@@ -1,10 +1,10 @@
-## defradb keyring export
+## defradb keyring get
 
-Export a private key
+Get a private key
 
 ### Synopsis
 
-Export a private key.
+Get a private key.
 Prints the hexadecimal representation of a private key.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
@@ -12,20 +12,20 @@ This can also be done with a .env file in the working directory or at a path
 defined with the --secret-file flag.
 
 ```
-defradb keyring export <name> [flags]
+defradb keyring get <name> [flags]
 ```
 
 ### Examples
 
 ```
-Export encryption key:  
-  defradb keyring export encryption-key
+Get encryption key:  
+  defradb keyring get encryption-key
 ```
 
 ### Options
 
 ```
-  -h, --help   help for export
+  -h, --help   help for get
 ```
 
 ### Options inherited from parent commands

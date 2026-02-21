@@ -91,36 +91,36 @@ func Main() {
 			"To run the wizard again you can use the command: defradb wizard",
 	)
 
-	stepQueryImportingKeys := initialModelMultipleChoice(
-		stepQueryImportingKeysID,
-		"Do you want to import any existing keys into the keyring?",
+	stepQueryAddingKeys := initialModelMultipleChoice(
+		stepQueryAddingKeysID,
+		"Do you want to add any existing keys into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
-	stepQueryImportingIdentityKey := initialModelMultipleChoice(
-		stepQueryImportingIdentityKeyID,
-		"An identity key is required to be imported or generated.\n"+
-			"Do you want to import an existing identity key into the keyring?",
-		[]string{"Yes, import an existing identity key", "No, generate a new identity key"},
+	stepQueryAddingIdentityKey := initialModelMultipleChoice(
+		stepQueryAddingIdentityKeyID,
+		"An identity key is required to be added or generated.\n"+
+			"Do you want to add an existing identity key into the keyring?",
+		[]string{"Yes, add an existing identity key", "No, generate a new identity key"},
 	)
 
-	stepQueryImportingIdentityKeyType := initialModelMultipleChoice(
-		stepQueryImportingIdentityKeyTypeID,
-		"What type of identity key do you want to import?",
+	stepQueryAddingIdentityKeyType := initialModelMultipleChoice(
+		stepQueryAddingIdentityKeyTypeID,
+		"What type of identity key do you want to add?",
 		[]string{"Ed25519", "Secp256k1", "Secp256r1"},
 	)
 
-	stepGettingIdentityKeyForImport := initialModelTextInput(
-		stepGettingIdentityKeyForImportID,
-		"Please enter the identity key you want to import:",
+	stepGettingIdentityKeyForAdd := initialModelTextInput(
+		stepGettingIdentityKeyForAddID,
+		"Please enter the identity key you want to add:",
 		"",
 	)
 
-	stepImportingIdentityKey := initialModelBlank()
+	stepAddingIdentityKey := initialModelBlank()
 
-	stepImportedIdentityKey := initialModelText(
-		stepImportedIdentityKeyID,
-		"Identity key imported.",
+	stepAddedIdentityKey := initialModelText(
+		stepAddedIdentityKeyID,
+		"Identity key added.",
 	)
 
 	stepGeneratingIdentityKey := initialModelBlank()
@@ -130,23 +130,23 @@ func Main() {
 		"Identity key generated successfully.",
 	)
 
-	stepQueryImportingPeerKey := initialModelMultipleChoice(
-		stepQueryImportingPeerKeyID,
-		"Do you want to import an existing peer key into the keyring?",
+	stepQueryAddingPeerKey := initialModelMultipleChoice(
+		stepQueryAddingPeerKeyID,
+		"Do you want to add an existing peer key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
-	stepGettingPeerKeyForImport := initialModelTextInput(
-		stepGettingPeerKeyForImportID,
-		"Please enter the peer key you want to import:",
+	stepGettingPeerKeyForAdd := initialModelTextInput(
+		stepGettingPeerKeyForAddID,
+		"Please enter the peer key you want to add:",
 		"",
 	)
 
-	stepImportingPeerKey := initialModelBlank()
+	stepAddingPeerKey := initialModelBlank()
 
-	stepImportedPeerKey := initialModelText(
-		stepImportedPeerKeyID,
-		"Peer key imported.",
+	stepAddedPeerKey := initialModelText(
+		stepAddedPeerKeyID,
+		"Peer key added.",
 	)
 
 	stepGeneratingPeerKey := initialModelBlank()
@@ -156,23 +156,23 @@ func Main() {
 		"Peer key generated successfully.",
 	)
 
-	stepQueryImportingEncryptionKey := initialModelMultipleChoice(
-		stepQueryImportingEncryptionKeyID,
-		"Do you want to import an existing encryption key into the keyring?",
+	stepQueryAddingEncryptionKey := initialModelMultipleChoice(
+		stepQueryAddingEncryptionKeyID,
+		"Do you want to add an existing encryption key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
-	stepGettingEncryptionKeyForImport := initialModelTextInput(
-		stepGettingEncryptionKeyForImportID,
-		"Please enter the encryption key you want to import:",
+	stepGettingEncryptionKeyForAdd := initialModelTextInput(
+		stepGettingEncryptionKeyForAddID,
+		"Please enter the encryption key you want to add:",
 		"",
 	)
 
-	stepImportingEncryptionKey := initialModelBlank()
+	stepAddingEncryptionKey := initialModelBlank()
 
-	stepImportedEncryptionKey := initialModelText(
-		stepImportedEncryptionKeyID,
-		"Encryption key imported.",
+	stepAddedEncryptionKey := initialModelText(
+		stepAddedEncryptionKeyID,
+		"Encryption key added.",
 	)
 
 	stepGeneratingEncryptionKey := initialModelBlank()
@@ -182,23 +182,23 @@ func Main() {
 		"Encryption key generated successfully.",
 	)
 
-	stepQueryImportingSearchableEncryptionKey := initialModelMultipleChoice(
-		stepQueryImportingSearchableEncryptionKeyID,
-		"Do you want to import an existing searchable encryption key into the keyring?",
+	stepQueryAddingSearchableEncryptionKey := initialModelMultipleChoice(
+		stepQueryAddingSearchableEncryptionKeyID,
+		"Do you want to add an existing searchable encryption key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
-	stepGettingSearchableEncryptionKeyForImport := initialModelTextInput(
-		stepGettingSearchableEncryptionKeyForImportID,
-		"Please enter the searchable encryption key you want to import:",
+	stepGettingSearchableEncryptionKeyForAdd := initialModelTextInput(
+		stepGettingSearchableEncryptionKeyForAddID,
+		"Please enter the searchable encryption key you want to add:",
 		"",
 	)
 
-	stepImportingSearchableEncryptionKey := initialModelBlank()
+	stepAddingSearchableEncryptionKey := initialModelBlank()
 
-	stepImportedSearchableEncryptionKey := initialModelText(
-		stepImportedSearchableEncryptionKeyID,
-		"Searchable encryption key imported.",
+	stepAddedSearchableEncryptionKey := initialModelText(
+		stepAddedSearchableEncryptionKeyID,
+		"Searchable encryption key added.",
 	)
 
 	stepGeneratingSearchableEncryptionKey := initialModelBlank()
@@ -260,49 +260,49 @@ func Main() {
 	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
 	stepConfigGenerator.nextStep = stepConfigGenerated
 	stepConfigGenerated.nextStep = stepKeyringStorageLocation
-	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepQueryImportingKeys}
+	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepQueryAddingKeys}
 	stepKeyringStorageLocationBrancher.nextSteps = []step{
 		stepQueryGeneratingEnvironmentVariable,
-		stepQueryImportingKeys,
+		stepQueryAddingKeys,
 	}
 	stepQueryGeneratingEnvironmentVariable.nextSteps = []step{
 		stepGetDefraKeyringSecretInput,
 		stepWizardExitMissingDefraKeyringSecret,
 	}
-	stepQueryImportingKeys.nextSteps = []step{stepQueryImportingIdentityKey, stepSelectKeyTypes}
-	stepQueryImportingIdentityKey.nextSteps = []step{stepQueryImportingIdentityKeyType, stepGeneratingIdentityKey}
-	stepQueryImportingIdentityKeyType.nextSteps = []step{
-		stepGettingIdentityKeyForImport,
-		stepGettingIdentityKeyForImport,
-		stepGettingIdentityKeyForImport,
+	stepQueryAddingKeys.nextSteps = []step{stepQueryAddingIdentityKey, stepSelectKeyTypes}
+	stepQueryAddingIdentityKey.nextSteps = []step{stepQueryAddingIdentityKeyType, stepGeneratingIdentityKey}
+	stepQueryAddingIdentityKeyType.nextSteps = []step{
+		stepGettingIdentityKeyForAdd,
+		stepGettingIdentityKeyForAdd,
+		stepGettingIdentityKeyForAdd,
 	}
-	stepGettingIdentityKeyForImport.nextStep = stepImportingIdentityKey
-	stepImportingIdentityKey.nextStep = stepImportedIdentityKey
-	stepImportedIdentityKey.nextStep = stepQueryImportingPeerKey
+	stepGettingIdentityKeyForAdd.nextStep = stepAddingIdentityKey
+	stepAddingIdentityKey.nextStep = stepAddedIdentityKey
+	stepAddedIdentityKey.nextStep = stepQueryAddingPeerKey
 	stepGeneratingIdentityKey.nextStep = stepGeneratedIdentityKey
-	stepGeneratedIdentityKey.nextStep = stepQueryImportingPeerKey
-	stepQueryImportingPeerKey.nextSteps = []step{stepGettingPeerKeyForImport, stepQueryImportingEncryptionKey}
-	stepGettingPeerKeyForImport.nextStep = stepImportingPeerKey
-	stepImportingPeerKey.nextStep = stepImportedPeerKey
-	stepImportedPeerKey.nextStep = stepQueryImportingEncryptionKey
+	stepGeneratedIdentityKey.nextStep = stepQueryAddingPeerKey
+	stepQueryAddingPeerKey.nextSteps = []step{stepGettingPeerKeyForAdd, stepQueryAddingEncryptionKey}
+	stepGettingPeerKeyForAdd.nextStep = stepAddingPeerKey
+	stepAddingPeerKey.nextStep = stepAddedPeerKey
+	stepAddedPeerKey.nextStep = stepQueryAddingEncryptionKey
 	stepGeneratingPeerKey.nextStep = stepGeneratedPeerKey
-	stepGeneratedPeerKey.nextStep = stepQueryImportingEncryptionKey
-	stepQueryImportingEncryptionKey.nextSteps = []step{
-		stepGettingEncryptionKeyForImport,
-		stepQueryImportingSearchableEncryptionKey,
+	stepGeneratedPeerKey.nextStep = stepQueryAddingEncryptionKey
+	stepQueryAddingEncryptionKey.nextSteps = []step{
+		stepGettingEncryptionKeyForAdd,
+		stepQueryAddingSearchableEncryptionKey,
 	}
-	stepGettingEncryptionKeyForImport.nextStep = stepImportingEncryptionKey
-	stepImportingEncryptionKey.nextStep = stepImportedEncryptionKey
-	stepImportedEncryptionKey.nextStep = stepQueryImportingSearchableEncryptionKey
+	stepGettingEncryptionKeyForAdd.nextStep = stepAddingEncryptionKey
+	stepAddingEncryptionKey.nextStep = stepAddedEncryptionKey
+	stepAddedEncryptionKey.nextStep = stepQueryAddingSearchableEncryptionKey
 	stepGeneratingEncryptionKey.nextStep = stepGeneratedEncryptionKey
-	stepGeneratedEncryptionKey.nextStep = stepQueryImportingSearchableEncryptionKey
-	stepQueryImportingSearchableEncryptionKey.nextSteps = []step{
-		stepGettingSearchableEncryptionKeyForImport,
+	stepGeneratedEncryptionKey.nextStep = stepQueryAddingSearchableEncryptionKey
+	stepQueryAddingSearchableEncryptionKey.nextSteps = []step{
+		stepGettingSearchableEncryptionKeyForAdd,
 		stepConfirmKeyringFilesGenerated,
 	}
-	stepGettingSearchableEncryptionKeyForImport.nextStep = stepImportingSearchableEncryptionKey
-	stepImportingSearchableEncryptionKey.nextStep = stepImportedSearchableEncryptionKey
-	stepImportedSearchableEncryptionKey.nextStep = stepConfirmKeyringFilesGenerated
+	stepGettingSearchableEncryptionKeyForAdd.nextStep = stepAddingSearchableEncryptionKey
+	stepAddingSearchableEncryptionKey.nextStep = stepAddedSearchableEncryptionKey
+	stepAddedSearchableEncryptionKey.nextStep = stepConfirmKeyringFilesGenerated
 	stepGeneratingSearchableEncryptionKey.nextStep = stepGeneratedSearchableEncryptionKey
 	stepGeneratedSearchableEncryptionKey.nextStep = stepConfirmKeyringFilesGenerated
 	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
@@ -325,13 +325,13 @@ func Main() {
 	stepGenerateSystemKeyringKeys.callback = callback_GenerateKeysInSystemKeyring
 	stepGetDefraKeyringSecretInput.callback = callback_SetAndReloadDefraKeyringSecretEnvironmentVariable
 	stepGeneratingIdentityKey.callback = callback_GenerateIdentityKey
-	stepImportingIdentityKey.callback = callback_ImportIdentityKey
+	stepAddingIdentityKey.callback = callback_AddIdentityKey
 	stepGeneratingPeerKey.callback = callback_GeneratePeerKey
-	stepImportingPeerKey.callback = callback_ImportPeerKey
+	stepAddingPeerKey.callback = callback_AddPeerKey
 	stepGeneratingEncryptionKey.callback = callback_GenerateEncryptionKey
-	stepImportingEncryptionKey.callback = callback_ImportEncryptionKey
+	stepAddingEncryptionKey.callback = callback_AddEncryptionKey
 	stepGeneratingSearchableEncryptionKey.callback = callback_GenerateSearchableEncryptionKey
-	stepImportingSearchableEncryptionKey.callback = callback_ImportSearchableEncryptionKey
+	stepAddingSearchableEncryptionKey.callback = callback_AddSearchableEncryptionKey
 	stepPerformHealthcheck.callback = callback_PerformHealthcheck
 
 	// Setup the evaluators

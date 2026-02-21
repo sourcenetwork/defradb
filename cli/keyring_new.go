@@ -21,14 +21,14 @@ import (
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
-func MakeKeyringGenerateCommand(ctx context.Context) *cobra.Command {
+func MakeKeyringNewCommand(ctx context.Context) *cobra.Command {
 	var noEncryptionKey bool
 	var noPeerKey bool
 	var force bool
 	var cmd = &cobra.Command{
-		Use:   "generate",
-		Short: "Generate private keys",
-		Long: `Generate private keys.
+		Use:   "new",
+		Short: "Create new private keys",
+		Long: `Create new private keys.
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
@@ -60,7 +60,7 @@ WARNING: This will overwrite existing keys in the keyring.`,
 				if err != nil {
 					return err
 				}
-				log.Info("generated encryption key")
+				log.Info("generated new encryption key")
 			}
 			if !noPeerKey {
 				if !force {
@@ -80,23 +80,23 @@ WARNING: This will overwrite existing keys in the keyring.`,
 				if err != nil {
 					return err
 				}
-				log.Info("generated peer key")
+				log.Info("generated new peer key")
 			}
 			return nil
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Generate keys",
-		`defradb keyring generate`)
+	EmbedCLIExample(ctx, cmd, "Create new keys",
+		`defradb keyring new`)
 
 	EmbedCLIExample(ctx, cmd, "with no encryption key",
-		`defradb keyring generate --no-encryption`)
+		`defradb keyring new --no-encryption`)
 
 	EmbedCLIExample(ctx, cmd, "with no peer key",
-		`defradb keyring generate --no-peer-key`)
+		`defradb keyring new --no-peer-key`)
 
 	EmbedCLIExample(ctx, cmd, "with system keyring",
-		`defradb keyring generate --keyring-backend system`)
+		`defradb keyring new --keyring-backend system`)
 
 	cmd.Flags().BoolVar(&noEncryptionKey, "no-encryption", false,
 		"Skip generating an encryption key. Encryption at rest will be disabled")

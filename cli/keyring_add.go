@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringImportCommand(ctx context.Context) *cobra.Command {
+func MakeKeyringAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "import <name> <private-key-hex>",
-		Short: "Import a private key",
-		Long: `Import a private key.
+		Use:   "add <name> <private-key-hex>",
+		Short: "Add a private key",
+		Long: `Add a private key.
 Store an externally generated key in the keyring.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
@@ -41,8 +41,8 @@ defined with the --secret-file flag.`,
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Import encryption key",
-		`defradb keyring import encryption-key 0000000000000000`)
+	EmbedCLIExample(ctx, cmd, "Add encryption key",
+		`defradb keyring add encryption-key 0000000000000000`)
 
 	return cmd
 }

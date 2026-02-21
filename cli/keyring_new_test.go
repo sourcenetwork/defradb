@@ -20,13 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestKeyringGenerate(t *testing.T) {
+func TestKeyringNew(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "new", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
@@ -35,13 +35,13 @@ func TestKeyringGenerate(t *testing.T) {
 	assert.FileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
 }
 
-func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
+func TestKeyringNewNoEncryptionKey(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "new", "--no-encryption", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
@@ -50,13 +50,13 @@ func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 	assert.FileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
 }
 
-func TestKeyringGenerateNoPeerKey(t *testing.T) {
+func TestKeyringNewNoPeerKey(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "generate", "--no-peer-key", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "new", "--no-peer-key", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
@@ -65,37 +65,37 @@ func TestKeyringGenerateNoPeerKey(t *testing.T) {
 	assert.NoFileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
 }
 
-func TestKeyringGenerateOverwrite(t *testing.T) {
+func TestKeyringNewOverwrite(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "new", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
 
 	cmd2 := NewDefraCommand(context.Background())
-	cmd2.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+	cmd2.SetArgs([]string{"keyring", "new", "--rootdir", rootdir})
 	err = cmd2.Execute()
 
 	require.Error(t, err)
 }
 
-func TestKeyringGenerateOverwriteForce(t *testing.T) {
+func TestKeyringNewOverwriteForce(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+	cmd.SetArgs([]string{"keyring", "new", "--rootdir", rootdir})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
 
 	cmd2 := NewDefraCommand(context.Background())
-	cmd2.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir, "--force"})
+	cmd2.SetArgs([]string{"keyring", "new", "--rootdir", rootdir, "--force"})
 	err = cmd2.Execute()
 
 	require.NoError(t, err)

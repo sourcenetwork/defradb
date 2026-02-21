@@ -38,7 +38,7 @@ func TestKeyringList(t *testing.T) {
 		require.NoError(t, err)
 		keyHex := hex.EncodeToString(keyBytes)
 		cmd := NewDefraCommand(context.Background())
-		cmd.SetArgs([]string{"keyring", "import", "--rootdir", rootdir, keyName, keyHex})
+		cmd.SetArgs([]string{"keyring", "add", "--rootdir", rootdir, keyName, keyHex})
 		err = cmd.Execute()
 		require.NoError(t, err)
 	}

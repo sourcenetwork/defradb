@@ -16,11 +16,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringExportCommand(ctx context.Context) *cobra.Command {
+func MakeKeyringGetCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "export <name>",
-		Short: "Export a private key",
-		Long: `Export a private key.
+		Use:   "get <name>",
+		Short: "Get a private key",
+		Long: `Get a private key.
 Prints the hexadecimal representation of a private key.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
@@ -41,8 +41,8 @@ defined with the --secret-file flag.`,
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Export encryption key",
-		`defradb keyring export encryption-key`)
+	EmbedCLIExample(ctx, cmd, "Get encryption key",
+		`defradb keyring get encryption-key`)
 
 	return cmd
 }

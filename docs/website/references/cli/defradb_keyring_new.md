@@ -1,10 +1,10 @@
-## defradb keyring generate
+## defradb keyring new
 
-Generate private keys
+Create new private keys
 
 ### Synopsis
 
-Generate private keys.
+Create new private keys.
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
@@ -15,30 +15,30 @@ defined with the --secret-file flag.
 WARNING: This will overwrite existing keys in the keyring.
 
 ```
-defradb keyring generate [flags]
+defradb keyring new [flags]
 ```
 
 ### Examples
 
 ```
-Generate keys:  
-  defradb keyring generate
+Create new keys:  
+  defradb keyring new
 
 with no encryption key:  
-  defradb keyring generate --no-encryption
+  defradb keyring new --no-encryption
 
 with no peer key:  
-  defradb keyring generate --no-peer-key
+  defradb keyring new --no-peer-key
 
 with system keyring:  
-  defradb keyring generate --keyring-backend system
+  defradb keyring new --keyring-backend system
 ```
 
 ### Options
 
 ```
       --force           Overwrite existing keys without confirmation
-  -h, --help            help for generate
+  -h, --help            help for new
       --no-encryption   Skip generating an encryption key. Encryption at rest will be disabled
       --no-peer-key     Skip generating a peer key.
 ```
