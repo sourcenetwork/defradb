@@ -34,6 +34,11 @@ const (
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
