@@ -126,13 +126,13 @@ Alternatively, to randomly generate the required keys, run the following command
 Node identity is an identity assigned to the node. It is used to exchange encryption keys with other nodes. 
 
 ```
-defradb keyring generate
+defradb keyring new
 ```
 
 To import externally generated keys, run the following command:
 
 ```
-defradb keyring import <name> <private-key-hex>
+defradb keyring add <name> <private-key-hex>
 ```
 
 To learn more about the available options:
