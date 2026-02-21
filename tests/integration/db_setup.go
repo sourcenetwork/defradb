@@ -134,6 +134,8 @@ func setupNode(
 		opts.SetDisableP2P(false)
 	}
 
+	opts.SetEnableDevelopment(true)
+
 	nodeObj, err := node.New(s.Ctx, opts)
 	if err != nil {
 		return nil, err
