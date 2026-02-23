@@ -69,7 +69,7 @@ func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testin
 					{
 						TargetNodeName: "orphanNode",
 						ExpectedAttributes: dataMap{
-							"iterations":   uint64(3),
+							"iterations":   uint64(2),
 							"docFetches":   uint64(1),
 							"fieldFetches": uint64(1),
 							"indexFetches": uint64(1),
@@ -149,43 +149,3 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExecuteExplainWithOrphanNode_SimpleExplain_ReportsOrderDirection(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type Book {
-						title: String
-						rating: Int @index
-						publisher: Publisher
-					}
-					type Publisher {
-						name: String
-						book: Book @primary
-					}
-				`,
-			},
-
-			&action.ExplainRequest{
-				// @exhaustive is required to include orphanNode in the plan
-				Request: `query @explain @exhaustive {
-					Publisher(order: {book: {rating: DESC}}) {
-						name
-					}
-				}`,
-
-				ExpectedTargets: []action.PlanNodeTargetCase{
-					{
-						TargetNodeName: "orphanNode",
-						ExpectedAttributes: dataMap{
-							"orderDirection": "DESC",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}

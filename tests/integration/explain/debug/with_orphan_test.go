@@ -18,9 +18,42 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-// orphanNodePattern is the expected pattern for a query that orders by a relation
-// field with an index. The orphanNode wraps the typeJoinOne to handle orphan parents.
-var orphanNodePattern = dataMap{
+var joinOnePattern = dataMap{
+	"typeJoinOne": dataMap{
+		"root": dataMap{
+			"scanNode": dataMap{},
+		},
+		"subType": dataMap{
+			"selectTopNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
+
+// primaryParentASCPattern is for primary parent FK IS NULL path, ASC order:
+// orphans come first in the sequence.
+var primaryParentASCPattern = dataMap{
+	"sequenceNode": []dataMap{
+		{"orphanNode": dataMap{}},
+		joinOnePattern,
+	},
+}
+
+// primaryParentDESCPattern is for primary parent FK IS NULL path, DESC order:
+// join results come first, orphans last.
+var primaryParentDESCPattern = dataMap{
+	"sequenceNode": []dataMap{
+		joinOnePattern,
+		{"orphanNode": dataMap{}},
+	},
+}
+
+// secondaryParentPattern is for secondary parent exclusion path:
+// orphanNode wraps the join and handles ordering internally.
+var secondaryParentPattern = dataMap{
 	"orphanNode": dataMap{
 		"typeJoinOne": dataMap{
 			"root": dataMap{
@@ -69,7 +102,7 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndex(t *testing.T) {
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"typeIndexJoin": orphanNodePattern,
+										"typeIndexJoin": primaryParentASCPattern,
 									},
 								},
 							},
@@ -115,7 +148,7 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndexDESC(t *testing.T) 
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"typeIndexJoin": orphanNodePattern,
+										"typeIndexJoin": primaryParentDESCPattern,
 									},
 								},
 							},
@@ -161,7 +194,7 @@ func TestDebugExplainRequestWithOrderByRelationFieldSecondaryParent(t *testing.T
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"typeIndexJoin": orphanNodePattern,
+										"typeIndexJoin": secondaryParentPattern,
 									},
 								},
 							},

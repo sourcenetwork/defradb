@@ -1754,4 +1754,3 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 
 	testUtils.ExecuteTestCase(t, test)
 }
-

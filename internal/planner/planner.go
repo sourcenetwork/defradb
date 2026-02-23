@@ -308,6 +308,8 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	// For nested joins with FK IS NULL path, orphanNode is wired into the primary side's
 	// selectTopNode so limitNode enforces limits naturally via the pipeline.
 	expandJoin := func(node planNode, join *invertibleTypeJoin) error {
+		plan.join = join
+		plan.joinKind = node.Kind()
 		orderDir, err := p.expandTypeJoin(join, parentPlan)
 		if err != nil {
 			return err
@@ -379,7 +381,11 @@ func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, d
 // It buffers source docs, collects their IDs, and fetches orphans by exclusion
 // after the source is exhausted.
 // Called after the full plan chain (order, limit) is built.
-func wireSubQueryOrphanExclusionPipeline(plan *selectTopNode, join *invertibleTypeJoin, direction mapper.SortDirection) {
+func wireSubQueryOrphanExclusionPipeline(
+	plan *selectTopNode, 
+	join *invertibleTypeJoin, 
+	direction mapper.SortDirection,
+) {
 	if plan.limit != nil {
 		orphan := newOrphanNodeWithSource(join, plan.limit.plan, direction)
 		plan.limit.plan = orphan
@@ -419,24 +425,7 @@ func isOrderedByIndex(plan planNode) bool {
 	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
 	typeJoin := getNode[*typeIndexJoin](plan)
 	if typeJoin != nil {
-		joinPlan := typeJoin.joinPlan
-		// Unwrap sequenceNode or orphanNode (wrapper mode) to find the actual join node.
-		if seq, ok := joinPlan.(*sequenceNode); ok {
-			for _, child := range seq.children {
-				if _, isOrphan := child.(*orphanNode); !isOrphan {
-					joinPlan = child
-					break
-				}
-			}
-		}
-		if orphan, ok := joinPlan.(*orphanNode); ok && orphan.source != nil {
-			joinPlan = orphan.source
-		}
-		if j, ok := joinPlan.(*typeJoinOne); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		} else if j, ok := joinPlan.(*typeJoinMany); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		}
+		scan = getNode[*scanNode](typeJoin.join.getFirstSide().plan)
 	} else {
 		scan = getNode[*scanNode](plan)
 	}

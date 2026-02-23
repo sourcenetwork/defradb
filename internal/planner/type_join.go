@@ -57,8 +57,16 @@ type typeIndexJoin struct {
 	p *Planner
 
 	// actual join plan, could be one of several strategies
-	// based on the relationship of the sub types
+	// based on the relationship of the sub types.
+	// May be wrapped by orphan-handling nodes (sequenceNode, orphanNode)
+	// during plan expansion when @exhaustive is active.
 	joinPlan planNode
+
+	// join is a direct reference to the underlying invertibleTypeJoin,
+	// set during plan expansion. Used by simpleExplain to access join
+	// metadata (direction, subType) without unwrapping the joinPlan.
+	join     *invertibleTypeJoin
+	joinKind string
 
 	execInfo typeIndexJoinExecInfo
 }
@@ -148,7 +156,7 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 
 	simpleExplainMap := map[string]any{}
 
-	simpleExplainMap[joinTypeLabel] = n.joinPlan.Kind()
+	simpleExplainMap[joinTypeLabel] = n.joinKind
 
 	addExplainData := func(j *invertibleTypeJoin) error {
 		if j.childSide.relFieldDef.HasValue() {
@@ -166,42 +174,15 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 		return nil
 	}
 
-	var err error
-	joinPlan := n.joinPlan
-	// When @exhaustive is active, the actual join node (typeJoinOne/typeJoinMany) may be
-	// wrapped by orphan-handling nodes:
-	//   - sequenceNode wraps [orphanNode, joinNode] for the FK IS NULL path
-	//   - orphanNode (wrapper mode) wraps the joinNode for the exclusion path
-	// We unwrap these to reach the join node, which holds the direction and subType
-	// information needed for explain output. The orphan nodes produce their own explain
-	// entries via the MultiNode interface (sequenceNode) or inline (orphanNode).
-	if seq, ok := joinPlan.(*sequenceNode); ok {
-		for _, child := range seq.children {
-			if _, isOrphan := child.(*orphanNode); !isOrphan {
-				joinPlan = child
-				break
-			}
-		}
-	}
-	if orphan, ok := joinPlan.(*orphanNode); ok && orphan.source != nil {
-		joinPlan = orphan.source
-	}
-	switch joinType := joinPlan.(type) {
-	case *typeJoinOne:
-		if joinType.parentSide.isPrimary() {
+	if n.joinKind == "typeJoinOne" {
+		if n.join.parentSide.isPrimary() {
 			simpleExplainMap[joinDirectionLabel] = joinDirectionPrimaryLabel
 		} else {
 			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
 		}
-
-		err = addExplainData(&joinType.invertibleTypeJoin)
-
-	case *typeJoinMany:
-		err = addExplainData(&joinType.invertibleTypeJoin)
-
-	default:
-		err = client.NewErrUnhandledType("join plan", joinPlan)
 	}
+
+	err := addExplainData(n.join)
 
 	return simpleExplainMap, err
 }

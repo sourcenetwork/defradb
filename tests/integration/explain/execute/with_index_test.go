@@ -222,33 +222,39 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"orphanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(0),
-												"fieldFetches": uint64(0),
-												"indexFetches": uint64(0),
-												"typeJoinOne": dataMap{
-													"root": dataMap{
-														"scanNode": dataMap{
-															"iterations":   uint64(4),
-															"docFetches":   uint64(2),
-															"fieldFetches": uint64(4),
-															"indexFetches": uint64(2),
+											"sequenceNode": []dataMap{
+												{
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(4),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(4),
+																"indexFetches": uint64(2),
+															},
 														},
-													},
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"iterations":    uint64(3),
-																"filterMatches": uint64(2),
-																"scanNode": dataMap{
-																	"iterations":   uint64(3),
-																	"docFetches":   uint64(2),
-																	"fieldFetches": uint64(4),
-																	"indexFetches": uint64(2),
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(3),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(3),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(4),
+																		"indexFetches": uint64(2),
+																	},
 																},
 															},
 														},
+													},
+												},
+												{
+													"orphanNode": dataMap{
+														"iterations":   uint64(1),
+														"docFetches":   uint64(0),
+														"fieldFetches": uint64(0),
+														"indexFetches": uint64(0),
 													},
 												},
 											},

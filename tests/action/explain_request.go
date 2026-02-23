@@ -48,6 +48,7 @@ var (
 		"orderNode":      {},
 		"orphanNode":     {},
 		"parallelNode":   {},
+		"sequenceNode":   {},
 		"pipeNode":       {},
 		"scanNode":       {},
 		"selectNode":     {},
