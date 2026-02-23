@@ -11,6 +11,8 @@
 package request
 
 import (
+	"slices"
+
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -69,7 +71,7 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 		},
 		DocID: c.DocID,
 		CIDFilter: CIDFilter{
-			immutable.Some(cid),
+			immutable.Some([]string{cid}),
 		},
 		ChildSelect: c.ChildSelect,
 	}
@@ -79,10 +81,7 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 // Returns true if the cid passes the filter, false otherwise.
 // If no CID filter is set, it always passes.
 func (c CommitSelect) CheckCIDFilter(cid string) bool {
-	if c.CID.HasValue() && c.CID.Value() != cid {
-		return false
-	}
-	return true
+	return !c.CIDs.HasValue() || slices.Contains(c.CIDs.Value(), cid)
 }
 
 // CheckDocIDFilter checks if the given docID passes the DocID filter.

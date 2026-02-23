@@ -232,3 +232,71 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQuerySimple_ListOfOneCID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users (
+							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_MultipleCIDs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users (
+							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"]
+						) {
+						name
+					}
+				}`,
+				ExpectedError: "querying by multiple cids is not yet supported",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

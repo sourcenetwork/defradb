@@ -1560,7 +1560,7 @@ func (g *Generator) genTypeQueryableFieldList(
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), docIDsArgDescription),
-			"cid":                schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			request.CidArgName:   schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), cidArgDescription),
 			"filter":             schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
