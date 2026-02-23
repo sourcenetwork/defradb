@@ -168,7 +168,13 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 
 	var err error
 	joinPlan := n.joinPlan
-	// Unwrap sequenceNode or orphanNode (wrapper mode) to find the actual join node.
+	// When @exhaustive is active, the actual join node (typeJoinOne/typeJoinMany) may be
+	// wrapped by orphan-handling nodes:
+	//   - sequenceNode wraps [orphanNode, joinNode] for the FK IS NULL path
+	//   - orphanNode (wrapper mode) wraps the joinNode for the exclusion path
+	// We unwrap these to reach the join node, which holds the direction and subType
+	// information needed for explain output. The orphan nodes produce their own explain
+	// entries via the MultiNode interface (sequenceNode) or inline (orphanNode).
 	if seq, ok := joinPlan.(*sequenceNode); ok {
 		for _, child := range seq.children {
 			if _, isOrphan := child.(*orphanNode); !isOrphan {

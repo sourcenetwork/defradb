@@ -326,6 +326,17 @@ func (n *orphanNode) prepareOrphanContext() {
 }
 
 // fetchOrphans fetches and returns parent documents that have no related children.
+//
+// Two strategies are used depending on which side of the relation the parent is on:
+//
+// Primary parent (stores the FK, e.g. Book._publisherID): Uses a "FK IS NULL" filter
+// to directly identify orphans via the datastore. This is efficient and precise.
+//
+// Secondary parent (no FK stored, e.g. Publisher with Book._publisherID pointing to it):
+// The parent has no FK field to check, so orphans are identified by exclusion — fetch all
+// parent docs matching the filter, then exclude those already encountered by the join.
+// This is necessary because the join scans the child's index and only finds parents that
+// have at least one child; parents with zero children never appear in the join results.
 func (n *orphanNode) fetchOrphans() ([]core.Doc, error) {
 	n.fetched = true
 
