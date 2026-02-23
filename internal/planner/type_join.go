@@ -382,7 +382,7 @@ func (p *Planner) newInvertableTypeJoin(
 		subFilter: childScan.filter,
 		// we store child's ordering to apply when fetching child documents
 		subOrdering: childScan.ordering,
-		exhaustive:  p.exhaustive,
+		exhaustive:  p.joinExpand.exhaustive,
 	}
 
 	return join, nil

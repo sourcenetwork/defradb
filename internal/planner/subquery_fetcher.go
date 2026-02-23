@@ -33,9 +33,14 @@ import (
 	lensStore "github.com/sourcenetwork/lens/host-go/store"
 )
 
-// subQueryFetcher executes sub-queries independently without mutating scan nodes.
-// It creates its own fetcher instance for each query, avoiding shared state issues
-// that can arise from the save-restore pattern.
+// subQueryFetcher executes side-channel fetches independently of the main plan tree.
+//
+// It was introduced for orphan detection, which needs to fetch documents outside the
+// normal plan iteration (e.g., "fetch all parents where FK IS NULL" or "fetch all
+// parents except these IDs"). These fetches cannot go through the existing scanNode
+// because it is already in use by the join's main iteration — mutating its filter or
+// fetcher mid-iteration would corrupt state. subQueryFetcher avoids this by creating
+// its own fetcher instance for each query, with proper cleanup via defer Close().
 type subQueryFetcher struct {
 	ctx         context.Context
 	identity    immutable.Option[acpIdentity.Identity]

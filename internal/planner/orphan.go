@@ -18,6 +18,25 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
+// joinExpandState holds transient state used only during plan expansion for
+// join optimization and orphan wiring. These fields are set at the start of
+// plan expansion and consumed during the recursive expandPlan walk.
+type joinExpandState struct {
+	// exhaustive is set when the @exhaustive directive is present on the query.
+	// When true, orphan parent documents will be included when ordering by relation
+	// fields with indexes. When false (default), orphans are excluded for performance.
+	exhaustive bool
+
+	// inNestedJoin tracks whether we're expanding a join that is nested inside another join.
+	// When true, orphanNode should not be added because nested joins are iterated via
+	// retrievePrimaryDocs which handles orphans correctly with parent context.
+	inNestedJoin bool
+
+	// pendingOrphanWiring is set during expandTypeIndexJoinPlan to defer orphan node
+	// wiring until after the full plan chain (order, limit) is built.
+	pendingOrphanWiring *orphanWiringRequest
+}
+
 // orphanWiringRequest stores information needed to wire orphan nodes into a selectTopNode.
 // This is set during expandTypeIndexJoinPlan and processed at the end of expandSelectTopNodePlan,
 // after the full plan chain (order, limit) is built.
@@ -62,7 +81,10 @@ type orphanNode struct {
 	source         planNode
 	orderDirection mapper.SortDirection
 
-	// subquery context — set per iteration via setSubQueryContext / setSubQueryExclusionContext / setSubQueryFilter
+	// Subquery context fields. These are set by retrievePrimaryDocs before each
+	// Init()/Next() cycle when the orphanNode is part of a nested join (not top-level).
+	// In nested joins, retrievePrimaryDocs iterates over secondary-side docs and calls
+	// the primary-side plan once per doc with a constrained filter.
 	subQueryFilter           *mapper.Filter
 	subQueryRelIDFieldName   string
 	subQueryRelIDFieldMapIdx int
@@ -77,7 +99,6 @@ type orphanNode struct {
 
 	// wrapper iteration state (source != nil)
 	docsToYield     []core.Doc
-	bufferedDocs    []core.Doc
 	yieldedDocIDs   []string
 	sourceExhausted bool
 	orphansFetched  bool
@@ -138,7 +159,6 @@ func (n *orphanNode) Init() error {
 	n.current = 0
 	n.fetched = false
 	n.docsToYield = nil
-	n.bufferedDocs = nil
 	n.yieldedDocIDs = nil
 	n.sourceExhausted = false
 	n.orphansFetched = false
@@ -184,9 +204,11 @@ func (n *orphanNode) Next() (bool, error) {
 // nextStandalone fetches all orphans on first call, then yields them sequentially.
 func (n *orphanNode) nextStandalone() (bool, error) {
 	if !n.fetched {
-		if err := n.fetchOrphans(); err != nil {
+		orphans, err := n.fetchOrphans()
+		if err != nil {
 			return false, err
 		}
+		n.docs = orphans
 	}
 
 	if n.current >= len(n.docs) {
@@ -227,37 +249,39 @@ func (n *orphanNode) Value() core.Doc {
 
 // nextASC buffers all source docs, then fetches orphans by exclusion,
 // then yields orphans followed by buffered docs.
+//
+// On the first call, it drains the entire source into a local buffer while
+// collecting doc IDs for exclusion. Then it fetches orphans and populates
+// docsToYield with orphans first (ASC: nulls before non-nulls), followed
+// by the buffered source docs. Subsequent calls yield from docsToYield.
 func (n *orphanNode) nextASC() (bool, error) {
-	if n.sourceExhausted {
-		if !n.orphansFetched {
-			n.orphansFetched = true
-			n.prepareOrphanContext()
-			if err := n.fetchOrphans(); err != nil {
-				return false, err
-			}
-			n.docsToYield = append(n.docs, n.bufferedDocs...)
-			n.docs = nil
-			n.bufferedDocs = nil
-			if len(n.docsToYield) > 0 {
-				return true, nil
-			}
-		}
+	if n.orphansFetched {
 		return false, nil
 	}
+	n.orphansFetched = true
 
+	var sourceDocs []core.Doc
 	for {
 		hasNext, err := n.source.Next()
 		if err != nil {
 			return false, err
 		}
 		if !hasNext {
-			n.sourceExhausted = true
-			return n.nextASC()
+			break
 		}
 		doc := n.source.Value()
-		n.bufferedDocs = append(n.bufferedDocs, doc)
+		sourceDocs = append(sourceDocs, doc)
 		n.yieldedDocIDs = append(n.yieldedDocIDs, doc.GetID())
 	}
+
+	n.prepareOrphanContext()
+	orphans, err := n.fetchOrphans()
+	if err != nil {
+		return false, err
+	}
+
+	n.docsToYield = append(orphans, sourceDocs...)
+	return len(n.docsToYield) > 0, nil
 }
 
 // nextDESC yields source docs first, then fetches and yields orphans.
@@ -279,12 +303,12 @@ func (n *orphanNode) nextDESC() (bool, error) {
 	if !n.orphansFetched {
 		n.orphansFetched = true
 		n.prepareOrphanContext()
-		if err := n.fetchOrphans(); err != nil {
+		orphans, err := n.fetchOrphans()
+		if err != nil {
 			return false, err
 		}
-		if len(n.docs) > 0 {
-			n.docsToYield = append(n.docsToYield, n.docs...)
-			n.docs = nil
+		if len(orphans) > 0 {
+			n.docsToYield = append(n.docsToYield, orphans...)
 			return true, nil
 		}
 	}
@@ -301,17 +325,17 @@ func (n *orphanNode) prepareOrphanContext() {
 	}
 }
 
-// fetchOrphans fetches parent documents that have no related children.
-func (n *orphanNode) fetchOrphans() error {
+// fetchOrphans fetches and returns parent documents that have no related children.
+func (n *orphanNode) fetchOrphans() ([]core.Doc, error) {
 	n.fetched = true
 
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
 	if parentScan == nil {
-		return nil
+		return nil, nil
 	}
 
 	if !n.join.parentSide.relFieldDef.HasValue() {
-		return nil
+		return nil, nil
 	}
 
 	fetcher := newSubQueryFetcher(
@@ -326,36 +350,26 @@ func (n *orphanNode) fetchOrphans() error {
 		&n.execInfo.fetches,
 	)
 
-	var orphans []core.Doc
-	var err error
-
 	if n.isSubQueryExclusion {
-		orphans, err = fetcher.fetchAllExcluding(n.subQueryFilter, n.subQueryExcludeIDs)
+		return fetcher.fetchAllExcluding(n.subQueryFilter, n.subQueryExcludeIDs)
 	} else if n.isSubQuery {
-		orphans, err = fetcher.fetchOrphans(n.subQueryRelIDFieldName, n.subQueryRelIDFieldMapIdx, n.subQueryFilter)
+		return fetcher.fetchOrphans(n.subQueryRelIDFieldName, n.subQueryRelIDFieldMapIdx, n.subQueryFilter)
 	} else if n.join.parentSide.isPrimary() {
 		relIDFieldName := request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
 
 		if !n.join.parentSide.relIDFieldMapIndex.HasValue() {
-			return nil
+			return nil, nil
 		}
 		relIDFieldMapIndex := n.join.parentSide.relIDFieldMapIndex.Value()
 
-		orphans, err = fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, n.join.subFilter)
-	} else {
-		excludeIDs := make([]string, 0, len(n.join.state.encounteredDocIDs))
-		for id := range n.join.state.encounteredDocIDs {
-			excludeIDs = append(excludeIDs, id)
-		}
-		orphans, err = fetcher.fetchAllExcluding(n.join.subFilter, excludeIDs)
+		return fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, n.join.subFilter)
 	}
 
-	if err != nil {
-		return err
+	excludeIDs := make([]string, 0, len(n.join.state.encounteredDocIDs))
+	for id := range n.join.state.encounteredDocIDs {
+		excludeIDs = append(excludeIDs, id)
 	}
-
-	n.docs = orphans
-	return nil
+	return fetcher.fetchAllExcluding(n.join.subFilter, excludeIDs)
 }
 
 func (n *orphanNode) simpleExplain() (map[string]any, error) {

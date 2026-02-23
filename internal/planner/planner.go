@@ -105,19 +105,10 @@ type Planner struct {
 	ctx       context.Context
 	lensStore lensStore.Store
 
-	// exhaustive is set when the @exhaustive directive is present on the query.
-	// When true, orphan parent documents will be included when ordering by relation
-	// fields with indexes. When false (default), orphans are excluded for performance.
-	exhaustive bool
-
-	// inNestedJoin tracks whether we're expanding a join that is nested inside another join.
-	// When true, orphanNode should not be added because nested joins are iterated via
-	// retrievePrimaryDocs which handles orphans correctly with parent context.
-	inNestedJoin bool
-
-	// pendingOrphanWiring is set during expandTypeIndexJoinPlan to defer orphan node
-	// wiring until after the full plan chain (order, limit) is built.
-	pendingOrphanWiring *orphanWiringRequest
+	// joinExpand holds transient state used only during plan expansion for
+	// join optimization and orphan wiring. These fields are set at the start of
+	// plan expansion and consumed during the recursive expandPlan walk.
+	joinExpand joinExpandState
 }
 
 func New(
@@ -265,9 +256,9 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	// Process deferred orphan wiring now that the full plan chain is built.
-	if p.pendingOrphanWiring != nil {
-		req := p.pendingOrphanWiring
-		p.pendingOrphanWiring = nil
+	if p.joinExpand.pendingOrphanWiring != nil {
+		req := p.joinExpand.pendingOrphanWiring
+		p.joinExpand.pendingOrphanWiring = nil
 		if req.useExclusion {
 			wireSubQueryOrphanExclusionPipeline(plan, req.join, req.direction)
 		} else {
@@ -321,8 +312,8 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 		if err != nil {
 			return err
 		}
-		if orderDir.HasValue() && p.exhaustive {
-			if !p.inNestedJoin {
+		if orderDir.HasValue() && p.joinExpand.exhaustive {
+			if !p.joinExpand.inNestedJoin {
 				orphan := newOrphanNode(join)
 				if join.parentSide.isPrimary() {
 					// Primary parent: orphans self-identify via FK IS NULL.
@@ -338,7 +329,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 					plan.joinPlan = newOrphanNodeWithSource(join, node, orderDir.Value())
 				}
 			} else if parentPlan != nil {
-				p.pendingOrphanWiring = &orphanWiringRequest{
+				p.joinExpand.pendingOrphanWiring = &orphanWiringRequest{
 					join:         join,
 					direction:    orderDir.Value(),
 					useExclusion: !join.parentSide.isPrimary(),
@@ -620,10 +611,10 @@ func (p *Planner) expandTypeJoin(
 	// Mark that we're now in a nested join context.
 	// Any joins inside the child plan should not add orphanNode because they
 	// will be iterated via retrievePrimaryDocs which handles orphans correctly.
-	oldInNestedJoin := p.inNestedJoin
-	p.inNestedJoin = true
+	oldInNestedJoin := p.joinExpand.inNestedJoin
+	p.joinExpand.inNestedJoin = true
 	err = p.expandPlan(node.childSide.plan, parentPlan)
-	p.inNestedJoin = oldInNestedJoin
+	p.joinExpand.inNestedJoin = oldInNestedJoin
 
 	return orderDir, err
 }
@@ -913,7 +904,7 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 		return nil, ErrMissingQueryOrMutation
 	}
 
-	p.exhaustive = operation.Directives.Exhaustive
+	p.joinExpand.exhaustive = operation.Directives.Exhaustive
 
 	m, err := mapper.ToOperation(p.ctx, p.db, operation)
 	if err != nil {
