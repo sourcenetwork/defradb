@@ -96,20 +96,24 @@ const (
 	NodeDocumentDeletePerm
 	NodeIndexListPerm
 	NodeIndexCreatePerm
-	NodeIndexDropPerm
-	NodeEncryptedIndexCreatePerm
+	NodeIndexDeletePerm
+	NodeEncryptedIndexAddPerm
+	NodeEncryptedIndexDeletePerm
+	NodeEncryptedIndexListPerm
+	NodeEncryptedIndexListAllPerm
 	NodeP2PPeerInfo
 	NodeP2PPeerConnectPerm
 	NodeP2PPeerActivePerm
-	NodeP2PReplicatorCreatePerm
+	NodeP2PReplicatorAddPerm
 	NodeP2PReplicatorDeletePerm
 	NodeP2PReplicatorListPerm
-	NodeP2PCollectionCreatePerm
+	NodeP2PCollectionAddPerm
 	NodeP2PCollectionDeletePerm
 	NodeP2PCollectionListPerm
-	NodeP2PDocumentCreatePerm
+	NodeP2PDocumentAddPerm
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
+	NodeP2PSyncDocumentsPerm
 	NodeP2PSyncCollectionVersionsPerm
 	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
@@ -146,20 +150,24 @@ var RequiredResourcePermissionsForNode = []string{
 	"document-delete",
 	"index-list",
 	"index-create",
-	"index-drop",
-	"encrypted-index-create",
+	"index-delete",
+	"encrypted-index-add",
+	"encrypted-index-delete",
+	"encrypted-index-list",
+	"encrypted-index-list-all",
 	"p2p-peer-info",
 	"p2p-peer-connect",
 	"p2p-peer-active",
-	"p2p-replicator-create",
+	"p2p-replicator-add",
 	"p2p-replicator-delete",
 	"p2p-replicator-list",
-	"p2p-collection-create",
+	"p2p-collection-add",
 	"p2p-collection-delete",
 	"p2p-collection-list",
-	"p2p-document-create",
+	"p2p-document-add",
 	"p2p-document-delete",
 	"p2p-document-list",
+	"p2p-sync-documents",
 	"p2p-sync-collection-versions",
 	"p2p-sync-branchable-collection",
 	"signature-verify",
@@ -228,10 +236,16 @@ resources:
     expr: admin
   - name: index-create
     expr: admin
-  - name: index-drop
+  - name: index-delete
     expr: admin
 
-  - name: encrypted-index-create
+  - name: encrypted-index-add
+    expr: admin
+  - name: encrypted-index-delete
+    expr: admin
+  - name: encrypted-index-list
+    expr: admin
+  - name: encrypted-index-list-all
     expr: admin
 
   - name: p2p-peer-info
@@ -240,23 +254,25 @@ resources:
     expr: admin
   - name: p2p-peer-active
     expr: admin
-  - name: p2p-replicator-create
+  - name: p2p-replicator-add
     expr: admin
   - name: p2p-replicator-delete
     expr: admin
   - name: p2p-replicator-list
     expr: admin
-  - name: p2p-collection-create
+  - name: p2p-collection-add
     expr: admin
   - name: p2p-collection-delete
     expr: admin
   - name: p2p-collection-list
     expr: admin
-  - name: p2p-document-create
+  - name: p2p-document-add
     expr: admin
   - name: p2p-document-delete
     expr: admin
   - name: p2p-document-list
+    expr: admin
+  - name: p2p-sync-documents
     expr: admin
   - name: p2p-sync-collection-versions
     expr: admin

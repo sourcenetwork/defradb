@@ -35,12 +35,12 @@ type P2P interface {
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error
 
-	// CreateReplicator adds a replicator to the persisted list or adds
+	// AddReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	CreateReplicator(
+	AddReplicator(
 		ctx context.Context,
 		addresses []string,
-		opts ...options.Enumerable[options.CreateReplicatorOptions],
+		opts ...options.Enumerable[options.AddReplicatorOptions],
 	) error
 
 	// DeleteReplicator deletes a replicator from the persisted list
@@ -55,13 +55,13 @@ type P2P interface {
 	// subscribed schemas.
 	ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]Replicator, error)
 
-	// CreateP2PCollections creates the given collections to the P2P system and
+	// AddP2PCollections adds the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// collection names are invalid.
-	CreateP2PCollections(
+	AddP2PCollections(
 		ctx context.Context,
 		collectionNames []string,
-		opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+		opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 	) error
 
 	// DeleteP2PCollections deletes the given collections from the P2P system and
@@ -80,13 +80,13 @@ type P2P interface {
 		opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 	) ([]string, error)
 
-	// CreateP2PDocuments creates the given docIDs to the P2P system and
+	// AddP2PDocuments adds the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	CreateP2PDocuments(
+	AddP2PDocuments(
 		ctx context.Context,
 		docIDs []string,
-		opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+		opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 	) error
 
 	// DeleteP2PDocuments removes the given docIDs from the P2P system and
@@ -106,7 +106,12 @@ type P2P interface {
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe
 	// to the documents or their collection for future updates.
 	// context.WithTimeout can be used to set a timeout for the operation.
-	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
+	SyncDocuments(
+		ctx context.Context,
+		collectionName string,
+		docIDs []string,
+		opts ...options.Enumerable[options.SyncDocumentsOptions],
+	) error
 
 	// SyncCollectionVersions synchronizes the given collection versions to local node.
 	//

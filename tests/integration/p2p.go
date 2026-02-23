@@ -202,6 +202,12 @@ func syncDocs(s *state.State, action SyncDocs) {
 
 	collectionName := s.Nodes[action.NodeID].Collections[action.CollectionID].Name()
 
+	syncOpts := options.SyncDocuments()
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID)
+	if identOption.HasValue() {
+		syncOpts.SetIdentity(identOption.Value())
+	}
+
 	err := withRetryOnNode(
 		node,
 		func() error {
@@ -209,6 +215,7 @@ func syncDocs(s *state.State, action SyncDocs) {
 				s.Ctx,
 				collectionName,
 				docIDStrings,
+				syncOpts,
 			)
 		},
 	)

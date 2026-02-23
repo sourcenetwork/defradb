@@ -81,10 +81,10 @@ func (w *Wrapper) ActivePeers(
 	panic("not implemented")
 }
 
-func (w *Wrapper) CreateReplicator(
+func (w *Wrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	panic("not implemented")
 }
@@ -104,10 +104,10 @@ func (w *Wrapper) ListReplicators(
 	panic("not implemented")
 }
 
-func (w *Wrapper) CreateP2PCollections(
+func (w *Wrapper) AddP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -127,10 +127,10 @@ func (w *Wrapper) ListP2PCollections(
 	panic("not implemented")
 }
 
-func (w *Wrapper) CreateP2PDocuments(
+func (w *Wrapper) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -147,7 +147,7 @@ func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerab
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
 	panic("not implemented")
 }
 
@@ -480,13 +480,13 @@ func (w *Wrapper) GetCollections(
 	return out, nil
 }
 
-func (w *Wrapper) GetAllIndexes(
+func (w *Wrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, w.value, "getAllIndexes")
+	res, err := execute(ctx, w.value, "listIndexes")
 	if err != nil {
 		return nil, err
 	}
@@ -626,6 +626,9 @@ func (w *Wrapper) VerifySignature(
 
 func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return w.node.DB.ListAllEncryptedIndexes(ctx)
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	return w.node.DB.ListAllEncryptedIndexes(ctx, opts...)
 }

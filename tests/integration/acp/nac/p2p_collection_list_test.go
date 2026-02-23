@@ -56,7 +56,7 @@ func TestNAC_GatesP2PCollectionList_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -109,7 +109,7 @@ func TestNAC_GatesP2PCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -162,7 +162,7 @@ func TestNAC_GatesP2PCollectionList_WrongIdentity_NotAuthorizedError(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},

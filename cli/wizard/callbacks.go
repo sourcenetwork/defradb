@@ -120,8 +120,8 @@ func callback_GenerateIdentityKey(_ step, ctx *WizardContext) error {
 	return nil
 }
 
-// This callback will attempt to import an existing identity key
-func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
+// This callback will attempt to add an existing identity key
+func callback_AddIdentityKey(_ step, ctx *WizardContext) error {
 	// Open either the file or system keyring
 	openKeyring, err := getFileOrSystemKeyring(ctx)
 	if err != nil {
@@ -129,12 +129,12 @@ func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Retrieve the key value from the previous step
-	if len(ctx.Results[stepGettingIdentityKeyForImportID]) == 0 {
-		return NewErrNoResultValue(stepGettingIdentityKeyForImportID)
+	if len(ctx.Results[stepGettingIdentityKeyForAddID]) == 0 {
+		return NewErrNoResultValue(stepGettingIdentityKeyForAddID)
 	}
-	keyStr, ok := ctx.Results[stepGettingIdentityKeyForImportID][0].(string)
+	keyStr, ok := ctx.Results[stepGettingIdentityKeyForAddID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[stepGettingIdentityKeyForImportID][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingIdentityKeyForAddID][0], "string")
 	}
 
 	// Decode the pasted hex string into raw bytes
@@ -144,7 +144,7 @@ func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Determine the key type from a previous step
-	keyTypeStep := stepQueryImportingIdentityKeyTypeID
+	keyTypeStep := stepQueryAddingIdentityKeyTypeID
 	if len(ctx.Results[keyTypeStep]) == 0 {
 		return NewErrNoResultValue(keyTypeStep)
 	}
@@ -170,8 +170,8 @@ func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
 	return nil
 }
 
-// This callback will attempt to import an existing peer key
-func callback_ImportPeerKey(_ step, ctx *WizardContext) error {
+// This callback will attempt to add an existing peer key
+func callback_AddPeerKey(_ step, ctx *WizardContext) error {
 	// Open either the file or system keyring pending on the user's previous selection
 	openKeyring, err := getFileOrSystemKeyring(ctx)
 	if err != nil {
@@ -179,12 +179,12 @@ func callback_ImportPeerKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Try to retrieve the key value from a previous step
-	if len(ctx.Results[stepGettingPeerKeyForImportID]) == 0 {
-		return NewErrNoResultValue(stepGettingPeerKeyForImportID)
+	if len(ctx.Results[stepGettingPeerKeyForAddID]) == 0 {
+		return NewErrNoResultValue(stepGettingPeerKeyForAddID)
 	}
-	keyValue, ok := ctx.Results[stepGettingPeerKeyForImportID][0].(string)
+	keyValue, ok := ctx.Results[stepGettingPeerKeyForAddID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[stepGettingPeerKeyForImportID][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingPeerKeyForAddID][0], "string")
 	}
 
 	// Decode the hex string into raw bytes
@@ -198,18 +198,18 @@ func callback_ImportPeerKey(_ step, ctx *WizardContext) error {
 		return NewErrInvalidEd25519KeyLength(len(keyBytes))
 	}
 
-	// Import the key into the keyring
+	// Add the key into the keyring
 	err = openKeyring.Set("peer-key", keyBytes)
 	if err != nil {
 		return err
 	}
 
-	// If we made it this far, we successfully imported the key
+	// If we made it this far, we successfully added the key
 	return nil
 }
 
-// This callback will attempt to import an existing AES-256 encryption key
-func callback_ImportEncryptionKey(_ step, ctx *WizardContext) error {
+// This callback will attempt to add an existing AES-256 encryption key
+func callback_AddEncryptionKey(_ step, ctx *WizardContext) error {
 	// Open either the file or system keyring
 	openKeyring, err := getFileOrSystemKeyring(ctx)
 	if err != nil {
@@ -217,7 +217,7 @@ func callback_ImportEncryptionKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Retrieve the key value from the previous step
-	keyStep := "stepGettingEncryptionKeyForImport"
+	keyStep := "stepGettingEncryptionKeyForAdd"
 	if len(ctx.Results[keyStep]) == 0 {
 		return NewErrNoResultValue(keyStep)
 	}
@@ -244,8 +244,8 @@ func callback_ImportEncryptionKey(_ step, ctx *WizardContext) error {
 	return nil
 }
 
-// This callback will attempt to import an existing AES-256 searchable encryption key
-func callback_ImportSearchableEncryptionKey(_ step, ctx *WizardContext) error {
+// This callback will attempt to add an existing AES-256 searchable encryption key
+func callback_AddSearchableEncryptionKey(_ step, ctx *WizardContext) error {
 	// Open either the file or system keyring
 	openKeyring, err := getFileOrSystemKeyring(ctx)
 	if err != nil {
@@ -253,12 +253,12 @@ func callback_ImportSearchableEncryptionKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Retrieve the key value from the previous step
-	if len(ctx.Results[stepGettingSearchableEncryptionKeyForImportID]) == 0 {
-		return NewErrNoResultValue(stepGettingSearchableEncryptionKeyForImportID)
+	if len(ctx.Results[stepGettingSearchableEncryptionKeyForAddID]) == 0 {
+		return NewErrNoResultValue(stepGettingSearchableEncryptionKeyForAddID)
 	}
-	keyStr, ok := ctx.Results[stepGettingSearchableEncryptionKeyForImportID][0].(string)
+	keyStr, ok := ctx.Results[stepGettingSearchableEncryptionKeyForAddID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[stepGettingSearchableEncryptionKeyForImportID][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingSearchableEncryptionKeyForAddID][0], "string")
 	}
 
 	// Decode the hex string into raw bytes

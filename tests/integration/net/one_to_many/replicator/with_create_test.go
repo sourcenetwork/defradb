@@ -37,7 +37,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

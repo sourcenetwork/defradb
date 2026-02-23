@@ -406,12 +406,12 @@ func (c *Collection) CreateIndex(
 	return index, nil
 }
 
-func (c *Collection) DropIndex(
+func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
-	args := []string{"client", "index", "drop"}
+	args := []string{"client", "index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--name", indexName)
 
@@ -422,9 +422,9 @@ func (c *Collection) DropIndex(
 	return err
 }
 
-func (c *Collection) GetIndexes(
+func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -443,13 +443,13 @@ func (c *Collection) GetIndexes(
 	return indexes, nil
 }
 
-// CreateEncryptedIndex implements client.Collection.
-func (c *Collection) CreateEncryptedIndex(
+// AddEncryptedIndex implements client.Collection.
+func (c *Collection) AddEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (index client.EncryptedIndexDescription, err error) {
-	args := []string{"client", "encrypted-index", "create"}
+	args := []string{"client", "encrypted-index", "add"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", indexDesc.FieldName)
 
@@ -467,9 +467,13 @@ func (c *Collection) CreateEncryptedIndex(
 }
 
 // ListEncryptedIndexes implements client.Collection.
-func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
 	args = append(args, "--collection", c.Version().Name)
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -483,10 +487,17 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 }
 
 // DeleteEncryptedIndex implements client.Collection.
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	args := []string{"client", "encrypted-index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", fieldName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

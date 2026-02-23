@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -60,7 +61,10 @@ type docSyncItem struct {
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
-		options.GetCollections().SetCollectionName(collectionName),
+		options.WithIdentity(
+			options.GetCollections().SetCollectionName(collectionName),
+			iIdentity.FromContext(ctx),
+		),
 	)
 	if err != nil {
 		return err

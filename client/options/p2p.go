@@ -84,12 +84,12 @@ func (o *PeerInfoOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CreateReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
+// PeerInfoOptionsBuilder is a builder for PeerInfoOptions.
 type PeerInfoOptionsBuilder struct {
 	enumerableBuilder[PeerInfoOptions]
 }
 
-// CreateReplicator creates a new SetReplicatorOptionsBuilder instance.
+// AddReplicator creates a new AddReplicatorOptionsBuilder instance.
 func PeerInfo() *PeerInfoOptionsBuilder {
 	return &PeerInfoOptionsBuilder{}
 }
@@ -102,8 +102,8 @@ func (b *PeerInfoOptionsBuilder) SetIdentity(id identity.Identity) *PeerInfoOpti
 	return b
 }
 
-// CreateReplicatorOptions contains options for SetReplicator operation.
-type CreateReplicatorOptions struct {
+// AddReplicatorOptions contains options for AddReplicator operation.
+type AddReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 	// CollectionNames is the list of collection names to replicate.
@@ -111,31 +111,31 @@ type CreateReplicatorOptions struct {
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CreateReplicatorOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddReplicatorOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CreateReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
-type CreateReplicatorOptionsBuilder struct {
-	enumerableBuilder[CreateReplicatorOptions]
+// AddReplicatorOptionsBuilder is a builder for AddReplicatorOptions.
+type AddReplicatorOptionsBuilder struct {
+	enumerableBuilder[AddReplicatorOptions]
 }
 
-// CreateReplicator creates a new SetReplicatorOptionsBuilder instance.
-func CreateReplicator() *CreateReplicatorOptionsBuilder {
-	return &CreateReplicatorOptionsBuilder{}
+// AddReplicator creates a new AddReplicatorOptionsBuilder instance.
+func AddReplicator() *AddReplicatorOptionsBuilder {
+	return &AddReplicatorOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CreateReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *CreateReplicatorOptionsBuilder {
-	b.append(func(opts *CreateReplicatorOptions) {
+func (b *AddReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *AddReplicatorOptionsBuilder {
+	b.append(func(opts *AddReplicatorOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // SetCollectionNames sets the collection names to replicate.
-func (b *CreateReplicatorOptionsBuilder) SetCollectionNames(names []string) *CreateReplicatorOptionsBuilder {
-	b.append(func(opts *CreateReplicatorOptions) {
+func (b *AddReplicatorOptionsBuilder) SetCollectionNames(names []string) *AddReplicatorOptionsBuilder {
+	b.append(func(opts *AddReplicatorOptions) {
 		if names != nil {
 			opts.CollectionNames = make([]string, len(names))
 			copy(opts.CollectionNames, names)
@@ -215,30 +215,30 @@ func (b *ListReplicatorsOptionsBuilder) SetIdentity(id identity.Identity) *ListR
 	return b
 }
 
-// CreateP2PCollectionsOptions contains options for AddP2PCollections operation.
-type CreateP2PCollectionsOptions struct {
+// AddP2PCollectionsOptions contains options for AddP2PCollections operation.
+type AddP2PCollectionsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CreateP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CreateP2PCollectionsOptionsBuilder is a builder for CreateP2PCollectionsOptions.
-type CreateP2PCollectionsOptionsBuilder struct {
-	enumerableBuilder[CreateP2PCollectionsOptions]
+// AddP2PCollectionsOptionsBuilder is a builder for AddP2PCollectionsOptions.
+type AddP2PCollectionsOptionsBuilder struct {
+	enumerableBuilder[AddP2PCollectionsOptions]
 }
 
-// CreateP2PCollections creates a new AddP2PCollectionsOptionsBuilder instance.
-func CreateP2PCollections() *CreateP2PCollectionsOptionsBuilder {
-	return &CreateP2PCollectionsOptionsBuilder{}
+// AddP2PCollections creates a new AddP2PCollectionsOptionsBuilder instance.
+func AddP2PCollections() *AddP2PCollectionsOptionsBuilder {
+	return &AddP2PCollectionsOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CreateP2PCollectionsOptionsBuilder) SetIdentity(id identity.Identity) *CreateP2PCollectionsOptionsBuilder {
-	b.append(func(opts *CreateP2PCollectionsOptions) {
+func (b *AddP2PCollectionsOptionsBuilder) SetIdentity(id identity.Identity) *AddP2PCollectionsOptionsBuilder {
+	b.append(func(opts *AddP2PCollectionsOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -302,30 +302,30 @@ func (b *ListP2PCollectionsOptionsBuilder) SetIdentity(id identity.Identity) *Li
 	return b
 }
 
-// CreateP2PDocumentsOptions contains options for AddP2PDocuments operation.
-type CreateP2PDocumentsOptions struct {
+// AddP2PDocumentsOptions contains options for AddP2PDocuments operation.
+type AddP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CreateP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CreateP2PDocumentsOptionsBuilder is a builder for CreateP2PDocumentsOptions.
-type CreateP2PDocumentsOptionsBuilder struct {
-	enumerableBuilder[CreateP2PDocumentsOptions]
+// AddP2PDocumentsOptionsBuilder is a builder for AddP2PDocumentsOptions.
+type AddP2PDocumentsOptionsBuilder struct {
+	enumerableBuilder[AddP2PDocumentsOptions]
 }
 
-// CreateP2PDocuments creates a new AddP2PDocumentsOptionsBuilder instance.
-func CreateP2PDocuments() *CreateP2PDocumentsOptionsBuilder {
-	return &CreateP2PDocumentsOptionsBuilder{}
+// AddP2PDocuments creates a new AddP2PDocumentsOptionsBuilder instance.
+func AddP2PDocuments() *AddP2PDocumentsOptionsBuilder {
+	return &AddP2PDocumentsOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CreateP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *CreateP2PDocumentsOptionsBuilder {
-	b.append(func(opts *CreateP2PDocumentsOptions) {
+func (b *AddP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *AddP2PDocumentsOptionsBuilder {
+	b.append(func(opts *AddP2PDocumentsOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -444,6 +444,35 @@ func ListP2PDocuments() *ListP2PDocumentsOptionsBuilder {
 // SetIdentity sets the identity for the operation.
 func (b *ListP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *ListP2PDocumentsOptionsBuilder {
 	b.append(func(opts *ListP2PDocumentsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SyncDocumentsOptions contains options for SyncDocuments operation.
+type SyncDocumentsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SyncDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SyncDocumentsOptionsBuilder is a builder for SyncDocumentsOptions.
+type SyncDocumentsOptionsBuilder struct {
+	enumerableBuilder[SyncDocumentsOptions]
+}
+
+// SyncDocuments creates a new SyncDocumentsOptionsBuilder instance.
+func SyncDocuments() *SyncDocumentsOptionsBuilder {
+	return &SyncDocumentsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *SyncDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *SyncDocumentsOptionsBuilder {
+	b.append(func(opts *SyncDocumentsOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

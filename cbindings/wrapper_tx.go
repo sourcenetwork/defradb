@@ -189,11 +189,11 @@ func (txn *Transaction) GetCollections(
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }
 
-func (txn *Transaction) GetAllIndexes(
+func (txn *Transaction) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return txn.CWrapper.GetAllIndexes(ctx, opts...)
+	return txn.CWrapper.ListIndexes(ctx, opts...)
 }
 
 func (txn *Transaction) ExecRequest(

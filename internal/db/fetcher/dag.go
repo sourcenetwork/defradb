@@ -12,6 +12,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ipfs/go-cid"
 
@@ -24,69 +25,99 @@ import (
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	kvIter corekv.Iterator
+	kvIters   []corekv.Iterator
+	iterIndex int
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside
 // of the main iteration loop/funcs.
 //
-// prefix - Optional. The headstore prefix to scan across.  If None, the entire
-// headstore will be scanned - for example, in order to fetch document and collection
-// heads.
+// prefix - Optional. The headstore prefix to scan across.  If None, only collection
+// and document commit heads will be scanned.
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	prefix immutable.Option[keys.HeadstoreKey],
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	var prefixBytes []byte
-	if prefix.HasValue() {
-		prefixBytes = prefix.Value().Bytes()
-	}
-
-	if hf.kvIter != nil {
-		if err := hf.kvIter.Close(); err != nil {
-			return err
+	if len(hf.kvIters) > 0 {
+		var firstErr error
+		for _, iter := range hf.kvIters {
+			if err := iter.Close(); err != nil && firstErr == nil {
+				firstErr = err
+			}
+		}
+		if firstErr != nil {
+			return firstErr
 		}
 	}
 
-	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
-		Prefix: prefixBytes,
+	hf.kvIters = nil
+	hf.iterIndex = 0
+
+	if prefix.HasValue() {
+		iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+			Prefix: prefix.Value().Bytes(),
+		})
+		if err != nil {
+			return err
+		}
+		hf.kvIters = []corekv.Iterator{iter}
+		return nil
+	}
+
+	// When no specific prefix is provided, explicitly scan only the
+	// collection commits ("/c") and document commits ("/d") prefixes,
+	// excluding schema-definition keys ("/f", "/g", "/s").
+	// This avoids relying on lexicographic ordering of key prefixes.
+	colIter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(keys.HEADSTORE_COL),
 	})
 	if err != nil {
 		return err
 	}
 
-	hf.kvIter = iter
+	docIter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(keys.HEADSTORE_DOC),
+	})
+	if err != nil {
+		return errors.Join(err, colIter.Close())
+	}
+
+	hf.kvIters = []corekv.Iterator{colIter, docIter}
 	return nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
-	hasValue, err := hf.kvIter.Next()
-	if err != nil || !hasValue {
-		return nil, err
+	for hf.iterIndex < len(hf.kvIters) {
+		hasValue, err := hf.kvIters[hf.iterIndex].Next()
+		if err != nil {
+			return nil, err
+		}
+		if !hasValue {
+			hf.iterIndex++
+			continue
+		}
+
+		headStoreKey, err := keys.NewHeadstoreKey(string(hf.kvIters[hf.iterIndex].Key()))
+		if err != nil {
+			return nil, err
+		}
+
+		cid := headStoreKey.GetCid()
+		return &cid, nil
 	}
 
-	headStoreKey, err := keys.NewHeadstoreKey(string(hf.kvIter.Key()))
-	if err != nil {
-		return nil, err
-	}
-
-	// This needs to be handled more efficiently - these keys should not be scanned in the first place
-	// https://github.com/sourcenetwork/defradb/issues/3846
-	switch headStoreKey.(type) {
-	case keys.HeadstoreFieldDefinition, keys.HeadstoreCollectionDefinition, keys.HeadstoreCollectionSetDefinition:
-		return hf.FetchNext()
-	}
-
-	cid := headStoreKey.GetCid()
-	return &cid, nil
+	return nil, nil
 }
 
 func (hf *HeadFetcher) Close() error {
-	if hf.kvIter == nil {
-		return nil
+	var firstErr error
+	for _, iter := range hf.kvIters {
+		if err := iter.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
 	}
 
-	return hf.kvIter.Close()
+	return firstErr
 }

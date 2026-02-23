@@ -58,16 +58,16 @@ func (db *DB) Connect(
 	return db.p2p.Connect(ctx, addresses)
 }
 
-// CreateReplicator adds a replicator to the persisted list or adds
+// AddReplicator adds a replicator to the persisted list or adds
 // schemas if the replicator already exists.
-func (db *DB) CreateReplicator(
+func (db *DB) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorAddPerm); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func (db *DB) CreateReplicator(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.CreateReplicator(ctx, addresses, opt.CollectionNames...)
+	err = db.p2p.AddReplicator(ctx, addresses, opt.CollectionNames...)
 	if err != nil {
 		return err
 	}
@@ -161,17 +161,17 @@ func (db *DB) ActivePeers(
 	return db.p2p.ActivePeers(ctx)
 }
 
-// CreateP2PCollections creates the given collections to the P2P system and
+// AddP2PCollections adds the given collections to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // collection names are invalid.
-func (db *DB) CreateP2PCollections(
+func (db *DB) AddP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionAddPerm); err != nil {
 		return err
 	}
 
@@ -184,7 +184,7 @@ func (db *DB) CreateP2PCollections(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.CreateP2PCollections(identity.WithContext(ctx, opt.Identity), collectionNames...)
+	err = db.p2p.AddP2PCollections(identity.WithContext(ctx, opt.Identity), collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -247,17 +247,17 @@ func (db *DB) ListP2PCollections(
 	return db.p2p.ListP2PCollections(identity.WithContext(ctx, opt.Identity))
 }
 
-// CreateP2PDocuments adds the given docIDs to the P2P system and
+// AddP2PDocuments adds the given docIDs to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // docIDs are invalid.
-func (db *DB) CreateP2PDocuments(
+func (db *DB) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentAddPerm); err != nil {
 		return err
 	}
 
@@ -270,7 +270,7 @@ func (db *DB) CreateP2PDocuments(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.CreateP2PDocuments(ctx, docIDs...)
+	err = db.p2p.AddP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
@@ -339,7 +339,20 @@ func (db *DB) ListP2PDocuments(
 // context.WithTimeout can be used to set a timeout for the operation.
 //
 // WARNING: This function does not respect transactions.
-func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (db *DB) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PSyncDocumentsPerm); err != nil {
+		return err
+	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	if db.p2p == nil {
 		return ErrNoP2P
 	}

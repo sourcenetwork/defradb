@@ -406,9 +406,9 @@ func (c *Client) GetCollections(
 	return collections, nil
 }
 
-func (c *Client) GetAllIndexes(
+func (c *Client) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -428,7 +428,10 @@ func (c *Client) GetAllIndexes(
 
 func (c *Client) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("encrypted-indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

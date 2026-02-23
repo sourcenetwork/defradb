@@ -34,9 +34,9 @@ extern Result IdentityNew(char* keyType);
 extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
 extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
 extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);
@@ -45,13 +45,13 @@ extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PreplicatorList(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PreplicatorCreate(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PreplicatorAdd(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PreplicatorDelete(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
-extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result P2PdocumentCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
@@ -152,10 +152,10 @@ func (w *CWrapper) ActivePeers(
 	return peers, nil
 }
 
-func (w *CWrapper) CreateReplicator(
+func (w *CWrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	addrStr := C.CString(strings.Join(addresses, ","))
@@ -165,7 +165,7 @@ func (w *CWrapper) CreateReplicator(
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PreplicatorCreate(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorAdd(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -213,16 +213,16 @@ func (w *CWrapper) ListReplicators(
 	return replicators, nil
 }
 
-func (w *CWrapper) CreateP2PCollections(
+func (w *CWrapper) AddP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PcollectionCreate(C.uintptr_t(w.handle), colStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -267,17 +267,17 @@ func (w *CWrapper) ListP2PCollections(
 	return collections, nil
 }
 
-func (w *CWrapper) CreateP2PDocuments(
+func (w *CWrapper) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentCreate(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -326,7 +326,12 @@ func (w *CWrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	docs := C.CString(strings.Join(docIDs, ","))
 	defer C.free(unsafe.Pointer(docs))
 
@@ -341,7 +346,7 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cCollectionName))
 
 	res := ConvertAndFreeCResult(C.P2PdocumentSync(
-		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, C.uintptr_t(0)))
+		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -897,9 +902,9 @@ func (w *CWrapper) GetCollections(
 	return cols, nil
 }
 
-func (w *CWrapper) GetAllIndexes(
+func (w *CWrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -933,12 +938,15 @@ func (w *CWrapper) GetAllIndexes(
 
 func (w *CWrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	colName := C.CString("")
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(colName))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName))
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

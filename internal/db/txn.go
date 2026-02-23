@@ -288,19 +288,20 @@ func (txn *Txn) GetCollections(
 	return txn.db.GetCollections(ctx, opts...)
 }
 
-func (txn *Txn) GetAllIndexes(
+func (txn *Txn) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllIndexes(ctx, opts...)
+	return txn.db.ListIndexes(ctx, opts...)
 }
 
 func (txn *Txn) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ListAllEncryptedIndexes(ctx)
+	return txn.db.ListAllEncryptedIndexes(ctx, opts...)
 }
 
 func (txn *Txn) ExecRequest(
@@ -342,13 +343,13 @@ func (txn *Txn) Connect(
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
-func (txn *Txn) CreateReplicator(
+func (txn *Txn) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateReplicator(ctx, addresses, opts...)
+	return txn.db.AddReplicator(ctx, addresses, opts...)
 }
 
 func (txn *Txn) DeleteReplicator(
@@ -368,13 +369,13 @@ func (txn *Txn) ListReplicators(
 	return txn.db.ListReplicators(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PCollections(
+func (txn *Txn) AddP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PCollections(ctx, collectionNames, opts...)
+	return txn.db.AddP2PCollections(ctx, collectionNames, opts...)
 }
 
 func (txn *Txn) DeleteP2PCollections(
@@ -394,13 +395,13 @@ func (txn *Txn) ListP2PCollections(
 	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PDocuments(
+func (txn *Txn) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PDocuments(ctx, docIDs, opts...)
+	return txn.db.AddP2PDocuments(ctx, docIDs, opts...)
 }
 
 func (txn *Txn) DeleteP2PDocuments(
@@ -420,9 +421,14 @@ func (txn *Txn) ListP2PDocuments(
 	return txn.db.ListP2PDocuments(ctx, opts...)
 }
 
-func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (txn *Txn) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
+	return txn.db.SyncDocuments(ctx, collectionName, docIDs, opts...)
 }
 
 func (txn *Txn) SyncCollectionVersions(

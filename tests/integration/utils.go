@@ -345,14 +345,14 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
-	case CreateReplicator:
-		createReplicator(s, action)
+	case AddReplicator:
+		addReplicator(s, action)
 
 	case DeleteReplicator:
 		deleteReplicator(s, action)
 
-	case CreateCollectionSubscription:
-		createCollectionSubscription(s, action)
+	case AddCollectionSubscription:
+		addCollectionSubscription(s, action)
 
 	case DeleteCollectionSubscription:
 		deleteCollectionSubscription(s, action)
@@ -360,8 +360,8 @@ func performAction(
 	case ListP2PCollections:
 		listP2PCollections(s, action)
 
-	case CreateDocumentSubscription:
-		createDocumentSubscription(s, action)
+	case AddDocumentSubscription:
+		addDocumentSubscription(s, action)
 
 	case DeleteDocumentSubscription:
 		deleteDocumentSubscription(s, action)
@@ -408,8 +408,8 @@ func performAction(
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
-	case CreateEncryptedIndex:
-		createEncryptedIndex(s, action)
+	case AddEncryptedIndex:
+		addEncryptedIndex(s, action)
 
 	case ListEncryptedIndexes:
 		listEncryptedIndexes(s, action)
@@ -1361,9 +1361,9 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	}
 }
 
-func createEncryptedIndex(
+func addEncryptedIndex(
 	s *state.State,
-	action CreateEncryptedIndex,
+	action AddEncryptedIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
@@ -1378,7 +1378,7 @@ func createEncryptedIndex(
 			Type:      client.EncryptedIndexType(action.Type),
 		}
 
-		opts := options.CreateEncryptedIndex()
+		opts := options.AddEncryptedIndex()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1387,7 +1387,7 @@ func createEncryptedIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.CreateEncryptedIndex(s.Ctx, indexDesc, opts)
+				_, err := collection.AddEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)
@@ -1412,10 +1412,17 @@ func listEncryptedIndexes(
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
+
+		opts := options.CollectionListEncryptedIndexes()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx)
+				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}
@@ -1445,10 +1452,16 @@ func listAllEncryptedIndexes(
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
+		opts := options.ListAllEncryptedIndexes()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx)
+				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}
@@ -1487,10 +1500,16 @@ func deleteEncryptedIndex(
 			s.T.Fatalf("fieldName is required for deleting encrypted index")
 		}
 
+		opts := options.DeleteEncryptedIndex()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName)
+				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName, opts)
 			},
 		)
 		if AssertError(s.T, err, action.ExpectedError) {

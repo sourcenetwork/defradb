@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -171,6 +172,7 @@ func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) 
 // WARNING - DeleteShortFieldIDs is dependent on the collection short id still existing
 func DeleteShortFieldIDs(
 	ctx context.Context,
+	lockSet *lock.LockSet,
 	collection client.CollectionVersion,
 	allVersions []client.CollectionVersion,
 ) error {
@@ -190,6 +192,8 @@ func DeleteShortFieldIDs(
 		}
 	}
 
+	fieldIDsToDelete := make([]string, 0)
+
 	for _, field := range collection.Fields {
 		if field.FieldID == "" {
 			// Short field IDs only exist for fields with full ids
@@ -202,7 +206,18 @@ func DeleteShortFieldIDs(
 			continue
 		}
 
-		err := DeleteShortFieldID(ctx, collectionShortID, field.FieldID)
+		fieldIDsToDelete = append(fieldIDsToDelete, field.FieldID)
+	}
+
+	if len(fieldIDsToDelete) > 0 {
+		txn := datastore.CtxMustGetTxn(ctx)
+		// It is impossible to recreate the field short ID once it is deleted, so we must lock the collection
+		// whilst we finalize this operation, otherwise other threads/operations may try and make use of it.
+		lockSet.CollectionLock(txn, collectionShortID)
+	}
+
+	for _, fieldID := range fieldIDsToDelete {
+		err := DeleteShortFieldID(ctx, collectionShortID, fieldID)
 		if err != nil {
 			return err
 		}

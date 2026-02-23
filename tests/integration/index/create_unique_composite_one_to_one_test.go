@@ -33,7 +33,7 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoCreated(t *testing.T) {
 						user: User
 					}`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -67,7 +67,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 						user: User
 					}`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -123,7 +123,7 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 						user: User
 					}`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -182,7 +182,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillCreate
 						user: User
 					}`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -314,11 +314,11 @@ func TestOneToOneUniqueIndex_OneToMany_ShouldNotCreateIndex(t *testing.T) {
 						author: Author
 					}`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},

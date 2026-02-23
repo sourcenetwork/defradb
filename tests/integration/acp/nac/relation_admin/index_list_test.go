@@ -50,7 +50,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
@@ -65,7 +65,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
@@ -106,7 +106,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
@@ -121,7 +121,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},

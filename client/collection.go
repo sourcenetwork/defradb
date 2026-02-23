@@ -120,27 +120,38 @@ type Collection interface {
 		...options.Enumerable[options.CollectionCreateIndexOptions],
 	) (IndexDescription, error)
 
-	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error
-
-	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(
+	// DeleteIndex deletes an index from the collection.
+	DeleteIndex(
 		ctx context.Context,
-		opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+		indexName string,
+		opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	) error
+
+	// ListIndexes returns all the indexes that exist on the collection.
+	ListIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionListIndexesOptions],
 	) ([]IndexDescription, error)
 
-	// CreateEncryptedIndex creates a new encrypted index on the collection.
-	CreateEncryptedIndex(
+	// AddEncryptedIndex adds a new encrypted index to the collection.
+	AddEncryptedIndex(
 		ctx context.Context,
 		desc EncryptedIndexDescription,
-		opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+		opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
-	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
+	DeleteEncryptedIndex(
+		ctx context.Context,
+		fieldName string,
+		opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+	) error
 
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-	ListEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
+	ListEncryptedIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	) ([]EncryptedIndexDescription, error)
 
 	// Truncate this collection, permanently deleting all document state on this node.
 	//

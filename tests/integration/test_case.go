@@ -329,12 +329,12 @@ type UpdateWithFilter struct {
 	SkipLocalUpdateEvent bool
 }
 
-// CreateEncryptedIndex will attempt to create the given encrypted index for the given collection
+// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
 // using the collection api.
-type CreateEncryptedIndex struct {
-	// NodeID may hold the ID (index) of a node to create the encrypted index on.
+type AddEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to add the encrypted index to.
 	//
-	// If a value is not provided the index will be created in all nodes.
+	// If a value is not provided the index will be added to all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -342,13 +342,13 @@ type CreateEncryptedIndex struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection for which this index should be created.
+	// The collection to which this index should be added.
 	CollectionID int
 
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The type of the index to create.
+	// The type of the index to add.
 	Type string
 
 	// Any error expected from the action. Optional.
@@ -365,6 +365,11 @@ type ListEncryptedIndexes struct {
 	//
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection for which this encrypted indexes should be retrieved.
 	CollectionID int
@@ -386,6 +391,11 @@ type ListAllEncryptedIndexes struct {
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
 
+	// Identity is the identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The expected encrypted indexes by collection names to be returned.
 	ExpectedIndexes map[client.CollectionName][]client.EncryptedIndexDescription
 
@@ -403,6 +413,11 @@ type DeleteEncryptedIndex struct {
 	//
 	// If a value is not provided the index will be dropped on all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection for which this index should be dropped.
 	CollectionID int
@@ -632,6 +647,11 @@ type VerifyBlockSignature struct {
 type SyncDocs struct {
 	// NodeID holds the ID (index) of a node to execute the sync on.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection containing the documents to sync.
 	CollectionID int

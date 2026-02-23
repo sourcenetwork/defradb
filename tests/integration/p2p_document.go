@@ -27,11 +27,11 @@ const (
 	NonExistentDocIDString string = "NonExistentDocID"
 )
 
-// CreateDocumentSubscription sets up a subscription on the given node to the given document.
+// AddDocumentSubscription sets up a subscription on the given node to the given document.
 //
 // Changes made to subscribed documents in peers connected to this node will be synced from
 // them to this node.
-type CreateDocumentSubscription struct {
+type AddDocumentSubscription struct {
 	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
 	// Changes made to subscribed documents in peers connected to this node will be synced from
@@ -99,12 +99,12 @@ type ListP2PDocuments struct {
 	ExpectedError string
 }
 
-// createDocumentSubscription sets up a collection subscription on the given node/collection.
+// addDocumentSubscription sets up a collection subscription on the given node/collection.
 //
 // Any errors generated during this process will result in a test failure.
-func createDocumentSubscription(
+func addDocumentSubscription(
 	s *state.State,
-	action CreateDocumentSubscription,
+	action AddDocumentSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
@@ -122,17 +122,17 @@ func createDocumentSubscription(
 		docIDs = append(docIDs, docID.String())
 	}
 
-	opt := options.WithIdentity(options.CreateP2PDocuments(),
+	opt := options.WithIdentity(options.AddP2PDocuments(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	err := node.CreateP2PDocuments(s.Ctx, docIDs, opt)
+	err := node.AddP2PDocuments(s.Ctx, docIDs, opt)
 	if err == nil {
-		waitForCreateDocumentSubscriptionEvent(s, action)
+		waitForAddDocumentSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	// The `n.Peer.CreateP2PDocuments(colIDs)` call above is calling some asynchronous functions
+	// The `n.Peer.AddP2PDocuments(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)

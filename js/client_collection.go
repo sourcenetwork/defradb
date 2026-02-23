@@ -46,9 +46,9 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"get":                  goji.Async(c.get),
 		"getAllDocIDs":         goji.Async(c.getAllDocIDs),
 		"createIndex":          goji.Async(c.createIndex),
-		"dropIndex":            goji.Async(c.dropIndex),
-		"getIndexes":           goji.Async(c.getIndexes),
-		"createEncryptedIndex": goji.Async(c.createEncryptedIndex),
+		"deleteIndex":          goji.Async(c.deleteIndex),
+		"listIndexes":          goji.Async(c.listIndexes),
+		"addEncryptedIndex":    goji.Async(c.addEncryptedIndex),
 		"deleteEncryptedIndex": goji.Async(c.deleteEncryptedIndex),
 		"listEncryptedIndexes": goji.Async(c.listEncryptedIndexes),
 		"truncate":             goji.Async(c.truncate),
@@ -325,7 +325,7 @@ func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value
 	return goji.MarshalJS(desc)
 }
 
-func (c *clientCollection) dropIndex(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) deleteIndex(this js.Value, args []js.Value) (js.Value, error) {
 	name, err := stringArg(args, 0, "name")
 	if err != nil {
 		return js.Undefined(), err
@@ -334,27 +334,27 @@ func (c *clientCollection) dropIndex(this js.Value, args []js.Value) (js.Value, 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionDropIndex()
+	opt := options.CollectionDeleteIndex()
 	setOptIdentity(opt, args, 1)
-	err = c.col.DropIndex(ctx, name, opt)
+	err = c.col.DeleteIndex(ctx, name, opt)
 	return js.Undefined(), err
 }
 
-func (c *clientCollection) getIndexes(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionGetIndexes()
+	opt := options.CollectionListIndexes()
 	setOptIdentity(opt, args, 0)
-	desc, err := c.col.GetIndexes(ctx, opt)
+	desc, err := c.col.ListIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(desc)
 }
 
-func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
 	var request client.EncryptedIndexDescription
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
@@ -363,9 +363,9 @@ func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CreateEncryptedIndex()
+	opt := options.AddEncryptedIndex()
 	setOptIdentity(opt, args, 1)
-	desc, err := c.col.CreateEncryptedIndex(ctx, request, opt)
+	desc, err := c.col.AddEncryptedIndex(ctx, request, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -381,7 +381,9 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.DeleteEncryptedIndex(ctx, fieldName)
+	opt := options.DeleteEncryptedIndex()
+	setOptIdentity(opt, args, 1)
+	err = c.col.DeleteEncryptedIndex(ctx, fieldName, opt)
 	return js.Undefined(), err
 }
 
@@ -390,7 +392,9 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.ListEncryptedIndexes(ctx)
+	opt := options.CollectionListEncryptedIndexes()
+	setOptIdentity(opt, args, 0)
+	desc, err := c.col.ListEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

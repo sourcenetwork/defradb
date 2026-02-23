@@ -408,10 +408,10 @@ func (c *Collection) CreateIndex(
 	return index, nil
 }
 
-func (c *Collection) DropIndex(
+func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -426,9 +426,9 @@ func (c *Collection) DropIndex(
 	return err
 }
 
-func (c *Collection) GetIndexes(
+func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -446,10 +446,10 @@ func (c *Collection) GetIndexes(
 	return indexes, nil
 }
 
-func (c *Collection) CreateEncryptedIndex(
+func (c *Collection) AddEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -470,7 +470,11 @@ func (c *Collection) CreateEncryptedIndex(
 	return index, nil
 }
 
-func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -484,7 +488,14 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 	return indexes, nil
 }
 
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes", fieldName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)

@@ -265,59 +265,59 @@ func (b *CollectionCreateIndexOptionsBuilder) SetIdentity(id identity.Identity) 
 	return b
 }
 
-// CollectionDropIndexOptions contains options for DropIndex operation.
-type CollectionDropIndexOptions struct {
+// CollectionDeleteIndexOptions contains options for DeleteIndex operation.
+type CollectionDeleteIndexOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionDropIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CollectionDeleteIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionDropIndexOptionsBuilder is a builder for CollectionDropIndexOptions.
-type CollectionDropIndexOptionsBuilder struct {
-	enumerableBuilder[CollectionDropIndexOptions]
+// CollectionDeleteIndexOptionsBuilder is a builder for CollectionDeleteIndexOptions.
+type CollectionDeleteIndexOptionsBuilder struct {
+	enumerableBuilder[CollectionDeleteIndexOptions]
 }
 
-// CollectionDropIndex creates a new CollectionDropIndexOptionsBuilder instance.
-func CollectionDropIndex() *CollectionDropIndexOptionsBuilder {
-	return &CollectionDropIndexOptionsBuilder{}
+// CollectionDeleteIndex creates a new CollectionDeleteIndexOptionsBuilder instance.
+func CollectionDeleteIndex() *CollectionDeleteIndexOptionsBuilder {
+	return &CollectionDeleteIndexOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionDropIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDropIndexOptionsBuilder {
-	b.append(func(opts *CollectionDropIndexOptions) {
+func (b *CollectionDeleteIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDeleteIndexOptionsBuilder {
+	b.append(func(opts *CollectionDeleteIndexOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
-// CollectionGetIndexesOptions contains options for GetIndexes operation.
-type CollectionGetIndexesOptions struct {
+// CollectionListIndexesOptions contains options for ListIndexes operation.
+type CollectionListIndexesOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionGetIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CollectionListIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionGetIndexesOptionsBuilder is a builder for CollectionGetIndexesOptions.
-type CollectionGetIndexesOptionsBuilder struct {
-	enumerableBuilder[CollectionGetIndexesOptions]
+// CollectionListIndexesOptionsBuilder is a builder for CollectionListIndexesOptions.
+type CollectionListIndexesOptionsBuilder struct {
+	enumerableBuilder[CollectionListIndexesOptions]
 }
 
-// CollectionGetIndexes creates a new CollectionGetIndexesOptionsBuilder instance.
-func CollectionGetIndexes() *CollectionGetIndexesOptionsBuilder {
-	return &CollectionGetIndexesOptionsBuilder{}
+// CollectionListIndexes creates a new CollectionListIndexesOptionsBuilder instance.
+func CollectionListIndexes() *CollectionListIndexesOptionsBuilder {
+	return &CollectionListIndexesOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionGetIndexesOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetIndexesOptionsBuilder {
-	b.append(func(opts *CollectionGetIndexesOptions) {
+func (b *CollectionListIndexesOptionsBuilder) SetIdentity(id identity.Identity) *CollectionListIndexesOptionsBuilder {
+	b.append(func(opts *CollectionListIndexesOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -410,25 +410,85 @@ func (b *CollectionTruncateOptionsBuilder) SetIdentity(id identity.Identity) *Co
 	return b
 }
 
-// CreateEncryptedIndexOptions contains options for CreateEncryptedIndex operation.
-type CreateEncryptedIndexOptions struct {
+// AddEncryptedIndexOptions contains options for AddEncryptedIndex operation.
+type AddEncryptedIndexOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-func (o *CreateEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-type CreateEncryptedIndexOptionsBuilder struct {
-	enumerableBuilder[CreateEncryptedIndexOptions]
+type AddEncryptedIndexOptionsBuilder struct {
+	enumerableBuilder[AddEncryptedIndexOptions]
 }
 
-func CreateEncryptedIndex() *CreateEncryptedIndexOptionsBuilder {
-	return &CreateEncryptedIndexOptionsBuilder{}
+func AddEncryptedIndex() *AddEncryptedIndexOptionsBuilder {
+	return &AddEncryptedIndexOptionsBuilder{}
 }
 
-func (b *CreateEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *CreateEncryptedIndexOptionsBuilder {
-	b.append(func(opts *CreateEncryptedIndexOptions) {
+func (b *AddEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *AddEncryptedIndexOptionsBuilder {
+	b.append(func(opts *AddEncryptedIndexOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// CollectionListEncryptedIndexesOptions contains options for ListEncryptedIndexes operation.
+type CollectionListEncryptedIndexesOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionListEncryptedIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionListEncryptedIndexesOptionsBuilder is a builder for CollectionListEncryptedIndexesOptions.
+type CollectionListEncryptedIndexesOptionsBuilder struct {
+	enumerableBuilder[CollectionListEncryptedIndexesOptions]
+}
+
+// CollectionListEncryptedIndexes creates a new CollectionListEncryptedIndexesOptionsBuilder instance.
+func CollectionListEncryptedIndexes() *CollectionListEncryptedIndexesOptionsBuilder {
+	return &CollectionListEncryptedIndexesOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionListEncryptedIndexesOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionListEncryptedIndexesOptionsBuilder {
+	b.append(func(opts *CollectionListEncryptedIndexesOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// DeleteEncryptedIndexOptions contains options for DeleteEncryptedIndex operation.
+type DeleteEncryptedIndexOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *DeleteEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// DeleteEncryptedIndexOptionsBuilder is a builder for DeleteEncryptedIndexOptions.
+type DeleteEncryptedIndexOptionsBuilder struct {
+	enumerableBuilder[DeleteEncryptedIndexOptions]
+}
+
+// DeleteEncryptedIndex creates a new DeleteEncryptedIndexOptionsBuilder instance.
+func DeleteEncryptedIndex() *DeleteEncryptedIndexOptionsBuilder {
+	return &DeleteEncryptedIndexOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *DeleteEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *DeleteEncryptedIndexOptionsBuilder {
+	b.append(func(opts *DeleteEncryptedIndexOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

@@ -123,12 +123,12 @@ func (w *Wrapper) Connect(
 	return err
 }
 
-func (w *Wrapper) CreateReplicator(
+func (w *Wrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
-	args := []string{"client", "p2p", "replicator", "create"}
+	args := []string{"client", "p2p", "replicator", "add"}
 
 	opt := utils.NewOptions(opts...)
 	if len(opt.CollectionNames) > 0 {
@@ -181,12 +181,12 @@ func (w *Wrapper) ListReplicators(
 	return reps, nil
 }
 
-func (w *Wrapper) CreateP2PCollections(
+func (w *Wrapper) AddP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
-	args := []string{"client", "p2p", "collection", "create"}
+	args := []string{"client", "p2p", "collection", "add"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
 	opt := utils.NewOptions(opts...)
@@ -231,12 +231,12 @@ func (w *Wrapper) ListP2PCollections(
 	return cols, nil
 }
 
-func (w *Wrapper) CreateP2PDocuments(
+func (w *Wrapper) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
-	args := []string{"client", "p2p", "document", "create"}
+	args := []string{"client", "p2p", "document", "add"}
 	args = append(args, strings.Join(docIDs, ","))
 
 	opt := utils.NewOptions(opts...)
@@ -285,8 +285,12 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
 	args := []string{"client", "p2p", "document", "sync"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
@@ -609,9 +613,9 @@ func (w *Wrapper) GetCollections(
 	return cols, err
 }
 
-func (w *Wrapper) GetAllIndexes(
+func (w *Wrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 
@@ -628,8 +632,11 @@ func (w *Wrapper) GetAllIndexes(
 
 func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

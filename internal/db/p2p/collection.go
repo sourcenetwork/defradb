@@ -25,7 +25,7 @@ import (
 
 const marker = byte(0xff)
 
-func (p *P2P) CreateP2PCollections(
+func (p *P2P) AddP2PCollections(
 	ctx context.Context,
 	collectionNames ...string,
 ) error {
