@@ -78,6 +78,32 @@ func TestQuerySimpleWithCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_UnknownCid(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users (
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+						) {
+						name
+					}
+				}`,
+				ExpectedError: "seek failed: (version fetcher) failed to get block in blockstore: ipld: could not find",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
