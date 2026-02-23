@@ -238,6 +238,8 @@ func assertErrors(t testing.TB, errs []error, expectedError string) bool {
 			errorString := e.Error()
 			if errorString == expectedError || contains(errorString, expectedError) {
 				return true
+			} else {
+				require.ErrorContains(t, e, expectedError)
 			}
 		}
 	}

@@ -97,7 +97,7 @@ func assertRequestResults(
 	}
 
 	if expectedResults == nil && result.Data == nil {
-		return true
+		return false
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
