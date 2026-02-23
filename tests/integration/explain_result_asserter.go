@@ -213,7 +213,7 @@ func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap
 	// Find the join child (non-orphan) in the array.
 	indexJoin = unwrapSequenceNode(indexJoin)
 
-	// orphanWrapperNode wraps the join for secondary parent @exhaustive queries.
+	// orphanNode (wrapper mode) wraps the join for secondary parent @exhaustive queries.
 	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
 		indexJoin = orphan
 	}

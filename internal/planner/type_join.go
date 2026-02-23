@@ -168,7 +168,7 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 
 	var err error
 	joinPlan := n.joinPlan
-	// Unwrap sequenceNode or orphanWrapperNode to find the actual join node.
+	// Unwrap sequenceNode or orphanNode (wrapper mode) to find the actual join node.
 	if seq, ok := joinPlan.(*sequenceNode); ok {
 		for _, child := range seq.children {
 			if _, isOrphan := child.(*orphanNode); !isOrphan {
@@ -177,8 +177,8 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 			}
 		}
 	}
-	if wrapper, ok := joinPlan.(*orphanWrapperNode); ok {
-		joinPlan = wrapper.source
+	if orphan, ok := joinPlan.(*orphanNode); ok && orphan.source != nil {
+		joinPlan = orphan.source
 	}
 	switch joinType := joinPlan.(type) {
 	case *typeJoinOne:
@@ -668,15 +668,28 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	var err error
 
 	if r.exhaustive && r.isOrderingByRelation() {
-		direction, _ := r.getOrderingInfo()
 		if r.orderingRelFieldIsPrimary() {
-			docs, err = r.collectDocsWithOrphansByFK(*direction)
+			orphan := getNode[*orphanNode](r.primarySide.plan)
+			if orphan != nil {
+				_, relFieldIndex := r.getOrderingInfo()
+				relFieldName, _ := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
+				relIDFieldName := request.ToFieldID(relFieldName)
+				relIDFieldMapIndex := r.primaryScan.documentMapping.FirstIndexOfName(relIDFieldName)
+				parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+					r.targetSecondaryDoc.GetID())
+				orphan.setSubQueryContext(parentFilter, relIDFieldName, relIDFieldMapIndex)
+			}
 		} else {
-			docs, err = r.collectDocsWithOrphansByExclusion(*direction, r.getLimit())
+			orphan := getNode[*orphanNode](r.primarySide.plan)
+			if orphan != nil && orphan.source != nil {
+				parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+					r.targetSecondaryDoc.GetID())
+				orphan.setSubQueryFilter(parentFilter)
+			}
 		}
-	} else {
-		docs, err = r.collectDocs()
 	}
+
+	docs, err = r.collectDocs()
 
 	closeErr := r.primaryScan.fetcher.Close()
 	r.primaryScan.fetcher = oldFetcher
@@ -897,14 +910,16 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 
 func getNode[T planNode](plan planNode) T {
 	node := plan
+	usedFallback := false
 	for node != nil {
 		if node, ok := node.(T); ok {
 			return node
 		}
 		node = node.Source()
-		if node == nil {
+		if node == nil && !usedFallback {
 			if topSelect, ok := plan.(*selectTopNode); ok {
 				node = topSelect.selectNode
+				usedFallback = true
 			}
 		}
 	}

@@ -114,6 +114,10 @@ type Planner struct {
 	// When true, orphanNode should not be added because nested joins are iterated via
 	// retrievePrimaryDocs which handles orphans correctly with parent context.
 	inNestedJoin bool
+
+	// pendingOrphanWiring is set during expandTypeIndexJoinPlan to defer orphan node
+	// wiring until after the full plan chain (order, limit) is built.
+	pendingOrphanWiring *orphanWiringRequest
 }
 
 func New(
@@ -260,6 +264,17 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		p.expandLimitPlan(plan, parentPlan)
 	}
 
+	// Process deferred orphan wiring now that the full plan chain is built.
+	if p.pendingOrphanWiring != nil {
+		req := p.pendingOrphanWiring
+		p.pendingOrphanWiring = nil
+		if req.useExclusion {
+			wireSubQueryOrphanExclusionPipeline(plan, req.join, req.direction)
+		} else {
+			wireSubQueryOrphanPipeline(plan, req.join, req.direction)
+		}
+	}
+
 	return nil
 }
 
@@ -298,27 +313,36 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	// expandJoin expands the join and wraps it with orphanNode if @exhaustive is set
 	// and ordering by relation field is active.
-	// Note: orphanNode is NOT added for nested joins (inNestedJoin=true) because nested joins
-	// are iterated via retrievePrimaryDocs which handles orphans correctly with parent context.
+	// For top-level joins, orphanNode wraps the joinPlan directly.
+	// For nested joins with FK IS NULL path, orphanNode is wired into the primary side's
+	// selectTopNode so limitNode enforces limits naturally via the pipeline.
 	expandJoin := func(node planNode, join *invertibleTypeJoin) error {
 		orderDir, err := p.expandTypeJoin(join, parentPlan)
 		if err != nil {
 			return err
 		}
-		if orderDir.HasValue() && p.exhaustive && !p.inNestedJoin {
-			orphan := newOrphanNode(join)
-			if join.parentSide.isPrimary() {
-				// Primary parent: orphans self-identify via FK IS NULL.
-				// Use sequenceNode for clean pipeline composition.
-				if orderDir.Value() == mapper.ASC {
-					plan.joinPlan = newSequenceNode(orphan, node)
+		if orderDir.HasValue() && p.exhaustive {
+			if !p.inNestedJoin {
+				orphan := newOrphanNode(join)
+				if join.parentSide.isPrimary() {
+					// Primary parent: orphans self-identify via FK IS NULL.
+					// Use sequenceNode for clean pipeline composition.
+					if orderDir.Value() == mapper.ASC {
+						plan.joinPlan = newSequenceNode(orphan, node)
+					} else {
+						plan.joinPlan = newSequenceNode(node, orphan)
+					}
 				} else {
-					plan.joinPlan = newSequenceNode(node, orphan)
+					// Secondary parent: orphans identified by exclusion after join runs.
+					// Wrap join with orphanNode that handles ordering internally.
+					plan.joinPlan = newOrphanNodeWithSource(join, node, orderDir.Value())
 				}
-			} else {
-				// Secondary parent: orphans identified by exclusion after join runs.
-				// Wrap join with orphanNode that handles ordering internally.
-				plan.joinPlan = newOrphanWrapperNode(node, orphan, orderDir.Value())
+			} else if parentPlan != nil {
+				p.pendingOrphanWiring = &orphanWiringRequest{
+					join:         join,
+					direction:    orderDir.Value(),
+					useExclusion: !join.parentSide.isPrimary(),
+				}
 			}
 		}
 		return nil
@@ -331,6 +355,47 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 		return expandJoin(node, &node.invertibleTypeJoin)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
+}
+
+// wireSubQueryOrphanPipeline inserts a sequenceNode with an orphanNode into the
+// selectTopNode for nested join orphan handling via FK IS NULL.
+// Called after the full plan chain (order, limit) is built.
+func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, direction mapper.SortDirection) {
+	orphan := newOrphanNode(join)
+
+	var seq *sequenceNode
+	if direction == mapper.ASC {
+		if plan.limit != nil {
+			seq = newSequenceNode(orphan, plan.limit.plan)
+			plan.limit.plan = seq
+		} else {
+			seq = newSequenceNode(orphan, plan.planNode)
+			plan.planNode = seq
+		}
+	} else {
+		if plan.limit != nil {
+			seq = newSequenceNode(plan.limit.plan, orphan)
+			plan.limit.plan = seq
+		} else {
+			seq = newSequenceNode(plan.planNode, orphan)
+			plan.planNode = seq
+		}
+	}
+}
+
+// wireSubQueryOrphanExclusionPipeline inserts an orphanNode (in wrapper mode)
+// into the selectTopNode for nested join orphan handling via exclusion.
+// It buffers source docs, collects their IDs, and fetches orphans by exclusion
+// after the source is exhausted.
+// Called after the full plan chain (order, limit) is built.
+func wireSubQueryOrphanExclusionPipeline(plan *selectTopNode, join *invertibleTypeJoin, direction mapper.SortDirection) {
+	if plan.limit != nil {
+		orphan := newOrphanNodeWithSource(join, plan.limit.plan, direction)
+		plan.limit.plan = orphan
+	} else {
+		orphan := newOrphanNodeWithSource(join, plan.planNode, direction)
+		plan.planNode = orphan
+	}
 }
 
 func findFilteredByRelationFields(
@@ -364,7 +429,7 @@ func isOrderedByIndex(plan planNode) bool {
 	typeJoin := getNode[*typeIndexJoin](plan)
 	if typeJoin != nil {
 		joinPlan := typeJoin.joinPlan
-		// Unwrap sequenceNode or orphanWrapperNode to find the actual join node.
+		// Unwrap sequenceNode or orphanNode (wrapper mode) to find the actual join node.
 		if seq, ok := joinPlan.(*sequenceNode); ok {
 			for _, child := range seq.children {
 				if _, isOrphan := child.(*orphanNode); !isOrphan {
@@ -373,8 +438,8 @@ func isOrderedByIndex(plan planNode) bool {
 				}
 			}
 		}
-		if wrapper, ok := joinPlan.(*orphanWrapperNode); ok {
-			joinPlan = wrapper.source
+		if orphan, ok := joinPlan.(*orphanNode); ok && orphan.source != nil {
+			joinPlan = orphan.source
 		}
 		if j, ok := joinPlan.(*typeJoinOne); ok {
 			scan = getNode[*scanNode](j.getFirstSide().plan)
@@ -393,7 +458,7 @@ func isOrderedByIndex(plan planNode) bool {
 }
 
 // tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.
-// Returns the order direction if the join was optimized by ordering, otherwise returns None.
+// Returns the order direction if the join involves a relation ordering, otherwise returns None.
 func (p *Planner) tryOptimizeJoinDirection(
 	node *invertibleTypeJoin,
 	parentPlan *selectTopNode,
@@ -408,6 +473,15 @@ func (p *Planner) tryOptimizeJoinDirection(
 	}
 	if !optimized {
 		return p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
+	}
+
+	// Filter optimization already inverted the join. Check if there's also
+	// a relation ordering to get the direction for orphan node wiring.
+	if parentPlan.order != nil && len(parentPlan.order.ordering) > 0 {
+		name, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
+		if err == nil && name != "" {
+			return immutable.Some(parentPlan.order.ordering[0].Direction), nil
+		}
 	}
 
 	return immutable.None[mapper.SortDirection](), nil
