@@ -434,8 +434,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	indexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/index",
 	}
-	indexCreateRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/index_create",
+	indexAddRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index_add",
 	}
 	encryptedIndexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/encrypted_index",
@@ -512,23 +512,23 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDeleteWith.AddResponse(200, collectionDeleteWithResponse)
 	collectionDeleteWith.Responses.Set("400", errorResponse)
 
-	createIndexRequest := openapi3.NewRequestBody().
+	addIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(indexCreateRequestSchema))
-	createIndexResponse := openapi3.NewResponse().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(indexAddRequestSchema))
+	addIndexResponse := openapi3.NewResponse().
 		WithDescription("Index description").
 		WithJSONSchemaRef(indexSchema)
 
-	createIndex := openapi3.NewOperation()
-	createIndex.OperationID = "index_create"
-	createIndex.Description = "Create a secondary index"
-	createIndex.Tags = []string{"index"}
-	createIndex.AddParameter(collectionNamePathParam)
-	createIndex.RequestBody = &openapi3.RequestBodyRef{
-		Value: createIndexRequest,
+	addIndex := openapi3.NewOperation()
+	addIndex.OperationID = "index_add"
+	addIndex.Description = "Add a secondary index"
+	addIndex.Tags = []string{"index"}
+	addIndex.AddParameter(collectionNamePathParam)
+	addIndex.RequestBody = &openapi3.RequestBodyRef{
+		Value: addIndexRequest,
 	}
-	createIndex.AddResponse(200, createIndexResponse)
-	createIndex.Responses.Set("400", errorResponse)
+	addIndex.AddResponse(200, addIndexResponse)
+	addIndex.Responses.Set("400", errorResponse)
 
 	indexArraySchema := openapi3.NewArraySchema()
 	indexArraySchema.Items = indexSchema
@@ -667,7 +667,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
-	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.AddIndex)
+	router.AddRoute("/collections/{name}/indexes", http.MethodPost, addIndex, h.AddIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, deleteIndex, h.DeleteIndex)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)

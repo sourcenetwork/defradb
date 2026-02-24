@@ -498,7 +498,7 @@
                 },
                 "type": "object"
             },
-            "index_create": {
+            "index_add": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -1623,7 +1623,7 @@
             },
             "post": {
                 "description": "Create a secondary index",
-                "operationId": "index_create",
+                "operationId": "index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1639,7 +1639,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create"
+                                "$ref": "#/components/schemas/index_add"
                             }
                         }
                     },
