@@ -63,12 +63,12 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocAddArgs(c, opts...)
 
 	document, err := doc.String()
 	if err != nil {
@@ -89,7 +89,7 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocAddArgs(c, opts...)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -111,7 +111,7 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func makeDocCreateArgs(
+func makeDocAddArgs(
 	c *Collection,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) []string {
@@ -183,7 +183,7 @@ func (c *Collection) Save(
 		if opt.GetIdentity().HasValue() {
 			createOpt.SetIdentity(opt.GetIdentity().Value())
 		}
-		return c.Create(ctx, doc, createOpt)
+		return c.Add(ctx, doc, createOpt)
 	}
 	return err
 }

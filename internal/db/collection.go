@@ -333,9 +333,9 @@ func (c *collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-// Create a new document.
+// Add a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Create(
+func (c *collection) Add(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -365,7 +365,7 @@ func (c *collection) Create(
 	return txn.Commit()
 }
 
-// CreateMany creates a collection of documents at once.
+// CreateMany adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
 func (c *collection) CreateMany(
 	ctx context.Context,

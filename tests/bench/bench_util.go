@@ -170,7 +170,7 @@ func BackfillBenchmarkDB(
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Create(ctx, doc); err != nil &&
+							if err := cols[j].Add(ctx, doc); err != nil &&
 								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,

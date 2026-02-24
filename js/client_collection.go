@@ -77,7 +77,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 		return js.Undefined(), err
 	}
 
-	opts, err := getCreateOptionsFromArg(args, 1, 2)
+	opts, err := getAddOptionsFromArg(args, 1, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -90,7 +90,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Create(ctx, doc, opts...)
+	err = c.col.Add(ctx, doc, opts...)
 	return js.Undefined(), err
 }
 
@@ -100,7 +100,7 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 		return js.Undefined(), err
 	}
 
-	opts, err := getCreateOptionsFromArg(args, 1, 2)
+	opts, err := getAddOptionsFromArg(args, 1, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -127,7 +127,7 @@ type createOptionsInput struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.CollectionAddOptions], error) {
+func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.CollectionAddOptions], error) {
 	var input createOptionsInput
 	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err

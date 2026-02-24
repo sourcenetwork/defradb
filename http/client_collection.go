@@ -51,7 +51,7 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -188,7 +188,7 @@ func (c *Collection) Save(
 			createOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 
-		return c.Create(ctx, doc, createOpts)
+		return c.Add(ctx, doc, createOpts)
 	}
 	return err
 }

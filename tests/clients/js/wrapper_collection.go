@@ -69,7 +69,7 @@ func (c *Collection) CollectionID() string {
 	return res[0].String()
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -80,7 +80,7 @@ func (c *Collection) Create(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "create", docVal, makeDocCreateOptions(opts))
+	_, err = execute(ctx, c.client, "add", docVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ type createOptionsJS struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func makeDocCreateOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
+func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
 	jsOpts := createOptionsJS{}
 	createOpts := utils.NewOptions(opts...)
 	jsOpts.EncryptDoc = createOpts.EncryptDoc
@@ -118,7 +118,7 @@ func (c *Collection) CreateMany(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocCreateOptions(opts))
+	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (c *Collection) Save(
 		createOpts := options.CollectionAdd().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
-		return c.Create(ctx, doc, createOpts)
+		return c.Add(ctx, doc, createOpts)
 	}
 	return err
 }

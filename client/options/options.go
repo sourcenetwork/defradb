@@ -20,7 +20,7 @@
 //	    options.AddDACPolicy().SetIdentity(myIdentity))
 //
 //	// Collection operation with identity and encryption
-//	err := collection.Create(ctx, doc,
+//	err := collection.Add(ctx, doc,
 //	    options.CollectionAdd().
 //	        SetIdentity(myIdentity).
 //	        SetEncryptDoc(true))

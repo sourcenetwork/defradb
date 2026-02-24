@@ -96,7 +96,7 @@ func (a *CreateDoc) Execute() {
 	case state.CollectionSaveMutationType:
 		mutation = createDocViaColSave
 	case state.CollectionNamedMutationType:
-		mutation = createDocViaColCreate
+		mutation = addDocViaColAdd
 	case state.GQLRequestMutationType:
 		mutation = createDocViaGQL
 	default:
@@ -174,7 +174,7 @@ func createDocViaColSave(
 	return docIDs, nil
 }
 
-func createDocViaColCreate(
+func addDocViaColAdd(
 	a *CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -194,13 +194,13 @@ func createDocViaColCreate(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(a.s, a, nodeIndex)...)
+		err := collection.CreateMany(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Create(ctx, docs[0], makeDocCreateOptions(a.s, a, nodeIndex)...)
+		err := collection.Add(ctx, docs[0], makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -339,7 +339,7 @@ func makeDocSaveOptions(
 	return []options.Enumerable[options.CollectionSaveOptions]{opts}
 }
 
-func makeDocCreateOptions(
+func makeDocAddOptions(
 	s *state.State,
 	action *CreateDoc,
 	nodeIndex int,

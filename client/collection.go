@@ -35,10 +35,10 @@ type Collection interface {
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion
 
-	// Create a new document.
+	// Add a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
+	Add(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
 
 	// CreateMany new documents.
 	//

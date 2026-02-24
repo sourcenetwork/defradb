@@ -94,7 +94,7 @@ Options:
 			if err != nil {
 				return err
 			}
-			return col.Create(cmd.Context(), doc, createOpt)
+			return col.Add(cmd.Context(), doc, createOpt)
 		},
 	}
 

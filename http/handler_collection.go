@@ -41,7 +41,7 @@ type CollectionUpdateRequest struct {
 	Updater string `json:"updater"`
 }
 
-func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -86,7 +86,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc, createOpt); err != nil {
+		if err := col.Add(ctx, doc, createOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -452,27 +452,27 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	documentArraySchema := openapi3.NewArraySchema()
 	documentArraySchema.Items = documentSchema
 
-	collectionCreateSchema := openapi3.NewOneOfSchema()
-	collectionCreateSchema.OneOf = openapi3.SchemaRefs{
+	collectionAddSchema := openapi3.NewOneOfSchema()
+	collectionAddSchema.OneOf = openapi3.SchemaRefs{
 		documentSchema,
 		openapi3.NewSchemaRef("", documentArraySchema),
 	}
 
-	collectionCreateRequest := openapi3.NewRequestBody().
+	collectionAddRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(collectionCreateSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(collectionAddSchema))
 
-	collectionCreate := openapi3.NewOperation()
-	collectionCreate.OperationID = "collection_create"
-	collectionCreate.Description = "Create document(s) in a collection"
-	collectionCreate.Tags = []string{"collection"}
-	collectionCreate.AddParameter(collectionNamePathParam)
-	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
-		Value: collectionCreateRequest,
+	collectionAdd := openapi3.NewOperation()
+	collectionAdd.OperationID = "collection_add"
+	collectionAdd.Description = "Add document(s) to a collection"
+	collectionAdd.Tags = []string{"collection"}
+	collectionAdd.AddParameter(collectionNamePathParam)
+	collectionAdd.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionAddRequest,
 	}
-	collectionCreate.Responses = openapi3.NewResponses()
-	collectionCreate.Responses.Set("200", successResponse)
-	collectionCreate.Responses.Set("400", errorResponse)
+	collectionAdd.Responses = openapi3.NewResponses()
+	collectionAdd.Responses.Set("200", successResponse)
+	collectionAdd.Responses.Set("400", errorResponse)
 
 	collectionUpdateWithRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -664,7 +664,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	truncate.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
-	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
+	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)

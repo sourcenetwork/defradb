@@ -82,8 +82,8 @@ func getCollection(
 	return cols[0], nil
 }
 
-//export CollectionCreate
-func CollectionCreate(
+//export CollectionAdd
+func CollectionAdd(
 	nodePtr C.uintptr_t,
 	json *C.char,
 	isEncrypted C.int,
@@ -144,7 +144,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Create(ctx, doc, createOpt)
+		err = col.Add(ctx, doc, createOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

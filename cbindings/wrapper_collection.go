@@ -14,7 +14,7 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted,
+extern Result CollectionAdd(uintptr_t nodePtr, char* json, int isEncrypted,
 char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 CollectionOptions options, uintptr_t identityPtr);
@@ -72,7 +72,7 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -110,7 +110,7 @@ func (c *Collection) Create(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionAdd(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -173,7 +173,7 @@ func (c *Collection) CreateMany(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionAdd(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -256,7 +256,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		return c.Create(ctx, doc, opts...)
+		return c.Add(ctx, doc, opts...)
 	}
 	return err
 }

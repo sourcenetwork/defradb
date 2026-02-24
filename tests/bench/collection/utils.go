@@ -200,7 +200,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
 				doc, _ := client.NewDocFromJSON(ctx, []byte(docs[k]), collections[k].Version())
-				collections[k].Create(ctx, doc) //nolint:errcheck
+				collections[k].Add(ctx, doc) //nolint:errcheck
 			}
 		}
 	}
@@ -239,7 +239,7 @@ func runCollectionBenchCreateAsync(b *testing.B,
 					// create the documents
 					for j := 0; j < numTypes; j++ {
 						doc, _ := client.NewDocFromJSON(ctx, []byte(docs[j]), collections[j].Version())
-						collections[j].Create(ctx, doc) //nolint:errcheck
+						collections[j].Add(ctx, doc) //nolint:errcheck
 					}
 
 					wg.Done()

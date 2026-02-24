@@ -214,13 +214,13 @@ func setupDatabase(t *testing.T) DB {
 	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc)
+	err = col.Add(ctx, doc)
 	require.NoError(t, err)
 
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Create(ctx, doc2)
+	err = col.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	return cdb
