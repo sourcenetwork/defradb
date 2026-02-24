@@ -23,7 +23,7 @@ import (
 // two nodes.
 //
 // All document changes made in the source node will be synced to the target node.
-// New documents created in the target node will not be synced to the source node,
+// New documents added in the target node will not be synced to the source node,
 // however updates in the target node to documents synced from the source node will
 // be synced back to the source node.
 type AddReplicator struct {
