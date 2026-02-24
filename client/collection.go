@@ -38,12 +38,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
+	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
 
 	// Update an existing document with the new values.
 	//

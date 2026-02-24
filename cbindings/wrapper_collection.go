@@ -75,7 +75,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	createOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
@@ -130,7 +130,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	createOpts := utils.NewOptions(opts...)
 	isEncrypted := 0

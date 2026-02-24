@@ -72,7 +72,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -94,7 +94,7 @@ type createOptionsJS struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func makeDocCreateOptions(opts []options.Enumerable[options.CollectionCreateOptions]) js.Value {
+func makeDocCreateOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
 	jsOpts := createOptionsJS{}
 	createOpts := utils.NewOptions(opts...)
 	jsOpts.EncryptDoc = createOpts.EncryptDoc
@@ -110,7 +110,7 @@ func makeDocCreateOptions(opts []options.Enumerable[options.CollectionCreateOpti
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -160,7 +160,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		createOpts := options.CollectionCreate().
+		createOpts := options.CollectionAdd().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
 		return c.Create(ctx, doc, createOpts)

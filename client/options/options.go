@@ -21,7 +21,7 @@
 //
 //	// Collection operation with identity and encryption
 //	err := collection.Create(ctx, doc,
-//	    options.CollectionCreate().
+//	    options.CollectionAdd().
 //	        SetIdentity(myIdentity).
 //	        SetEncryptDoc(true))
 package options

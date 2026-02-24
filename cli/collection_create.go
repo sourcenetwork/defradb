@@ -76,7 +76,7 @@ Options:
 			ctx := cmd.Context()
 
 			createOpt := options.WithIdentity(
-				options.CollectionCreate().
+				options.CollectionAdd().
 					SetEncryptDoc(shouldEncryptDoc).
 					SetEncryptedFields(encryptedFields),
 				identity.FromContext(ctx),

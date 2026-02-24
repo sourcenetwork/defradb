@@ -54,7 +54,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -83,7 +83,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -121,7 +121,7 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionCreateOptions) {
+func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionAddOptions) {
 	q := req.URL.Query()
 	if opt.EncryptDoc {
 		q.Set(docEncryptParam, "true")
@@ -180,7 +180,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		createOpts := options.CollectionCreate().
+		createOpts := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 

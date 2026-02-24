@@ -66,7 +66,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	args := makeDocCreateArgs(c, opts...)
 
@@ -87,7 +87,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	args := makeDocCreateArgs(c, opts...)
 
@@ -113,7 +113,7 @@ func (c *Collection) CreateMany(
 
 func makeDocCreateArgs(
 	c *Collection,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) []string {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
@@ -177,7 +177,7 @@ func (c *Collection) Save(
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		opt := utils.NewOptions(opts...)
-		createOpt := options.CollectionCreate().
+		createOpt := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 		if opt.GetIdentity().HasValue() {

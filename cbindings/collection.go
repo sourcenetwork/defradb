@@ -124,7 +124,7 @@ func CollectionCreate(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
-	createOpt := options.WithIdentity(options.CollectionCreate(), acpIdentity.FromContext(ctx))
+	createOpt := options.WithIdentity(options.CollectionAdd(), acpIdentity.FromContext(ctx))
 
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))

@@ -61,7 +61,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	createOpt := options.WithIdentity(
-		options.CollectionCreate().
+		options.CollectionAdd().
 			SetEncryptDoc(encConf.IsDocEncrypted).
 			SetEncryptedFields(encConf.EncryptedFields),
 		identity.FromContext(ctx),

@@ -343,13 +343,13 @@ func makeDocCreateOptions(
 	s *state.State,
 	action *CreateDoc,
 	nodeIndex int,
-) []options.Enumerable[options.CollectionCreateOptions] {
-	opts := options.CollectionCreate().
+) []options.Enumerable[options.CollectionAddOptions] {
+	opts := options.CollectionAdd().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Enumerable[options.CollectionCreateOptions]{opts}
+	return []options.Enumerable[options.CollectionAddOptions]{opts}
 }

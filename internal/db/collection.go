@@ -338,7 +338,7 @@ func (c *collection) CollectionID() string {
 func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -370,7 +370,7 @@ func (c *collection) Create(
 func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -422,7 +422,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -485,7 +485,7 @@ func (c *collection) create(
 
 func setContextDocEncryption(
 	ctx context.Context,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) context.Context {
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx

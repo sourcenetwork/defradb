@@ -73,7 +73,7 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			createOpts := options.WithIdentity(options.CollectionCreate(), n.p.identity)
+			createOpts := options.WithIdentity(options.CollectionAdd(), n.p.identity)
 			err = n.collection.Create(n.p.ctx, doc, createOpts)
 			if err != nil {
 				return false, err
