@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// CreateIndex will attempt to create the given secondary index for the given collection
+// AddIndex will attempt to add the given secondary index for the given collection
 // using the collection api.
-type CreateIndex struct {
+type AddIndex struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to create the secondary index on.
@@ -57,10 +57,10 @@ type CreateIndex struct {
 	ExpectedError string
 }
 
-var _ Action = (*CreateIndex)(nil)
-var _ Stateful = (*CreateIndex)(nil)
+var _ Action = (*AddIndex)(nil)
+var _ Stateful = (*AddIndex)(nil)
 
-func (a *CreateIndex) Execute() {
+func (a *AddIndex) Execute() {
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]

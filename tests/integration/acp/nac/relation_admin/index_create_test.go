@@ -49,7 +49,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -65,7 +65,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -106,7 +106,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -122,7 +122,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",

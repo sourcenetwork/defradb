@@ -98,7 +98,7 @@ func (m *secondaryIndex) Apply(source action.Actions) action.Actions {
 func hasIndexActions(actions action.Actions) bool {
 	for _, a := range actions {
 		switch a.(type) {
-		case *action.CreateIndex, *action.DeleteIndex, *action.ListIndexes:
+		case *action.AddIndex, *action.DeleteIndex, *action.ListIndexes:
 			return true
 		}
 	}

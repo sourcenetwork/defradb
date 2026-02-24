@@ -53,7 +53,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				FieldName:     "age",
 				Unique:        true,
@@ -155,7 +155,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",
@@ -215,7 +215,7 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 						"name":	"Keenan"
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",

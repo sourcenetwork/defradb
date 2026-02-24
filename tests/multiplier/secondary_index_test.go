@@ -21,7 +21,7 @@ import (
 func TestHasIndexActions_WithCreateIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	assert.True(t, hasIndexActions(actions))
@@ -460,7 +460,7 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	result := m.Apply(actions)
@@ -469,7 +469,7 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 	assert.True(t, ok)
 	assert.Contains(t, schemaAdd.Schema, "@index")
 
-	createIndex, ok := result[1].(*action.CreateIndex)
+	createIndex, ok := result[1].(*action.AddIndex)
 	assert.True(t, ok)
 	assert.Equal(t, 0, createIndex.CollectionID)
 	assert.Equal(t, "name", createIndex.FieldName)
@@ -520,7 +520,7 @@ func TestShouldSkip_WithIndexActions_ReturnsTrue(t *testing.T) {
 
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))

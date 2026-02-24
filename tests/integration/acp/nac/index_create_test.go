@@ -50,7 +50,7 @@ func TestNAC_GatesIndexCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -90,7 +90,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -132,7 +132,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -173,7 +173,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -215,7 +215,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.CreateIndex{
+			&action.AddIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",

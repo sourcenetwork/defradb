@@ -30,7 +30,7 @@ func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -53,7 +53,7 @@ func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -112,7 +112,7 @@ func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "score_index",
 				FieldName:     "score",
@@ -135,7 +135,7 @@ func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				IndexName:    "age_index",
 				FieldName:    "age",
@@ -179,7 +179,7 @@ func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "composite_index",
 				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "points"}},
@@ -202,7 +202,7 @@ func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "unique_points_index",
 				FieldName:     "points",

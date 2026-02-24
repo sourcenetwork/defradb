@@ -48,7 +48,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 						"email": "another@gmail.com"
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
 				Unique:        true,
@@ -140,7 +140,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 						"email": "different@gmail.com"
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				Fields:       []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
 				IndexName:    "name_age_unique_index",
@@ -209,7 +209,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 						"email": "different@gmail.com"
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				Fields: []client.IndexedFieldDescription{
 					{Name: "name", Descending: true},

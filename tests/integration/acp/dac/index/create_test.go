@@ -38,7 +38,7 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 				`,
 			},
 
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				IndexName:    "some_index",
 				FieldName:    "name",

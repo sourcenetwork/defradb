@@ -92,7 +92,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				IndexName: "some_index",
 				FieldName: "name",
 			},
@@ -143,7 +143,7 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "!",
 				FieldName:     "Name",
