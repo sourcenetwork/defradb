@@ -131,7 +131,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
@@ -173,7 +173,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
@@ -223,7 +223,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author (filter: {book: {publisher: {yearOpened: { _geq: 2020}}}}){
@@ -296,7 +296,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -377,7 +377,7 @@ func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [

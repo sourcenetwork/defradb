@@ -154,7 +154,7 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 }
 
 func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
-	createDocOnNode := func(nodeId int) *action.AddDoc {
+	addDocOnNode := func(nodeId int) *action.AddDoc {
 		return &action.AddDoc{
 			NodeID: immutable.Some(nodeId),
 			Doc: `{
@@ -178,9 +178,9 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 				}
 			`,
 			},
-			createDocOnNode(0),
-			createDocOnNode(1),
-			createDocOnNode(2),
+			addDocOnNode(0),
+			addDocOnNode(1),
+			addDocOnNode(2),
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,

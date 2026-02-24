@@ -24,7 +24,7 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
