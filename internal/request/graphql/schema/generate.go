@@ -569,7 +569,7 @@ func (g *Generator) buildTypes(
 }
 
 // buildMutationInputTypes creates the input object types
-// for collection create and update mutation operations.
+// for collection add and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersion) error {
 	for _, collection := range collections {
 		if collection.IsEmbeddedOnly {

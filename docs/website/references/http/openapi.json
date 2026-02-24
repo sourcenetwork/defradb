@@ -1622,7 +1622,7 @@
                 ]
             },
             "post": {
-                "description": "Create a secondary index",
+                "description": "Add a secondary index",
                 "operationId": "index_add",
                 "parameters": [
                     {

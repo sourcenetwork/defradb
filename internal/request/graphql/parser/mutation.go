@@ -70,7 +70,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	if len(mutNameParts) > 1 { // only generated object mutations
 		// reconstruct the name.
 		// if the schema/collection name is eg: my_book
-		// then the mutation name would be create_my_book
+		// then the mutation name would be add_my_book
 		// so we need to recreate the string my_book, which
 		// has been split by "_", so we just join by "_"
 		mut.Collection = strings.Join(mutNameParts[1:], "_")

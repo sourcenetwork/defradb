@@ -243,7 +243,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -280,7 +280,7 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,

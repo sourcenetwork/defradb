@@ -1,10 +1,10 @@
 ## defradb client index add
 
-Creates a secondary index on a collection's field(s)
+Adds a secondary index on a collection's field(s)
 
 ### Synopsis
 
-Creates a secondary index on a collection's field(s).
+Adds a secondary index on a collection's field(s).
 
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
