@@ -85,7 +85,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
@@ -97,7 +97,7 @@ resources:
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(1),
@@ -186,7 +186,7 @@ resources:
 				CollectionIDs: []int{0},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,

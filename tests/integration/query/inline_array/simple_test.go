@@ -22,7 +22,7 @@ import (
 func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"likedIndexes": null
@@ -52,7 +52,7 @@ func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
 func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"likedIndexes": []
@@ -82,7 +82,7 @@ func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John", 
 						"likedIndexes": [true, true, false, true]
@@ -113,7 +113,7 @@ func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
 func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"indexLikesDislikes": [true, true, false, null]
@@ -149,7 +149,7 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John"
 					}`,
@@ -179,7 +179,7 @@ func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
 func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteIntegers": null
@@ -210,7 +210,7 @@ func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteIntegers": []
@@ -241,7 +241,7 @@ func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -272,7 +272,7 @@ func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
 func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "Andy",
 						"favouriteIntegers": [-1, -2, -3, -5, -8]
@@ -303,7 +303,7 @@ func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
 func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "Shahzad",
 						"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -333,7 +333,7 @@ func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
 func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"testScores": [-1, null, -1, 2, 0]
@@ -370,7 +370,7 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteFloats": null
@@ -401,7 +401,7 @@ func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
 func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteFloats": []
@@ -432,7 +432,7 @@ func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -463,7 +463,7 @@ func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
 func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"pageRatings": [3.1425, null, -0.00000000001, 10]
@@ -499,7 +499,7 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"preferredStrings": null
@@ -530,7 +530,7 @@ func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
 func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"preferredStrings": []
@@ -561,7 +561,7 @@ func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -592,7 +592,7 @@ func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
 func TestQueryInlineArrayWithNillableString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"pageHeaders": ["", "the previous", "the first", "empty string", null]

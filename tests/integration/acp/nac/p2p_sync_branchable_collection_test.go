@@ -57,7 +57,7 @@ func TestNAC_GatesSyncBranchableCollection_AuthorizedIdentity_AllowAccess(t *tes
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
@@ -98,7 +98,7 @@ func TestNAC_GatesSyncBranchableCollection_NoIdentity_NotAuthorizedError(t *test
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
@@ -140,7 +140,7 @@ func TestNAC_GatesSyncBranchableCollection_WrongIdentity_NotAuthorizedError(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{

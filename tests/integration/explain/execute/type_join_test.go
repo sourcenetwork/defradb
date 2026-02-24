@@ -24,9 +24,9 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -94,9 +94,9 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -201,9 +201,9 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -296,9 +296,9 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {

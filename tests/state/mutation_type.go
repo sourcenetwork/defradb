@@ -30,7 +30,7 @@ const (
 	// to run their mutations via their corresponding named [Collection]
 	// call.
 	//
-	// For example, CreateDoc will call [Collection.Create], and
+	// For example, AddDoc will call [Collection.Add], and
 	// UpdateDoc will call [Collection.Update].
 	CollectionNamedMutationType MutationType = "collection-named"
 

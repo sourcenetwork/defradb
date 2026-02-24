@@ -25,7 +25,7 @@ func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *t
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {

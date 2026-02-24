@@ -27,7 +27,7 @@ func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"name"},
 			},

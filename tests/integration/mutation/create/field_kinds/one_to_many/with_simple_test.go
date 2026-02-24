@@ -29,7 +29,7 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"notName": "Painted House",
 					"_authorID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
@@ -50,7 +50,7 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -68,7 +68,7 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -97,13 +97,13 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",

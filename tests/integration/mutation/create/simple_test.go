@@ -36,7 +36,7 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"fieldDoesNotExist": 27
@@ -73,7 +73,7 @@ func TestMutationCreate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -122,13 +122,13 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27

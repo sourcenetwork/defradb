@@ -104,7 +104,7 @@ type KMS struct {
 // setup is complete so that it may split actions across database code-versions.
 //
 // If a SetupComplete action is not provided the change detector will split before
-// the first item that is neither a SchemaUpdate, CreateDoc or UpdateDoc action.
+// the first item that is neither a SchemaUpdate, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
 // ConfigureNode allows the explicit configuration of new Defra nodes.

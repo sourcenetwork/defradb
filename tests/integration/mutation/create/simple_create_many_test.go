@@ -28,7 +28,7 @@ func TestMutationCreateMany(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `[ 
 					{
 						"name": "John",

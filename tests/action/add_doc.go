@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-type CreateDoc struct {
+type AddDoc struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to apply this create to.
@@ -83,22 +83,22 @@ type CreateDoc struct {
 	DoNotWaitForEvent bool
 }
 
-var _ Action = (*CreateDoc)(nil)
-var _ Stateful = (*CreateDoc)(nil)
+var _ Action = (*AddDoc)(nil)
+var _ Stateful = (*AddDoc)(nil)
 
-func (a *CreateDoc) Execute() {
+func (a *AddDoc) Execute() {
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(*AddDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
-		mutation = createDocViaColSave
+		mutation = addDocViaColSave
 	case state.CollectionNamedMutationType:
 		mutation = addDocViaColAdd
 	case state.GQLRequestMutationType:
-		mutation = createDocViaGQL
+		mutation = addDocViaGQL
 	default:
 		a.s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
@@ -146,8 +146,8 @@ func (a *CreateDoc) Execute() {
 	}
 }
 
-func createDocViaColSave(
-	a *CreateDoc,
+func addDocViaColSave(
+	a *AddDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
@@ -159,7 +159,7 @@ func createDocViaColSave(
 
 	ctx := db.InitContext(a.s.Ctx, txn)
 
-	docs, err := parseCreateDocs(ctx, a, collection)
+	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func createDocViaColSave(
 }
 
 func addDocViaColAdd(
-	a *CreateDoc,
+	a *AddDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
@@ -187,7 +187,7 @@ func addDocViaColAdd(
 
 	ctx := db.InitContext(a.s.Ctx, txn)
 
-	docs, err := parseCreateDocs(ctx, a, collection)
+	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -213,8 +213,8 @@ func addDocViaColAdd(
 	return docIDs, nil
 }
 
-func createDocViaGQL(
-	a *CreateDoc,
+func addDocViaGQL(
+	a *AddDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
@@ -287,7 +287,7 @@ func createDocViaGQL(
 // If a document at that index is not found it will panic.
 func substituteRelations(
 	s *state.State,
-	action *CreateDoc,
+	action *AddDoc,
 ) {
 	for k, v := range action.DocMap {
 		index, isIndex := v.(DocIndex)
@@ -302,8 +302,8 @@ func substituteRelations(
 	}
 }
 
-// parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(ctx context.Context, action *CreateDoc, collection client.Collection) ([]*client.Document, error) {
+// parseAddDocs parses and returns documents from a AddDoc action.
+func parseAddDocs(ctx context.Context, action *AddDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
 		val, err := client.NewDocFromMap(ctx, action.DocMap, collection.Version())
@@ -326,7 +326,7 @@ func parseCreateDocs(ctx context.Context, action *CreateDoc, collection client.C
 
 func makeDocSaveOptions(
 	s *state.State,
-	action *CreateDoc,
+	action *AddDoc,
 	nodeIndex int,
 ) []options.Enumerable[options.CollectionSaveOptions] {
 	opts := options.CollectionSave().
@@ -341,7 +341,7 @@ func makeDocSaveOptions(
 
 func makeDocAddOptions(
 	s *state.State,
-	action *CreateDoc,
+	action *AddDoc,
 	nodeIndex int,
 ) []options.Enumerable[options.CollectionAddOptions] {
 	opts := options.CollectionAdd().

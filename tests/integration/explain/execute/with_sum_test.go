@@ -24,10 +24,10 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-			create3BookDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
+			add3BookDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -75,10 +75,10 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-			create3ArticleDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
+			add3ArticleDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {

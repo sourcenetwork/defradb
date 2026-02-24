@@ -34,7 +34,7 @@ func TestColVersionUpdateRemoveCollectionSourceTransform(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

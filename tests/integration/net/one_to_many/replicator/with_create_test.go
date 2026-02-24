@@ -41,7 +41,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Saadi on the first node
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
@@ -49,7 +49,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 					"Name": "Saadi"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				// Create Gulistan on the first node
 				CollectionID: 1,

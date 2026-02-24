@@ -21,7 +21,7 @@ func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
@@ -54,7 +54,7 @@ func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21

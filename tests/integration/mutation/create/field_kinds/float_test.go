@@ -27,7 +27,7 @@ func TestMutationCreateFieldKinds_WithFloat(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"points": 1.2,
 				},
@@ -62,7 +62,7 @@ func TestMutationCreateFieldKinds_WithFloat32(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"points": 1.2,
 				},
@@ -97,7 +97,7 @@ func TestMutationCreateFieldKinds_WithFloat64(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"points": 1.2,
 				},

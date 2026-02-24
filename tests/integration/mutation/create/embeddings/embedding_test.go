@@ -42,14 +42,14 @@ func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
 					"about": "He loves tacos."
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with only one embedding field
 				Doc: `{
 					"name": "John"
@@ -98,7 +98,7 @@ func TestMutationCreate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"about": "He loves tacos.",

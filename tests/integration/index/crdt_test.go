@@ -140,7 +140,7 @@ func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
 				IndexName:    "age_index",
 				FieldName:    "age",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 30

@@ -33,7 +33,7 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -47,7 +47,7 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Shahzad",

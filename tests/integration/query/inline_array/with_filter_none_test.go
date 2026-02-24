@@ -20,13 +20,13 @@ import (
 func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageHeaders": ["first", "second"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"pageHeaders": [null, "second"]
@@ -55,13 +55,13 @@ func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"preferredStrings": ["first", "second"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"preferredStrings": ["", "second"]
@@ -90,13 +90,13 @@ func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [50, 80]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"testScores": [null, 60]
@@ -125,13 +125,13 @@ func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [50, 80]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"testScores": [0, 60]
@@ -160,13 +160,13 @@ func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [50, 80]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"pageRatings": [null, 60]
@@ -195,13 +195,13 @@ func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [50, 80]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"pageRatings": [0, 60]
@@ -230,13 +230,13 @@ func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"indexLikesDislikes": [false, false]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"indexLikesDislikes": [null, true]
@@ -265,13 +265,13 @@ func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"likedIndexes": [false, false]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"likedIndexes": [true, true]

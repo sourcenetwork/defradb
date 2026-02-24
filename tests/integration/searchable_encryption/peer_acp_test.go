@@ -97,7 +97,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.NodeIdentity(0),
 				NodeID:   immutable.Some(0),
 				Doc: `{

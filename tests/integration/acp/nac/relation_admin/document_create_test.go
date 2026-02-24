@@ -36,7 +36,7 @@ func TestNAC_AdminRelation_CanDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -56,7 +56,7 @@ func TestNAC_AdminRelation_CanDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

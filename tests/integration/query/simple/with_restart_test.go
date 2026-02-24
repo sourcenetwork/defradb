@@ -29,7 +29,7 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 				`,
 			},
 			testUtils.Restart{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age": 30

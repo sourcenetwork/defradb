@@ -28,31 +28,31 @@ func TestCollectionTruncateParallel_DeletesAllPreviouslyExistingDocuments(t *tes
 				`,
 			},
 			// Create the first docs before parallel, so that deletion can be verified
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 				},
 			},
 			&action.Parallel{
 				Children: []action.Action{
-					&action.CreateDoc{
+					&action.AddDoc{
 						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Fred",
 						},
 					},
-					&action.CreateDoc{
+					&action.AddDoc{
 						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Shahzad",
 						},
 					},
-					&action.CreateDoc{
+					&action.AddDoc{
 						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Chris",

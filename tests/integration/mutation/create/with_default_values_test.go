@@ -39,7 +39,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
@@ -89,7 +89,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValu
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
@@ -131,7 +131,7 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"age":      nil,
 					"active":   nil,
@@ -198,7 +198,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"age":      int64(50),
 					"active":   false,
@@ -266,11 +266,11 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// left empty to test default values
 				DocMap:        map[string]any{},
 				ExpectedError: "a document with the given ID already exists",
@@ -300,11 +300,11 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"age": int64(50),
 				},
@@ -327,7 +327,7 @@ func TestMutationCreate_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -363,7 +363,7 @@ func TestMutationCreate_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -399,7 +399,7 @@ func TestMutationCreate_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -453,7 +453,7 @@ func TestMutationCreate_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -489,7 +489,7 @@ func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

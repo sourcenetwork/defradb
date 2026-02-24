@@ -67,13 +67,13 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 28
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30

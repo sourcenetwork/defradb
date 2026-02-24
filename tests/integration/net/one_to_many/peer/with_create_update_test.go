@@ -39,7 +39,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Gulistan on all nodes
 				CollectionID: 1,
 				Doc: `{
@@ -50,7 +50,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Saadi on first node
 				// NodePeers do not sync new documents so this will not be synced
 				// to node 1.

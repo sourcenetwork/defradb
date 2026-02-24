@@ -52,7 +52,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					},
 				}),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create a document on the second schema version, with an email field value
 				Doc: `{
 					"name": "John",

@@ -29,7 +29,7 @@ func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -74,7 +74,7 @@ func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -121,7 +121,7 @@ func TestIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{

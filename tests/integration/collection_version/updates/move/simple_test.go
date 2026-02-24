@@ -29,7 +29,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"

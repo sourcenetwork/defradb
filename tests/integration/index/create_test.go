@@ -31,7 +31,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
@@ -85,7 +85,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
