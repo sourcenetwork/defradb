@@ -116,7 +116,7 @@ type Collection interface {
 	// WARNING: This method can not create index for a collection that has a policy.
 	CreateIndex(
 		context.Context,
-		IndexCreateRequest,
+		IndexAddRequest,
 		...options.Enumerable[options.CollectionAddIndexOptions],
 	) (IndexDescription, error)
 

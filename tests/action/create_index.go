@@ -65,7 +65,7 @@ func (a *CreateIndex) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		indexDesc := client.IndexCreateRequest{
+		indexDesc := client.IndexAddRequest{
 			Name: a.IndexName,
 		}
 

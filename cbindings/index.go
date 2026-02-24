@@ -67,7 +67,7 @@ func IndexCreate(
 		})
 	}
 
-	desc := client.IndexCreateRequest{
+	desc := client.IndexAddRequest{
 		Name:   C.GoString(indexName),
 		Fields: fields,
 		Unique: isUnique != 0,

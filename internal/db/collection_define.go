@@ -910,7 +910,7 @@ func isOneToOneRelation(
 
 // findIndexWithFirstField checks if an index exists where the given field is the first field.
 func findIndexWithFirstField(
-	createIndexes []client.IndexCreateRequest,
+	createIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	fieldName string,
 ) (isUnique bool, found bool) {
@@ -931,11 +931,11 @@ func findIndexWithFirstField(
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
 // If no user-defined index exists, it creates one automatically.
 func ensureOneToOneUniqueIndex(
-	createIndexes []client.IndexCreateRequest,
+	createIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
-) (newIndex *client.IndexCreateRequest, err error) {
+) (newIndex *client.IndexAddRequest, err error) {
 	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
@@ -953,7 +953,7 @@ func ensureOneToOneUniqueIndex(
 	}
 
 	// No user-defined index exists, create one automatically
-	return &client.IndexCreateRequest{
+	return &client.IndexAddRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
 	}, nil
@@ -962,11 +962,11 @@ func ensureOneToOneUniqueIndex(
 // getOneToOneIndexRequestsForPatch returns index create requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
 // standard schema creation flow that calls finalizeRelations.
-// Returns a map of collectionName -> []IndexCreateRequest for indexes that need to be created.
+// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be created.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
-) (map[string][]client.IndexCreateRequest, error) {
+) (map[string][]client.IndexAddRequest, error) {
 	allColsByName := make(map[string]client.CollectionVersion)
 	maps.Copy(allColsByName, existingColsByName)
 
@@ -974,7 +974,7 @@ func getOneToOneIndexRequestsForPatch(
 		allColsByName[col.Name] = col
 	}
 
-	result := make(map[string][]client.IndexCreateRequest)
+	result := make(map[string][]client.IndexAddRequest)
 
 	for _, col := range newColsByID {
 		existingCol := existingColsByName[col.Name]

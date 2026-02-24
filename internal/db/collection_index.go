@@ -165,7 +165,7 @@ func (c *collection) deleteIndexedDocWithID(
 // the documents will be indexed by the new index.
 func (c *collection) CreateIndex(
 	ctx context.Context,
-	desc client.IndexCreateRequest,
+	desc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
@@ -193,7 +193,7 @@ func (c *collection) CreateIndex(
 func processCreateIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
-	desc client.IndexCreateRequest,
+	desc client.IndexAddRequest,
 ) (client.IndexDescription, error) {
 	err := validateIndexDescription(desc)
 	if err != nil {
@@ -232,7 +232,7 @@ func processCreateIndexRequest(
 
 func (c *collection) createIndex(
 	ctx context.Context,
-	createReq client.IndexCreateRequest,
+	createReq client.IndexAddRequest,
 ) (CollectionIndex, error) {
 	desc, err := processCreateIndexRequest(ctx, c.Version(), createReq)
 	if err != nil {
@@ -626,7 +626,7 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
-	createReq client.IndexCreateRequest,
+	createReq client.IndexAddRequest,
 ) (string, error) {
 	indexName := createReq.Name
 	if indexName == "" {
@@ -663,7 +663,7 @@ func generateIndexNameIfNeeded(
 	return indexName, nil
 }
 
-func validateIndexDescription(desc client.IndexCreateRequest) error {
+func validateIndexDescription(desc client.IndexAddRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return schema.NewErrIndexWithInvalidName("!")
 	}

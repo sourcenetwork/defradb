@@ -62,7 +62,7 @@ If no order is specified for the field, the default value will be "ASC"`,
 				})
 			}
 
-			desc := client.IndexCreateRequest{
+			desc := client.IndexAddRequest{
 				Name:   nameArg,
 				Fields: fields,
 				Unique: uniqueArg,

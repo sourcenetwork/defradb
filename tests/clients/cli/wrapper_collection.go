@@ -361,7 +361,7 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
+	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
