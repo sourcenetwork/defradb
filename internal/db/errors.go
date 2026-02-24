@@ -220,7 +220,7 @@ func NewErrInvalidStoredIndexKey(key string) error {
 	return errors.New(errInvalidStoredIndexKey, errors.NewKV("Key", key))
 }
 
-// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to create an index
+// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to add an index
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
@@ -263,7 +263,7 @@ func NewErrFailedToGetAllCollections(inner error) error {
 
 // NewErrDocVerification returns a new error indicating that the document verification failed.
 //
-// This occurs when a documents contents fail the verification during a Create()
+// This occurs when a documents contents fail the verification during an Add()
 // call against the supplied Document ID (docID).
 func NewErrDocVerification(expected string, actual string) error {
 	return errors.New(

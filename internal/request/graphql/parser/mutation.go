@@ -59,7 +59,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	// parse the mutation type
 	// mutation names are either generated from a type
 	// which means they are in the form name_type, where
-	// the name is the object mutation name (ie: create, update, delete)
+	// the name is the object mutation name (ie: add, update, delete)
 	// or its an general API mutation, which is in the form
 	// name (camelCase).
 	// This means we can split on the "_" character, and always

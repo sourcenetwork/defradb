@@ -1216,7 +1216,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
-	create := &gql.Field{
+	add := &gql.Field{
 		Name:        "add_" + obj.Name(),
 		Description: addDocumentDescription,
 		Type:        gql.NewList(obj),
@@ -1261,7 +1261,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	return []*gql.Field{create, update, delete, upsert}, nil
+	return []*gql.Field{add, update, delete, upsert}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {

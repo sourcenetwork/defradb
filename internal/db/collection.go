@@ -657,19 +657,19 @@ func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	return nil
 }
 
-// save saves the document state. save MUST not be called outside the `c.create`
+// save saves the document state. save MUST not be called outside the `c.add`
 // and `c.update` methods as we wrap the acp logic within those methods. Calling
 // save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
 	doc *client.Document,
-	isCreate bool,
+	isAdd bool,
 ) error {
 	if err := c.validateEncryptedFields(ctx); err != nil {
 		return err
 	}
 
-	if !isCreate {
+	if !isAdd {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
 			return err

@@ -481,7 +481,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	// First, create documents to get their actual docIDs
+	// First, add documents to get their actual docIDs
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 

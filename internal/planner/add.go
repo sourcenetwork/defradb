@@ -22,7 +22,7 @@ import (
 // addNode is used to construct and execute
 // an object add mutation.
 //
-// Create nodes are the simplest of the object mutations
+// Add nodes are the simplest of the object mutations
 // Each iteration of the plan, adds and returns one
 // document, until we've exhausted the payload. No filtering
 // or Select plans

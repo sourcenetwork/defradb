@@ -597,7 +597,7 @@ Result:
 }
 ```
 
-**Note: If the same relationship is created again the `ExistedAlready` would then be true, indicating no-op**
+**Note: If the same relationship is added again the `ExistedAlready` would then be true, indicating no-op**
 
 Now the other actor can read:
 ```sh

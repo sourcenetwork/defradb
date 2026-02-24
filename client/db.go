@@ -66,7 +66,7 @@ type Store interface {
 		opts ...options.Enumerable[options.AddDACPolicyOptions],
 	) (AddPolicyResult, error)
 
-	// AddDACActorRelationship creates a relationship between document and the target actor.
+	// AddDACActorRelationship adds a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -102,7 +102,7 @@ type Store interface {
 		opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
-	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
+	// AddNACActorRelationship adds a relationship to grant node access to the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.

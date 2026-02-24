@@ -132,7 +132,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
 				Name:        "schema",
-				Description: "Upload GQL schemas to create collections",
+				Description: "Upload GQL schemas to add collections",
 			},
 			&openapi3.Tag{
 				Name:        "collection",

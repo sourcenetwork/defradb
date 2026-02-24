@@ -25,7 +25,7 @@ type Mutation struct {
 	// The underlying Select, defining the information requested upon return.
 	Select
 
-	// The type of mutation. For example a create request.
+	// The type of mutation. For example an add request.
 	Type MutationType
 
 	// AddInput is the array of maps of fields and values used for an add mutation.
