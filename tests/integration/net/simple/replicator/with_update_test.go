@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing.T) {
+func TestP2POneToOneReplicatorUpdatesDocAddedBeforeReplicatorConfig(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -74,7 +74,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
+func TestP2POneToOneReplicatorUpdatesDocAddedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -209,7 +209,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAfterCreate_ShouldSucceed(t *testing.T) {
+func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAfterAdd_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{

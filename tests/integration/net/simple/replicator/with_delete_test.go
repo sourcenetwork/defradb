@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfig(t *testing.T) {
+func TestP2POneToOneReplicatorDeletesDocAddedBeforeReplicatorConfig(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -75,7 +75,7 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfig(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
+func TestP2POneToOneReplicatorDeletesDocAddedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

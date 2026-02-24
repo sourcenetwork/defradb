@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 )
 
-func TestHasIndexActions_WithCreateIndex_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},

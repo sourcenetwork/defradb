@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableIntArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -101,7 +101,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

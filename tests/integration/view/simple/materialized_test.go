@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
+func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

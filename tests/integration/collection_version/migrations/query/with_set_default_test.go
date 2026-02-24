@@ -161,7 +161,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt_ClearsMigrations(t *testing.T) {
+func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_ClearsMigrations(t *testing.T) {
 	collectionVersionID1 := "bafyreiabmrtgxy5dgotuc53gfaamuqhlzugyeetzbuv7s3x6ufmlr5ylga"
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 

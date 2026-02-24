@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRelationship_SourceHubACP(t *testing.T) {
+func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionAddDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedDocumentACPTypes: immutable.Some(

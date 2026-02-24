@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSubscriptionWithCreateMutations(t *testing.T) {
+func TestSubscriptionWithAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -84,7 +84,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
+func TestSubscriptionWithFilterAndOneAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -127,7 +127,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
+func TestSubscriptionWithFilterAndOneAddMutationOutsideFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -160,7 +160,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
+func TestSubscriptionWithFilterAndAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

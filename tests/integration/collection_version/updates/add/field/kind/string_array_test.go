@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindStringArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindStringArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindStringArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindStringArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindStringArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindStringArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

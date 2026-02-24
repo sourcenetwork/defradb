@@ -72,7 +72,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t *testing.T) {
+func TestArrayUniqueCompositeIndex_IfDocIsAddedThatViolatesUniqueness_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

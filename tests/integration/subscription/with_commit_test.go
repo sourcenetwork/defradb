@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
+func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -67,7 +67,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	execute(t, test)
 }
 
-func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing.T) {
+func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T) {
 	create1Links := testUtils.NewSameValue()
 	create2Links := testUtils.NewSameValue()
 	create1Heads := testUtils.NewSameValue()

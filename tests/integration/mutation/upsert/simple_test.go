@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
+func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -193,7 +193,7 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
+func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

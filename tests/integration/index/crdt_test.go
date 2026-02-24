@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -42,7 +42,7 @@ func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -65,7 +65,7 @@ func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -83,7 +83,7 @@ func TestIndexCreate_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -101,7 +101,7 @@ func TestIndexCreate_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -124,7 +124,7 @@ func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
+func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -168,7 +168,7 @@ func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -191,7 +191,7 @@ func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -215,7 +215,7 @@ func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

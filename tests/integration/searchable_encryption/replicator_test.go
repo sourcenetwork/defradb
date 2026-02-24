@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
+func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSearchableEncryption: true,
 		SupportedDatabaseTypes: immutable.Some(

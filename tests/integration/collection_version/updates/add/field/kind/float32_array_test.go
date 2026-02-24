@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloat32ArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

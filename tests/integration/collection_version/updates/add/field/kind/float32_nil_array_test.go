@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -101,7 +101,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

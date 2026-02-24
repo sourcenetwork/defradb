@@ -60,7 +60,7 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAdd_AfterCreateRequest_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

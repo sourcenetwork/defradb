@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -97,7 +97,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

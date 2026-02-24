@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_CreateWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
+func TestACP_AddWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -96,7 +96,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
+func TestACP_AddWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -177,7 +177,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
+func TestACP_AddWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -260,7 +260,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
+func TestACP_AddWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -335,7 +335,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T) {
+func TestACP_AddWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{

@@ -74,7 +74,7 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
+func TestQuery_AddDocWithNestedLatestCommit(t *testing.T) {
 	docCompositeCid := testUtils.NewUniqueValue()
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()

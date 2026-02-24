@@ -61,7 +61,7 @@ func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexList_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
+func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

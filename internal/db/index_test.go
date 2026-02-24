@@ -163,7 +163,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	return index, err
 }
 
-func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
+func TestAddIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -173,7 +173,7 @@ func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	assert.EqualError(t, err, errIndexMissingFields)
 }
 
-func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
+func TestAddIndex_IfValidInput_AddIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -190,7 +190,7 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
-func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
+func TestAddIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -204,7 +204,7 @@ func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	assert.EqualError(t, err, errIndexFieldMissingName)
 }
 
-func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
+func TestAddIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -217,7 +217,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	assert.False(t, newDesc.Fields[0].Descending)
 }
 
-func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
+func TestAddIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -236,7 +236,7 @@ func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	assert.ErrorIs(t, err, NewErrIndexWithNameAlreadyExists(name))
 }
 
-func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
+func TestAddIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -262,7 +262,7 @@ func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	assert.Equal(t, name+"_3", newDesc3.Name)
 }
 
-func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
+func TestAddIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -275,7 +275,7 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(field))
 }
 
-func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
+func TestAddIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -285,7 +285,7 @@ func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, schema.NewErrIndexWithInvalidName(indexDesc.Name))
 }
 
-func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+func TestAddIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 

@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindFloat(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindFloatWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloatWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindFloatWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindFloatSubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindFloatSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
