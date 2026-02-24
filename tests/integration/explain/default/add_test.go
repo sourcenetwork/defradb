@@ -18,7 +18,7 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var createPattern = dataMap{
+var addPattern = dataMap{
 	"explain": dataMap{
 		"operationNode": []dataMap{
 			{
@@ -49,7 +49,7 @@ func TestDefaultExplainMutationRequestWithAdd(t *testing.T) {
 					}
 				}`,
 
-				ExpectedPatterns: createPattern,
+				ExpectedPatterns: addPattern,
 
 				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
@@ -86,7 +86,7 @@ func TestDefaultExplainMutationRequestDoesNotAddDocGivenDuplicate(t *testing.T) 
 					}
 				}`,
 
-				ExpectedPatterns: createPattern,
+				ExpectedPatterns: addPattern,
 
 				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
