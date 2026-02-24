@@ -292,6 +292,36 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryCommits_DocIDEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				Request: `query {
+						_commits(docID: []) {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryCommits_DocIDListOfOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
