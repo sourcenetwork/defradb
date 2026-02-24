@@ -44,7 +44,6 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"updateWithFilter":     goji.Async(c.updateWithFilter),
 		"deleteWithFilter":     goji.Async(c.deleteWithFilter),
 		"get":                  goji.Async(c.get),
-		"getAllDocIDs":         goji.Async(c.getAllDocIDs),
 		"addIndex":             goji.Async(c.addIndex),
 		"deleteIndex":          goji.Async(c.deleteIndex),
 		"listIndexes":          goji.Async(c.listIndexes),
@@ -284,27 +283,6 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(doc)
-}
-
-func (c *clientCollection) getAllDocIDs(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	opt := options.CollectionGetAllDocIDs()
-	setOptIdentity(opt, args, 0)
-	res, err := c.col.GetAllDocIDs(ctx, opt)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	out := make(chan any)
-	go func() {
-		defer close(out)
-		for id := range res {
-			out <- js.ValueOf(id.ID.String())
-		}
-	}()
-	return goji.AsyncIteratorOf(out), err
 }
 
 func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, error) {

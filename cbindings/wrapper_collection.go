@@ -19,7 +19,6 @@ char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
@@ -490,64 +489,6 @@ func (c *Collection) Get(
 	}
 	doc.Clean()
 	return doc, nil
-}
-
-func (c *Collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.IdentityFree(cIdentity)
-
-	var copts C.CollectionOptions
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.getInactive = 0
-
-	res := ConvertAndFreeCResult(C.CollectionListDocIDs(C.uintptr_t(c.w.handle), copts, cIdentity))
-
-	if res.Status != 0 {
-		return nil, errors.New(res.Error)
-	}
-
-	docIDCh := make(chan client.DocIDResult)
-
-	go func() {
-		defer close(docIDCh)
-
-		var rawResults []struct {
-			DocID string `json:"docID"`
-			Error string `json:"error"`
-		}
-
-		if err := json.Unmarshal([]byte(res.Value), &rawResults); err != nil {
-			docIDCh <- client.DocIDResult{Err: fmt.Errorf("failed to parse docIDs: %w", err)}
-			return
-		}
-
-		for _, r := range rawResults {
-			docID, err := client.NewDocIDFromString(r.DocID)
-			res := client.DocIDResult{
-				ID: docID,
-			}
-			if err != nil {
-				res.Err = err
-			}
-			if r.Error != "" {
-				res.Err = errors.New(r.Error)
-			}
-			docIDCh <- res
-		}
-	}()
-
-	return docIDCh, nil
 }
 
 func (c *Collection) AddIndex(

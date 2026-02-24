@@ -102,12 +102,6 @@ type Collection interface {
 		opts ...options.Enumerable[options.CollectionGetOptions],
 	) (*Document, error)
 
-	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(
-		ctx context.Context,
-		opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-	) (<-chan DocIDResult, error)
-
 	// AddIndex adds a new index on the collection.
 	// `IndexDescription` contains the description of the index to be added.
 	// `IndexDescription.Name` must start with a letter or an underscore and can
@@ -161,14 +155,6 @@ type Collection interface {
 	// This call will lock the collection, and no other read or write document operations on this collection
 	// will progress whilst this is executing.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error
-}
-
-// DocIDResult wraps the result of an attempt at a DocID retrieval operation.
-type DocIDResult struct {
-	// If a DocID was successfully retrieved, this will be that DocID.
-	ID DocID
-	// If an error was generated whilst attempting to retrieve the DocID, this will be the error.
-	Err error
 }
 
 // UpdateResult wraps the result of an update call.
