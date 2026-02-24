@@ -117,7 +117,7 @@ const (
 	NodeP2PSyncCollectionVersionsPerm
 	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
-	NodeLensCreatePerm
+	NodeLensAddPerm
 	NodeLensListPerm
 	NodeViewRefreshPerm
 	NodeViewAddPerm
