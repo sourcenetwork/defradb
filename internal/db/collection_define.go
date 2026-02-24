@@ -92,7 +92,8 @@ func (db *DB) addCollections(
 			return nil, err
 		}
 
-		col, err := db.newCollection(def.Definition)
+		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+		col, err := db.newCollection(def.Definition, txnOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -337,9 +338,11 @@ existingVersionLoop:
 			return err
 		}
 
+		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
-				colObj, err := db.newCollection(col)
+				colObj, err := db.newCollection(col, txnOpt)
 				if err != nil {
 					return err
 				}

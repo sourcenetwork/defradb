@@ -106,6 +106,7 @@ func (db *DB) GetCollections(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.getCollections(ctx, opt)

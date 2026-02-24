@@ -49,6 +49,9 @@ type AddSchema struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddSchema)(nil)

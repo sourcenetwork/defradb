@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -230,7 +231,8 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								return err
 							}
 
-							foreignCol, err := db.newCollection(foreignDef)
+							txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+							foreignCol, err := db.newCollection(foreignDef, txnOpt)
 							if err != nil {
 								return err
 							}

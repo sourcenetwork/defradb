@@ -81,6 +81,9 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddDoc)(nil)

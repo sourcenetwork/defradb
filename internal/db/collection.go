@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -48,6 +49,7 @@ type collection struct {
 	def            client.CollectionVersion
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
+	txn            immutable.Option[client.Txn]
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -57,10 +59,13 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion) (*collection, error) {
+func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[client.Txn]) (*collection, error) {
 	col := &collection{
 		db:  db,
 		def: desc,
+	}
+	if txn.HasValue() {
+		col.txn = txn
 	}
 	for _, index := range desc.Indexes {
 		colIndex, err := NewCollectionIndex(col, index)
@@ -194,7 +199,9 @@ func (db *DB) getCollections(
 			}
 		}
 
-		collection, err := db.newCollection(col)
+		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+
+		collection, err := db.newCollection(col, txnOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -372,6 +379,11 @@ func (c *collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -395,6 +407,7 @@ func (c *collection) AddMany(
 			return err
 		}
 	}
+
 	return txn.Commit()
 }
 
