@@ -156,7 +156,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 ) (client.IndexDescription, error) {
 	txn := f.txn.(*Txn)
 	ctx := InitContext(f.ctx, txn)
-	index, err := col.CreateIndex(ctx, desc)
+	index, err := col.AddIndex(ctx, desc)
 	if err == nil {
 		f.commitTxn()
 	}
@@ -281,7 +281,7 @@ func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 
 	indexDesc := getUsersIndexDescOnName()
 	indexDesc.Name = "!"
-	_, err := f.users.CreateIndex(f.ctx, indexDesc)
+	_, err := f.users.AddIndex(f.ctx, indexDesc)
 	require.ErrorIs(t, err, schema.NewErrIndexWithInvalidName(indexDesc.Name))
 }
 
@@ -289,12 +289,12 @@ func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indOnName, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	indOnName, err := f.users.AddIndex(f.ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnName}, f.users.Version().Indexes)
 
-	indOnAge, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.AddIndex(f.ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnName, indOnAge},
@@ -341,7 +341,7 @@ func TestCollectionListIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
 
-	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	_, err = f.users.AddIndex(f.ctx, getUsersIndexDescOnAge())
 	assert.NoError(t, err)
 
 	indexes, err = f.users.ListIndexes(f.ctx)
@@ -442,9 +442,9 @@ func TestDeleteIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	defer f.db.Close()
 	txn := f.txn.(*Txn)
 	ctx := InitContext(f.ctx, txn)
-	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
+	_, err := f.users.AddIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
-	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.AddIndex(ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 	f.commitTxn()
 

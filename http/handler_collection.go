@@ -284,7 +284,7 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 	}
 }
 
-func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -301,7 +301,7 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 
 	createIndexOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(ctx))
 
-	index, err := col.CreateIndex(ctx, descWithoutID, createIndexOpt)
+	index, err := col.AddIndex(ctx, descWithoutID, createIndexOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -667,7 +667,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
-	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
+	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.AddIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, deleteIndex, h.DeleteIndex)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)

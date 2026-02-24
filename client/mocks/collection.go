@@ -236,8 +236,8 @@ func (_c *Collection_Add_Call) RunAndReturn(run func(ctx context.Context, doc *c
 	return _c
 }
 
-// CreateIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error) {
+// AddIndex provides a mock function for the type Collection
+func (_mock *Collection) AddIndex(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error) {
 	var tmpRet mock.Arguments
 	if len(vs) > 0 {
 		tmpRet = _mock.Called(context1, indexCreateRequest, vs)
@@ -247,7 +247,7 @@ func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateReques
 	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateIndex")
+		panic("no return value specified for AddIndex")
 	}
 
 	var r0 client.IndexDescription
@@ -268,21 +268,21 @@ func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateReques
 	return r0, r1
 }
 
-// Collection_CreateIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateIndex'
-type Collection_CreateIndex_Call struct {
+// Collection_AddIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddIndex'
+type Collection_AddIndex_Call struct {
 	*mock.Call
 }
 
-// CreateIndex is a helper method to define mock.On call
+// AddIndex is a helper method to define mock.On call
 //   - context1 context.Context
 //   - indexCreateRequest client.IndexAddRequest
 //   - vs ...options.Enumerable[options.CollectionAddIndexOptions]
-func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_CreateIndex_Call {
-	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex",
+func (_e *Collection_Expecter) AddIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_AddIndex_Call {
+	return &Collection_AddIndex_Call{Call: _e.mock.On("AddIndex",
 		append([]interface{}{context1, indexCreateRequest}, vs...)...)}
 }
 
-func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions])) *Collection_CreateIndex_Call {
+func (_c *Collection_AddIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions])) *Collection_AddIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -307,12 +307,12 @@ func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, in
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) Return(indexDescription client.IndexDescription, err error) *Collection_CreateIndex_Call {
+func (_c *Collection_AddIndex_Call) Return(indexDescription client.IndexDescription, err error) *Collection_AddIndex_Call {
 	_c.Call.Return(indexDescription, err)
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
+func (_c *Collection_AddIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexAddRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error)) *Collection_AddIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

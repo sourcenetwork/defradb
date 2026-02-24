@@ -384,7 +384,7 @@ func (c *Collection) GetAllDocIDs(
 	return docIDCh, nil
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],

@@ -92,7 +92,7 @@ func (a *CreateIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		_, err := collection.CreateIndex(a.s.Ctx, indexDesc, opts)
+		_, err := collection.AddIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

@@ -80,7 +80,7 @@ func (db *DB) createCollections(
 	for _, def := range parseResults {
 		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
 		for _, createIndex := range def.CreateIndexes {
-			desc, err := processCreateIndexRequest(ctx, def.Definition, createIndex)
+			desc, err := processAddIndexRequest(ctx, def.Definition, createIndex)
 			if err != nil {
 				return nil, err
 			}

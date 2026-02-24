@@ -148,7 +148,7 @@ func (c *collection) deleteIndexedDocWithID(
 	return c.deleteIndexedDoc(ctx, doc)
 }
 
-// CreateIndex creates a new index on the collection.
+// AddIndex creates a new index on the collection.
 //
 // If the index name is empty, a name will be automatically generated.
 // Otherwise its uniqueness will be checked against existing indexes and
@@ -163,7 +163,7 @@ func (c *collection) deleteIndexedDocWithID(
 //
 // Once finished, if there are existing documents in the collection,
 // the documents will be indexed by the new index.
-func (c *collection) CreateIndex(
+func (c *collection) AddIndex(
 	ctx context.Context,
 	desc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
@@ -190,7 +190,7 @@ func (c *collection) CreateIndex(
 	return index.Description(), txn.Commit()
 }
 
-func processCreateIndexRequest(
+func processAddIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexAddRequest,
@@ -234,7 +234,7 @@ func (c *collection) createIndex(
 	ctx context.Context,
 	createReq client.IndexAddRequest,
 ) (CollectionIndex, error) {
-	desc, err := processCreateIndexRequest(ctx, c.Version(), createReq)
+	desc, err := processAddIndexRequest(ctx, c.Version(), createReq)
 	if err != nil {
 		return nil, err
 	}

@@ -108,13 +108,13 @@ type Collection interface {
 		opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 	) (<-chan DocIDResult, error)
 
-	// CreateIndex creates a new index on the collection.
+	// AddIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
 	// `IndexDescription.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(
+	AddIndex(
 		context.Context,
 		IndexAddRequest,
 		...options.Enumerable[options.CollectionAddIndexOptions],

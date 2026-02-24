@@ -269,7 +269,7 @@ func (c *Collection) GetAllDocIDs(
 	panic("not implemented")
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],

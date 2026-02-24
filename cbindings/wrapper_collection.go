@@ -24,7 +24,7 @@ extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+extern Result IndexAdd(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
@@ -550,7 +550,7 @@ func (c *Collection) GetAllDocIDs(
 	return docIDCh, nil
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
@@ -589,7 +589,7 @@ func (c *Collection) CreateIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(C.IndexCreate(
+	res := ConvertAndFreeCResult(C.IndexAdd(
 		C.uintptr_t(c.w.handle),
 		cIndexDescName,
 		fields,
