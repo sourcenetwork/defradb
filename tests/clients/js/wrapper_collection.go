@@ -88,17 +88,17 @@ func (c *Collection) Add(
 	return nil
 }
 
-// createOptionsJS is used to marshal options for the JS client.
-type createOptionsJS struct {
+// addOptionsJS is used to marshal options for the JS client.
+type addOptionsJS struct {
 	EncryptDoc      bool     `json:"encryptDoc"`
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
 func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
-	jsOpts := createOptionsJS{}
-	createOpts := utils.NewOptions(opts...)
-	jsOpts.EncryptDoc = createOpts.EncryptDoc
-	jsOpts.EncryptedFields = createOpts.EncryptedFields
+	jsOpts := addOptionsJS{}
+	addOpts := utils.NewOptions(opts...)
+	jsOpts.EncryptDoc = addOpts.EncryptDoc
+	jsOpts.EncryptedFields = addOpts.EncryptedFields
 
 	optsVal, err := goji.MarshalJS(jsOpts)
 	if err != nil {
@@ -160,10 +160,10 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		createOpts := options.CollectionAdd().
+		addOpts := options.CollectionAdd().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
-		return c.Add(ctx, doc, createOpts)
+		return c.Add(ctx, doc, addOpts)
 	}
 	return err
 }
@@ -280,7 +280,7 @@ func (c *Collection) AddIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "createIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "addIndex", indexDescVal)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}

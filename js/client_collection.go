@@ -36,8 +36,8 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"versionID":            goji.Async(c.versionID),
 		"version":              goji.Async(c.version),
 		"collectionID":         goji.Async(c.collectionID),
-		"create":               goji.Async(c.create),
-		"createMany":           goji.Async(c.createMany),
+		"add":                  goji.Async(c.add),
+		"addMany":              goji.Async(c.addMany),
 		"update":               goji.Async(c.update),
 		"delete":               goji.Async(c.delete),
 		"exists":               goji.Async(c.exists),
@@ -45,7 +45,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"deleteWithFilter":     goji.Async(c.deleteWithFilter),
 		"get":                  goji.Async(c.get),
 		"getAllDocIDs":         goji.Async(c.getAllDocIDs),
-		"createIndex":          goji.Async(c.createIndex),
+		"addIndex":             goji.Async(c.addIndex),
 		"deleteIndex":          goji.Async(c.deleteIndex),
 		"listIndexes":          goji.Async(c.listIndexes),
 		"addEncryptedIndex":    goji.Async(c.addEncryptedIndex),
@@ -71,7 +71,7 @@ func (c *clientCollection) collectionID(this js.Value, args []js.Value) (js.Valu
 	return js.ValueOf(c.col.CollectionID()), nil
 }
 
-func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) add(this js.Value, args []js.Value) (js.Value, error) {
 	var docMap map[string]any
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
 		return js.Undefined(), err
@@ -94,7 +94,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	return js.Undefined(), err
 }
 
-func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addMany(this js.Value, args []js.Value) (js.Value, error) {
 	var docMaps []map[string]any
 	if err := structArg(args, 0, "doc", &docMaps); err != nil {
 		return js.Undefined(), err
@@ -121,14 +121,14 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 	return js.Undefined(), err
 }
 
-// createOptionsInput represents the input structure for create options from JS.
-type createOptionsInput struct {
+// addOptionsInput represents the input structure for add options from JS.
+type addOptionsInput struct {
 	EncryptDoc      bool     `json:"encryptDoc"`
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
 func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.CollectionAddOptions], error) {
-	var input createOptionsInput
+	var input addOptionsInput
 	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (c *clientCollection) getAllDocIDs(this js.Value, args []js.Value) (js.Valu
 	return goji.AsyncIteratorOf(out), err
 }
 
-func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, error) {
 	var request client.IndexAddRequest
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err

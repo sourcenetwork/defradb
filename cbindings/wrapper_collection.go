@@ -77,20 +77,20 @@ func (c *Collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	createOpts := utils.NewOptions(opts...)
+	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
-	if createOpts.EncryptDoc {
+	if addOpts.EncryptDoc {
 		isEncrypted = 1
 	}
 	encryptedFields := C.CString("")
-	if len(createOpts.EncryptedFields) > 0 {
-		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	if len(addOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(addOpts.EncryptedFields, ","))
 	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(createOpts.GetIdentity())
+	cIdentity := optionToUintptr(addOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -132,20 +132,20 @@ func (c *Collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	createOpts := utils.NewOptions(opts...)
+	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
-	if createOpts.EncryptDoc {
+	if addOpts.EncryptDoc {
 		isEncrypted = 1
 	}
 	encryptedFields := C.CString("")
-	if len(createOpts.EncryptedFields) > 0 {
-		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	if len(addOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(addOpts.EncryptedFields, ","))
 	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(createOpts.GetIdentity())
+	cIdentity := optionToUintptr(addOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
