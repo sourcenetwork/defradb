@@ -1330,7 +1330,6 @@ func toCommitSelect(
 	return &CommitSelect{
 		Select: *underlyingSelect,
 		Depth:  selectRequest.Depth,
-		Cids:   selectRequest.CIDs,
 	}, nil
 }
 

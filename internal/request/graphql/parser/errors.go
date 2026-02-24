@@ -27,4 +27,5 @@ var (
 	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleCidsNotSupported       = errors.New("querying by multiple cids is not yet supported")
+	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
 )

@@ -349,7 +349,7 @@ func TestQueryCommits_DocIDListOfMany(t *testing.T) {
 							cid
 						}
 					}`,
-				ExpectedError: "querying by multiple cids is not yet supported",
+				ExpectedError: "querying by multiple docIDs is not yet supported",
 			},
 		},
 	}

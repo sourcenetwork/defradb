@@ -45,7 +45,7 @@ func parseCommitSelect(
 				if len(v) > 1 {
 					// todo - This limitiation is temporary and should be removed in
 					// https://github.com/sourcenetwork/defradb/issues/4302
-					return nil, ErrMultipleCidsNotSupported
+					return nil, ErrMultipleDocIDsNotSupported
 				}
 
 				docIDs = make([]string, len(v))
@@ -57,7 +57,7 @@ func parseCommitSelect(
 				if len(v) > 1 {
 					// todo - This limitiation is temporary and should be removed in
 					// https://github.com/sourcenetwork/defradb/issues/4302
-					return nil, ErrMultipleCidsNotSupported
+					return nil, ErrMultipleDocIDsNotSupported
 				}
 
 				docIDs = v

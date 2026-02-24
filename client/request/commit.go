@@ -49,6 +49,7 @@ func (c CommitSelect) ToSelect() *Select {
 			Alias: c.Alias,
 		},
 		DocIDsFilter: c.DocIDsFilter,
+		CIDFilter:    c.CIDFilter,
 		Limitable:    c.Limitable,
 		Offsetable:   c.Offsetable,
 		Orderable:    c.Orderable,
