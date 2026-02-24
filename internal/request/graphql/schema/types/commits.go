@@ -51,7 +51,7 @@ func CommitObject(
 			Description: commitLinksDescription,
 			Type:        gql.NewList(commitObject),
 			Args: gql.FieldConfigArgument{
-				request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+				request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
 				request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
 				"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
 				request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),
@@ -271,7 +271,7 @@ func QueryCommits(
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
 			request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
 			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
 			request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),

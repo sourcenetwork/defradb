@@ -225,7 +225,7 @@ depth: Int,     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
@@ -500,7 +500,7 @@ depth: Int,     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
@@ -823,7 +823,7 @@ cid: [ID!],     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
@@ -869,7 +869,7 @@ cid: [ID!],     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
@@ -2048,7 +2048,7 @@ input: BookMutationInputArg): [Book]
     """
     
     Update or add a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided 
+    must match at most one document. The matching document will be updated with the provided
     update input, or if no matching document is found, a new document will be added with the
     provided add input.
 
@@ -2067,7 +2067,7 @@ update: AuthorMutationInputArg!): [Author]
     """
     
     Update or add a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided 
+    must match at most one document. The matching document will be updated with the provided
     update input, or if no matching document is found, a new document will be added with the
     provided add input.
 
