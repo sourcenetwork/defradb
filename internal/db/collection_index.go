@@ -148,7 +148,7 @@ func (c *collection) deleteIndexedDocWithID(
 	return c.deleteIndexedDoc(ctx, doc)
 }
 
-// AddIndex creates a new index on the collection.
+// AddIndex adds a new index on the collection.
 //
 // If the index name is empty, a name will be automatically generated.
 // Otherwise its uniqueness will be checked against existing indexes and

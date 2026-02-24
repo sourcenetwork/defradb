@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2PCollectionAddSingle ensures that created documents reach the node that subscribes
+// TestP2PCollectionAddSingle ensures that added documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PCollectionAddSingle(t *testing.T) {
 	test := testUtils.TestCase{

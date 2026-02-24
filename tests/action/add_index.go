@@ -23,9 +23,9 @@ import (
 type AddIndex struct {
 	stateful
 
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	// NodeID may hold the ID (index) of a node to add the secondary index on.
 	//
-	// If a value is not provided the index will be created in all nodes.
+	// If a value is not provided the index will be added on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -33,21 +33,21 @@ type AddIndex struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection for which this index should be created.
+	// The collection for which this index should be added.
 	CollectionID int
 
-	// The name of the index to create. If not provided, one will be generated.
+	// The name of the index to add. If not provided, one will be generated.
 	IndexName string
 
 	// The name of the field to index. Used only for single field indexes.
-	// It's a convenience field so that tests don't have to create a slice
+	// It's a convenience field so that tests don't have to add a slice
 	// of [IndexedField] when only a single field index is needed.
 	FieldName string
 
 	// The fields to index. Used only for composite indexes.
 	Fields []client.IndexedFieldDescription
 
-	// If Unique is true, the index will be created as a unique index.
+	// If Unique is true, the index will be added as a unique index.
 	Unique bool
 
 	// Any error expected from the action. Optional.

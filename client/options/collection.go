@@ -20,7 +20,7 @@ import (
 type CollectionAddOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
-	// EncryptDoc enables document encryption when creating a document.
+	// EncryptDoc enables document encryption when adding a document.
 	EncryptDoc bool
 	// EncryptedFields specifies a list of fields to be encrypted.
 	EncryptedFields []string

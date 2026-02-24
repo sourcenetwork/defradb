@@ -554,7 +554,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 				`,
 			},
 			&action.AddDoc{
-				// Create the document directly and indepentently on each node.
+				// Add the document directly and independently on each node.
 				Doc: `{
 					"name": "John",
 					"age": 21

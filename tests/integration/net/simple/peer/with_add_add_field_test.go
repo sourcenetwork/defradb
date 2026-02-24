@@ -32,7 +32,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly create a doc on
+				// Patch the schema on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -245,7 +245,7 @@ func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotR
 				`,
 			},
 			&action.AddDoc{
-				// Create the doc with a value in the new field on the first node only, and allow the values to sync
+				// Add the doc with a value in the new field on the first node only, and allow the values to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",

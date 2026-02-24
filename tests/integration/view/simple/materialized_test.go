@@ -57,8 +57,8 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 							}
 						}`,
 				Results: map[string]any{
-					// Even though UserView was created after the document was created, the results are
-					// present because the view will automatically refresh upon its creation.
+					// Even though UserView was added after the document was added, the results are
+					// present because the view will automatically refresh upon its addition.
 					"UserView": []map[string]any{
 						{
 							"name": "John",

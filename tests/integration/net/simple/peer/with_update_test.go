@@ -487,7 +487,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 }
 
 // TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection tests document syncing between two nodes by
-// ensuring that the created document and its update reach the node that subscribes to the P2P collection topic.
+// ensuring that the added document and its update reach the node that subscribes to the P2P collection topic.
 func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -555,7 +555,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 }
 
 // TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection tests document syncing between two nodes with multiple
-// updates per node as well as ensuring that the created document and its update reach the node that
+// updates per node as well as ensuring that the added document and its update reach the node that
 // subscribes to the P2P collection topic.
 func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{

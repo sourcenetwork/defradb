@@ -232,7 +232,7 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
-				ExpectError: "creating an index on a non-existing property",
+				ExpectError: "adding an index on a non-existing property",
 			},
 		},
 	}

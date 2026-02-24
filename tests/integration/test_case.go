@@ -656,7 +656,7 @@ type SyncDocs struct {
 	// The collection containing the documents to sync.
 	CollectionID int
 
-	// The indices of documents to sync (references to previously created documents).
+	// The indices of documents to sync (references to previously added documents).
 	// Uses the same DocIndex pattern as other test actions - these will be resolved
 	// to actual document IDs at runtime by the test framework.
 	DocIDs []int

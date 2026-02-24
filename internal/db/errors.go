@@ -48,7 +48,7 @@ const (
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
-	errNonExistingFieldForIndex                  string = "creating an index on a non-existing property"
+	errNonExistingFieldForIndex                  string = "adding an index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
 	errCanNotDeleteIndexedField                  string = "can not delete indexed field"

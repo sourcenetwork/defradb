@@ -127,7 +127,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	node := s.Nodes[nodeID]
 
 	// update the actual document head on the node that updated it
-	// as the node created the document, it is already decrypted
+	// as the node added the document, it is already decrypted
 	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid}
 
 	// update the expected document heads of replicator targets

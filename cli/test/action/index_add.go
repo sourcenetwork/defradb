@@ -18,13 +18,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// IndexAdd executes the `client index create` command and requires that the returned
+// IndexAdd executes the `client index add` command and requires that the returned
 // result matches the expected value.
 type IndexAdd struct {
 	stateful
 	augmented
 
-	// The collection name to create the index on (required).
+	// The collection name to add the index on (required).
 	Collection string
 
 	// The name of the index (optional).

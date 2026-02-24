@@ -110,12 +110,12 @@ An optional value that specifies as to whether deleted documents may be
 Adds one or more documents of this type using the data provided.
 `
 	upsertDocumentDescription string = `
-Update or create a document in this collection using the data provided. The provided filter
- must match at most one document. The matching document will be updated with the provided 
- update input, or if no matching document is found, a new document will be created with the
+Update or add a document in this collection using the data provided. The provided filter
+ must match at most one document. The matching document will be updated with the provided
+ update input, or if no matching document is found, a new document will be added with the
  provided add input.
 
-NOTE: It is highly recommended to create an index on the fields used to filter.`
+NOTE: It is highly recommended to add an index on the fields used to filter.`
 	updateDocumentsDescription string = `
 Updates documents in this collection using the data provided. Only documents
  matching any provided criteria will be updated, if no criteria are provided

@@ -38,7 +38,7 @@ func TestP2POneToOneReplicatorWithAddWithUpdate(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			&action.AddDoc{
-				// This document is created in node `0` after the replicator has
+				// This document is added in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
 				NodeID: immutable.Some(0),
@@ -93,7 +93,7 @@ func TestP2POneToOneReplicatorWithAddWithUpdateOnRecipientNode(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			&action.AddDoc{
-				// This document is created in node `0` after the replicator has
+				// This document is added in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
 				NodeID: immutable.Some(0),
@@ -113,7 +113,7 @@ func TestP2POneToOneReplicatorWithAddWithUpdateOnRecipientNode(t *testing.T) {
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the seond node only, and allow the value to sync
-				// back to the original node that created the document.
+				// back to the original node that added the document.
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 60
@@ -154,21 +154,21 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 				`,
 			},
 			&action.AddDoc{
-				// This document is created in all nodes
+				// This document is added in all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
 			testUtils.AddReplicator{
-				// Replication must happen after creating documents
+				// Replication must happen after adding documents
 				// on both nodes, or a race condition can occur
-				// on the second node when creating the document
+				// on the second node when adding the document
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			&action.AddDoc{
-				// This document is created in the second node (target) only
+				// This document is added in the second node (target) only
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Name": "Fred",

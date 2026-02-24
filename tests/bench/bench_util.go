@@ -156,12 +156,12 @@ func BackfillBenchmarkDB(
 						return
 					}
 
-					// create the documents
+					// add the documents
 					docIDs := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
 						doc, err := client.NewDocFromJSON(ctx, []byte(docs[j]), cols[j].Version())
 						if err != nil {
-							errCh <- errors.Wrap("failed to create document from fixture", err)
+							errCh <- errors.Wrap("failed to add document from fixture", err)
 							return
 						}
 
@@ -179,7 +179,7 @@ func BackfillBenchmarkDB(
 								)
 								continue
 							} else if err != nil {
-								errCh <- errors.Wrap("failed to create document", err)
+								errCh <- errors.Wrap("failed to add document", err)
 							}
 							docIDs[j] = doc.ID()
 							break

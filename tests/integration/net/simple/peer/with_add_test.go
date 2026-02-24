@@ -92,7 +92,7 @@ func TestP2PAddDoesNotSync(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestP2PAddWithP2PCollection ensures that created documents reach the node that subscribes
+// TestP2PAddWithP2PCollection ensures that added documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PAddWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{

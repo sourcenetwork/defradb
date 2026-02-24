@@ -36,10 +36,10 @@ type AddDoc struct {
 
 	// The identity of this request. Optional.
 	//
-	// If an Identity is not provided the created document(s) will be public.
+	// If an Identity is not provided the added document(s) will be public.
 	//
 	// If an Identity is provided and the collection has a policy, then the
-	// created document(s) will be owned by this Identity.
+	// added document(s) will be owned by this Identity.
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
