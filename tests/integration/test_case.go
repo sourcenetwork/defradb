@@ -209,9 +209,9 @@ func NewDocIndex(collectionIndex int, index int) DocIndex {
 // DeleteDoc will attempt to delete the given document in the given collection
 // using the collection api.
 type DeleteDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
+	// NodeID may hold the ID (index) of a node to apply this delete to.
 	//
-	// If a value is not provided the document will be created in all nodes.
+	// If a value is not provided the document will be deleted in all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.

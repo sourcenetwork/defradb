@@ -139,7 +139,7 @@ An optional filter for this update that will limit the update to the documents
 	upsertFilterArgDescription string = `
 A required filter for this upsert that must match one or zero documents.
  If a matching document is found it will be updated, otherwise a new
- document will be created.
+ document will be added.
 `
 	deleteDocumentsDescription string = `
 Deletes documents in this collection matching any provided criteria. If no

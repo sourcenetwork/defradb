@@ -39,7 +39,7 @@ func TestNAC_GatesDocumentAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
-			&action.Request{ // Should now be created
+			&action.Request{ // Should now be added
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -81,7 +81,7 @@ func TestNAC_GatesDocumentAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
-			&action.Request{ // Should not be created
+			&action.Request{ // Should not be added
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},
@@ -121,7 +121,7 @@ func TestNAC_GatesDocumentAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
-			&action.Request{ // Should not be created
+			&action.Request{ // Should not be added
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},

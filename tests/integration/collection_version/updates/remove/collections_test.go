@@ -461,7 +461,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 				},
 			},
 			&action.AddDoc{
-				// It is important that this test creates and queries a document as it is possible
+				// It is important that this test adds and queries a document as it is possible
 				// for the code to be written in a way that erroneously deletes the field short ids
 				// for fields that existed for non-deleted versions.
 				DocMap: map[string]any{
