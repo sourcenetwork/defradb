@@ -112,14 +112,18 @@ func (c *collection) purgeChunk(ctx context.Context, docIDs []string, pruneHisto
 			return nil, ctx.Err()
 		}
 
-		// Delete index entries first
+		// Delete index entries first. Skip index deletion if the document
+		// has fields that don't match the current schema.
 		if hasIndexes {
 			docID, err := client.NewDocIDFromString(docIDStr)
 			if err != nil {
 				return nil, err
 			}
 			if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
-				return nil, err
+				if !strings.Contains(err.Error(), "field does not exist") &&
+					!strings.Contains(err.Error(), "corrupted index") {
+					return nil, err
+				}
 			}
 		}
 
@@ -275,14 +279,18 @@ func (c *collection) purgeOneDoc(ctx context.Context, docIDStr string) error {
 		return err
 	}
 
-	// Delete index entries first
+	// Delete index entries first. Skip errors for missing fields or corrupted
+	// indexes — the document data will still be deleted below.
 	if len(c.Version().Indexes) > 0 {
 		docID, err := client.NewDocIDFromString(docIDStr)
 		if err != nil {
 			return err
 		}
 		if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
-			return err
+			if !strings.Contains(err.Error(), "field does not exist") &&
+				!strings.Contains(err.Error(), "corrupted index") {
+				return err
+			}
 		}
 	}
 

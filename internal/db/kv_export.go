@@ -8,9 +8,50 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// ExportFieldMapping returns the field mapping for the given collection.
+// The caller should serialize this mapping alongside the KV snapshot so that
+// the importing instance can remap short IDs.
+func (db *DB) ExportFieldMapping(ctx context.Context, collectionName string) (*client.CollectionFieldMapping, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	col, err := db.getCollectionByName(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
+	if err != nil {
+		return nil, err
+	}
+
+	mapping := &client.CollectionFieldMapping{
+		CollectionID:      col.CollectionID(),
+		CollectionShortID: shortID,
+		FieldIDMapping:    make(map[uint32]string),
+	}
+
+	for _, field := range col.Version().Fields {
+		if field.FieldID == "" {
+			continue
+		}
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, field.FieldID)
+		if err != nil {
+			return nil, err
+		}
+		mapping.FieldIDMapping[fieldShortID] = field.FieldID
+	}
+
+	return mapping, nil
+}
 
 // ExportDocKVs writes rootstore KV pairs for the given docIDs to w
 // in length-prefixed binary format: [key_len u32 BE][key][value_len u32 BE][value].

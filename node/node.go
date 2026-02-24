@@ -49,7 +49,9 @@ type DB interface {
 	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	ExportFieldMapping(ctx context.Context, collectionName string) (*client.CollectionFieldMapping, error)
 	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	ImportRawKVsWithMapping(ctx context.Context, r io.Reader, sourceMappings []*client.CollectionFieldMapping) (int, error)
 	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 	Close()
 }
