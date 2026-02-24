@@ -33,7 +33,7 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Users {
 						name
@@ -113,7 +113,7 @@ func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testin
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Users {
 						name

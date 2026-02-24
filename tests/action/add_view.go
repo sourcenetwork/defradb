@@ -21,8 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// CreateView is an action that will create a new View.
-type CreateView struct {
+// AddView is an action that will add a new View.
+type AddView struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to create this View on.
@@ -52,11 +52,11 @@ type CreateView struct {
 	ExpectedError string
 }
 
-var _ Action = (*CreateView)(nil)
-var _ Stateful = (*CreateView)(nil)
+var _ Action = (*AddView)(nil)
+var _ Stateful = (*AddView)(nil)
 
 // Execute executes the create view action.
-func (a *CreateView) Execute() {
+func (a *AddView) Execute() {
 	sdl := a.SDL
 
 	switch {

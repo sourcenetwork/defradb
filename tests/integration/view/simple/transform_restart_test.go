@@ -46,7 +46,7 @@ func TestView_SimpleWithTransformAndRestart(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name

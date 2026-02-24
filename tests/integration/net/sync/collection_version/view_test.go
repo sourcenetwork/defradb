@@ -52,7 +52,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -152,7 +152,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {

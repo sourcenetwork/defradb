@@ -51,7 +51,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
@@ -144,7 +144,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name

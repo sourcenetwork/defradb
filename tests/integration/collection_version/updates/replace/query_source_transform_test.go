@@ -58,7 +58,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						firstName

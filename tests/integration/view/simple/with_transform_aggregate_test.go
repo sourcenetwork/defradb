@@ -44,7 +44,7 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						age

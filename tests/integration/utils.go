@@ -586,7 +586,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
-		case *action.CreateView:
+		case *action.AddView:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
