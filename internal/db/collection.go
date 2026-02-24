@@ -357,7 +357,7 @@ func (c *collection) Add(
 	}
 	defer txn.Discard()
 
-	err = c.create(ctx, doc, opt)
+	err = c.add(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
@@ -390,7 +390,7 @@ func (c *collection) AddMany(
 	defer txn.Discard()
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 		if err != nil {
 			return err
 		}
@@ -419,7 +419,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
-func (c *collection) create(
+func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
 	opt *options.CollectionAddOptions,
@@ -619,7 +619,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 	}
 	if err != nil {
 		return err

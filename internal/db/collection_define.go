@@ -36,7 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *DB) createCollections(
+func (db *DB) addCollections(
 	ctx context.Context,
 	parseResults []core.Collection,
 ) ([]client.CollectionVersion, error) {

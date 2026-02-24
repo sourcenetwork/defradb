@@ -62,7 +62,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 	}
 }
 
-// NewCollectionIndex creates a new collection index
+// NewCollectionIndex adds a new collection index
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
