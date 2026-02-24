@@ -80,9 +80,9 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
 	switch typeStr {
-	case "create":
+	case "add":
 		mut.Type = request.AddObjects
-		parseCreateMutationArgs(mut, arguments)
+		parseAddMutationArgs(mut, arguments)
 
 	case "update":
 		mut.Type = request.UpdateObjects
@@ -118,7 +118,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	return mut, err
 }
 
-func parseCreateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 	for name, value := range args {
 		switch name {
 		case request.Input:

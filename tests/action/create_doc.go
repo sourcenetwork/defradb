@@ -246,7 +246,7 @@ func createDocViaGQL(
 			strings.Join(a.EncryptedFields, ", ") + "]"
 	}
 
-	key := fmt.Sprintf("create_%s", collection.Name())
+	key := fmt.Sprintf("add_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn, err := a.s.GetTransaction(node, immutable.None[int]())

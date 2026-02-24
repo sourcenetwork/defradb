@@ -153,12 +153,12 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Users(input: {}) {
+					add_Users(input: {}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"_docID": "bae-d97a4927-9fad-53a0-bda2-8e9d8dd33551",
 						},
@@ -213,13 +213,13 @@ func TestMutationCreate_With10Collections(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Foo1(input: {about: "something", name: "John"}) {
+					add_Foo1(input: {about: "something", name: "John"}) {
 						about
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Foo1": []map[string]any{
+					"add_Foo1": []map[string]any{
 						{
 							"about": "something",
 							"name":  "John",

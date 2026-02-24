@@ -52,12 +52,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -66,12 +66,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 						},
@@ -109,12 +109,12 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -142,12 +142,12 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -185,12 +185,12 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -199,12 +199,12 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 						},

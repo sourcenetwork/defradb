@@ -1217,12 +1217,12 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
 	create := &gql.Field{
-		Name:        "create_" + obj.Name(),
-		Description: createDocumentDescription,
+		Name:        "add_" + obj.Name(),
+		Description: addDocumentDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.Input: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
-				"Create "+obj.Name()+" documents"),
+				"Add "+obj.Name()+" documents"),
 			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
 			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
 				encryptFieldsArgDescription),

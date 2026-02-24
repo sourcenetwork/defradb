@@ -36,12 +36,12 @@ func TestMutationCreateWithNonNullVariable(t *testing.T) {
 					},
 				}),
 				Request: `mutation($user: [UsersMutationInputArg!]!) {
-					create_Users(input: $user) {
+					add_Users(input: $user) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"name": "Bob",
 						},
@@ -66,12 +66,12 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation($user: [UsersMutationInputArg!] = {name: "Bob"}) {
-					create_Users(input: $user) {
+					add_Users(input: $user) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"name": "Bob",
 						},
@@ -99,12 +99,12 @@ func TestMutationCreate_WithVariableInJSONObject_Succeeds(t *testing.T) {
 					"message": "hello",
 				}),
 				Request: `mutation($message: String) {
-					create_Users(input: {embed: {message: $message}}) {
+					add_Users(input: {embed: {message: $message}}) {
 						embed
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"embed": map[string]any{
 								"message": "hello",
@@ -136,12 +136,12 @@ func TestMutationCreate_WithJSONVariable_Succeeds(t *testing.T) {
 					},
 				}),
 				Request: `mutation($embed: JSON) {
-					create_Users(input: {embed: $embed}) {
+					add_Users(input: {embed: $embed}) {
 						embed
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"embed": map[string]any{
 								"bar": 1,

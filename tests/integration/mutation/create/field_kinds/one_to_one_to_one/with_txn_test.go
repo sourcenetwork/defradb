@@ -50,12 +50,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
+					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_Book": []map[string]any{
+					"add_Book": []map[string]any{
 						{
 							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
@@ -65,12 +65,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
+					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_Book": []map[string]any{
+					"add_Book": []map[string]any{
 						{
 							"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 						},
@@ -212,12 +212,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
+					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_Book": []map[string]any{
+					"add_Book": []map[string]any{
 						{
 							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
@@ -227,12 +227,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
+					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_Book": []map[string]any{
+					"add_Book": []map[string]any{
 						{
 							"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 						},

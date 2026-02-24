@@ -47,11 +47,11 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-						create_Users(input:{}) {
+						add_Users(input:{}) {
 							name
 						}
 					}`,
-				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
+				ExpectedError: `Cannot query field "add_Users" on type "Mutation".`,
 			},
 			&action.Request{
 				Request: `mutation {
@@ -108,11 +108,11 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-						create_Users(input:{}) {
+						add_Users(input:{}) {
 							name
 						}
 					}`,
-				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
+				ExpectedError: `Cannot query field "add_Users" on type "Mutation".`,
 			},
 			&action.Request{
 				Request: `mutation {

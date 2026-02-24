@@ -34,12 +34,12 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27}) {
+					add_User(input: {name: "John", age: 27}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
 						},
@@ -88,12 +88,12 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27}) {
+					add_User(input: {name: "John", age: 27}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
 						},

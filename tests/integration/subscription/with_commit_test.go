@@ -111,7 +111,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 						_version {
 							links {
@@ -125,7 +125,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 							"_version": []map[string]any{
@@ -140,7 +140,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 						_version {
 							links {
@@ -154,7 +154,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 							"_version": []map[string]any{

@@ -106,8 +106,8 @@ An optional filter for this aggregate, only documents matching the given criteri
 An optional value that specifies as to whether deleted documents may be
  returned. This argument will propagate down through any child selects/joins.
 `
-	createDocumentDescription string = `
-Creates one or more documents of this type using the data provided.
+	addDocumentDescription string = `
+Adds one or more documents of this type using the data provided.
 `
 	upsertDocumentDescription string = `
 Update or create a document in this collection using the data provided. The provided filter

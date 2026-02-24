@@ -529,11 +529,11 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDef
 			},
 			&action.Request{
 				Request: `mutation {
-					bob: create_User(input: { name: "Bob" }) {
+					bob: add_User(input: { name: "Bob" }) {
 						created
 					}
 
-					alice: create_User(input: { name: "Alice" }) {
+					alice: add_User(input: { name: "Alice" }) {
 						created
 					}
                 }`,

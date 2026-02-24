@@ -117,12 +117,12 @@ func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-                    create_User(input: {time: UTC_NOW}) {
+                    add_User(input: {time: UTC_NOW}) {
 						time
                     }
                 }`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"time": testUtils.CurrentTimestamp(),
 						},
@@ -148,11 +148,11 @@ func TestMutationCreate_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					bob: create_User(input: { name: "Bob", created: UTC_NOW }) {
+					bob: add_User(input: { name: "Bob", created: UTC_NOW }) {
 						created
 					}
 
-					alice: create_User(input: { name: "Alice", created: UTC_NOW }) {
+					alice: add_User(input: { name: "Alice", created: UTC_NOW }) {
 						created
 					}
                 }`,

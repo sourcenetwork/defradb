@@ -29,14 +29,14 @@ func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-							create_Users(input: {name: "John"}) {
+							add_Users(input: {name: "John"}) {
 								_version {
 									cid
 								}
 							}
 						}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"_version": []map[string]any{
 								{

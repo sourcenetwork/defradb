@@ -29,12 +29,12 @@ func TestMutationCreate_WithNullEncrypt_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Users(encrypt: null, input: {name: "Bob"}) {
+					add_Users(encrypt: null, input: {name: "Bob"}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"name": "Bob",
 						},
@@ -59,12 +59,12 @@ func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Users(input: null) {
+					add_Users(input: null) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{},
+					"add_Users": []map[string]any{},
 				},
 			},
 		},
@@ -85,7 +85,7 @@ func TestMutationCreate_WithNullInputEntry_ReturnsError(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Users(input: [null]) {
+					add_Users(input: [null]) {
 						name
 					}
 				}`,
@@ -109,12 +109,12 @@ func TestMutationCreate_WithNullEncryptFields_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_Users(encryptFields: null, input: {name: "Bob"}) {
+					add_Users(encryptFields: null, input: {name: "Bob"}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_Users": []map[string]any{
+					"add_Users": []map[string]any{
 						{
 							"name": "Bob",
 						},

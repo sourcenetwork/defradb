@@ -18,11 +18,11 @@ Insert is used to create new documents from scratch. This involves many necessar
 type Book { ... }
 
 mutation {
-    create_Book(input: createBookInput) [Book]
+    add_Book(input: createBookInput) [Book]
 }
 ```
 
-The above example displays the general structure of an insert mutation. You call the `create_TYPE` mutation, with the given input.
+The above example displays the general structure of an insert mutation. You call the `add_TYPE` mutation, with the given input.
 
 ### Input Object Type
 
@@ -38,7 +38,7 @@ type Book {
 }
 
 mutation {
-    create_Book(input: {
+    add_Book(input: {
         title: "Painted House",
         description: "The story begins as Luke Chandler ...",
         rating: 4.9
@@ -71,7 +71,7 @@ mutation {
 
 See the structure and syntax of the filter query above. You can also see an additional field `id`, thawhich will supersede the `filter`; this makes it easy to update a single document by a given ID.
 
-The input object type is the same for both `update_TYPE` and `create_TYPE` mutations.
+The input object type is the same for both `update_TYPE` and `add_TYPE` mutations.
 
 Here's an example.
 ```json
