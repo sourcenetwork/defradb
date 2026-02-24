@@ -75,7 +75,7 @@ Options:
 
 			ctx := cmd.Context()
 
-			createOpt := options.WithIdentity(
+			addOpt := options.WithIdentity(
 				options.CollectionAdd().
 					SetEncryptDoc(shouldEncryptDoc).
 					SetEncryptedFields(encryptedFields),
@@ -87,14 +87,14 @@ Options:
 				if err != nil {
 					return err
 				}
-				return col.AddMany(ctx, docs, createOpt)
+				return col.AddMany(ctx, docs, addOpt)
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
 				return err
 			}
-			return col.Add(cmd.Context(), doc, createOpt)
+			return col.Add(cmd.Context(), doc, addOpt)
 		},
 	}
 

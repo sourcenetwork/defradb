@@ -60,7 +60,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	createOpt := options.WithIdentity(
+	addOpt := options.WithIdentity(
 		options.CollectionAdd().
 			SetEncryptDoc(encConf.IsDocEncrypted).
 			SetEncryptedFields(encConf.EncryptedFields),
@@ -75,7 +75,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.AddMany(ctx, docList, createOpt); err != nil {
+		if err := col.AddMany(ctx, docList, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -86,7 +86,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Add(ctx, doc, createOpt); err != nil {
+		if err := col.Add(ctx, doc, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -299,9 +299,9 @@ func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) 
 		Unique: indexDesc.Unique,
 	}
 
-	createIndexOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(ctx))
+	addIndexOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(ctx))
 
-	index, err := col.AddIndex(ctx, descWithoutID, createIndexOpt)
+	index, err := col.AddIndex(ctx, descWithoutID, addIndexOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

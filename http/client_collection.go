@@ -180,15 +180,15 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		createOpts := options.CollectionAdd().
+		addOpts := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 
 		if opt.GetIdentity().HasValue() {
-			createOpts.SetIdentity(opt.GetIdentity().Value())
+			addOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 
-		return c.Add(ctx, doc, createOpts)
+		return c.Add(ctx, doc, addOpts)
 	}
 	return err
 }

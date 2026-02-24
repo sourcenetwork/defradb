@@ -177,13 +177,13 @@ func (c *Collection) Save(
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		opt := utils.NewOptions(opts...)
-		createOpt := options.CollectionAdd().
+		addOpt := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 		if opt.GetIdentity().HasValue() {
-			createOpt.SetIdentity(opt.GetIdentity().Value())
+			addOpt.SetIdentity(opt.GetIdentity().Value())
 		}
-		return c.Add(ctx, doc, createOpt)
+		return c.Add(ctx, doc, addOpt)
 	}
 	return err
 }
