@@ -607,10 +607,10 @@ type Mutation {
     _: Boolean
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_User(    """
+    add_User(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -625,7 +625,7 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [UserExplicitField!],     "Create User documents"
+encryptFields: [UserExplicitField!],     "Add User documents"
 input: [UserMutationInputArg!]): [User]
     """
     

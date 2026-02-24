@@ -1913,10 +1913,10 @@ type Mutation {
     _: Boolean
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Author(    """
+    add_Author(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1931,14 +1931,14 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [AuthorExplicitField!],     "Create Author documents"
+encryptFields: [AuthorExplicitField!],     "Add Author documents"
 input: [AuthorMutationInputArg!]): [Author]
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Book(    """
+    add_Book(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1953,7 +1953,7 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [BookExplicitField!],     "Create Book documents"
+encryptFields: [BookExplicitField!],     "Add Book documents"
 input: [BookMutationInputArg!]): [Book]
     """
     
