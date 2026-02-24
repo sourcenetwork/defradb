@@ -84,7 +84,7 @@ func (c *Collection) Add(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],

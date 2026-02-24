@@ -134,7 +134,7 @@ func CollectionAdd(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.CreateMany(ctx, docs, createOpt)
+		err = col.AddMany(ctx, docs, createOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

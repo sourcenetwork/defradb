@@ -100,7 +100,7 @@ func (n *addNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	if !n.didAdd {
-		err := n.collection.CreateMany(n.p.ctx, n.docs, n.addOptions...)
+		err := n.collection.AddMany(n.p.ctx, n.docs, n.addOptions...)
 		if err != nil {
 			return false, err
 		}

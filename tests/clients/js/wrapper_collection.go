@@ -107,7 +107,7 @@ func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) 
 	return optsVal
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -118,7 +118,7 @@ func (c *Collection) CreateMany(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocAddOptions(opts))
+	_, err = execute(ctx, c.client, "addMany", docsVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}

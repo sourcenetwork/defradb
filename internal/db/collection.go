@@ -365,9 +365,9 @@ func (c *collection) Add(
 	return txn.Commit()
 }
 
-// CreateMany adds a collection of documents at once.
+// AddMany adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) CreateMany(
+func (c *collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],

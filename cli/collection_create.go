@@ -87,7 +87,7 @@ Options:
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(ctx, docs, createOpt)
+				return col.AddMany(ctx, docs, createOpt)
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())

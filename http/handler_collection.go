@@ -75,7 +75,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList, createOpt); err != nil {
+		if err := col.AddMany(ctx, docList, createOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}

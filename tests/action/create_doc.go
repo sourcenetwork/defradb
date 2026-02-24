@@ -194,7 +194,7 @@ func addDocViaColAdd(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
+		err := collection.AddMany(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}

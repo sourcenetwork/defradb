@@ -317,8 +317,8 @@ func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Co
 	return _c
 }
 
-// CreateMany provides a mock function for the type Collection
-func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions]) error {
+// AddMany provides a mock function for the type Collection
+func (_mock *Collection) AddMany(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, docs, opts)
@@ -328,7 +328,7 @@ func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document
 	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateMany")
+		panic("no return value specified for AddMany")
 	}
 
 	var r0 error
@@ -340,21 +340,21 @@ func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document
 	return r0
 }
 
-// Collection_CreateMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateMany'
-type Collection_CreateMany_Call struct {
+// Collection_AddMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddMany'
+type Collection_AddMany_Call struct {
 	*mock.Call
 }
 
-// CreateMany is a helper method to define mock.On call
+// AddMany is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docs []*client.Document
 //   - opts ...options.Enumerable[options.CollectionAddOptions]
-func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_CreateMany_Call {
-	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany",
+func (_e *Collection_Expecter) AddMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_AddMany_Call {
+	return &Collection_AddMany_Call{Call: _e.mock.On("AddMany",
 		append([]interface{}{ctx, docs}, opts...)...)}
 }
 
-func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions])) *Collection_CreateMany_Call {
+func (_c *Collection_AddMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions])) *Collection_AddMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -379,12 +379,12 @@ func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*
 	return _c
 }
 
-func (_c *Collection_CreateMany_Call) Return(err error) *Collection_CreateMany_Call {
+func (_c *Collection_AddMany_Call) Return(err error) *Collection_AddMany_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions]) error) *Collection_CreateMany_Call {
+func (_c *Collection_AddMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.CollectionAddOptions]) error) *Collection_AddMany_Call {
 	_c.Call.Return(run)
 	return _c
 }

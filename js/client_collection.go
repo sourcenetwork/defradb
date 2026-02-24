@@ -117,7 +117,7 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 		}
 		docs = append(docs, doc)
 	}
-	err = c.col.CreateMany(ctx, docs, opts...)
+	err = c.col.AddMany(ctx, docs, opts...)
 	return js.Undefined(), err
 }
 

@@ -179,7 +179,7 @@ func runCollectionBenchCreateMany(
 			docs[j], _ = client.NewDocFromJSON(ctx, []byte(d[0]), collections[0].Version())
 		}
 
-		collections[0].CreateMany(ctx, docs) //nolint:errcheck
+		collections[0].AddMany(ctx, docs) //nolint:errcheck
 	}
 	b.StopTimer()
 
