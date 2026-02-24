@@ -81,7 +81,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 
 	switch typeStr {
 	case "create":
-		mut.Type = request.CreateObjects
+		mut.Type = request.AddObjects
 		parseCreateMutationArgs(mut, arguments)
 
 	case "update":

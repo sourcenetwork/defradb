@@ -14,7 +14,7 @@ type MutationType int
 
 const (
 	NoneMutationType MutationType = iota
-	CreateObjects
+	AddObjects
 	UpdateObjects
 	DeleteObjects
 	UpsertObjects
