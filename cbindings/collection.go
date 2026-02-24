@@ -108,6 +108,8 @@ func CollectionAdd(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -177,6 +179,8 @@ func CollectionDelete(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -234,6 +238,8 @@ func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityP
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	cols, err := store.GetCollections(ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -266,6 +272,8 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, opts C.CollectionOptions, identit
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
@@ -324,6 +332,8 @@ func CollectionGet(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -379,6 +389,8 @@ func CollectionPatch(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	err = store.PatchCollection(ctx, C.GoString(patch), migration,
 		options.WithIdentity(options.PatchCollection(), acpIdentity.FromContext(ctx)))
 	if err != nil {
@@ -413,6 +425,8 @@ func CollectionUpdate(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
@@ -480,6 +494,8 @@ func SetActiveCollection(nodePtr C.uintptr_t, opts C.CollectionOptions, identity
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	err = store.SetActiveCollectionVersion(ctx, versionID,
 		options.WithIdentity(options.SetActiveCollectionVersion(), acpIdentity.FromContext(ctx)))
 	if err != nil {
@@ -511,6 +527,8 @@ func CollectionTruncate(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {

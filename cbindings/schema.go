@@ -36,6 +36,9 @@ func AddSchema(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t) C.R
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opt := options.WithIdentity(options.AddSchema(), iIdentity.FromContext(ctx))
 	collectionVersions, err := store.AddSchema(ctx, C.GoString(schema), opt)
 	if err != nil {
