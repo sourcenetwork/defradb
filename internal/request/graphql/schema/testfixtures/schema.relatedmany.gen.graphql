@@ -3082,7 +3082,7 @@ directive @policy(
     resource: String
 ) on OBJECT
 
-"@index is a directive that can be used to create an index on a type or a field."
+"@index is a directive that can be used to add an index on a type or a field."
 directive @index(
     "Sets the index name."
     name: String
@@ -3096,7 +3096,7 @@ directive @index(
     """
     direction: Ordering
     """
-    Sets the fields the index is created on.
+    Sets the fields the index is added on.
 
     When used on a field definition and the field is not in the includes list
     it will be implicitly added as the first entry.

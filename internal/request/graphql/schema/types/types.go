@@ -232,7 +232,7 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 				Type: orderingEnum,
 			},
 			IndexDirectivePropIncludes: &gql.ArgumentConfig{
-				Description: `Sets the fields the index is created on.
+				Description: `Sets the fields the index is added on.
 
 	When used on a field definition and the field is not in the includes list
 	it will be implicitly added as the first entry.`,
