@@ -122,7 +122,7 @@ func (db *DB) addCollections(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+// New CollectionVersions added by modifying the global type definition (e.g. renaming, adding fields, etc)
 // will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
 //
 // Field [FieldKind] values may be provided in either their raw integer form, or as string as per
@@ -132,7 +132,7 @@ func (db *DB) addCollections(
 // the current active version, whereas referencing by VersionID will patch that specific version, whether it is
 // currently active or not.
 //
-// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+// A lens configuration may also be provided, and will become the migration to any new CollectionVersions added
 // by the patch.
 func (db *DB) patchCollection(
 	ctx context.Context,
@@ -752,7 +752,7 @@ func validateCollectionDoesNotHaveHigherVersion(
 		if newVersion.PreviousVersion.HasValue() &&
 			newVersion.PreviousVersion.Value().SourceCollectionID == version.VersionID {
 			// We do not allow the deletion of versions that are not the head of their branch - this would
-			// create a gap in the history, potentially causing problems that we do not wish to test for or
+			// add a gap in the history, potentially causing problems that we do not wish to test for or
 			// handle right now.
 			return NewErrCannotDeleteOldVersion(version.VersionID, newVersion.VersionID)
 		}
@@ -929,7 +929,7 @@ func findIndexWithFirstField(
 
 // ensureOneToOneUniqueIndex ensures a unique index exists for a one-to-one relation's _id field.
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
-// If no user-defined index exists, it creates one automatically.
+// If no user-defined index exists, it adds one automatically.
 func ensureOneToOneUniqueIndex(
 	addIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
@@ -952,7 +952,7 @@ func ensureOneToOneUniqueIndex(
 		return nil, nil
 	}
 
-	// No user-defined index exists, create one automatically
+	// No user-defined index exists, add one automatically
 	return &client.IndexAddRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
@@ -962,7 +962,7 @@ func ensureOneToOneUniqueIndex(
 // getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
 // standard schema creation flow that calls finalizeRelations.
-// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be created.
+// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be added.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
