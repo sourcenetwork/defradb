@@ -2811,7 +2811,7 @@
                                 }
                             }
                         },
-                        "description": "The created collection and embedded schemas for the added view."
+                        "description": "The added collection and embedded schemas for the added view."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2888,7 +2888,7 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to create collections",
+            "description": "Upload GQL schemas to add collections",
             "name": "schema"
         },
         {
