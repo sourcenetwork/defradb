@@ -87,7 +87,7 @@ func (db *DB) addView(
 		parseResults[i].Definition.Query = immutable.Some(source)
 	}
 
-	returnDescriptions, err := db.createCollections(ctx, parseResults)
+	returnDescriptions, err := db.addCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
 	}

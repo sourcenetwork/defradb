@@ -569,7 +569,7 @@ func (g *Generator) buildTypes(
 }
 
 // buildMutationInputTypes creates the input object types
-// for collection create and update mutation operations.
+// for collection add and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersion) error {
 	for _, collection := range collections {
 		if collection.IsEmbeddedOnly {
@@ -1216,13 +1216,13 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
-	create := &gql.Field{
-		Name:        "create_" + obj.Name(),
-		Description: createDocumentDescription,
+	add := &gql.Field{
+		Name:        "add_" + obj.Name(),
+		Description: addDocumentDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.Input: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
-				"Create "+obj.Name()+" documents"),
+				"Add "+obj.Name()+" documents"),
 			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
 			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
 				encryptFieldsArgDescription),
@@ -1256,12 +1256,12 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
-			request.CreateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			request.AddInput:     schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Add field values"),
 			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
 		},
 	}
 
-	return []*gql.Field{create, update, delete, upsert}, nil
+	return []*gql.Field{add, update, delete, upsert}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {

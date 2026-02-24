@@ -33,21 +33,21 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 						nfts2: [Int!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
 					"nfts2": [2, 4]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Keenan",
 					"nfts1": [3, 4],
@@ -72,7 +72,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t *testing.T) {
+func TestArrayUniqueCompositeIndex_IfDocIsAddedThatViolatesUniqueness_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -83,14 +83,14 @@ func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t 
 						nfts2: [Int!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
@@ -98,7 +98,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t 
 				}`,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [5, 6, 2],
@@ -123,14 +123,14 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t 
 						nfts2: [Int!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
@@ -163,14 +163,14 @@ func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 						nfts2: [Int] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, null],
 					"nfts2": [null, 1, 3, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, null, 2],

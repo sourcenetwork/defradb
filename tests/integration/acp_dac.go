@@ -137,7 +137,7 @@ func addDACPolicy(
 	}
 }
 
-// AddDACActorRelationship will attempt to create a new relationship for a document with an actor.
+// AddDACActorRelationship will attempt to add a new relationship for a document with an actor.
 type AddDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
@@ -167,7 +167,7 @@ type AddDACActorRelationship struct {
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
 	TargetIdentity immutable.Option[state.Identity]
 
-	// The requestor identity, i.e. identity of the actor creating the relationship.
+	// The requestor identity, i.e. identity of the actor adding the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.

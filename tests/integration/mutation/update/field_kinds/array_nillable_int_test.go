@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, null, 3]

@@ -39,7 +39,7 @@ func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John"

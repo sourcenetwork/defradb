@@ -48,7 +48,7 @@ const (
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
-	errNonExistingFieldForIndex                  string = "creating an index on a non-existing property"
+	errNonExistingFieldForIndex                  string = "adding an index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
 	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
@@ -69,7 +69,7 @@ const (
 	errFailedToWriteString                       string = "failed to write string"
 	errJSONDecode                                string = "failed to decode JSON"
 	errDocFromMap                                string = "failed to create a new doc from map"
-	errDocCreate                                 string = "failed to save a new doc to collection"
+	errDocAdd                                    string = "failed to add a new doc to collection"
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
@@ -220,7 +220,7 @@ func NewErrInvalidStoredIndexKey(key string) error {
 	return errors.New(errInvalidStoredIndexKey, errors.NewKV("Key", key))
 }
 
-// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to create an index
+// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to add an index
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
@@ -263,7 +263,7 @@ func NewErrFailedToGetAllCollections(inner error) error {
 
 // NewErrDocVerification returns a new error indicating that the document verification failed.
 //
-// This occurs when a documents contents fail the verification during a Create()
+// This occurs when a documents contents fail the verification during an Add()
 // call against the supplied Document ID (docID).
 func NewErrDocVerification(expected string, actual string) error {
 	return errors.New(
@@ -546,10 +546,10 @@ func NewErrDocFromMap(inner error) error {
 	return errors.Wrap(errDocFromMap, inner)
 }
 
-// NewErrDocCreate returns a new error indicating there was a failure to save
+// NewErrDocAdd returns a new error indicating there was a failure to add
 // a new doc to a collection
-func NewErrDocCreate(inner error) error {
-	return errors.Wrap(errDocCreate, inner)
+func NewErrDocAdd(inner error) error {
+	return errors.Wrap(errDocAdd, inner)
 }
 
 // NewErrDocUpdate returns a new error indicating there was a failure to update

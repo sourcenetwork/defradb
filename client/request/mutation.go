@@ -14,7 +14,7 @@ type MutationType int
 
 const (
 	NoneMutationType = MutationType(iota)
-	CreateObjects
+	AddObjects
 	UpdateObjects
 	DeleteObjects
 	UpsertObjects
@@ -31,14 +31,14 @@ type ObjectMutation struct {
 
 	// Type is the type of mutatation that this object represents.
 	//
-	// For example [CreateObjects].
+	// For example [AddObjects].
 	Type MutationType
 
 	// Collection is the target collection name.
 	Collection string
 
-	// CreateInput is the array of maps of fields and values used for a create mutation.
-	CreateInput []map[string]any
+	// AddInput is the array of maps of fields and values used for an add mutation.
+	AddInput []map[string]any
 
 	// UpdateInput is a map of fields and values used for an update mutation.
 	UpdateInput map[string]any

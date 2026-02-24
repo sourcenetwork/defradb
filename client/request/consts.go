@@ -16,7 +16,7 @@ const (
 	TypeNameFieldName = "__typename"
 
 	Input              = "input"
-	CreateInput        = "create"
+	AddInput           = "add"
 	UpdateInput        = "update"
 	FieldArgName       = "field"
 	FieldIDName        = "fieldId"

@@ -20,14 +20,14 @@ import (
 func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5],
 					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Maximum: 5
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [30, 40, 50],
 					"pageRatings": [10.0, 20.0, 30.0]
@@ -80,14 +80,14 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithNullAndMaxAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, null],
 					"pageRatings": [1.0, 2.0, 3.0, null]
 				}`, // Maximum: 5
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [30, 40, 50, null],
 					"pageRatings": [10.0, 20.0, 30.0, null]

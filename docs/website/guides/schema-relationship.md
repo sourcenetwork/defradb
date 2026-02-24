@@ -73,7 +73,7 @@ type Address {
 
 ```graphql
 mutation {
-  create_Address(input: {streetNumber: "123", streetName: "Test road", country: "Canada"}) {
+  add_Address(input: {streetNumber: "123", streetName: "Test road", country: "Canada"}) {
   	_docID
   }
 }
@@ -81,7 +81,7 @@ mutation {
 
 ```graphql
 mutation {
-  create_User(input: {name: "Alice", username: "awesomealice", age: 35, _addressID: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
+  add_User(input: {name: "Alice", username: "awesomealice", age: 35, _addressID: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
   	_docID
   }
 }
@@ -177,7 +177,7 @@ defradb client schema add -f schema.graphql
 
 ```graphql
 mutation {
-    create_Author(input: {name: "Saadi", dateOfBirth: "1210-07-23T03:46:56.647Z"}) {
+    add_Author(input: {name: "Saadi", dateOfBirth: "1210-07-23T03:46:56.647Z"}) {
     	_docID
     }
 }
@@ -186,7 +186,7 @@ mutation {
 
 ```graphql
 mutation {
-  	create_Book(input: {name: "Gulistan", genre: "Poetry", _authorID: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
+  	add_Book(input: {name: "Gulistan", genre: "Poetry", _authorID: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
       	_docID
     }
 }

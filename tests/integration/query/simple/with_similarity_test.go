@@ -143,7 +143,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
@@ -180,7 +180,7 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
@@ -210,7 +210,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 					pointsList: [Float32!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []float32{2, 4, 1},
@@ -247,7 +247,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 					pointsList: [Float64!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []float64{2, 4, 1},
@@ -284,7 +284,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 					pointsList: [Float64!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"pointsList": [2, 4, 1]
@@ -321,19 +321,19 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Bob",
 					"pointsList": []int64{1, 1, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Alice",
 					"pointsList": []int64{4, 5, 3},
@@ -374,19 +374,19 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Bob",
 					"pointsList": []int64{1, 1, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Alice",
 					"pointsList": []int64{4, 5, 3},
@@ -427,19 +427,19 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Bob",
 					"pointsList": []int64{1, 1, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Alice",
 					"pointsList": []int64{4, 5, 3},
@@ -481,19 +481,19 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 					pointsList: [Int!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Bob",
 					"pointsList": []int64{1, 1, 1},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "Alice",
 					"pointsList": []int64{4, 5, 3},

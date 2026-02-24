@@ -35,7 +35,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 						published: [Book]
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -43,7 +43,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Voltaire",
@@ -51,7 +51,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Simon Pelloutier",
@@ -59,7 +59,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -67,7 +67,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -75,7 +75,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "The Client",
@@ -83,7 +83,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Candide",
@@ -91,7 +91,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Zadig",
@@ -99,7 +99,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",

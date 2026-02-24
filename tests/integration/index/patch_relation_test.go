@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
+func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -69,7 +69,7 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *testing.T) {
+func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -144,7 +144,7 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
+func TestPatchRelation_OneToMany_DoesNotAddUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

@@ -27,7 +27,7 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -40,7 +40,7 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"Alice"
 				}`,

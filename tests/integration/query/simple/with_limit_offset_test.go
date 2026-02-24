@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithLimit0(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -59,13 +59,13 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 func TestQuerySimpleWithLimit1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -96,25 +96,25 @@ func TestQuerySimpleWithLimit1(t *testing.T) {
 func TestQuerySimpleWithLimit2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Carlo",
 						"Age": 55
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Alice",
 						"Age": 19
@@ -150,7 +150,7 @@ func TestQuerySimpleWithLimit2(t *testing.T) {
 func TestQuerySimpleWithLimitBiggerThanTotalDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
@@ -181,13 +181,13 @@ func TestQuerySimpleWithLimitBiggerThanTotalDocuments(t *testing.T) {
 func TestQuerySimpleWithOffset0(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -223,13 +223,13 @@ func TestQuerySimpleWithOffset0(t *testing.T) {
 func TestQuerySimpleWithOffset1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -260,31 +260,31 @@ func TestQuerySimpleWithOffset1(t *testing.T) {
 func TestQuerySimpleWithOffset2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Carlo",
 						"Age": 55
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Alice",
 						"Age": 19
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Melynda",
 						"Age": 30
@@ -324,7 +324,7 @@ func TestQuerySimpleWithOffset2(t *testing.T) {
 func TestQuerySimpleWithOffsetBiggerThanTotalDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
@@ -350,13 +350,13 @@ func TestQuerySimpleWithOffsetBiggerThanTotalDocuments(t *testing.T) {
 func TestQuerySimpleWithLimit0AndOffset0(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -392,13 +392,13 @@ func TestQuerySimpleWithLimit0AndOffset0(t *testing.T) {
 func TestQuerySimpleWithLimit1AndOffset1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -429,25 +429,25 @@ func TestQuerySimpleWithLimit1AndOffset1(t *testing.T) {
 func TestQuerySimpleWithLimit2AndOffset2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Carlo",
 						"Age": 55
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Alice",
 						"Age": 19

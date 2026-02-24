@@ -82,8 +82,8 @@ func getCollection(
 	return cols[0], nil
 }
 
-//export CollectionCreate
-func CollectionCreate(
+//export CollectionAdd
+func CollectionAdd(
 	nodePtr C.uintptr_t,
 	json *C.char,
 	isEncrypted C.int,
@@ -124,7 +124,7 @@ func CollectionCreate(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
-	createOpt := options.WithIdentity(options.CollectionCreate(), acpIdentity.FromContext(ctx))
+	addOpt := options.WithIdentity(options.CollectionAdd(), acpIdentity.FromContext(ctx))
 
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))
@@ -134,7 +134,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.CreateMany(ctx, docs, createOpt)
+		err = col.AddMany(ctx, docs, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -144,7 +144,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Create(ctx, doc, createOpt)
+		err = col.Add(ctx, doc, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

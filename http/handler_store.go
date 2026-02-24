@@ -689,7 +689,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	addViewResponse := openapi3.NewResponse().
-		WithDescription("The created collection and embedded schemas for the added view.").
+		WithDescription("The added collection and embedded schemas for the added view.").
 		WithJSONSchema(addViewResponseSchema)
 
 	addViewRequest := openapi3.NewRequestBody().

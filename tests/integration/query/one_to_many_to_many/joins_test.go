@@ -44,7 +44,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -52,7 +52,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -60,7 +60,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Not a Writer",
@@ -68,7 +68,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "The Rooster Bar",
@@ -76,7 +76,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -84,7 +84,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "The Associate",
@@ -92,7 +92,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -100,7 +100,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -108,7 +108,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -116,7 +116,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
@@ -125,7 +125,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",
@@ -134,7 +134,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Painted House",
@@ -143,7 +143,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 3),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of A Time for Mercy",
@@ -152,7 +152,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 4),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "First of Two Publishers of Sooley",
@@ -161,7 +161,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 5),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Second of Two Publishers of Sooley",

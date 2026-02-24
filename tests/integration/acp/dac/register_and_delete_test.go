@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.T) {
+func TestACP_AddWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.T) {
 	// The same identity that is used to do the registering/creation should be used in the
 	// final read check to see the state of that registered document.
 	// Note: In this test that identity is empty (no identity).
@@ -63,7 +63,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -101,7 +101,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
+func TestACP_AddWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	// The same identity that is used to do the registering/creation should be used in the
 	// final read check to see the state of that registered document.
 	// Note: In this test that identity is empty (no identity).
@@ -147,7 +147,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -186,7 +186,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
+func TestACP_AddWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -228,7 +228,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -271,7 +271,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
+func TestACP_AddWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -313,7 +313,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -362,7 +362,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
+func TestACP_AddWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -404,7 +404,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),

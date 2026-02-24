@@ -63,12 +63,12 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocAddArgs(c, opts...)
 
 	document, err := doc.String()
 	if err != nil {
@@ -84,12 +84,12 @@ func (c *Collection) Create(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocAddArgs(c, opts...)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -111,11 +111,11 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func makeDocCreateArgs(
+func makeDocAddArgs(
 	c *Collection,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) []string {
-	args := []string{"client", "collection", "create"}
+	args := []string{"client", "collection", "add"}
 	args = append(args, "--name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
@@ -177,13 +177,13 @@ func (c *Collection) Save(
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		opt := utils.NewOptions(opts...)
-		createOpt := options.CollectionCreate().
+		addOpt := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 		if opt.GetIdentity().HasValue() {
-			createOpt.SetIdentity(opt.GetIdentity().Value())
+			addOpt.SetIdentity(opt.GetIdentity().Value())
 		}
-		return c.Create(ctx, doc, createOpt)
+		return c.Add(ctx, doc, addOpt)
 	}
 	return err
 }
@@ -359,12 +359,12 @@ func (c *Collection) GetAllDocIDs(
 	return docIDCh, nil
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "create"}
+	args := []string{"client", "index", "add"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)

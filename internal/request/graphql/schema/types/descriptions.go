@@ -68,7 +68,7 @@ The signature of the commit, if one exists. This is used to verify the integrity
 `
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
- and field level) on create will have a height of '1', each subsequent local update
+ and field level) on add will have a height of '1', each subsequent local update
  will increment this by one for the new commits.
 `
 	commitCIDFieldDescription string = `

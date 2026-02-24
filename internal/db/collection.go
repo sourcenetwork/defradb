@@ -333,12 +333,12 @@ func (c *collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-// Create a new document.
+// Add a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Create(
+func (c *collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -357,7 +357,7 @@ func (c *collection) Create(
 	}
 	defer txn.Discard()
 
-	err = c.create(ctx, doc, opt)
+	err = c.add(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
@@ -365,12 +365,12 @@ func (c *collection) Create(
 	return txn.Commit()
 }
 
-// CreateMany creates a collection of documents at once.
+// AddMany adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) CreateMany(
+func (c *collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -390,7 +390,7 @@ func (c *collection) CreateMany(
 	defer txn.Discard()
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 		if err != nil {
 			return err
 		}
@@ -419,10 +419,10 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
-func (c *collection) create(
+func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -485,7 +485,7 @@ func (c *collection) create(
 
 func setContextDocEncryption(
 	ctx context.Context,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) context.Context {
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
@@ -619,7 +619,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 	}
 	if err != nil {
 		return err
@@ -657,19 +657,19 @@ func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	return nil
 }
 
-// save saves the document state. save MUST not be called outside the `c.create`
+// save saves the document state. save MUST not be called outside the `c.add`
 // and `c.update` methods as we wrap the acp logic within those methods. Calling
 // save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
 	doc *client.Document,
-	isCreate bool,
+	isAdd bool,
 ) error {
 	if err := c.validateEncryptedFields(ctx); err != nil {
 		return err
 	}
 
-	if !isCreate {
+	if !isAdd {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
 			return err

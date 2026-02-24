@@ -56,7 +56,7 @@ enum commitFields {
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -339,7 +339,7 @@ input StringOperatorBlock {
     _nlike: String
 }
 
-"Used to create an index from a field."
+"Used to add an index from a field."
 input IndexField {
     direction: Ordering
     field: String
@@ -844,7 +844,7 @@ order: [commitsOrderArg]): [Commit]
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -1801,7 +1801,7 @@ input commitsOrderArg {
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -1913,10 +1913,10 @@ type Mutation {
     _: Boolean
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Author(    """
+    add_Author(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1931,14 +1931,14 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [AuthorExplicitField!],     "Create Author documents"
+encryptFields: [AuthorExplicitField!],     "Add Author documents"
 input: [AuthorMutationInputArg!]): [Author]
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Book(    """
+    add_Book(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1953,7 +1953,7 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [BookExplicitField!],     "Create Book documents"
+encryptFields: [BookExplicitField!],     "Add Book documents"
 input: [BookMutationInputArg!]): [Book]
     """
     
@@ -2047,38 +2047,38 @@ filter: BookFilterArg,     "Update field values"
 input: BookMutationInputArg): [Book]
     """
     
-    Update or create a document in this collection using the data provided. The provided filter
+    Update or add a document in this collection using the data provided. The provided filter
     must match at most one document. The matching document will be updated with the provided 
-    update input, or if no matching document is found, a new document will be created with the
-    provided create input.
+    update input, or if no matching document is found, a new document will be added with the
+    provided add input.
 
-    NOTE: It is highly recommended to create an index on the fields used to filter.
+    NOTE: It is highly recommended to add an index on the fields used to filter.
     """
-    upsert_Author(    "Create field values"
-create: AuthorMutationInputArg!,     """
+    upsert_Author(    "Add field values"
+add: AuthorMutationInputArg!,     """
     
     A required filter for this upsert that must match one or zero documents.
     If a matching document is found it will be updated, otherwise a new
-    document will be created.
+    document will be added.
 
     """
 filter: AuthorFilterArg!,     "Update field values"
 update: AuthorMutationInputArg!): [Author]
     """
     
-    Update or create a document in this collection using the data provided. The provided filter
+    Update or add a document in this collection using the data provided. The provided filter
     must match at most one document. The matching document will be updated with the provided 
-    update input, or if no matching document is found, a new document will be created with the
-    provided create input.
+    update input, or if no matching document is found, a new document will be added with the
+    provided add input.
 
-    NOTE: It is highly recommended to create an index on the fields used to filter.
+    NOTE: It is highly recommended to add an index on the fields used to filter.
     """
-    upsert_Book(    "Create field values"
-create: BookMutationInputArg!,     """
+    upsert_Book(    "Add field values"
+add: BookMutationInputArg!,     """
     
     A required filter for this upsert that must match one or zero documents.
     If a matching document is found it will be updated, otherwise a new
-    document will be created.
+    document will be added.
 
     """
 filter: BookFilterArg!,     "Update field values"
@@ -3082,7 +3082,7 @@ directive @policy(
     resource: String
 ) on OBJECT
 
-"@index is a directive that can be used to create an index on a type or a field."
+"@index is a directive that can be used to add an index on a type or a field."
 directive @index(
     "Sets the index name."
     name: String
@@ -3096,7 +3096,7 @@ directive @index(
     """
     direction: Ordering
     """
-    Sets the fields the index is created on.
+    Sets the fields the index is added on.
 
     When used on a field definition and the field is not in the includes list
     it will be implicitly added as the first entry.

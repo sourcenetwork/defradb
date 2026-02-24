@@ -13,7 +13,7 @@ package planner
 var (
 	_ planNode = (*averageNode)(nil)
 	_ planNode = (*countNode)(nil)
-	_ planNode = (*createNode)(nil)
+	_ planNode = (*addNode)(nil)
 	_ planNode = (*dagScanNode)(nil)
 	_ planNode = (*deleteNode)(nil)
 	_ planNode = (*groupNode)(nil)

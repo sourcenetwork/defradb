@@ -48,10 +48,10 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.Add(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -60,7 +60,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.Add(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -139,10 +139,10 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.Add(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -151,7 +151,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.Add(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -230,10 +230,10 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.Add(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -242,7 +242,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.Add(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -304,10 +304,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 31}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.Add(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Book")
@@ -321,9 +321,9 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc4, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Game of chains", "author": "`+doc1ID+`"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.Add(ctx, doc3)
 	require.NoError(t, err)
-	err = col2.Create(ctx, doc4)
+	err = col2.Add(ctx, doc4)
 	require.NoError(t, err)
 
 	err = doc1.Set(ctx, "age", 31)
@@ -409,10 +409,10 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.Add(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.Add(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -421,7 +421,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.Add(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -481,7 +481,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	// First, create documents to get their actual docIDs
+	// First, add documents to get their actual docIDs
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 

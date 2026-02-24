@@ -14,7 +14,7 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted,
+extern Result CollectionAdd(uintptr_t nodePtr, char* json, int isEncrypted,
 char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 CollectionOptions options, uintptr_t identityPtr);
@@ -24,7 +24,7 @@ extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+extern Result IndexAdd(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
@@ -72,25 +72,25 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	createOpts := utils.NewOptions(opts...)
+	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
-	if createOpts.EncryptDoc {
+	if addOpts.EncryptDoc {
 		isEncrypted = 1
 	}
 	encryptedFields := C.CString("")
-	if len(createOpts.EncryptedFields) > 0 {
-		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	if len(addOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(addOpts.EncryptedFields, ","))
 	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(createOpts.GetIdentity())
+	cIdentity := optionToUintptr(addOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -110,7 +110,7 @@ func (c *Collection) Create(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionAdd(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -127,25 +127,25 @@ func (c *Collection) Create(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	createOpts := utils.NewOptions(opts...)
+	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
-	if createOpts.EncryptDoc {
+	if addOpts.EncryptDoc {
 		isEncrypted = 1
 	}
 	encryptedFields := C.CString("")
-	if len(createOpts.EncryptedFields) > 0 {
-		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	if len(addOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(addOpts.EncryptedFields, ","))
 	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(createOpts.GetIdentity())
+	cIdentity := optionToUintptr(addOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -173,7 +173,7 @@ func (c *Collection) CreateMany(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionAdd(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -256,7 +256,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		return c.Create(ctx, doc, opts...)
+		return c.Add(ctx, doc, opts...)
 	}
 	return err
 }
@@ -550,10 +550,10 @@ func (c *Collection) GetAllDocIDs(
 	return docIDCh, nil
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
@@ -589,7 +589,7 @@ func (c *Collection) CreateIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(C.IndexCreate(
+	res := ConvertAndFreeCResult(C.IndexAdd(
 		C.uintptr_t(c.w.handle),
 		cIndexDescName,
 		fields,

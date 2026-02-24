@@ -22,7 +22,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -31,7 +31,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"favouritePageNumbers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// Has written 1 Book
 				Doc: `{
@@ -41,7 +41,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				}`,
 			},
 			// Books
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
@@ -50,7 +50,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
@@ -59,7 +59,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// Has no Publisher.
 				DocMap: map[string]any{
@@ -69,7 +69,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				},
 			},
 			// Publishers
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
@@ -78,7 +78,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",

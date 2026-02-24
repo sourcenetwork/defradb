@@ -453,7 +453,7 @@ func performAction(
 	case GenerateDocs:
 		generateDocs(s, action)
 
-	case CreatePredefinedDocs:
+	case AddPredefinedDocs:
 		generatePredefinedDocs(s, action)
 
 	case GetNodeIdentity:
@@ -470,7 +470,7 @@ func performAction(
 	}
 }
 
-func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
 	nameToInd := make(map[string]int)
 	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
@@ -481,7 +481,7 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
 
-		a := &action.CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a := &action.AddDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
 		a.SetState(s)
 		a.Execute()
 	}
@@ -501,10 +501,10 @@ func generateDocs(s *state.State, action GenerateDocs) {
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
-	createGenerateDocs(s, docs, action.NodeID)
+	addGeneratedDocs(s, docs, action.NodeID)
 }
 
-func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
+func generatePredefinedDocs(s *state.State, action AddPredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
@@ -512,11 +512,11 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	for _, col := range collections {
 		defs = append(defs, col.Version())
 	}
-	docs, err := predefined.Create(s.Ctx, defs, action.Docs)
+	docs, err := predefined.Add(s.Ctx, defs, action.Docs)
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
-	createGenerateDocs(s, docs, action.NodeID)
+	addGeneratedDocs(s, docs, action.NodeID)
 }
 
 func benchmarkAction(
@@ -586,7 +586,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
-		case *action.CreateView:
+		case *action.AddView:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -738,7 +738,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 // will be split.
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
-// they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
+// they will be split at the first non SchemaUpdate/AddDoc/UpdateDoc action.
 func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
@@ -758,7 +758,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, *action.CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, *action.AddDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1020,7 +1020,7 @@ func refreshDocuments(
 		// We need to add the existing documents in the order in which the test case lists them
 		// otherwise they cannot be referenced correctly by other actions.
 		switch action := testCase.Actions[i].(type) {
-		case *action.CreateDoc:
+		case *action.AddDoc:
 			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
@@ -1030,7 +1030,7 @@ func refreshDocuments(
 			if action.DocMap != nil {
 				substituteRelations(s, action)
 			}
-			docs, err := parseCreateDocs(s.Ctx, action, collection)
+			docs, err := parseAddDocs(s.Ctx, action, collection)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1110,7 +1110,7 @@ func setActiveCollectionVersion(
 // If a document at that index is not found it will panic.
 func substituteRelations(
 	s *state.State,
-	action *action.CreateDoc,
+	action *action.AddDoc,
 ) {
 	for k, v := range action.DocMap {
 		index, isIndex := v.(DocIndex)
@@ -1996,10 +1996,10 @@ func CBORValue(value any) []byte {
 	return enc
 }
 
-// parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(
+// parseAddDocs parses and returns documents from an AddDoc action.
+func parseAddDocs(
 	ctx context.Context,
-	action *action.CreateDoc,
+	action *action.AddDoc,
 	collection client.Collection,
 ) ([]*client.Document, error) {
 	switch {

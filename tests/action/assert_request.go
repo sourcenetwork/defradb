@@ -35,7 +35,7 @@ type DocIndex struct {
 
 	// Index is the index within the target collection at which the document exists.
 	//
-	// This is dependent on the order in which test CreateDoc actions were defined.
+	// This is dependent on the order in which test AddDoc actions were defined.
 	Index int
 }
 

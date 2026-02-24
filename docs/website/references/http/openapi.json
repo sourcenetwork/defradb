@@ -498,7 +498,7 @@
                 },
                 "type": "object"
             },
-            "index_create": {
+            "index_add": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -1405,8 +1405,8 @@
                 ]
             },
             "post": {
-                "description": "Create document(s) in a collection",
-                "operationId": "collection_create",
+                "description": "Add document(s) to a collection",
+                "operationId": "collection_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1622,8 +1622,8 @@
                 ]
             },
             "post": {
-                "description": "Create a secondary index",
-                "operationId": "index_create",
+                "description": "Add a secondary index",
+                "operationId": "index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1639,7 +1639,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create"
+                                "$ref": "#/components/schemas/index_add"
                             }
                         }
                     },
@@ -2811,7 +2811,7 @@
                                 }
                             }
                         },
-                        "description": "The created collection and embedded schemas for the added view."
+                        "description": "The added collection and embedded schemas for the added view."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2888,7 +2888,7 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to create collections",
+            "description": "Upload GQL schemas to add collections",
             "name": "schema"
         },
         {

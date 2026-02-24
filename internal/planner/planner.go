@@ -133,8 +133,8 @@ func New(
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
-	case mapper.CreateObjects:
-		return p.CreateDocs(stmt)
+	case mapper.AddObjects:
+		return p.AddDocs(stmt)
 
 	case mapper.UpdateObjects:
 		return p.UpdateDocs(stmt)
@@ -202,7 +202,7 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
 
-	case *createNode:
+	case *addNode:
 		return p.expandPlan(n.results, parentPlan)
 
 	case *deleteNode:

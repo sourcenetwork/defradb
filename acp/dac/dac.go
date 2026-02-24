@@ -98,7 +98,7 @@ type DocumentACP interface {
 		docID string,
 	) (bool, error)
 
-	// AddDocActorRelationship creates a relationship between document and the target actor.
+	// AddDocActorRelationship adds a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.

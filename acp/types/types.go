@@ -95,7 +95,7 @@ const (
 	NodeDocumentUpdatePerm
 	NodeDocumentDeletePerm
 	NodeIndexListPerm
-	NodeIndexCreatePerm
+	NodeIndexAddPerm
 	NodeIndexDeletePerm
 	NodeEncryptedIndexAddPerm
 	NodeEncryptedIndexDeletePerm
@@ -117,7 +117,7 @@ const (
 	NodeP2PSyncCollectionVersionsPerm
 	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
-	NodeLensCreatePerm
+	NodeLensAddPerm
 	NodeLensListPerm
 	NodeViewRefreshPerm
 	NodeViewAddPerm
@@ -149,7 +149,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"document-update",
 	"document-delete",
 	"index-list",
-	"index-create",
+	"index-add",
 	"index-delete",
 	"encrypted-index-add",
 	"encrypted-index-delete",
@@ -234,7 +234,7 @@ resources:
 
   - name: index-list
     expr: admin
-  - name: index-create
+  - name: index-add
     expr: admin
   - name: index-delete
     expr: admin

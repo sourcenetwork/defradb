@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
@@ -28,7 +28,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "A Time for Mercy",
@@ -36,7 +36,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "The Client",
@@ -44,7 +44,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Theif Lord",
@@ -52,7 +52,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -60,7 +60,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Cornelia Funke",
@@ -135,7 +135,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
@@ -143,7 +143,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "A Time for Mercy",
@@ -151,7 +151,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "The Client",
@@ -159,7 +159,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Candide",
@@ -167,7 +167,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Zadig",
@@ -175,7 +175,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -183,7 +183,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -191,7 +191,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Voltaire",
@@ -199,7 +199,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Simon Pelloutier",

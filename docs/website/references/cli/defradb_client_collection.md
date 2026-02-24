@@ -4,7 +4,7 @@ Interact with a collection.
 
 ### Synopsis
 
-Create, read, update, and delete documents within a collection.
+Add, read, update, and delete documents within a collection.
 
 ### Options
 
@@ -41,7 +41,7 @@ Create, read, update, and delete documents within a collection.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client collection create](defradb_client_collection_create.md)	 - Create a new document.
+* [defradb client collection add](defradb_client_collection_add.md)	 - Add a new document.
 * [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete documents by docID or filter.
 * [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
 * [defradb client collection docIDs](defradb_client_collection_docIDs.md)	 - List all document IDs (docIDs).

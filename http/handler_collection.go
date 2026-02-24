@@ -41,7 +41,7 @@ type CollectionUpdateRequest struct {
 	Updater string `json:"updater"`
 }
 
-func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -60,8 +60,8 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	createOpt := options.WithIdentity(
-		options.CollectionCreate().
+	addOpt := options.WithIdentity(
+		options.CollectionAdd().
 			SetEncryptDoc(encConf.IsDocEncrypted).
 			SetEncryptedFields(encConf.EncryptedFields),
 		identity.FromContext(ctx),
@@ -75,7 +75,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList, createOpt); err != nil {
+		if err := col.AddMany(ctx, docList, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -86,7 +86,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc, createOpt); err != nil {
+		if err := col.Add(ctx, doc, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -284,7 +284,7 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 	}
 }
 
-func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -293,15 +293,15 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	descWithoutID := client.IndexCreateRequest{
+	descWithoutID := client.IndexAddRequest{
 		Name:   indexDesc.Name,
 		Fields: indexDesc.Fields,
 		Unique: indexDesc.Unique,
 	}
 
-	createIndexOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(ctx))
+	addIndexOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(ctx))
 
-	index, err := col.CreateIndex(ctx, descWithoutID, createIndexOpt)
+	index, err := col.AddIndex(ctx, descWithoutID, addIndexOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -434,8 +434,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	indexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/index",
 	}
-	indexCreateRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/index_create",
+	indexAddRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index_add",
 	}
 	encryptedIndexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/encrypted_index",
@@ -452,27 +452,27 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	documentArraySchema := openapi3.NewArraySchema()
 	documentArraySchema.Items = documentSchema
 
-	collectionCreateSchema := openapi3.NewOneOfSchema()
-	collectionCreateSchema.OneOf = openapi3.SchemaRefs{
+	collectionAddSchema := openapi3.NewOneOfSchema()
+	collectionAddSchema.OneOf = openapi3.SchemaRefs{
 		documentSchema,
 		openapi3.NewSchemaRef("", documentArraySchema),
 	}
 
-	collectionCreateRequest := openapi3.NewRequestBody().
+	collectionAddRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(collectionCreateSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(collectionAddSchema))
 
-	collectionCreate := openapi3.NewOperation()
-	collectionCreate.OperationID = "collection_create"
-	collectionCreate.Description = "Create document(s) in a collection"
-	collectionCreate.Tags = []string{"collection"}
-	collectionCreate.AddParameter(collectionNamePathParam)
-	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
-		Value: collectionCreateRequest,
+	collectionAdd := openapi3.NewOperation()
+	collectionAdd.OperationID = "collection_add"
+	collectionAdd.Description = "Add document(s) to a collection"
+	collectionAdd.Tags = []string{"collection"}
+	collectionAdd.AddParameter(collectionNamePathParam)
+	collectionAdd.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionAddRequest,
 	}
-	collectionCreate.Responses = openapi3.NewResponses()
-	collectionCreate.Responses.Set("200", successResponse)
-	collectionCreate.Responses.Set("400", errorResponse)
+	collectionAdd.Responses = openapi3.NewResponses()
+	collectionAdd.Responses.Set("200", successResponse)
+	collectionAdd.Responses.Set("400", errorResponse)
 
 	collectionUpdateWithRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -512,23 +512,23 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDeleteWith.AddResponse(200, collectionDeleteWithResponse)
 	collectionDeleteWith.Responses.Set("400", errorResponse)
 
-	createIndexRequest := openapi3.NewRequestBody().
+	addIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(indexCreateRequestSchema))
-	createIndexResponse := openapi3.NewResponse().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(indexAddRequestSchema))
+	addIndexResponse := openapi3.NewResponse().
 		WithDescription("Index description").
 		WithJSONSchemaRef(indexSchema)
 
-	createIndex := openapi3.NewOperation()
-	createIndex.OperationID = "index_create"
-	createIndex.Description = "Create a secondary index"
-	createIndex.Tags = []string{"index"}
-	createIndex.AddParameter(collectionNamePathParam)
-	createIndex.RequestBody = &openapi3.RequestBodyRef{
-		Value: createIndexRequest,
+	addIndex := openapi3.NewOperation()
+	addIndex.OperationID = "index_add"
+	addIndex.Description = "Add a secondary index"
+	addIndex.Tags = []string{"index"}
+	addIndex.AddParameter(collectionNamePathParam)
+	addIndex.RequestBody = &openapi3.RequestBodyRef{
+		Value: addIndexRequest,
 	}
-	createIndex.AddResponse(200, createIndexResponse)
-	createIndex.Responses.Set("400", errorResponse)
+	addIndex.AddResponse(200, addIndexResponse)
+	addIndex.Responses.Set("400", errorResponse)
 
 	indexArraySchema := openapi3.NewArraySchema()
 	indexArraySchema.Items = indexSchema
@@ -664,10 +664,10 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	truncate.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
-	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
+	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
-	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
+	router.AddRoute("/collections/{name}/indexes", http.MethodPost, addIndex, h.AddIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, deleteIndex, h.DeleteIndex)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)

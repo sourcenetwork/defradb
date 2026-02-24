@@ -32,7 +32,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -95,7 +95,7 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,

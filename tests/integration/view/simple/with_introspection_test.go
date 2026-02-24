@@ -28,7 +28,7 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name

@@ -124,7 +124,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	index := MakeIndexCommand(ctx)
 	index.AddCommand(
-		MakeIndexCreateCommand(ctx),
+		MakeIndexAddCommand(ctx),
 		MakeIndexDeleteCommand(ctx),
 		MakeIndexListCommand(ctx),
 	)
@@ -155,7 +155,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionListDocIDsCommand(ctx),
 		MakeCollectionDeleteCommand(ctx),
 		MakeCollectionUpdateCommand(ctx),
-		MakeCollectionCreateCommand(ctx),
+		MakeCollectionAddCommand(ctx),
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),

@@ -32,7 +32,7 @@ func TestQueryCommitsBranchables(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -85,7 +85,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

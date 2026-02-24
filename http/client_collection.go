@@ -51,10 +51,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -80,10 +80,10 @@ func (c *Collection) Create(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -121,7 +121,7 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionCreateOptions) {
+func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionAddOptions) {
 	q := req.URL.Query()
 	if opt.EncryptDoc {
 		q.Set(docEncryptParam, "true")
@@ -180,15 +180,15 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		createOpts := options.CollectionCreate().
+		addOpts := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 
 		if opt.GetIdentity().HasValue() {
-			createOpts.SetIdentity(opt.GetIdentity().Value())
+			addOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 
-		return c.Create(ctx, doc, createOpts)
+		return c.Add(ctx, doc, addOpts)
 	}
 	return err
 }
@@ -384,10 +384,10 @@ func (c *Collection) GetAllDocIDs(
 	return docIDCh, nil
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

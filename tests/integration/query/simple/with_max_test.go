@@ -71,13 +71,13 @@ func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
@@ -111,7 +111,7 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 					"Age":  int64(math.MaxInt64),

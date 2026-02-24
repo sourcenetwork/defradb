@@ -31,17 +31,17 @@ func TestExecuteExplainWithIndexOnFilter(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice", "age": 25}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 30}`,
 			},
@@ -97,17 +97,17 @@ func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice", "age": 25}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 35}`,
 			},
@@ -295,12 +295,12 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
@@ -308,7 +308,7 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
@@ -316,7 +316,7 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -325,7 +325,7 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",

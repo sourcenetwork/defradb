@@ -93,9 +93,9 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.Create(ctx, doc)
+			err = col.Add(ctx, doc)
 			if err != nil {
-				return NewErrDocCreate(err)
+				return NewErrDocAdd(err)
 			}
 
 			// add back the self referencing fields and update doc.

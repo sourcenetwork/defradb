@@ -104,7 +104,7 @@ type KMS struct {
 // setup is complete so that it may split actions across database code-versions.
 //
 // If a SetupComplete action is not provided the change detector will split before
-// the first item that is neither a SchemaUpdate, CreateDoc or UpdateDoc action.
+// the first item that is neither a SchemaUpdate, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
 // ConfigureNode allows the explicit configuration of new Defra nodes.
@@ -209,9 +209,9 @@ func NewDocIndex(collectionIndex int, index int) DocIndex {
 // DeleteDoc will attempt to delete the given document in the given collection
 // using the collection api.
 type DeleteDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
+	// NodeID may hold the ID (index) of a node to apply this delete to.
 	//
-	// If a value is not provided the document will be created in all nodes.
+	// If a value is not provided the document will be deleted in all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -471,7 +471,7 @@ type GenerateDocs struct {
 	ForCollections []string
 }
 
-// CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+// AddPredefinedDocs is an action that will trigger creation of predefined documents.
 // Predefined docs allows specifying a database state with complex schemas that can be used by
 // multiple tests while allowing each test to select a subset of the schemas (collection and
 // collection's fields) to work with.
@@ -490,7 +490,7 @@ type GenerateDocs struct {
 //	 }
 //
 // For more information refer to tests/predefined/README.md
-type CreatePredefinedDocs struct {
+type AddPredefinedDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//
 	// If a value is not provided the docs generation will be executed against all nodes,
@@ -656,7 +656,7 @@ type SyncDocs struct {
 	// The collection containing the documents to sync.
 	CollectionID int
 
-	// The indices of documents to sync (references to previously created documents).
+	// The indices of documents to sync (references to previously added documents).
 	// Uses the same DocIndex pattern as other test actions - these will be resolved
 	// to actual document IDs at runtime by the test framework.
 	DocIDs []int

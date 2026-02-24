@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
+func TestSchemaAggregateSimpleAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -113,7 +113,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
+func TestSchemaAggregateSimpleAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -311,7 +311,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
+func TestSchemaAggregateSimpleAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

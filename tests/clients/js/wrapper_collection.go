@@ -69,10 +69,10 @@ func (c *Collection) CollectionID() string {
 	return res[0].String()
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -80,7 +80,7 @@ func (c *Collection) Create(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "create", docVal, makeDocCreateOptions(opts))
+	_, err = execute(ctx, c.client, "add", docVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -88,17 +88,17 @@ func (c *Collection) Create(
 	return nil
 }
 
-// createOptionsJS is used to marshal options for the JS client.
-type createOptionsJS struct {
+// addOptionsJS is used to marshal options for the JS client.
+type addOptionsJS struct {
 	EncryptDoc      bool     `json:"encryptDoc"`
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func makeDocCreateOptions(opts []options.Enumerable[options.CollectionCreateOptions]) js.Value {
-	jsOpts := createOptionsJS{}
-	createOpts := utils.NewOptions(opts...)
-	jsOpts.EncryptDoc = createOpts.EncryptDoc
-	jsOpts.EncryptedFields = createOpts.EncryptedFields
+func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
+	jsOpts := addOptionsJS{}
+	addOpts := utils.NewOptions(opts...)
+	jsOpts.EncryptDoc = addOpts.EncryptDoc
+	jsOpts.EncryptedFields = addOpts.EncryptedFields
 
 	optsVal, err := goji.MarshalJS(jsOpts)
 	if err != nil {
@@ -107,10 +107,10 @@ func makeDocCreateOptions(opts []options.Enumerable[options.CollectionCreateOpti
 	return optsVal
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -118,7 +118,7 @@ func (c *Collection) CreateMany(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocCreateOptions(opts))
+	_, err = execute(ctx, c.client, "addMany", docsVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -160,10 +160,10 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		createOpts := options.CollectionCreate().
+		addOpts := options.CollectionAdd().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
-		return c.Create(ctx, doc, createOpts)
+		return c.Add(ctx, doc, addOpts)
 	}
 	return err
 }
@@ -269,10 +269,10 @@ func (c *Collection) GetAllDocIDs(
 	panic("not implemented")
 }
 
-func (c *Collection) CreateIndex(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -280,7 +280,7 @@ func (c *Collection) CreateIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "createIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "addIndex", indexDescVal)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}

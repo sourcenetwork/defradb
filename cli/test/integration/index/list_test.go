@@ -51,12 +51,12 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age:DESC"},
@@ -103,23 +103,23 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 				`,
 			},
 			// Create indexes for User collection
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
 			// Create indexes for Product collection
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "Product",
 				Name:       "ProductsByTitle",
 				Fields:     []string{"title"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "Product",
 				Name:       "ProductsByPrice",
 				Fields:     []string{"price:DESC"},

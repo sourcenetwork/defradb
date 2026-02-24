@@ -37,39 +37,39 @@ func TestManyToMany_QueryFromJoinCollection_ShouldSucceed(t *testing.T) {
                 `,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "Math"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "Science"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2, // Enrollment
 				DocMap: map[string]any{
 					"student": testUtils.NewDocIndex(0, 0), // Alice
 					"course":  testUtils.NewDocIndex(1, 0), // Math
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2, // Enrollment
 				DocMap: map[string]any{
 					"student": testUtils.NewDocIndex(0, 0), // Alice
 					"course":  testUtils.NewDocIndex(1, 1), // Science
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2, // Enrollment
 				DocMap: map[string]any{
 					"student": testUtils.NewDocIndex(0, 1), // Bob

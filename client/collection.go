@@ -35,15 +35,15 @@ type Collection interface {
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion
 
-	// Create a new document.
+	// Add a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
+	Add(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
 
-	// CreateMany new documents.
+	// AddMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
+	AddMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
 
 	// Update an existing document with the new values.
 	//
@@ -108,16 +108,16 @@ type Collection interface {
 		opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 	) (<-chan DocIDResult, error)
 
-	// CreateIndex creates a new index on the collection.
-	// `IndexDescription` contains the description of the index to be created.
+	// AddIndex adds a new index on the collection.
+	// `IndexDescription` contains the description of the index to be added.
 	// `IndexDescription.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
-	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(
+	// WARNING: This method can not add index for a collection that has a policy.
+	AddIndex(
 		context.Context,
-		IndexCreateRequest,
-		...options.Enumerable[options.CollectionCreateIndexOptions],
+		IndexAddRequest,
+		...options.Enumerable[options.CollectionAddIndexOptions],
 	) (IndexDescription, error)
 
 	// DeleteIndex deletes an index from the collection.

@@ -240,18 +240,18 @@ Result:
 
 ```
 
-### Create private documents (with identity)
+### Add private documents (with identity)
 
 CLI Command:
 ```sh
-defradb client collection create --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client collection add --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
-### Create public documents (without identity)
+### Add public documents (without identity)
 
 CLI Command:
 ```sh
-defradb client collection create  --name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
+defradb client collection add --name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
 ```
 
 ### Get all docIDs without an identity (shows only public):
@@ -553,9 +553,9 @@ Result:
 ]
 ```
 
-Create a private document:
+Add a private document:
 ```sh
-defradb client collection create --name Users '[{ "name": "SecretShahzadLone" }]' \
+defradb client collection add --name Users '[{ "name": "SecretShahzadLone" }]' \
 --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
@@ -597,7 +597,7 @@ Result:
 }
 ```
 
-**Note: If the same relationship is created again the `ExistedAlready` would then be true, indicating no-op**
+**Note: If the same relationship is added again the `ExistedAlready` would then be true, indicating no-op**
 
 Now the other actor can read:
 ```sh

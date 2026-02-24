@@ -16,50 +16,50 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// CollectionCreateOptions contains options for Create and CreateMany operations.
-type CollectionCreateOptions struct {
+// CollectionAddOptions contains options for Add and AddMany operations.
+type CollectionAddOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
-	// EncryptDoc enables document encryption when creating a document.
+	// EncryptDoc enables document encryption when adding a document.
 	EncryptDoc bool
 	// EncryptedFields specifies a list of fields to be encrypted.
 	EncryptedFields []string
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionCreateOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CollectionAddOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionCreateOptionsBuilder is a builder for CollectionCreateOptions.
-type CollectionCreateOptionsBuilder struct {
-	enumerableBuilder[CollectionCreateOptions]
+// CollectionAddOptionsBuilder is a builder for CollectionAddOptions.
+type CollectionAddOptionsBuilder struct {
+	enumerableBuilder[CollectionAddOptions]
 }
 
-// CollectionCreate creates a new CollectionCreateOptionsBuilder instance.
-func CollectionCreate() *CollectionCreateOptionsBuilder {
-	return &CollectionCreateOptionsBuilder{}
+// CollectionAdd creates a new CollectionAddOptionsBuilder instance.
+func CollectionAdd() *CollectionAddOptionsBuilder {
+	return &CollectionAddOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionCreateOptionsBuilder) SetIdentity(id identity.Identity) *CollectionCreateOptionsBuilder {
-	b.append(func(opts *CollectionCreateOptions) {
+func (b *CollectionAddOptionsBuilder) SetIdentity(id identity.Identity) *CollectionAddOptionsBuilder {
+	b.append(func(opts *CollectionAddOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // SetEncryptDoc enables or disables document encryption.
-func (b *CollectionCreateOptionsBuilder) SetEncryptDoc(encrypt bool) *CollectionCreateOptionsBuilder {
-	b.append(func(opts *CollectionCreateOptions) {
+func (b *CollectionAddOptionsBuilder) SetEncryptDoc(encrypt bool) *CollectionAddOptionsBuilder {
+	b.append(func(opts *CollectionAddOptions) {
 		opts.EncryptDoc = encrypt
 	})
 	return b
 }
 
 // SetEncryptedFields specifies fields to be encrypted.
-func (b *CollectionCreateOptionsBuilder) SetEncryptedFields(fields []string) *CollectionCreateOptionsBuilder {
-	b.append(func(opts *CollectionCreateOptions) {
+func (b *CollectionAddOptionsBuilder) SetEncryptedFields(fields []string) *CollectionAddOptionsBuilder {
+	b.append(func(opts *CollectionAddOptions) {
 		if fields != nil {
 			opts.EncryptedFields = make([]string, len(fields))
 			copy(opts.EncryptedFields, fields)
@@ -97,9 +97,9 @@ func (b *CollectionUpdateOptionsBuilder) SetIdentity(id identity.Identity) *Coll
 	return b
 }
 
-type CollectionSaveOptions = CollectionCreateOptions
+type CollectionSaveOptions = CollectionAddOptions
 
-type CollectionSaveOptionsBuilder = CollectionCreateOptionsBuilder
+type CollectionSaveOptionsBuilder = CollectionAddOptionsBuilder
 
 // CollectionSave creates a new CollectionSaveOptionsBuilder instance.
 func CollectionSave() *CollectionSaveOptionsBuilder {
@@ -236,30 +236,30 @@ func (b *CollectionDeleteWithFilterOptionsBuilder) SetIdentity(
 	return b
 }
 
-// CollectionCreateIndexOptions contains options for CreateIndex operation.
-type CollectionCreateIndexOptions struct {
+// CollectionAddIndexOptions contains options for AddIndex operation.
+type CollectionAddIndexOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionCreateIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CollectionAddIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionCreateIndexOptionsBuilder is a builder for CollectionCreateIndexOptions.
-type CollectionCreateIndexOptionsBuilder struct {
-	enumerableBuilder[CollectionCreateIndexOptions]
+// CollectionAddIndexOptionsBuilder is a builder for CollectionAddIndexOptions.
+type CollectionAddIndexOptionsBuilder struct {
+	enumerableBuilder[CollectionAddIndexOptions]
 }
 
-// CollectionCreateIndex creates a new CollectionCreateIndexOptionsBuilder instance.
-func CollectionCreateIndex() *CollectionCreateIndexOptionsBuilder {
-	return &CollectionCreateIndexOptionsBuilder{}
+// CollectionAddIndex creates a new CollectionAddIndexOptionsBuilder instance.
+func CollectionAddIndex() *CollectionAddIndexOptionsBuilder {
+	return &CollectionAddIndexOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionCreateIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionCreateIndexOptionsBuilder {
-	b.append(func(opts *CollectionCreateIndexOptions) {
+func (b *CollectionAddIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionAddIndexOptionsBuilder {
+	b.append(func(opts *CollectionAddIndexOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

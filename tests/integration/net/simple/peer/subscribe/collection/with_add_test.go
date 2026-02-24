@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2PCollectionAddSingle ensures that created documents reach the node that subscribes
+// TestP2PCollectionAddSingle ensures that added documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PCollectionAddSingle(t *testing.T) {
 	test := testUtils.TestCase{
@@ -41,13 +41,13 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
@@ -122,20 +122,20 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0, 2},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
 					"name": "Gillian"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 2,
 				Doc: `{
@@ -213,7 +213,7 @@ func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -259,7 +259,7 @@ func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -310,7 +310,7 @@ func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -359,7 +359,7 @@ func TestP2PCollectionAddNone(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"

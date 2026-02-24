@@ -63,7 +63,7 @@ type AddDACActorRelationshipOptionsBuilder struct {
 	enumerableBuilder[AddDACActorRelationshipOptions]
 }
 
-// AddDACActorRelationship creates a new AddDACActorRelationshipOptionsBuilder instance.
+// AddDACActorRelationship returns a new AddDACActorRelationshipOptionsBuilder instance.
 func AddDACActorRelationship() *AddDACActorRelationshipOptionsBuilder {
 	return &AddDACActorRelationshipOptionsBuilder{}
 }
@@ -94,7 +94,7 @@ type DeleteDACActorRelationshipOptionsBuilder struct {
 	enumerableBuilder[DeleteDACActorRelationshipOptions]
 }
 
-// DeleteDACActorRelationship creates a new DeleteDACActorRelationshipOptionsBuilder instance.
+// DeleteDACActorRelationship returns a new DeleteDACActorRelationshipOptionsBuilder instance.
 func DeleteDACActorRelationship() *DeleteDACActorRelationshipOptionsBuilder {
 	return &DeleteDACActorRelationshipOptionsBuilder{}
 }
@@ -125,7 +125,7 @@ type AddNACActorRelationshipOptionsBuilder struct {
 	enumerableBuilder[AddNACActorRelationshipOptions]
 }
 
-// AddNACActorRelationship creates a new AddNACActorRelationshipOptionsBuilder instance.
+// AddNACActorRelationship returns a new AddNACActorRelationshipOptionsBuilder instance.
 func AddNACActorRelationship() *AddNACActorRelationshipOptionsBuilder {
 	return &AddNACActorRelationshipOptionsBuilder{}
 }
@@ -156,7 +156,7 @@ type DeleteNACActorRelationshipOptionsBuilder struct {
 	enumerableBuilder[DeleteNACActorRelationshipOptions]
 }
 
-// DeleteNACActorRelationship creates a new DeleteNACActorRelationshipOptionsBuilder instance.
+// DeleteNACActorRelationship returns a new DeleteNACActorRelationshipOptionsBuilder instance.
 func DeleteNACActorRelationship() *DeleteNACActorRelationshipOptionsBuilder {
 	return &DeleteNACActorRelationshipOptionsBuilder{}
 }

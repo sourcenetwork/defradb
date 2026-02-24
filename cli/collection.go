@@ -29,7 +29,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
 		Short: "Interact with a collection.",
-		Long:  `Create, read, update, and delete documents within a collection.`,
+		Long:  `Add, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
 			if err := setContextRootDir(cmd); err != nil {
