@@ -53,7 +53,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexAddPerm),
 			},
 
 			// Grant access to user.

@@ -94,7 +94,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexAddPerm),
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexAddPerm),
 			},
 		},
 	}

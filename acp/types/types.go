@@ -95,7 +95,7 @@ const (
 	NodeDocumentUpdatePerm
 	NodeDocumentDeletePerm
 	NodeIndexListPerm
-	NodeIndexCreatePerm
+	NodeIndexAddPerm
 	NodeIndexDeletePerm
 	NodeEncryptedIndexAddPerm
 	NodeEncryptedIndexDeletePerm

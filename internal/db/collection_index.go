@@ -173,7 +173,7 @@ func (c *collection) AddIndex(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexCreatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexAddPerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
