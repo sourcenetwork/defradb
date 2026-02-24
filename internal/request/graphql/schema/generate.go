@@ -1256,7 +1256,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
-			request.CreateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			request.AddInput:     schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Add field values"),
 			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
 		},
 	}

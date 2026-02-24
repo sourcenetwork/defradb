@@ -40,14 +40,14 @@ func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 				Request: `mutation {
 					john: upsert_Users(
 						filter: {name: {_eq: "John"}},
-						create: {name: "John", created_at: UTC_NOW},
+						add: {name: "John", created_at: UTC_NOW},
 						update: {created_at: UTC_NOW}
 					) {
 						created_at
 					}
 					chris: upsert_Users(
 						filter: {name: {_eq: "Chris"}},
-						create: {name: "Chris", created_at: UTC_NOW},
+						add: {name: "Chris", created_at: UTC_NOW},
 						update: {created_at: UTC_NOW}
 					) {
 						created_at

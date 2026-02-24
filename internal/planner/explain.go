@@ -66,7 +66,7 @@ const (
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
 	inputLabel          = "input"
-	createInputLabel    = "create"
+	addInputLabel       = "add"
 	updateInputLabel    = "update"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"

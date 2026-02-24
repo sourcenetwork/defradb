@@ -38,7 +38,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {age: 40}
 					) {
 						name
@@ -108,7 +108,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {age: 40}
 					) {
 						name
@@ -178,7 +178,7 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {age: 50}
 					) {
 						name
@@ -208,14 +208,14 @@ func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: null,
+						add: null,
 						update: {age: 50}
 					) {
 						name
 						age
 					}
 				}`,
-				ExpectedError: `Argument "create" has invalid value <nil>`,
+				ExpectedError: `Argument "add" has invalid value <nil>`,
 			},
 		},
 	}
@@ -238,7 +238,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: null,
 					) {
 						name
@@ -268,7 +268,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 				Request: `mutation {
 					upsert_Users(
 						filter: null,
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {age: 50}
 					) {
 						name
@@ -310,7 +310,7 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {name: "Alice", age: 40}
 					) {
 						name

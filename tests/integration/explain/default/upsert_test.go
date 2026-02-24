@@ -45,7 +45,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 				Request: `mutation @explain {
 					upsert_Author(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 59},
+						add: {name: "Bob", age: 59},
 						update: {age: 59}
 					) {
 						_docID
@@ -61,7 +61,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 						TargetNodeName:    "upsertNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"create": dataMap{
+							"add": dataMap{
 								"name": "Bob",
 								"age":  int32(59),
 							},

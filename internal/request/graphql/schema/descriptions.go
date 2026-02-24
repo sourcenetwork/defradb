@@ -113,7 +113,7 @@ Adds one or more documents of this type using the data provided.
 Update or create a document in this collection using the data provided. The provided filter
  must match at most one document. The matching document will be updated with the provided 
  update input, or if no matching document is found, a new document will be created with the
- provided create input.
+ provided add input.
 
 NOTE: It is highly recommended to create an index on the fields used to filter.`
 	updateDocumentsDescription string = `

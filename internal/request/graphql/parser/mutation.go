@@ -130,7 +130,7 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			for i, v := range v {
 				inputs[i] = v.(map[string]any)
 			}
-			mut.CreateInput = inputs
+			mut.AddInput = inputs
 
 		case request.EncryptDocArgName:
 			if v, ok := value.(bool); ok {
@@ -203,9 +203,9 @@ func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 func parseUpsertMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 	for name, value := range args {
 		switch name {
-		case request.CreateInput:
+		case request.AddInput:
 			if v, ok := value.(map[string]any); ok {
-				mut.CreateInput = []map[string]any{v}
+				mut.AddInput = []map[string]any{v}
 			}
 
 		case request.UpdateInput:

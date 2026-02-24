@@ -46,7 +46,7 @@ func TestDebugExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 					upsert_Author(
 						filter: {name: {_eq: "Bob"}},
 						update: {age: 59},
-						create: {name: "Bob", age: 59}
+						add: {name: "Bob", age: 59}
 					) {
 						_docID
 						name

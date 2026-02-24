@@ -164,7 +164,7 @@ func (p *Planner) AddDocs(parsed *mapper.Mutation) (planNode, error) {
 
 	add := &addNode{
 		p:         p,
-		input:     parsed.CreateInput,
+		input:     parsed.AddInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
 		addOptions: []options.Enumerable[options.CollectionAddOptions]{
