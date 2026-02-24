@@ -853,15 +853,15 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book1"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book2"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":            "Publisher1",
@@ -912,15 +912,15 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book1"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book2"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":            "Publisher1",
@@ -971,18 +971,18 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book1",
 					"rating": 5,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "OrphanPublisher"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "LinkedPublisher",
@@ -1032,18 +1032,18 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book1",
 					"rating": 5,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "OrphanPublisher"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "LinkedPublisher",
@@ -1094,15 +1094,15 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book1"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book2"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":            "Publisher1",
@@ -1152,18 +1152,18 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book1",
 					"rating": 5,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "OrphanPublisher"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "LinkedPublisher",
@@ -1219,39 +1219,39 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2000",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "OrphanBook",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -1259,7 +1259,7 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 					"book":            testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",
@@ -1267,7 +1267,7 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 					"book":            testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2000",
@@ -1336,25 +1336,25 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2000",
@@ -1362,14 +1362,14 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 				},
 			},
 			// OrphanBook has no publisher - would come first in ASC ordering if included
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "OrphanBook",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -1377,7 +1377,7 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 					"book":            testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",
@@ -1385,7 +1385,7 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 					"book":            testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2000",
@@ -1453,39 +1453,39 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldInc
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2000",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "OrphanBook",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -1493,7 +1493,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldInc
 					"book":            testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",
@@ -1501,7 +1501,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldInc
 					"book":            testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2000",
@@ -1560,39 +1560,39 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAp
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2000",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "OrphanBook",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -1600,7 +1600,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAp
 					"book":            testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",
@@ -1608,7 +1608,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAp
 					"book":            testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2000",
@@ -1658,15 +1658,15 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Book1"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Book2"}`, // No publisher - orphan
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"year": 2020,
@@ -1719,19 +1719,19 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Book With Publisher"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Orphan Book 1"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "Orphan Book 2"}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",

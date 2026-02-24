@@ -36,7 +36,7 @@ func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testin
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book1",
@@ -44,12 +44,12 @@ func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testin
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "OrphanPublisher"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "LinkedPublisher",
@@ -101,17 +101,17 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "OrphanBook"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"title": "LinkedBook"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":            "Publisher1",

@@ -169,7 +169,7 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book1",
@@ -177,7 +177,7 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"title":  "Book2",
@@ -185,7 +185,7 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Publisher1",
@@ -193,7 +193,7 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Publisher2",
