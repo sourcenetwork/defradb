@@ -174,7 +174,7 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 		return nil
 	}
 
-	if n.joinKind == "typeJoinOne" {
+	if n.joinKind == typeJoinOneKind {
 		if n.join.parentSide.isPrimary() {
 			simpleExplainMap[joinDirectionLabel] = joinDirectionPrimaryLabel
 		} else {
@@ -223,8 +223,10 @@ func (p *Planner) makeTypeJoinOne(
 	return &typeJoinOne{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
+const typeJoinOneKind = "typeJoinOne"
+
 func (n *typeJoinOne) Kind() string {
-	return "typeJoinOne"
+	return typeJoinOneKind
 }
 
 type typeJoinMany struct {

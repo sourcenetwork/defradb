@@ -382,8 +382,8 @@ func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, d
 // after the source is exhausted.
 // Called after the full plan chain (order, limit) is built.
 func wireSubQueryOrphanExclusionPipeline(
-	plan *selectTopNode, 
-	join *invertibleTypeJoin, 
+	plan *selectTopNode,
+	join *invertibleTypeJoin,
 	direction mapper.SortDirection,
 ) {
 	if plan.limit != nil {

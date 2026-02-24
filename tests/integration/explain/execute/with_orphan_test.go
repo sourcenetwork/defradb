@@ -148,4 +148,3 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 
 	explainUtils.ExecuteTestCase(t, test)
 }
-
