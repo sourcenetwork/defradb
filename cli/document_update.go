@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
+func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var updater string
@@ -84,15 +84,16 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 	}
 
 	EmbedCLIExample(ctx, cmd, "update by filter",
-		`defradb client collection update --name User \
+		`defradb client document update --collection-name User \
   --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'`)
 
 	EmbedCLIExample(ctx, cmd, "update by docID",
-		`defradb client collection update --name User \
+		`defradb client document update --collection-name User \
   --docID bae-123 --updater '{ "verified": true }'`)
 
 	EmbedCLIExample(ctx, cmd, "update private docID, with identity",
-		`defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
+		`defradb client document update --collection-name User \
+  -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
   --docID bae-123 --updater '{ "verified": true }'`)
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")

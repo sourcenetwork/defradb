@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
+func MakeDocumentGetCommand(ctx context.Context) *cobra.Command {
 	var showDeleted bool
 	var cmd = &cobra.Command{
 		Use:   "get [-i --identity] [--show-deleted] <docID> ",
@@ -58,10 +58,10 @@ func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 	}
 
 	EmbedCLIExample(ctx, cmd, "Get document by ID",
-		`defradb client collection get --name User bae-123`)
+		`defradb client document get --collection-name User bae-123`)
 
 	EmbedCLIExample(ctx, cmd, "Get a private document using an identity",
-		`defradb client collection get --name User bae-123 \
+		`defradb client document get --collection-name User bae-123 \
 	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f `)
 
 	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")

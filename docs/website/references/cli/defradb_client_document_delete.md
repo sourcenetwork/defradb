@@ -1,44 +1,42 @@
-## defradb client collection update
+## defradb client document delete
 
-Update documents by docID or filter.
+Delete documents by docID or filter.
 
 ### Synopsis
 
-Update documents by docID or filter.
+Delete documents by docID or filter and lists the number of documents deleted.
 
 ```
-defradb client collection update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater> [flags]
+defradb client document delete [-i --identity] [--filter <filter> --docID <docID>] [flags]
 ```
 
 ### Examples
 
 ```
-update by filter:  
-  defradb client collection update --name User \
-  --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'
+delete by docID:  
+  defradb client document delete --collection-name User --docID bae-123
 
-update by docID:  
-  defradb client collection update --name User \
-  --docID bae-123 --updater '{ "verified": true }'
+delete by docID with identity:  
+  defradb client document delete --collection-name User --docID bae-123 \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-update private docID, with identity:  
-  defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
-  --docID bae-123 --updater '{ "verified": true }'
+delete by filter:  
+  defradb client document delete --collection-name User --filter '{ "_gte": { "points": 100 } }'
 ```
 
 ### Options
 
 ```
-      --docID string     Document ID
-      --filter string    Document filter
-  -h, --help             help for update
-      --updater string   Document updater
+      --docID string    Document ID
+      --filter string   Document filter
+  -h, --help            help for delete
 ```
 
 ### Options inherited from parent commands
 
 ```
       --collection-id string        Collection ID
+      --collection-name string      Collection name
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -50,7 +48,6 @@ update private docID, with identity:
       --log-overrides string        Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
       --log-source                  Include source location in logs
       --log-stacktrace              Include stacktrace in error and fatal logs
-      --name string                 Collection name
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
@@ -63,5 +60,5 @@ update private docID, with identity:
 
 ### SEE ALSO
 
-* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
+* [defradb client document](defradb_client_document.md)	 - Interact with documents.
 

@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
+func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var file string
 	var shouldEncryptDoc bool
 	var encryptedFields []string
@@ -30,20 +30,20 @@ func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
 		Use:   "add [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
 		Short: "Add a new document.",
 		Long: `Add a new document.
-		
+
 Options:
-	-i, --identity 
+	-i, --identity
 		Marks the document as private and set the identity as the owner. The access to the document
 		and permissions are controlled by ACP (Access Control Policy).
 
 	-e, --encrypt
 		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
 		symmetric key for encryption using AES-GCM.
-	
+
 	--encrypt-fields
 		Comma-separated list of fields to encrypt. If set, DefraDB will encrypt only the specified fields
 		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
-		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
+		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields'
 		will be encrypted with the same key.
 		`,
 		Args: cobra.RangeArgs(0, 1),
@@ -99,20 +99,20 @@ Options:
 	}
 
 	EmbedCLIExample(ctx, cmd, "Add from string1",
-		`defradb client collection add --name User '{ "name": "Bob" }'`)
+		`defradb client document add --collection-name User '{ "name": "Bob" }'`)
 
 	EmbedCLIExample(ctx, cmd, "Add from string, with identity",
-		`defradb client collection add --name User '{ "name": "Bob" }' \
+		`defradb client document add --collection-name User '{ "name": "Bob" }' \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
 
 	EmbedCLIExample(ctx, cmd, "Add multiple from string",
-		`defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
+		`defradb client document add --collection-name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
 
 	EmbedCLIExample(ctx, cmd, "Add from file",
-		`defradb client collection add --name User -f document.json`)
+		`defradb client document add --collection-name User -f document.json`)
 
 	EmbedCLIExample(ctx, cmd, "Add from stdin",
-		`cat document.json | defradb client collection add --name User -`)
+		`cat document.json | defradb client document add --collection-name User -`)
 
 	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
 		"Flag to enable encryption of the document")

@@ -102,7 +102,7 @@ func TestIndexDelete_WithoutName_ShouldReturnError(t *testing.T) {
 			&action.IndexDelete{
 				Collection: "User",
 				// Name is empty
-				ExpectError: "malformed document ID",
+				ExpectError: "index name is required",
 			},
 		},
 	}

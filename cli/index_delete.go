@@ -15,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -28,6 +29,10 @@ func MakeIndexDeleteCommand(ctx context.Context) *cobra.Command {
 		Long:      `Delete a collection's secondary index.`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if nameArg == "" {
+				return client.ErrIndexNameRequired
+			}
+
 			cliClient := mustGetContextCLIClient(cmd)
 
 			colOpt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))

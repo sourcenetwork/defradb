@@ -100,6 +100,7 @@ var (
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
+	ErrIndexNameRequired                     = errors.New("index name is required")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

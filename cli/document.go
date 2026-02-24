@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,17 +19,17 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeCollectionCommand(ctx context.Context) *cobra.Command {
+func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 	var txID uint64
 	var identity string
-	var name string
+	var collection string
 	var collectionID string
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
-		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
-		Short: "Interact with a collection.",
-		Long:  `Describe, patch, set-active, and truncate collections.`,
+		Use:   "document [--collection-name <name> --collection-id <collectionID> --version-id <versionID>]",
+		Short: "Interact with documents.",
+		Long:  `Add, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
 			if err := setContextRootDir(cmd); err != nil {
@@ -56,8 +56,8 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			if collectionID != "" {
 				opt.SetCollectionID(collectionID)
 			}
-			if name != "" {
-				opt.SetCollectionName(name)
+			if collection != "" {
+				opt.SetCollectionName(collection)
 			}
 			if getInactive {
 				opt.SetGetInactive(getInactive)
@@ -82,7 +82,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
+	cmd.PersistentFlags().StringVar(&collection, "collection-name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&collectionID, "collection-id", "", "Collection ID")
 	cmd.PersistentFlags().StringVar(&versionID, "version-id", "", "Collection version ID")
 	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")

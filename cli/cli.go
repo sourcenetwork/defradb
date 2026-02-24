@@ -151,14 +151,18 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	collection := MakeCollectionCommand(ctx)
 	collection.AddCommand(
-		MakeCollectionGetCommand(ctx),
-		MakeCollectionDeleteCommand(ctx),
-		MakeCollectionUpdateCommand(ctx),
-		MakeCollectionAddCommand(ctx),
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
 		MakeCollectionTruncateCommand(ctx),
+	)
+
+	document := MakeDocumentCommand(ctx)
+	document.AddCommand(
+		MakeDocumentAddCommand(ctx),
+		MakeDocumentGetCommand(ctx),
+		MakeDocumentUpdateCommand(ctx),
+		MakeDocumentDeleteCommand(ctx),
 	)
 
 	block := MakeBlockCommand(ctx)
@@ -181,6 +185,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		backup,
 		tx,
 		collection,
+		document,
 		lens,
 		block,
 	)

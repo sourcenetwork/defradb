@@ -12,17 +12,13 @@ package http
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -38,59 +34,6 @@ type CollectionDeleteRequest struct {
 type CollectionUpdateRequest struct {
 	Filter  any    `json:"filter"`
 	Updater string `json:"updater"`
-}
-
-func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-
-	data, err := io.ReadAll(req.Body)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	ctx := req.Context()
-	q := req.URL.Query()
-	encConf := encryption.DocEncConfig{}
-	if q.Get(docEncryptParam) == "true" {
-		encConf.IsDocEncrypted = true
-	}
-	if q.Get(docEncryptFieldsParam) != "" {
-		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
-	}
-
-	addOpt := options.WithIdentity(
-		options.CollectionAdd().
-			SetEncryptDoc(encConf.IsDocEncrypted).
-			SetEncryptedFields(encConf.EncryptedFields),
-		identity.FromContext(ctx),
-	)
-
-	switch {
-	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(ctx, data, col.Version())
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-
-		if err := col.AddMany(ctx, docList, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		rw.WriteHeader(http.StatusOK)
-	default:
-		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		if err := col.Add(ctx, doc, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		rw.WriteHeader(http.StatusOK)
-	}
 }
 
 func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
@@ -131,107 +74,6 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
-}
-
-func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	col := mustGetContextClientCollection(req)
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(true),
-		identity.FromContext(ctx),
-	)
-
-	doc, err := col.Get(ctx, docID, getOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
-		return
-	}
-
-	patch, err := io.ReadAll(req.Body)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	if err := doc.SetWithJSON(ctx, patch); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
-
-	err = col.Update(ctx, doc, updateOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-	ctx := req.Context()
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
-
-	_, err = col.Delete(ctx, docID, deleteOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-	ctx := req.Context()
-	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(showDeleted),
-		identity.FromContext(ctx),
-	)
-
-	doc, err := col.Get(ctx, docID, getOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
-		return
-	}
-
-	docMap, err := doc.ToMap()
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, docMap)
 }
 
 func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) {
@@ -413,9 +255,9 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithContent(openapi3.NewContentWithJSONSchema(collectionAddSchema))
 
 	collectionAdd := openapi3.NewOperation()
-	collectionAdd.OperationID = "collection_add"
+	collectionAdd.OperationID = "document_add"
 	collectionAdd.Description = "Add document(s) to a collection"
-	collectionAdd.Tags = []string{"collection"}
+	collectionAdd.Tags = []string{"document"}
 	collectionAdd.AddParameter(collectionNamePathParam)
 	collectionAdd.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionAddRequest,
@@ -519,8 +361,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	collectionGet := openapi3.NewOperation()
 	collectionGet.Description = "Get a document by docID"
-	collectionGet.OperationID = "collection_get"
-	collectionGet.Tags = []string{"collection"}
+	collectionGet.OperationID = "document_get"
+	collectionGet.Tags = []string{"document"}
 	collectionGet.AddParameter(collectionNamePathParam)
 	collectionGet.AddParameter(documentIDPathParam)
 	collectionGet.AddResponse(200, collectionGetResponse)
@@ -528,8 +370,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	collectionUpdate := openapi3.NewOperation()
 	collectionUpdate.Description = "Update a document by docID"
-	collectionUpdate.OperationID = "collection_update"
-	collectionUpdate.Tags = []string{"collection"}
+	collectionUpdate.OperationID = "document_update"
+	collectionUpdate.Tags = []string{"document"}
 	collectionUpdate.AddParameter(collectionNamePathParam)
 	collectionUpdate.AddParameter(documentIDPathParam)
 	collectionUpdate.Responses = openapi3.NewResponses()
@@ -538,8 +380,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	collectionDelete := openapi3.NewOperation()
 	collectionDelete.Description = "Delete a document by docID"
-	collectionDelete.OperationID = "collection_delete"
-	collectionDelete.Tags = []string{"collection"}
+	collectionDelete.OperationID = "document_delete"
+	collectionDelete.Tags = []string{"document"}
 	collectionDelete.AddParameter(collectionNamePathParam)
 	collectionDelete.AddParameter(documentIDPathParam)
 	collectionDelete.Responses = openapi3.NewResponses()
@@ -610,9 +452,6 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, addIndex, h.AddIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, deleteIndex, h.DeleteIndex)
-	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)
-	router.AddRoute("/collections/{name}/{docID}", http.MethodPatch, collectionUpdate, h.Update)
-	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, addEncryptedIndex,
 		h.AddEncryptedIndex)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, listEncryptedIndexes,
@@ -620,4 +459,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
 	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
+
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodGet, collectionGet, h.Get)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, collectionUpdate, h.Update)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodDelete, collectionDelete, h.Delete)
 }

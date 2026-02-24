@@ -42,6 +42,7 @@ Execute queries, add schema types, obtain node info, etc.
 * [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
 * [defradb client block](defradb_client_block.md)	 - Manage blocks of a running DefraDB instance
 * [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
+* [defradb client document](defradb_client_document.md)	 - Interact with documents.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
 * [defradb client encrypted-index](defradb_client_encrypted-index.md)	 - Manage collections' encrypted indexes on a running DefraDB node
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance

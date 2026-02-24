@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -27,8 +27,8 @@ import (
 )
 
 // UpdateWithFilter updates using a filter to target documents for update.
-// An updater value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
+// An updater value is provided, which could be a string Patch, string Merge Patch,
+// parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
