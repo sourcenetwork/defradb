@@ -32,7 +32,7 @@ func TestIndexCreate_WithSingleField_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
@@ -62,7 +62,7 @@ func TestIndexCreate_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByNameAndAge",
 				Fields:     []string{"name:ASC", "age:DESC"},
@@ -93,7 +93,7 @@ func TestIndexCreate_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UniqueEmail",
 				Fields:     []string{"email"},
@@ -124,7 +124,7 @@ func TestIndexCreate_WithoutName_ShouldGenerateName(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Fields:     []string{"age"},
 				Expected: immutable.Some(client.IndexDescription{
@@ -144,7 +144,7 @@ func TestIndexCreate_WithoutName_ShouldGenerateName(t *testing.T) {
 func TestIndexCreate_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection:  "NonExistentCollection",
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -159,7 +159,7 @@ func TestIndexCreate_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 func TestIndexCreate_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexCreate{
+			&action.IndexAdd{
 				// Collection is empty
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -182,7 +182,7 @@ func TestIndexCreate_WithoutFields_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "EmptyIndex",
 				// Fields is empty
@@ -205,7 +205,7 @@ func TestIndexCreate_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection:  "User",
 				Name:        "InvalidOrderIndex",
 				Fields:      []string{"name:INVALID"},
@@ -228,7 +228,7 @@ func TestIndexCreate_WithNonExistentField_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
@@ -251,12 +251,12 @@ func TestIndexCreate_WithDuplicateName_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "DuplicateIndex",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection:  "User",
 				Name:        "DuplicateIndex",
 				Fields:      []string{"age"},

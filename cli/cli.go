@@ -124,7 +124,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	index := MakeIndexCommand(ctx)
 	index.AddCommand(
-		MakeIndexCreateCommand(ctx),
+		MakeIndexAddCommand(ctx),
 		MakeIndexDeleteCommand(ctx),
 		MakeIndexListCommand(ctx),
 	)
