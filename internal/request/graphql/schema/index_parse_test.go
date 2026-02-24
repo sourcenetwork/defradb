@@ -392,10 +392,10 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	require.NoError(t, err, testCase.description, "should parse sdl without error")
 
 	require.Equal(t, len(parseResult), 1, testCase.description, "should parse 1 schema")
-	require.Equal(t, len(parseResult[0].CreateIndexes), len(testCase.targetDescriptions), testCase.description,
+	require.Equal(t, len(parseResult[0].AddIndexes), len(testCase.targetDescriptions), testCase.description,
 		"should parse correct number of indexes")
 
-	for i, d := range parseResult[0].CreateIndexes {
+	for i, d := range parseResult[0].AddIndexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }

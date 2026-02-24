@@ -249,7 +249,7 @@ func fromAstDefinition(
 			VectorEmbeddings: vectorEmbeddings,
 			EncryptedIndexes: encryptedIndexes,
 		},
-		CreateIndexes: indexes,
+		AddIndexes: indexes,
 	}, nil
 }
 

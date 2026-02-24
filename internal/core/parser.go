@@ -32,8 +32,8 @@ type SchemaDefinition struct {
 }
 
 type Collection struct {
-	Definition    client.CollectionVersion
-	CreateIndexes []client.IndexAddRequest
+	Definition client.CollectionVersion
+	AddIndexes []client.IndexAddRequest
 }
 
 // Parser represents the object responsible for handling stuff specific to a query language.

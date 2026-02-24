@@ -78,9 +78,9 @@ func (db *DB) createCollections(
 	}
 
 	for _, def := range parseResults {
-		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
-		for _, createIndex := range def.CreateIndexes {
-			desc, err := processAddIndexRequest(ctx, def.Definition, createIndex)
+		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.AddIndexes))
+		for _, addIndex := range def.AddIndexes {
+			desc, err := processAddIndexRequest(ctx, def.Definition, addIndex)
 			if err != nil {
 				return nil, err
 			}
@@ -873,7 +873,7 @@ func finalizeRelations(
 
 			if isOneToOne && field.IsPrimary {
 				newIndex, err := ensureOneToOneUniqueIndex(
-					newCollections[i].CreateIndexes,
+					newCollections[i].AddIndexes,
 					nil,
 					newCol.Definition.Name,
 					field.Name,
@@ -882,7 +882,7 @@ func finalizeRelations(
 					return err
 				}
 				if newIndex != nil {
-					newCollections[i].CreateIndexes = append(newCollections[i].CreateIndexes, *newIndex)
+					newCollections[i].AddIndexes = append(newCollections[i].AddIndexes, *newIndex)
 				}
 			}
 		}
@@ -910,11 +910,11 @@ func isOneToOneRelation(
 
 // findIndexWithFirstField checks if an index exists where the given field is the first field.
 func findIndexWithFirstField(
-	createIndexes []client.IndexAddRequest,
+	addIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	fieldName string,
 ) (isUnique bool, found bool) {
-	for _, index := range createIndexes {
+	for _, index := range addIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
 			return index.Unique, true
 		}
@@ -931,7 +931,7 @@ func findIndexWithFirstField(
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
 // If no user-defined index exists, it creates one automatically.
 func ensureOneToOneUniqueIndex(
-	createIndexes []client.IndexAddRequest,
+	addIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
@@ -940,9 +940,9 @@ func ensureOneToOneUniqueIndex(
 
 	// Check for user-defined index on either the _id field or the relation field name
 	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
-	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
+	isUnique, hasIndex := findIndexWithFirstField(addIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
-		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)
+		isUnique, hasIndex = findIndexWithFirstField(addIndexes, existingIndexes, relationFieldName)
 	}
 
 	if hasIndex {
@@ -959,7 +959,7 @@ func ensureOneToOneUniqueIndex(
 	}, nil
 }
 
-// getOneToOneIndexRequestsForPatch returns index create requests for one-to-one relations
+// getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
 // standard schema creation flow that calls finalizeRelations.
 // Returns a map of collectionName -> []IndexAddRequest for indexes that need to be created.
