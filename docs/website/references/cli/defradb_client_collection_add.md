@@ -29,21 +29,21 @@ defradb client collection add [-i --identity] [-e --encrypt] [--encrypt-fields] 
 ### Examples
 
 ```
-Create from string1:  
+Add from string1:  
   defradb client collection add --name User '{ "name": "Bob" }'
 
-Create from string, with identity:  
+Add from string, with identity:  
   defradb client collection add --name User '{ "name": "Bob" }' \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-Create multiple from string:  
+Add multiple from string:  
   defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 
-Create from file:  
+Add from file:  
   defradb client collection add --name User -f document.json
 
-Create from stdin:  
-  cat document.json | defradb client collection create --name User -
+Add from stdin:  
+  cat document.json | defradb client collection add --name User -
 ```
 
 ### Options
@@ -52,7 +52,7 @@ Create from stdin:
   -e, --encrypt                  Flag to enable encryption of the document
       --encrypt-fields strings   Comma-separated list of fields to encrypt
   -f, --file string              File containing document(s)
-  -h, --help                     help for create
+  -h, --help                     help for add
 ```
 
 ### Options inherited from parent commands

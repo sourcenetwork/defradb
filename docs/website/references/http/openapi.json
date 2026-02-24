@@ -1405,8 +1405,8 @@
                 ]
             },
             "post": {
-                "description": "Create document(s) in a collection",
-                "operationId": "collection_create",
+                "description": "Add document(s) to a collection",
+                "operationId": "collection_add",
                 "parameters": [
                     {
                         "description": "Collection name",
