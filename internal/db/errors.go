@@ -69,7 +69,7 @@ const (
 	errFailedToWriteString                       string = "failed to write string"
 	errJSONDecode                                string = "failed to decode JSON"
 	errDocFromMap                                string = "failed to create a new doc from map"
-	errDocCreate                                 string = "failed to save a new doc to collection"
+	errDocAdd                                    string = "failed to add a new doc to collection"
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
@@ -546,10 +546,10 @@ func NewErrDocFromMap(inner error) error {
 	return errors.Wrap(errDocFromMap, inner)
 }
 
-// NewErrDocCreate returns a new error indicating there was a failure to save
+// NewErrDocAdd returns a new error indicating there was a failure to add
 // a new doc to a collection
-func NewErrDocCreate(inner error) error {
-	return errors.Wrap(errDocCreate, inner)
+func NewErrDocAdd(inner error) error {
+	return errors.Wrap(errDocAdd, inner)
 }
 
 // NewErrDocUpdate returns a new error indicating there was a failure to update
