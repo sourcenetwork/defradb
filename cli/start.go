@@ -28,7 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
@@ -178,7 +177,6 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			opts.DB().SetEnableSigning(!cfg.GetBool("datastore.nosigning"))
 
 			isDevMode := cfg.GetBool("development")
-			http.IsDevMode = isDevMode
 			if isDevMode {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
@@ -240,7 +238,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				if err == nil {
 					goto RESTART
 				}
-				if errors.Is(err, node.ErrPurgeWithDevModeDisabled) {
+				if errors.Is(err, client.ErrOperationRequiresDeveloperMode) {
 					goto SELECT
 				}
 

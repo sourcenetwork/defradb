@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
@@ -38,7 +39,7 @@ func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.PurgeAndRestart(ctx)
-	require.ErrorIs(t, err, ErrPurgeWithDevModeDisabled)
+	require.ErrorIs(t, err, client.ErrOperationRequiresDeveloperMode)
 }
 
 func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {

@@ -51,6 +51,7 @@ const (
 	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
+	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 )
 
 var (
@@ -98,6 +99,7 @@ var (
 	ErrNACIsEnabledButInstanceIsNotAvailable = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
+	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -273,4 +275,11 @@ func NewErrNotFound(kv errors.KV) error {
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
 	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
+}
+
+func NewErrOperationRequiresDeveloperMode(operationName string) error {
+	return errors.New(
+		errOperationRequiresDeveloperMode,
+		errors.NewKV("Operation", operationName),
+	)
 }

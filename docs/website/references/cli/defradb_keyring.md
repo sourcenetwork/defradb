@@ -5,17 +5,17 @@ Manage DefraDB private keys
 ### Synopsis
 
 Manage DefraDB private keys.
-Generate, import, and export private keys.
+Generate, add, get, and list private keys.
 
 The following keys are loaded from the keyring on start:
 	peer-key: Ed25519 private key (required)
 	encryption-key: AES-128, AES-192, or AES-256 key (optional)
 
 To randomly generate the required keys, run the following command:
-	defradb keyring generate
+	defradb keyring new
 
 To import externally generated keys, run the following command:
-	defradb keyring import <name> <private-key-hex>
+	defradb keyring add <name> <private-key-hex>
 
 To learn more about the available options:
 	defradb keyring --help

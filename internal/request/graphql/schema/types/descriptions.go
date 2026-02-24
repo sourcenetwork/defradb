@@ -50,7 +50,7 @@ An optional field name parameter for this commit query. Only commits for a field
  composite (document level) commits only. If no fields match, the result set will be empty.
 `
 	commitCIDArgDescription string = `
-An optional value that specifies the commit ID of the commits to return. If a
+An optional value that specifies the commit IDs of the commits to return. If a
  matching commit is not found then an empty set will be returned.
 `
 	commitDepthArgDescription string = `

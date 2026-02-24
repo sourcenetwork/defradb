@@ -92,7 +92,7 @@ type Subscription {
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -150,7 +150,7 @@ showDeleted: Boolean): [Author]
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -208,11 +208,11 @@ showDeleted: Boolean): [Book]
     """
     _commits(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional value that specifies the maximum depth to which the commit DAG graph
     should be traversed from matching commits.
@@ -359,7 +359,7 @@ type Query {
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -417,7 +417,7 @@ showDeleted: Boolean): [Author]
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -483,11 +483,11 @@ showDeleted: Boolean): [Book]
     """
     _commits(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional value that specifies the maximum depth to which the commit DAG graph
     should be traversed from matching commits.
@@ -812,11 +812,11 @@ type Commit {
     """
     heads(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional docID parameter for this commit query. Only commits for a document
     with a matching docID will be returned.  If no documents match, the result
@@ -858,11 +858,11 @@ order: [commitsOrderArg]): [Commit]
     """
     links(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional docID parameter for this commit query. Only commits for a document
     with a matching docID will be returned.  If no documents match, the result
