@@ -183,7 +183,7 @@ func (c *collection) AddIndex(
 	}
 	defer txn.Discard()
 
-	index, err := c.createIndex(ctx, desc)
+	index, err := c.addIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -230,11 +230,11 @@ func processAddIndexRequest(
 	}, nil
 }
 
-func (c *collection) createIndex(
+func (c *collection) addIndex(
 	ctx context.Context,
-	createReq client.IndexAddRequest,
+	addReq client.IndexAddRequest,
 ) (CollectionIndex, error) {
-	desc, err := processAddIndexRequest(ctx, c.Version(), createReq)
+	desc, err := processAddIndexRequest(ctx, c.Version(), addReq)
 	if err != nil {
 		return nil, err
 	}
@@ -626,14 +626,14 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
-	createReq client.IndexAddRequest,
+	addReq client.IndexAddRequest,
 ) (string, error) {
-	indexName := createReq.Name
+	indexName := addReq.Name
 	if indexName == "" {
 		nameIncrement := 1
 		for {
 			var err error
-			indexName, err = generateIndexName(colVersion.Name, createReq.Fields, nameIncrement)
+			indexName, err = generateIndexName(colVersion.Name, addReq.Fields, nameIncrement)
 			if err != nil {
 				return "", err
 			}

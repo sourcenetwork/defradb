@@ -344,7 +344,7 @@ existingVersionLoop:
 					return err
 				}
 				for _, indexReq := range indexReqs {
-					if _, err := colObj.createIndex(ctx, indexReq); err != nil {
+					if _, err := colObj.addIndex(ctx, indexReq); err != nil {
 						return err
 					}
 				}
