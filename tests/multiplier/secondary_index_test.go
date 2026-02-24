@@ -469,10 +469,10 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 	assert.True(t, ok)
 	assert.Contains(t, schemaAdd.Schema, "@index")
 
-	createIndex, ok := result[1].(*action.AddIndex)
+	addIndex, ok := result[1].(*action.AddIndex)
 	assert.True(t, ok)
-	assert.Equal(t, 0, createIndex.CollectionID)
-	assert.Equal(t, "name", createIndex.FieldName)
+	assert.Equal(t, 0, addIndex.CollectionID)
+	assert.Equal(t, "name", addIndex.FieldName)
 }
 
 func TestApply_WithIndexDirective_ReturnsUnchanged(t *testing.T) {
