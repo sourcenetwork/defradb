@@ -145,12 +145,12 @@ func (l *LocalACP) AddPolicy(
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
-	createPolicy := types.CreatePolicyRequest{
+	addPolicy := types.CreatePolicyRequest{
 		Policy:      policy,
 		MarshalType: types.PolicyMarshalingType(marshalType),
 	}
 
-	response, err := l.engine.CreatePolicy(ctx, &createPolicy)
+	response, err := l.engine.CreatePolicy(ctx, &addPolicy)
 	if err != nil {
 		return "", err
 	}
