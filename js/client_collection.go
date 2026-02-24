@@ -316,7 +316,7 @@ func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionCreateIndex()
+	opt := options.CollectionAddIndex()
 	setOptIdentity(opt, args, 1)
 	desc, err := c.col.CreateIndex(ctx, request, opt)
 	if err != nil {

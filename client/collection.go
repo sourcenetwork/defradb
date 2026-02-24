@@ -117,7 +117,7 @@ type Collection interface {
 	CreateIndex(
 		context.Context,
 		IndexCreateRequest,
-		...options.Enumerable[options.CollectionCreateIndexOptions],
+		...options.Enumerable[options.CollectionAddIndexOptions],
 	) (IndexDescription, error)
 
 	// DeleteIndex deletes an index from the collection.

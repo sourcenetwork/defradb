@@ -272,7 +272,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)

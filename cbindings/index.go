@@ -84,7 +84,7 @@ func IndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	descWithID, err := col.CreateIndex(ctx, desc,
-		defraOpts.WithIdentity(defraOpts.CollectionCreateIndex(), ident))
+		defraOpts.WithIdentity(defraOpts.CollectionAddIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

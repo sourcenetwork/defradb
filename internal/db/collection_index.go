@@ -166,7 +166,7 @@ func (c *collection) deleteIndexedDocWithID(
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

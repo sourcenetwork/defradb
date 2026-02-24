@@ -86,7 +86,7 @@ func (a *CreateIndex) Execute() {
 
 		indexDesc.Unique = a.Unique
 
-		opts := options.CollectionCreateIndex()
+		opts := options.CollectionAddIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

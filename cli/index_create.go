@@ -73,7 +73,7 @@ If no order is specified for the field, the default value will be "ASC"`,
 				return err
 			}
 
-			indOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(cmd.Context()))
+			indOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(cmd.Context()))
 			descWithID, err := col.CreateIndex(cmd.Context(), desc, indOpt)
 			if err != nil {
 				return err

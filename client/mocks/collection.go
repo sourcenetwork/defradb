@@ -237,7 +237,7 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc
 }
 
 // CreateIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionCreateIndexOptions]) (client.IndexDescription, error) {
+func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error) {
 	var tmpRet mock.Arguments
 	if len(vs) > 0 {
 		tmpRet = _mock.Called(context1, indexCreateRequest, vs)
@@ -252,15 +252,15 @@ func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateReques
 
 	var r0 client.IndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error)); ok {
 		return returnFunc(context1, indexCreateRequest, vs...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionCreateIndexOptions]) client.IndexDescription); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionAddIndexOptions]) client.IndexDescription); ok {
 		r0 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r0 = ret.Get(0).(client.IndexDescription)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionCreateIndexOptions]) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest, ...options.Enumerable[options.CollectionAddIndexOptions]) error); ok {
 		r1 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r1 = ret.Error(1)
@@ -276,13 +276,13 @@ type Collection_CreateIndex_Call struct {
 // CreateIndex is a helper method to define mock.On call
 //   - context1 context.Context
 //   - indexCreateRequest client.IndexCreateRequest
-//   - vs ...options.Enumerable[options.CollectionCreateIndexOptions]
+//   - vs ...options.Enumerable[options.CollectionAddIndexOptions]
 func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_CreateIndex_Call {
 	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex",
 		append([]interface{}{context1, indexCreateRequest}, vs...)...)}
 }
 
-func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionCreateIndexOptions])) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions])) *Collection_CreateIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -292,10 +292,10 @@ func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, in
 		if args[1] != nil {
 			arg1 = args[1].(client.IndexCreateRequest)
 		}
-		var arg2 []options.Enumerable[options.CollectionCreateIndexOptions]
-		var variadicArgs []options.Enumerable[options.CollectionCreateIndexOptions]
+		var arg2 []options.Enumerable[options.CollectionAddIndexOptions]
+		var variadicArgs []options.Enumerable[options.CollectionAddIndexOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]options.Enumerable[options.CollectionCreateIndexOptions])
+			variadicArgs = args[2].([]options.Enumerable[options.CollectionAddIndexOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -312,7 +312,7 @@ func (_c *Collection_CreateIndex_Call) Return(indexDescription client.IndexDescr
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Enumerable[options.CollectionAddIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

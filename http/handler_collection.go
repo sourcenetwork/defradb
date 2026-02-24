@@ -299,7 +299,7 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		Unique: indexDesc.Unique,
 	}
 
-	createIndexOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(ctx))
+	createIndexOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(ctx))
 
 	index, err := col.CreateIndex(ctx, descWithoutID, createIndexOpt)
 	if err != nil {
