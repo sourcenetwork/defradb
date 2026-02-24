@@ -33,7 +33,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 						age: Int
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -71,7 +71,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 						name: String @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -107,7 +107,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.AddDoc{
@@ -151,7 +151,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -187,7 +187,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -224,7 +224,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -260,7 +260,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -297,7 +297,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -341,7 +341,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -432,7 +432,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.AddDoc{
@@ -476,7 +476,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -540,7 +540,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 						email: String @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -638,7 +638,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{

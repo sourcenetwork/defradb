@@ -33,7 +33,7 @@ func TestOrderQueryWithIndex_WithAscendingOrder_ShouldUseIndex(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -109,7 +109,7 @@ func TestOrderQueryWithIndex_WithLimitDescending_ShouldUseIndex(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -157,7 +157,7 @@ func TestOrderQueryWithIndex_WithLimitAscending_ShouldUseIndex(t *testing.T) {
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -205,7 +205,7 @@ func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldAscending_ShouldUseIndex
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -250,7 +250,7 @@ func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldDescending_ShouldUseInde
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -295,7 +295,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldAscending_ShouldUseIndex(t 
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -344,7 +344,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldDescending_ShouldUseIndex(t
 						age: Int @index
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -553,7 +553,7 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{

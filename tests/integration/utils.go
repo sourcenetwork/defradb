@@ -453,7 +453,7 @@ func performAction(
 	case GenerateDocs:
 		generateDocs(s, action)
 
-	case CreatePredefinedDocs:
+	case AddPredefinedDocs:
 		generatePredefinedDocs(s, action)
 
 	case GetNodeIdentity:
@@ -504,7 +504,7 @@ func generateDocs(s *state.State, action GenerateDocs) {
 	createGenerateDocs(s, docs, action.NodeID)
 }
 
-func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
+func generatePredefinedDocs(s *state.State, action AddPredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections

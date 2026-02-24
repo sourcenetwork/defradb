@@ -729,7 +729,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -764,7 +764,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{

@@ -471,7 +471,7 @@ type GenerateDocs struct {
 	ForCollections []string
 }
 
-// CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+// AddPredefinedDocs is an action that will trigger creation of predefined documents.
 // Predefined docs allows specifying a database state with complex schemas that can be used by
 // multiple tests while allowing each test to select a subset of the schemas (collection and
 // collection's fields) to work with.
@@ -490,7 +490,7 @@ type GenerateDocs struct {
 //	 }
 //
 // For more information refer to tests/predefined/README.md
-type CreatePredefinedDocs struct {
+type AddPredefinedDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//
 	// If a value is not provided the docs generation will be executed against all nodes,

@@ -46,7 +46,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.AddDoc{
@@ -119,7 +119,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -156,7 +156,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -193,7 +193,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -231,7 +231,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -269,7 +269,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -306,7 +306,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -343,7 +343,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -381,7 +381,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -419,7 +419,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -539,7 +539,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.AddDoc{
@@ -593,7 +593,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -661,7 +661,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -757,7 +757,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -796,7 +796,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -832,7 +832,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
