@@ -155,7 +155,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionListDocIDsCommand(ctx),
 		MakeCollectionDeleteCommand(ctx),
 		MakeCollectionUpdateCommand(ctx),
-		MakeCollectionCreateCommand(ctx),
+		MakeCollectionAddCommand(ctx),
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),

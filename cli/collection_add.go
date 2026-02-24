@@ -22,14 +22,14 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeCollectionCreateCommand(ctx context.Context) *cobra.Command {
+func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
 	var file string
 	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var cmd = &cobra.Command{
-		Use:   "create [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
-		Short: "Create a new document.",
-		Long: `Create a new document.
+		Use:   "add [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
+		Short: "Add a new document.",
+		Long: `Add a new document.
 		
 Options:
 	-i, --identity 
@@ -98,21 +98,21 @@ Options:
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Create from string1",
-		`defradb client collection create --name User '{ "name": "Bob" }'`)
+	EmbedCLIExample(ctx, cmd, "Add from string1",
+		`defradb client collection add --name User '{ "name": "Bob" }'`)
 
-	EmbedCLIExample(ctx, cmd, "Create from string, with identity",
-		`defradb client collection create --name User '{ "name": "Bob" }' \
+	EmbedCLIExample(ctx, cmd, "Add from string, with identity",
+		`defradb client collection add --name User '{ "name": "Bob" }' \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
 
-	EmbedCLIExample(ctx, cmd, "Create multiple from string",
-		`defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
+	EmbedCLIExample(ctx, cmd, "Add multiple from string",
+		`defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
 
-	EmbedCLIExample(ctx, cmd, "Create from file",
-		`defradb client collection create --name User -f document.json`)
+	EmbedCLIExample(ctx, cmd, "Add from file",
+		`defradb client collection add --name User -f document.json`)
 
-	EmbedCLIExample(ctx, cmd, "Create from stdin",
-		`cat document.json | defradb client collection create --name User -`)
+	EmbedCLIExample(ctx, cmd, "Add from stdin",
+		`cat document.json | defradb client collection add --name User -`)
 
 	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
 		"Flag to enable encryption of the document")

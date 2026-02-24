@@ -1,10 +1,10 @@
-## defradb client collection create
+## defradb client collection add
 
-Create a new document.
+Add a new document.
 
 ### Synopsis
 
-Create a new document.
+Add a new document.
 		
 Options:
 	-i, --identity 
@@ -23,24 +23,24 @@ Options:
 		
 
 ```
-defradb client collection create [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
+defradb client collection add [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
 ```
 
 ### Examples
 
 ```
 Create from string1:  
-  defradb client collection create --name User '{ "name": "Bob" }'
+  defradb client collection add --name User '{ "name": "Bob" }'
 
 Create from string, with identity:  
-  defradb client collection create --name User '{ "name": "Bob" }' \
+  defradb client collection add --name User '{ "name": "Bob" }' \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Create multiple from string:  
-  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
+  defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 
 Create from file:  
-  defradb client collection create --name User -f document.json
+  defradb client collection add --name User -f document.json
 
 Create from stdin:  
   cat document.json | defradb client collection create --name User -
