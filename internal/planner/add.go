@@ -19,14 +19,14 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// createNode is used to construct and execute
-// an object create mutation.
+// addNode is used to construct and execute
+// an object add mutation.
 //
 // Create nodes are the simplest of the object mutations
-// Each Iteration of the plan, creates and returns one
+// Each iteration of the plan, adds and returns one
 // document, until we've exhausted the payload. No filtering
 // or Select plans
-type createNode struct {
+type addNode struct {
 	documentIterator
 	docMapper
 
@@ -40,25 +40,25 @@ type createNode struct {
 	input []map[string]any
 	docs  []*client.Document
 
-	didCreate bool
+	didAdd bool
 
 	results planNode
 
-	execInfo createExecInfo
+	execInfo addExecInfo
 
-	createOptions []options.Enumerable[options.CollectionCreateOptions]
+	addOptions []options.Enumerable[options.CollectionCreateOptions]
 }
 
-type createExecInfo struct {
-	// Total number of times createNode was executed.
+type addExecInfo struct {
+	// Total number of times addNode was executed.
 	iterations uint64
 }
 
-func (n *createNode) Kind() string { return "createNode" }
+func (n *addNode) Kind() string { return "addNode" }
 
-func (n *createNode) Init() error { return nil }
+func (n *addNode) Init() error { return nil }
 
-func (n *createNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
+func (n *addNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
 	shortID, err := id.GetShortCollectionID(n.p.ctx, desc.CollectionID)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func documentsToDocIDs(docs ...*client.Document) []string {
 	return docIDs
 }
 
-func (n *createNode) Start() error {
+func (n *addNode) Start() error {
 	n.docs = make([]*client.Document, len(n.input))
 
 	for i, input := range n.input {
@@ -96,11 +96,11 @@ func (n *createNode) Start() error {
 	return nil
 }
 
-func (n *createNode) Next() (bool, error) {
+func (n *addNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if !n.didCreate {
-		err := n.collection.CreateMany(n.p.ctx, n.docs, n.createOptions...)
+	if !n.didAdd {
+		err := n.collection.CreateMany(n.p.ctx, n.docs, n.addOptions...)
 		if err != nil {
 			return false, err
 		}
@@ -121,7 +121,7 @@ func (n *createNode) Next() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		n.didCreate = true
+		n.didAdd = true
 	}
 
 	next, err := n.results.Next()
@@ -129,17 +129,17 @@ func (n *createNode) Next() (bool, error) {
 	return next, err
 }
 
-func (n *createNode) Prefixes(prefixes []keys.Walkable) { /* no-op */ }
+func (n *addNode) Prefixes(prefixes []keys.Walkable) { /* no-op */ }
 
-func (n *createNode) Close() error {
+func (n *addNode) Close() error {
 	return n.results.Close()
 }
 
-func (n *createNode) Source() planNode { return n.results }
+func (n *addNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *addNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
 		return map[string]any{
@@ -156,18 +156,18 @@ func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, e
 	}
 }
 
-func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
+func (p *Planner) AddDocs(parsed *mapper.Mutation) (planNode, error) {
 	results, err := p.Select(&parsed.Select)
 	if err != nil {
 		return nil, err
 	}
 
-	create := &createNode{
+	add := &addNode{
 		p:         p,
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		createOptions: []options.Enumerable[options.CollectionCreateOptions]{
+		addOptions: []options.Enumerable[options.CollectionCreateOptions]{
 			options.WithIdentity(
 				options.CollectionCreate().
 					SetEncryptDoc(parsed.Encrypt).
@@ -185,6 +185,6 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	create.collection = col
-	return create, nil
+	add.collection = col
+	return add, nil
 }

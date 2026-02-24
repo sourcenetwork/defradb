@@ -22,7 +22,7 @@ var createPattern = dataMap{
 	"explain": dataMap{
 		"operationNode": []dataMap{
 			{
-				"createNode": dataMap{
+				"addNode": dataMap{
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"scanNode": dataMap{},
@@ -53,7 +53,7 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 
 				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
-						TargetNodeName:    "createNode",
+						TargetNodeName:    "addNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"input": []dataMap{{
@@ -90,7 +90,7 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 
 				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
-						TargetNodeName:    "createNode",
+						TargetNodeName:    "addNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"input": []dataMap{{

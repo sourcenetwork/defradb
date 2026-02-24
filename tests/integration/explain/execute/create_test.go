@@ -38,7 +38,7 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
-								"createNode": dataMap{
+								"addNode": dataMap{
 									"iterations": uint64(2),
 									"selectTopNode": dataMap{
 										"selectNode": dataMap{

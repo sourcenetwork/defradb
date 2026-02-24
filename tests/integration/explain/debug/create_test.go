@@ -22,7 +22,7 @@ var createPattern = dataMap{
 	"explain": dataMap{
 		"operationNode": []dataMap{
 			{
-				"createNode": dataMap{
+				"addNode": dataMap{
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"scanNode": dataMap{},

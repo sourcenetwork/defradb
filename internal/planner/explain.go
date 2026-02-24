@@ -42,7 +42,7 @@ type typeJoinExplainable interface {
 var (
 	_ explainablePlanNode = (*averageNode)(nil)
 	_ explainablePlanNode = (*countNode)(nil)
-	_ explainablePlanNode = (*createNode)(nil)
+	_ explainablePlanNode = (*addNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)
 	_ explainablePlanNode = (*deleteNode)(nil)
 	_ explainablePlanNode = (*groupNode)(nil)
