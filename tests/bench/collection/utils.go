@@ -117,7 +117,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 	return nil
 }
 
-func runCollectionBenchCreate(
+func runCollectionBenchAdd(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
@@ -139,12 +139,12 @@ func runCollectionBenchCreate(
 	// run benchmark
 	b.StartTimer()
 	if doSync {
-		return runCollectionBenchCreateSync(b, ctx, collections, fixture, docCount, opCount)
+		return runCollectionBenchAddSync(b, ctx, collections, fixture, docCount, opCount)
 	}
-	return runCollectionBenchCreateAsync(b, ctx, collections, fixture, docCount, opCount)
+	return runCollectionBenchAddAsync(b, ctx, collections, fixture, docCount, opCount)
 }
 
-func runCollectionBenchCreateMany(
+func runCollectionBenchAddMany(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
@@ -163,10 +163,10 @@ func runCollectionBenchCreateMany(
 	}
 
 	numTypes := len(fixture.Types())
-	// CreateMany make sure numTypes == 1 since we only support that for now
+	// AddMany make sure numTypes == 1 since we only support that for now
 	// @todo: Add support for numTypes > 1 later
 	if numTypes != 1 {
-		return errors.New(fmt.Sprintf("Invalid number of types for create many, have %v but max is 1", numTypes))
+		return errors.New(fmt.Sprintf("Invalid number of types for add many, have %v but max is 1", numTypes))
 	}
 
 	// run benchmark
@@ -186,7 +186,7 @@ func runCollectionBenchCreateMany(
 	return nil
 }
 
-func runCollectionBenchCreateSync(b *testing.B,
+func runCollectionBenchAddSync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
@@ -213,7 +213,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 // uses an async method similar to the BackFill implementaion
 // cuts the total task up into batchs up to writeBatchGroup size
 // and wait for it all to finish.
-func runCollectionBenchCreateAsync(b *testing.B,
+func runCollectionBenchAddAsync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
@@ -236,7 +236,7 @@ func runCollectionBenchCreateAsync(b *testing.B,
 			for i := 0; i < currentBatchSize; i++ {
 				go func(index int) {
 					docs, _ := fixture.GenerateDocs()
-					// create the documents
+					// add the documents
 					for j := 0; j < numTypes; j++ {
 						doc, _ := client.NewDocFromJSON(ctx, []byte(docs[j]), collections[j].Version())
 						collections[j].Add(ctx, doc) //nolint:errcheck
