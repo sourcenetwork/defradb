@@ -53,7 +53,7 @@ func TestDebugExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: age})
+						AVG(GROUP: {field: age})
 					}
 				}`,
 
@@ -76,10 +76,10 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T)
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-							_avg(_group: {field: age})
+							AVG(GROUP: {field: age})
 						}
 					}
 				}`,
@@ -103,11 +103,11 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroup
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
 								}
 						}
@@ -133,13 +133,13 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAv
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
-									_avg(_group: {field: age})
+									AVG(GROUP: {field: age})
 								}
 						}
 					}

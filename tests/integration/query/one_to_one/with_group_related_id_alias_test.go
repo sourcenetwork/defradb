@@ -33,26 +33,26 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Andrew Lone",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Go Guide for Rust developers",
@@ -66,7 +66,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 						author {
 							name
 						}
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -78,7 +78,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -89,7 +89,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},
@@ -121,26 +121,26 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
@@ -186,26 +186,26 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
@@ -261,26 +261,26 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
@@ -291,7 +291,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 				Request: `query {
 					Book(groupBy: [author]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -300,7 +300,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -308,7 +308,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 						},
 						{
 							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},
@@ -340,26 +340,26 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
@@ -373,7 +373,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 						author {
 							name
 						}
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -385,7 +385,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -396,7 +396,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},

@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
+func TestIndexList_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -29,7 +29,7 @@ func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 					}
 				`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},

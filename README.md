@@ -29,7 +29,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Configuration](#configuration)
    * [External port binding](#external-port-binding)
    * [Add a schema type](#add-a-schema-type)
-   * [Create a document](#create-a-document)
+   * [Add a document](#add-a-document)
    * [Query documents](#query-documents)
    * [Obtain document commits](#obtain-document-commits)
    * [DefraDB Query Language (DQL)](#defradb-query-language-dql)
@@ -126,13 +126,13 @@ Alternatively, to randomly generate the required keys, run the following command
 Node identity is an identity assigned to the node. It is used to exchange encryption keys with other nodes. 
 
 ```
-defradb keyring generate
+defradb keyring new
 ```
 
 To import externally generated keys, run the following command:
 
 ```
-defradb keyring import <name> <private-key-hex>
+defradb keyring add <name> <private-key-hex>
 ```
 
 To learn more about the available options:
@@ -188,14 +188,14 @@ defradb client schema add '
 
 Find more examples of schema type definitions in the [examples/schema/](examples/schema/) folder.
 
-## Create a document
+## Add a document
 
-Submit a `mutation` request to create a document of the `User` type:
+Submit a `mutation` request to add a document of the `User` type:
 
 ```shell
 defradb client query '
   mutation {
-      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
+      add_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
           _docID
       }
   }
@@ -207,7 +207,7 @@ Expected response:
 ```json
 {
   "data": {
-    "create_User": [
+    "add_User": [
       {
         "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
       }
@@ -457,7 +457,7 @@ defradb client p2p info --url localhost:9182
 Set *nodeA* to actively replicate the Article collection to *nodeB*:
 
 ```shell
-defradb client p2p replicator create -c Article <nodeB_peer_info_json>
+defradb client p2p replicator add -c Article <nodeB_peer_info_json>
 ```
 
 As we add or update documents in the Article collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.

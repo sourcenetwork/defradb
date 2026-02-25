@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -67,7 +68,8 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			doc, err := n.collection.Get(n.p.ctx, docID, false)
+			getOpts := options.WithIdentity(options.CollectionGet(), n.p.identity)
+			doc, err := n.collection.Get(n.p.ctx, docID, getOpts)
 			if err != nil {
 				return false, err
 			}
@@ -76,7 +78,8 @@ func (n *updateNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			err = n.collection.Update(n.p.ctx, doc)
+			updateOpts := options.WithIdentity(options.CollectionUpdate(), n.p.identity)
+			err = n.collection.Update(n.p.ctx, doc, updateOpts)
 			if err != nil {
 				return false, err
 			}
@@ -169,7 +172,11 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

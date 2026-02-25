@@ -51,7 +51,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -72,11 +72,11 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},

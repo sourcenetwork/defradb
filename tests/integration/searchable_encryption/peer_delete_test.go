@@ -35,11 +35,11 @@ func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testin
 						verified: Boolean
 					}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",

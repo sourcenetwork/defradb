@@ -14,6 +14,8 @@ import (
 	"github.com/sourcenetwork/lens/host-go/engine/module"
 	lensNode "github.com/sourcenetwork/lens/host-go/node"
 	"github.com/sourcenetwork/lens/host-go/runtimes/js"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 const JSLensRuntime LensRuntimeType = "js"
@@ -23,7 +25,7 @@ func init() {
 	runtimeConstructors[JSLensRuntime] = func() module.Runtime { return js.New() }
 }
 
-func appendLensP2POpt(lensOptions []lensNode.Option, opts *dbOptions) []lensNode.Option {
+func appendLensP2POpt(lensOptions []lensNode.Option, _ client.Host) []lensNode.Option {
 	// Nil-op, js-lens does not support p2p
 	return lensOptions
 }

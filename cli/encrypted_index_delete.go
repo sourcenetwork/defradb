@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
@@ -27,12 +30,14 @@ func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+			opt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(cmd.Context()))
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, opt)
 			if err != nil {
 				return err
 			}
 
-			return col.DeleteEncryptedIndex(cmd.Context(), fieldArg)
+			deleteOpt := options.WithIdentity(options.DeleteEncryptedIndex(), iIdentity.FromContext(cmd.Context()))
+			return col.DeleteEncryptedIndex(cmd.Context(), fieldArg, deleteOpt)
 		},
 	}
 

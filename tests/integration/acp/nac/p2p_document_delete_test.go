@@ -51,7 +51,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -62,7 +62,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -114,7 +114,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -125,7 +125,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -178,7 +178,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -189,7 +189,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{

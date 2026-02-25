@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindIntArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindIntArrayWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindIntArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindIntArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindIntArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindIntArraySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindIntArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindIntArraySubstitutionWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

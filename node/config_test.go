@@ -14,22 +14,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-func TestWithDisableP2P(t *testing.T) {
-	options := &Config{}
-	WithDisableP2P(true)(options)
-	assert.Equal(t, true, options.disableP2P)
+func TestSetDisableP2P(t *testing.T) {
+	opts := utils.NewOptions(options.Node().SetDisableP2P(true))
+	assert.Equal(t, true, opts.DisableP2P)
 }
 
-func TestWithDisableAPI(t *testing.T) {
-	options := &Config{}
-	WithDisableAPI(true)(options)
-	assert.Equal(t, true, options.disableAPI)
+func TestSetDisableAPI(t *testing.T) {
+	opts := utils.NewOptions(options.Node().SetDisableAPI(true))
+	assert.Equal(t, true, opts.DisableAPI)
 }
 
-func TestWithEnableDevelopment(t *testing.T) {
-	options := &Config{}
-	WithEnableDevelopment(true)(options)
-	assert.Equal(t, true, options.enableDevelopment)
+func TestSetEnableDevelopment(t *testing.T) {
+	opts := utils.NewOptions(options.Node().SetEnableDevelopment(true))
+	assert.Equal(t, true, opts.EnableDevelopment)
 }

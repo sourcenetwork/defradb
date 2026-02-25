@@ -33,12 +33,12 @@ func TestColVersionUpdateReplaceNameOneToMany(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Painted House",

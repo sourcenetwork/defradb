@@ -58,7 +58,7 @@ func getEmbeddingFunc(provider, model, url string) chromem.EmbeddingFunc {
 
 // setEmbedding sets the embedding fields on the document if the related fields are dirty.
 // However, if the vector field itself has been set, it will not be overwritten by a new embedding generation.
-func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isCreate bool) error {
+func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isAdd bool) error {
 	embeddingGenerated := false
 	for _, embedding := range c.Version().VectorEmbeddings {
 		vecValue, err := doc.GetValue(embedding.FieldName)
@@ -96,7 +96,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 
 		// If we are updating the document and we don't have all the fields used for vector embedding
 		// generation, we get the document to see if the fields have previously been set.
-		if !isCreate && len(missingFieldsForGeneration) > 0 {
+		if !isAdd && len(missingFieldsForGeneration) > 0 {
 			oldDoc, err := c.get(
 				ctx,
 				keys.DataStoreKeyFromDocID(doc.ID()).ToPrimaryDataStoreKey(),
@@ -139,8 +139,8 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		embeddingGenerated = true
 	}
 
-	// If an embedding was generated on create, we need to update the document ID.
-	if isCreate && embeddingGenerated {
+	// If an embedding was generated on add, we need to update the document ID.
+	if isAdd && embeddingGenerated {
 		err := doc.GenerateAndSetDocID()
 		if err != nil {
 			return err

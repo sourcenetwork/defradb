@@ -30,11 +30,11 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -113,11 +113,11 @@ func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,

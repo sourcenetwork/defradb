@@ -39,7 +39,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_AuthorizedIdentity_AllowAccess(t *tes
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -95,7 +95,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -153,7 +153,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -210,7 +210,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -268,7 +268,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIandCandHTTPClient_No
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{

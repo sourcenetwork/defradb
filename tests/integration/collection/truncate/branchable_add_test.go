@@ -27,7 +27,7 @@ func TestCollectionTruncateBranchableAdd_RemovesDocument(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -62,7 +62,7 @@ func TestCollectionTruncateBranchableAdd_RemovesBlocks(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

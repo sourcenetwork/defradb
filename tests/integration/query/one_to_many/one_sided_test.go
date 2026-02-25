@@ -32,12 +32,12 @@ func TestQueryOneToMany_OneSided(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Painted House",

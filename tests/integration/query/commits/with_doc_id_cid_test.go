@@ -21,7 +21,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -52,7 +52,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -90,7 +90,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -131,7 +131,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",

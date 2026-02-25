@@ -38,7 +38,7 @@ func TestNAC_AdminRelation_CanDocumentUpdate(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{

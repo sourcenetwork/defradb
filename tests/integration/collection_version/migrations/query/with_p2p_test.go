@@ -62,11 +62,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -183,11 +183,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -277,11 +277,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -383,11 +383,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

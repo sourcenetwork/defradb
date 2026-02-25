@@ -106,14 +106,14 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	return f
 }
 
-func (f *indexTestFixture) createCollectionIndex(
-	desc client.IndexCreateRequest,
+func (f *indexTestFixture) addCollectionIndex(
+	desc client.IndexAddRequest,
 ) (client.IndexDescription, error) {
-	return f.createCollectionIndexFor(f.users, desc)
+	return f.addCollectionIndexFor(f.users, desc)
 }
 
-func getUsersIndexDescOnName() client.IndexCreateRequest {
-	return client.IndexCreateRequest{
+func getUsersIndexDescOnName() client.IndexAddRequest {
+	return client.IndexAddRequest{
 		Name: testUsersColIndexName,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNameFieldName},
@@ -121,8 +121,8 @@ func getUsersIndexDescOnName() client.IndexCreateRequest {
 	}
 }
 
-func getUsersIndexDescOnAge() client.IndexCreateRequest {
-	return client.IndexCreateRequest{
+func getUsersIndexDescOnAge() client.IndexAddRequest {
+	return client.IndexAddRequest{
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersAgeFieldName},
@@ -130,14 +130,14 @@ func getUsersIndexDescOnAge() client.IndexCreateRequest {
 	}
 }
 
-func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
-	newIndexDesc, err := f.createCollectionIndexFor(f.users, getUsersIndexDescOnName())
+func (f *indexTestFixture) addUserCollectionIndexOnName() client.IndexDescription {
+	newIndexDesc, err := f.addCollectionIndexFor(f.users, getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	return newIndexDesc
 }
 
-func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users, getUsersIndexDescOnAge())
+func (f *indexTestFixture) addUserCollectionIndexOnAge() client.IndexDescription {
+	newDesc, err := f.addCollectionIndexFor(f.users, getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -150,178 +150,178 @@ func (f *indexTestFixture) commitTxn() {
 	f.txn = txn
 }
 
-func (f *indexTestFixture) createCollectionIndexFor(
+func (f *indexTestFixture) addCollectionIndexFor(
 	col client.Collection,
-	desc client.IndexCreateRequest,
+	desc client.IndexAddRequest,
 ) (client.IndexDescription, error) {
 	txn := f.txn.(*Txn)
 	ctx := InitContext(f.ctx, txn)
-	index, err := col.CreateIndex(ctx, desc)
+	index, err := col.AddIndex(ctx, desc)
 	if err == nil {
 		f.commitTxn()
 	}
 	return index, err
 }
 
-func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
+func TestAddIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	_, err := f.createCollectionIndex(client.IndexCreateRequest{
+	_, err := f.addCollectionIndex(client.IndexAddRequest{
 		Name: "some_index_name",
 	})
 	assert.EqualError(t, err, errIndexMissingFields)
 }
 
-func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
+func TestAddIndex_IfValidInput_AddIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexCreateRequest{
+	desc := client.IndexAddRequest{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNameFieldName},
 		},
 	}
-	resultDesc, err := f.createCollectionIndex(desc)
+	resultDesc, err := f.addCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
 	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
-func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
+func TestAddIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexCreateRequest{
+	desc := client.IndexAddRequest{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
 			{Name: ""},
 		},
 	}
-	_, err := f.createCollectionIndex(desc)
+	_, err := f.addCollectionIndex(desc)
 	assert.EqualError(t, err, errIndexFieldMissingName)
 }
 
-func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
+func TestAddIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexCreateRequest{
+	desc := client.IndexAddRequest{
 		Name:   "some_index_name",
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
-	newDesc, err := f.createCollectionIndex(desc)
+	newDesc, err := f.addCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.False(t, newDesc.Fields[0].Descending)
 }
 
-func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
+func TestAddIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	name := "some_index_name"
-	desc1 := client.IndexCreateRequest{
+	desc1 := client.IndexAddRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
-	desc2 := client.IndexCreateRequest{
+	desc2 := client.IndexAddRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
-	_, err := f.createCollectionIndex(desc1)
+	_, err := f.addCollectionIndex(desc1)
 	assert.NoError(t, err)
-	_, err = f.createCollectionIndex(desc2)
+	_, err = f.addCollectionIndex(desc2)
 	assert.ErrorIs(t, err, NewErrIndexWithNameAlreadyExists(name))
 }
 
-func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
+func TestAddIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	name := usersColName + "_" + usersAgeFieldName + "_ASC"
-	desc1 := client.IndexCreateRequest{
+	desc1 := client.IndexAddRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
-	desc2 := client.IndexCreateRequest{
+	desc2 := client.IndexAddRequest{
 		Name:   name + "_2",
 		Fields: []client.IndexedFieldDescription{{Name: usersWeightFieldName}},
 	}
-	desc3 := client.IndexCreateRequest{
+	desc3 := client.IndexAddRequest{
 		Name:   "",
 		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
-	_, err := f.createCollectionIndex(desc1)
+	_, err := f.addCollectionIndex(desc1)
 	assert.NoError(t, err)
-	_, err = f.createCollectionIndex(desc2)
+	_, err = f.addCollectionIndex(desc2)
 	assert.NoError(t, err)
-	newDesc3, err := f.createCollectionIndex(desc3)
+	newDesc3, err := f.addCollectionIndex(desc3)
 	assert.NoError(t, err)
 	assert.Equal(t, name+"_3", newDesc3.Name)
 }
 
-func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
+func TestAddIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	const field = "non_existing_field"
-	desc := client.IndexCreateRequest{
+	desc := client.IndexAddRequest{
 		Fields: []client.IndexedFieldDescription{{Name: field}},
 	}
 
-	_, err := f.createCollectionIndex(desc)
+	_, err := f.addCollectionIndex(desc)
 	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(field))
 }
 
-func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
+func TestAddIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	indexDesc := getUsersIndexDescOnName()
 	indexDesc.Name = "!"
-	_, err := f.users.CreateIndex(f.ctx, indexDesc)
+	_, err := f.users.AddIndex(f.ctx, indexDesc)
 	require.ErrorIs(t, err, schema.NewErrIndexWithInvalidName(indexDesc.Name))
 }
 
-func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+func TestAddIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	indOnName, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	indOnName, err := f.users.AddIndex(f.ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnName}, f.users.Version().Indexes)
 
-	indOnAge, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.AddIndex(f.ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnName, indOnAge},
 		f.users.Version().Indexes)
 }
 
-func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
+func TestCollectionListIndexes_ShouldReturnIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	f.createUserCollectionIndexOnName()
+	f.addUserCollectionIndexOnName()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 
 	require.Equal(t, 1, len(indexes))
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
 }
 
-func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+func TestCollectionListIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	f.createUserCollectionIndexOnName()
-	f.createUserCollectionIndexOnAge()
+	f.addUserCollectionIndexOnName()
+	f.addUserCollectionIndexOnAge()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	require.Len(t, indexes, 2)
 	require.ElementsMatch(t,
@@ -331,52 +331,52 @@ func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
-func TestCollectionGetIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
+func TestCollectionListIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	f.createUserCollectionIndexOnName()
+	f.addUserCollectionIndexOnName()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
 
-	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	_, err = f.users.AddIndex(f.ctx, getUsersIndexDescOnAge())
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 2)
 }
 
-func TestCollectionGetIndexes_IfIndexIsDropped_ReturnUpdateIndexes(t *testing.T) {
+func TestCollectionListIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	f.createUserCollectionIndexOnName()
-	f.createUserCollectionIndexOnAge()
+	f.addUserCollectionIndexOnName()
+	f.addUserCollectionIndexOnAge()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 2)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexName)
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
 	assert.Equal(t, indexes[0].Name, testUsersColIndexAge)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 0)
 }
 
-func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
+func TestCollectionListIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	const (
 		num             = 30
@@ -417,18 +417,18 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	require.NoError(f.t, err)
 	for i := 1; i <= num; i++ {
 		iStr := toSuffix(i)
-		indexDesc := client.IndexCreateRequest{
+		indexDesc := client.IndexAddRequest{
 			Name: indexNamePrefix + iStr,
 			Fields: []client.IndexedFieldDescription{
 				{Name: fieldNamePrefix + iStr},
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection, indexDesc)
+		_, err := f.addCollectionIndexFor(collection, indexDesc)
 		require.NoError(t, err)
 	}
 
-	indexes, err := collection.GetIndexes(f.ctx)
+	indexes, err := collection.ListIndexes(f.ctx)
 	require.NoError(t, err)
 	require.Len(t, indexes, num)
 
@@ -437,35 +437,35 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	}
 }
 
-func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+func TestDeleteIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 	txn := f.txn.(*Txn)
 	ctx := InitContext(f.ctx, txn)
-	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
+	_, err := f.users.AddIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
-	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())
+	indOnAge, err := f.users.AddIndex(ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 	f.commitTxn()
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexName)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnAge},
 		f.users.Version().Indexes)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{}, f.users.Version().Indexes)
 }
 
-func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
+func TestDeleteIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	const name = "not_existing_index"
-	err := f.users.DropIndex(f.ctx, name)
+	err := f.users.DeleteIndex(f.ctx, name)
 	require.ErrorIs(t, err, NewErrIndexWithNameDoesNotExists(name))
 }
 

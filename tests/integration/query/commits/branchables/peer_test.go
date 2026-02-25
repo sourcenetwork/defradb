@@ -45,11 +45,11 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -139,18 +139,18 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"Fred",

@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
+func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -29,12 +29,12 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -57,8 +57,8 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 							}
 						}`,
 				Results: map[string]any{
-					// Even though UserView was created after the document was created, the results are
-					// present because the view will automatically refresh upon its creation.
+					// Even though UserView was added after the document was added, the results are
+					// present because the view will automatically refresh upon its addition.
 					"UserView": []map[string]any{
 						{
 							"name": "John",
@@ -85,12 +85,12 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -102,7 +102,7 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"Fred"
 				}`,
@@ -150,12 +150,12 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -168,7 +168,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 				`,
 			},
 			&action.RefreshViews{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"Fred"
 				}`,

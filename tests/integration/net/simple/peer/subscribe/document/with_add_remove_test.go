@@ -32,7 +32,7 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -41,7 +41,7 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -94,13 +94,13 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Andy"
@@ -110,7 +110,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -193,7 +193,7 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -203,7 +203,7 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -259,7 +259,7 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -269,7 +269,7 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),

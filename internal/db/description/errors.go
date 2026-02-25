@@ -17,8 +17,8 @@ const (
 	errFailedToCloseCollectionQuery string = "failed to close collection prefix query"
 )
 
-// NewErrFailedToCreateSchemaQuery returns a new error indicating that the query
-// to create a schema failed to close.
+// NewErrFailedToCloseSchemaQuery returns a new error indicating that the query
+// to add a schema failed to close.
 func NewErrFailedToCloseSchemaQuery(inner error) error {
 	return errors.Wrap(errFailedToCloseSchemaQuery, inner)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -30,7 +31,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -53,9 +54,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -74,7 +73,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -86,7 +85,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -102,9 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -123,7 +120,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -135,7 +132,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -154,9 +151,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -179,7 +174,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -191,7 +186,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -224,7 +219,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -247,9 +242,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{
@@ -279,7 +272,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -302,9 +295,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{

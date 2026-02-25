@@ -49,7 +49,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := c.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
+			collections, err := c.GetCollections(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -121,7 +121,7 @@ func saveBatchToCollections(
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
 			if col.Version().Name == colName {
-				err := col.CreateMany(ctx, colDocs)
+				err := col.AddMany(ctx, colDocs)
 				if err != nil {
 					return err
 				}

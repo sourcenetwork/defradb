@@ -33,7 +33,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -44,7 +44,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),

@@ -28,7 +28,7 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
@@ -78,7 +78,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"points": 5

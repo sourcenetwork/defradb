@@ -15,10 +15,29 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
+
+// appendIdentityArg extracts identity from an immutable.Option and appends --identity flag to args
+// if identity is present and is a FullIdentity with a private key.
+func appendIdentityArg(args []string, ident immutable.Option[identity.Identity]) []string {
+	if !ident.HasValue() {
+		return args
+	}
+	if fullIdent, ok := ident.Value().(identity.FullIdentity); ok {
+		rawIdent := fullIdent.IntoRawIdentity()
+		if rawIdent.PrivateKey != "" {
+			args = append(args, "--identity", rawIdent.PrivateKey)
+		}
+	}
+	return args
+}
 
 var _ client.Collection = (*Collection)(nil)
 
@@ -43,12 +62,12 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts)
+	args := makeDocAddArgs(c, opts...)
 
 	document, err := doc.String()
 	if err != nil {
@@ -64,12 +83,12 @@ func (c *Collection) Create(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	args := makeDocCreateArgs(c, opts)
+	args := makeDocAddArgs(c, opts...)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -91,21 +110,20 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func makeDocCreateArgs(
+func makeDocAddArgs(
 	c *Collection,
-	opts []client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) []string {
-	args := []string{"client", "collection", "create"}
+	args := []string{"client", "collection", "add"}
 	args = append(args, "--name", c.Version().Name)
 
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-
-	if createDocOpts.EncryptDoc {
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EncryptDoc {
 		args = append(args, "--encrypt")
 	}
-	if len(createDocOpts.EncryptedFields) > 0 {
-		args = append(args, "--encrypt-fields", strings.Join(createDocOpts.EncryptedFields, ","))
+	if len(opt.EncryptedFields) > 0 {
+		args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
 	}
 
 	return args
@@ -114,6 +132,7 @@ func makeDocCreateArgs(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	document, err := doc.ToJSONPatch()
 	if err != nil {
@@ -124,6 +143,9 @@ func (c *Collection) Update(
 	args = append(args, "--name", c.Version().Name)
 	args = append(args, "--docID", doc.ID().String())
 	args = append(args, "--updater", string(document))
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -136,14 +158,31 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
-	_, err := c.Get(ctx, doc.ID(), true)
+	getOpts := options.CollectionGet()
+	opt := utils.NewOptions(opts...)
+	if opt.Identity.HasValue() {
+		getOpts.SetIdentity(opt.GetIdentity().Value())
+	}
+	_, err := c.Get(ctx, doc.ID(), getOpts.SetShowDeleted(true))
 	if err == nil {
-		return c.Update(ctx, doc)
+		updateOpts := options.CollectionUpdate()
+		opt := utils.NewOptions(opts...)
+		if opt.GetIdentity().HasValue() {
+			updateOpts.SetIdentity(opt.GetIdentity().Value())
+		}
+		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc, opts...)
+		opt := utils.NewOptions(opts...)
+		addOpt := options.CollectionAdd().
+			SetEncryptDoc(opt.EncryptDoc).
+			SetEncryptedFields(opt.EncryptedFields)
+		if opt.GetIdentity().HasValue() {
+			addOpt.SetIdentity(opt.GetIdentity().Value())
+		}
+		return c.Add(ctx, doc, addOpt)
 	}
 	return err
 }
@@ -151,10 +190,14 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
 	args = append(args, "--docID", docID.String())
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -166,8 +209,15 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
-	_, err := c.Get(ctx, docID, false)
+	getOpts := options.CollectionGet()
+	opt := utils.NewOptions(opts...)
+	if opt.GetIdentity().HasValue() {
+		getOpts.SetIdentity(opt.GetIdentity().Value())
+	}
+
+	_, err := c.Get(ctx, docID, getOpts)
 	if err != nil {
 		return false, err
 	}
@@ -178,6 +228,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Version().Name)
@@ -188,6 +239,9 @@ func (c *Collection) UpdateWithFilter(
 		return nil, err
 	}
 	args = append(args, "--filter", string(filterJSON))
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -204,6 +258,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
@@ -213,6 +268,9 @@ func (c *Collection) DeleteWithFilter(
 		return nil, err
 	}
 	args = append(args, "--filter", string(filterJSON))
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -229,15 +287,18 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
+	opt := utils.NewOptions(opts...)
+
 	args := []string{"client", "collection", "get"}
 	args = append(args, "--name", c.Version().Name)
 	args = append(args, docID.String())
 
-	if showDeleted {
+	if opt.ShowDeleted {
 		args = append(args, "--show-deleted")
 	}
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -255,50 +316,12 @@ func (c *Collection) Get(
 	return doc, nil
 }
 
-func (c *Collection) GetAllDocIDs(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-
-) (<-chan client.DocIDResult, error) {
-	args := []string{"client", "collection", "docIDs"}
-	args = append(args, "--name", c.Version().Name)
-
-	stdOut, _, err := c.cmd.executeStream(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	docIDCh := make(chan client.DocIDResult)
-
-	go func() {
-		dec := json.NewDecoder(stdOut)
-		defer close(docIDCh)
-
-		for {
-			var res http.DocIDResult
-			if err := dec.Decode(&res); err != nil {
-				return
-			}
-			docID, err := client.NewDocIDFromString(res.DocID)
-			if err != nil {
-				return
-			}
-			docIDResult := client.DocIDResult{
-				ID: docID,
-			}
-			if res.Error != "" {
-				docIDResult.Err = errors.New(res.Error)
-			}
-			docIDCh <- docIDResult
-		}
-	}()
-
-	return docIDCh, nil
-}
-
-func (c *Collection) CreateIndex(
-	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "create"}
+	args := []string{"client", "index", "add"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
@@ -327,6 +350,9 @@ func (c *Collection) CreateIndex(
 
 	args = append(args, "--fields", strings.Join(orderedFields, ","))
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
 		return index, err
@@ -337,18 +363,31 @@ func (c *Collection) CreateIndex(
 	return index, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	args := []string{"client", "index", "drop"}
+func (c *Collection) DeleteIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+) error {
+	args := []string{"client", "index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--name", indexName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -361,15 +400,18 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	return indexes, nil
 }
 
-// CreateEncryptedIndex implements client.Collection.
-func (c *Collection) CreateEncryptedIndex(
+// AddEncryptedIndex implements client.Collection.
+func (c *Collection) AddEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (index client.EncryptedIndexDescription, err error) {
-	args := []string{"client", "encrypted-index", "create"}
+	args := []string{"client", "encrypted-index", "add"}
 	args = append(args, "--collection", c.Version().Name)
-
 	args = append(args, "--field", indexDesc.FieldName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -382,9 +424,13 @@ func (c *Collection) CreateEncryptedIndex(
 }
 
 // ListEncryptedIndexes implements client.Collection.
-func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
 	args = append(args, "--collection", c.Version().Name)
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -398,18 +444,30 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 }
 
 // DeleteEncryptedIndex implements client.Collection.
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	args := []string{"client", "encrypted-index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", fieldName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context) error {
+func (c *Collection) Truncate(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+) error {
 	args := []string{"client", "collection", "truncate"}
 	args = append(args, "--name", c.Version().Name)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

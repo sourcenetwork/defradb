@@ -20,19 +20,19 @@ import (
 func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
@@ -40,10 +40,10 @@ func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age, filter: {Age: {_gt: 26}}})
+					SUM(Users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(62),
+					"SUM": int64(62),
 				},
 			},
 		},

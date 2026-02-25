@@ -72,7 +72,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{ // Note: Is a public document (without an identity).
+			&action.AddDoc{ // Note: Is a public document (without an identity).
 				CollectionID: 0,
 
 				Doc: `

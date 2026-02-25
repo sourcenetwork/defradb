@@ -25,13 +25,13 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Books
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress(groupBy: [country]) {
 						country
-						_group {
+						GROUP {
 							city
 						}
 					}

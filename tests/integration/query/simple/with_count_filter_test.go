@@ -20,19 +20,19 @@ import (
 func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
@@ -40,10 +40,10 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {Age: {_gt: 26}}})
+					COUNT(Users: {filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},
@@ -55,21 +55,21 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30,
 					"CreatedAt": "2017-09-23T03:46:56-05:00"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32,
@@ -78,10 +78,10 @@ func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
+					COUNT(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},

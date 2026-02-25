@@ -18,28 +18,28 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 )
 
-func TestHasIndexActions_WithCreateIndex_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	assert.True(t, hasIndexActions(actions))
 }
 
-func TestHasIndexActions_WithDropIndex_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.DropIndex{CollectionID: 0, IndexName: "User_name_idx"},
+		&action.DeleteIndex{CollectionID: 0, IndexName: "User_name_idx"},
 	}
 
 	assert.True(t, hasIndexActions(actions))
 }
 
-func TestHasIndexActions_WithGetIndexes_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.GetIndexes{CollectionID: 0},
+		&action.ListIndexes{CollectionID: 0},
 	}
 
 	assert.True(t, hasIndexActions(actions))
@@ -460,7 +460,7 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	result := m.Apply(actions)
@@ -469,10 +469,10 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 	assert.True(t, ok)
 	assert.Contains(t, schemaAdd.Schema, "@index")
 
-	createIndex, ok := result[1].(*action.CreateIndex)
+	addIndex, ok := result[1].(*action.AddIndex)
 	assert.True(t, ok)
-	assert.Equal(t, 0, createIndex.CollectionID)
-	assert.Equal(t, "name", createIndex.FieldName)
+	assert.Equal(t, 0, addIndex.CollectionID)
+	assert.Equal(t, "name", addIndex.FieldName)
 }
 
 func TestApply_WithIndexDirective_ReturnsUnchanged(t *testing.T) {
@@ -520,7 +520,7 @@ func TestShouldSkip_WithIndexActions_ReturnsTrue(t *testing.T) {
 
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.CreateIndex{CollectionID: 0, FieldName: "name"},
+		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))

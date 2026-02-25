@@ -35,7 +35,7 @@ func TestDocEncryptionField_IfFieldDoesNotExistInGQLSchema_ReturnError(t *testin
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"points"},
 				ExpectedError:   "Argument \"encryptFields\" has invalid value [points].",
@@ -59,12 +59,12 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinFieldInGQLSchema_ReturnErro
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"_docID"},
 				ExpectedError:   "Argument \"encryptFields\" has invalid value [_docID].",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"_version"},
 				ExpectedError:   "Argument \"encryptFields\" has invalid value [_version].",
@@ -89,7 +89,7 @@ func TestDocEncryptionField_IfFieldDoesNotExist_ReturnError(t *testing.T) {
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"points"},
 				ExpectedError:   client.NewErrFieldNotExist("points").Error(),
@@ -114,12 +114,12 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinField_ReturnError(t *testin
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"_docID"},
 				ExpectedError:   db.NewErrCanNotEncryptBuiltinField("_docID").Error(),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"_version"},
 				ExpectedError:   client.NewErrFieldNotExist("_version").Error(),

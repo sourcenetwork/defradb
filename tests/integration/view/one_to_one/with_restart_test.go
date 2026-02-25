@@ -32,7 +32,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name

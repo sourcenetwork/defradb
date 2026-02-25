@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -82,7 +82,7 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": int64(2),
+							"MAX":  int64(2),
 						},
 					},
 				},
@@ -113,7 +113,7 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, null, 1, 0]
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 				Request: `query {
 					Users {
 						name
-						_max(testScores: {})
+						MAX(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": int64(2),
+							"MAX":  int64(2),
 						},
 					},
 				},
@@ -144,7 +144,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": null
@@ -154,14 +154,14 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -175,7 +175,7 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": []
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -206,7 +206,7 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},
@@ -237,7 +237,7 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
@@ -247,14 +247,14 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 				Request: `query {
 					Users {
 						name
-						_max(pageRatings: {})
+						MAX(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},
@@ -268,7 +268,7 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
@@ -278,14 +278,14 @@ func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t 
 				Request: `query {
 					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
-						_max(pageRatings: {})
+						MAX(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},

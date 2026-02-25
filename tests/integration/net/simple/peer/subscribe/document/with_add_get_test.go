@@ -30,7 +30,7 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -39,7 +39,7 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -71,17 +71,17 @@ func TestP2PDocumentAddGetMultiple(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
@@ -90,7 +90,7 @@ func TestP2PDocumentAddGetMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),

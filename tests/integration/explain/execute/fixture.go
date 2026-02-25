@@ -17,8 +17,8 @@ import (
 
 type dataMap = map[string]any
 
-func create3ArticleDocuments() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func add3ArticleDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 0,
 			DocMap: map[string]any{
@@ -46,8 +46,8 @@ func create3ArticleDocuments() []*action.CreateDoc {
 	}
 }
 
-func create3BookDocuments() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func add3BookDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 1,
 			DocMap: map[string]any{
@@ -77,8 +77,8 @@ func create3BookDocuments() []*action.CreateDoc {
 	}
 }
 
-func create2AuthorDocuments() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func add2AuthorDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 2,
 			DocMap: map[string]any{
@@ -100,8 +100,8 @@ func create2AuthorDocuments() []*action.CreateDoc {
 	}
 }
 
-func create2AuthorContactDocuments() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func add2AuthorContactDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 3,
 			DocMap: map[string]any{
@@ -121,8 +121,8 @@ func create2AuthorContactDocuments() []*action.CreateDoc {
 	}
 }
 
-func create2AddressDocuments() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func add2AddressDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 4,
 			// _docID: bae-186c2484-c3ea-5993-95d6-cb886e1b13a1

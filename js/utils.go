@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"sync"
 	"syscall/js"
 
@@ -23,11 +24,11 @@ import (
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/db"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func stringArg(args []js.Value, index int, name string) (string, error) {
@@ -80,7 +81,7 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	if err != nil {
 		return ctx, err
 	}
-	ctx = acpIdentity.WithContext(ctx, identity)
+	ctx = iIdentity.WithContext(ctx, identity)
 	ctx = db.InitContext(ctx, txn)
 	return ctx, nil
 }
@@ -123,11 +124,26 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
-	return immutable.Some[acpIdentity.Identity](identity), nil
+	return immutable.Some(identity), nil
+}
+
+// setOptIdentity extracts identity from args at the given index and sets it on the option builder.
+// We use reflection to call SetIdentity if the builder has it, ignoring the return value.
+func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
+	if len(args) > argIndex {
+		if ident, err := contextIdentityArg(args[argIndex]); err == nil && ident.HasValue() {
+			// Use reflect to call SetIdentity regardless of return type.
+			v := reflect.ValueOf(opt)
+			m := v.MethodByName("SetIdentity")
+			if m.IsValid() {
+				m.Call([]reflect.Value{reflect.ValueOf(ident.Value())})
+			}
+		}
+	}
 }
 
 // initKeypairAndGetIdentity initializes the keypair and gets an identity.
-func initKeypairAndGetIdentity() (identity.Identity, error) {
+func initKeypairAndGetIdentity() (acpIdentity.Identity, error) {
 	createKeyPairFunc := js.Global().Get("initKeypair")
 	if !createKeyPairFunc.Truthy() {
 		return nil, fmt.Errorf("initKeypair function not found")
@@ -143,7 +159,7 @@ func initKeypairAndGetIdentity() (identity.Identity, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create public key from hex: %w", err)
 	}
-	ident, err := identity.FromPublicKey(publicKey)
+	ident, err := acpIdentity.FromPublicKey(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity from public key: %w", err)
 	}

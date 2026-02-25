@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -59,7 +59,7 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_group {
+						GROUP {
 							__typename
 						}
 					}
@@ -68,7 +68,7 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"__typename": "Users",
 								},

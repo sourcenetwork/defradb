@@ -69,8 +69,8 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Verify the document was created with the expected values
-	doc, err := col.Get(ctx, docID, false)
+	// Verify the document was added with the expected values
+	doc, err := col.Get(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
@@ -124,8 +124,8 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Verify the document was created with the expected values
-	doc, err := col.Get(ctx, docID, false)
+	// Verify the document was added with the expected values
+	doc, err := col.Get(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
@@ -191,8 +191,8 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "could not find bafyreihs5kx5u6k6mc3m6st3ytam4e3mmk3sd6p4jn3hh5o63wpf4holoq")
 
-	// Verify the document was created with the expected values
-	doc, err := col.Get(ctx, docID, false)
+	// Verify the document was added with the expected values
+	doc, err := col.Get(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)

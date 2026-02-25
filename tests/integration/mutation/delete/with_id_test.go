@@ -53,7 +53,7 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Not the id below"
 				}`,

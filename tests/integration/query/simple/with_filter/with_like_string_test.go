@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -55,13 +55,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T
 func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -90,13 +90,13 @@ func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -125,13 +125,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -160,13 +160,13 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *te
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -195,13 +195,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -230,13 +230,13 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *te
 func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -265,13 +265,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -300,13 +300,13 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *tes
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -339,13 +339,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -374,13 +374,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -405,13 +405,13 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
@@ -440,19 +440,19 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 					"HeightM": 1.65
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Viserys I Targaryen, King of the Andals",
 					"HeightM": 1.82
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"HeightM": 1.92
 				}`,

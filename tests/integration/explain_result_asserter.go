@@ -12,7 +12,7 @@ package tests
 
 import (
 	"encoding/json"
-	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,13 +26,36 @@ const (
 	docFetchesProp   = "docFetches"
 	fieldFetchesProp = "fieldFetches"
 	indexFetchesProp = "indexFetches"
+
+	explainProp          = "explain"
+	executionSuccessProp = "executionSuccess"
+	sizeOfResultProp     = "sizeOfResult"
+	planExecutionsProp   = "planExecutions"
+	operationNodeProp    = "operationNode"
+	filterMatchesProp    = "filterMatches"
+
+	selectTopNodeProp = "selectTopNode"
+	selectNodeProp    = "selectNode"
+	scanNodeProp      = "scanNode"
+	limitNodeProp     = "limitNode"
+	orderNodeProp     = "orderNode"
+	typeIndexJoinProp = "typeIndexJoin"
+	typeJoinManyProp  = "typeJoinMany"
+	typeJoinOneProp   = "typeJoinOne"
+	orphanNodeProp    = "orphanNode"
+	rootProp          = "root"
+	subTypeProp       = "subType"
 )
 
 type dataMap = map[string]any
 
-// ExplainResultAsserter is a helper for asserting the result of an explain query.
-// It allows asserting on a selected set of properties.
-type ExplainResultAsserter struct {
+// ExplainAsserter is a helper for asserting the result of an explain query.
+// It asserts on metrics at specific levels of the explain tree using path navigation.
+//
+// For simple queries without joins, use NewExplainAsserter() without path.
+// For queries with joins, you must specify the path (e.g., "root" or "subType").
+type ExplainAsserter struct {
+	path           []string
 	iterations     immutable.Option[int]
 	docFetches     immutable.Option[int]
 	fieldFetches   immutable.Option[int]
@@ -40,145 +63,314 @@ type ExplainResultAsserter struct {
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
-	withOrder      bool
-	withLimit      bool
+	nextLevel      *ExplainAsserter
 }
 
-func readNumberProp(t testing.TB, val any, prop string) uint64 {
-	switch v := val.(type) {
-	case uint64:
-		return v
-	case json.Number:
-		n, err := v.Int64()
-		require.NoError(t, err, fmt.Sprintf("Expected %s property to be a uint64", prop))
-		return uint64(n)
-	default:
-		require.Fail(t, fmt.Sprintf("Unexpected type for %s property: %T", prop, val))
-	}
-	return 0
+// NewExplainAsserter creates an asserter for explain query results.
+//
+// For simple queries (no joins):
+//
+//	testUtils.NewExplainAsserter().WithIndexFetches(4)
+//
+// For queries with joins, specify the path to the level:
+//
+//	testUtils.NewExplainAsserter("root").WithIndexFetches(0)
+//	testUtils.NewExplainAsserter("subType").WithIndexFetches(4)
+//	testUtils.NewExplainAsserter("subType", "subType").WithIndexFetches(2) // nested
+//
+// Path elements: "root" for parent side, "subType" for child side.
+func NewExplainAsserter(path ...string) *ExplainAsserter {
+	return &ExplainAsserter{path: path}
 }
 
-func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
-	explainNode, ok := result["explain"].(dataMap)
-	require.True(t, ok, "Expected explain none")
-	assert.Equal(t, true, explainNode["executionSuccess"], "Expected executionSuccess property")
-	if a.sizeOfResults.HasValue() {
-		actual := explainNode["sizeOfResult"]
-		assert.Equal(t, a.sizeOfResults.Value(), actual,
-			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
-	}
-	if a.planExecutions.HasValue() {
-		actual := explainNode["planExecutions"]
-		assert.Equal(t, a.planExecutions.Value(), actual,
-			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
-	}
-	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
-	require.Len(t, operationNode, 1)
-	node, ok := operationNode[0]["selectTopNode"].(dataMap)
-	require.True(t, ok, "Expected selectTopNode")
-	if a.withLimit {
-		node, ok = node["limitNode"].(dataMap)
-		require.True(t, ok, "Expected limitNode")
-	}
-	if a.withOrder {
-		node, ok = node["orderNode"].(dataMap)
-		require.True(t, ok, "Expected orderNode")
-	}
-	selectNode, ok := node["selectNode"].(dataMap)
-	require.True(t, ok, "Expected selectNode")
-
-	if a.filterMatches.HasValue() {
-		filterMatches, hasFilterMatches := selectNode["filterMatches"]
-		require.True(t, hasFilterMatches, "Expected filterMatches property")
-		assert.Equal(t, uint64(a.filterMatches.Value()), filterMatches,
-			"Expected %d filterMatches, got %d", a.filterMatches, filterMatches)
-	}
-
-	scanNode, ok := selectNode["scanNode"].(dataMap)
-	subScanNode := map[string]any{}
-	if indexJoin, isJoin := selectNode["typeIndexJoin"].(dataMap); isJoin {
-		scanNode, ok = indexJoin["scanNode"].(dataMap)
-		subScanNode, _ = indexJoin["subTypeScanNode"].(dataMap)
-	}
-	require.True(t, ok, "Expected scanNode")
-
-	getScanNodesProp := func(prop string) uint64 {
-		val, hasProp := scanNode[prop]
-		require.True(t, hasProp, fmt.Sprintf("Expected %s property", prop))
-		actual := readNumberProp(t, val, prop)
-		if subScanNode[prop] != nil {
-			actual += readNumberProp(t, subScanNode[prop], "subTypeScanNode."+prop)
-		}
-		return actual
-	}
-
-	if a.iterations.HasValue() {
-		actual := getScanNodesProp(iterationsProp)
-		assert.Equal(t, uint64(a.iterations.Value()), actual,
-			"Expected %d iterations, got %d", a.iterations.Value(), actual)
-	}
-	if a.docFetches.HasValue() {
-		actual := getScanNodesProp(docFetchesProp)
-		assert.Equal(t, uint64(a.docFetches.Value()), actual,
-			"Expected %d docFetches, got %d", a.docFetches.Value(), actual)
-	}
-	if a.fieldFetches.HasValue() {
-		actual := getScanNodesProp(fieldFetchesProp)
-		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
-			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), actual)
-	}
-	if a.indexFetches.HasValue() {
-		actual := getScanNodesProp(indexFetchesProp)
-		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
-			"Expected %d indexFetches, got %d", a.indexFetches.Value(), actual)
-	}
-}
-
-func (a *ExplainResultAsserter) WithIterations(iterations int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithIterations(iterations int) *ExplainAsserter {
 	a.iterations = immutable.Some(iterations)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithDocFetches(docFetches int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithDocFetches(docFetches int) *ExplainAsserter {
 	a.docFetches = immutable.Some(docFetches)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithFieldFetches(fieldFetches int) *ExplainAsserter {
 	a.fieldFetches = immutable.Some(fieldFetches)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithIndexFetches(indexFetches int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithIndexFetches(indexFetches int) *ExplainAsserter {
 	a.indexFetches = immutable.Some(indexFetches)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithFilterMatches(filterMatches int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithFilterMatches(filterMatches int) *ExplainAsserter {
 	a.filterMatches = immutable.Some(filterMatches)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithSizeOfResults(sizeOfResults int) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithSizeOfResults(sizeOfResults int) *ExplainAsserter {
 	a.sizeOfResults = immutable.Some(sizeOfResults)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithPlanExecutions(planExecutions uint64) *ExplainResultAsserter {
+func (a *ExplainAsserter) WithPlanExecutions(planExecutions uint64) *ExplainAsserter {
 	a.planExecutions = immutable.Some(planExecutions)
 	return a
 }
 
-func (a *ExplainResultAsserter) WithOrder() *ExplainResultAsserter {
-	a.withOrder = true
-	return a
+// WithLevel adds another level assertion.
+// This allows chaining multiple level assertions:
+//
+//	testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+//		WithLevel("subType").WithIndexFetches(4)
+func (a *ExplainAsserter) WithLevel(path ...string) *ExplainAsserter {
+	next := &ExplainAsserter{path: path}
+	current := a
+	for current.nextLevel != nil {
+		current = current.nextLevel
+	}
+	current.nextLevel = next
+	return next
 }
 
-func (a *ExplainResultAsserter) WithLimit() *ExplainResultAsserter {
-	a.withLimit = true
-	return a
+// Assert validates metrics in the explain result.
+// For simple queries, reads from scanNode directly.
+// For join queries, navigates to the specified path level.
+func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
+	explainNode, ok := result[explainProp].(dataMap)
+	require.True(t, ok, "Expected explain node")
+
+	assert.Equal(t, true, explainNode[executionSuccessProp], "Expected executionSuccess property")
+
+	if a.sizeOfResults.HasValue() {
+		actual := toUint64(explainNode[sizeOfResultProp])
+		assert.Equal(t, uint64(a.sizeOfResults.Value()), actual,
+			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
+	}
+	if a.planExecutions.HasValue() {
+		actual := toUint64(explainNode[planExecutionsProp])
+		assert.Equal(t, a.planExecutions.Value(), actual,
+			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
+	}
+
+	operationNode := ConvertToArrayOfMaps(t, explainNode[operationNodeProp])
+	require.Len(t, operationNode, 1)
+
+	node, ok := operationNode[0][selectTopNodeProp].(dataMap)
+	require.True(t, ok, "Expected selectTopNode")
+
+	selectNode := navigateToSelectNode(t, node)
+
+	if a.filterMatches.HasValue() {
+		filterMatches, hasFilterMatches := selectNode[filterMatchesProp]
+		require.True(t, hasFilterMatches, "Expected filterMatches property")
+		assert.Equal(t, uint64(a.filterMatches.Value()), toUint64(filterMatches),
+			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
+	}
+
+	scanNode := a.findScanNode(t, selectNode)
+	a.assertMetrics(t, func(prop string) uint64 {
+		return getMetric(scanNode, prop)
+	}, a.path)
+
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
+	}
 }
 
-func NewExplainAsserter() *ExplainResultAsserter {
-	return &ExplainResultAsserter{}
+func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
+	scanNode := a.findScanNode(t, selectNode)
+	a.assertMetrics(t, func(prop string) uint64 {
+		return getMetric(scanNode, prop)
+	}, a.path)
+
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
+	}
+}
+
+func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap {
+	if scanNode, has := selectNode[scanNodeProp].(dataMap); has {
+		if len(a.path) > 0 {
+			require.Fail(t, "Path specified but no typeIndexJoin found")
+		}
+		return scanNode
+	}
+
+	indexJoin, hasJoin := selectNode[typeIndexJoinProp].(dataMap)
+	if !hasJoin {
+		require.Fail(t, "Expected scanNode or typeIndexJoin")
+		return nil
+	}
+
+	if len(a.path) == 0 {
+		require.Fail(t, "Query has typeIndexJoin - must specify path (e.g., \"root\" or \"subType\")")
+		return nil
+	}
+
+	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
+		indexJoin = orphan
+	}
+
+	targetNode := navigateToLevel(indexJoin, a.path)
+	require.NotNil(t, targetNode, "Could not navigate to level: %v", a.path)
+
+	scanNode := findScanNodeAtLevel(targetNode)
+	require.NotNil(t, scanNode, "No scanNode found at level: %v", a.path)
+
+	return scanNode
+}
+
+func (a *ExplainAsserter) assertMetrics(t testing.TB, getMetricFn func(string) uint64, path []string) {
+	levelInfo := ""
+	if len(path) > 0 {
+		levelInfo = " at level " + formatPath(path)
+	}
+
+	if a.iterations.HasValue() {
+		actual := getMetricFn(iterationsProp)
+		assert.Equal(t, uint64(a.iterations.Value()), actual,
+			"Expected %d iterations%s, got %d", a.iterations.Value(), levelInfo, actual)
+	}
+	if a.docFetches.HasValue() {
+		actual := getMetricFn(docFetchesProp)
+		assert.Equal(t, uint64(a.docFetches.Value()), actual,
+			"Expected %d docFetches%s, got %d", a.docFetches.Value(), levelInfo, actual)
+	}
+	if a.fieldFetches.HasValue() {
+		actual := getMetricFn(fieldFetchesProp)
+		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
+			"Expected %d fieldFetches%s, got %d", a.fieldFetches.Value(), levelInfo, actual)
+	}
+	if a.indexFetches.HasValue() {
+		actual := getMetricFn(indexFetchesProp)
+		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
+			"Expected %d indexFetches%s, got %d", a.indexFetches.Value(), levelInfo, actual)
+	}
+}
+
+func formatPath(path []string) string {
+	if len(path) == 0 {
+		return ""
+	}
+	var result strings.Builder
+	result.WriteString(path[0])
+	for i := 1; i < len(path); i++ {
+		result.WriteString("/" + path[i])
+	}
+	return result.String()
+}
+
+// navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
+func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
+	node = unwrapNode(node, limitNodeProp, orderNodeProp)
+	selectNode, ok := node[selectNodeProp].(dataMap)
+	require.True(t, ok, "Expected selectNode")
+	return selectNode
+}
+
+// navigateToLevel follows the path through the explain tree.
+func navigateToLevel(node dataMap, path []string) dataMap {
+	current := node
+
+	for _, step := range path {
+		joinNode := getJoinNode(current)
+
+		switch step {
+		case rootProp:
+			if root, has := joinNode[rootProp].(dataMap); has {
+				current = root
+			} else {
+				return nil
+			}
+		case subTypeProp:
+			if sub, has := joinNode[subTypeProp].(dataMap); has {
+				current = navigateThroughSelectTop(sub)
+			} else {
+				return nil
+			}
+		default:
+			if next, has := current[step].(dataMap); has {
+				current = next
+			} else {
+				return nil
+			}
+		}
+	}
+
+	return current
+}
+
+// navigateThroughSelectTop handles the selectTopNode -> selectNode -> typeIndexJoin chain.
+func navigateThroughSelectTop(node dataMap) dataMap {
+	node = unwrapNode(node, selectTopNodeProp, limitNodeProp, orderNodeProp, selectNodeProp)
+	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
+		return indexJoin
+	}
+	return node
+}
+
+// unwrapNode navigates through wrapper nodes in order.
+func unwrapNode(node dataMap, wrappers ...string) dataMap {
+	for _, wrapper := range wrappers {
+		if inner, has := node[wrapper].(dataMap); has {
+			node = inner
+		}
+	}
+	return node
+}
+
+// getJoinNode returns the typeJoinMany or typeJoinOne node, or the node itself.
+func getJoinNode(node dataMap) dataMap {
+	if jm, has := node[typeJoinManyProp].(dataMap); has {
+		return jm
+	}
+	if jo, has := node[typeJoinOneProp].(dataMap); has {
+		return jo
+	}
+	return node
+}
+
+// findScanNodeAtLevel finds the scanNode at the current level (not recursively).
+func findScanNodeAtLevel(node dataMap) dataMap {
+	if scan, has := node[scanNodeProp].(dataMap); has {
+		return scan
+	}
+	if jm, has := node[typeJoinManyProp].(dataMap); has {
+		if root, has := jm[rootProp].(dataMap); has {
+			if scan, has := root[scanNodeProp].(dataMap); has {
+				return scan
+			}
+		}
+	}
+	if jo, has := node[typeJoinOneProp].(dataMap); has {
+		if root, has := jo[rootProp].(dataMap); has {
+			if scan, has := root[scanNodeProp].(dataMap); has {
+				return scan
+			}
+		}
+	}
+	return nil
+}
+
+// getMetric extracts a metric value from a node.
+func getMetric(node dataMap, prop string) uint64 {
+	return toUint64(node[prop])
+}
+
+// toUint64 converts a value to uint64.
+// It handles both uint64 (Go embedded client) and float64 (HTTP/CLI/JS/C clients
+// where JSON numbers are deserialized as float64).
+func toUint64(val any) uint64 {
+	switch v := val.(type) {
+	case uint64:
+		return v
+	case json.Number:
+		n, _ := v.Int64()
+		return uint64(n)
+	case float64:
+		return uint64(v)
+	default:
+		return 0
+	}
 }

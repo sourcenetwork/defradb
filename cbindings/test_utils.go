@@ -22,15 +22,13 @@ import (
 	"errors"
 	"fmt"
 	"runtime/cgo"
-	"strings"
 	"unsafe"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
@@ -45,56 +43,27 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// identityFromContext creates a cgo handle, wrapped as a pointer, from a context
-func identityFromContext(ctx context.Context) C.uintptr_t {
-	idf := identity.FullFromContext(ctx)
-	if !idf.HasValue() {
+// optionToUintptr is a helper function that converts an immutable.Option to a C.uintptr_t representing a cgo.Handle.
+func optionToUintptr[T any](opt immutable.Option[T]) C.uintptr_t {
+	if !opt.HasValue() {
 		return C.uintptr_t(0)
 	}
-	val := idf.Value()
+	val := opt.Value()
 	handle := cgo.NewHandle(val)
 	return C.uintptr_t(handle)
 }
 
-// isEncryptedFromDocCreateOption is a helper function that extracts as a C.int
-func isEncryptedFromDocCreateOption(opts []client.DocCreateOption) C.int {
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-	var val C.int = 0
-	if createDocOpts.EncryptDoc {
-		val = 1
-	}
-	return val
-}
-
-// encryptedFieldsFromDocCreateOptions is a helper function that returns a comma separated
-// C-string, or a blank string, representing the fields that should be encrypted
-// After calling this, the caller is responsible for freeing the string returned
-func encryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) *C.char {
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-	if len(createDocOpts.EncryptedFields) > 0 {
-		return C.CString(strings.Join(createDocOpts.EncryptedFields, ","))
-	}
-	return C.CString("")
-}
-
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []client.RequestOption) (string, string, error) {
-	config := &client.GQLOptions{}
-	for _, opt := range opts {
-		opt(config)
-	}
-
+func extractStringsFromRequestOptions(opt *options.ExecRequestOptions) (string, string, error) {
 	opName := ""
-	if config.OperationName != "" {
-		opName = config.OperationName
+	if opt.OperationName.HasValue() {
+		opName = opt.OperationName.Value()
 	}
 
 	varsJSON := ""
-	if config.Variables != nil {
-		data, err := json.Marshal(config.Variables)
+	if opt.Variables != nil {
+		data, err := json.Marshal(opt.Variables)
 		if err != nil {
 			return "", "", err
 		}
@@ -114,19 +83,6 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 		return "", err
 	}
 	return string(jsonBytes), nil
-}
-
-// stringFromLensOption is a helper function to extract a simple string
-func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
-	if !opt.HasValue() {
-		return "", nil
-	}
-	lens := opt.Value()
-	data, err := json.Marshal(lens)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }
 
 // stringFromImmutableOptionString is a helper function to extract a simple string

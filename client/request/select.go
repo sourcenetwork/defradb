@@ -12,6 +12,7 @@ package request
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -132,7 +133,7 @@ func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 		Filterable:   s.Filterable,
 		DocIDsFilter: docIDFilter,
 		CIDFilter: CIDFilter{
-			immutable.Some(cid),
+			immutable.Some([]string{cid}),
 		},
 		Groupable:   s.Groupable,
 		ShowDeleted: s.ShowDeleted,
@@ -143,10 +144,7 @@ func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 // Returns true if the cid passes the filter, false otherwise.
 // If no CID filter is set, it always passes.
 func (s *Select) CheckCIDFilter(cid string) bool {
-	if s.CID.HasValue() && s.CID.Value() != cid {
-		return false
-	}
-	return true
+	return !s.CIDs.HasValue() || slices.Contains(s.CIDs.Value(), cid)
 }
 
 // CheckDocIDFilter checks if the given docID passes the DocID filter.
@@ -190,7 +188,7 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 
 	s.Field = selectMap.Field
 	s.DocIDs = selectMap.DocIDs
-	s.CID = selectMap.CID
+	s.CIDs = selectMap.CIDs
 	s.Limitable = selectMap.Limitable
 	s.Offsetable = selectMap.Offsetable
 	s.Orderable = selectMap.Orderable

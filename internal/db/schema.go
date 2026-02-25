@@ -18,7 +18,7 @@ import (
 )
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
-// and creates the necessary collections, request types, etc.
+// and adds the necessary collections, request types, etc.
 func (db *DB) addSchema(
 	ctx context.Context,
 	schemaString string,
@@ -28,7 +28,7 @@ func (db *DB) addSchema(
 		return nil, err
 	}
 
-	result, err := db.createCollections(ctx, newDefinitions)
+	result, err := db.addCollections(ctx, newDefinitions)
 	if err != nil {
 		return nil, err
 	}

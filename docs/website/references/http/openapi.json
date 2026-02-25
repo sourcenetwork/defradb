@@ -151,6 +151,23 @@
                 },
                 "type": "object"
             },
+            "add_replicator_params": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -354,23 +371,6 @@
                 },
                 "type": "object"
             },
-            "create_replicator_params": {
-                "properties": {
-                    "Addresses": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "Collections": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
             "create_tx": {
                 "properties": {
                     "id": {
@@ -425,7 +425,7 @@
                 },
                 "type": "object"
             },
-            "encrypted_index_create": {
+            "encrypted_index_add": {
                 "properties": {
                     "FieldName": {
                         "type": "string"
@@ -498,7 +498,7 @@
                 },
                 "type": "object"
             },
-            "index_create": {
+            "index_add": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -1329,35 +1329,6 @@
                     "collection"
                 ]
             },
-            "get": {
-                "description": "Get all document IDs",
-                "operationId": "collection_keys",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            },
             "patch": {
                 "description": "Update document(s) in a collection",
                 "operationId": "collection_update_with_filter",
@@ -1405,8 +1376,8 @@
                 ]
             },
             "post": {
-                "description": "Create document(s) in a collection",
-                "operationId": "collection_create",
+                "description": "Add document(s) to a collection",
+                "operationId": "collection_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1495,8 +1466,8 @@
                 ]
             },
             "post": {
-                "description": "Create an encrypted index",
-                "operationId": "encrypted_index_create",
+                "description": "Add an encrypted index",
+                "operationId": "encrypted_index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1512,7 +1483,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/encrypted_index_create"
+                                "$ref": "#/components/schemas/encrypted_index_add"
                             }
                         }
                     },
@@ -1622,8 +1593,8 @@
                 ]
             },
             "post": {
-                "description": "Create a secondary index",
-                "operationId": "index_create",
+                "description": "Add a secondary index",
+                "operationId": "index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1639,7 +1610,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create"
+                                "$ref": "#/components/schemas/index_add"
                             }
                         }
                     },
@@ -1671,7 +1642,7 @@
         "/collections/{name}/indexes/{index}": {
             "delete": {
                 "description": "Delete a secondary index",
-                "operationId": "index_drop",
+                "operationId": "index_delete",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -2200,8 +2171,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer collections",
-                "operationId": "peer_collections_create",
+                "description": "Add peer collections",
+                "operationId": "peer_collections_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2396,8 +2367,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer documents",
-                "operationId": "peer_documents_create",
+                "description": "Add peer documents",
+                "operationId": "peer_documents_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2559,12 +2530,12 @@
             },
             "post": {
                 "description": "Add peer replicators",
-                "operationId": "peer_replicator_create",
+                "operationId": "peer_replicator_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/create_replicator_params"
+                                "$ref": "#/components/schemas/add_replicator_params"
                             }
                         }
                     },
@@ -2811,7 +2782,7 @@
                                 }
                             }
                         },
-                        "description": "The created collection and embedded schemas for the added view."
+                        "description": "The added collection and embedded schemas for the added view."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2888,7 +2859,7 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to create collections",
+            "description": "Upload GQL schemas to add collections",
             "name": "schema"
         },
         {

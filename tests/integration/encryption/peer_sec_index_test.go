@@ -37,30 +37,30 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Shahzad",
 						"age":	25
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            islam33Doc,
 				IsDocEncrypted: true,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Andy",
 						"age":	21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -117,30 +117,30 @@ func TestDocEncryptionPeer_IfDocDocHasEncryptedIndexedField_ShouldIndexAfterDecr
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Shahzad",
 						"age":	25
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             islam33Doc,
 				EncryptedFields: []string{"age"},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Andy",
 						"age":	21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},

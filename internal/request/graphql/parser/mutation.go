@@ -59,7 +59,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	// parse the mutation type
 	// mutation names are either generated from a type
 	// which means they are in the form name_type, where
-	// the name is the object mutation name (ie: create, update, delete)
+	// the name is the object mutation name (ie: add, update, delete)
 	// or its an general API mutation, which is in the form
 	// name (camelCase).
 	// This means we can split on the "_" character, and always
@@ -70,7 +70,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	if len(mutNameParts) > 1 { // only generated object mutations
 		// reconstruct the name.
 		// if the schema/collection name is eg: my_book
-		// then the mutation name would be create_my_book
+		// then the mutation name would be add_my_book
 		// so we need to recreate the string my_book, which
 		// has been split by "_", so we just join by "_"
 		mut.Collection = strings.Join(mutNameParts[1:], "_")
@@ -80,9 +80,9 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 
 	switch typeStr {
-	case "create":
-		mut.Type = request.CreateObjects
-		parseCreateMutationArgs(mut, arguments)
+	case "add":
+		mut.Type = request.AddObjects
+		parseAddMutationArgs(mut, arguments)
 
 	case "update":
 		mut.Type = request.UpdateObjects
@@ -118,7 +118,7 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	return mut, err
 }
 
-func parseCreateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 	for name, value := range args {
 		switch name {
 		case request.Input:
@@ -130,7 +130,7 @@ func parseCreateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			for i, v := range v {
 				inputs[i] = v.(map[string]any)
 			}
-			mut.CreateInput = inputs
+			mut.AddInput = inputs
 
 		case request.EncryptDocArgName:
 			if v, ok := value.(bool); ok {
@@ -203,9 +203,9 @@ func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 func parseUpsertMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 	for name, value := range args {
 		switch name {
-		case request.CreateInput:
+		case request.AddInput:
 			if v, ok := value.(map[string]any); ok {
-				mut.CreateInput = []map[string]any{v}
+				mut.AddInput = []map[string]any{v}
 			}
 
 		case request.UpdateInput:

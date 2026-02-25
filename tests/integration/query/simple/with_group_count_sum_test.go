@@ -20,35 +20,35 @@ import (
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"Verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
@@ -59,10 +59,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: _count})
-						_group (groupBy: [Verified]){
+						SUM(GROUP: {field: COUNT})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_count(_group: {})
+							COUNT(GROUP: {})
 						}
 					}
 				}`,
@@ -70,35 +70,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(3),
-							"_group": []map[string]any{
+							"SUM":  int64(3),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(2),
+									"COUNT":    int(2),
 								},
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_sum": int64(1),
-							"_group": []map[string]any{
+							"SUM":  int64(1),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
-							"_sum": int64(1),
-							"_group": []map[string]any{
+							"SUM":  int64(1),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},

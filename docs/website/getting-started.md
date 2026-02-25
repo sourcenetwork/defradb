@@ -63,14 +63,14 @@ defradb client schema add '
 
 Find more examples of schema type definitions in the [examples/schema/](https://github.com/sourcenetwork/defradb/examples/schema/) folder.
 
-## Create a document
+## Add a document
 
-Submit a `mutation` request to create a document of the `User` type:
+Submit a `mutation` request to add a document of the `User` type:
 
 ```shell
 defradb client query '
   mutation {
-      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
+      add_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
           _docID
       }
   }

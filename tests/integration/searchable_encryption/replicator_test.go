@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
+func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSearchableEncryption: true,
 		SupportedDatabaseTypes: immutable.Some(
@@ -43,21 +43,21 @@ func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testin
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
 					"age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred",

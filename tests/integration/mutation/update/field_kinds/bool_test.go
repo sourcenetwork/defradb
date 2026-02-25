@@ -27,7 +27,7 @@ func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"valid": true
 				}`,

@@ -45,7 +45,7 @@ func TestDefaultExplainRequest_WithMinOnInlineArrayField_ChildFieldWillBeEmpty(t
 				Request: `query @explain {
 					Book {
 						name
-						MinChapterPages: _min(chapterPages: {})
+						MinChapterPages: MIN(chapterPages: {})
 					}
 				}`,
 

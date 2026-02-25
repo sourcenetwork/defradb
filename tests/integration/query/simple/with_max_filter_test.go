@@ -20,19 +20,19 @@ import (
 func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
@@ -40,10 +40,10 @@ func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_max(Users: {field: Age, filter: {Age: {_lt: 32}}})
+					MAX(Users: {field: Age, filter: {Age: {_lt: 32}}})
 				}`,
 				Results: map[string]any{
-					"_max": int64(30),
+					"MAX": int64(30),
 				},
 			},
 		},

@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
+func TestP2PPeerReplicatorWithAdd_PCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
@@ -38,13 +38,13 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
 				}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
@@ -52,7 +52,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Shahzad",
@@ -134,7 +134,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -144,13 +144,13 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},

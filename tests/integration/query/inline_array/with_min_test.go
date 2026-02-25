@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -82,7 +82,7 @@ func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T)
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(-1),
+							"MIN":  int64(-1),
 						},
 					},
 				},
@@ -113,7 +113,7 @@ func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T)
 func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, null, 1, 0]
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *te
 				Request: `query {
 					Users {
 						name
-						_min(testScores: {})
+						MIN(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(-1),
+							"MIN":  int64(-1),
 						},
 					},
 				},
@@ -144,7 +144,7 @@ func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *te
 func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": null
@@ -154,14 +154,14 @@ func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -175,7 +175,7 @@ func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": []
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -206,7 +206,7 @@ func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": float64(0.00000000001),
+							"MIN":  float64(0.00000000001),
 						},
 					},
 				},
@@ -237,7 +237,7 @@ func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 func TestQueryInlineNillableFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
@@ -247,14 +247,14 @@ func TestQueryInlineNillableFloatArray_WithMinAndPopulatedArray_Succeeds(t *test
 				Request: `query {
 					Users {
 						name
-						_min(pageRatings: {})
+						MIN(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": float64(0.00000000001),
+							"MIN":  float64(0.00000000001),
 						},
 					},
 				},

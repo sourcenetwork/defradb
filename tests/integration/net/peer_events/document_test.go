@@ -31,16 +31,16 @@ func TestPeerEvents_OnSubscribeToDocument_ShouldReceiveJoinEventOnDocumentTopic(
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -72,24 +72,24 @@ func TestPeerEvents_OnSubscribeToMultipleDocuments_ShouldReceiveJoinEventsOnAllT
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
 					{Col: 0, Doc: 1},
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
@@ -125,16 +125,16 @@ func TestPeerEvents_DocumentAndDocSyncTopics_ShouldReceiveJoinEventsOnBoth(t *te
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -169,24 +169,24 @@ func TestPeerEvents_AllTopicTypes_ShouldReceiveJoinEventsOnAll(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -224,16 +224,16 @@ func TestPeerEvents_OnUnsubscribeFromDocument_ShouldReceiveLeftEvent(t *testing.
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -276,24 +276,24 @@ func TestPeerEvents_OnUnsubscribeFromMultipleDocuments_ShouldReceiveLeftEvents(t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
 					{Col: 0, Doc: 1},
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},

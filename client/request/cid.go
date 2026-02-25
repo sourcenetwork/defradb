@@ -15,11 +15,11 @@ import "github.com/sourcenetwork/immutable"
 // CIDFilter is an embeddable struct that hosts a consistent set of properties
 // for filtering an aspect of a request by commit CID.
 type CIDFilter struct {
-	// CID is an optional value that selects a single document at the given commit CID
+	// CIDs is an optional value that selects a single document at each given commit's CID
 	// for processing by the request.
 	//
-	// If a commit matching the given CID is not found an error will be returned. The commit
+	// If a commit matching the given CIDs is not found an error will be returned. The commit
 	// does not need to be the latest, and this property allows viewing of the document at
 	// prior revisions.
-	CID immutable.Option[string]
+	CIDs immutable.Option[[]string]
 }

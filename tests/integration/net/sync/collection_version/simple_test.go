@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -65,10 +66,8 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
-				NodeID: immutable.Some(1),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -125,7 +124,7 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID0}}",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",

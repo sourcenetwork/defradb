@@ -43,7 +43,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -51,7 +51,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"verified": true,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -59,7 +59,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"verified": false,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -67,7 +67,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"rating":    3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -75,7 +75,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"rating":    2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"rating":    1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -91,7 +91,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"score":     1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -99,7 +99,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"score":     2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -107,7 +107,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 					"score":     3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -119,18 +119,18 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 				Request: `query {
 						Author {
 							name
-							_count(books: {filter: {score: {_gt: 3}}}, articles: {})
+							COUNT(books: {filter: {score: {_gt: 3}}}, articles: {})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 1,
+							"name":  "John Grisham",
+							"COUNT": 1,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 3,
+							"name":  "Cornelia Funke",
+							"COUNT": 3,
 						},
 					},
 				},
@@ -168,7 +168,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -176,7 +176,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"verified": true,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -184,7 +184,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"verified": false,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -192,7 +192,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"rating":    3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -200,7 +200,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"rating":    2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -208,7 +208,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"rating":    1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -216,7 +216,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"score":     1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -224,7 +224,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"score":     2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -232,7 +232,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 					"score":     3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -244,18 +244,18 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 				Request: `query {
 					Author {
 						name
-						_count(books: {filter: {score: {_gt: 3}}}, articles: {filter: {rating: {_lt: 3}}})
+						COUNT(books: {filter: {score: {_gt: 3}}}, articles: {filter: {rating: {_lt: 3}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 0,
+							"name":  "John Grisham",
+							"COUNT": 0,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 3,
+							"name":  "Cornelia Funke",
+							"COUNT": 3,
 						},
 					},
 				},

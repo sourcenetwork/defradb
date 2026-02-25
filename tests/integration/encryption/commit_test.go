@@ -25,7 +25,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
@@ -94,7 +94,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
@@ -133,11 +133,11 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: islam33Doc,
 			},
 			testUtils.UpdateDoc{
@@ -203,7 +203,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            `{ "points": 5 }`,
 				IsDocEncrypted: true,
 			},
@@ -249,7 +249,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            `{ "points": 5 }`,
 				IsDocEncrypted: true,
 			},
@@ -287,7 +287,7 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            "[" + islam33Doc + ", " + john21Doc + "]",
 				IsDocEncrypted: true,
 			},
@@ -340,14 +340,14 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "John",
 						"age": 21
 					}`,
 				IsDocEncrypted: true,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name": "Islam",
 						"age": 21

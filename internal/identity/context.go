@@ -1,0 +1,51 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package identity
+
+import (
+	"context"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/immutable"
+)
+
+// identityContextKey is the key type for ACP identity context values.
+type identityContextKey struct{}
+
+// FromContext returns the identity from the given context.
+//
+// If an identity does not exist `NoIdentity` is returned.
+func FromContext(ctx context.Context) immutable.Option[acpIdentity.Identity] {
+	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
+	if ok {
+		return immutable.Some(identity)
+	}
+	return acpIdentity.None
+}
+
+// WithContext returns a new context with the identity value set.
+//
+// This will overwrite any previously set identity value.
+func WithContext(ctx context.Context, identity immutable.Option[acpIdentity.Identity]) context.Context {
+	if identity.HasValue() {
+		return context.WithValue(ctx, identityContextKey{}, identity.Value())
+	}
+	return context.WithValue(ctx, identityContextKey{}, nil)
+}
+
+// FullFromContext returns the FullIdentity from the given context.
+func FullFromContext(ctx context.Context) immutable.Option[acpIdentity.FullIdentity] {
+	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.FullIdentity)
+	if ok {
+		return immutable.Some(identity)
+	}
+	return immutable.None[acpIdentity.FullIdentity]()
+}

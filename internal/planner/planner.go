@@ -128,8 +128,8 @@ func New(
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
-	case mapper.CreateObjects:
-		return p.CreateDocs(stmt)
+	case mapper.AddObjects:
+		return p.AddDocs(stmt)
 
 	case mapper.UpdateObjects:
 		return p.UpdateDocs(stmt)
@@ -197,7 +197,7 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
 
-	case *createNode:
+	case *addNode:
 		return p.expandPlan(n.results, parentPlan)
 
 	case *deleteNode:
@@ -413,7 +413,7 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 // extractRelatedSubFilter extracts the sub filter from the parent filter.
 // Returns nil if the relation field doesn't exist in the document map.
 func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
-	// In groupBy queries with _group filters, the docMap may not contain the relation field,
+	// In groupBy queries with GROUP filters, the docMap may not contain the relation field,
 	// so we check existence before accessing to avoid a panic.
 	indexes, ok := docMap.IndexesByName[relField.Name]
 	if !ok {

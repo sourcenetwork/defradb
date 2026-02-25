@@ -27,12 +27,12 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
@@ -75,12 +75,12 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
@@ -126,12 +126,12 @@ func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},

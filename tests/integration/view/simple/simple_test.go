@@ -27,7 +27,7 @@ func TestView_Simple(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -39,7 +39,7 @@ func TestView_Simple(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -74,7 +74,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -86,12 +86,12 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"Fred"
 				}`,
@@ -131,7 +131,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -143,7 +143,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -175,7 +175,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -189,7 +189,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -225,7 +225,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				// `age` is present in the query but not the SDL
 				Query: `
 					User {
@@ -239,7 +239,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -276,7 +276,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -288,7 +288,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					UserView {
 						name
@@ -300,7 +300,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,

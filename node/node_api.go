@@ -15,19 +15,22 @@ import (
 	"fmt"
 	gohttp "net/http"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 )
 
 func (n *Node) startAPI(ctx context.Context) error {
-	if n.config.disableAPI {
+	if n.opts.DisableAPI {
 		return nil
 	}
 	handler, err := http.NewHandler(n.DB)
 	if err != nil {
 		return err
 	}
-	n.server, err = http.NewServer(handler, filterOptions[http.ServerOpt](n.options)...)
+	http.IsDevMode = n.opts.EnableDevelopment
+
+	n.server, err = http.NewServer(handler, options.NodeHTTP().SetAll(n.opts.HTTP))
 	if err != nil {
 		return err
 	}

@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBlobWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

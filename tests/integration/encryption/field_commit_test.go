@@ -23,7 +23,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
@@ -86,7 +86,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 						name4: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name1": "John",
 						"name2": "John",
@@ -147,7 +147,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 						name4: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name1": "John",
 						"name2": "John",

@@ -30,7 +30,7 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

@@ -46,10 +46,10 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -57,7 +57,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 						"age":	40
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -119,7 +119,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -156,7 +156,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -193,7 +193,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -231,7 +231,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -269,7 +269,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -306,7 +306,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -343,7 +343,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -381,7 +381,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -419,7 +419,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -464,7 +464,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 						email: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -472,7 +472,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 						"age":	33
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -480,7 +480,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 						"age":	88
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -488,7 +488,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 						"age":	33
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -496,7 +496,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 						"age":	70
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -539,10 +539,10 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -550,7 +550,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 						"age":	10
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -593,7 +593,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -661,7 +661,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -757,7 +757,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -796,7 +796,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 						email: String 
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -832,7 +832,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 						email: String
 					}`,
 			},
-			testUtils.CreatePredefinedDocs{
+			testUtils.AddPredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			&action.Request{
@@ -860,7 +860,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 						email: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -868,7 +868,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -913,7 +913,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 						email: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -922,7 +922,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 						"email": "alice@gmail.com"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -930,7 +930,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 						"email": "bob@gmail.com"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -968,7 +968,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 						about: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -977,7 +977,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 						"about": "alice_22"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -985,7 +985,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 						"about": "bob_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1034,7 +1034,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 						email: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1043,7 +1043,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 						"email": "bob_age_22@gmail.com"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1052,7 +1052,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 						"email": "bob_age_44@gmail.com"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1060,7 +1060,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 						"email": "bob1@gmail.com"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1098,7 +1098,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						about: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1107,7 +1107,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						"about": "bob_22"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1115,7 +1115,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						"about": "bob_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1123,14 +1123,14 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						"about": "nil_22"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"about": "nil_nil_1"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1198,7 +1198,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						about: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1207,7 +1207,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						"about": "bob_22 -> bob_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1215,7 +1215,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						"about": "bob_nil -> nil_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1223,14 +1223,14 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						"about": "nil_22 -> bob_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"about": "nil_nil -> bob_nil"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1338,7 +1338,7 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1347,7 +1347,7 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1356,7 +1356,7 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 						"age":	38
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{

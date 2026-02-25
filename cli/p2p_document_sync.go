@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeP2PDocumentSyncCommand(ctx context.Context) *cobra.Command {
@@ -37,7 +40,8 @@ It doesn't automatically subscribe to the collection or the documents.`,
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncDocuments(ctx, collectionName, docIDs)
+			opt := options.WithIdentity(options.SyncDocuments(), iIdentity.FromContext(cmd.Context()))
+			return cliClient.SyncDocuments(ctx, collectionName, docIDs, opt)
 		},
 	}
 

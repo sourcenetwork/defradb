@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -54,7 +54,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_count",
+									"name": "COUNT",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -95,7 +95,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -136,7 +136,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_sum",
+									"name": "SUM",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -203,7 +203,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsAverageGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -244,7 +244,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_avg",
+									"name": "AVG",
 									"args": []any{
 										map[string]any{
 											"name": "Users",

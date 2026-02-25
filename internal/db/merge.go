@@ -23,9 +23,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -35,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
@@ -485,7 +486,7 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.Get(ctx, docID, false)
+	doc, err := mp.col.Get(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return nil
 	}
@@ -502,9 +503,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 
 	cols, err := db.getCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		utils.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
 	)
 	if err != nil {
 		return nil, err
@@ -575,7 +574,7 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.Get(ctx, docID, false)
+	newDoc, err := col.Get(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}

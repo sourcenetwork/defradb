@@ -20,19 +20,19 @@ import (
 func TestQuerySimple_WithMinFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
@@ -40,10 +40,10 @@ func TestQuerySimple_WithMinFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_min(Users: {field: Age, filter: {Age: {_gt: 21}}})
+					MIN(Users: {field: Age, filter: {Age: {_gt: 21}}})
 				}`,
 				Results: map[string]any{
-					"_min": int64(30),
+					"MIN": int64(30),
 				},
 			},
 		},

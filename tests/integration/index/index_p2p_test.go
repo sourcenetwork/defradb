@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexP2P_IfPeerCreatedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
+func TestIndexP2P_IfPeerAddedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -31,7 +31,7 @@ func TestIndexP2P_IfPeerCreatedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},
@@ -39,11 +39,11 @@ func TestIndexP2P_IfPeerCreatedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred"
@@ -83,7 +83,7 @@ func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},
@@ -91,11 +91,11 @@ func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred"
@@ -143,7 +143,7 @@ func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},
@@ -151,18 +151,18 @@ func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred",
 					"age": 25
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred",

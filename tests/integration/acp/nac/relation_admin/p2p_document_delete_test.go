@@ -51,7 +51,7 @@ func TestNAC_AdminRelation_CanP2PDocumentDelete(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanP2PDocumentDelete(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
