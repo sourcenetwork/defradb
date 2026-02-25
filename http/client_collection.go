@@ -18,8 +18,6 @@ import (
 	"net/url"
 	"strings"
 
-	sse "github.com/vito/go-sse/sse"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -323,65 +321,6 @@ func (c *Collection) Get(
 	}
 	doc.Clean()
 	return doc, nil
-}
-
-func (c *Collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = identity.WithContext(ctx, opt.GetIdentity())
-
-	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.http.setDefaultHeaders(req)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.http.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	docIDCh := make(chan client.DocIDResult)
-
-	go func() {
-		eventReader := sse.NewReadCloser(res.Body)
-		// ignore close errors because the status
-		// and body of the request are already
-		// checked and it cannot be handled properly
-		defer eventReader.Close() //nolint:errcheck
-		defer close(docIDCh)
-
-		for {
-			evt, err := eventReader.Next()
-			if err != nil {
-				return
-			}
-			var res DocIDResult
-			if err := json.Unmarshal(evt.Data, &res); err != nil {
-				return
-			}
-			docID, err := client.NewDocIDFromString(res.DocID)
-			if err != nil {
-				return
-			}
-			docIDResult := client.DocIDResult{
-				ID: docID,
-			}
-			if res.Error != "" {
-				docIDResult.Err = errors.New(res.Error)
-			}
-			docIDCh <- docIDResult
-		}
-	}()
-
-	return docIDCh, nil
 }
 
 func (c *Collection) AddIndex(

@@ -26,16 +26,13 @@ type CommitSelect struct {
 	ChildSelect
 
 	CIDFilter
+	DocIDsFilter
 
 	Limitable
 	Offsetable
 	Orderable
 	Groupable
 	Filterable
-
-	// DocID is an optional filter which when provided will limit commits to those
-	// belonging to the given document.
-	DocID immutable.Option[string]
 
 	// Depth limits the returned commits to being X places in the history away from the
 	// most current.
@@ -51,12 +48,14 @@ func (c CommitSelect) ToSelect() *Select {
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		Limitable:   c.Limitable,
-		Offsetable:  c.Offsetable,
-		Orderable:   c.Orderable,
-		Groupable:   c.Groupable,
-		Filterable:  c.Filterable,
-		ChildSelect: c.ChildSelect,
+		DocIDsFilter: c.DocIDsFilter,
+		CIDFilter:    c.CIDFilter,
+		Limitable:    c.Limitable,
+		Offsetable:   c.Offsetable,
+		Orderable:    c.Orderable,
+		Groupable:    c.Groupable,
+		Filterable:   c.Filterable,
+		ChildSelect:  c.ChildSelect,
 	}
 }
 
@@ -69,7 +68,7 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		DocID: c.DocID,
+		DocIDsFilter: c.DocIDsFilter,
 		CIDFilter: CIDFilter{
 			immutable.Some([]string{cid}),
 		},
@@ -88,8 +87,5 @@ func (c CommitSelect) CheckCIDFilter(cid string) bool {
 // Returns true if the docID passes the filter, false otherwise.
 // If no DocID filter is set, it always passes.
 func (c CommitSelect) CheckDocIDFilter(docID string) bool {
-	if c.DocID.HasValue() && c.DocID.Value() != docID {
-		return false
-	}
-	return true
+	return !c.DocIDs.HasValue() || slices.Contains(c.DocIDs.Value(), docID)
 }

@@ -1329,9 +1329,7 @@ func toCommitSelect(
 	}
 	return &CommitSelect{
 		Select: *underlyingSelect,
-		DocID:  selectRequest.DocID,
 		Depth:  selectRequest.Depth,
-		Cids:   selectRequest.CIDs,
 	}, nil
 }
 

@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -315,48 +314,6 @@ func (c *Collection) Get(
 	}
 	doc.Clean()
 	return doc, nil
-}
-
-func (c *Collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	args := []string{"client", "collection", "docIDs"}
-	args = append(args, "--name", c.Version().Name)
-
-	opt := utils.NewOptions(opts...)
-	args = appendIdentityArg(args, opt.GetIdentity())
-
-	stdOut, _, err := c.cmd.executeStream(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	docIDCh := make(chan client.DocIDResult)
-
-	go func() {
-		dec := json.NewDecoder(stdOut)
-		defer close(docIDCh)
-
-		for {
-			var res http.DocIDResult
-			if err := dec.Decode(&res); err != nil {
-				return
-			}
-			docID, err := client.NewDocIDFromString(res.DocID)
-			if err != nil {
-				return
-			}
-			docIDResult := client.DocIDResult{
-				ID: docID,
-			}
-			if res.Error != "" {
-				docIDResult.Err = errors.New(res.Error)
-			}
-			docIDCh <- docIDResult
-		}
-	}()
-
-	return docIDCh, nil
 }
 
 func (c *Collection) AddIndex(

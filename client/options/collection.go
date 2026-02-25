@@ -323,35 +323,6 @@ func (b *CollectionListIndexesOptionsBuilder) SetIdentity(id identity.Identity) 
 	return b
 }
 
-// CollectionGetAllDocIDsOptions contains options for GetAllDocIDs operation.
-type CollectionGetAllDocIDsOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-}
-
-// GetIdentity returns the identity for the operation.
-func (o *CollectionGetAllDocIDsOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
-}
-
-// CollectionGetAllDocIDsOptionsBuilder is a builder for CollectionGetAllDocIDsOptions.
-type CollectionGetAllDocIDsOptionsBuilder struct {
-	enumerableBuilder[CollectionGetAllDocIDsOptions]
-}
-
-// CollectionGetAllDocIDs creates a new CollectionGetAllDocIDsOptionsBuilder instance.
-func CollectionGetAllDocIDs() *CollectionGetAllDocIDsOptionsBuilder {
-	return &CollectionGetAllDocIDsOptionsBuilder{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (b *CollectionGetAllDocIDsOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetAllDocIDsOptionsBuilder {
-	b.append(func(opts *CollectionGetAllDocIDsOptions) {
-		opts.Identity = immutable.Some(id)
-	})
-	return b
-}
-
 // CollectionExistsOptions contains options for Exists operation.
 type CollectionExistsOptions struct {
 	// Identity is the identity of the actor performing the operation.

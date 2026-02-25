@@ -11,7 +11,6 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -233,55 +232,6 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	responseJSON(rw, http.StatusOK, docMap)
-}
-
-type DocIDResult struct {
-	DocID string `json:"docID"`
-	Error string `json:"error"`
-}
-
-func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-	ctx := req.Context()
-
-	flusher, ok := rw.(http.Flusher)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
-		return
-	}
-
-	getAllOpt := options.WithIdentity(options.CollectionGetAllDocIDs(), identity.FromContext(ctx))
-
-	docIDsResult, err := col.GetAllDocIDs(ctx, getAllOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	rw.Header().Set("Content-Type", "text/event-stream")
-	rw.Header().Set("Cache-Control", "no-cache")
-	rw.Header().Set("Connection", "keep-alive")
-
-	rw.WriteHeader(http.StatusOK)
-	flusher.Flush()
-
-	for docID := range docIDsResult {
-		results := &DocIDResult{
-			DocID: docID.ID.String(),
-		}
-		if docID.Err != nil {
-			results.Error = docID.Err.Error()
-		}
-		data, err := json.Marshal(results)
-		if err != nil {
-			return
-		}
-		_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
-		if err != nil {
-			return
-		}
-		flusher.Flush()
-	}
 }
 
 func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) {
@@ -596,15 +546,6 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDelete.Responses.Set("200", successResponse)
 	collectionDelete.Responses.Set("400", errorResponse)
 
-	collectionKeys := openapi3.NewOperation()
-	collectionKeys.AddParameter(collectionNamePathParam)
-	collectionKeys.Description = "Get all document IDs"
-	collectionKeys.OperationID = "collection_keys"
-	collectionKeys.Tags = []string{"collection"}
-	collectionKeys.Responses = openapi3.NewResponses()
-	collectionKeys.Responses.Set("200", successResponse)
-	collectionKeys.Responses.Set("400", errorResponse)
-
 	addEncryptedIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchemaRef(encryptedIndexAddRequestSchema))
@@ -663,7 +604,6 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	truncate.Responses.Set("200", successResponse)
 	truncate.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
