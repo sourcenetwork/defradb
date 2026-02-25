@@ -68,6 +68,9 @@ type Node struct {
 	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
+	// ReplicationFilter is an optional filter that rejects incoming P2P documents before storage.
+	// Set this between New() and Start() to enable filtering.
+	ReplicationFilter client.ReplicationFilter
 }
 
 // DefaultNodeOptions returns default NodeOptions values.
@@ -148,6 +151,9 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	if n.peer != nil {
 		dbBuilder.SetP2P(n.peer)
+	}
+	if n.ReplicationFilter != nil {
+		dbBuilder.SetReplicationFilter(n.ReplicationFilter)
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)

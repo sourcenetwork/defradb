@@ -196,7 +196,7 @@ func newDB(
 	db.lensNode = node
 
 	if cfg.P2P.HasValue() {
-		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db), cfg.ReplicationFilter)
 		if err != nil {
 			return nil, err
 		}

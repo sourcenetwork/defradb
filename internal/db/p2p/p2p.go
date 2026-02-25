@@ -160,6 +160,9 @@ type P2P struct {
 	// pushHandlers are called when documents are pushed to replicators
 	pushHandlers []PushToReplicatorsHandler
 
+	// replicationFilter is an optional filter that rejects incoming P2P documents before storage.
+	replicationFilter client.ReplicationFilter
+
 	// collectionCache caches collection existence checks to reduce DB queries.
 	collectionCache   map[string]*cachedCollection
 	collectionCacheMu sync.RWMutex
@@ -216,6 +219,7 @@ func New(
 	host client.Host,
 	nodeIdentity immutable.Option[identity.Identity],
 	collectionRetriever kms.CollectionRetriever,
+	replicationFilter client.ReplicationFilter,
 ) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
@@ -227,6 +231,7 @@ func New(
 		peerIdentities:       make(map[string]identity.Identity),
 		retryIntervals:       db.RetryIntervals(),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
+		replicationFilter:    replicationFilter,
 		collectionCache:      make(map[string]*cachedCollection),
 		msgQueue:             make(chan *protocol.PushLogRequest, 50000),
 		processQueue:         newProcessQueue(),
@@ -724,6 +729,11 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			continue
 		}
 
+		// Apply replication filter before adding to batch
+		if !p.filterCARDocument(ctx, req.CollectionID, doc.DocID, parsed) {
+			continue
+		}
+
 		allParsed = append(allParsed, parsedDocInfo{
 			doc:           doc,
 			headCID:       headCID,
@@ -915,6 +925,11 @@ func (p *P2P) processDocument(
 
 	if err := p.syncDAG(ctx, block); err != nil {
 		return err
+	}
+
+	// Apply replication filter after DAG sync (all blocks available)
+	if !p.filterNonCARDocument(ctx, req.CollectionID, doc.DocID, block) {
+		return nil
 	}
 
 	mergeEvt := event.Merge{
