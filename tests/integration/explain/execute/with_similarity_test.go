@@ -27,7 +27,7 @@ func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 					pointsList: [Float64!]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []float64{2, 4, 1},

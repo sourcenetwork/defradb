@@ -27,7 +27,7 @@ func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
@@ -62,7 +62,7 @@ func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
@@ -97,7 +97,7 @@ func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},

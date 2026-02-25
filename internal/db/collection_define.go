@@ -36,7 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *DB) createCollections(
+func (db *DB) addCollections(
 	ctx context.Context,
 	parseResults []core.Collection,
 ) ([]client.CollectionVersion, error) {
@@ -78,9 +78,9 @@ func (db *DB) createCollections(
 	}
 
 	for _, def := range parseResults {
-		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
-		for _, createIndex := range def.CreateIndexes {
-			desc, err := processCreateIndexRequest(ctx, def.Definition, createIndex)
+		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.AddIndexes))
+		for _, addIndex := range def.AddIndexes {
+			desc, err := processAddIndexRequest(ctx, def.Definition, addIndex)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +122,7 @@ func (db *DB) createCollections(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+// New CollectionVersions added by modifying the global type definition (e.g. renaming, adding fields, etc)
 // will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
 //
 // Field [FieldKind] values may be provided in either their raw integer form, or as string as per
@@ -132,7 +132,7 @@ func (db *DB) createCollections(
 // the current active version, whereas referencing by VersionID will patch that specific version, whether it is
 // currently active or not.
 //
-// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+// A lens configuration may also be provided, and will become the migration to any new CollectionVersions added
 // by the patch.
 func (db *DB) patchCollection(
 	ctx context.Context,
@@ -344,7 +344,7 @@ existingVersionLoop:
 					return err
 				}
 				for _, indexReq := range indexReqs {
-					if _, err := colObj.createIndex(ctx, indexReq); err != nil {
+					if _, err := colObj.addIndex(ctx, indexReq); err != nil {
 						return err
 					}
 				}
@@ -752,7 +752,7 @@ func validateCollectionDoesNotHaveHigherVersion(
 		if newVersion.PreviousVersion.HasValue() &&
 			newVersion.PreviousVersion.Value().SourceCollectionID == version.VersionID {
 			// We do not allow the deletion of versions that are not the head of their branch - this would
-			// create a gap in the history, potentially causing problems that we do not wish to test for or
+			// add a gap in the history, potentially causing problems that we do not wish to test for or
 			// handle right now.
 			return NewErrCannotDeleteOldVersion(version.VersionID, newVersion.VersionID)
 		}
@@ -873,7 +873,7 @@ func finalizeRelations(
 
 			if isOneToOne && field.IsPrimary {
 				newIndex, err := ensureOneToOneUniqueIndex(
-					newCollections[i].CreateIndexes,
+					newCollections[i].AddIndexes,
 					nil,
 					newCol.Definition.Name,
 					field.Name,
@@ -882,7 +882,7 @@ func finalizeRelations(
 					return err
 				}
 				if newIndex != nil {
-					newCollections[i].CreateIndexes = append(newCollections[i].CreateIndexes, *newIndex)
+					newCollections[i].AddIndexes = append(newCollections[i].AddIndexes, *newIndex)
 				}
 			}
 		}
@@ -910,11 +910,11 @@ func isOneToOneRelation(
 
 // findIndexWithFirstField checks if an index exists where the given field is the first field.
 func findIndexWithFirstField(
-	createIndexes []client.IndexCreateRequest,
+	addIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	fieldName string,
 ) (isUnique bool, found bool) {
-	for _, index := range createIndexes {
+	for _, index := range addIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
 			return index.Unique, true
 		}
@@ -929,20 +929,20 @@ func findIndexWithFirstField(
 
 // ensureOneToOneUniqueIndex ensures a unique index exists for a one-to-one relation's _id field.
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
-// If no user-defined index exists, it creates one automatically.
+// If no user-defined index exists, it adds one automatically.
 func ensureOneToOneUniqueIndex(
-	createIndexes []client.IndexCreateRequest,
+	addIndexes []client.IndexAddRequest,
 	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
-) (newIndex *client.IndexCreateRequest, err error) {
+) (newIndex *client.IndexAddRequest, err error) {
 	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
 	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
-	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
+	isUnique, hasIndex := findIndexWithFirstField(addIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
-		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)
+		isUnique, hasIndex = findIndexWithFirstField(addIndexes, existingIndexes, relationFieldName)
 	}
 
 	if hasIndex {
@@ -952,21 +952,21 @@ func ensureOneToOneUniqueIndex(
 		return nil, nil
 	}
 
-	// No user-defined index exists, create one automatically
-	return &client.IndexCreateRequest{
+	// No user-defined index exists, add one automatically
+	return &client.IndexAddRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
 	}, nil
 }
 
-// getOneToOneIndexRequestsForPatch returns index create requests for one-to-one relations
+// getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
 // standard schema creation flow that calls finalizeRelations.
-// Returns a map of collectionName -> []IndexCreateRequest for indexes that need to be created.
+// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be added.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
-) (map[string][]client.IndexCreateRequest, error) {
+) (map[string][]client.IndexAddRequest, error) {
 	allColsByName := make(map[string]client.CollectionVersion)
 	maps.Copy(allColsByName, existingColsByName)
 
@@ -974,7 +974,7 @@ func getOneToOneIndexRequestsForPatch(
 		allColsByName[col.Name] = col
 	}
 
-	result := make(map[string][]client.IndexCreateRequest)
+	result := make(map[string][]client.IndexAddRequest)
 
 	for _, col := range newColsByID {
 		existingCol := existingColsByName[col.Name]

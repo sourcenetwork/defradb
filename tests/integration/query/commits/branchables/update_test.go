@@ -40,7 +40,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

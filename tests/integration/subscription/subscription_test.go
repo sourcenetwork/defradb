@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSubscriptionWithCreateMutations(t *testing.T) {
+func TestSubscriptionWithAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -52,12 +52,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -66,12 +66,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 						},
@@ -84,7 +84,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
+func TestSubscriptionWithFilterAndOneAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -109,12 +109,12 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -127,7 +127,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
+func TestSubscriptionWithFilterAndOneAddMutationOutsideFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -142,12 +142,12 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -160,7 +160,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
+func TestSubscriptionWithFilterAndAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -185,12 +185,12 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 						},
@@ -199,12 +199,12 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 						},
@@ -220,7 +220,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -229,7 +229,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 					"points": 42.1
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -281,7 +281,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -290,7 +290,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					"points": 42.1
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -380,14 +380,14 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 					},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  27,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Addo",
@@ -465,7 +465,7 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"counter": int64(1),
@@ -526,7 +526,7 @@ func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

@@ -30,7 +30,7 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age":  26,
@@ -38,7 +38,7 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age":  26,

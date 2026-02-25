@@ -20,7 +20,7 @@ import (
 func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"likedIndexes": [true, true, false, true]
@@ -51,7 +51,7 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"indexLikesDislikes": [true, true, false, null]
@@ -82,7 +82,7 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -113,7 +113,7 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, 1, null, 0]
@@ -144,7 +144,7 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0, -2]
@@ -175,7 +175,7 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -206,7 +206,7 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
@@ -237,7 +237,7 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -268,7 +268,7 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageHeaders": ["", "the previous", null, "empty string"]

@@ -33,7 +33,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name

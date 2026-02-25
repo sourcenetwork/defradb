@@ -43,7 +43,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -51,7 +51,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"verified": true,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -59,7 +59,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"verified": false,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -67,7 +67,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"rating":    3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -75,7 +75,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"rating":    2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"rating":    1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -91,7 +91,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"score":     1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -99,7 +99,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"score":     2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -163,7 +163,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -171,7 +171,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"verified": true,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -179,7 +179,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"verified": false,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -187,7 +187,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"rating":    3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -195,7 +195,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"rating":    2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -203,7 +203,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"rating":    1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -211,7 +211,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"score":     1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -219,7 +219,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"score":     2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -227,7 +227,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"score":     3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",

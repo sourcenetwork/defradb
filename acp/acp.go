@@ -82,7 +82,7 @@ type ACPSystemClient interface {
 		objectID string,
 	) (bool, error)
 
-	// AddActorRelationship creates a relationship within a policy which ties the target actor
+	// AddActorRelationship adds a relationship within a policy which ties the target actor
 	// with the specified object, which means that the set of high level rules defined in the
 	// policy will now apply to target actor as well.
 	//

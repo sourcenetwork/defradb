@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -95,7 +95,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -203,7 +203,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
+func TestSchemaAggregateTopLevelAddsAverageGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

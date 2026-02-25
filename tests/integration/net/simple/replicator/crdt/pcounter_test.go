@@ -32,8 +32,8 @@ func TestP2POneToOneReplicatorUpdate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
-				// This document is created in first node before the replicator is set up.
+			&action.AddDoc{
+				// This document is added in first node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(0),
 				Doc: `{

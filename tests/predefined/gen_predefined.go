@@ -18,13 +18,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
-// CreateFromSDL generates documents for GraphQL SDL from a predefined list
+// AddFromSDL generates documents for GraphQL SDL from a predefined list
 // of docs that might include nested docs.
 // The SDL is parsed to get the list of fields, and the docs
-// are created with the fields parsed from the SDL.
+// are added with the fields parsed from the SDL.
 // This allows us to have only one large list of docs with predefined
-// fields, and create SDLs with different fields from it.
-func CreateFromSDL(ctx context.Context, gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
+// fields, and add SDLs with different fields from it.
+func AddFromSDL(ctx context.Context, gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefsByName, err := gen.ParseSDL(gqlSDL)
 	if err != nil {
@@ -51,7 +51,7 @@ func CreateFromSDL(ctx context.Context, gqlSDL string, docsList DocsList) ([]gen
 	return resultDocs, nil
 }
 
-// Create generates documents from a predefined list
+// Add generates documents from a predefined list
 // of docs that might include nested docs.
 //
 // For example it can be used to generate docs from this list:
@@ -72,8 +72,8 @@ func CreateFromSDL(ctx context.Context, gqlSDL string, docsList DocsList) ([]gen
 //	 ...
 //
 // It will generator documents for `User` collection replicating the given structure, i.e.
-// creating devices as related secondary documents.
-func Create(ctx context.Context, defs []client.CollectionVersion, docsList DocsList) ([]gen.GeneratedDoc, error) {
+// adding devices as related secondary documents.
+func Add(ctx context.Context, defs []client.CollectionVersion, docsList DocsList) ([]gen.GeneratedDoc, error) {
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs := make(map[string]client.CollectionVersion)
 	for _, col := range defs {
@@ -170,7 +170,7 @@ func (d *docGenerator) generateRelatedDocs(ctx context.Context,
 ) ([]gen.GeneratedDoc, error) {
 	typeDef := d.types[typeName]
 
-	// create first primary docs and link them to the given doc so that we can define
+	// add first primary docs and link them to the given doc so that we can define
 	// docID for the complete document.
 	requested, result, err := d.generatePrimary(ctx, docMap, &typeDef)
 	if err != nil {

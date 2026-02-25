@@ -21,7 +21,7 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -48,7 +48,7 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -86,7 +86,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -146,7 +146,7 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -206,7 +206,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -285,6 +285,101 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 					},
 				},
 				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_DocIDEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				Request: `query {
+						_commits(docID: []) {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_DocIDListOfOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				Request: `query {
+						_commits(docID: ["bae-0fcd42bc-f8ab-510b-9b71-f42b72d75d53"]) {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"cid": testUtils.NewUniqueValue(),
+						},
+						{
+							"cid": testUtils.NewUniqueValue(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_DocIDListOfMany(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				Request: `query {
+						_commits(docID: ["bae-0fcd42bc-f8ab-510b-9b71-f42b72d75d53", "bae-234fd13b-a9ea-59b5-9830-7e903a72bd24"]) {
+							cid
+						}
+					}`,
+				ExpectedError: "querying by multiple docIDs is not yet supported",
 			},
 		},
 	}

@@ -163,8 +163,12 @@ var similarityField = Field{
 var cidArg = Field{
 	"name": "cid",
 	"type": map[string]any{
-		"name":        "String",
+		"name":        nil,
 		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
 	},
 }
 var docIDArg = Field{

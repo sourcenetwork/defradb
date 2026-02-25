@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
+func TestSchemaInlineArrayAddsSchemaGivenSingleType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -47,7 +47,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
+func TestSchemaInlineArrayAddsSchemaGivenSecondType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

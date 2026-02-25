@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithOperationAlias(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21

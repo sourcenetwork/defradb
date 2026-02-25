@@ -45,7 +45,7 @@ func TestNAC_AdminRelation_CanAddLens(t *testing.T) {
 						},
 					},
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensAddPerm),
 			},
 
 			// Grant access to user.

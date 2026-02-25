@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
+func addAuthorBooksSchemaWithPolicyAndAddDocs() []any {
 	return []any{
 		testUtils.AddDACPolicy{
 			Identity: testUtils.ClientIdentity(1),
@@ -44,7 +44,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					author: Author
 				}`,
 		},
-		&action.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 0,
 			// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 			Doc: `{
@@ -53,7 +53,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": true
 			}`,
 		},
-		&action.CreateDoc{
+		&action.AddDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 0,
 			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
@@ -63,7 +63,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": false
 			}`,
 		},
-		&action.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "Painted House",
@@ -71,7 +71,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		&action.CreateDoc{
+		&action.AddDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
@@ -80,7 +80,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		&action.CreateDoc{
+		&action.AddDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
@@ -95,7 +95,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Request: `
 					query {
@@ -130,7 +130,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_Shou
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -178,7 +178,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -214,7 +214,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Request: `
 					query {
@@ -247,7 +247,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_Shou
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -294,7 +294,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
+			addAuthorBooksSchemaWithPolicyAndAddDocs(),
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `

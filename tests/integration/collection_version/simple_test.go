@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColVersionSimpleCreatesColGivenEmptyType(t *testing.T) {
+func TestColVersionSimpleAddsColGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -115,7 +115,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
+func TestSchemaSimpleAddsSchemaGivenNewTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -148,7 +148,7 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
+func TestSchemaSimpleAddsSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -219,7 +219,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
+func TestSchemaSimpleAddsSchemaGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -303,7 +303,7 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
+func TestSchemaSimpleAddsSchemaGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -349,7 +349,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
+func TestSchemaSimple_WithJSONField_AddsSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -395,7 +395,7 @@ func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloat32Field_CreatesSchemaGivenType(t *testing.T) {
+func TestSchemaSimple_WithFloat32Field_AddsSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -441,7 +441,7 @@ func TestSchemaSimple_WithFloat32Field_CreatesSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloat64Field_CreatesSchemaGivenType(t *testing.T) {
+func TestSchemaSimple_WithFloat64Field_AddsSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -487,7 +487,7 @@ func TestSchemaSimple_WithFloat64Field_CreatesSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
+func TestSchemaSimple_WithFloatField_AddsSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -537,7 +537,7 @@ func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
 //
 // It also documents a bug with graphql-go introspection.
 // TODO: https://github.com/sourcenetwork/defradb/issues/3429
-func TestSchemaSimple_WithAllTypes_CreatesSchemaGivenTypes(t *testing.T) {
+func TestSchemaSimple_WithAllTypes_AddsSchemaGivenTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

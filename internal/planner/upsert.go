@@ -26,7 +26,7 @@ type upsertNode struct {
 	p             *Planner
 	collection    client.Collection
 	filter        *mapper.Filter
-	createInput   map[string]any
+	addInput      map[string]any
 	updateInput   map[string]any
 	isInitialized bool
 	source        planNode
@@ -69,12 +69,12 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 		} else {
-			doc, err := client.NewDocFromMap(n.p.ctx, n.createInput, n.collection.Version())
+			doc, err := client.NewDocFromMap(n.p.ctx, n.addInput, n.collection.Version())
 			if err != nil {
 				return false, err
 			}
-			createOpts := options.WithIdentity(options.CollectionCreate(), n.p.identity)
-			err = n.collection.Create(n.p.ctx, doc, createOpts)
+			addOpts := options.WithIdentity(options.CollectionAdd(), n.p.identity)
+			err = n.collection.Add(n.p.ctx, doc, addOpts)
 			if err != nil {
 				return false, err
 			}
@@ -149,9 +149,9 @@ func (n *upsertNode) simpleExplain() (map[string]any, error) {
 	// Add the filter attribute
 	simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 
-	// Add the attribute that represents the values to create or update.
+	// Add the attribute that represents the values to add or update.
 	simpleExplainMap[updateInputLabel] = n.updateInput
-	simpleExplainMap[createInputLabel] = n.createInput
+	simpleExplainMap[addInputLabel] = n.addInput
 
 	return simpleExplainMap, nil
 }
@@ -179,8 +179,8 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		docMapper:   docMapper{parsed.DocumentMapping},
 	}
 
-	if len(parsed.CreateInput) > 0 {
-		upsert.createInput = parsed.CreateInput[0]
+	if len(parsed.AddInput) > 0 {
+		upsert.addInput = parsed.AddInput[0]
 	}
 
 	// get collection

@@ -16,7 +16,7 @@ const (
 	TypeNameFieldName = "__typename"
 
 	Input              = "input"
-	CreateInput        = "create"
+	AddInput           = "add"
 	UpdateInput        = "update"
 	FieldArgName       = "field"
 	FieldIDName        = "fieldId"
@@ -137,9 +137,10 @@ var (
 	}
 
 	VersionFields = []string{
+		// DocIDArgName must be the first in this slice in order to align with document doc-id mappings
+		DocIDArgName,
 		HeightFieldName,
 		CidFieldName,
-		DocIDArgName,
 		CollectionVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,

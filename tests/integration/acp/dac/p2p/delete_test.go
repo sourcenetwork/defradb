@@ -90,7 +90,7 @@ resources:
 				TargetNodeID: 1,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
@@ -102,7 +102,7 @@ resources:
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(1),

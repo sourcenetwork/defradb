@@ -52,7 +52,7 @@ func TestNAC_GatesSyncDocuments_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(0),
 				Doc: `{
@@ -102,7 +102,7 @@ func TestNAC_GatesSyncDocuments_NoIdentity_NotAuthorizedError(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				Doc: `{
 					"name": "John"
@@ -145,7 +145,7 @@ func TestNAC_GatesSyncDocuments_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				Doc: `{
 					"name": "John"

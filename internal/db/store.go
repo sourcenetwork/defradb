@@ -307,7 +307,7 @@ func (db *DB) AddLens(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensAddPerm); err != nil {
 		return "", err
 	}
 

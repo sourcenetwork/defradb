@@ -20,7 +20,7 @@ import (
 func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -28,7 +28,7 @@ func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -36,7 +36,7 @@ func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -44,7 +44,7 @@ func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -52,7 +52,7 @@ func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",

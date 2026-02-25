@@ -29,7 +29,7 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -60,7 +60,7 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAdd_AfterCreateRequest_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -71,7 +71,7 @@ func TestEncryptedIndexAdd_AfterCreateRequest_ShouldNotHinderQuerying(t *testing
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{

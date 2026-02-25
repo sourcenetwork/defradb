@@ -14,7 +14,7 @@ type MutationType int
 
 const (
 	NoneMutationType MutationType = iota
-	CreateObjects
+	AddObjects
 	UpdateObjects
 	DeleteObjects
 	UpsertObjects
@@ -25,11 +25,11 @@ type Mutation struct {
 	// The underlying Select, defining the information requested upon return.
 	Select
 
-	// The type of mutation. For example a create request.
+	// The type of mutation. For example an add request.
 	Type MutationType
 
-	// CreateInput is the array of maps of fields and values used for a create mutation.
-	CreateInput []map[string]any
+	// AddInput is the array of maps of fields and values used for an add mutation.
+	AddInput []map[string]any
 
 	// UpdateInput is a map of fields and values used for an update mutation.
 	UpdateInput map[string]any

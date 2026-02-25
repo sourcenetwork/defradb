@@ -29,7 +29,7 @@ var openApiSchemas = map[string]any{
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
-	"index_create":                             &client.IndexCreateRequest{},
+	"index_add":                                &client.IndexAddRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
 	"encrypted_index_add":                      &client.EncryptedIndexDescription{},
 	"delete_result":                            &client.DeleteResult{},
@@ -132,7 +132,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
 				Name:        "schema",
-				Description: "Upload GQL schemas to create collections",
+				Description: "Upload GQL schemas to add collections",
 			},
 			&openapi3.Tag{
 				Name:        "collection",

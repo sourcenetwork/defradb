@@ -63,9 +63,9 @@ func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
-				// Create the doc before truncate as owned by identity `1`.
+				// Add the doc before truncate as owned by identity `1`.
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -74,9 +74,9 @@ func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
-				// Recreate the document without specifying an identity.
+				// Re-add the document without specifying an identity.
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -117,9 +117,9 @@ func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testin
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
-				// Create the doc before truncate as public (no creating identity).
+				// Add the doc before truncate as public (no adding identity).
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -127,9 +127,9 @@ func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testin
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
-				// Recreate the document using identity `1`.
+				// Re-add the document using identity `1`.
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",

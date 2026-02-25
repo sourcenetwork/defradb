@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
+func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.SubscriptionRequest{
@@ -43,7 +43,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -52,7 +52,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -67,7 +67,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	execute(t, test)
 }
 
-func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing.T) {
+func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T) {
 	create1Links := testUtils.NewSameValue()
 	create2Links := testUtils.NewSameValue()
 	create1Heads := testUtils.NewSameValue()
@@ -111,7 +111,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+					add_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
 						_version {
 							links {
@@ -125,7 +125,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "John",
 							"_version": []map[string]any{
@@ -140,7 +140,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 			},
 			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+					add_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
 						_version {
 							links {
@@ -154,7 +154,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"add_User": []map[string]any{
 						{
 							"name": "Addo",
 							"_version": []map[string]any{
@@ -178,14 +178,14 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 	addoDocID := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"Addo",

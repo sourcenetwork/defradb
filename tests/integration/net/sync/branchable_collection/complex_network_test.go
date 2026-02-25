@@ -49,35 +49,35 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"origin": "node3",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(4),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -163,14 +163,14 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
@@ -185,7 +185,7 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
@@ -251,28 +251,28 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -390,28 +390,28 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -491,7 +491,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			},
 			testUtils.WaitForSync{},
 			// Create another doc on all nodes to make sure it picked up all heads properly
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":   "Bruno",
 					"origin": "all",

@@ -647,7 +647,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 		}
 	}
 
-	r.primaryScan.initFetcher(immutable.None[string]())
+	r.primaryScan.initFetcher(immutable.None[[]string]())
 
 	docs, err := r.collectDocs(0)
 	if err != nil {
@@ -860,7 +860,7 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	childScan.filter = fieldFilter
 	childScan.index = immutable.Some(index)
 	childScan.ordering = ordering
-	childScan.initFetcher(immutable.Option[string]{})
+	childScan.initFetcher(immutable.Option[[]string]{})
 
 	join.childSide.isFirst = join.parentSide.isFirst
 	join.parentSide.isFirst = !join.parentSide.isFirst

@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]

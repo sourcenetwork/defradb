@@ -25,7 +25,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
@@ -73,9 +73,9 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {

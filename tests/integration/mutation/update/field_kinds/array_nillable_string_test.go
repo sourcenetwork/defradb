@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string", null]

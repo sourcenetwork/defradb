@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
@@ -82,7 +82,7 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -113,7 +113,7 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, null, 1, 0]
@@ -144,7 +144,7 @@ func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": null
@@ -175,7 +175,7 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": []
@@ -206,7 +206,7 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -237,7 +237,7 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]

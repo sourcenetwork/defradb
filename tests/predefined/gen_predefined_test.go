@@ -36,7 +36,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs, err := CreateFromSDL(ctx, schema, docsList)
+	docs, err := AddFromSDL(ctx, schema, docsList)
 	assert.NoError(t, err)
 
 	colDefMap, err := gen.ParseSDL(schema)
@@ -55,7 +55,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 			name: String
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
@@ -88,7 +88,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 			owner: User @primary
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -144,7 +144,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -204,7 +204,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 			device: Device
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -256,7 +256,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -308,7 +308,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 			user: User 
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -352,7 +352,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			owner: User
 // 		}`
 
-// 	docs, err := CreateFromSDL(schema, DocsList{
+// 	docs, err := AddFromSDL(schema, DocsList{
 // 		ColName: "User",
 // 		Docs: []map[string]any{
 // 			{
@@ -407,7 +407,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			device: Device @primary
 // 		}`
 
-// 	docs, err := CreateFromSDL(schema, DocsList{
+// 	docs, err := AddFromSDL(schema, DocsList{
 // 		ColName: "User",
 // 		Docs: []map[string]any{
 // 			{
@@ -503,7 +503,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 		},
 // 	}
-// 	docs, err := Create(defs, DocsList{
+// 	docs, err := Add(defs, DocsList{
 // 		ColName: "User",
 // 		Docs: []map[string]any{
 // 			{

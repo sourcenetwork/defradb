@@ -43,8 +43,8 @@ func gqlSchemaOneToManyToOne() *action.AddSchema {
 	}
 }
 
-func createDocsWith6BooksAnd5Publishers() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func addDocsWith6BooksAnd5Publishers() []*action.AddDoc {
+	return []*action.AddDoc{
 		// Authors
 		{
 			CollectionID: 0,

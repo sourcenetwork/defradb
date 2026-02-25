@@ -1,0 +1,182 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package replicator
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				// Patch the schema on the node that we will directly add a doc on
+				NodeID: immutable.Some(0),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				// Create John on the first (source) node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Email": "imnotyourbuddyguy@source.ca"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				// Patch the schema on the node that we sync docs to
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				// Create John on the first (source) node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				// Patch the schema on all nodes
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				// Create John on the first (source) node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Email": "imnotyourbuddyguy@source.ca"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+						Email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":  "John",
+							"Email": "imnotyourbuddyguy@source.ca",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

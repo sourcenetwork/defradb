@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_SourceHubACP(t *testing.T) {
+func TestACP_P2PReplicatorWithPermissionedCollectionAddDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedDocumentACPTypes: immutable.Some(
@@ -91,7 +91,7 @@ resources:
 				TargetNodeID: 1,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),

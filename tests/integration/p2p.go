@@ -60,14 +60,14 @@ type ConnectPeers struct {
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
-// For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
+// For example you will likely wish to `WaitForSync` after adding a document in node 0 before querying
 // node 1 to see if it has been replicated.
 type WaitForSync struct{}
 
 // WaitForSESync waits for SE artifact synchronization to complete.
 type WaitForSESync struct {
 	// DocIDs is a list of document indexes expected to have SE artifacts synced.
-	// If empty, waits for SE sync of all created documents.
+	// If empty, waits for SE sync of all added documents.
 	DocIDs []int
 }
 

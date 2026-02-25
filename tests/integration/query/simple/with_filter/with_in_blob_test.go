@@ -28,13 +28,13 @@ func TestQuerySimple_WithInOpOnBlobField_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"data": "00FF99AA"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"data": "FA02CC45"

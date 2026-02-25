@@ -29,7 +29,7 @@ func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_Should
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{

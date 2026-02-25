@@ -121,7 +121,7 @@ func saveBatchToCollections(
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
 			if col.Version().Name == colName {
-				err := col.CreateMany(ctx, colDocs)
+				err := col.AddMany(ctx, colDocs)
 				if err != nil {
 					return err
 				}

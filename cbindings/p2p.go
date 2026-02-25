@@ -151,8 +151,8 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	createP2PColOpt := options.WithIdentity(options.AddP2PCollections(), acpIdentity.FromContext(ctx))
-	err = node.DB.AddP2PCollections(ctx, colArgs, createP2PColOpt)
+	addP2PColOpt := options.WithIdentity(options.AddP2PCollections(), acpIdentity.FromContext(ctx))
+	err = node.DB.AddP2PCollections(ctx, colArgs, addP2PColOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -213,8 +213,8 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	createP2PDocOpt := options.WithIdentity(options.AddP2PDocuments(), acpIdentity.FromContext(ctx))
-	err = node.DB.AddP2PDocuments(ctx, colArgs, createP2PDocOpt)
+	addP2PDocOpt := options.WithIdentity(options.AddP2PDocuments(), acpIdentity.FromContext(ctx))
+	err = node.DB.AddP2PDocuments(ctx, colArgs, addP2PDocOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

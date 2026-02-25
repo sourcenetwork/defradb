@@ -75,7 +75,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
