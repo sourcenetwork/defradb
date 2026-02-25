@@ -211,21 +211,35 @@ func ExecuteTestCase(
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				// Some goroutine depend on the context to be cancelled in order to exit.
-				// Cancelling the context after each text case should limit the chances of
-				// having leaking goroutines.
-				ctx, cancel := context.WithCancel(context.Background())
-				executeTestCase(
-					ctx,
-					t,
-					collectionNames,
-					testCase,
-					kms,
-					dbt,
-					ct,
-					documentACPType,
-				)
-				cancel()
+				run := func(st testing.TB) {
+					// Some goroutine depend on the context to be cancelled in order to exit.
+					// Cancelling the context after each text case should limit the chances of
+					// having leaking goroutines.
+					ctx, cancel := context.WithCancel(context.Background())
+					executeTestCase(
+						ctx,
+						st,
+						collectionNames,
+						testCase,
+						kms,
+						dbt,
+						ct,
+						documentACPType,
+					)
+					cancel()
+				}
+
+				if testCase.FlakeRetries > 0 {
+					passed := runTestWithRetry(t, testCase.FlakeRetries, run)
+					if !passed {
+						t.Errorf(
+							"test failed after %d retries for client=%v db=%v kms=%v",
+							testCase.FlakeRetries, ct, dbt, kms,
+						)
+					}
+				} else {
+					run(t)
+				}
 			}
 		}
 	}
