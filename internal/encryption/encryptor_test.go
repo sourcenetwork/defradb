@@ -201,3 +201,22 @@ func TestShouldEncryptIndividualField_WithFieldEncryption_TrueForMatchingField(t
 	assert.True(t, ShouldEncryptIndividualField(ctx, immutable.Some("field1")))
 	assert.False(t, ShouldEncryptIndividualField(ctx, immutable.Some("field2")))
 }
+
+func TestGenerateEncryptionKeyFunc_UsesDeterministicInTest(t *testing.T) {
+	isTesting := testing.Testing()
+	t.Logf("testing.Testing() returned: %v", isTesting)
+
+	key1, err := generateEncryptionKeyFunc("testDoc", immutable.Some("field1"))
+	assert.NoError(t, err)
+
+	key2, err := generateEncryptionKeyFunc("testDoc", immutable.Some("field1"))
+	assert.NoError(t, err)
+
+	if isTesting {
+		assert.Equal(t, key1, key2, "Keys should be deterministic in test mode")
+		t.Logf("Keys are deterministic (test mode confirmed)")
+	} else {
+		assert.NotEqual(t, key1, key2, "Keys should be random in production")
+		t.Logf("Keys are random (production mode confirmed)")
+	}
+}
