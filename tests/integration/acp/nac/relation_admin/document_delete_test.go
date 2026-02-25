@@ -47,7 +47,7 @@ func TestNAC_AdminRelation_CanDocumentDelete(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -113,7 +113,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanDocumentDelete(t *testing.T) 
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{

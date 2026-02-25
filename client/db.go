@@ -66,7 +66,7 @@ type Store interface {
 		opts ...options.Enumerable[options.AddDACPolicyOptions],
 	) (AddPolicyResult, error)
 
-	// AddDACActorRelationship creates a relationship between document and the target actor.
+	// AddDACActorRelationship adds a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -102,7 +102,7 @@ type Store interface {
 		opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
-	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
+	// AddNACActorRelationship adds a relationship to grant node access to the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -192,7 +192,7 @@ type Store interface {
 	// individual operations defined in the patch do not need to result in a valid state, only the net result
 	// of the full patch.
 	//
-	// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+	// New CollectionVersions added by modifying the global type definition (e.g. renaming, adding fields, etc)
 	// will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
@@ -202,7 +202,7 @@ type Store interface {
 	// the current active version, whereas referencing by VersionID will patch that specific version, whether it is
 	// currently active or not.
 	//
-	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions added
 	// by the patch.
 	PatchCollection(
 		ctx context.Context,

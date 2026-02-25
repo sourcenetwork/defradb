@@ -225,7 +225,7 @@ func toSelect(
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
-		Cid:             selectRequest.CID,
+		Cids:            selectRequest.CIDs,
 		CollectionName:  collectionName,
 		Fields:          fields,
 		IsEncrypted:     selectRequest.IsEncrypted,
@@ -1329,9 +1329,7 @@ func toCommitSelect(
 	}
 	return &CommitSelect{
 		Select: *underlyingSelect,
-		DocID:  selectRequest.DocID,
 		Depth:  selectRequest.Depth,
-		Cid:    selectRequest.CID,
 	}, nil
 }
 
@@ -1364,7 +1362,7 @@ func toMutation(
 	return &Mutation{
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),
-		CreateInput:   mutationRequest.CreateInput,
+		AddInput:      mutationRequest.AddInput,
 		UpdateInput:   mutationRequest.UpdateInput,
 		Encrypt:       mutationRequest.Encrypt,
 		EncryptFields: mutationRequest.EncryptFields,

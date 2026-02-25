@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindBool(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBoolWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

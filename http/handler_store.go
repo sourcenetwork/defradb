@@ -34,6 +34,11 @@ const (
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
@@ -50,6 +55,11 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
@@ -679,7 +689,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	addViewResponse := openapi3.NewResponse().
-		WithDescription("The created collection and embedded schemas for the added view.").
+		WithDescription("The added collection and embedded schemas for the added view.").
 		WithJSONSchema(addViewResponseSchema)
 
 	addViewRequest := openapi3.NewRequestBody().

@@ -52,7 +52,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -152,7 +152,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -178,7 +178,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID1}}",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

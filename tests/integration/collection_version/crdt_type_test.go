@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
@@ -56,7 +56,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
@@ -93,7 +93,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
+func TestSchemaAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
@@ -113,7 +113,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
+func TestSchemaAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
@@ -133,7 +133,7 @@ func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -167,7 +167,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -201,7 +201,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -235,7 +235,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
+func TestSchemaAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -269,7 +269,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
+func TestSchemaAdd_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

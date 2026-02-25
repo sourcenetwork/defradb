@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, null, 1, 0]
@@ -82,7 +82,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -113,7 +113,7 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]

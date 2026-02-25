@@ -24,9 +24,9 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -76,7 +76,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Authors
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -85,7 +85,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -94,7 +94,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -103,7 +103,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -159,10 +159,10 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-			create3ArticleDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
+			add3ArticleDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -234,10 +234,10 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-			create3ArticleDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
+			add3ArticleDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -313,10 +313,10 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-			create3ArticleDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
+			add3ArticleDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
@@ -363,12 +363,12 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
@@ -376,7 +376,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
@@ -384,7 +384,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -393,7 +393,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",
@@ -516,12 +516,12 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John"}`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2020",
@@ -529,7 +529,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Book2010",
@@ -537,7 +537,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2020",
@@ -546,7 +546,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":            "Publisher2010",

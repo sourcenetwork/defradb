@@ -30,7 +30,7 @@ func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
@@ -145,17 +145,17 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 				`,
 			},
 			// Create multiple indexes
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByEmail",
 				Fields:     []string{"email"},

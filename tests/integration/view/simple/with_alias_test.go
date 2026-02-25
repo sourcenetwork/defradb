@@ -27,7 +27,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						fullname: name
@@ -39,7 +39,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,

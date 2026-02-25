@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -30,7 +30,7 @@ func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -42,7 +42,7 @@ func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -53,7 +53,7 @@ func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -65,7 +65,7 @@ func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -83,7 +83,7 @@ func TestIndexCreate_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -101,7 +101,7 @@ func TestIndexCreate_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
+func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -112,7 +112,7 @@ func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "score_index",
 				FieldName:     "score",
@@ -124,7 +124,7 @@ func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
+func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -135,12 +135,12 @@ func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID: 0,
 				IndexName:    "age_index",
 				FieldName:    "age",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 30
@@ -168,7 +168,7 @@ func TestIndexCreate_WithLWWField_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -179,7 +179,7 @@ func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "composite_index",
 				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "points"}},
@@ -191,7 +191,7 @@ func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -202,7 +202,7 @@ func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateIndex{
+			&action.AddIndex{
 				CollectionID:  0,
 				IndexName:     "unique_points_index",
 				FieldName:     "points",
@@ -215,7 +215,7 @@ func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexCreate_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexAdd_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

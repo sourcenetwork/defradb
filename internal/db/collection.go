@@ -204,31 +204,15 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// GetAllDocIDs returns all the document IDs that exist in the collection.
-//
-// @todo: We probably need a lock on the collection for this kind of op since
-// it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	opt := utils.NewOptions(opts...)
-
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, err
-	}
-
-	ctx = iIdentity.WithContext(ctx, opt.Identity)
-
-	return c.getAllDocIDsChan(ctx)
+// docIDResult wraps the result of an attempt at a DocID retrieval operation.
+type docIDResult struct {
+	ID  client.DocID
+	Err error
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
-) (<-chan client.DocIDResult, error) {
+) (<-chan docIDResult, error) {
 	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
@@ -244,7 +228,7 @@ func (c *collection) getAllDocIDsChan(
 		return nil, err
 	}
 
-	resCh := make(chan client.DocIDResult)
+	resCh := make(chan docIDResult)
 	go func() {
 		closeIterator := func() {
 			if err := iter.Close(); err != nil {
@@ -268,7 +252,7 @@ func (c *collection) getAllDocIDsChan(
 			hasNext, err := iter.Next()
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
@@ -283,7 +267,7 @@ func (c *collection) getAllDocIDsChan(
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
@@ -297,14 +281,14 @@ func (c *collection) getAllDocIDsChan(
 
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
 			}
 
 			if canRead {
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					ID: docID,
 				}
 			}
@@ -333,12 +317,12 @@ func (c *collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-// Create a new document.
+// Add a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Create(
+func (c *collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -357,7 +341,7 @@ func (c *collection) Create(
 	}
 	defer txn.Discard()
 
-	err = c.create(ctx, doc, opt)
+	err = c.add(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
@@ -365,12 +349,12 @@ func (c *collection) Create(
 	return txn.Commit()
 }
 
-// CreateMany creates a collection of documents at once.
+// AddMany adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) CreateMany(
+func (c *collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -390,7 +374,7 @@ func (c *collection) CreateMany(
 	defer txn.Discard()
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 		if err != nil {
 			return err
 		}
@@ -419,10 +403,10 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
-func (c *collection) create(
+func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -485,7 +469,7 @@ func (c *collection) create(
 
 func setContextDocEncryption(
 	ctx context.Context,
-	opt *options.CollectionCreateOptions,
+	opt *options.CollectionAddOptions,
 ) context.Context {
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
@@ -619,7 +603,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opt)
+		err = c.add(ctx, doc, opt)
 	}
 	if err != nil {
 		return err
@@ -657,19 +641,19 @@ func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	return nil
 }
 
-// save saves the document state. save MUST not be called outside the `c.create`
+// save saves the document state. save MUST not be called outside the `c.add`
 // and `c.update` methods as we wrap the acp logic within those methods. Calling
 // save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
 	doc *client.Document,
-	isCreate bool,
+	isAdd bool,
 ) error {
 	if err := c.validateEncryptedFields(ctx); err != nil {
 		return err
 	}
 
-	if !isCreate {
+	if !isAdd {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
 			return err

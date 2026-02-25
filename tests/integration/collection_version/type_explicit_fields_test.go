@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptFieldsForCreateMutation(t *testing.T) {
+func TestEncryptFieldsForAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{

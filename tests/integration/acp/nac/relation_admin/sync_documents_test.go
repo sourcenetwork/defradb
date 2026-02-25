@@ -52,7 +52,7 @@ func TestNAC_AdminRelation_CanSyncDocuments(t *testing.T) {
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(0),
 				Doc: `{

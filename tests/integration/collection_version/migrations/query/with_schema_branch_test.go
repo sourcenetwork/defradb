@@ -52,8 +52,8 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					},
 				}),
 			},
-			&action.CreateDoc{
-				// Create a document on the second schema version, with an email field value
+			&action.AddDoc{
+				// Add a document on the second schema version, with an email field value
 				Doc: `{
 					"name": "John",
 					"email": "john@source.hub"

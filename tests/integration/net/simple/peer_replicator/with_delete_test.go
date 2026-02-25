@@ -34,7 +34,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21

@@ -24,7 +24,6 @@ const (
 var (
 	ErrSignerMissingForSourceHubACP = errors.New("a txn signer must be provided for SourceHub ACP")
 	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
-	ErrPurgeWithDevModeDisabled     = errors.New("cannot purge database when development mode is disabled")
 	ErrP2PNotSupported              = errors.New("p2p networking is not supported by this build")
 	ErrNodeACPTypeNotSupported      = errors.New(errNodeACPTypeNotSupported)
 )

@@ -26,7 +26,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					custom: JSON
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -35,7 +35,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -44,7 +44,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": null

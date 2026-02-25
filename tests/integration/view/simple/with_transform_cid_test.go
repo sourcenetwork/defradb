@@ -44,7 +44,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -57,7 +57,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -94,7 +94,7 @@ func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name

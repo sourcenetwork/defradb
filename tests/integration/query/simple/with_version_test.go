@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -74,14 +74,14 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
+func TestQuery_AddDocWithNestedLatestCommit(t *testing.T) {
 	docCompositeCid := testUtils.NewUniqueValue()
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -147,7 +147,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -230,7 +230,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T
 	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -269,7 +269,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -311,7 +311,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -380,7 +380,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -486,7 +486,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -556,7 +556,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
@@ -631,7 +631,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",

@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -141,7 +141,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -263,7 +263,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -477,7 +477,7 @@ var aggregateVersionArg = map[string]any{
 	},
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -603,7 +603,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -729,7 +729,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -879,7 +879,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -1029,7 +1029,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -1179,7 +1179,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -1329,7 +1329,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -1479,7 +1479,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
+func TestSchemaAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

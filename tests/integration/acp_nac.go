@@ -96,7 +96,7 @@ func disableNAC(
 	}
 }
 
-// AddNACActorRelationship will attempt to create a new relationship for node access with an actor.
+// AddNACActorRelationship will attempt to add a new relationship for node access with an actor.
 type AddNACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add actor relationship on.
 	//
@@ -108,12 +108,12 @@ type AddNACActorRelationship struct {
 	// This is a required field.
 	Relation string
 
-	// The target public identity, i.e. the identity of the actor to create a relationship with.
+	// The target public identity, i.e. the identity of the actor to add a relationship with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
 	TargetIdentity immutable.Option[state.Identity]
 
-	// The requestor identity, i.e. identity of the actor creating the relationship.
+	// The requestor identity, i.e. identity of the actor adding the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.

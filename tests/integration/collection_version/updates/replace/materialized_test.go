@@ -57,7 +57,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -69,7 +69,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John when the view is materialized
 				DocMap: map[string]any{
 					"name": "John",
@@ -86,7 +86,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Fred when the view is not materialized, noting that there is no `RefreshView`
 				// call after this action, meaning that if the view was still materialized Fred would not
 				// be returned by the query.

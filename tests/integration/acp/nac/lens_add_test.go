@@ -76,7 +76,7 @@ func TestNAC_GatesLensAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 						},
 					},
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensAddPerm),
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func TestNAC_GatesLensAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 						},
 					},
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensAddPerm),
 			},
 		},
 	}

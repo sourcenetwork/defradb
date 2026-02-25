@@ -34,7 +34,7 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21

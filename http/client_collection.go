@@ -18,8 +18,6 @@ import (
 	"net/url"
 	"strings"
 
-	sse "github.com/vito/go-sse/sse"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -51,10 +49,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Create(
+func (c *Collection) Add(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -80,10 +78,10 @@ func (c *Collection) Create(
 	return nil
 }
 
-func (c *Collection) CreateMany(
+func (c *Collection) AddMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -121,7 +119,7 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionCreateOptions) {
+func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionAddOptions) {
 	q := req.URL.Query()
 	if opt.EncryptDoc {
 		q.Set(docEncryptParam, "true")
@@ -180,15 +178,15 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		createOpts := options.CollectionCreate().
+		addOpts := options.CollectionAdd().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
 
 		if opt.GetIdentity().HasValue() {
-			createOpts.SetIdentity(opt.GetIdentity().Value())
+			addOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 
-		return c.Create(ctx, doc, createOpts)
+		return c.Add(ctx, doc, addOpts)
 	}
 	return err
 }
@@ -325,69 +323,10 @@ func (c *Collection) Get(
 	return doc, nil
 }
 
-func (c *Collection) GetAllDocIDs(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = identity.WithContext(ctx, opt.GetIdentity())
-
-	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.http.setDefaultHeaders(req)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.http.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	docIDCh := make(chan client.DocIDResult)
-
-	go func() {
-		eventReader := sse.NewReadCloser(res.Body)
-		// ignore close errors because the status
-		// and body of the request are already
-		// checked and it cannot be handled properly
-		defer eventReader.Close() //nolint:errcheck
-		defer close(docIDCh)
-
-		for {
-			evt, err := eventReader.Next()
-			if err != nil {
-				return
-			}
-			var res DocIDResult
-			if err := json.Unmarshal(evt.Data, &res); err != nil {
-				return
-			}
-			docID, err := client.NewDocIDFromString(res.DocID)
-			if err != nil {
-				return
-			}
-			docIDResult := client.DocIDResult{
-				ID: docID,
-			}
-			if res.Error != "" {
-				docIDResult.Err = errors.New(res.Error)
-			}
-			docIDCh <- docIDResult
-		}
-	}()
-
-	return docIDCh, nil
-}
-
-func (c *Collection) CreateIndex(
-	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
-	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

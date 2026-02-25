@@ -199,7 +199,7 @@ func PolicyDirective() *gql.Directive {
 func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name:        "IndexField",
-		Description: "Used to create an index from a field.",
+		Description: "Used to add an index from a field.",
 		Fields: gql.InputObjectConfigFieldMap{
 			IncludesPropField: &gql.InputObjectFieldConfig{
 				Type: gql.String,
@@ -214,7 +214,7 @@ func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
-		Description: "@index is a directive that can be used to create an index on a type or a field.",
+		Description: "@index is a directive that can be used to add an index on a type or a field.",
 		Args: gql.FieldConfigArgument{
 			IndexDirectivePropName: &gql.ArgumentConfig{
 				Description: "Sets the index name.",
@@ -232,7 +232,7 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 				Type: orderingEnum,
 			},
 			IndexDirectivePropIncludes: &gql.ArgumentConfig{
-				Description: `Sets the fields the index is created on.
+				Description: `Sets the fields the index is added on.
 
 	When used on a field definition and the field is not in the includes list
 	it will be implicitly added as the first entry.`,

@@ -30,11 +30,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-type docIDResult struct {
-	DocID string `json:"docID"`
-	Error string `json:"error"`
-}
-
 // parseCollectionOptionsToGetCollectionsOptions is a helper function that converts
 // a C.CollectionOptions struct into a GetCollectionsOptions
 func parseCollectionOptionsToGetCollectionsOptions(
@@ -82,8 +77,8 @@ func getCollection(
 	return cols[0], nil
 }
 
-//export CollectionCreate
-func CollectionCreate(
+//export CollectionAdd
+func CollectionAdd(
 	nodePtr C.uintptr_t,
 	json *C.char,
 	isEncrypted C.int,
@@ -124,7 +119,7 @@ func CollectionCreate(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
-	createOpt := options.WithIdentity(options.CollectionCreate(), acpIdentity.FromContext(ctx))
+	addOpt := options.WithIdentity(options.CollectionAdd(), acpIdentity.FromContext(ctx))
 
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))
@@ -134,7 +129,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.CreateMany(ctx, docs, createOpt)
+		err = col.AddMany(ctx, docs, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -144,7 +139,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Create(ctx, doc, createOpt)
+		err = col.Add(ctx, doc, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -245,58 +240,6 @@ func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityP
 	}
 
 	return returnC(marshalJSONToGoCResult(colDesc))
-}
-
-//export CollectionListDocIDs
-func CollectionListDocIDs(nodePtr C.uintptr_t, opts C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
-	ctx := context.Background()
-
-	ctx, err := contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
-	ident := acpIdentity.FromContext(ctx)
-	if ident.HasValue() {
-		colOptions.SetIdentity(ident.Value())
-	}
-
-	store, err := getStoreFromPointer(nodePtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	col, err := getCollection(store, ctx, colOptions)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	// Get and return the Doc IDs as a JSON list
-	// Note: This is different from the format returned by the CLI, which contains error fields
-	docCh, err := col.GetAllDocIDs(ctx, options.WithIdentity(options.CollectionGetAllDocIDs(),
-		acpIdentity.FromContext(ctx)))
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	var results []docIDResult
-	for doc := range docCh {
-		result := docIDResult{
-			DocID: doc.ID.String(),
-		}
-		if doc.Err != nil {
-			// Return immediately upon error
-			return returnC(returnGoC(1, doc.Err.Error(), ""))
-		}
-		results = append(results, result)
-	}
-
-	data, err := json.Marshal(results)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-	return returnC(returnGoC(0, "", string(data)))
 }
 
 //export CollectionGet

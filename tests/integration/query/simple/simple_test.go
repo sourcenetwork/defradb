@@ -20,7 +20,7 @@ import (
 func TestQuerySimple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -53,7 +53,7 @@ func TestQuerySimple(t *testing.T) {
 func TestQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -84,13 +84,13 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 27
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -179,7 +179,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{ }`,
 			},
 			&action.Request{
@@ -225,19 +225,19 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
                     }
                 `,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Andy",

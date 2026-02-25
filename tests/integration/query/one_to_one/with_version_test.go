@@ -33,13 +33,13 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",
@@ -98,13 +98,13 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",

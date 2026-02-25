@@ -96,6 +96,7 @@ func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := options.Node().
 		SetDisableP2P(true).
 		SetDisableAPI(true).
+		SetEnableDevelopment(true).
 		Store().SetBadgerInMemory(true).
 		Node()
 
@@ -116,6 +117,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	opts := options.Node().
 		SetDisableP2P(true).
 		SetDisableAPI(true).
+		SetEnableDevelopment(true).
 		Store().SetPath(path).
 		Node()
 

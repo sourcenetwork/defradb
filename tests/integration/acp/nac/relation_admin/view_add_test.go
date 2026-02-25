@@ -38,7 +38,7 @@ func TestNAC_AdminRelation_CanAddView(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.CreateView{
+			&action.AddView{
 				Identity: testUtils.ClientIdentity(2),
 				Query: `
 					Users {
@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanAddView(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.CreateView{
+			&action.AddView{
 				Identity: testUtils.ClientIdentity(2),
 				Query: `
 					Users {

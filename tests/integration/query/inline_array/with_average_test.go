@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
@@ -82,7 +82,7 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [0, 0, 0]
@@ -113,7 +113,7 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [-1, 0, 9, 0]
@@ -144,7 +144,7 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"testScores": [-1, null, 13, 0]
@@ -175,7 +175,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": null
@@ -206,7 +206,7 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": []
@@ -237,7 +237,7 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [0, 0, 0]
@@ -269,7 +269,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [-0.1, 0, 0.9, 0]
@@ -300,7 +300,7 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"pageRatings": [-0.1, 0, 0.9, 0, null]

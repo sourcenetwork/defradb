@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -28,7 +28,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -36,7 +36,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
@@ -44,7 +44,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
@@ -52,7 +52,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
@@ -60,7 +60,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -68,7 +68,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -76,7 +76,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -84,7 +84,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",
@@ -138,7 +138,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -146,7 +146,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -154,7 +154,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
@@ -162,7 +162,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
@@ -170,7 +170,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
@@ -178,7 +178,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -186,7 +186,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -194,7 +194,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -202,7 +202,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",

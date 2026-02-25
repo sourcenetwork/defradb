@@ -31,7 +31,7 @@ func TestQueryJSON_WithInFilter_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -40,7 +40,7 @@ func TestQueryJSON_WithInFilter_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
