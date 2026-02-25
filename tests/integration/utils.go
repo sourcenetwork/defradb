@@ -212,10 +212,10 @@ func ExecuteTestCase(
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
 				run := func(st testing.TB) {
-					// Some goroutine depend on the context to be cancelled in order to exit.
-					// Cancelling the context after each text case should limit the chances of
-					// having leaking goroutines.
+					// Some goroutines depend on the context to be cancelled in order to exit.
+					// Defer ensures cancel runs on all exit paths, including runtime.Goexit().
 					ctx, cancel := context.WithCancel(context.Background())
+					defer cancel()
 					executeTestCase(
 						ctx,
 						st,
@@ -226,7 +226,6 @@ func ExecuteTestCase(
 						ct,
 						documentACPType,
 					)
-					cancel()
 				}
 
 				if testCase.FlakeRetries > 0 {
