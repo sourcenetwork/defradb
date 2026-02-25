@@ -180,6 +180,7 @@ func ShouldEncryptIndividualField(ctx context.Context, fieldName immutable.Optio
 }
 
 func init() {
+	// If the binary is a test binary, use a deterministic nonce.
 	if testing.Testing() {
 		generateEncryptionKeyFunc = generateTestEncryptionKey
 	}

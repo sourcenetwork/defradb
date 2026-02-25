@@ -42,6 +42,7 @@ func generateTestNonce() ([]byte, error) {
 }
 
 func init() {
+	// If the binary is a test binary, use a deterministic nonce.
 	if testing.Testing() {
 		generateNonceFunc = generateTestNonce
 	}
