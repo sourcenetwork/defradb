@@ -164,10 +164,9 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		var err2 error
-		f, err2 = c.db.parser.NewFilterFromString(c.Name(), fval)
-		if err2 != nil {
-			return nil, err2
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		if err != nil {
+			return nil, err
 		}
 	case immutable.Option[request.Filter]:
 		f = fval

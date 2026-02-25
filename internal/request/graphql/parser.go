@@ -77,9 +77,9 @@ func (p *parser) BuildRequestAST(ctx context.Context, request string) (*ast.Docu
 
 func (p *parser) IsIntrospection(ast *ast.Document) bool {
 	p.mu.RLock()
-	schema := p.schemaManager.Schema()
+	gqlSchema := p.schemaManager.Schema()
 	p.mu.RUnlock()
-	return defrap.IsIntrospectionQuery(*schema, ast)
+	return defrap.IsIntrospectionQuery(*gqlSchema, ast)
 }
 
 func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *client.RequestResult {
@@ -87,10 +87,10 @@ func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *clie
 	defer span.End()
 
 	p.mu.RLock()
-	schema := p.schemaManager.Schema()
+	gqlSchema := p.schemaManager.Schema()
 	p.mu.RUnlock()
 
-	params := gql.Params{Schema: *schema, RequestString: request}
+	params := gql.Params{Schema: *gqlSchema, RequestString: request}
 	r := gql.Do(params)
 
 	res := &client.RequestResult{
@@ -114,10 +114,10 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	// itself is immutable once published, so it is safe to use it after releasing
 	// the lock.
 	p.mu.RLock()
-	schema := p.schemaManager.Schema()
+	gqlSchema := p.schemaManager.Schema()
 	p.mu.RUnlock()
 
-	validationResult := gql.ValidateDocument(schema, ast, nil)
+	validationResult := gql.ValidateDocument(gqlSchema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))
 		for i, err := range validationResult.Errors {
@@ -126,7 +126,7 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 		return nil, errors
 	}
 
-	return defrap.ParseRequest(*schema, ast, options)
+	return defrap.ParseRequest(*gqlSchema, ast, options)
 }
 
 func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, error) {
@@ -172,7 +172,7 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 
 func (p *parser) NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error) {
 	p.mu.RLock()
-	schema := p.schemaManager.Schema()
+	gqlSchema := p.schemaManager.Schema()
 	p.mu.RUnlock()
-	return defrap.NewFilterFromString(*schema, collectionType, body)
+	return defrap.NewFilterFromString(*gqlSchema, collectionType, body)
 }
