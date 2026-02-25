@@ -65,12 +65,15 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
-	// gqlLock serializes schema-mutating operations (AddSchema, PatchCollection,
-	// SetActiveCollectionVersion, AddView, AddEncryptedIndex, DeleteEncryptedIndex)
-	// to prevent concurrent modifications from racing on loadSchema/SetSchema,
-	// which could cause the GQL type system to lose track of registered types.
-	// It is an RWMutex so that concurrent read-only paths (ExecRequest, filter parsing)
-	// can hold a shared read lock without blocking each other, while writes are exclusive.
+	// gqlLock serializes schema-mutating operations end-to-end
+	// (AddSchema, PatchCollection, SetActiveCollectionVersion, AddView,
+	// AddEncryptedIndex, DeleteEncryptedIndex) so that concurrent schema
+	// changes cannot race and overwrite each other's DB writes.
+	//
+	// Only the write side (Lock/Unlock) is used here; GQL request execution
+	// and filter parsing do NOT hold this lock at all — the parser's own
+	// internal p.mu guards the in-memory schemaManager pointer swap with a
+	// much narrower scope so that reads are never blocked.
 	gqlLock sync.RWMutex
 
 	rootstore corekv.TxnStore

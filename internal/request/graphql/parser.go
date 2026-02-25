@@ -12,6 +12,7 @@ package graphql
 
 import (
 	"context"
+	"sync"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -33,6 +34,12 @@ var _ core.Parser = (*parser)(nil)
 var tracer = telemetry.NewTracer()
 
 type parser struct {
+	// mu protects schemaManager. Writers (SetSchema's OnSuccess callback) hold
+	// the full write lock while swapping the pointer; readers hold a shared read
+	// lock only for the duration of the pointer dereference + snapshot copy.
+	// This keeps the critical section extremely short and avoids blocking normal
+	// GQL request execution during schema mutations.
+	mu                            sync.RWMutex
 	schemaManager                 *schema.SchemaManager
 	isSearchableEncryptionEnabled bool
 }
@@ -69,7 +76,9 @@ func (p *parser) BuildRequestAST(ctx context.Context, request string) (*ast.Docu
 }
 
 func (p *parser) IsIntrospection(ast *ast.Document) bool {
+	p.mu.RLock()
 	schema := p.schemaManager.Schema()
+	p.mu.RUnlock()
 	return defrap.IsIntrospectionQuery(*schema, ast)
 }
 
@@ -77,7 +86,10 @@ func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *clie
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
+	p.mu.RLock()
 	schema := p.schemaManager.Schema()
+	p.mu.RUnlock()
+
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
@@ -98,7 +110,13 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
+	// Snapshot the schema pointer under a short-lived read lock. The schema object
+	// itself is immutable once published, so it is safe to use it after releasing
+	// the lock.
+	p.mu.RLock()
 	schema := p.schemaManager.Schema()
+	p.mu.RUnlock()
+
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))
@@ -115,7 +133,11 @@ func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, e
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
-	return p.schemaManager.ParseSDL(sdl)
+	p.mu.RLock()
+	sm := p.schemaManager
+	p.mu.RUnlock()
+
+	return sm.ParseSDL(sdl)
 }
 
 func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionVersion) error {
@@ -136,12 +158,21 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 
 	txn.OnSuccess(
 		func() {
+			// The write lock is held only for the pointer swap, keeping the critical
+			// section as short as possible. Readers (Parse, IsIntrospection, etc.)
+			// snapshot the pointer under a shared read lock and then use the
+			// immutable schema object without holding any lock.
+			p.mu.Lock()
 			p.schemaManager = schemaManager
+			p.mu.Unlock()
 		},
 	)
 	return err
 }
 
 func (p *parser) NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error) {
-	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
+	p.mu.RLock()
+	schema := p.schemaManager.Schema()
+	p.mu.RUnlock()
+	return defrap.NewFilterFromString(*schema, collectionType, body)
 }
