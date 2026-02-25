@@ -120,6 +120,11 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	opts *options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
+	ctx, _, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return nil, err
+	}
+
 	if opts == nil {
 		opts = &options.GetCollectionsOptions{}
 	}
@@ -347,40 +352,9 @@ func (c *collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
 
-	opt := utils.NewOptions(opts...)
-
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
-	}
-
-	ctx = iIdentity.WithContext(ctx, opt.Identity)
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	err = c.add(ctx, doc, opt)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
-}
-
-// AddMany adds a collection of documents at once.
-// Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) AddMany(
-	ctx context.Context,
-	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionAddOptions],
-) error {
-
-	if c.txn.HasValue() {
+	hadTxn := c.txn.HasValue()
+	if hadTxn {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
 
@@ -399,7 +373,47 @@ func (c *collection) AddMany(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	err = c.add(ctx, doc, opt)
+	if err != nil {
+		return err
+	}
+
+	if !hadTxn {
+		return txn.Commit()
+	}
+
+	return nil
+}
+
+// AddMany adds a collection of documents at once.
+// Will verify the DocID/CID to ensure that the new documents are correctly formatted.
+func (c *collection) AddMany(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.CollectionAddOptions],
+) error {
+
+	hadTxn := c.txn.HasValue()
+	if hadTxn {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
 
 	for _, doc := range docs {
 		err = c.add(ctx, doc, opt)
@@ -408,7 +422,11 @@ func (c *collection) AddMany(
 		}
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+
+	return nil
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
@@ -597,6 +615,8 @@ func (c *collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -612,7 +632,6 @@ func (c *collection) Save(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
 
 	// Check if document already exists with primary DS key.
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -638,7 +657,10 @@ func (c *collection) Save(
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.

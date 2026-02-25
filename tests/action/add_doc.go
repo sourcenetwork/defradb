@@ -81,9 +81,6 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
-
-	// Used to identify the transaction for this to be executed in. Optional.
-	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddDoc)(nil)
@@ -166,6 +163,7 @@ func addDocViaColSave(
 	if err != nil {
 		return nil, err
 	}
+
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
 		err := collection.Save(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
@@ -174,6 +172,7 @@ func addDocViaColSave(
 		}
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 

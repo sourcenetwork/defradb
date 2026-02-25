@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -58,6 +59,15 @@ var _ Action = (*AddSchema)(nil)
 var _ Stateful = (*AddSchema)(nil)
 
 func (a *AddSchema) Execute() {
+	// If a transaction ID is present, it must get attached to the context
+	if a.TransactionID.HasValue() {
+		txn, err := a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
+		}
+		a.s.Ctx = datastore.CtxSetFromClientTxn(a.s.Ctx, txn)
+	}
+
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]

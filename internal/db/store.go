@@ -20,6 +20,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -102,13 +103,6 @@ func (db *DB) GetCollections(
 		return nil, err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
-	if err != nil {
-		return nil, err
-	}
-
-	defer txn.Discard()
-
 	return db.getCollections(ctx, opt)
 }
 
@@ -168,6 +162,8 @@ func (db *DB) AddSchema(
 	schemaString string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -181,15 +177,16 @@ func (db *DB) AddSchema(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
 
 	cols, err := db.addSchema(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := txn.Commit(); err != nil {
-		return nil, err
+	if !hadTxn {
+		if err := txn.Commit(); err != nil {
+			return nil, err
+		}
 	}
 	return cols, nil
 }

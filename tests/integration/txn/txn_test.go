@@ -44,19 +44,6 @@ func TestTxnBehavior(t *testing.T) {
 
 	defer node.Close(ctx)
 
-	// Add a schema, without a transaction
-	userSchema := `
-		type Users {
-			name: String
-			age: Int
-		}
-	`
-	_, err = node.DB.AddSchema(ctx, userSchema)
-	if err != nil {
-		panic(fmt.Sprintf("Error adding schema: %v", err))
-	}
-	fmt.Println("Added schema.")
-
 	// Create a transaction
 	txn, err := node.DB.NewTxn(false)
 	if err != nil {
@@ -65,10 +52,40 @@ func TestTxnBehavior(t *testing.T) {
 	fmt.Printf("Transaction created.\n")
 	fmt.Printf("Transaction ID: %d\n", txn.ID())
 
+	// Add a schema, with a transaction
+	userSchema := `
+		type Users {
+			name: String
+			age: Int
+		}
+	`
+	_, err = txn.AddSchema(ctx, userSchema)
+	if err != nil {
+		panic(fmt.Sprintf("Error adding schema: %v", err))
+	}
+
+	// Commit the transaction.
+	err = txn.Commit()
+	if err != nil {
+		panic(fmt.Sprintf("Commit error: %v", err))
+	} else {
+		fmt.Println("Transaction committed.")
+	}
+
+	fmt.Println("Added schema.")
+
+	// Create a transaction
+	txn2, err := node.DB.NewTxn(false)
+	if err != nil {
+		panic(fmt.Sprintf("Transaction create error: %v", err))
+	}
+	fmt.Printf("Transaction created.\n")
+	fmt.Printf("Transaction ID: %d\n", txn2.ID())
+
 	// Get the collection (with transaction)...
 	collectionOpts := options.GetCollections()
 	collectionOpts.SetCollectionName("Users")
-	cols, err := txn.GetCollections(ctx, collectionOpts)
+	cols, err := txn2.GetCollections(ctx, collectionOpts)
 	if err != nil {
 		panic(fmt.Sprintf("Error getting collections: %v", err))
 	}
@@ -91,17 +108,14 @@ func TestTxnBehavior(t *testing.T) {
 
 	fmt.Println("Created documents.")
 
-	// Commit the transaction. Note that this is commented out.
-	// This shouldn't work when it's commented out, but it does.
+	// Commit the transaction.
 
-	/*
-		err = txn.Commit()
-		if err != nil {
-			panic(fmt.Sprintf("Commit error: %v", err))
-		} else {
-			fmt.Println("Transaction committed.")
-		}
-	*/
+	err = txn2.Commit()
+	if err != nil {
+		panic(fmt.Sprintf("Commit error: %v", err))
+	} else {
+		fmt.Println("Transaction committed.")
+	}
 
 	// Make a query for the documents
 	query := `
@@ -124,7 +138,7 @@ func TestTxn_AddSchema_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
-				TransactionID: immutable.Some(0),
+				TransactionID: immutable.Some(1),
 				Schema: `
 					type Users {
 						name: String
@@ -133,7 +147,7 @@ func TestTxn_AddSchema_Succeeds(t *testing.T) {
 				`,
 			},
 			testUtils.TransactionCommit{
-				TransactionID: 0,
+				TransactionID: 1,
 			},
 			&action.AddDoc{
 				Doc: `{
@@ -167,10 +181,11 @@ func TestTxn_AddSchema_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestTxn_CreateDoc_Succeeds(t *testing.T) {
+func TestTxn_AddSchema_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
+				TransactionID: immutable.Some(1),
 				Schema: `
 					type Users {
 						name: String
@@ -179,12 +194,39 @@ func TestTxn_CreateDoc_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.AddDoc{
-				//TransactionID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
 					"age": 27
 				}`,
+				ExpectedError: "key not found",
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestTxn_AddDoc_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				TransactionID: immutable.Some(1),
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			/*
+				&action.AddDoc{
+					TransactionID: immutable.Some(1),
+					Doc: `{
+						"name": "John",
+						"age": 27
+					}`,
+				},
+			*/
 			&action.Request{
 				Request: `
 					query {
