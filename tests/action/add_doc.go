@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -81,12 +82,25 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	// If a transaction ID is present, it must get attached to the context
+	if a.TransactionID.HasValue() {
+		txn, err := a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
+		}
+		a.s.Ctx = datastore.CtxSetFromClientTxn(a.s.Ctx, txn)
+	}
+	hasTransaction := a.TransactionID.HasValue()
+
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
@@ -141,7 +155,7 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hasTransaction {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -152,7 +166,7 @@ func addDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
+	txn, err := a.s.GetTransaction(node, a.TransactionID)
 	if err != nil {
 		return nil, err
 	}

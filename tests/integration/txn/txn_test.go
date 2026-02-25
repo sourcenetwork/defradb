@@ -134,7 +134,9 @@ func TestTxnBehavior(t *testing.T) {
 	fmt.Println(res)
 }
 
-func TestTxn_AddSchema_Succeeds(t *testing.T) {
+// This test runs AddSchema inside of a transaction, and illustrates that committing the transaction
+// results in the schema being added to the database.
+func TestTxn_AddSchema_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -181,6 +183,8 @@ func TestTxn_AddSchema_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// This test runs AddSchema inside of a transaction, and illustrates that not committing the transaction
+// results in the schema not being ready for use.
 func TestTxn_AddSchema_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -206,11 +210,12 @@ func TestTxn_AddSchema_Fails(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestTxn_AddDoc_Succeeds(t *testing.T) {
+// This test runs AddDoc inside of a transaction, and illustrates that committing the transaction
+// results in the document being added to the database.
+func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
-				TransactionID: immutable.Some(1),
 				Schema: `
 					type Users {
 						name: String
@@ -218,15 +223,16 @@ func TestTxn_AddDoc_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			/*
-				&action.AddDoc{
-					TransactionID: immutable.Some(1),
-					Doc: `{
-						"name": "John",
-						"age": 27
-					}`,
-				},
-			*/
+			&action.AddDoc{
+				TransactionID: immutable.Some(1),
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
+			},
 			&action.Request{
 				Request: `
 					query {
@@ -245,6 +251,46 @@ func TestTxn_AddDoc_Succeeds(t *testing.T) {
 							"age":    int64(27),
 						},
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test runs AddDoc inside of a transaction, and illustrates that not committing the transaction
+// results in the document not yet being in the database.
+func TestTxn_AddDoc_WithCommit_EmptyResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				TransactionID: immutable.Some(1),
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
 				},
 			},
 		},
