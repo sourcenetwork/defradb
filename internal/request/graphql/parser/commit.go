@@ -39,9 +39,37 @@ func parseCommitSelect(
 
 		switch name {
 		case request.DocIDArgName:
-			if v, ok := value.(string); ok {
-				commit.DocID = immutable.Some(v)
+			var docIDs []string
+			switch v := value.(type) {
+			case []any:
+				if len(v) > 1 {
+					// todo - This limitiation is temporary and should be removed in
+					// https://github.com/sourcenetwork/defradb/issues/4302
+					return nil, ErrMultipleDocIDsNotSupported
+				}
+
+				docIDs = make([]string, len(v))
+				for i, value := range v {
+					docIDs[i] = value.(string)
+				}
+
+			case []string:
+				if len(v) > 1 {
+					// todo - This limitiation is temporary and should be removed in
+					// https://github.com/sourcenetwork/defradb/issues/4302
+					return nil, ErrMultipleDocIDsNotSupported
+				}
+
+				docIDs = v
+
+			case string:
+				docIDs = []string{v}
+
+			default:
+				continue
 			}
+
+			commit.DocIDs = immutable.Some(docIDs)
 
 		case request.CidFieldName:
 			v, ok := value.([]any)

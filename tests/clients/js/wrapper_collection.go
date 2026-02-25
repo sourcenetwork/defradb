@@ -262,13 +262,6 @@ func (c *Collection) Get(
 	return doc, nil
 }
 
-func (c *Collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	panic("not implemented")
-}
-
 func (c *Collection) AddIndex(
 	ctx context.Context,
 	indexDesc client.IndexAddRequest,

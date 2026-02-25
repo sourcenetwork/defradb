@@ -187,7 +187,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		if err != nil {
 			return err
 		}
-		docIDsCh, err := col.GetAllDocIDs(ctx)
+		docIDsCh, err := col.(*collection).getAllDocIDsChan(ctx)
 		if err != nil {
 			return err
 		}

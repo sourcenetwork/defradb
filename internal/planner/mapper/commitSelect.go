@@ -19,14 +19,8 @@ type CommitSelect struct {
 	// The underlying Select, defining the information requested.
 	Select
 
-	// The key of the target document for which to get commits for.
-	DocID immutable.Option[string]
-
 	// The maximum depth to yield results for.
 	Depth immutable.Option[uint64]
-
-	// The parent Cids for which commit information has been requested.
-	Cids immutable.Option[[]string]
 
 	// The CollectionVersionID at the time of commit.
 	CollectionVersionID immutable.Option[string]
@@ -39,7 +33,5 @@ func (s *CommitSelect) CloneTo(index int) Requestable {
 func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
 		Select: *s.Select.cloneTo(index),
-		DocID:  s.DocID,
-		Cids:   s.Cids,
 	}
 }

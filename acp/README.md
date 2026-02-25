@@ -254,47 +254,41 @@ CLI Command:
 defradb client collection add --name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
 ```
 
-### Get all docIDs without an identity (shows only public):
+### Query documents without an identity (shows only public):
 CLI Command:
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }'
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83",
-  "error": ""
-}
-{
-  "docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83", "name": "PublicShahzad" },
+      { "_docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e", "name": "PublicLone" }
+    ]
+  }
 }
 ```
 
 
-### Get all docIDs with an identity (shows public and owned documents):
+### Query documents with an identity (shows public and owned documents):
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83",
-  "error": ""
-}
-{
-  "docID": "bae-a5830219-b8e7-5791-9836-2e494816fc0a",
-  "error": ""
-}
-{
-  "docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e",
-  "error": ""
-}
-{
-  "docID": "bae-eafad571-e40c-55a7-bc41-3cf7d61ee891",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83", "name": "PublicShahzad" },
+      { "_docID": "bae-a5830219-b8e7-5791-9836-2e494816fc0a", "name": "SecretShahzad" },
+      { "_docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e", "name": "PublicLone" },
+      { "_docID": "bae-eafad571-e40c-55a7-bc41-3cf7d61ee891", "name": "SecretLone" }
+    ]
+  }
 }
 ```
 
@@ -561,23 +555,33 @@ defradb client collection add --name Users '[{ "name": "SecretShahzadLone" }]' \
 
 Only the owner can see it:
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c", "name": "SecretShahzadLone" }
+    ]
+  }
 }
 ```
 
 Another actor can not:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
-**Result is empty from the above command**
+Result:
+```json
+{
+  "data": {
+    "Users": []
+  }
+}
+```
 
 
 Now let's make the other actor a reader of the document by adding a relationship:
@@ -601,14 +605,17 @@ Result:
 
 Now the other actor can read:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c", "name": "SecretShahzadLone" }
+    ]
+  }
 }
 ```
 
@@ -703,10 +710,17 @@ would be false, indicating no-op**
 
 Now the other actor can no longer read:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
-**Result is empty from the above command**
+Result:
+```json
+{
+  "data": {
+    "Users": []
+  }
+}
+```
 
 We can also revoke the previously granted implicit relationship which gave all actors access using the "*" actor.
 Similarly we can just specify "*" to revoke all access given to actors implicitly through this relationship:

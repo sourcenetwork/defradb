@@ -1329,35 +1329,6 @@
                     "collection"
                 ]
             },
-            "get": {
-                "description": "Get all document IDs",
-                "operationId": "collection_keys",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            },
             "patch": {
                 "description": "Update document(s) in a collection",
                 "operationId": "collection_update_with_filter",

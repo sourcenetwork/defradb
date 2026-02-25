@@ -204,31 +204,15 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// GetAllDocIDs returns all the document IDs that exist in the collection.
-//
-// @todo: We probably need a lock on the collection for this kind of op since
-// it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *collection) GetAllDocIDs(
-	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
-) (<-chan client.DocIDResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	opt := utils.NewOptions(opts...)
-
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, err
-	}
-
-	ctx = iIdentity.WithContext(ctx, opt.Identity)
-
-	return c.getAllDocIDsChan(ctx)
+// docIDResult wraps the result of an attempt at a DocID retrieval operation.
+type docIDResult struct {
+	ID  client.DocID
+	Err error
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
-) (<-chan client.DocIDResult, error) {
+) (<-chan docIDResult, error) {
 	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
@@ -244,7 +228,7 @@ func (c *collection) getAllDocIDsChan(
 		return nil, err
 	}
 
-	resCh := make(chan client.DocIDResult)
+	resCh := make(chan docIDResult)
 	go func() {
 		closeIterator := func() {
 			if err := iter.Close(); err != nil {
@@ -268,7 +252,7 @@ func (c *collection) getAllDocIDsChan(
 			hasNext, err := iter.Next()
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
@@ -283,7 +267,7 @@ func (c *collection) getAllDocIDsChan(
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
@@ -297,14 +281,14 @@ func (c *collection) getAllDocIDsChan(
 
 			if err != nil {
 				closeIterator()
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					Err: err,
 				}
 				return
 			}
 
 			if canRead {
-				resCh <- client.DocIDResult{
+				resCh <- docIDResult{
 					ID: docID,
 				}
 			}
