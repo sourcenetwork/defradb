@@ -36,7 +36,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
 		viewQuery := col.Version().Query.Value().Query
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &viewQuery)
+		m, err := mapper.ToSelect(p.ctx, p.db, p.collectionRepository, mapper.ObjectSelection, &viewQuery)
 		if err != nil {
 			return nil, err
 		}

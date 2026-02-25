@@ -55,6 +55,7 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		db,
 		db.p2p,
 		db.getLensStore(ctx),
+		db.collectionRepository,
 	)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)

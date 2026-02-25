@@ -168,18 +168,19 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		db,
 		db.p2p,
 		db.getLensStore(ctx),
+		db.collectionRepository,
 	)
 
 	// temporarily disable the cache in order to query without using it
 	col.IsMaterialized = false
-	err = description.SaveCollection(ctx, col)
+	err = description.SaveCollection(ctx, db.collectionRepository, col)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.IsMaterialized = true
-		defErr = description.SaveCollection(ctx, col)
+		defErr = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -309,7 +310,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	childRequests := []request.Selection{}
 	for _, field := range col.Fields {
 		if field.RelationName.HasValue() && field.Kind.IsObject() {
-			relatedCol, _, err := description.GetRelatedCollection(ctx, col, field.Kind)
+			relatedCol, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col, field.Kind)
 			if err != nil {
 				return nil, err
 			}

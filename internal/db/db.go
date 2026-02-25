@@ -36,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -115,6 +116,8 @@ type DB struct {
 
 	// lockSet contains and manages the set of locks held and available to this Defra instance.
 	lockSet *lock.LockSet
+
+	collectionRepository *description.CollectionRepository
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -145,6 +148,8 @@ func newDB(
 
 	ctx, cancel := context.WithCancel(ctx)
 
+	lockSet := lock.NewLockSet()
+
 	db := &DB{
 		rootstore:               rootstore,
 		blockStoreChunkSize:     cfg.ChunkSize,
@@ -162,7 +167,8 @@ func newDB(
 		colMergeQueue:           newMergeQueue(),
 		retryIntervals:          cfg.RetryIntervals,
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
-		lockSet:                 lock.NewLockSet(),
+		lockSet:                 lockSet,
+		collectionRepository:    description.NewColCache(lockSet),
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
@@ -194,7 +200,14 @@ func newDB(
 	db.lensNode = node
 
 	if cfg.P2P.HasValue() {
-		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+		p, err := p2p.New(
+			ctx,
+			db,
+			node, cfg.P2P.Value(),
+			db.nodeIdentity,
+			NewCollectionRetriever(db),
+			db.collectionRepository,
+		)
 		if err != nil {
 			return nil, err
 		}

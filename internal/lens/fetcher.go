@@ -38,9 +38,10 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/1589
 
 type lensedFetcher struct {
-	source fetcher.Fetcher
-	store  store.Store
-	lens   Lens
+	source               fetcher.Fetcher
+	store                store.Store
+	lens                 Lens
+	collectionRepository *description.CollectionRepository
 
 	txn datastore.Txn
 
@@ -59,10 +60,15 @@ var _ fetcher.Fetcher = (*lensedFetcher)(nil)
 
 // NewFetcher returns a new fetcher that will migrate any documents from the given
 // source Fetcher as they are are yielded.
-func NewFetcher(source fetcher.Fetcher, store store.Store) fetcher.Fetcher {
+func NewFetcher(
+	source fetcher.Fetcher,
+	store store.Store,
+	collectionRepository *description.CollectionRepository,
+) fetcher.Fetcher {
 	return &lensedFetcher{
-		source: source,
-		store:  store,
+		source:               source,
+		store:                store,
+		collectionRepository: collectionRepository,
 	}
 }
 
@@ -93,8 +99,12 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := description.GetTargetedCollectionHistory(ctx, f.col.Version().CollectionID,
-		f.col.Version().VersionID)
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		f.collectionRepository,
+		f.col.Version().CollectionID,
+		f.col.Version().VersionID,
+	)
 	if err != nil {
 		return err
 	}
