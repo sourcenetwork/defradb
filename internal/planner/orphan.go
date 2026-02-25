@@ -11,10 +11,15 @@
 package planner
 
 import (
+	"errors"
+	"maps"
+
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -337,7 +342,7 @@ func (n *orphanNode) prepareOrphanContext() {
 // parent docs matching the filter, then exclude those already encountered by the join.
 // This is necessary because the join scans the child's index and only finds parents that
 // have at least one child; parents with zero children never appear in the join results.
-func (n *orphanNode) fetchOrphans() ([]core.Doc, error) {
+func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 	n.fetched = true
 
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
@@ -349,38 +354,101 @@ func (n *orphanNode) fetchOrphans() ([]core.Doc, error) {
 		return nil, nil
 	}
 
-	fetcher := newSubQueryFetcher(
-		parentScan.p.ctx,
-		parentScan.p.identity,
-		parentScan.p.nodeACP,
-		parentScan.p.documentACP,
-		n.join.parentSide.col,
-		n.documentMapping,
-		parentScan.p.lensStore,
-		parentScan.fields,
-		&n.execInfo.fetches,
-	)
+	var orphanFilter *mapper.Filter
+	var relationIDFieldName string
+	var excludeIDs []string
 
 	if n.isSubQueryExclusion {
-		return fetcher.fetchAllExcluding(n.subQueryFilter, n.subQueryExcludeIDs)
+		orphanFilter = n.subQueryFilter
+		excludeIDs = n.subQueryExcludeIDs
 	} else if n.isSubQuery {
-		return fetcher.fetchOrphans(n.subQueryRelIDFieldName, n.subQueryRelIDFieldMapIdx, n.subQueryFilter)
+		orphanFilter = addNullFilterOnField(n.subQueryFilter, n.subQueryRelIDFieldMapIdx)
+		relationIDFieldName = n.subQueryRelIDFieldName
 	} else if n.join.parentSide.isPrimary() {
-		relIDFieldName := request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
-
 		if !n.join.parentSide.relIDFieldMapIndex.HasValue() {
 			return nil, nil
 		}
 		relIDFieldMapIndex := n.join.parentSide.relIDFieldMapIndex.Value()
-
-		return fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, n.join.subFilter)
+		orphanFilter = addNullFilterOnField(n.join.subFilter, relIDFieldMapIndex)
+		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
+	} else {
+		orphanFilter = n.join.subFilter
+		excludeIDs = make([]string, 0, len(n.join.state.encounteredDocIDs))
+		for id := range n.join.state.encounteredDocIDs {
+			excludeIDs = append(excludeIDs, id)
+		}
 	}
 
-	excludeIDs := make([]string, 0, len(n.join.state.encounteredDocIDs))
-	for id := range n.join.state.encounteredDocIDs {
-		excludeIDs = append(excludeIDs, id)
+	result := selectIndex(selectIndexOptions{
+		collection:          n.join.parentSide.col,
+		filter:              orphanFilter,
+		relationIDFieldName: relationIDFieldName,
+		docMapping:          n.documentMapping,
+	})
+
+	scan := parentScan.cloneWithFilter(orphanFilter, result.index)
+	defer func() {
+		err = errors.Join(err, scan.Close())
+	}()
+
+	if err := scan.Init(); err != nil {
+		return nil, err
 	}
-	return fetcher.fetchAllExcluding(n.join.subFilter, excludeIDs)
+
+	excludeSet := make(map[string]struct{}, len(excludeIDs))
+	for _, id := range excludeIDs {
+		excludeSet[id] = struct{}{}
+	}
+
+	var docs []core.Doc
+	for {
+		hasNext, err := scan.Next()
+		if err != nil {
+			return nil, err
+		}
+		if !hasNext {
+			break
+		}
+
+		doc := scan.Value()
+
+		if _, excluded := excludeSet[doc.GetID()]; excluded {
+			continue
+		}
+
+		docs = append(docs, doc)
+	}
+
+	n.execInfo.fetches.Add(scan.execInfo.fetches)
+
+	return docs, nil
+}
+
+// addFilterOnField returns a new filter with a condition that checks if the field equals the given value.
+// It does not mutate the input filter.
+func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {
+	result := mapper.NewFilter()
+	if f != nil {
+		maps.Copy(result.Conditions, f.Conditions)
+		result.ExternalConditions = make(map[string]any, len(f.ExternalConditions))
+		maps.Copy(result.ExternalConditions, f.ExternalConditions)
+	}
+
+	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
+	filterConditions := map[connor.FilterKey]any{
+		propertyIndex: map[connor.FilterKey]any{
+			mapper.FilterEqOp: value,
+		},
+	}
+
+	filter.RemoveField(result, mapper.Field{Index: propIndex})
+	result.Conditions = filter.MergeConditions(result.Conditions, filterConditions)
+	return result
+}
+
+// addNullFilterOnField adds a filter condition that checks if the field is NULL.
+func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
+	return addFilterOnField(f, propIndex, nil)
 }
 
 func (n *orphanNode) simpleExplain() (map[string]any, error) {
