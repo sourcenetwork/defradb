@@ -103,7 +103,7 @@ func AddDelta(
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
-		if !dagBlock.Delta.IsField() || dagBlock.Delta.GetPriority() == 1 {
+		if dagBlock.Delta.IsComposite() {
 			collector.Add(link.Cid)
 		}
 		err = ProcessBlock(ctx, crdtData, block, link)

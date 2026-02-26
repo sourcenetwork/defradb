@@ -18,10 +18,10 @@ import "context"
 // Returning false causes the document to be silently skipped.
 type ReplicationFilter interface {
 	// AllowReplication decides whether an incoming P2P document should be stored.
-	// collectionID is the DefraDB collection identifier.
+	// collectionName is the human-readable collection name.
 	// docID is the document's unique identifier.
 	// fields contains the document's field name-value pairs extracted from the
 	// incoming CRDT deltas. Values are decoded from CBOR.
 	// Returning false causes the document (and its blocks) to be skipped.
-	AllowReplication(ctx context.Context, collectionID string, docID string, fields map[string]any) bool
+	AllowReplication(ctx context.Context, collectionName string, docID string, fields map[string]any) bool
 }

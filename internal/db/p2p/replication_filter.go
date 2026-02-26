@@ -69,10 +69,17 @@ func (p *P2P) filterAllowsReplication(
 		return true
 	}
 
-	allowed := p.replicationFilter.AllowReplication(ctx, collectionID, docID, fields)
+	// Resolve human-readable collection name from cached collection lookup.
+	// The hasCollection call that precedes filtering populates this cache.
+	filterID := collectionID
+	if col := p.getCachedCollection(collectionID); col != nil {
+		filterID = col.Name()
+	}
+
+	allowed := p.replicationFilter.AllowReplication(ctx, filterID, docID, fields)
 	if !allowed {
 		log.Info("Document rejected by replication filter",
-			corelog.String("CollectionID", collectionID),
+			corelog.String("Collection", filterID),
 			corelog.String("DocID", docID))
 	}
 	return allowed

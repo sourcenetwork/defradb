@@ -60,3 +60,22 @@ func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error
 func CollectDocumentCIDs(ctx context.Context, docIDs []string) ([]cid.Cid, error) {
 	return coreblock.CollectDocumentCIDs(ctx, docIDs)
 }
+
+// MerkleProof contains sibling hashes and path flags for Merkle inclusion proofs.
+type MerkleProof = coreblock.MerkleProof
+
+// SortedCIDStrings returns CID string representations in canonical sorted order.
+func SortedCIDStrings(cids []cid.Cid) []string {
+	return coreblock.SortedCIDStrings(cids)
+}
+
+// GenerateMerkleProof builds an inclusion proof for the CID at targetIndex
+// within a pre-sorted CID list.
+func GenerateMerkleProof(sortedCids []cid.Cid, targetIndex int) *MerkleProof {
+	return coreblock.GenerateMerkleProof(sortedCids, targetIndex)
+}
+
+// VerifyMerkleProof checks that a leaf CID's proof produces the expected Merkle root.
+func VerifyMerkleProof(leafCID cid.Cid, proof *MerkleProof, expectedRoot []byte) bool {
+	return coreblock.VerifyMerkleProof(leafCID, proof, expectedRoot)
+}

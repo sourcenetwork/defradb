@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -78,26 +79,42 @@ func IsBatchSigningEnabled(ctx context.Context) bool {
 	return BatchSigningCollectorFromContext(ctx) != nil
 }
 
-// ComputeMerkleRoot computes a merkle root hash from a list of CIDs.
-// The CIDs are sorted for deterministic ordering before hashing.
-func ComputeMerkleRoot(cids []cid.Cid) []byte {
-	if len(cids) == 0 {
-		return nil
-	}
-
-	sortedCids := make([]cid.Cid, len(cids))
-	copy(sortedCids, cids)
-	sort.Slice(sortedCids, func(i, j int) bool {
-		return bytes.Compare(sortedCids[i].Bytes(), sortedCids[j].Bytes()) < 0
+// sortCIDs returns a new slice of CIDs sorted in canonical byte order.
+func sortCIDs(cids []cid.Cid) []cid.Cid {
+	sorted := make([]cid.Cid, len(cids))
+	copy(sorted, cids)
+	sort.Slice(sorted, func(i, j int) bool {
+		return bytes.Compare(sorted[i].Bytes(), sorted[j].Bytes()) < 0
 	})
+	return sorted
+}
 
-	n := len(sortedCids)
-	hashes := make([][]byte, n)
+// SortedCIDStrings returns CID string representations in canonical sorted order.
+// This is the format stored on BatchSignature documents.
+func SortedCIDStrings(cids []cid.Cid) []string {
+	sorted := sortCIDs(cids)
+	result := make([]string, len(sorted))
+	for i, c := range sorted {
+		result[i] = c.String()
+	}
+	return result
+}
+
+// computeLeafHashes computes SHA256 leaf hashes from pre-sorted CIDs.
+func computeLeafHashes(sortedCids []cid.Cid) [][]byte {
+	hashes := make([][]byte, len(sortedCids))
 	for i, c := range sortedCids {
 		hash := sha256.Sum256(c.Bytes())
 		hashes[i] = hash[:]
 	}
+	return hashes
+}
 
+// buildMerkleTree computes the root from leaf hashes using pair-wise SHA256.
+func buildMerkleTree(hashes [][]byte) []byte {
+	if len(hashes) == 0 {
+		return nil
+	}
 	combined := make([]byte, 64)
 	for len(hashes) > 1 {
 		newLen := (len(hashes) + 1) / 2
@@ -114,8 +131,108 @@ func ComputeMerkleRoot(cids []cid.Cid) []byte {
 		}
 		hashes = newHashes
 	}
-
 	return hashes[0]
+}
+
+// ComputeMerkleRoot computes a merkle root hash from a list of CIDs.
+// The CIDs are sorted for deterministic ordering before hashing.
+func ComputeMerkleRoot(cids []cid.Cid) []byte {
+	if len(cids) == 0 {
+		return nil
+	}
+	return buildMerkleTree(computeLeafHashes(sortCIDs(cids)))
+}
+
+// MerkleProof contains the sibling hashes and path flags needed to verify
+// that a single leaf is included in a Merkle tree with a known root.
+type MerkleProof struct {
+	// Siblings contains the sibling hash at each tree level from leaf to root.
+	Siblings [][]byte
+	// Path indicates the position at each level. false = sibling is on the right
+	// (proven node is left child), true = sibling is on the left (proven node is right child).
+	Path []bool
+}
+
+// GenerateMerkleProof builds an inclusion proof for the CID at targetIndex
+// within the sorted CID list. The caller must pass CIDs already sorted in
+// canonical byte order (use sortCIDs). Returns nil if the list is empty or
+// the index is out of range.
+func GenerateMerkleProof(sortedCids []cid.Cid, targetIndex int) *MerkleProof {
+	n := len(sortedCids)
+	if n == 0 || targetIndex < 0 || targetIndex >= n {
+		return nil
+	}
+
+	hashes := computeLeafHashes(sortedCids)
+
+	var siblings [][]byte
+	var path []bool
+	idx := targetIndex
+
+	combined := make([]byte, 64)
+	for len(hashes) > 1 {
+		newLen := (len(hashes) + 1) / 2
+		newHashes := make([][]byte, 0, newLen)
+
+		for i := 0; i < len(hashes); i += 2 {
+			if i+1 < len(hashes) {
+				if i == idx || i+1 == idx {
+					if idx%2 == 0 {
+						sibling := make([]byte, 32)
+						copy(sibling, hashes[i+1])
+						siblings = append(siblings, sibling)
+						path = append(path, false)
+					} else {
+						sibling := make([]byte, 32)
+						copy(sibling, hashes[i])
+						siblings = append(siblings, sibling)
+						path = append(path, true)
+					}
+				}
+				copy(combined[:32], hashes[i])
+				copy(combined[32:], hashes[i+1])
+				hash := sha256.Sum256(combined)
+				newHashes = append(newHashes, hash[:])
+			} else {
+				// Odd node — carried forward without a sibling.
+				// No proof entry needed at this level.
+				newHashes = append(newHashes, hashes[i])
+			}
+		}
+
+		idx /= 2
+		hashes = newHashes
+	}
+
+	return &MerkleProof{Siblings: siblings, Path: path}
+}
+
+// VerifyMerkleProof checks that a leaf CID combined with the proof siblings
+// produces the expected Merkle root. Returns true if valid.
+func VerifyMerkleProof(leafCID cid.Cid, proof *MerkleProof, expectedRoot []byte) bool {
+	if proof == nil || len(expectedRoot) == 0 {
+		return false
+	}
+
+	current := sha256.Sum256(leafCID.Bytes())
+	hash := current[:]
+
+	combined := make([]byte, 64)
+	for i, sibling := range proof.Siblings {
+		if proof.Path[i] {
+			// Sibling is on the left.
+			copy(combined[:32], sibling)
+			copy(combined[32:], hash)
+		} else {
+			// Sibling is on the right.
+			copy(combined[:32], hash)
+			copy(combined[32:], sibling)
+		}
+		h := sha256.Sum256(combined)
+		hash = h[:]
+	}
+
+	return bytes.Equal(hash, expectedRoot)
 }
 
 // BatchSignature contains a signature over a batch of block CIDs.
@@ -210,15 +327,16 @@ func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error
 	return verifySignature(pubKey, batchSig.MerkleRoot, batchSig.Value) == nil, nil
 }
 
-// CollectDocumentCIDs retrieves all head block CIDs for the given documents from the headstore.
+// CollectDocumentCIDs retrieves the composite head CID for each given document from the headstore.
+// Only composite CIDs (FieldID == "C") are returned — one per document.
 func CollectDocumentCIDs(ctx context.Context, docIDs []string) ([]cid.Cid, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	var allCIDs []cid.Cid
 
 	for _, docID := range docIDs {
-		prefix := keys.HeadstoreDocKey{DocID: docID}
+		compositeKey := keys.HeadstoreDocKey{DocID: docID, FieldID: core.COMPOSITE_NAMESPACE}
 		iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
-			Prefix: prefix.Bytes(),
+			Prefix: compositeKey.Bytes(),
 		})
 		if err != nil {
 			return nil, err

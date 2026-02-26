@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -504,6 +505,11 @@ func saveIndexBatch(ctx context.Context, db *DB, indexes []CollectionIndex, docs
 	for _, doc := range docs {
 		for _, index := range indexes {
 			if err := index.Save(txnCtx, doc); err != nil {
+				if errors.Is(err, ErrCanNotIndexNonUniqueFields) {
+					// During import, duplicates are expected when snapshot data
+					// overlaps with data already received via P2P. Skip silently.
+					continue
+				}
 				txn.Discard()
 				return fmt.Errorf("save index for %s: %w", doc.ID().String(), err)
 			}
