@@ -68,7 +68,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				if err != nil {
 					return err
 				}
-				patch = string(data)
+				lensCfgJson = string(data)
 			case len(args) == 2:
 				lensCfgJson = args[1]
 			}

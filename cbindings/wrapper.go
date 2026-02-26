@@ -930,7 +930,7 @@ func (w *CWrapper) ListIndexes(
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
 	if err != nil {
-		return nil, errors.New(res.Error)
+		return nil, err
 	}
 
 	return resValue, nil
@@ -954,7 +954,7 @@ func (w *CWrapper) ListAllEncryptedIndexes(
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.EncryptedIndexDescription](res.Value)
 	if err != nil {
-		return nil, errors.New(res.Error)
+		return nil, err
 	}
 
 	return resValue, nil
