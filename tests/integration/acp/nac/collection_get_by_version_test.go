@@ -34,7 +34,7 @@ func TestNAC_GatesCollectionGetByVersion_AuthorizedIdentity_AllowAccess(t *testi
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(1),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
-				ExpectedError: "key not found", // Note: it is authorized, just key not found.
+				ExpectedError: "collection not found", // Note: it is authorized, just collection not found.
 			},
 		},
 	}

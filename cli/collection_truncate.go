@@ -30,7 +30,7 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return client.ErrNoMatchingCollection
+				return client.ErrCollectionNotFound
 			}
 
 			opt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(cmd.Context()))

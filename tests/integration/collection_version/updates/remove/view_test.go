@@ -251,7 +251,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 						name
 					}
 				}`,
-				ExpectedError: `key not found`,
+				ExpectedError: `collection not found`,
 			},
 		},
 	}

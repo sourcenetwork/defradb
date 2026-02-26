@@ -53,7 +53,7 @@ func (p *P2P) syncCollectionVersion(
 ) (client.CollectionVersion, error) {
 	col, err := description.GetCollectionByID(ctx, versionID)
 	if err != nil {
-		if !errors.Is(err, corekv.ErrNotFound) {
+		if !errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, err
 		}
 		// If it is not found, continue and try and sync it!

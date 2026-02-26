@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
@@ -61,7 +60,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			dstFound = false
 		} else {
 			return "", err
@@ -71,7 +70,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	srcFound := true
 	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			srcFound = false
 		} else {
 			return "", err
@@ -152,7 +151,7 @@ func (db *DB) shouldReindexAfterMigration(
 
 	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return false, client.CollectionVersion{}, nil
 		}
 		return false, client.CollectionVersion{}, err

@@ -70,7 +70,7 @@ Options:
 
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return client.ErrNoMatchingCollection
+				return client.ErrCollectionNotFound
 			}
 
 			ctx := cmd.Context()

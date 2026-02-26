@@ -18,7 +18,6 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -420,7 +419,7 @@ func saveBlocks(
 			var err error
 			oldCol, err = description.GetCollectionByID(ctx, collection.VersionID)
 			if err != nil {
-				if errors.Is(err, corekv.ErrNotFound) {
+				if errors.Is(err, client.ErrCollectionNotFound) {
 					// If the key does not exist, continue, and let the validation code handle it
 					// in a user friendly way.
 					continue

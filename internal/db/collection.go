@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -84,7 +82,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	if len(cols) == 0 {
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	// cols will always have length == 1 here
@@ -108,7 +106,7 @@ func (db *DB) getCollections(
 	switch {
 	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
 		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
-		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)

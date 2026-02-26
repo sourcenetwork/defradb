@@ -62,7 +62,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 			},
 			testUtils.SetActiveCollectionVersion{
 				VersionID:     "does not exist",
-				ExpectedError: "key not found",
+				ExpectedError: "collection not found",
 			},
 		},
 	}

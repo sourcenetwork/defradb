@@ -52,11 +52,6 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
-	errNoMatchingCollection                  string = "no collection matches the given criteria"
-)
-
-var (
-	errNotFound string = corekv.ErrNotFound.Error()
 )
 
 // Errors returnable from this package.
@@ -93,7 +88,6 @@ var (
 	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
-	ErrNotFound                              = errors.New(errNotFound)
 	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
 	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
 	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
@@ -102,7 +96,6 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
-	ErrNoMatchingCollection                  = errors.New(errNoMatchingCollection)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -270,10 +263,6 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
-}
-
-func NewErrNotFound(kv errors.KV) error {
-	return errors.New(errNotFound, kv)
 }
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {

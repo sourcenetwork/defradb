@@ -26,7 +26,7 @@ func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 		Actions: []any{
 			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetVersionID("does not exist"),
-				ExpectedError: "key not found",
+				ExpectedError: "collection not found",
 			},
 		},
 	}
