@@ -117,6 +117,30 @@ func (a *AddDoc) Execute() {
 			node,
 			func() error {
 				var err error
+				fmt.Println("collection is nil?", collection == nil)
+				// If the collection is nil, there will be a panic. And if the collection was
+				// created in a transaction that was not yet commited, it WILL be nil. However,
+				// that doesn't mean it doesn't exist. We can try to find it by looping through
+				// all of the available transactions. This seems hacky, but it works.
+				// This is a result of the test harness not relying on actually calling GetCollections,
+				// and instead relying on its own maintained state of collections.
+				if collection == nil {
+					for _, txn := range a.s.Txns {
+						if txn == nil {
+							continue
+						}
+						col, err := txn.GetCollections(a.s.Ctx, options.GetCollections())
+						if err != nil {
+							continue
+						}
+						fmt.Println("Found a collection: ", col[0].Name())
+						collection = col[0]
+						break
+					}
+					if collection == nil {
+						fmt.Print("Still nil after trying all txns")
+					}
+				}
 				docIDs, err = mutation(
 					a,
 					node,
@@ -155,7 +179,28 @@ func addDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	txn := a.getTransaction(node)
+	fmt.Println("Entering addDocViaColSave")
+	var txn client.Txn
+	var err error
+	hadTxn := false
+	if a.TransactionID.HasValue() {
+		fmt.Println("Has a transaction ID: ", a.TransactionID.Value())
+		hadTxn = true
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			fmt.Println("Error getting the txn: ", err)
+			return nil, err
+		}
+	} else {
+		fmt.Println("No transaction ID, creating a new txn")
+		txn, err = node.NewTxn(false)
+		if err != nil {
+			fmt.Println("Error creating the txn: ", err)
+			return nil, err
+		}
+	}
+
+	fmt.Println("Got the txn: ", txn.ID())
 	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
@@ -170,6 +215,15 @@ func addDocViaColSave(
 			return nil, err
 		}
 		docIDs[i] = doc.ID()
+	}
+
+	fmt.Println("Getting ready to leave addDocViaColSave")
+	if !hadTxn {
+		fmt.Println("Committing the txn because we made it")
+		err = txn.Commit()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return docIDs, nil

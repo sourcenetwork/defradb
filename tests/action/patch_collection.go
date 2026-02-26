@@ -75,5 +75,5 @@ func (a *PatchCollection) Execute() {
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(a.s)
+	RefreshCollections(a.s)
 }

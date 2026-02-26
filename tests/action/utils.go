@@ -37,11 +37,11 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 	return []int{nodeID.Value()}, []*state.NodeState{nodes[nodeID.Value()]}
 }
 
-// refreshCollections refreshes all the collections of the given names, preserving order.
+// RefreshCollections refreshes all the collections of the given names, preserving order.
 //
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
-func refreshCollections(
+func RefreshCollections(
 	s *state.State,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)

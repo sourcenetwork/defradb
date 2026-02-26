@@ -41,6 +41,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
+	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -1646,6 +1647,8 @@ func commitTransaction(
 	if err != nil {
 		s.Txns[action.TransactionID].Discard()
 	}
+
+	actionPackage.RefreshCollections(s)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 

@@ -11,11 +11,12 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -59,13 +60,17 @@ var _ Action = (*AddSchema)(nil)
 var _ Stateful = (*AddSchema)(nil)
 
 func (a *AddSchema) Execute() {
-	// If a transaction ID is present, it must get attached to the context
+	fmt.Println("Entering Execute for AddSchema")
+	var txn client.Txn
+	hadTxn := false
 	if a.TransactionID.HasValue() {
-		txn, err := a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		fmt.Println("Has a transaction ID: ", a.TransactionID.Value())
+		hadTxn = true
+		var err error
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
 		if err != nil {
 			return
 		}
-		a.s.Ctx = datastore.CtxSetFromClientTxn(a.s.Ctx, txn)
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
@@ -79,8 +84,16 @@ func (a *AddSchema) Execute() {
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		results, err := node.AddSchema(a.s.Ctx, schema, opts)
 
+		var err error
+		var results []client.CollectionVersion
+		if hadTxn {
+			fmt.Println("Will call AddSchema on the txn")
+			results, err = txn.AddSchema(a.s.Ctx, schema, opts)
+		} else {
+			fmt.Println("Will call AddSchema on the node")
+			results, err = node.AddSchema(a.s.Ctx, schema, opts)
+		}
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
 		}
@@ -95,5 +108,5 @@ func (a *AddSchema) Execute() {
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(a.s)
+	RefreshCollections(a.s)
 }

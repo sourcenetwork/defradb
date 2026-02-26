@@ -124,5 +124,5 @@ func (a *AddView) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(a.s)
+	RefreshCollections(a.s)
 }

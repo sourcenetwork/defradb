@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -95,12 +96,15 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 }
 
 func (txn *Txn) Commit() error {
+	fmt.Println("Entering Commit for Txn")
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
+		fmt.Println("Not committing because it is explicit")
 		return nil
 	}
+	fmt.Println("Committing the txn")
 	return txn.BasicTxn.Commit()
 }
 
