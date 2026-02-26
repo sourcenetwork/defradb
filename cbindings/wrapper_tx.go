@@ -22,6 +22,7 @@ import "C"
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime/cgo"
 	"time"
 
@@ -40,7 +41,7 @@ var _ client.Txn = (*Transaction)(nil)
 
 type Transaction struct {
 	*CWrapper
-	tx     client.Txn
+	tx     datastore.Txn
 	handle cgo.Handle
 }
 
@@ -118,6 +119,8 @@ func (txn *Transaction) AddSchema(
 	sdl string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
+	fmt.Println("Adding schema from C binding txn")
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
 
@@ -217,53 +220,53 @@ func (txn *Transaction) BasicExport(
 }
 
 func (txn *Transaction) Blockstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Blockstore() //nolint:forcetypeassert
+	return txn.tx.Blockstore()
 }
 
 func (txn *Transaction) Datastore() datastore.Keyedstore {
-	return txn.tx.(datastore.Txn).Datastore() //nolint:forcetypeassert
+	return txn.tx.Datastore()
 }
 
 func (txn *Transaction) Encstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Encstore() //nolint:forcetypeassert
+	return txn.tx.Encstore()
 }
 
 func (txn *Transaction) Headstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Headstore() //nolint:forcetypeassert
+	return txn.tx.Headstore()
 }
 
 func (txn *Transaction) Peerstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Peerstore() //nolint:forcetypeassert
+	return txn.tx.Peerstore()
 }
 
 func (txn *Transaction) Rootstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Rootstore() //nolint:forcetypeassert
+	return txn.tx.Rootstore()
 }
 
 func (txn *Transaction) Systemstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Systemstore() //nolint:forcetypeassert
+	return txn.tx.Systemstore()
 }
 
 func (txn *Transaction) OnSuccess(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccess(fn) //nolint:forcetypeassert
+	txn.tx.OnSuccess(fn)
 }
 
 func (txn *Transaction) OnError(fn func()) {
-	txn.tx.(datastore.Txn).OnError(fn) //nolint:forcetypeassert
+	txn.tx.OnError(fn)
 }
 
 func (txn *Transaction) OnDiscard(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscard(fn) //nolint:forcetypeassert
+	txn.tx.OnDiscard(fn)
 }
 
 func (txn *Transaction) OnSuccessAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccessAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnSuccessAsync(fn)
 }
 
 func (txn *Transaction) OnErrorAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnErrorAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnErrorAsync(fn)
 }
 
 func (txn *Transaction) OnDiscardAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscardAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnDiscardAsync(fn)
 }

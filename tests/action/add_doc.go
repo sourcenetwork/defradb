@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -91,16 +90,6 @@ var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
-	// If a transaction ID is present, it must get attached to the context
-	if a.TransactionID.HasValue() {
-		txn, err := a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
-		a.s.Ctx = datastore.CtxSetFromClientTxn(a.s.Ctx, txn)
-	}
-	hasTransaction := a.TransactionID.HasValue()
-
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
@@ -155,7 +144,7 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hasTransaction {
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -166,11 +155,7 @@ func addDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, a.TransactionID)
-	if err != nil {
-		return nil, err
-	}
-
+	txn := a.getTransaction(node)
 	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
@@ -196,11 +181,7 @@ func addDocViaColAdd(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
-	}
-
+	txn := a.getTransaction(node)
 	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
@@ -265,11 +246,7 @@ func addDocViaGQL(
 	key := fmt.Sprintf("add_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
-	}
-
+	txn := a.getTransaction(node)
 	ctx := db.InitContext(a.s.Ctx, txn)
 
 	reqOption := options.ExecRequest()
@@ -368,4 +345,31 @@ func makeDocAddOptions(
 		opts.SetIdentity(identOption.Value())
 	}
 	return []options.Enumerable[options.CollectionAddOptions]{opts}
+}
+
+func (a *AddDoc) getTransaction(node client.TxnStore) client.Txn {
+	if !a.TransactionID.HasValue() {
+		// If no TransactionID is provided, return nil
+		// so that collection calls use a manual txn when possible
+		return nil
+	}
+
+	transactionID := a.TransactionID.Value()
+
+	// Ensure the slice can hold this txn
+	if transactionID >= len(a.s.Txns) {
+		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
+	}
+
+	// Lazily create txn if not yet created
+	if a.s.Txns[transactionID] == nil {
+		txn, err := node.NewTxn(true) // Manual transaction
+		if assertError(a.s.T, err, a.ExpectedError) {
+			txn.Discard()
+			return nil
+		}
+		a.s.Txns[transactionID] = txn
+	}
+
+	return a.s.Txns[transactionID]
 }

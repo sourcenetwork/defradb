@@ -13,6 +13,7 @@ package db
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -599,6 +600,7 @@ func (c *collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
+	fmt.Println("Entering Save")
 	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)

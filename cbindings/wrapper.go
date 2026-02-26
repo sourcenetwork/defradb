@@ -83,6 +83,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -429,6 +430,20 @@ func (w *CWrapper) AddSchema(
 	schema string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
+	fmt.Println("Entering AddSchema for c binding wrapper")
+
+	var txn datastore.Txn
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		txn = gotTxn
+		fmt.Println("Had a txn attached in AddSchema: ", txn.ID())
+	} else {
+		fmt.Println("No txn attached in AddSchema, making a new one")
+		clientTxn, _ := w.NewTxn(false)
+		txn = clientTxn.(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	cSchema := C.CString(schema)
@@ -445,6 +460,16 @@ func (w *CWrapper) AddSchema(
 	if err != nil {
 		return nil, err
 	}
+
+	if !hadTxn {
+		fmt.Println("We made the txn, so we are commiting it")
+		err = txn.Commit()
+		if err != nil {
+			fmt.Println("Error committing txn in AddSchema:", err)
+			return nil, err
+		}
+	}
+
 	return collectionVersions, nil
 }
 
@@ -875,6 +900,11 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	ctxTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		fmt.Println("Had a txn attached in get collections")
+	}
+
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
@@ -895,9 +925,20 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		if clientTxn, ok := ctxTxn.(client.Txn); ok {
+			txnOpt = immutable.Some(clientTxn)
+		} else {
+			return nil, errors.New("unsupported txn type in context")
+		}
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
-		cols[i] = &Collection{def: def, w: w}
+		cols[i] = &Collection{def: def, w: w, txn: txnOpt}
 	}
 	return cols, nil
 }
@@ -1008,6 +1049,7 @@ func (w *CWrapper) ExecRequest(
 }
 
 func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
+	fmt.Println("Entering NewTxn for c binding wrapper")
 	var concurrent C.int = 0
 	var cReadOnly C.int = 0
 	if readOnly {
@@ -1023,10 +1065,10 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
+	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
+	retTxn := &Transaction{w, dsTxn, handle}
 	txnHandleMap.Store(retTxn, handle)
-
+	fmt.Println("NewTxn for c binding wrapper stored in map:", handle)
 	return retTxn, nil
 }
 
@@ -1046,8 +1088,8 @@ func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
+	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
+	retTxn := &Transaction{w, dsTxn, handle}
 	txnHandleMap.Store(retTxn, handle)
 
 	return retTxn, nil

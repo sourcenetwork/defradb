@@ -45,7 +45,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -53,6 +55,7 @@ var _ client.Collection = (*Collection)(nil)
 type Collection struct {
 	def client.CollectionVersion
 	w   *CWrapper
+	txn immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -76,6 +79,20 @@ func (c *Collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+	fmt.Println("Entering Add for c binding wrapper")
+
+	var txn datastore.Txn
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		txn = gotTxn
+		fmt.Println("Had a txn attached in Add: ", txn.ID())
+	} else {
+		fmt.Println("No txn attached in Add, making a new one")
+		clientTxn, _ := c.w.NewTxn(false)
+		txn = clientTxn.(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
 	if addOpts.EncryptDoc {
@@ -109,8 +126,9 @@ func (c *Collection) Add(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionAdd(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cJSON,
 		C.int(isEncrypted),
 		encryptedFields,
@@ -123,6 +141,16 @@ func (c *Collection) Add(
 	}
 
 	doc.Clean()
+
+	if !hadTxn {
+		fmt.Println("We made the txn, so we are commiting it")
+		err = txn.Commit()
+		if err != nil {
+			fmt.Println("Error committing txn in AddSchema:", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

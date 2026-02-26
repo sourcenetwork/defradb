@@ -69,7 +69,7 @@ func TestTxn_AddSchema_WithCommit_Succeeds(t *testing.T) {
 
 // This test runs AddSchema inside of a transaction, and illustrates that not committing the transaction
 // results in the schema not being ready for use.
-func TestTxn_AddSchema_Fails(t *testing.T) {
+func TestTxn_AddSchema_WithoutCommit_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
