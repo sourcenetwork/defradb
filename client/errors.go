@@ -52,6 +52,7 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
+	errNoMatchingCollection                  string = "no collection matches the given criteria"
 )
 
 var (
@@ -101,6 +102,7 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrNoMatchingCollection                  = errors.New(errNoMatchingCollection)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

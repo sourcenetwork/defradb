@@ -33,7 +33,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 			ctx := cmd.Context()
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return cmd.Usage()
+				return client.ErrNoMatchingCollection
 			}
 
 			if updater == "" {

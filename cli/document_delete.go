@@ -30,7 +30,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return cmd.Usage()
+				return client.ErrNoMatchingCollection
 			}
 
 			ctx := cmd.Context()
