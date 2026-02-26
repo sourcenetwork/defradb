@@ -89,6 +89,13 @@ type TestCase struct {
 	// The test will be skipped if the current active set of multipliers
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
+
+	// FlakeRetries specifies the number of times a flaky test should be retried
+	// if it fails. If a test succeeds on any attempt, it is considered passed.
+	// A value of 0 (default) means no retries - the test runs once as normal.
+	// A value of N means the test will be attempted up to N+1 times total
+	// (1 initial + N retries).
+	FlakeRetries uint
 }
 
 // KMS contains the configuration for KMS to be used in the test
