@@ -96,8 +96,8 @@ func AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	// In batch mode store block without signature and collect CID for batch signing
-	collector := BatchSigningCollectorFromContext(ctx)
+	// In block signing mode, store block without signature and collect CID
+	collector := BlockSigningCollectorFromContext(ctx)
 	if collector != nil {
 		link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 		if err != nil {

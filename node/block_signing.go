@@ -18,31 +18,31 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
-// BatchCIDCollector collects CIDs during batch operations for later signing.
-type BatchCIDCollector = coreblock.BatchCIDCollector
+// BlockCIDCollector collects CIDs during batch operations for later signing.
+type BlockCIDCollector = coreblock.BlockCIDCollector
 
-// BatchSignature contains a signature over a batch of block CIDs.
-type BatchSignature = coreblock.BatchSignature
+// BlockSignature contains a signature over a block's document CIDs.
+type BlockSignature = coreblock.BlockSignature
 
-// NewBatchCIDCollector creates a new CID collector for batch signing.
-func NewBatchCIDCollector() *BatchCIDCollector {
-	return coreblock.NewBatchCIDCollector()
+// NewBlockCIDCollector creates a new CID collector for block signing.
+func NewBlockCIDCollector() *BlockCIDCollector {
+	return coreblock.NewBlockCIDCollector()
 }
 
-// ContextWithBatchSigning returns a context with batch signing mode enabled.
-func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) context.Context {
-	return coreblock.ContextWithBatchSigning(ctx, collector)
+// ContextWithBlockSigning returns a context with block signing mode enabled.
+func ContextWithBlockSigning(ctx context.Context, collector *BlockCIDCollector) context.Context {
+	return coreblock.ContextWithBlockSigning(ctx, collector)
 }
 
-// IsBatchSigningEnabled returns true if batch signing mode is enabled.
-func IsBatchSigningEnabled(ctx context.Context) bool {
-	return coreblock.IsBatchSigningEnabled(ctx)
+// IsBlockSigningEnabled returns true if block signing mode is enabled.
+func IsBlockSigningEnabled(ctx context.Context) bool {
+	return coreblock.IsBlockSigningEnabled(ctx)
 }
 
-// SignBatch creates a batch signature for the collected CIDs.
+// SignBlock creates a block signature for the collected CIDs.
 // This function should be called after all documents in a batch have been created.
-func SignBatch(ctx context.Context, collector *BatchCIDCollector) (*BatchSignature, error) {
-	return coreblock.SignBatch(ctx, collector)
+func SignBlock(ctx context.Context, collector *BlockCIDCollector) (*BlockSignature, error) {
+	return coreblock.SignBlock(ctx, collector)
 }
 
 // ComputeMerkleRoot computes a merkle root hash from a list of CIDs.
@@ -51,9 +51,9 @@ func ComputeMerkleRoot(cids []cid.Cid) []byte {
 	return coreblock.ComputeMerkleRoot(cids)
 }
 
-// VerifyBatchSignature verifies a batch signature against a list of CIDs.
-func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error) {
-	return coreblock.VerifyBatchSignature(batchSig, cids)
+// VerifyBlockSignatureCIDs verifies a block signature against a list of CIDs.
+func VerifyBlockSignatureCIDs(blockSig *BlockSignature, cids []cid.Cid) (bool, error) {
+	return coreblock.VerifyBlockSignatureCIDs(blockSig, cids)
 }
 
 // CollectDocumentCIDs retrieves all head block CIDs for the given documents from the headstore.

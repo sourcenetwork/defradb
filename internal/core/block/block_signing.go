@@ -27,30 +27,30 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-type batchSigningContextKey struct{}
+type blockSigningContextKey struct{}
 
-// BatchCIDCollector collects CIDs during batch operations for later signing.
-type BatchCIDCollector struct {
+// BlockCIDCollector collects CIDs during block operations for later signing.
+type BlockCIDCollector struct {
 	mu   sync.Mutex
 	cids []cid.Cid
 }
 
-// NewBatchCIDCollector creates a new CID collector for batch signing.
-func NewBatchCIDCollector() *BatchCIDCollector {
-	return &BatchCIDCollector{
+// NewBlockCIDCollector creates a new CID collector for block signing.
+func NewBlockCIDCollector() *BlockCIDCollector {
+	return &BlockCIDCollector{
 		cids: make([]cid.Cid, 0),
 	}
 }
 
 // Add adds a CID to the collector.
-func (c *BatchCIDCollector) Add(cid cid.Cid) {
+func (c *BlockCIDCollector) Add(cid cid.Cid) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.cids = append(c.cids, cid)
 }
 
 // GetCIDs returns all collected CIDs.
-func (c *BatchCIDCollector) GetCIDs() []cid.Cid {
+func (c *BlockCIDCollector) GetCIDs() []cid.Cid {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	result := make([]cid.Cid, len(c.cids))
@@ -58,25 +58,25 @@ func (c *BatchCIDCollector) GetCIDs() []cid.Cid {
 	return result
 }
 
-// ContextWithBatchSigning returns a context with batch signing mode enabled.
-// In batch signing mode, individual block signing is skipped and CIDs are
-// collected for later batch signing.
-func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) context.Context {
-	return context.WithValue(ctx, batchSigningContextKey{}, collector)
+// ContextWithBlockSigning returns a context with block signing mode enabled.
+// In block signing mode, individual block signing is skipped and CIDs are
+// collected for later block signing.
+func ContextWithBlockSigning(ctx context.Context, collector *BlockCIDCollector) context.Context {
+	return context.WithValue(ctx, blockSigningContextKey{}, collector)
 }
 
-// BatchSigningCollectorFromContext returns the batch CID collector if batch signing is enabled.
-func BatchSigningCollectorFromContext(ctx context.Context) *BatchCIDCollector {
-	val := ctx.Value(batchSigningContextKey{})
+// BlockSigningCollectorFromContext returns the batch CID collector if block signing is enabled.
+func BlockSigningCollectorFromContext(ctx context.Context) *BlockCIDCollector {
+	val := ctx.Value(blockSigningContextKey{})
 	if val == nil {
 		return nil
 	}
-	return val.(*BatchCIDCollector) //nolint:forcetypeassert
+	return val.(*BlockCIDCollector) //nolint:forcetypeassert
 }
 
-// IsBatchSigningEnabled returns true if batch signing mode is enabled.
-func IsBatchSigningEnabled(ctx context.Context) bool {
-	return BatchSigningCollectorFromContext(ctx) != nil
+// IsBlockSigningEnabled returns true if block signing mode is enabled.
+func IsBlockSigningEnabled(ctx context.Context) bool {
+	return BlockSigningCollectorFromContext(ctx) != nil
 }
 
 // sortCIDs returns a new slice of CIDs sorted in canonical byte order.
@@ -90,7 +90,7 @@ func sortCIDs(cids []cid.Cid) []cid.Cid {
 }
 
 // SortedCIDStrings returns CID string representations in canonical sorted order.
-// This is the format stored on BatchSignature documents.
+// This is the format stored on BlockSignature documents.
 func SortedCIDStrings(cids []cid.Cid) []string {
 	sorted := sortCIDs(cids)
 	result := make([]string, len(sorted))
@@ -235,18 +235,18 @@ func VerifyMerkleProof(leafCID cid.Cid, proof *MerkleProof, expectedRoot []byte)
 	return bytes.Equal(hash, expectedRoot)
 }
 
-// BatchSignature contains a signature over a batch of block CIDs.
-type BatchSignature struct {
+// BlockSignature contains a signature over a block's document CIDs.
+type BlockSignature struct {
 	Header     SignatureHeader
 	Value      []byte
 	MerkleRoot []byte
 	CIDCount   int
 }
 
-// IPLDSchemaBytes returns the IPLD schema for BatchSignature.
-func (sig *BatchSignature) IPLDSchemaBytes() []byte {
+// IPLDSchemaBytes returns the IPLD schema for BlockSignature.
+func (sig *BlockSignature) IPLDSchemaBytes() []byte {
 	return []byte(`
-		type BatchSignature struct {
+		type BlockSignature struct {
 			header SignatureHeader
 			value Bytes
 			merkleRoot Bytes
@@ -255,12 +255,12 @@ func (sig *BatchSignature) IPLDSchemaBytes() []byte {
 	`)
 }
 
-// SignBatch creates a batch signature for the collected CIDs.
-// This function should be called after all documents in a batch have been created.
-func SignBatch(
+// SignBlock creates a block signature for the collected CIDs.
+// This function should be called after all documents in a block have been created.
+func SignBlock(
 	ctx context.Context,
-	collector *BatchCIDCollector,
-) (*BatchSignature, error) {
+	collector *BlockCIDCollector,
+) (*BlockSignature, error) {
 	cids := collector.GetCIDs()
 	if len(cids) == 0 {
 		return nil, nil
@@ -293,7 +293,7 @@ func SignBatch(
 		return nil, err
 	}
 
-	batchSig := &BatchSignature{
+	blockSig := &BlockSignature{
 		Header: SignatureHeader{
 			Type:     sigType,
 			Identity: []byte(fullIdent.PublicKey().String()),
@@ -303,28 +303,28 @@ func SignBatch(
 		CIDCount:   len(cids),
 	}
 
-	return batchSig, nil
+	return blockSig, nil
 }
 
-// VerifyBatchSignature verifies a batch signature against a list of CIDs.
-func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error) {
-	if batchSig == nil {
+// VerifyBlockSignatureCIDs verifies a block signature against a list of CIDs.
+func VerifyBlockSignatureCIDs(blockSig *BlockSignature, cids []cid.Cid) (bool, error) {
+	if blockSig == nil {
 		return false, nil
 	}
 	computedRoot := ComputeMerkleRoot(cids)
-	if len(computedRoot) != len(batchSig.MerkleRoot) {
+	if len(computedRoot) != len(blockSig.MerkleRoot) {
 		return false, nil
 	}
 	for i := range computedRoot {
-		if computedRoot[i] != batchSig.MerkleRoot[i] {
+		if computedRoot[i] != blockSig.MerkleRoot[i] {
 			return false, nil
 		}
 	}
-	pubKey, err := getPublicKeyFromSignature(&Signature{Header: batchSig.Header, Value: batchSig.Value})
+	pubKey, err := getPublicKeyFromSignature(&Signature{Header: blockSig.Header, Value: blockSig.Value})
 	if err != nil {
 		return false, err
 	}
-	return verifySignature(pubKey, batchSig.MerkleRoot, batchSig.Value) == nil, nil
+	return verifySignature(pubKey, blockSig.MerkleRoot, blockSig.Value) == nil, nil
 }
 
 // CollectDocumentCIDs retrieves the composite head CID for each given document from the headstore.
