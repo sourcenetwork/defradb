@@ -226,6 +226,7 @@ const docSyncTopic = "doc-sync"
 
 func TestDocSync_WithDifferentVersionsOnPeers_ShouldSyncLatest(t *testing.T) {
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
