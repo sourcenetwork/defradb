@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -99,8 +98,12 @@ func (a *Request) Execute() {
 nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := a.getTransaction(node)
-		ctx := db.InitContext(a.s.Ctx, txn)
+		hadTxn := false
+		var txn client.Txn
+		if a.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		}
 
 		reqOption := options.ExecRequest()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
@@ -122,7 +125,12 @@ nodeLoop:
 		}
 
 		request := replace(a.s, nodeID, a.Request)
-		result := node.ExecRequest(ctx, request, reqOption)
+		var result *client.RequestResult
+		if hadTxn {
+			result = txn.ExecRequest(a.s.Ctx, request, reqOption)
+		} else {
+			result = node.ExecRequest(a.s.Ctx, request, reqOption)
+		}
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,
@@ -136,30 +144,4 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
-}
-
-// getTransaction returns the transaction for this request, creating one if needed.
-func (a *Request) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	if a.s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
-		}
-
-		a.s.Txns[transactionID] = txn
-	}
-
-	return a.s.Txns[transactionID]
 }
