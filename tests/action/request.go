@@ -98,6 +98,7 @@ func (a *Request) Execute() {
 nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		// Check if a transaction is attached to this action. If so, we will be using it.
 		hadTxn := false
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
@@ -125,6 +126,7 @@ nodeLoop:
 		}
 
 		request := replace(a.s, nodeID, a.Request)
+		// If we have a transaction, we will use it here. Otherwise we use the node.
 		var result *client.RequestResult
 		if hadTxn {
 			result = txn.ExecRequest(a.s.Ctx, request, reqOption)

@@ -113,6 +113,7 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 
+		// Check if a transaction is attached to this action. If so, we will be using it.
 		hadTxn := false
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
@@ -120,6 +121,7 @@ func (a *AddDoc) Execute() {
 			a.DoNotWaitForEvent = true // Don't wait for the event, because it won't be commited yet
 			txn, _ = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
 		} else {
+			// If a transaction was not provided, we will make an ephemeral one for this action.
 			txn, _ = node.NewTxn(false)
 		}
 
@@ -136,9 +138,11 @@ func (a *AddDoc) Execute() {
 					collection,
 					txn,
 				)
+				// If there was not an explicit transaction, here we will try to commit it.
 				if !hadTxn && err == nil {
 					err = txn.Commit()
 				}
+				// (It should not error, but we defensively discard it if it does.)
 				if !hadTxn && err != nil {
 					txn.Discard()
 				}
@@ -163,6 +167,7 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
+	// If there was an explicit transaction, then we will not be waiting for update events.
 	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}

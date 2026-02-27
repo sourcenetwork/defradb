@@ -30,6 +30,8 @@ func (db *DB) ExecRequest(
 	ctx context.Context,
 	request string, opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -44,7 +46,10 @@ func (db *DB) ExecRequest(
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	gqlOpts := &client.GQLOptions{}
 	if opt.OperationName.HasValue() {
@@ -57,9 +62,11 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
-	if err := txn.Commit(); err != nil {
-		res.GQL.Errors = append(res.GQL.Errors, err)
-		return res
+	if !hadTxn {
+		if err := txn.Commit(); err != nil {
+			res.GQL.Errors = append(res.GQL.Errors, err)
+			return res
+		}
 	}
 
 	return res
@@ -162,6 +169,7 @@ func (db *DB) AddSchema(
 	schemaString string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
@@ -209,6 +217,9 @@ func (db *DB) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -222,14 +233,19 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	err = db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 func (db *DB) SetActiveCollectionVersion(

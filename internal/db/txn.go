@@ -96,15 +96,12 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 }
 
 func (txn *Txn) Commit() error {
-	fmt.Println("Entering Commit for Txn")
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
-		fmt.Println("Not committing because it is explicit")
 		return nil
 	}
-	fmt.Println("Committing the txn")
 	return txn.BasicTxn.Commit()
 }
 
@@ -127,6 +124,7 @@ func (txn *Txn) AddDACPolicy(
 	policy string,
 	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
+	fmt.Println("Calling AddDACPolicy from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddDACPolicy(ctx, policy, opts...)
 }
@@ -223,6 +221,7 @@ func (txn *Txn) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
+	fmt.Println("Calling PatchCollection from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
 }

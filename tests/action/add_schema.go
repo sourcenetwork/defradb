@@ -11,8 +11,6 @@
 package action
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -60,11 +58,10 @@ var _ Action = (*AddSchema)(nil)
 var _ Stateful = (*AddSchema)(nil)
 
 func (a *AddSchema) Execute() {
-	fmt.Println("Entering Execute for AddSchema")
+	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
 	hadTxn := false
 	if a.TransactionID.HasValue() {
-		fmt.Println("Has a transaction ID: ", a.TransactionID.Value())
 		hadTxn = true
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
@@ -85,13 +82,12 @@ func (a *AddSchema) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
+		// If we have a transaction, we will use it here. Otherwise we use the node.
 		var err error
 		var results []client.CollectionVersion
 		if hadTxn {
-			fmt.Println("Will call AddSchema on the txn")
 			results, err = txn.AddSchema(a.s.Ctx, schema, opts)
 		} else {
-			fmt.Println("Will call AddSchema on the node")
 			results, err = node.AddSchema(a.s.Ctx, schema, opts)
 		}
 		for _, result := range results {
