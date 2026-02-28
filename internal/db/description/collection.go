@@ -31,7 +31,10 @@ func SaveCollection(
 	ctx context.Context,
 	desc client.CollectionVersion,
 ) error {
+	fmt.Println("Calling SaveCollection")
 	txn := datastore.CtxMustGetTxn(ctx)
+
+	fmt.Println("Current txn: ", txn.ID())
 
 	err := id.SetShortCollectionID(ctx, desc.CollectionID)
 	if err != nil {
@@ -281,12 +284,20 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
+
+	fmt.Println("Calling GetActiveCollections")
+
 	cache := CollectionCacheFromContext(ctx)
 	if cache.IsActiveCollectionsPopulated {
 		return cache.ActiveCollections, nil
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
+
+	// Experimental testing
+	fmt.Println("Going to set strange test using txn: ", txn.ID())
+	fmt.Printf("Rootstore pointer: %p\n", txn.Rootstore())
+	txn.Systemstore().Set(ctx, []byte("strange_test"), []byte("test"))
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
@@ -327,7 +338,6 @@ func GetActiveCollections(
 
 	// Sort the results by ID, so that the order matches that of [GetCollections].
 	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
-
 	cache.AddAllActive(cols)
 
 	return cols, iter.Close()

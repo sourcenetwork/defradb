@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -46,6 +47,15 @@ func (db *DB) ExecRequest(
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
+
+	// Experimental testing
+	fmt.Println("Going to get strange test using txn: ", txn.ID())
+	fmt.Println("The address of the root store is: ", txn.Rootstore())
+	value, err := txn.Systemstore().Get(ctx, []byte("strange_test"))
+	if err != nil {
+		return nil
+	}
+	fmt.Println("Value of strange test: ", string(value))
 
 	if !hadTxn {
 		defer txn.Discard()
@@ -253,6 +263,13 @@ func (db *DB) SetActiveCollectionVersion(
 	collectionVersionID string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
+	if hadTxn {
+		fmt.Println("Had a txn attached in SetActiveCollectionVersion: ", txn.ID())
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -266,14 +283,23 @@ func (db *DB) SetActiveCollectionVersion(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	fmt.Println("Current txn: ", txn.ID())
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		fmt.Println("Committing transaction because it was not explicit")
+		return txn.Commit()
+	}
+	return nil
 }
 
 func (db *DB) SetMigration(

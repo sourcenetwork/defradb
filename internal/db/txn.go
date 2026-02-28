@@ -96,6 +96,7 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 }
 
 func (txn *Txn) Commit() error {
+	fmt.Println("Txn is being committed")
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
@@ -221,7 +222,6 @@ func (txn *Txn) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	fmt.Println("Calling PatchCollection from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
 }
@@ -231,6 +231,7 @@ func (txn *Txn) SetActiveCollectionVersion(
 	version string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
+	fmt.Println("Calling SetActiveCollectionVersion from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
 }

@@ -184,6 +184,9 @@ type SetActiveCollectionVersion struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // DocIndex represents a relation field value, it allows relation fields to be set without worrying

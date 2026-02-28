@@ -1084,6 +1084,19 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
+
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := false
+	if action.TransactionID.HasValue() {
+		hadTxn = true
+		var err error
+		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		if err != nil {
+			return
+		}
+	}
+
 	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
 	versionID := replacedIDs[action.VersionID]
 
@@ -1096,7 +1109,13 @@ func setActiveCollectionVersion(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var err error
+		if hadTxn {
+			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+		} else {
+			err = node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+		}
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
