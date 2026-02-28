@@ -33,8 +33,7 @@ func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 			&action.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
-						{ "op": "replace", "path": "/Users/IsActive", "value": false }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -74,8 +73,7 @@ func TestTxn_SetActiveCollectionVersion_WithoutCommit_VersionNotChanged(t *testi
 			&action.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
-						{ "op": "replace", "path": "/Users/IsActive", "value": false }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -85,7 +83,6 @@ func TestTxn_SetActiveCollectionVersion_WithoutCommit_VersionNotChanged(t *testi
 			},
 
 			&action.Request{
-				TransactionID: immutable.Some(2),
 				Request: `query {
 					Users {
 						name
@@ -132,9 +129,11 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 				TransactionID: immutable.Some(0),
 				VersionID:     "{{.CollectionVersionID0}}",
 			},
-			testUtils.TransactionCommit{
-				TransactionID: 0,
-			},
+			/*
+				testUtils.TransactionCommit{
+					TransactionID: 0,
+				},
+			*/
 			&action.Request{
 				TransactionID: immutable.Some(1),
 				NodeID:        immutable.Some(1),

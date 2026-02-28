@@ -294,11 +294,6 @@ func GetActiveCollections(
 
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	// Experimental testing
-	fmt.Println("Going to set strange test using txn: ", txn.ID())
-	fmt.Printf("Rootstore pointer: %p\n", txn.Rootstore())
-	txn.Systemstore().Set(ctx, []byte("strange_test"), []byte("test"))
-
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
 	})

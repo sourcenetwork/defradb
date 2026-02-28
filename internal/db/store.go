@@ -48,15 +48,6 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
-	// Experimental testing
-	fmt.Println("Going to get strange test using txn: ", txn.ID())
-	fmt.Println("The address of the root store is: ", txn.Rootstore())
-	value, err := txn.Systemstore().Get(ctx, []byte("strange_test"))
-	if err != nil {
-		return nil
-	}
-	fmt.Println("Value of strange test: ", string(value))
-
 	if !hadTxn {
 		defer txn.Discard()
 	}
