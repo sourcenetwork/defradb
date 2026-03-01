@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -60,6 +61,18 @@ var _ Stateful = (*AddView)(nil)
 
 // Execute executes the create view action.
 func (a *AddView) Execute() {
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := false
+	if a.TransactionID.HasValue() {
+		hadTxn = true
+		var err error
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
+		}
+	}
+
 	sdl := a.SDL
 
 	switch {
@@ -113,7 +126,15 @@ func (a *AddView) Execute() {
 			transformCID := replace(a.s, nodeID, a.TransformCID.Value())
 			opts.SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
+
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var results []client.CollectionVersion
+		var err error
+		if hadTxn {
+			results, err = txn.AddView(a.s.Ctx, a.Query, sdl, opts)
+		} else {
+			results, err = node.AddView(a.s.Ctx, a.Query, sdl, opts)
+		}
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)

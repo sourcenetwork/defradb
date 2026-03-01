@@ -31,10 +31,7 @@ func SaveCollection(
 	ctx context.Context,
 	desc client.CollectionVersion,
 ) error {
-	fmt.Println("Calling SaveCollection")
 	txn := datastore.CtxMustGetTxn(ctx)
-
-	fmt.Println("Current txn: ", txn.ID())
 
 	err := id.SetShortCollectionID(ctx, desc.CollectionID)
 	if err != nil {
@@ -284,9 +281,6 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
-
-	fmt.Println("Calling GetActiveCollections")
-
 	cache := CollectionCacheFromContext(ctx)
 	if cache.IsActiveCollectionsPopulated {
 		return cache.ActiveCollections, nil

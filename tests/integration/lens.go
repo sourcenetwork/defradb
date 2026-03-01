@@ -64,7 +64,6 @@ func configureMigration(
 	action ConfigureMigration,
 ) {
 	var lensID string
-
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -75,10 +74,25 @@ func configureMigration(
 			migrationOpts.SetIdentity(identOption.Value())
 		}
 
-		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := false
+		if action.TransactionID.HasValue() {
+			hadTxn = true
+			var err error
+			txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+			if err != nil {
+				return
+			}
+		}
+
 		ctx := db.InitContext(s.Ctx, txn)
 		var err error
-		lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		if hadTxn {
+			lensID, err = txn.SetMigration(ctx, action.LensConfig, migrationOpts)
+		} else {
+			lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		}
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

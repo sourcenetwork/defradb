@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -96,7 +95,6 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 }
 
 func (txn *Txn) Commit() error {
-	fmt.Println("Txn is being committed")
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
@@ -125,7 +123,6 @@ func (txn *Txn) AddDACPolicy(
 	policy string,
 	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	fmt.Println("Calling AddDACPolicy from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddDACPolicy(ctx, policy, opts...)
 }
@@ -231,7 +228,6 @@ func (txn *Txn) SetActiveCollectionVersion(
 	version string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
-	fmt.Println("Calling SetActiveCollectionVersion from Txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
 }

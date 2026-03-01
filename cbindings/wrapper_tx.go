@@ -144,7 +144,7 @@ func (txn *Transaction) SetActiveCollectionVersion(
 	version string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
-
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
@@ -155,6 +155,7 @@ func (txn *Transaction) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
@@ -162,6 +163,7 @@ func (txn *Transaction) AddView(
 func (txn *Transaction) RefreshViews(
 	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
 ) error {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
@@ -169,6 +171,7 @@ func (txn *Transaction) RefreshViews(
 func (txn *Transaction) SetMigration(
 	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetMigration(ctx, config, opts...)
 }

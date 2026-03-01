@@ -11,7 +11,6 @@
 package action
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -134,8 +133,6 @@ nodeLoop:
 		} else {
 			result = node.ExecRequest(a.s.Ctx, request, reqOption)
 		}
-
-		fmt.Println("Result: ", result)
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,

@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -40,6 +41,9 @@ type RefreshViews struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*RefreshViews)(nil)
@@ -47,6 +51,18 @@ var _ Stateful = (*RefreshViews)(nil)
 
 // Execute executes the refresh views action.
 func (a *RefreshViews) Execute() {
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := false
+	if a.TransactionID.HasValue() {
+		hadTxn = true
+		var err error
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
+		}
+	}
+
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -64,7 +80,13 @@ func (a *RefreshViews) Execute() {
 		}
 		allOpts = append(allOpts, identOpts)
 
-		err := node.RefreshViews(a.s.Ctx, allOpts...)
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var err error
+		if hadTxn {
+			err = txn.RefreshViews(a.s.Ctx, allOpts...)
+		} else {
+			err = node.RefreshViews(a.s.Ctx, allOpts...)
+		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

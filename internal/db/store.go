@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -257,10 +256,6 @@ func (db *DB) SetActiveCollectionVersion(
 	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 
-	if hadTxn {
-		fmt.Println("Had a txn attached in SetActiveCollectionVersion: ", txn.ID())
-	}
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -275,8 +270,6 @@ func (db *DB) SetActiveCollectionVersion(
 		return err
 	}
 
-	fmt.Println("Current txn: ", txn.ID())
-
 	if !hadTxn {
 		defer txn.Discard()
 	}
@@ -287,7 +280,6 @@ func (db *DB) SetActiveCollectionVersion(
 	}
 
 	if !hadTxn {
-		fmt.Println("Committing transaction because it was not explicit")
 		return txn.Commit()
 	}
 	return nil
@@ -298,6 +290,9 @@ func (db *DB) SetMigration(
 	cfg client.LensConfig,
 	opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -312,16 +307,20 @@ func (db *DB) SetMigration(
 	if err != nil {
 		return "", err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return "", err
+	if !hadTxn {
+		err = txn.Commit()
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return lensID, nil
@@ -390,6 +389,9 @@ func (db *DB) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -405,22 +407,29 @@ func (db *DB) AddView(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	defs, err := db.addView(ctx, query, sdl, opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return nil, err
+	if !hadTxn {
+		err = txn.Commit()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return defs, nil
 }
 
 func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -436,16 +445,21 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	err = db.refreshViews(ctx, opt)
 	if err != nil {
 		return err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return err
+	if !hadTxn {
+		err = txn.Commit()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
