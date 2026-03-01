@@ -139,7 +139,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	tx := MakeTxCommand(ctx)
 	tx.AddCommand(
-		MakeTxCreateCommand(ctx),
+		MakeTxNewCommand(ctx),
 		MakeTxCommitCommand(ctx),
 		MakeTxDiscardCommand(ctx),
 	)
