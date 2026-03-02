@@ -2068,10 +2068,28 @@ func resetMatchers(s *state.State) {
 func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := false
+		if action.TransactionID.HasValue() {
+			hadTxn = true
+			var err error
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			if err != nil {
+				return
+			}
+		}
+
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
-		err := node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+
+		var err error
+		if hadTxn {
+			err = txn.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+		} else {
+			err = node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+		}
 
 		if action.ExpectedError != "" {
 			require.Error(s.T, err)

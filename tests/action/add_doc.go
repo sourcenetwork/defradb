@@ -126,7 +126,20 @@ func (a *AddDoc) Execute() {
 		}
 
 		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+
+		// If we have a transaction, we have to use it to get the collection
+		var collection client.Collection
+		if hadTxn {
+			collections, err := txn.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+			collection = collections[a.CollectionID]
+		} else {
+			// Otherwise, we will use a cached collection from the state
+			collection = a.s.Nodes[nodeID].Collections[a.CollectionID]
+		}
+
 		err := withRetryOnNode(
 			node,
 			func() error {

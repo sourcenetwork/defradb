@@ -83,6 +83,7 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+	// fmt.Println("To do for txn")
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 

@@ -901,9 +901,6 @@ func (w *CWrapper) GetCollections(
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctxTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if hadTxn {
-		fmt.Println("Had a txn attached in get collections")
-	}
 
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))

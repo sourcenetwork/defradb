@@ -181,6 +181,7 @@ func (txn *Transaction) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddLens(ctx, lens, opts...)
 }
@@ -189,6 +190,7 @@ func (txn *Transaction) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListLenses(ctx, opts...)
 }
@@ -198,6 +200,7 @@ func (txn *Transaction) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
+	// Skipped
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
@@ -206,6 +209,7 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }

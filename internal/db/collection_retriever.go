@@ -18,6 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
@@ -44,11 +46,17 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
 ) (client.Collection, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
 	if err != nil {
@@ -69,9 +77,17 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		opt = opt.SetIdentity(r.ident.Value())
 	}
 
-	cols, err := r.db.GetCollections(ctx, opt)
-	if err != nil {
-		return nil, err
+	// If we have a transaction, we will use it here. Otherwise we use r.db
+	var cols []client.Collection
+	if hadTxn {
+		clientTxn, ok := txn.(client.Txn)
+		// This error should not happen through any normal code path, but we can be defensive here.
+		if !ok {
+			return nil, errors.New("unsupported txn type in context")
+		}
+		cols, err = clientTxn.GetCollections(ctx, opt)
+	} else {
+		cols, err = r.db.GetCollections(ctx, opt)
 	}
 
 	if len(cols) == 0 {

@@ -120,11 +120,6 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	opts *options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
-	ctx, _, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return nil, err
-	}
-
 	if opts == nil {
 		opts = &options.GetCollectionsOptions{}
 	}

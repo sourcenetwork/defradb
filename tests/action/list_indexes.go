@@ -47,12 +47,27 @@ type ListIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*ListIndexes)(nil)
 var _ Stateful = (*ListIndexes)(nil)
 
 func (a *ListIndexes) Execute() {
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := false
+	if a.TransactionID.HasValue() {
+		hadTxn = true
+		var err error
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
+		}
+	}
+
 	if len(a.s.Nodes) == 0 {
 		return
 	}
@@ -61,7 +76,18 @@ func (a *ListIndexes) Execute() {
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+
+		var collection client.Collection
+		if hadTxn {
+			collections, err := txn.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+			collection = collections[a.CollectionID]
+		} else {
+			// Otherwise, we will use a cached collection from the state
+			collection = a.s.Nodes[nodeID].Collections[a.CollectionID]
+		}
 
 		opts := options.CollectionListIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

@@ -78,6 +78,9 @@ func (db *DB) GetCollectionByName(
 	name string,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -91,7 +94,9 @@ func (db *DB) GetCollectionByName(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	return db.getCollectionByName(ctx, name)
 }
@@ -101,6 +106,9 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -108,6 +116,16 @@ func (db *DB) GetCollections(
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
+	}
+
+	var err error = nil
+	ctx, txn, err = ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hadTxn {
+		defer txn.Discard()
 	}
 
 	return db.getCollections(ctx, opt)
@@ -118,6 +136,9 @@ func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -131,7 +152,10 @@ func (db *DB) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	return db.listIndexDescriptions(ctx)
 }
@@ -141,6 +165,9 @@ func (db *DB) ListAllEncryptedIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -154,7 +181,10 @@ func (db *DB) ListAllEncryptedIndexes(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
@@ -331,6 +361,9 @@ func (db *DB) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -345,16 +378,21 @@ func (db *DB) AddLens(
 	if err != nil {
 		return "", err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	lensID, err := db.addLens(ctx, lens)
 	if err != nil {
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return "", err
+	if !hadTxn {
+		err = txn.Commit()
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return lensID, nil
@@ -364,6 +402,9 @@ func (db *DB) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -378,9 +419,17 @@ func (db *DB) ListLenses(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
 
-	return db.listLenses(ctx)
+	if !hadTxn {
+		defer txn.Discard()
+	}
+
+	lenses, err := db.listLenses(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lenses, nil
 }
 
 func (db *DB) AddView(

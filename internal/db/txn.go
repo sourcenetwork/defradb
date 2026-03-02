@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -284,6 +285,7 @@ func (txn *Txn) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	fmt.Println("GetCollections txn")
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetCollections(ctx, opts...)
 }

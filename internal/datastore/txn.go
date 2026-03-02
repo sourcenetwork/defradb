@@ -12,7 +12,6 @@ package datastore
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -129,7 +128,6 @@ func (t *BasicTxn) StartTS() time.Time {
 }
 
 func (t *BasicTxn) Commit() error {
-	fmt.Println("Committing transaction")
 	var fns []func()
 	var asyncFns []func()
 

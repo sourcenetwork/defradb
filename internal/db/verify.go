@@ -35,6 +35,9 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
@@ -46,7 +49,14 @@ func (db *DB) VerifySignature(
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	// If we have a transaction, we will use it to set the blockstore. Otherwise, we will use the db.
+	var blockStore *bsadapter.Adapter
+	if hadTxn {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(txn.Rootstore(), db.blockStoreChunkSize)}
+	} else {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	}
+
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true
