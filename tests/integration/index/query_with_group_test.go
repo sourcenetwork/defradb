@@ -21,7 +21,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String 
 						rating: Float @index

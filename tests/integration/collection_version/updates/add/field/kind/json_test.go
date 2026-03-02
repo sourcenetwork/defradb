@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldKindJSON(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -54,7 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -99,7 +99,7 @@ func TestCollectionVersionUpdatesAddFieldKindJSONSubstitutionWithAdd(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

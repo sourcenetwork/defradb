@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -56,7 +56,7 @@ func TestCollectionVersionUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -92,7 +92,7 @@ func TestCollectionVersionUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -132,7 +132,7 @@ func TestCollectionVersionUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -184,7 +184,7 @@ func TestCollectionVersionUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstituti
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

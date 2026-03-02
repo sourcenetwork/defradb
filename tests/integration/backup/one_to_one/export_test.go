@@ -73,7 +73,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 				type User {
 					name: String
 					age: Int
@@ -121,7 +121,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 				type User {
 					name: String
 					age: Int

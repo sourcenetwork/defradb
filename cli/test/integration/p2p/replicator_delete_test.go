@@ -21,7 +21,7 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -48,7 +48,7 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -75,7 +75,7 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -101,7 +101,7 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -130,7 +130,7 @@ func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSuc
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int

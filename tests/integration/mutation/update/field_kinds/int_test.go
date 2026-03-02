@@ -21,7 +21,7 @@ func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						age: Int
 					}

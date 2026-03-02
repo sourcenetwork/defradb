@@ -21,7 +21,7 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -58,7 +58,7 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean

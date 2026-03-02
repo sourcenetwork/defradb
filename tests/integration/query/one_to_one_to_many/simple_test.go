@@ -21,7 +21,7 @@ func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable
@@ -95,7 +95,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable @primary
@@ -171,7 +171,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable @primary
@@ -245,7 +245,7 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable

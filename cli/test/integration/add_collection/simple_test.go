@@ -22,7 +22,7 @@ func TestAddCollection(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {}
 				`,
 			},

@@ -21,7 +21,7 @@ func TestCollectionVersion_WithMissingType_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name:
 					}

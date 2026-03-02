@@ -24,6 +24,6 @@ const userCollectionGQLSchema = (`
 
 func updateUserCollectionSchema() *action.AddCollection {
 	return &action.AddCollection{
-		Schema: userCollectionGQLSchema,
+		SDL: userCollectionGQLSchema,
 	}
 }

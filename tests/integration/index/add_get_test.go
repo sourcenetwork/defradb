@@ -22,7 +22,7 @@ func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String @index(name: "name_index")
 						age: Int
@@ -62,7 +62,7 @@ func TestIndexList_GetIndexesForACollection_ReturnCollectionSpecificList(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int @index

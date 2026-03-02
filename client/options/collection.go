@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// AddDocumentOptions contains options for Add and AddMany operations.
+// AddDocumentOptions contains options for AddDocument and AddManyDocuments operations.
 type AddDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -68,7 +68,7 @@ func (b *AddDocumentOptionsBuilder) SetEncryptedFields(fields []string) *AddDocu
 	return b
 }
 
-// UpdateDocumentOptions contains options for Update operation.
+// UpdateDocumentOptions contains options for UpdateDocument operation.
 type UpdateDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -106,7 +106,7 @@ func SaveDocument() *SaveDocumentOptionsBuilder {
 	return &SaveDocumentOptionsBuilder{}
 }
 
-// DeleteDocumentOptions contains options for Delete operation.
+// DeleteDocumentOptions contains options for DeleteDocument operation.
 type DeleteDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -135,7 +135,7 @@ func (b *DeleteDocumentOptionsBuilder) SetIdentity(id identity.Identity) *Delete
 	return b
 }
 
-// GetDocumentOptions contains options for Get operation.
+// GetDocumentOptions contains options for GetDocument operation.
 type GetDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -174,7 +174,7 @@ func (b *GetDocumentOptionsBuilder) SetShowDeleted(showDeleted bool) *GetDocumen
 	return b
 }
 
-// UpdateDocumentsWithFilterOptions contains options for UpdateWithFilter operation.
+// UpdateDocumentsWithFilterOptions contains options for UpdateDocumentsWithFilter operation.
 type UpdateDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -205,7 +205,7 @@ func (b *UpdateDocumentsWithFilterOptionsBuilder) SetIdentity(
 	return b
 }
 
-// DeleteDocumentsWithFilterOptions contains options for DeleteWithFilter operation.
+// DeleteDocumentsWithFilterOptions contains options for DeleteDocumentsWithFilter operation.
 type DeleteDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -323,7 +323,7 @@ func (b *CollectionListIndexesOptionsBuilder) SetIdentity(id identity.Identity) 
 	return b
 }
 
-// ExistsDocumentOptions contains options for Exists operation.
+// ExistsDocumentOptions contains options for ExistsDocument operation.
 type ExistsDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]

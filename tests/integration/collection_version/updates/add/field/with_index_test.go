@@ -24,7 +24,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -39,7 +39,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 			},
 			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
+			// where patching a collection would result in the index disappearing from one of those locations.
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -109,7 +109,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -140,7 +140,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 			},
 			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
+			// where patching a collection would result in the index disappearing from one of those locations.
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{

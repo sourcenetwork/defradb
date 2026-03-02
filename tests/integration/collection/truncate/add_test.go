@@ -21,7 +21,7 @@ func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -56,7 +56,7 @@ func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -93,7 +93,7 @@ func TestCollectionTruncateAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -156,7 +156,7 @@ func TestCollectionTruncateAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -217,7 +217,7 @@ func TestCollectionTruncateAdd_AddsDocWithBlocksAtHeight1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

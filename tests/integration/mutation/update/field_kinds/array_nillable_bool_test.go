@@ -23,7 +23,7 @@ func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean]

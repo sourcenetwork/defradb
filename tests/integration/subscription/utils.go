@@ -21,7 +21,7 @@ func execute(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int

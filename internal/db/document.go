@@ -130,7 +130,7 @@ func (c *collection) getAllDocIDsChan(
 	return resCh, nil
 }
 
-// Add a new document.
+// AddDocument adds a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
 func (c *collection) AddDocument(
 	ctx context.Context,
@@ -162,7 +162,7 @@ func (c *collection) AddDocument(
 	return txn.Commit()
 }
 
-// AddMany adds a collection of documents at once.
+// AddManyDocuments adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
 func (c *collection) AddManyDocuments(
 	ctx context.Context,
@@ -291,7 +291,7 @@ func setContextDocEncryption(
 	return ctx
 }
 
-// Update an existing document with the new values.
+// UpdateDocument updates an existing document with the new values.
 // Any field that needs to be removed or cleared should call doc.Clear(field) before.
 // Any field that is nil/empty that hasn't called Clear will be ignored.
 func (c *collection) UpdateDocument(
@@ -374,7 +374,7 @@ func (c *collection) update(
 	return nil
 }
 
-// Save a document into the db.
+// SaveDocument saves a document into the db.
 // Either by creating a new document or by updating an existing one.
 func (c *collection) SaveDocument(
 	ctx context.Context,
@@ -620,7 +620,7 @@ func (c *collection) save(
 	return nil
 }
 
-// Delete will attempt to delete a document by docID and return true if a deletion is successful,
+// DeleteDocument will attempt to delete a document by docID and return true if a deletion is successful,
 // otherwise will return false, along with an error, if it cannot.
 // If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
 // This operation will all state relating to the given DocID. This includes data, block, and head storage.
@@ -663,7 +663,7 @@ func (c *collection) DeleteDocument(
 	return true, txn.Commit()
 }
 
-// Exists checks if a given document exists with supplied DocID.
+// ExistsDocument checks if a given document exists with supplied DocID.
 func (c *collection) ExistsDocument(
 	ctx context.Context,
 	docID client.DocID,

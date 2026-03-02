@@ -24,7 +24,7 @@ func TestQueryJSON_WithInFilter_ShouldFilter(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON

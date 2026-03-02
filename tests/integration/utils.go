@@ -584,7 +584,7 @@ func benchmarkAction(
 // referenced across multiple nodes by a consistent, predictable index - allowing a single
 // action to target the same collection across multiple nodes.
 //
-// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
 func getCollectionNames(testCase TestCase) []string {
 	nextIndex := 0
 	collectionIndexByName := map[string]int{}
@@ -597,7 +597,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 
 		case *action.AddView:
 			if action.ExpectedError != "" {
@@ -605,7 +605,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.SDL, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 		}
 	}
 
@@ -617,9 +617,9 @@ func getCollectionNames(testCase TestCase) []string {
 	return collectionNames
 }
 
-func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
-	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
-	splitByType := strings.Split(schema, "type ")
+func getCollectionNamesFromSDL(result map[string]int, sdl string, nextIndex int) int {
+	// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
+	splitByType := strings.Split(sdl, "type ")
 	// Skip the first, as that precede `type ` if `type ` is present,
 	// else there are no types.
 	for i := 1; i < len(splitByType); i++ {
@@ -751,7 +751,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 // will be split.
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
-// they will be split at the first non SchemaUpdate/AddDoc/UpdateDoc action.
+// they will be split at the first non AddCollection/AddDoc/UpdateDoc action.
 func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
@@ -1979,13 +1979,13 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions
-// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
+// contain a collection definition with vector embedding generation and skipVectoEmbeeddingTest is true.
 func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
 		case *action.AddCollection:
-			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+			hasVectorEmbedding = strings.Contains(a.SDL, "@embedding")
 		}
 	}
 	if !runVectorEmbeddingTests && hasVectorEmbedding {

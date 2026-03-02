@@ -64,8 +64,8 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	err = n.PurgeAndRestart(ctx)
 	require.NoError(t, err)
 
-	schemas, err := n.DB.GetCollections(ctx)
+	collections, err := n.DB.GetCollections(ctx)
 	require.NoError(t, err)
 
-	assert.Len(t, schemas, 0)
+	assert.Len(t, collections, 0)
 }

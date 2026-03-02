@@ -24,7 +24,7 @@ func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTo
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -60,7 +60,7 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -101,7 +101,7 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -145,7 +145,7 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -192,7 +192,7 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

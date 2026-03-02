@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionVersionAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsCountGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -95,11 +95,11 @@ func TestCollectionVersionAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsSumGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -203,11 +203,11 @@ func TestCollectionVersionAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionAggregateTopLevelAddsAverageGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsAverageGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

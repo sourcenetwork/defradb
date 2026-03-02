@@ -45,7 +45,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 				},
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

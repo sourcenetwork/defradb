@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var schema = `
+var userCollection = `
 	type Users {
 		name: String
 		age: Int
@@ -30,7 +30,7 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
 			&action.AddCollection{
-				Schema: schema,
+				SDL: userCollection,
 			},
 		},
 		test.Actions...)

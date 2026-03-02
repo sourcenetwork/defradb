@@ -33,7 +33,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_AuthorizedIdentity_AllowAccess(t *tes
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -89,7 +89,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -147,7 +147,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -204,7 +204,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -262,7 +262,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIandCandHTTPClient_No
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 

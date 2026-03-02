@@ -21,7 +21,7 @@ func TestColVersionUpdateReplacePolicy_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -47,7 +47,7 @@ func TestColVersionUpdateReplacePolicyID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -73,7 +73,7 @@ func TestColVersionUpdateReplacePolicyResource_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

@@ -157,14 +157,14 @@ func (db *DB) ListAllEncryptedIndexes(
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
-// AddCollection takes the provided GQL schema in SDL format, and applies it to the database,
+// AddCollection takes the provided GQL SDL and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
-// All schema types provided must not exist prior to calling this, and they may not reference existing
-// types previously defined.
+// All collection types provided must not exist prior to calling this, and they may not
+// reference existing types previously defined.
 func (db *DB) AddCollection(
 	ctx context.Context,
-	schemaString string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
@@ -182,7 +182,7 @@ func (db *DB) AddCollection(
 	}
 	defer txn.Discard()
 
-	cols, err := db.addCollection(ctx, schemaString)
+	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (db *DB) AddCollection(
 	return cols, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the

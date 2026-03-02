@@ -21,7 +21,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						rating: Float

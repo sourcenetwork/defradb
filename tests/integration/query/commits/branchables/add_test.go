@@ -34,7 +34,7 @@ func TestQueryCommitsBranchables_WithMultipleAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @branchable {
 						name: String
 						age: Int

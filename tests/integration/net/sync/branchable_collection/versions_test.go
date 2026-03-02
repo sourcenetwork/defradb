@@ -25,7 +25,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}

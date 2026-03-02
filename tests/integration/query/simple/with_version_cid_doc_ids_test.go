@@ -21,7 +21,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -69,7 +69,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -120,7 +120,7 @@ func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}

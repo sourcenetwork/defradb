@@ -38,7 +38,7 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
@@ -153,7 +153,7 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
@@ -242,7 +242,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
@@ -382,7 +382,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String

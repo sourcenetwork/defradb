@@ -21,7 +21,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -73,7 +73,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -127,7 +127,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -181,7 +181,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -249,7 +249,7 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -293,7 +293,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -372,7 +372,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -496,7 +496,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,

@@ -28,7 +28,7 @@ func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testin
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @encryptedIndex

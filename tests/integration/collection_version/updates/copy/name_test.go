@@ -26,14 +26,14 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						fullName: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {}
 				`,
 			},

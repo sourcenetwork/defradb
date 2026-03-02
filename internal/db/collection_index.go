@@ -155,7 +155,7 @@ func (c *collection) deleteIndexedDocWithID(
 // it will be validated with `schema.IsValidIndexName` method.
 //
 // The provided index description must include at least one field with
-// a name that exists in the collection schema.
+// a name that exists in the collection definition.
 // Also it's `ID` field must be zero. It will be assigned a unique
 // incremental value by the database.
 //
@@ -483,7 +483,7 @@ func (c *collection) addEncryptedIndex(
 		return client.EncryptedIndexDescription{}, err
 	}
 
-	err = c.db.loadSchema(ctx)
+	err = c.db.loadCollectionDefinitions(ctx)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
@@ -563,7 +563,7 @@ func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string)
 		return err
 	}
 
-	err = c.db.loadSchema(ctx)
+	err = c.db.loadCollectionDefinitions(ctx)
 	if err != nil {
 		return err
 	}
@@ -572,7 +572,7 @@ func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string)
 }
 
 // checkExistingFieldsAndAdjustRelFieldNames checks if the fields in the index description
-// exist in the collection schema.
+// exist in the collection definition.
 // If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`.
 func checkExistingFieldsAndAdjustRelFieldNames(
 	collection client.CollectionVersion,
@@ -591,7 +591,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 }
 
 // validateNewEncryptedIndex validates, if encrypted index can be added to the given collection.
-// It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
+// It checks if the field exists in the collection definition and if an encrypted index already exists on the field.
 func validateNewEncryptedIndex(
 	definition client.CollectionVersion,
 	newEncryptedIndex client.EncryptedIndexDescription,

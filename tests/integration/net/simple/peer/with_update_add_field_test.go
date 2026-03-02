@@ -25,7 +25,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -45,7 +45,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 				CollectionIDs: []int{0},
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly add a doc on
+				// Patch the collection on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -114,7 +114,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -134,7 +134,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T
 				CollectionIDs: []int{0},
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly update the doc on
+				// Patch the collection on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[

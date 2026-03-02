@@ -28,7 +28,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -122,7 +122,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t 
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -243,7 +243,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -340,7 +340,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWit
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

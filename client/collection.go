@@ -19,7 +19,7 @@ import (
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
-// host, and many collections may share the same schema.
+// host, and many collection versions may share the same definition.
 //
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
@@ -29,7 +29,7 @@ type Collection interface {
 	// VersionID returns the VersionID of this Collection.
 	VersionID() string
 
-	// CollectionID returns the Root of the Schema used to define this Collection.
+	// CollectionID returns the Root of the definition used to define this Collection.
 	CollectionID() string
 
 	// Version returns the CollectionVersion of this Collection.

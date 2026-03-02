@@ -22,7 +22,7 @@ func TestEncryptFieldsForAddMutation(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age:  Int

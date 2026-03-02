@@ -28,7 +28,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -88,7 +88,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -147,7 +147,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -220,7 +220,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			// This last node is not marked for peer sync
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -313,7 +313,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 			// not be synced to the other nodes.
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -399,7 +399,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -494,7 +494,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -563,7 +563,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int

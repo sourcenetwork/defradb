@@ -46,7 +46,7 @@ func TestNAC_GatesSyncCollectionVersions_AuthorizedIdentity_AllowAccess(t *testi
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

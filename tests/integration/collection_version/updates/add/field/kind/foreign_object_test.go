@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -40,11 +40,11 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObject_UnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -69,7 +69,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -95,7 +95,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -121,7 +121,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -184,7 +184,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToO
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -270,7 +270,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToM
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}

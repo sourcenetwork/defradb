@@ -41,7 +41,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNodeOwner_No
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -88,7 +88,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNodeOwner_Ma
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -139,7 +139,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNonNodeOwner
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
@@ -193,7 +193,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNonNodeOwner
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
@@ -247,7 +247,7 @@ func TestNAC_WithDACEnabled_AccessEmptyUser_PublicDocument_NotAuthorizedError(t 
 			},
 			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),
@@ -301,7 +301,7 @@ func TestNAC_WithDACEnabled_AccessEmptyUser_PublicDocument_MaterializedView_NotA
 			},
 			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),

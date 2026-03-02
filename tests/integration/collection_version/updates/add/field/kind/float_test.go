@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloat(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -54,7 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloatWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -99,7 +99,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloatSubstitutionWithAdd(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

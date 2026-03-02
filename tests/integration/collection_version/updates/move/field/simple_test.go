@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesMoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -45,7 +45,7 @@ func TestCollectionVersionUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String

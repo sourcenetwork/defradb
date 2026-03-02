@@ -138,7 +138,7 @@ func (c *Client) BasicExport(
 
 func (c *Client) AddCollection(
 	ctx context.Context,
-	schema string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
@@ -146,7 +146,7 @@ func (c *Client) AddCollection(
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(sdl))
 	if err != nil {
 		return nil, err
 	}

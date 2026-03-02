@@ -21,7 +21,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type LeftHand {
 						name: String
 						holding: RightHand @primary @relation(name: "left_right")
@@ -98,7 +98,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -133,7 +133,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 			// was broken as `AuthorView.books` would reference a type that does
 			// not exist.
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

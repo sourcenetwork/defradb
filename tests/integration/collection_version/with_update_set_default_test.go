@@ -21,7 +21,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -47,7 +47,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -73,7 +73,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNo
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -109,7 +109,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfN
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

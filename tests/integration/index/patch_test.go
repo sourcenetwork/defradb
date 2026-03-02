@@ -21,7 +21,7 @@ func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						email: String
@@ -58,7 +58,7 @@ func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						email: String @index
@@ -86,7 +86,7 @@ func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						email: String @index

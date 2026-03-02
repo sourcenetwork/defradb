@@ -32,7 +32,7 @@ func TestNAC_AdminRelation_CanDocumentUpdate(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 

@@ -26,7 +26,7 @@ func TestCollectionMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -108,14 +108,14 @@ func TestCollectionMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T
 
 func TestCollectionMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApplyMigration(t *testing.T) {
 	const (
-		schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
-		schemaV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
+		colVersionV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
+		colVersionV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
 	)
 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -159,8 +159,8 @@ func TestCollectionMigrationQuery_WithFilterAndMigrationBetweenOldVersions_Shoul
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV3,
-					DestinationCollectionVersionID: schemaV4,
+					SourceCollectionVersionID:      colVersionV3,
+					DestinationCollectionVersionID: colVersionV4,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -212,7 +212,7 @@ func TestCollectionMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

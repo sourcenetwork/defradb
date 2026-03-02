@@ -24,7 +24,7 @@ import (
 )
 
 //export AddCollection
-func AddCollection(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t) C.Result {
+func AddCollection(nodePtr C.uintptr_t, sdl *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -37,7 +37,7 @@ func AddCollection(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t)
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	opt := options.WithIdentity(options.AddCollection(), iIdentity.FromContext(ctx))
-	collectionVersions, err := store.AddCollection(ctx, C.GoString(schema), opt)
+	collectionVersions, err := store.AddCollection(ctx, C.GoString(sdl), opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

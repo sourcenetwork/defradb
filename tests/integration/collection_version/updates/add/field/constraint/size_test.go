@@ -21,7 +21,7 @@ func TestCollectionVersionUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

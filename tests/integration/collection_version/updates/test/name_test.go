@@ -21,7 +21,7 @@ func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -46,7 +46,7 @@ func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -72,7 +72,7 @@ func TestColVersionUpdateTestName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -94,7 +94,7 @@ func TestColVersionUpdateTestName_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

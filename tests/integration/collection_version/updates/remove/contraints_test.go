@@ -21,7 +21,7 @@ func TestColVersionUpdate_FieldFieldSizeContraint_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						foo: [Int] @constraints(size: 2)
 					}

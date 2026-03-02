@@ -25,7 +25,7 @@ func TestCollectionVersionOneMany_Primary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						dogs: [Dog]
@@ -98,7 +98,7 @@ func TestCollectionVersionOneMany_SelfReferenceOneFieldLexographicallyFirst(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						a: User
 						b: [User]
@@ -148,7 +148,7 @@ func TestCollectionVersionOneMany_SelfReferenceManyFieldLexographicallyFirst(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						b: User
 						a: [User]
@@ -199,7 +199,7 @@ func TestCollectionVersionOneMany_SelfUsingActualName(t *testing.T) {
 				// Note: The @primary directive is required due to
 				// https://github.com/sourcenetwork/defradb/issues/2620
 				// it should be removed when that ticket is closed.
-				Schema: `
+				SDL: `
 					type User {
 						boss: User @primary
 						minions: [User]

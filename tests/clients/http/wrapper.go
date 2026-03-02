@@ -189,10 +189,10 @@ func (w *Wrapper) BasicExport(
 
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddCollection(ctx, schema, opts...)
+	return w.client.AddCollection(ctx, sdl, opts...)
 }
 
 func (w *Wrapper) AddDACPolicy(

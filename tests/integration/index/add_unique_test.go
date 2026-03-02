@@ -22,7 +22,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -73,7 +73,7 @@ func TestUniqueIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int @index(unique: true, name: "age_unique_index")
@@ -132,7 +132,7 @@ func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int 
@@ -186,7 +186,7 @@ func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -246,7 +246,7 @@ func TestUniqueIndexAdd_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int @index(unique: true)
@@ -270,7 +270,7 @@ func TestUniqueIndexAdd_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int @index(unique: true)
@@ -309,7 +309,7 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index(unique: true)

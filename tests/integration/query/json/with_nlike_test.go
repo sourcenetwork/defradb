@@ -24,7 +24,7 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						custom: JSON
 					}

@@ -169,12 +169,12 @@ func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...opti
 
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, w.value, "addCollection", schema)
+	res, err := execute(ctx, w.value, "addCollection", sdl)
 	if err != nil {
 		return nil, err
 	}

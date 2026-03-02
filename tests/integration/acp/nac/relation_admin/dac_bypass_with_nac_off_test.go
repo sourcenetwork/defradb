@@ -34,7 +34,7 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -116,7 +116,7 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, and keep NAC disbaled
 			// to test the disabled NAC case.
@@ -206,7 +206,7 @@ func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *t
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to make public document(s), and keep NAC disbaled to test the disabled NAC case.
 			testUtils.DisableNAC{

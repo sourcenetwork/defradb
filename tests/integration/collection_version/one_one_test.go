@@ -25,7 +25,7 @@ func TestCollectionVersionOneOne_NoPrimary_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						dog: Dog
@@ -49,7 +49,7 @@ func TestCollectionVersionOneOne_TwoPrimaries_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						dog: Dog @primary
@@ -71,7 +71,7 @@ func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						boss: User @primary
 						minion: User

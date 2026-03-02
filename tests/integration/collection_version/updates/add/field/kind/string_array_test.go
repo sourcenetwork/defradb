@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -54,7 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -99,7 +99,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringArraySubstitutionWithAdd(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

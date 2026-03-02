@@ -25,14 +25,14 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly add a doc on
+				// Patch the collection on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -102,14 +102,14 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToNewerCollectionVersion(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will sync docs to
+				// Patch the collection on the node that we will sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
@@ -161,14 +161,14 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedCollectionVersion(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on all nodes
+				// Patch the collection on all nodes
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
@@ -221,7 +221,7 @@ func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotR
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -236,7 +236,7 @@ func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotR
 				CollectionIDs: []int{0},
 			},
 			&action.PatchCollection{
-				// Patch the schema on the first node only
+				// Patch the collection on the first node only
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -254,7 +254,7 @@ func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotR
 			},
 			testUtils.WaitForSync{},
 			&action.PatchCollection{
-				// Update the schema on the second node
+				// Update the collection on the second node
 				NodeID: immutable.Some(1),
 				Patch: `
 					[

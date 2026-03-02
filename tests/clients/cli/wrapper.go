@@ -377,11 +377,11 @@ func (w *Wrapper) BasicExport(
 
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "collection", "add"}
-	args = append(args, schema)
+	args = append(args, sdl)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

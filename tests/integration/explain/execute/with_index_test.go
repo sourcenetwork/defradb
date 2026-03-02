@@ -23,7 +23,7 @@ func TestExecuteExplainWithIndexOnFilter(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -89,7 +89,7 @@ func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -156,7 +156,7 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]

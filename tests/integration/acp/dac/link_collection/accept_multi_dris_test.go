@@ -55,7 +55,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: fmt.Sprintf(`
+				SDL: fmt.Sprintf(`
 					type OldUsers @policy(
 						id: "{{.Policy0}}",
 						resource: "%s"
@@ -108,7 +108,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: fmt.Sprintf(`
+				SDL: fmt.Sprintf(`
 					type NewUsers @policy(
 						id: "{{.Policy1}}",
 						resource: "%s"

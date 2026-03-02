@@ -25,7 +25,7 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: true)
 						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
@@ -83,7 +83,7 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValue(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						created: DateTime @default(dateTime: UTC_NOW)
 					}
@@ -117,7 +117,7 @@ func TestMutationAdd_WithDefaultValues_NilValuesProvided_SetsNilValue(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: true)
 						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
@@ -184,7 +184,7 @@ func TestMutationAdd_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: true)
 						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
@@ -259,7 +259,7 @@ func TestMutationAdd_WithDefaultValue_NoValueProvided_AddedTwice_ReturnsError(t 
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
@@ -293,7 +293,7 @@ func TestMutationAdd_WithDefaultValue_NoValueProvided_AddedTwice_UniqueIndex_Ret
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @default(string: "Bob") @index(unique: true)
 						age: Int @default(int: 40)
@@ -320,7 +320,7 @@ func TestMutationAdd_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: 1)
@@ -356,7 +356,7 @@ func TestMutationAdd_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: 1.2)
@@ -392,7 +392,7 @@ func TestMutationAdd_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: true)
@@ -428,7 +428,7 @@ func TestMutationAdd_WithDefaultJSONNullValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: null)
@@ -446,7 +446,7 @@ func TestMutationAdd_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: {one: 1})
@@ -482,7 +482,7 @@ func TestMutationAdd_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						metadata: JSON @default(json: {one: {two: {i: 3, f: 1.2, b: true, s: "three", n: null}}})
@@ -520,7 +520,7 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDefaul
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						created: DateTime @default(dateTime: UTC_NOW)

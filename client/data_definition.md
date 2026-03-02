@@ -60,6 +60,6 @@ Related objects defined in a [view](#views) are embedded objects.
 
 Schemas represent [global](#global-definitions) data shapes.  They cannot host document data themselves or be queried, that is done via [collections](#collections).
 
-Schemas are defined by the `SchemaDescription` struct.  They are immutable, however new versions can be created using the `PatchSchema` function.
+Schemas are immutable, however new versions can be created using the `PatchCollection` function.
 
 Multiple [collections](#collections) may reference the same schema.

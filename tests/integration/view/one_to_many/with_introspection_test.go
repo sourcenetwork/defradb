@@ -22,7 +22,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]

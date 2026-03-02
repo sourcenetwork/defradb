@@ -28,7 +28,7 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

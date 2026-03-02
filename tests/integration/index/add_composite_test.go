@@ -22,7 +22,7 @@ func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int 
@@ -77,7 +77,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_SetsDefaultDirection(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int 
@@ -114,7 +114,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_OverridesDefaultDirection(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int 
@@ -151,7 +151,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_ImplicitlyAddsField(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index(includes: [{field: "age"}])
 						age: Int 
@@ -185,7 +185,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_SetsDefaultDirection(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age"}])
 						age: Int 
@@ -222,7 +222,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_OverridesDefaultDirection(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
 						age: Int 
@@ -259,7 +259,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_WithExplicitIncludes_RespectsOrde
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index(includes: [{field: "age"}, {field: "name"}])
 						age: Int 

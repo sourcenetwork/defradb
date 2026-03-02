@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/goji"
 )
 
-func (c *clientCollection) add(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value, error) {
 	var docMap map[string]any
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
 		return js.Undefined(), err
@@ -43,7 +43,7 @@ func (c *clientCollection) add(this js.Value, args []js.Value) (js.Value, error)
 	return js.Undefined(), err
 }
 
-func (c *clientCollection) addMany(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.Value, error) {
 	var docMaps []map[string]any
 	if err := structArg(args, 0, "doc", &docMaps); err != nil {
 		return js.Undefined(), err
@@ -93,7 +93,7 @@ func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]opt
 	return []options.Enumerable[options.AddDocumentOptions]{opt}, nil
 }
 
-func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Value, error) {
 	docIDString, err := stringArg(args, 0, "docID")
 	if err != nil {
 		return js.Undefined(), err
@@ -125,7 +125,7 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	return js.Undefined(), err
 }
 
-func (c *clientCollection) delete(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Value, error) {
 	docIDString, err := stringArg(args, 0, "docID")
 	if err != nil {
 		return js.Undefined(), err
@@ -147,7 +147,7 @@ func (c *clientCollection) delete(this js.Value, args []js.Value) (js.Value, err
 	return js.ValueOf(deleted), nil
 }
 
-func (c *clientCollection) exists(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Value, error) {
 	docIDString, err := stringArg(args, 0, "docID")
 	if err != nil {
 		return js.Undefined(), err
@@ -169,7 +169,7 @@ func (c *clientCollection) exists(this js.Value, args []js.Value) (js.Value, err
 	return js.ValueOf(exists), nil
 }
 
-func (c *clientCollection) updateWithFilter(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
 	filter, err := stringArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
@@ -191,7 +191,7 @@ func (c *clientCollection) updateWithFilter(this js.Value, args []js.Value) (js.
 	return goji.MarshalJS(result)
 }
 
-func (c *clientCollection) deleteWithFilter(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
 	filter, err := stringArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
@@ -209,7 +209,7 @@ func (c *clientCollection) deleteWithFilter(this js.Value, args []js.Value) (js.
 	return goji.MarshalJS(result)
 }
 
-func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value, error) {
 	docIDString, err := stringArg(args, 0, "docID")
 	if err != nil {
 		return js.Undefined(), err

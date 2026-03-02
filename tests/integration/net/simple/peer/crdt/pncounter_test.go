@@ -30,7 +30,7 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						points: Int @crdt(type: pncounter)
@@ -91,7 +91,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int @crdt(type: pncounter)

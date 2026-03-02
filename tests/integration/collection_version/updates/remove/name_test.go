@@ -21,7 +21,7 @@ func TestColVersionUpdateRemoveNameByVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -48,7 +48,7 @@ func TestColVersionUpdateRemoveName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String

@@ -22,7 +22,7 @@ func TestMutationAddFieldKinds_WithDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						time: DateTime
 					}
@@ -57,7 +57,7 @@ func TestMutationAddFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						time: DateTime
 					}
@@ -109,7 +109,7 @@ func TestMutationAddFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						time: DateTime
 					}
@@ -139,7 +139,7 @@ func TestMutationAdd_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						created: DateTime

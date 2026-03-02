@@ -34,7 +34,7 @@ func (c *Collection) AddDocument(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "add", docVal, makeDocAddOptions(opts))
+	_, err = execute(ctx, c.client, "addDocument", docVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (c *Collection) AddManyDocuments(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "addMany", docsVal, makeDocAddOptions(opts))
+	_, err = execute(ctx, c.client, "addManyDocuments", docsVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (c *Collection) UpdateDocument(
 		return err
 	}
 	docID := doc.ID().String()
-	_, err = execute(ctx, c.client, "update", docID, string(patch))
+	_, err = execute(ctx, c.client, "updateDocument", docID, string(patch))
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (c *Collection) DeleteDocument(
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "delete", docID.String())
+	res, err := execute(ctx, c.client, "deleteDocument", docID.String())
 	if err != nil {
 		return false, err
 	}
@@ -143,7 +143,7 @@ func (c *Collection) ExistsDocument(
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "exists", docID.String())
+	res, err := execute(ctx, c.client, "existsDocument", docID.String())
 	if err != nil {
 		return false, err
 	}
@@ -158,7 +158,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 ) (*client.UpdateResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "updateWithFilter", filter, updater)
+	res, err := execute(ctx, c.client, "updateDocumentsWithFilter", filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 ) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "deleteWithFilter", filter)
+	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter", filter)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (c *Collection) GetDocument(
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	showDeleted := opt.ShowDeleted
-	res, err := execute(ctx, c.client, "get", docID.String(), showDeleted)
+	res, err := execute(ctx, c.client, "getDocument", docID.String(), showDeleted)
 	if err != nil {
 		return nil, err
 	}

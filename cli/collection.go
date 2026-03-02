@@ -29,7 +29,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
 		Short: "Interact with a collection.",
-		Long:  `Describe, patch, set-active, and truncate collections.`,
+		Long:  `Add, describe, patch, set-active, and truncate collections.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
 			if err := setContextRootDir(cmd); err != nil {
@@ -51,7 +51,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			// The 'add' subcommand creates new collections and doesn't need to resolve an
 			// existing collection from the context.
 			// If we don't do this, we will hit the NAC gate for collection-get permission
-			// when we do the [GetCollection()] call below.
+			// when we do the [GetCollections()] call below.
 			if cmd.Name() == "add" {
 				return nil
 			}

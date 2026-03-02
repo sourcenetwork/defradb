@@ -27,7 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// DeleteWithFilter deletes using a filter to target documents for delete.
+// DeleteDocumentsWithFilter deletes using a filter to target documents for delete.
 func (c *collection) DeleteDocumentsWithFilter(
 	ctx context.Context,
 	filter any,

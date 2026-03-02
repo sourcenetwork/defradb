@@ -83,7 +83,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				Policy:   policy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @policy(
 						id: "{{.Policy0}}",
 						resource: "users"

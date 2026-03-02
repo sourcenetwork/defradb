@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -44,7 +44,7 @@ func TestCollectionVersionUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -66,7 +66,7 @@ func TestCollectionVersionUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -89,7 +89,7 @@ func TestCollectionVersionUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -114,7 +114,7 @@ func TestCollectionVersionUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -139,7 +139,7 @@ func TestCollectionVersionUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsI
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

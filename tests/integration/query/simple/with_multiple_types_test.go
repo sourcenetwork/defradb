@@ -29,7 +29,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -89,7 +89,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -152,7 +152,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -180,7 +180,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -218,7 +218,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -281,7 +281,7 @@ func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Type0 {
 						f: String
 					}

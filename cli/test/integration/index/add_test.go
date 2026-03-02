@@ -24,7 +24,7 @@ func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -54,7 +54,7 @@ func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -85,7 +85,7 @@ func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -116,7 +116,7 @@ func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -175,7 +175,7 @@ func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -198,7 +198,7 @@ func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -221,7 +221,7 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -244,7 +244,7 @@ func TestIndexAdd_WithDuplicateName_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int

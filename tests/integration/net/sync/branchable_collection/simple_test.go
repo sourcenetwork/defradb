@@ -27,7 +27,7 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 						age: Int
@@ -89,7 +89,7 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -157,7 +157,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -238,7 +238,7 @@ func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *tes
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -259,7 +259,7 @@ func TestBranchableCollectionSync_WithNonExistentCollection_ShouldError(t *testi
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}

@@ -25,7 +25,7 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
@@ -69,7 +69,7 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 		},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
@@ -96,7 +96,7 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
@@ -124,7 +124,7 @@ func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 

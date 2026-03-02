@@ -40,7 +40,7 @@ func TestNAC_GatesDeleteEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -84,7 +84,7 @@ func TestNAC_GatesDeleteEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -123,7 +123,7 @@ func TestNAC_GatesDeleteEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthor
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -161,7 +161,7 @@ func TestNAC_GatesDeleteEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testi
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -200,7 +200,7 @@ func TestNAC_GatesDeleteEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAut
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

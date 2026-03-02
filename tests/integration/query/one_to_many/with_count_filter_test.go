@@ -184,7 +184,7 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 				type Book {
 					name: String
 					rating: Float

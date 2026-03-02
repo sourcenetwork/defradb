@@ -34,7 +34,7 @@ func TestMutationAdd_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						about: String
@@ -90,7 +90,7 @@ func TestMutationAdd_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_ShouldSu
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						about: String

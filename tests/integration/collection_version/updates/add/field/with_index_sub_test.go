@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -54,7 +54,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDe
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -87,7 +87,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentN
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -109,7 +109,7 @@ func TestCollectionVersionUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

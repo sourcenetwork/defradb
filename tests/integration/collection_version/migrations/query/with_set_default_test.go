@@ -29,7 +29,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -92,7 +92,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigrati
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -170,7 +170,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAdded
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean

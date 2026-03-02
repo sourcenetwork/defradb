@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// Migrations need to be able to be registered for unknown schema ids, so they
+// Migrations need to be able to be registered for unknown collection version ids, so they
 // may migrate to/from them if recieved by the P2P system.
 func TestCollectionMigrationDoesNotErrorGivenUnknownCollectionRoots(t *testing.T) {
 	test := testUtils.TestCase{
@@ -215,7 +215,7 @@ func TestCollectionMigration_ConfigureMigrationSkippingVersion_Errors(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users { }
 				`,
 			},

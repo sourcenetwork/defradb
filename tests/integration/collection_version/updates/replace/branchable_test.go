@@ -21,7 +21,7 @@ func TestColVersionUpdateReplaceIsBranchable_UpdatingFromTrueToFalse_Errors(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -49,7 +49,7 @@ func TestColVersionUpdateReplaceIsBranchable_UpdatingFromFalseToTrue_Errors(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @branchable(if: false) {
 						name: String
 					}

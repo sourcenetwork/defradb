@@ -21,7 +21,7 @@ func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -44,7 +44,7 @@ func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -67,7 +67,7 @@ func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -90,7 +90,7 @@ func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testin
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -112,7 +112,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *tes
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -138,7 +138,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
-				InlineSchema: `
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int

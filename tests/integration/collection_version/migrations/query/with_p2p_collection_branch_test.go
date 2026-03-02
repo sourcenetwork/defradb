@@ -22,13 +22,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestCollectionMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocOnOtherCollectionBranch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean

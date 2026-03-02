@@ -76,12 +76,12 @@ func TestGetCollectionVersion_ReturnsAllCollections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {}
 				`,
 			},
@@ -153,12 +153,12 @@ func TestGetCollectionVersion_ReturnsCollectionForGivenRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {}
 				`,
 			},
@@ -220,12 +220,12 @@ func TestGetCollectionVersion_ReturnsCollectionForGivenName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {}
 				`,
 			},

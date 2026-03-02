@@ -21,7 +21,7 @@ func TestMutationAddFieldKinds_WithFloat(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						points: Float
 					}
@@ -56,7 +56,7 @@ func TestMutationAddFieldKinds_WithFloat32(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						points: Float32
 					}
@@ -91,7 +91,7 @@ func TestMutationAddFieldKinds_WithFloat64(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						points: Float64
 					}

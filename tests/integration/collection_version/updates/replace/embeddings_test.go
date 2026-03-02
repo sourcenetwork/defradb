@@ -22,7 +22,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -51,7 +51,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -80,7 +80,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -109,7 +109,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String

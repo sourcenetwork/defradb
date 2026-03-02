@@ -33,7 +33,7 @@ func TestNAC_GatesCollectionGetByName_AuthorizedIdentity_AllowAccess(t *testing.
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

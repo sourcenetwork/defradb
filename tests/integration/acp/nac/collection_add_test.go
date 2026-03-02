@@ -33,7 +33,7 @@ func TestNAC_GatesCollectionAdd_AllowIfAuthorizedElseError(t *testing.T) {
 			// We haven't authorized non-identities. So, this should error.
 			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -44,7 +44,7 @@ func TestNAC_GatesCollectionAdd_AllowIfAuthorizedElseError(t *testing.T) {
 			// Wrong user/identity will also not be authorized.
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -55,7 +55,7 @@ func TestNAC_GatesCollectionAdd_AllowIfAuthorizedElseError(t *testing.T) {
 			// This should work as the identity is authorized.
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

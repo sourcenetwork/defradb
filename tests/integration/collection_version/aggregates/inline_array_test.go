@@ -21,7 +21,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -145,7 +145,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						FavouriteFloats: [Float!]
 					}
@@ -267,7 +267,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -481,7 +481,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilte
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Boolean]
 					}
@@ -607,7 +607,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Boolean!]
 					}
@@ -733,7 +733,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilte
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Int]
 					}
@@ -883,7 +883,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Int!]
 					}
@@ -1033,7 +1033,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Float]
 					}
@@ -1183,7 +1183,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [Float!]
 					}
@@ -1333,7 +1333,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [String]
 					}
@@ -1483,7 +1483,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Favourites: [String!]
 					}

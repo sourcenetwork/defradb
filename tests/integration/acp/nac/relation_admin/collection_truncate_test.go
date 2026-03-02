@@ -41,7 +41,7 @@ func TestNAC_AdminRelation_CanCollectionTruncate(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -94,7 +94,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCollectionTruncate(t *testing
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

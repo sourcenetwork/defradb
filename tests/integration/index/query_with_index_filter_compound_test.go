@@ -27,7 +27,7 @@ func TestQueryWithIndex_WithOrFilter_ShouldFetchCorrectDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -92,7 +92,7 @@ func TestQueryWithIndex_WithOrFilterWithThreeBranches_ShouldUseIndex(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -161,7 +161,7 @@ func TestQueryWithIndex_WithOrFilterWithRangeConditions_ShouldUseIndex(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -227,7 +227,7 @@ func TestQueryWithIndex_WithOrFilterWithOverlappingConditions_ShouldDeduplicateR
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -292,7 +292,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_ShouldNotUseInde
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -368,7 +368,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithOverlap_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -437,7 +437,7 @@ func TestQueryWithIndex_WithOrFilterOnIndexedAndNonIndexedField_ShouldFallbackTo
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -504,7 +504,7 @@ func TestQueryWithIndex_WithOrFilterOnOnlyNonIndexedFields_ShouldNotUseIndex(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -570,7 +570,7 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						numbers: [Int!] @index
@@ -633,7 +633,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithRangeConditi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int @index

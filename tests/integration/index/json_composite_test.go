@@ -114,7 +114,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 			test := testUtils.TestCase{
 				Actions: []any{
 					&action.AddCollection{
-						Schema: `
+						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
 								name: String 
 								custom: JSON 
@@ -277,7 +277,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			test := testUtils.TestCase{
 				Actions: []any{
 					&action.AddCollection{
-						Schema: `
+						SDL: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
 								name: String 
 								custom: JSON 
@@ -469,7 +469,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
 					&action.AddCollection{
-						Schema: `
+						SDL: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
 								name: String 
 								custom: JSON 
@@ -661,7 +661,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 			test := testUtils.TestCase{
 				Actions: []any{
 					&action.AddCollection{
-						Schema: `
+						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
 								name: String 
 								custom: JSON 
@@ -853,7 +853,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 			test := testUtils.TestCase{
 				Actions: []any{
 					&action.AddCollection{
-						Schema: `
+						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "tags"}]) {
 								name: String 
 								custom: JSON 

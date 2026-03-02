@@ -75,7 +75,7 @@ func (t *transaction) discard(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, error) {
-	schema, err := stringArg(args, 0, "schema")
+	sdl, err := stringArg(args, 0, "sdl")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -85,7 +85,7 @@ func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, e
 	}
 	opt := options.AddCollection()
 	setOptIdentity(opt, args, 1)
-	cols, err := t.txn.AddCollection(ctx, schema, opt)
+	cols, err := t.txn.AddCollection(ctx, sdl, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

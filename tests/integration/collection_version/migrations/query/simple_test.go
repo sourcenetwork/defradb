@@ -26,7 +26,7 @@ func TestCollectionMigrationQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -87,7 +87,7 @@ func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -163,13 +163,13 @@ func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Users may want to register migrations before the schema is locally updated. This may be particularly useful
+// Users may want to register migrations before the collection is locally updated. This may be particularly useful
 // for downgrading documents recieved via P2P.
 func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -230,7 +230,7 @@ func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -302,7 +302,7 @@ func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -376,7 +376,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -463,7 +463,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -550,7 +550,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWron
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -638,13 +638,13 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWron
 // from functioning.
 //
 // It is important to allow these orphans to be persisted as they may later become linked to the
-// collection version history chain as either new migrations are added or the local schema is updated
+// collection version history chain as either new migrations are added or the local collection is updated
 // bridging the gap.
-func TestCollectionMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
+func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -705,7 +705,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -767,7 +767,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						mobile: [Int!]
 					}
@@ -829,7 +829,7 @@ func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -891,7 +891,7 @@ func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequ
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -968,7 +968,7 @@ func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequ
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -1031,7 +1031,7 @@ func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldN
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

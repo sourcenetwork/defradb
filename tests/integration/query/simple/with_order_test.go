@@ -134,7 +134,7 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					Points: Float32
 				}`,
@@ -201,7 +201,7 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					HeightM: Float
 				}`,
@@ -268,7 +268,7 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					Raw: Blob
 				}`,
@@ -461,7 +461,7 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					Points: Float32
 				}`,
@@ -528,7 +528,7 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					HeightM: Float
 				}`,
@@ -595,7 +595,7 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					Raw: Blob
 				}`,

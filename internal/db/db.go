@@ -311,10 +311,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// if we're loading an existing database, just load the schema
+	// if we're loading an existing database, just load the collection definitions
 	// and migrations and finish initialization
 	if exists {
-		err = db.loadSchema(ctx)
+		err = db.loadCollectionDefinitions(ctx)
 		if err != nil {
 			return err
 		}

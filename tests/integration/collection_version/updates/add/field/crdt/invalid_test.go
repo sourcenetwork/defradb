@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -44,7 +44,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTInvalidErrorsMultiple(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

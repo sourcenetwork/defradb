@@ -132,7 +132,11 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
 				Name:        "collection",
-				Description: "Add, remove, or update documents",
+				Description: "Add, describe, patch, and manage collections",
+			},
+			&openapi3.Tag{
+				Name:        "document",
+				Description: "Add, get, update, or delete documents",
 			},
 			&openapi3.Tag{
 				Name:        "view",

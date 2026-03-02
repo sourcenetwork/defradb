@@ -21,7 +21,7 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -56,7 +56,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}
@@ -91,7 +91,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocumen
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}

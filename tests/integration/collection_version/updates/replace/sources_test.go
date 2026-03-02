@@ -21,7 +21,7 @@ func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -47,7 +47,7 @@ func TestColVersionUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

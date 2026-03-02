@@ -21,7 +21,7 @@ func TestCollectionVersion_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name_v: [String!] @embedding
 					}
@@ -38,7 +38,7 @@ func TestCollectionVersion_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name_v: [Int!] @embedding
 					}
@@ -54,7 +54,7 @@ func TestCollectionVersion_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name_v: [Float!] @embedding
 					}
@@ -71,7 +71,7 @@ func TestCollectionVersion_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name_v: [Float64!] @embedding
 					}
@@ -88,7 +88,7 @@ func TestCollectionVersion_WithNillableFloat32ForEmbedding_ShouldError(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name_v: [Float32] @embedding
 					}
@@ -105,7 +105,7 @@ func TestCollectionVersion_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						name_v: [Float32!] @embedding(fields: ["name"], provider: "ollama", model: "nomic-embed-text",  url: "http://localhost:11434/api")
@@ -122,7 +122,7 @@ func TestCollectionVersion_WithNonExistantFieldForEmbedding_ShouldError(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						name_v: [Float32!] @embedding(fields: ["name", "about"])
@@ -140,7 +140,7 @@ func TestCollectionVersion_WithInvalidEmbeddingGenerationFieldType_ShouldError(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -159,7 +159,7 @@ func TestCollectionVersion_WithUnsupportedProviderForEmbedding_ShouldError(t *te
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -177,7 +177,7 @@ func TestCollectionVersion_WithMissingModelForEmbedding_ShouldError(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -195,7 +195,7 @@ func TestCollectionVersion_ReferenceToSelfForEmbedding_ShouldError(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -213,7 +213,7 @@ func TestCollectionVersion_ReferenceToAnotherEmbedding_ShouldError(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String

@@ -24,7 +24,7 @@ func TestCollectionVersionUpdatesReplaceField(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String

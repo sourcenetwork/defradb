@@ -35,7 +35,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @branchable {
 						name: String
 					}

@@ -21,7 +21,7 @@ func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book @primary

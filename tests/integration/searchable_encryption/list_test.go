@@ -22,7 +22,7 @@ func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex
@@ -65,7 +65,7 @@ func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int 
@@ -107,7 +107,7 @@ func TestEncryptedIndexList_WhenRequestingAllIndexes_ShouldReturn(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex

@@ -21,7 +21,7 @@ func TestCollectionVersionInlineArrayAddsCollectionGivenSingleType(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -51,14 +51,14 @@ func TestCollectionVersionInlineArrayAddsCollectionGivenSecondType(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {
 						pageNumbers: [Int!]
 					}

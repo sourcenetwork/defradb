@@ -17,7 +17,7 @@ import (
 
 func gqlSchemaOneToManyToOne() *action.AddCollection {
 	return &action.AddCollection{
-		Schema: (`
+		SDL: (`
 			type Author {
 				name: String
 				age: Int

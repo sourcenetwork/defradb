@@ -39,7 +39,7 @@ func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type User {
+				SDL: `type User {
 					name: String
 					pointsList: [Float64!]
 				}`,

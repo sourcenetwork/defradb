@@ -21,7 +21,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 						age: Int

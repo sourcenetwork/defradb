@@ -4,7 +4,7 @@ Interact with a collection.
 
 ### Synopsis
 
-Describe, patch, set-active, and truncate collections.
+Add, describe, patch, set-active, and truncate collections.
 
 ### Options
 

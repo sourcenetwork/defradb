@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// AddCollection is an action that will add the given GQL schema to the Defra nodes.
+// AddCollection is an action that will add the given GQL SDL to the Defra nodes.
 type AddCollection struct {
 	stateful
 
@@ -32,8 +32,8 @@ type AddCollection struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The schema to add.
-	Schema string
+	// The collection definition SDL to add.
+	SDL string
 
 	// Optionally, the expected results.
 	//
@@ -59,14 +59,14 @@ func (a *AddCollection) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		schema := replace(a.s, nodeID, a.Schema)
+		sdl := replace(a.s, nodeID, a.SDL)
 
 		opts := options.AddCollection()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		results, err := node.AddCollection(a.s.Ctx, schema, opts)
+		results, err := node.AddCollection(a.s.Ctx, sdl, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
@@ -81,6 +81,6 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
+	// If the collection was updated we need to refresh the collection definitions.
 	refreshCollections(a.s)
 }

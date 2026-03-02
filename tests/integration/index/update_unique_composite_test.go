@@ -21,7 +21,7 @@ func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_Should
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String 
 						age: Int 

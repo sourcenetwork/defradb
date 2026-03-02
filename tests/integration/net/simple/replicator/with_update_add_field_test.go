@@ -25,7 +25,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultist
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -41,7 +41,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultist
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will update the doc on
+				// Patch the collection on the node that we will update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -110,7 +110,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -126,7 +126,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly update the doc on
+				// Patch the collection on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[

@@ -43,7 +43,7 @@ func TestNAC_AdminRelation_CanCollectionSetActiveVersion(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -105,7 +105,7 @@ func TestNAC_AdminRelation_CLIClient_CanCollectionSetActiveVersion(t *testing.T)
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

@@ -30,7 +30,7 @@ func TestNAC_GatesDocumentAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 
 			// This should work as the identity is authorized.
@@ -67,7 +67,7 @@ func TestNAC_GatesDocumentAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 
 			// We haven't authorized non-identities. So, this should error.
@@ -107,7 +107,7 @@ func TestNAC_GatesDocumentAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 
 			// Wrong user/identity will also not be authorized.

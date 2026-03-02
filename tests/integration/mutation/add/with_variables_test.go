@@ -23,7 +23,7 @@ func TestMutationAddWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -58,7 +58,7 @@ func TestMutationAddWithDefaultVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -88,7 +88,7 @@ func TestMutationAdd_WithVariableInJSONObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						embed: JSON
 					}
@@ -123,7 +123,7 @@ func TestMutationAdd_WithJSONVariable_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						embed: JSON
 					}

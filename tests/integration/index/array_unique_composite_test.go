@@ -26,7 +26,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "nfts1"}, {field: "nfts2"}]) {
 						name: String 
 						nfts1: [Int!] 
@@ -76,7 +76,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsAddedThatViolatesUniqueness_Error(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "nfts1"}, {field: "nfts2"}]) {
 						name: String 
 						nfts1: [Int!] 
@@ -116,7 +116,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "nfts1"}, {field: "nfts2"}]) {
 						name: String 
 						nfts1: [Int!] 
@@ -156,7 +156,7 @@ func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "nfts1"}, {field: "nfts2"}]) {
 						name: String 
 						nfts1: [Int] 

@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -77,7 +77,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	col := mustGetContextClientCollection(req)
 
@@ -123,7 +123,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DeleteDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -143,7 +143,7 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))

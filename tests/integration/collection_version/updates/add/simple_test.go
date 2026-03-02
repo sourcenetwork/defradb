@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionVersionUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddSimpleErrorsAddingCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -50,11 +50,11 @@ func TestCollectionVersionUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
+func TestCollectionVersionUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -77,7 +77,7 @@ func TestCollectionVersionUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -106,11 +106,11 @@ func TestCollectionVersionUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
+func TestCollectionVersionUpdatesAddSimpleErrorsAddingUnsupportedCollectionPropAtRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

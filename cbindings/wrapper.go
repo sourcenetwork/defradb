@@ -426,16 +426,16 @@ func (w *CWrapper) BasicExport(
 
 func (w *CWrapper) AddCollection(
 	ctx context.Context,
-	schema string,
+	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
-	cSchema := C.CString(schema)
-	defer C.free(unsafe.Pointer(cSchema))
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.AddCollection(callHandle, cSchema, cIdentity))
+	res := ConvertAndFreeCResult(C.AddCollection(callHandle, cSDL, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

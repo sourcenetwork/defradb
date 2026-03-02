@@ -46,7 +46,7 @@ func TestNAC_AdminRelation_CanSyncCollectionVersions(t *testing.T) {
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

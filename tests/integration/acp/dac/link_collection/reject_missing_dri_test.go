@@ -26,7 +26,7 @@ func TestACP_LinkCollection_WhereNoPolicyWasAdded_CollectionRejected(t *testing.
 		Actions: []any{
 
 			&action.AddCollection{
-				Schema: fmt.Sprintf(`
+				SDL: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",
 						resource: "users"
@@ -95,7 +95,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: fmt.Sprintf(`
+				SDL: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",
 						resource: "users"

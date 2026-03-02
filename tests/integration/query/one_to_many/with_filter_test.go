@@ -21,7 +21,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -107,7 +107,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -176,7 +176,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -257,7 +257,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -360,7 +360,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,
@@ -472,7 +472,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
@@ -566,7 +566,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: bookAuthorGQLSchema,
+				SDL: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
 				CollectionID: 0,

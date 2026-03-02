@@ -21,7 +21,7 @@ func TestManyToMany_QueryFromSecondary_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
                     type Student {
                         name: String
                         enrollments: [Enrollment] @relation(name: "student_enrollments")

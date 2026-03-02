@@ -21,7 +21,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
 						age: Int
@@ -98,7 +98,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
 						age: Int
@@ -181,7 +181,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
@@ -275,7 +275,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
@@ -363,7 +363,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
@@ -452,7 +452,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
@@ -531,7 +531,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
@@ -608,7 +608,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
@@ -665,7 +665,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
@@ -722,7 +722,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
 						age: Int
@@ -757,7 +757,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
 						age: Int
@@ -805,7 +805,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -887,7 +887,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -973,7 +973,7 @@ func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUse
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(includes: [{field: "age", direction: DESC}, {field: "name"}]) {
 						name: String
 						age: Int

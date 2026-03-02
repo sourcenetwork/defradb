@@ -23,7 +23,7 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: true)
 						created: DateTime @default(dateTime: "2000-07-23T03:00:00.000Z")
@@ -100,7 +100,7 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: invalid)
 					}
@@ -117,7 +117,7 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						active: Boolean @default(int: 10)
 					}
@@ -134,7 +134,7 @@ func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *te
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
 					}
@@ -151,7 +151,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						friend: User @default(string: "Bob")
 					}
@@ -168,7 +168,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						names: [String] @default(string: "Bob")
 					}

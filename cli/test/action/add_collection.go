@@ -12,13 +12,13 @@ package action
 
 import "github.com/stretchr/testify/require"
 
-// AddCollection executes the `client collection add` command using the given schema.
+// AddCollection executes the `client collection add` command using the given SDL.
 type AddCollection struct {
 	stateful
 	augmented
 
-	// The schema string value to be passed directly to the command (i.e. not via a file)
-	InlineSchema string
+	// The SDL string value to be passed directly to the command (i.e. not via a file)
+	InlineSDL string
 }
 
 var _ Action = (*AddCollection)(nil)
@@ -26,7 +26,7 @@ var _ Action = (*AddCollection)(nil)
 func (a *AddCollection) Execute() {
 	args := []string{"client", "collection", "add"}
 
-	args = append(args, a.InlineSchema)
+	args = append(args, a.InlineSDL)
 
 	args = a.AppendDirections(args)
 	args = append(args, a.AdditionalArgs...)

@@ -21,7 +21,7 @@ func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
                     type Users {
                         name: String
                         age: Int

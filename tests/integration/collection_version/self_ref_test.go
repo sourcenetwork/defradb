@@ -24,7 +24,7 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						boss: User
 					}
@@ -110,7 +110,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 		Actions: []any{
 			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -354,7 +354,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID_SingleSid
 		Actions: []any{
 			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 					}
@@ -451,7 +451,7 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 				// between the two (User/Dog and Cat/Mouse) circles, this is included to ensure that
 				// the code does not incorrectly merge the User/Dog and Cat/Mouse circles into a single
 				// circle.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -740,7 +740,7 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 				// independent User/Dog and Cat/Mouse circles, causing the 4 types to be locked together in
 				// a larger circle (a relationship DAG cannot be formed) - all 4 types must thus share the
 				// same base ID.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -1053,7 +1053,7 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 				// at different points in the same direction - this circle forms from
 				// User=>Dog=>Mouse=>Cat=>User=>etc.  This test ensures that the two independent circles do not
 				// confuse the code into ignoring the larger circle.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")

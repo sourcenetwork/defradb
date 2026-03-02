@@ -2857,8 +2857,12 @@
     ],
     "tags": [
         {
-            "description": "Add, remove, or update documents",
+            "description": "Add, describe, patch, and manage collections",
             "name": "collection"
+        },
+        {
+            "description": "Add, get, update, or delete documents",
+            "name": "document"
         },
         {
             "description": "Add views",

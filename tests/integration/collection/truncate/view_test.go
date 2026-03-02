@@ -27,7 +27,7 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -107,7 +107,7 @@ func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testin
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

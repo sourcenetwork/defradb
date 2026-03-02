@@ -21,7 +21,7 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
@@ -92,7 +92,7 @@ func TestQueryJSON_WithAllFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,

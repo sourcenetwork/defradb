@@ -38,7 +38,7 @@ func TestNAC_AdminRelation_CanAddEncryptedIndex(t *testing.T) {
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -85,7 +85,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddEncryptedIndex(t *testing.
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

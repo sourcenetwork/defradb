@@ -33,7 +33,7 @@ func TestNAC_GatesCollectionSetActiveVersion_AuthorizedIdentity_AllowAccess(t *t
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -83,7 +83,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_NotAuthorizedError(t *te
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -131,7 +131,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_CLIClient_NotAuthorizedE
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -182,7 +182,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_NotAuthorizedError(t 
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -230,7 +230,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_CLIClient_NotAuthoriz
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

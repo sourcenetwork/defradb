@@ -39,7 +39,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -112,7 +112,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -149,7 +149,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -186,7 +186,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -224,7 +224,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -262,7 +262,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -299,7 +299,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -336,7 +336,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
 						age: Int
@@ -374,7 +374,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -412,7 +412,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -457,7 +457,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -532,7 +532,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -586,7 +586,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -655,7 +655,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
 						email: String 
@@ -751,7 +751,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
 						email: String 
@@ -790,7 +790,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
 						email: String 
@@ -825,7 +825,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -853,7 +853,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -906,7 +906,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -961,7 +961,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -1027,7 +1027,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -1091,7 +1091,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -1191,7 +1191,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -1331,7 +1331,7 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}, {field: "age"}]) {
 						name: String
 						email: String

@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// UpdateWithFilter updates using a filter to target documents for update.
+// UpdateDocumentsWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch,
 // parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateDocumentsWithFilter(

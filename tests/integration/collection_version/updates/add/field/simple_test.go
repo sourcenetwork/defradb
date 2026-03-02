@@ -28,7 +28,7 @@ func TestCollectionVersionUpdatesAddFieldSimple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -93,7 +93,7 @@ func TestCollectionVersionUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -128,7 +128,7 @@ func TestCollectionVersionUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryab
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -185,7 +185,7 @@ func TestCollectionVersionUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -218,7 +218,7 @@ func TestCollectionVersionUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -253,7 +253,7 @@ func TestCollectionVersionUpdatesAddFieldMultiplePatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -294,7 +294,7 @@ func TestCollectionVersionUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -317,7 +317,7 @@ func TestCollectionVersionUpdatesAddFieldMultipleInPatchPartialSuccess(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -344,7 +344,7 @@ func TestCollectionVersionUpdatesAddFieldMultipleInPatchPartialSuccess(t *testin
 				ExpectedError: "Cannot query field \"email\" on type \"Users\"",
 			},
 			&action.Request{
-				// Original schema is preserved
+				// Original collection definition is preserved
 				Request: `query {
 					Users {
 						name
@@ -363,7 +363,7 @@ func TestCollectionVersionUpdatesAddFieldSimpleDuplicateOfExistingField(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -386,7 +386,7 @@ func TestCollectionVersionUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -410,7 +410,7 @@ func TestCollectionVersionUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

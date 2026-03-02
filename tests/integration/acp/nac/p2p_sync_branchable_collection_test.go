@@ -51,7 +51,7 @@ func TestNAC_GatesSyncBranchableCollection_AuthorizedIdentity_AllowAccess(t *tes
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -92,7 +92,7 @@ func TestNAC_GatesSyncBranchableCollection_NoIdentity_NotAuthorizedError(t *test
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -134,7 +134,7 @@ func TestNAC_GatesSyncBranchableCollection_WrongIdentity_NotAuthorizedError(t *t
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}

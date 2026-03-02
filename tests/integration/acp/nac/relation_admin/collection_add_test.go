@@ -31,7 +31,7 @@ func TestNAC_AdminRelation_CanAddCollection(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -50,7 +50,7 @@ func TestNAC_AdminRelation_CanAddCollection(t *testing.T) {
 			// This user, can now perform this gated operation.
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

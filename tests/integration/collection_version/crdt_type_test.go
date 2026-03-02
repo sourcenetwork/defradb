@@ -26,7 +26,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Int @crdt(type: pncounter)
 					}
@@ -63,7 +63,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) 
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Float @crdt(type: pncounter)
 					}
@@ -100,7 +100,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: String @crdt(type: pncounter)
 					}
@@ -120,7 +120,7 @@ func TestCollectionAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Int @crdt(type: "invalid")
 					}
@@ -137,7 +137,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Int @crdt(type: pcounter)
 					}
@@ -171,7 +171,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Float @crdt(type: pcounter)
 					}
@@ -205,7 +205,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Float64 @crdt(type: pcounter)
 					}
@@ -239,7 +239,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: Float32 @crdt(type: pcounter)
 					}
@@ -273,7 +273,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						points: String @crdt(type: pcounter)
 					}

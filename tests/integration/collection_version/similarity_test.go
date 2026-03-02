@@ -21,7 +21,7 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldIntArray(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						someVector: [Int!]
 					}
@@ -113,7 +113,7 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldFloat32Array(t *te
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						someVector: [Float32!]
 					}
@@ -205,7 +205,7 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldsIntArrayAndFloat3
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						someVectorInt: [Int!]
 						someVectorFloat32: [Float32!]

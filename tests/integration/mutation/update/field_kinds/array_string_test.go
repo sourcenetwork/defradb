@@ -21,7 +21,7 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String!]
@@ -65,7 +65,7 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String!]
@@ -109,7 +109,7 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String!]
@@ -153,7 +153,7 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String!]
@@ -197,7 +197,7 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String!]

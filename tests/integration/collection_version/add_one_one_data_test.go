@@ -21,7 +21,7 @@ func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -90,7 +90,7 @@ func TestAddOneToOne_Input_SecondaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author

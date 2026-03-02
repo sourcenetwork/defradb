@@ -27,7 +27,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -73,7 +73,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -120,7 +120,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -164,7 +164,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -215,7 +215,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -267,7 +267,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 			// Node[2] will not be configured
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -341,7 +341,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -400,7 +400,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -463,7 +463,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -471,10 +471,10 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				`,
 			},
 			&action.AddCollection{
-				// Add the same schema to the second node but with the age and name fields in
+				// Add the same collection definition to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						age: Int
 						name: String
@@ -535,7 +535,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -543,10 +543,10 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 				`,
 			},
 			&action.AddCollection{
-				// Add the same schema to the second node but with the age and name fields in
+				// Add the same collection definition to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						age: Int
 						name: String
@@ -562,7 +562,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 			},
 			&action.Request{
 				// Assert that the document id and collection version id are the same across all nodes,
-				// even though the schema field order is different.
+				// even though the collection definition field order is different.
 				Request: `query {
 					Users {
 						_docID
@@ -603,7 +603,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int

@@ -22,7 +22,7 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

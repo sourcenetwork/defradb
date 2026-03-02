@@ -25,7 +25,7 @@ func TestQueryCommitsBranchables(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @branchable {
 						name: String
 						age: Int
@@ -78,7 +78,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @branchable {
 						name: String
 						age: Int

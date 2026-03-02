@@ -48,7 +48,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"

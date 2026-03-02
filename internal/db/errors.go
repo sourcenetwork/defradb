@@ -39,7 +39,7 @@ const (
 	errCannotMoveField                           string = "moving fields is not currently supported"
 	errCannotDeleteField                         string = "deleting an existing field is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
-	errFieldKindDoesNotMatchFieldSchema          string = "field Kind does not match field Schema"
+	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
 	errDocumentDeleted                           string = "a document with the given ID has been deleted"
 	errIndexMissingFields                        string = "index missing fields"
@@ -350,11 +350,11 @@ func NewErrFieldKindNotFound(name string, kind string) error {
 	)
 }
 
-func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
+func NewErrFieldKindDoesNotMatchFieldDefinition(kind string, definition string) error {
 	return errors.New(
-		errFieldKindDoesNotMatchFieldSchema,
+		errFieldKindDoesNotMatchFieldDefinition,
 		errors.NewKV("Kind", kind),
-		errors.NewKV("Schema", schema),
+		errors.NewKV("Definition", definition),
 	)
 }
 

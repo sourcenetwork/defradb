@@ -59,7 +59,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 				Policy:   policy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
  					type Users @policy(
 						id: "{{.Policy0}}",
  						resource: "users"
@@ -102,7 +102,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 				Policy:   policy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
  					type Users @policy(
 						id: "{{.Policy0}}",
  						resource: "users"

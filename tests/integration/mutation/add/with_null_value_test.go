@@ -30,7 +30,7 @@ func TestMutationAdd_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

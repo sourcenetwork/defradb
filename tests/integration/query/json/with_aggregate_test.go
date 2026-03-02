@@ -21,7 +21,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,

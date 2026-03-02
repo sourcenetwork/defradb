@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -63,11 +63,11 @@ func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdatesAddFieldWithAddAfterSchemaUpdate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

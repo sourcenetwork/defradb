@@ -75,7 +75,7 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {
+				SDL: `type Users {
 					Name: String
 					FavoriteNumbers: [Int!]
 				}`,

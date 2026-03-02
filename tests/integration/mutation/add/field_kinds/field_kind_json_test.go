@@ -24,7 +24,7 @@ func TestMutationAdd_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -66,7 +66,7 @@ func TestMutationAdd_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -105,7 +105,7 @@ func TestMutationAdd_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -150,7 +150,7 @@ func TestMutationAdd_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -189,7 +189,7 @@ func TestMutationAdd_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -228,7 +228,7 @@ func TestMutationAdd_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -267,7 +267,7 @@ func TestMutationAdd_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -313,7 +313,7 @@ func TestMutationAdd_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON

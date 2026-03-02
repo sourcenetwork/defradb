@@ -22,7 +22,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -51,7 +51,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldErrorMult
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -85,7 +85,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -113,7 +113,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -147,7 +147,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithInvalidEmbeddingGenerationFieldK
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -176,7 +176,7 @@ func TestColVersionUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -222,7 +222,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -251,7 +251,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldErrorMult
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -285,7 +285,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -314,7 +314,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldErrorMultipl
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -348,7 +348,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -377,7 +377,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldErrorMulti
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -411,7 +411,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -440,7 +440,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldErrorM
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -474,7 +474,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -503,7 +503,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -537,7 +537,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -585,7 +585,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldError(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -614,7 +614,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldErrorMultiple(
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -648,7 +648,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -678,7 +678,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -715,7 +715,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -750,7 +750,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						about: String

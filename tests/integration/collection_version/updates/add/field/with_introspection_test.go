@@ -22,7 +22,7 @@ func TestCollectionVersionUpdatesAddFieldIntrospection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -72,7 +72,7 @@ func TestCollectionVersionUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenB
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

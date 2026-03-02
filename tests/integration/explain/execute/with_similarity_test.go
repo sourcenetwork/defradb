@@ -22,7 +22,7 @@ func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type User {
+				SDL: `type User {
 					name: String
 					pointsList: [Float64!]
 				}`,

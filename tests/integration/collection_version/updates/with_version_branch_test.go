@@ -21,7 +21,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionVersionUpdates_WithBranchingSchema(t *testing.T) {
+func TestCollectionVersionUpdates_WithBranchingCollection(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
@@ -29,7 +29,7 @@ func TestCollectionVersionUpdates_WithBranchingSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -178,7 +178,7 @@ func TestCollectionVersionUpdates_WithBranchingSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdates_WithPatchOnBranchedSchema(t *testing.T) {
+func TestCollectionVersionUpdates_WithPatchOnBranchedCollection(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
@@ -187,7 +187,7 @@ func TestCollectionVersionUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -321,7 +321,7 @@ func TestCollectionVersionUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
+func TestCollectionVersionUpdates_WithBranchingCollectionAndSetActiveCollectionToOtherBranch(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
@@ -329,7 +329,7 @@ func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBr
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -417,7 +417,7 @@ func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBr
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
+func TestCollectionVersionUpdates_WithBranchingCollectionAndSetActiveCollectionToOtherBranchThenPatch(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
@@ -426,7 +426,7 @@ func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBr
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -564,13 +564,13 @@ func TestCollectionVersionUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBr
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
+func TestCollectionVersionUpdates_WithBranchingCollectionAndGetCollectionAtVersion(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

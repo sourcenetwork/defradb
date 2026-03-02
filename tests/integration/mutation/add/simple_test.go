@@ -30,7 +30,7 @@ func TestMutationAdd_GivenNonExistantField_Errors(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -66,7 +66,7 @@ func TestMutationAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -115,7 +115,7 @@ func TestMutationAdd_GivenDuplicate_Errors(t *testing.T) {
 		}),
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -145,7 +145,7 @@ func TestMutationAdd_GivenEmptyInput(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -175,7 +175,7 @@ func TestMutationAdd_With10Collections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Foo1 {
 						# The name used for the fields is important as the field shortID
 						# is serially assigned based on the alphabetical order of field names.

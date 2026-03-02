@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var schemas = `
+var userCollection = `
 type Book {
 	name: String
 	rating: Float
@@ -34,7 +34,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: schemas,
+				SDL: userCollection,
 			},
 			&action.AddDoc{
 				CollectionID: 1,

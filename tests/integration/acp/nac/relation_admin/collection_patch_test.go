@@ -43,7 +43,7 @@ func TestNAC_AdminRelation_CanCollectionPatch(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -102,7 +102,7 @@ func TestNAC_AdminRelation_CLIClient_CanCollectionPatch(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},

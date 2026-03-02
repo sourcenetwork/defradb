@@ -21,7 +21,7 @@ func TestQuerySimple_WithEqOpOnBlobField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						data: Blob

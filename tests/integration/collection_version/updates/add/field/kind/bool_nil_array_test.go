@@ -23,7 +23,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -56,7 +56,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableBoolArrayWithAdd(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -101,7 +101,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableBoolArraySubstitutionWithAd
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

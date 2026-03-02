@@ -23,7 +23,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableFloat32Array(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -56,7 +56,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableFloat32ArrayWithAdd(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -105,7 +105,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableFloat32ArraySubstitutionWit
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

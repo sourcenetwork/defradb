@@ -21,7 +21,7 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index(unique: true)
 						age: Int

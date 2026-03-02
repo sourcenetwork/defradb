@@ -21,7 +21,7 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -43,7 +43,7 @@ func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

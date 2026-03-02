@@ -25,7 +25,7 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						age: Int
 					}

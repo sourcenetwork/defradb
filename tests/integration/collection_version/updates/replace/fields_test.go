@@ -21,7 +21,7 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -46,7 +46,7 @@ func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @default(string: "Bob")
 					}

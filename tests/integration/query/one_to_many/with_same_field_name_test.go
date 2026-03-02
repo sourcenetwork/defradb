@@ -36,7 +36,7 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 			Actions: append(
 				[]any{
 					&action.AddCollection{
-						Schema: sameFieldNameGQLSchema,
+						SDL: sameFieldNameGQLSchema,
 					},
 				},
 				test.Actions...,

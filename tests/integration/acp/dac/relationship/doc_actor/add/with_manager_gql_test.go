@@ -74,7 +74,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -328,7 +328,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -481,7 +481,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"

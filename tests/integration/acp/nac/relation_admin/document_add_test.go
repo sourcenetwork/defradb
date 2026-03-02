@@ -32,7 +32,7 @@ func TestNAC_AdminRelation_CanDocumentAdd(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 
 			// This user, can not perform this gated operation yet.

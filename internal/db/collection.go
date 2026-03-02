@@ -187,6 +187,39 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
+// addCollection takes the provided SDL, and applies it to the database,
+// adding the necessary collections, request types, etc.
+func (db *DB) addCollection(
+	ctx context.Context,
+	sdl string,
+) ([]client.CollectionVersion, error) {
+	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := db.addCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.loadCollectionDefinitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
+	definitions, err := description.GetActiveCollections(ctx)
+	if err != nil {
+		return err
+	}
+
+	return db.parser.SetSchema(ctx, definitions)
+}
+
 // Version returns the client.CollectionVersion.
 func (c *collection) Version() client.CollectionVersion {
 	return c.def

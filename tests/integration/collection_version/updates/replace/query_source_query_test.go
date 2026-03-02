@@ -21,14 +21,14 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {
 						name: String
 					}
@@ -89,14 +89,14 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Books {
 						name: String
 					}

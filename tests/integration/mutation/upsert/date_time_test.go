@@ -22,7 +22,7 @@ func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime

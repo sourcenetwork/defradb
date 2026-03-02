@@ -21,7 +21,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -117,7 +117,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -315,7 +315,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `type Users {}`,
+				SDL: `type Users {}`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `

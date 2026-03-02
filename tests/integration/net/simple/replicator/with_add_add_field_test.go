@@ -25,14 +25,14 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderCollectionVersion(t
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly add a doc on
+				// Patch the collection on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -79,14 +79,14 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerCollectionVersion(t
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we sync docs to
+				// Patch the collection on the node that we sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
@@ -132,14 +132,14 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToUpdatedCollectionVersion
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on all nodes
+				// Patch the collection on all nodes
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }

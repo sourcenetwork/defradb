@@ -71,6 +71,6 @@ func (a *SyncCollectionVersions) Execute() {
 		return
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
+	// If the collection was updated we need to refresh the collection definitions.
 	refreshCollections(a.s)
 }

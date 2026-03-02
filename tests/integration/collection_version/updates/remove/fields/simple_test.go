@@ -24,7 +24,7 @@ func TestCollectionVersionUpdatesRemoveField(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -68,7 +68,7 @@ func TestCollectionVersionUpdatesRemoveAllFields(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -101,7 +101,7 @@ func TestCollectionVersionUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -125,7 +125,7 @@ func TestCollectionVersionUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -149,7 +149,7 @@ func TestCollectionVersionUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						email: String

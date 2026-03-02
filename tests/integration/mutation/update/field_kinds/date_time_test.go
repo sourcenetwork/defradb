@@ -21,7 +21,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime
@@ -65,7 +65,7 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime
@@ -115,7 +115,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						created_at: DateTime
 					}
@@ -157,7 +157,7 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime
@@ -201,7 +201,7 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime

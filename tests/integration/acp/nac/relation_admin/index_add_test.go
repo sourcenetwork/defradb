@@ -41,7 +41,7 @@ func TestNAC_AdminRelation_CanIndexAdd(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -98,7 +98,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexAdd(t *testing.T) {
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

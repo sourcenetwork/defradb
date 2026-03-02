@@ -30,7 +30,7 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -64,7 +64,7 @@ func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int

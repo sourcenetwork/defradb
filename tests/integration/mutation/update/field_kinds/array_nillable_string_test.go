@@ -23,7 +23,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String]

@@ -18,7 +18,7 @@ import (
 )
 
 var SchemaForExplainTests = &action.AddCollection{
-	Schema: (`
+	SDL: (`
 		type Article {
 			name: String
 			author: Author

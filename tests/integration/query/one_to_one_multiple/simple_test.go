@@ -21,7 +21,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book
@@ -125,7 +125,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book @primary
@@ -229,7 +229,7 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book @primary
@@ -333,7 +333,7 @@ func TestAddCollectionWithCyclicMutuallyReferentialRelations_DoesNotError(t *tes
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Player {
 						name: String
 						decks: [Deck] @relation(name: "deck_player")

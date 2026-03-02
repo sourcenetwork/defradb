@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldKind15(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -46,7 +46,7 @@ func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -71,7 +71,7 @@ func TestCollectionVersionUpdatesAddFieldKind198(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -94,7 +94,7 @@ func TestCollectionVersionUpdatesAddFieldKindInvalid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

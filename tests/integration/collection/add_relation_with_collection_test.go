@@ -21,14 +21,14 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCrea
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -95,21 +95,21 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCrea
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -177,14 +177,14 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToM
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -257,14 +257,14 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithMixedBatchHavingR
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 					}
@@ -331,14 +331,14 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithChainedOneToManyR
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Publisher {
 						name: String
 					}
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						name: String
 						publisher: Publisher
@@ -346,7 +346,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithChainedOneToManyR
 				`,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author

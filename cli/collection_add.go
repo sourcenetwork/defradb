@@ -22,13 +22,13 @@ import (
 )
 
 func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
-	var schemaFiles []string
+	var sdlFiles []string
 	var cmd = &cobra.Command{
-		Use:   "add [schema]",
+		Use:   "add [sdl]",
 		Short: "Add new collection",
 		Long: `Add new collection.
 
-Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
+Collection type with a '@policy(id:".." resource: "..")' linked will only be accepted if:
   - ACP is available (i.e. ACP is not disabled).
   - The specified resource adheres to the document resource interface (DRI).
   - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
@@ -37,37 +37,37 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cli := mustGetContextCLIClient(cmd)
 
-			var combinedSchema string
+			var combinedSDL string
 			switch {
-			case len(schemaFiles) > 0:
-				// Read schemas from files and concatenate them
-				for _, schemaFile := range schemaFiles {
-					data, err := os.ReadFile(schemaFile)
+			case len(sdlFiles) > 0:
+				// Read collection definitions from files and concatenate them
+				for _, sdlFile := range sdlFiles {
+					data, err := os.ReadFile(sdlFile)
 					if err != nil {
-						return NewErrFailedToReadCollectionFile(schemaFile, err)
+						return NewErrFailedToReadCollectionFile(sdlFile, err)
 					}
-					combinedSchema += string(data) + "\n"
+					combinedSDL += string(data) + "\n"
 				}
 
 			case len(args) > 0 && args[0] == "-":
-				// Read schema from stdin
+				// Read collection definition from stdin
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
 					return NewErrFailedToReadCollectionFromStdin(err)
 				}
-				combinedSchema += string(data) + "\n"
+				combinedSDL += string(data) + "\n"
 
 			case len(args) > 0:
-				// Read schema from argument string
-				combinedSchema += args[0] + "\n"
+				// Read collection definition from argument string
+				combinedSDL += args[0] + "\n"
 
 			default:
-				return ErrEmptyCollectionSchema
+				return ErrEmptyCollectionSDL
 			}
 
 			opt := options.WithIdentity(options.AddCollection(), identity.FromContext(cmd.Context()))
-			// Process the combined schema
-			cols, err := cli.AddCollection(cmd.Context(), combinedSchema, opt)
+			// Process the combined SDL
+			cols, err := cli.AddCollection(cmd.Context(), combinedSDL, opt)
 			if err != nil {
 				return NewErrFailedToAddCollection(err)
 			}
@@ -94,6 +94,6 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 	EmbedCLIExample(ctx, cmd, "add from stdin",
 		`cat schema.graphql | defradb client collection add -`)
 
-	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File to load schema from")
+	cmd.Flags().StringSliceVarP(&sdlFiles, "file", "f", []string{}, "File to load a collection definition from")
 	return cmd
 }

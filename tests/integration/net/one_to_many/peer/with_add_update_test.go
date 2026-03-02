@@ -28,7 +28,7 @@ func TestP2POneToManyPeerWithAddUpdateLinkingSyncedDocToUnsyncedDoc(t *testing.T
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Author {
 						Name: String
 						Books: [Book]

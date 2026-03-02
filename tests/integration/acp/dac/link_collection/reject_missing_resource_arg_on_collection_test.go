@@ -44,7 +44,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 				type Users @policy(id: "{{.Policy0}}") {
 						name: String
 						age: Int
@@ -105,7 +105,7 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 				type Users @policy(id: "{{.Policy0}}", resource: "") {
 						name: String
 						age: Int

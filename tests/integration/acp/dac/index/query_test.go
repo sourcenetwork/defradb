@@ -25,7 +25,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				Policy:   userPolicy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -77,7 +77,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				Policy:   userPolicy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -135,7 +135,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				Policy:   userPolicy,
 			},
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"

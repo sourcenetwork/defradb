@@ -39,7 +39,7 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 			Actions: append(
 				[]any{
 					&action.AddCollection{
-						Schema: bookAuthorGQLSchema,
+						SDL: bookAuthorGQLSchema,
 					},
 				},
 				test.Actions...,

@@ -23,18 +23,18 @@ import (
 )
 
 const (
-	schemaV1 = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
-	schemaV2 = "bafyreighc6zz7674lpd3vwbd3bve5elzol3ijntwtzmw6cspnxkfijdsxa"
-	schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
-	schemaV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
-	schemaV5 = "bafyreia2ls3vfvwbgaunr5si5cpo3be5m7vtbmlzxuzvls5laz74zpwrg4"
+	colVersionV1 = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
+	colVersionV2 = "bafyreighc6zz7674lpd3vwbd3bve5elzol3ijntwtzmw6cspnxkfijdsxa"
+	colVersionV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
+	colVersionV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
+	colVersionV5 = "bafyreia2ls3vfvwbgaunr5si5cpo3be5m7vtbmlzxuzvls5laz74zpwrg4"
 )
 
 func TestCollectionMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String @index
 						age: Int
@@ -62,8 +62,8 @@ func TestCollectionMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -112,7 +112,7 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMig
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String 
 						age: Int @index
@@ -152,8 +152,8 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMig
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -199,7 +199,7 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAs
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String 
 						age: Int @index
@@ -239,8 +239,8 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAs
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -255,7 +255,7 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAs
 				},
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.Request{
 				Request: `query {
@@ -289,7 +289,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocs
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String 
 						age: Int 
@@ -329,8 +329,8 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocs
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -379,7 +379,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIn
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String 
 						age: Int 
@@ -419,8 +419,8 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIn
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -435,7 +435,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIn
 				},
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.AddIndex{
 				FieldName: "age",
@@ -473,7 +473,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIn
 func setupDistantVersions() []any {
 	return []any{
 		&action.AddCollection{
-			Schema: `
+			SDL: `
 				type Users {
 					name: String
 					age: Int @index
@@ -539,8 +539,8 @@ func setupDistantVersions() []any {
 func addMigrationBetweenV3AndV4() any {
 	return testUtils.ConfigureMigration{
 		LensConfig: client.LensConfig{
-			SourceCollectionVersionID:      schemaV3,
-			DestinationCollectionVersionID: schemaV4,
+			SourceCollectionVersionID:      colVersionV3,
+			DestinationCollectionVersionID: colVersionV4,
 			Lens: model.Lens{
 				Lenses: []model.LensModule{
 					{
@@ -562,7 +562,7 @@ func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_Shou
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.Request{
 				Request: `query {
@@ -598,10 +598,10 @@ func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_Shou
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV5,
+				VersionID: colVersionV5,
 			},
 			&action.Request{
 				Request: `query {
@@ -637,7 +637,7 @@ func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetwee
 			setupDistantVersions(),
 			addMigrationBetweenV3AndV4(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.Request{
 				Request: `query {
@@ -672,11 +672,11 @@ func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetwee
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			addMigrationBetweenV3AndV4(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV5,
+				VersionID: colVersionV5,
 			},
 			&action.Request{
 				Request: `query {
@@ -711,10 +711,10 @@ func TestCollectionMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldRein
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV5,
+				VersionID: colVersionV5,
 			},
 			addMigrationBetweenV3AndV4(),
 			&action.Request{
@@ -751,7 +751,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotR
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			addMigrationBetweenV3AndV4(),
 			&action.Request{
@@ -786,7 +786,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int @index
@@ -819,8 +819,8 @@ func TestCollectionMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Sh
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV1,
-					DestinationCollectionVersionID: schemaV2,
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -875,7 +875,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int @index
@@ -956,7 +956,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int @index
@@ -984,7 +984,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			// Create branch B: v1 -> v3 (with migration: age+5)
 			&action.PatchCollection{
@@ -1030,7 +1030,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV2,
+				VersionID: colVersionV2,
 			},
 			&action.Request{
 				Request: `query {
@@ -1057,7 +1057,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.Request{
 				Request: `query {
@@ -1077,7 +1077,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 			},
 			// Switch back to branch B (v3 with migration) - should reindex with migrated values
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV3,
+				VersionID: colVersionV3,
 			},
 			&action.Request{
 				Request: `query {
@@ -1113,7 +1113,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int @index
@@ -1136,7 +1136,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Switch back to v1 to create branch B
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			// Create branch B: v1 -> v3 (migration: age+5)
 			&action.PatchCollection{
@@ -1159,7 +1159,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Switch back to v1 to create branch C
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			// Create branch C: v1 -> v4 (migration: age+10)
 			&action.PatchCollection{
@@ -1207,7 +1207,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Switch to branch B (v3): age should be 25 (20 + 5)
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV3,
+				VersionID: colVersionV3,
 			},
 			&action.Request{
 				Request: `query {
@@ -1235,7 +1235,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Switch to branch A (v2): age should be 20 (no migration)
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV2,
+				VersionID: colVersionV2,
 			},
 			&action.Request{
 				Request: `query {
@@ -1263,7 +1263,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Switch back to root (v1): age should be 20 (original)
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV1,
+				VersionID: colVersionV1,
 			},
 			&action.Request{
 				Request: `query {
@@ -1283,7 +1283,7 @@ func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMi
 			},
 			// Final switch back to branch C (v4): verify age is 30 again
 			testUtils.SetActiveCollectionVersion{
-				VersionID: schemaV4,
+				VersionID: colVersionV4,
 			},
 			&action.Request{
 				Request: `query {

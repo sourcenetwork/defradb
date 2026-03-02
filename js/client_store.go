@@ -25,7 +25,7 @@ import (
 )
 
 func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error) {
-	schema, err := stringArg(args, 0, "schema")
+	sdl, err := stringArg(args, 0, "sdl")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -35,7 +35,7 @@ func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error)
 	}
 	opt := options.AddCollection()
 	setOptIdentity(opt, args, 1)
-	cols, err := c.node.DB.AddCollection(ctx, schema, opt)
+	cols, err := c.node.DB.AddCollection(ctx, sdl, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

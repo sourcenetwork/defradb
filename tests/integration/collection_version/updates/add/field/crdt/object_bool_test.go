@@ -21,7 +21,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -44,7 +44,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

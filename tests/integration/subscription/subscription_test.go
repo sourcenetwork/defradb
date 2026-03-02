@@ -436,7 +436,7 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						counter: Int @crdt(type: pcounter)
 					}
@@ -486,7 +486,7 @@ func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

@@ -17,12 +17,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test ensures that nearby relation fields are not failing validation during a schema patch.
+// This test ensures that nearby relation fields are not failing validation during a collection patch.
 func TestCollectionVersionUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author

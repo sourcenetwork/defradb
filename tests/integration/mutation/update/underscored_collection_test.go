@@ -22,7 +22,7 @@ func TestMutationUpdateUnderscoredCollection(t *testing.T) {
 
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type My_User {
 						name: String
 					}

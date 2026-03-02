@@ -43,7 +43,7 @@ func TestNAC_GatesEncryptedIndexList_AuthorizedIdentity_AllowAccess(t *testing.T
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -83,7 +83,7 @@ func TestNAC_GatesEncryptedIndexList_NoIdentity_NotAuthorizedError(t *testing.T)
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -124,7 +124,7 @@ func TestNAC_GatesEncryptedIndexList_NoIdentity_CLIandCandHTTPClient_NotAuthoriz
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -164,7 +164,7 @@ func TestNAC_GatesEncryptedIndexList_WrongIdentity_NotAuthorizedError(t *testing
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -205,7 +205,7 @@ func TestNAC_GatesEncryptedIndexList_WrongIdentity_CLIandCandHTTPClient_NotAutho
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}

@@ -86,14 +86,14 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	schema, err := io.ReadAll(req.Body)
+	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
 	opt := options.WithIdentity(options.AddCollection(), identity.FromContext(ctx))
-	cols, err := db.AddCollection(ctx, string(schema), opt)
+	cols, err := db.AddCollection(ctx, string(sdl), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

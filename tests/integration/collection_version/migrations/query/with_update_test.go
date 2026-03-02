@@ -25,7 +25,7 @@ func TestCollectionMigrationQueryWithUpdateRequest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -106,7 +106,7 @@ func TestCollectionMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

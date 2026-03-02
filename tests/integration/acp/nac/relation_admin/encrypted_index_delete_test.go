@@ -39,7 +39,7 @@ func TestNAC_AdminRelation_CanDeleteEncryptedIndex(t *testing.T) {
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -100,7 +100,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanDeleteEncryptedIndex(t *testi
 			},
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

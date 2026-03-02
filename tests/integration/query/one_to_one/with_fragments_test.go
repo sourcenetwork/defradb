@@ -21,7 +21,7 @@ func TestQueryOneToOne_WithFragment(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -82,7 +82,7 @@ func TestQueryOneToOne_WithFragmentWithObjectWithFragment(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Book {
 						name: String
 						author: Author

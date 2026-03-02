@@ -21,13 +21,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestCollectionMigrationQuery_WithBranchingSchema(t *testing.T) {
+func TestCollectionMigrationQuery_WithBranchingCollection(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
