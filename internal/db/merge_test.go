@@ -488,9 +488,9 @@ func TestMergeQueue(t *testing.T) {
 //
 // DAG structure:
 //
-//	      A (create: name="John")
-//	    / | \
-//	   B  C  D  (B: name="Johny", C: age=30, D: name="Jane")
+//	   A (create: name="John")
+//	 / | \
+//	B  C  D  (B: name="Johny", C: age=30, D: name="Jane")
 func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 	ctx := context.Background()
 
@@ -569,11 +569,11 @@ func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 //
 // DAG structure:
 //
-//	    A (create: name="John")
-//	   / \
-//	  B   C  (B: name="Johny", C: age=30)
-//	   \ /
-//	    D  (reconverge — D has heads=[B,C])
+//	  A (create: name="John")
+//	 / \
+//	B   C  (B: name="Johny", C: age=30)
+//	 \ /
+//	  D  (reconverge — D has heads=[B,C])
 func TestMerge_DiamondMerge_NoError(t *testing.T) {
 	ctx := context.Background()
 
@@ -636,13 +636,13 @@ func TestMerge_DiamondMerge_NoError(t *testing.T) {
 //
 // DAG structure:
 //
-//	    A (create: name="John")
-//	   / \
-//	  B   E  (E: age=40, at height=2)
-//	  |
-//	  C
-//	  |
-//	  D  (D: name at height=4)
+//	  A (create: name="John")
+//	 / \
+//	B   E  (E: age=40, at height=2)
+//	|
+//	C
+//	|
+//	D  (D: name at height=4)
 func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 	ctx := context.Background()
 
@@ -712,9 +712,9 @@ func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 //
 // DAG structure:
 //
-//	    A (create: name="John")
-//	   / \
-//	  B   C  (B: name="Jane" [update], C: delete)
+//	  A (create: name="John")
+//	 / \
+//	B   C  (B: name="Jane" [update], C: delete)
 //
 // Merge order: B first, then C.
 func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
@@ -772,9 +772,9 @@ func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
 //
 // DAG structure:
 //
-//	    A (create: name="John")
-//	   / \
-//	  B   C  (B: delete, C: name="Jane" [update])
+//	  A (create: name="John")
+//	 / \
+//	B   C  (B: delete, C: name="Jane" [update])
 //
 // Merge order: B (delete) first, then C (update).
 func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
@@ -831,9 +831,9 @@ func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
 //
 // DAG structure:
 //
-//	      A (create: points=0)
-//	    / | \
-//	   B  C  D  (B: +10, C: +20, D: +30)
+//	   A (create: points=0)
+//	 / | \
+//	B  C  D  (B: +10, C: +20, D: +30)
 //
 // Final value should be 0+10+20+30 = 60.
 func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
