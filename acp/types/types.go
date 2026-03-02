@@ -11,8 +11,6 @@
 package acp_types
 
 import (
-	"strings"
-
 	"github.com/sourcenetwork/acp_core/pkg/types"
 )
 
@@ -74,108 +72,108 @@ type NodeResourcePermission int
 
 // Resource interface permission types for node access control.
 const (
-	NodeDACBypassPerm NodeResourcePermission = iota
-	NodeDACEnablePerm
-	NodeDACDisablePerm
-	NodeDACPurgePerm
-	NodeDACStatusPerm
-	NodeDACRelationAddPerm
-	NodeDACRelationDeletePerm
-	NodeDACPolicyAddPerm
-	NodeNACReEnablePerm
-	NodeNACDisablePerm
-	NodeNACPurgePerm
-	NodeNACStatusPerm
-	NodeNACRelationAddPerm
-	NodeNACRelationDeletePerm
-	NodeCollectionPatchPerm
-	NodeCollectionGetPerm
-	NodeCollectionTruncatePerm
-	NodeDocumentReadPerm
-	NodeDocumentUpdatePerm
-	NodeDocumentDeletePerm
-	NodeIndexListPerm
-	NodeIndexAddPerm
-	NodeIndexDeletePerm
-	NodeEncryptedIndexAddPerm
-	NodeEncryptedIndexDeletePerm
-	NodeEncryptedIndexListPerm
-	NodeEncryptedIndexListAllPerm
-	NodeP2PPeerInfo
-	NodeP2PPeerConnectPerm
-	NodeP2PPeerActivePerm
-	NodeP2PReplicatorAddPerm
-	NodeP2PReplicatorDeletePerm
-	NodeP2PReplicatorListPerm
-	NodeP2PCollectionAddPerm
-	NodeP2PCollectionDeletePerm
-	NodeP2PCollectionListPerm
-	NodeP2PDocumentAddPerm
-	NodeP2PDocumentDeletePerm
-	NodeP2PDocumentListPerm
-	NodeP2PSyncDocumentsPerm
-	NodeP2PSyncCollectionVersionsPerm
-	NodeP2PSyncBranchableCollectionPerm
-	NodeSignatureVerifyPerm
-	NodeLensAddPerm
-	NodeLensListPerm
-	NodeViewRefreshPerm
-	NodeViewAddPerm
-	NodeMigrationSetPerm
+	NodeBypassDACPerm NodeResourcePermission = iota
+	NodeEnableDACPerm
+	NodeDisableDACPerm
+	NodePurgeDACPerm
+	NodeGetDACStatusPerm
+	NodeAddDACRelationPerm
+	NodeDeleteDACRelationPerm
+	NodeAddDACPolicyPerm
+	NodeReEnableNACPerm
+	NodeDisableNACPerm
+	NodePurgeNACPerm
+	NodeGetNACStatusPerm
+	NodeAddNACRelationPerm
+	NodeDeleteNACRelationPerm
+	NodePatchCollectionPerm
+	NodeGetCollectionPerm
+	NodeTruncateCollectionPerm
+	NodeReadDocumentPerm
+	NodeUpdateDocumentPerm
+	NodeDeleteDocumentPerm
+	NodeListIndexPerm
+	NodeAddIndexPerm
+	NodeDeleteIndexPerm
+	NodeAddEncryptedIndexPerm
+	NodeDeleteEncryptedIndexPerm
+	NodeListEncryptedIndexPerm
+	NodeListAllEncryptedIndexPerm
+	NodeConnectP2PPeerPerm
+	NodeGetP2PPeerInfoPerm
+	NodeGetP2PActivePeersPerm
+	NodeAddP2PReplicatorPerm
+	NodeDeleteP2PReplicatorPerm
+	NodeListP2PReplicatorPerm
+	NodeAddP2PCollectionPerm
+	NodeDeleteP2PCollectionPerm
+	NodeListP2PCollectionPerm
+	NodeAddP2PDocumentPerm
+	NodeDeleteP2PDocumentPerm
+	NodeListP2PDocumentPerm
+	NodeSyncP2PDocumentsPerm
+	NodeSyncP2PCollectionVersionsPerm
+	NodeSyncP2PBranchableCollectionPerm
+	NodeVerifySignaturePerm
+	NodeAddLensPerm
+	NodeListLensPerm
+	NodeRefreshViewPerm
+	NodeAddViewPerm
+	NodeSetMigrationPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
 // node access control, the order of permissions in this list must match the above defined
 // ordering such that iota matches the index position within the list.
 var RequiredResourcePermissionsForNode = []string{
-	"dac-bypass",
-	"dac-enable",
-	"dac-disable",
-	"dac-purge",
-	"dac-status",
-	"dac-relation-add",
-	"dac-relation-delete",
-	"dac-policy-add",
-	"nac-re-enable",
-	"nac-disable",
-	"nac-purge",
-	"nac-status",
-	"nac-relation-add",
-	"nac-relation-delete",
-	"collection-patch",
-	"collection-get",
-	"collection-truncate",
-	"document-read",
-	"document-update",
-	"document-delete",
-	"index-list",
-	"index-add",
-	"index-delete",
-	"encrypted-index-add",
-	"encrypted-index-delete",
-	"encrypted-index-list",
-	"encrypted-index-list-all",
-	"p2p-peer-info",
-	"p2p-peer-connect",
-	"p2p-peer-active",
-	"p2p-replicator-add",
-	"p2p-replicator-delete",
-	"p2p-replicator-list",
-	"p2p-collection-add",
-	"p2p-collection-delete",
-	"p2p-collection-list",
-	"p2p-document-add",
-	"p2p-document-delete",
-	"p2p-document-list",
-	"p2p-sync-documents",
-	"p2p-sync-collection-versions",
-	"p2p-sync-branchable-collection",
-	"signature-verify",
-	"lens-create",
-	"lens-list",
-	"view-refresh",
-	"view-add",
-	"migration-set",
+	"bypass-dac",
+	"enable-dac",
+	"disable-dac",
+	"purge-dac",
+	"get-dac-status",
+	"add-dac-relation",
+	"delete-dac-relation",
+	"add-dac-policy",
+	"re-enable-nac",
+	"disable-nac",
+	"purge-nac",
+	"get-nac-status",
+	"add-nac-relation",
+	"delete-nac-relation",
+	"patch-collection",
+	"get-collection",
+	"truncate-collection",
+	"read-document",
+	"update-document",
+	"delete-document",
+	"list-index",
+	"add-index",
+	"delete-index",
+	"add-encrypted-index",
+	"delete-encrypted-index",
+	"list-encrypted-index",
+	"list-all-encrypted-index",
+	"connect-p2p-peer",
+	"get-p2p-peer-info",
+	"get-p2p-active-peers",
+	"add-p2p-replicator",
+	"delete-p2p-replicator",
+	"list-p2p-replicator",
+	"add-p2p-collection",
+	"delete-p2p-collection",
+	"list-p2p-collection",
+	"add-p2p-document",
+	"delete-p2p-document",
+	"list-p2p-document",
+	"sync-p2p-documents",
+	"sync-p2p-collection-versions",
+	"sync-p2p-branchable-collection",
+	"verify-signature",
+	"add-lens",
+	"list-lens",
+	"refresh-view",
+	"add-view",
+	"set-migration",
 }
 
 const NodeACPObject = "NodeObject"
@@ -188,111 +186,111 @@ name: Node ACP Policy
 resources:
 - name: node
   permissions:
-  - name: dac-bypass
+  - name: bypass-dac
     expr: admin
-  - name: dac-enable
+  - name: enable-dac
     expr: admin
-  - name: dac-disable
+  - name: disable-dac
     expr: admin
-  - name: dac-purge
+  - name: purge-dac
     expr: admin
-  - name: dac-status
+  - name: get-dac-status
     expr: admin
-  - name: dac-relation-add
+  - name: add-dac-relation
     expr: admin
-  - name: dac-relation-delete
+  - name: delete-dac-relation
     expr: admin
-  - name: dac-policy-add
-    expr: admin
-
-  - name: nac-re-enable
-    expr: admin
-  - name: nac-disable
-    expr: admin
-  - name: nac-purge
-    expr: admin
-  - name: nac-status
-    expr: admin
-  - name: nac-relation-add
-    expr: admin
-  - name: nac-relation-delete
+  - name: add-dac-policy
     expr: admin
 
-  - name: collection-patch
+  - name: re-enable-nac
     expr: admin
-  - name: collection-get
+  - name: disable-nac
     expr: admin
-  - name: collection-truncate
+  - name: purge-nac
     expr: admin
-
-  - name: document-read
+  - name: get-nac-status
     expr: admin
-  - name: document-update
+  - name: add-nac-relation
     expr: admin
-  - name: document-delete
-    expr: admin
-
-  - name: index-list
-    expr: admin
-  - name: index-add
-    expr: admin
-  - name: index-delete
+  - name: delete-nac-relation
     expr: admin
 
-  - name: encrypted-index-add
+  - name: patch-collection
     expr: admin
-  - name: encrypted-index-delete
+  - name: get-collection
     expr: admin
-  - name: encrypted-index-list
-    expr: admin
-  - name: encrypted-index-list-all
+  - name: truncate-collection
     expr: admin
 
-  - name: p2p-peer-info
+  - name: read-document
     expr: admin
-  - name: p2p-peer-connect
+  - name: update-document
     expr: admin
-  - name: p2p-peer-active
-    expr: admin
-  - name: p2p-replicator-add
-    expr: admin
-  - name: p2p-replicator-delete
-    expr: admin
-  - name: p2p-replicator-list
-    expr: admin
-  - name: p2p-collection-add
-    expr: admin
-  - name: p2p-collection-delete
-    expr: admin
-  - name: p2p-collection-list
-    expr: admin
-  - name: p2p-document-add
-    expr: admin
-  - name: p2p-document-delete
-    expr: admin
-  - name: p2p-document-list
-    expr: admin
-  - name: p2p-sync-documents
-    expr: admin
-  - name: p2p-sync-collection-versions
-    expr: admin
-  - name: p2p-sync-branchable-collection
+  - name: delete-document
     expr: admin
 
-  - name: signature-verify
+  - name: list-index
+    expr: admin
+  - name: add-index
+    expr: admin
+  - name: delete-index
     expr: admin
 
-  - name: lens-create
+  - name: add-encrypted-index
     expr: admin
-  - name: lens-list
+  - name: delete-encrypted-index
+    expr: admin
+  - name: list-encrypted-index
+    expr: admin
+  - name: list-all-encrypted-index
     expr: admin
 
-  - name: view-refresh
+  - name: connect-p2p-peer
     expr: admin
-  - name: view-add
+  - name: get-p2p-peer-info
+    expr: admin
+  - name: get-p2p-active-peers
+    expr: admin
+  - name: add-p2p-replicator
+    expr: admin
+  - name: delete-p2p-replicator
+    expr: admin
+  - name: list-p2p-replicator
+    expr: admin
+  - name: add-p2p-collection
+    expr: admin
+  - name: delete-p2p-collection
+    expr: admin
+  - name: list-p2p-collection
+    expr: admin
+  - name: add-p2p-document
+    expr: admin
+  - name: delete-p2p-document
+    expr: admin
+  - name: list-p2p-document
+    expr: admin
+  - name: sync-p2p-documents
+    expr: admin
+  - name: sync-p2p-collection-versions
+    expr: admin
+  - name: sync-p2p-branchable-collection
     expr: admin
 
-  - name: migration-set
+  - name: verify-signature
+    expr: admin
+
+  - name: add-lens
+    expr: admin
+  - name: list-lens
+    expr: admin
+
+  - name: refresh-view
+    expr: admin
+  - name: add-view
+    expr: admin
+
+  - name: set-migration
     expr: admin
 
   relations:
@@ -308,11 +306,17 @@ func (resourcePermission NodeResourcePermission) String() string {
 }
 
 func (resourcePermission NodeResourcePermission) IsForNACOperation() bool {
-	permission := resourcePermission.String()
-	if len(permission) >= 3 && strings.EqualFold(permission[:3], "nac") {
+	switch resourcePermission {
+	case NodeReEnableNACPerm,
+		NodeDisableNACPerm,
+		NodePurgeNACPerm,
+		NodeGetNACStatusPerm,
+		NodeAddNACRelationPerm,
+		NodeDeleteNACRelationPerm:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core

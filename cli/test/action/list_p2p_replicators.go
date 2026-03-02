@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// ListP2PReplicators executes the `client p2p replicator getall` command.
+// ListP2PReplicators executes the `client p2p replicator list` command.
 type ListP2PReplicators struct {
 	stateful
 	augmented

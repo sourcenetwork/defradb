@@ -66,7 +66,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_MaterializedVie
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}
@@ -174,7 +174,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
 	}
@@ -228,7 +228,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_Materiali
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}
@@ -282,7 +282,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *t
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
 	}
@@ -336,7 +336,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_MaterializedView
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}

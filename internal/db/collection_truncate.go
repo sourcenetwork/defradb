@@ -39,7 +39,7 @@ func (c *collection) Truncate(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionTruncatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeTruncateCollectionPerm); err != nil {
 		return err
 	}
 

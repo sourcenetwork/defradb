@@ -62,10 +62,10 @@ func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 		return err
 	}
 
-	return c.indexNewDoc(ctx, newDoc)
+	return c.addDocToIndex(ctx, newDoc)
 }
 
-func (c *collection) indexNewDoc(ctx context.Context, doc *client.Document) error {
+func (c *collection) addDocToIndex(ctx context.Context, doc *client.Document) error {
 	// callers of this function must set a context transaction
 	for _, index := range c.indexes {
 		err := index.Save(ctx, doc)
@@ -173,7 +173,7 @@ func (c *collection) AddIndex(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexAddPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddIndexPerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -368,7 +368,7 @@ func (c *collection) DeleteIndex(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteIndexPerm); err != nil {
 		return err
 	}
 
@@ -427,7 +427,7 @@ func (c *collection) ListIndexes(
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -446,7 +446,7 @@ func (c *collection) AddEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexAddPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeAddEncryptedIndexPerm); err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
@@ -498,7 +498,7 @@ func (c *collection) ListEncryptedIndexes(
 ) ([]client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeListEncryptedIndexPerm); err != nil {
 		return nil, err
 	}
 	return c.Version().EncryptedIndexes, nil
@@ -519,7 +519,7 @@ func (c *collection) DeleteEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDeleteEncryptedIndexPerm); err != nil {
 		return err
 	}
 

@@ -581,7 +581,7 @@ func syncIndexedDoc(
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)
 	} else if oldDoc == nil {
-		return col.indexNewDoc(ctx, newDoc)
+		return col.addDocToIndex(ctx, newDoc)
 	} else {
 		return col.deleteIndexedDoc(ctx, oldDoc)
 	}

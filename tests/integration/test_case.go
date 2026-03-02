@@ -587,7 +587,7 @@ type ExportBackup struct {
 	ExpectedError string
 }
 
-// ExportBackup will attempt to export data from the datastore using the db api.
+// ImportBackup will attempt to import data into the datastore using the db API.
 type ImportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
