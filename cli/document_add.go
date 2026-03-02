@@ -53,13 +53,13 @@ Options:
 			case file != "":
 				data, err := os.ReadFile(file)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				docData = data
 			case len(args) == 1 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				docData = data
 			case len(args) == 1:
@@ -85,14 +85,14 @@ Options:
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
 				if err != nil {
-					return err
+					return NewErrParsingArgument("document", err)
 				}
 				return col.AddManyDocuments(ctx, docs, addOpt)
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
-				return err
+				return NewErrParsingArgument("document", err)
 			}
 			return col.AddDocument(cmd.Context(), doc, addOpt)
 		},

@@ -134,7 +134,7 @@ func fromAstDefinition(
 
 	policyDescription := immutable.None[client.PolicyDescription]()
 
-	indexes := []client.IndexAddRequest{}
+	indexes := []client.AddIndexRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
 	encryptedIndexes := []client.EncryptedIndexDescription{}
 	for _, field := range def.Fields {
@@ -272,7 +272,7 @@ func IsValidIndexName(name string) bool {
 	return true
 }
 
-func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.IndexAddRequest, error) {
+func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.AddIndexRequest, error) {
 	var name string
 	var unique bool
 
@@ -284,36 +284,36 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		case types.IndexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return client.IndexAddRequest{}, ErrIndexWithInvalidArg
+				return client.AddIndexRequest{}, ErrIndexWithInvalidArg
 			}
 			name = nameVal.Value
 			if !IsValidIndexName(name) {
-				return client.IndexAddRequest{}, NewErrIndexWithInvalidName(name)
+				return client.AddIndexRequest{}, NewErrIndexWithInvalidName(name)
 			}
 
 		case types.IndexDirectivePropIncludes:
 			includesVal, ok := arg.Value.(*ast.ListValue)
 			if !ok {
-				return client.IndexAddRequest{}, ErrIndexWithInvalidArg
+				return client.AddIndexRequest{}, ErrIndexWithInvalidArg
 			}
 			includes = includesVal
 
 		case types.IndexDirectivePropDirection:
 			directionVal, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
-				return client.IndexAddRequest{}, ErrIndexWithInvalidArg
+				return client.AddIndexRequest{}, ErrIndexWithInvalidArg
 			}
 			direction = directionVal
 
 		case types.IndexDirectivePropUnique:
 			uniqueVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
-				return client.IndexAddRequest{}, ErrIndexWithInvalidArg
+				return client.AddIndexRequest{}, ErrIndexWithInvalidArg
 			}
 			unique = uniqueVal.Value
 
 		default:
-			return client.IndexAddRequest{}, ErrIndexWithUnknownArg
+			return client.AddIndexRequest{}, ErrIndexWithUnknownArg
 		}
 	}
 
@@ -324,7 +324,7 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		for _, include := range includes.Values {
 			field, err := indexFieldFromAST(include, direction)
 			if err != nil {
-				return client.IndexAddRequest{}, err
+				return client.AddIndexRequest{}, err
 			}
 			if fieldDef != nil && fieldDef.Name.Value == field.Name {
 				containsField = true
@@ -347,10 +347,10 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 	}
 
 	if len(fields) == 0 {
-		return client.IndexAddRequest{}, ErrIndexMissingFields
+		return client.AddIndexRequest{}, ErrIndexMissingFields
 	}
 
-	return client.IndexAddRequest{
+	return client.AddIndexRequest{
 		Name:   name,
 		Fields: fields,
 		Unique: unique,

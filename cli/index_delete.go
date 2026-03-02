@@ -40,7 +40,7 @@ func MakeIndexDeleteCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			opt := options.WithIdentity(options.CollectionDeleteIndex(), identity.FromContext(cmd.Context()))
+			opt := options.WithIdentity(options.DeleteCollectionIndex(), identity.FromContext(cmd.Context()))
 			return col.DeleteIndex(cmd.Context(), nameArg, opt)
 		},
 	}

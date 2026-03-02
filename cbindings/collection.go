@@ -76,8 +76,8 @@ func getCollection(
 	return cols[0], nil
 }
 
-//export CollectionDescribe
-func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
+//export DescribeCollection
+func DescribeCollection(nodePtr C.uintptr_t, opts C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -109,8 +109,8 @@ func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityP
 	return returnC(marshalJSONToGoCResult(colDesc))
 }
 
-//export CollectionPatch
-func CollectionPatch(nodePtr C.uintptr_t,
+//export PatchCollection
+func PatchCollection(nodePtr C.uintptr_t,
 	patch *C.char, lensConfig *C.char,
 	identityPtr C.uintptr_t,
 ) C.Result {
@@ -174,8 +174,8 @@ func SetActiveCollection(nodePtr C.uintptr_t, opts C.CollectionOptions, identity
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export CollectionTruncate
-func CollectionTruncate(
+//export TruncateCollection
+func TruncateCollection(
 	nodePtr C.uintptr_t,
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
@@ -203,7 +203,7 @@ func CollectionTruncate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = col.Truncate(ctx, options.WithIdentity(options.CollectionTruncate(), ident))
+	err = col.Truncate(ctx, options.WithIdentity(options.TruncateCollection(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

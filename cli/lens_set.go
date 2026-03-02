@@ -44,13 +44,13 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			case lensFile != "":
 				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 3 && args[2] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 3:

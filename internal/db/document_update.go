@@ -40,7 +40,7 @@ func (c *collection) UpdateDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeUpdateDocumentPerm); err != nil {
 		return nil, err
 	}
 

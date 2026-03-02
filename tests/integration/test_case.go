@@ -507,8 +507,8 @@ type AddPredefinedDocs struct {
 	Docs predefined.DocsList
 }
 
-// TransactionCommit represents a commit request for a transaction of the given id.
-type TransactionCommit struct {
+// CommitTransaction represents a commit request for a transaction of the given id.
+type CommitTransaction struct {
 	// Used to identify the transaction to commit.
 	TransactionID int
 
@@ -566,8 +566,8 @@ type ClientIntrospectionRequest struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupExport struct {
+// ExportBackup will attempt to export data from the datastore using the db api.
+type ExportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup export will be done for all the nodes.
@@ -587,8 +587,8 @@ type BackupExport struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupImport struct {
+// ImportBackup will attempt to import data into the datastore using the db API.
+type ImportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup import will be done for all the nodes.

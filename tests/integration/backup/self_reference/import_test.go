@@ -22,7 +22,7 @@ import (
 func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"User":[
 						{
@@ -105,11 +105,11 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
 				}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				NodeID:          immutable.Some(0),
 				ExpectedContent: expectedExportData,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
@@ -158,7 +158,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					}
 				`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Author":[
 						{
@@ -224,7 +224,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					}
 				`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Book":[
 						{
@@ -342,12 +342,12 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			/*
 				This fails due to the linked ticket.
 				https://github.com/sourcenetwork/defradb/issues/1704
-				testUtils.BackupExport{
+				testUtils.ExportBackup{
 					NodeID:          immutable.Some(0),
 					ExpectedContent: expectedExportData,
 				},
 			*/
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},

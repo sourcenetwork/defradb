@@ -39,7 +39,7 @@ Otherwise, all indexes in the database will be shown.`,
 				if err != nil {
 					return err
 				}
-				indOpt := options.WithIdentity(options.CollectionListIndexes(), identity.FromContext(cmd.Context()))
+				indOpt := options.WithIdentity(options.ListCollectionIndexes(), identity.FromContext(cmd.Context()))
 				indexes, err := col.ListIndexes(cmd.Context(), indOpt)
 				if err != nil {
 					return err

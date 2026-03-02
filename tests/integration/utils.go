@@ -433,13 +433,13 @@ func performAction(
 	case DeleteEncryptedIndex:
 		deleteEncryptedIndex(s, action)
 
-	case BackupExport:
-		backupExport(s, action)
+	case ExportBackup:
+		exportBackup(s, action)
 
-	case BackupImport:
-		backupImport(s, action)
+	case ImportBackup:
+		importBackup(s, action)
 
-	case TransactionCommit:
+	case CommitTransaction:
 		commitTransaction(s, action)
 
 	case IntrospectionRequest:
@@ -1426,7 +1426,7 @@ func listEncryptedIndexes(
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
 
-		opts := options.CollectionListEncryptedIndexes()
+		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1533,10 +1533,10 @@ func deleteEncryptedIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
-// backupExport generates a backup using the db api.
-func backupExport(
+// exportBackup generates a backup using the db api.
+func exportBackup(
 	s *state.State,
-	action BackupExport,
+	action ExportBackup,
 ) {
 	if action.Config.Filepath == "" {
 		action.Config.Filepath = s.T.TempDir() + testJSONFile
@@ -1565,10 +1565,10 @@ func backupExport(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
-// backupImport imports data from a backup using the db api.
-func backupImport(
+// importBackup imports data from a backup using the db api.
+func importBackup(
 	s *state.State,
-	action BackupImport,
+	action ImportBackup,
 ) {
 	if action.Filepath == "" {
 		action.Filepath = s.T.TempDir() + testJSONFile
@@ -1653,7 +1653,7 @@ func getTransaction(
 // an error is returned on commit.
 func commitTransaction(
 	s *state.State,
-	action TransactionCommit,
+	action CommitTransaction,
 ) {
 	err := s.Txns[action.TransactionID].Commit()
 	if err != nil {
@@ -1967,9 +1967,9 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case BackupImport:
+		case ImportBackup:
 			hasBackupAction = true
-		case BackupExport:
+		case ExportBackup:
 			hasBackupAction = true
 		}
 	}

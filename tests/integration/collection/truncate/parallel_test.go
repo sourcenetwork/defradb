@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionTruncateParallel_DeletesAllPreviouslyExistingDocuments(t *testing.T) {
+func TestTruncateCollectionParallel_DeletesAllPreviouslyExistingDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

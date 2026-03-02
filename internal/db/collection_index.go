@@ -62,10 +62,10 @@ func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 		return err
 	}
 
-	return c.indexNewDoc(ctx, newDoc)
+	return c.addDocToIndex(ctx, newDoc)
 }
 
-func (c *collection) indexNewDoc(ctx context.Context, doc *client.Document) error {
+func (c *collection) addDocToIndex(ctx context.Context, doc *client.Document) error {
 	// callers of this function must set a context transaction
 	for _, index := range c.indexes {
 		err := index.Save(ctx, doc)
@@ -165,15 +165,15 @@ func (c *collection) deleteIndexedDocWithID(
 // the documents will be indexed by the new index.
 func (c *collection) AddIndex(
 	ctx context.Context,
-	desc client.IndexAddRequest,
-	opts ...options.Enumerable[options.CollectionAddIndexOptions],
+	desc client.AddIndexRequest,
+	opts ...options.Enumerable[options.AddCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexAddPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddIndexPerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -193,7 +193,7 @@ func (c *collection) AddIndex(
 func processAddIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
-	desc client.IndexAddRequest,
+	desc client.AddIndexRequest,
 ) (client.IndexDescription, error) {
 	err := validateIndexDescription(desc)
 	if err != nil {
@@ -232,7 +232,7 @@ func processAddIndexRequest(
 
 func (c *collection) addIndex(
 	ctx context.Context,
-	addReq client.IndexAddRequest,
+	addReq client.AddIndexRequest,
 ) (CollectionIndex, error) {
 	desc, err := processAddIndexRequest(ctx, c.Version(), addReq)
 	if err != nil {
@@ -361,14 +361,14 @@ func (c *collection) indexExistingDocs(
 func (c *collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteIndexPerm); err != nil {
 		return err
 	}
 
@@ -423,11 +423,11 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 // ListIndexes returns all indexes for the collection.
 func (c *collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -446,7 +446,7 @@ func (c *collection) AddEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexAddPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeAddEncryptedIndexPerm); err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
@@ -494,11 +494,11 @@ func (c *collection) addEncryptedIndex(
 // ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 func (c *collection) ListEncryptedIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeListEncryptedIndexPerm); err != nil {
 		return nil, err
 	}
 	return c.Version().EncryptedIndexes, nil
@@ -519,7 +519,7 @@ func (c *collection) DeleteEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDeleteEncryptedIndexPerm); err != nil {
 		return err
 	}
 
@@ -626,7 +626,7 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
-	addReq client.IndexAddRequest,
+	addReq client.AddIndexRequest,
 ) (string, error) {
 	indexName := addReq.Name
 	if indexName == "" {
@@ -663,7 +663,7 @@ func generateIndexNameIfNeeded(
 	return indexName, nil
 }
 
-func validateIndexDescription(desc client.IndexAddRequest) error {
+func validateIndexDescription(desc client.AddIndexRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return schema.NewErrIndexWithInvalidName("!")
 	}

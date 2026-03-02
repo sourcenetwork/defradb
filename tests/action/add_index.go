@@ -65,7 +65,7 @@ func (a *AddIndex) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		indexDesc := client.IndexAddRequest{
+		indexDesc := client.AddIndexRequest{
 			Name: a.IndexName,
 		}
 
@@ -86,7 +86,7 @@ func (a *AddIndex) Execute() {
 
 		indexDesc.Unique = a.Unique
 
-		opts := options.CollectionAddIndex()
+		opts := options.AddCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

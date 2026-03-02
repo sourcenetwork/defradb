@@ -26,7 +26,7 @@ func TestAddCollection(t *testing.T) {
 					type User {}
 				`,
 			},
-			&action.CollectionDescribe{
+			&action.DescribeCollection{
 				Expected: []client.CollectionVersion{
 					{
 						Name:           "User",

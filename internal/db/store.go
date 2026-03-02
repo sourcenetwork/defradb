@@ -75,7 +75,7 @@ func (db *DB) GetCollectionByName(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +98,7 @@ func (db *DB) GetCollections(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -121,7 +121,7 @@ func (db *DB) ListIndexes(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func (db *DB) ListAllEncryptedIndexes(
 
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListAllPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListAllEncryptedIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +172,7 @@ func (db *DB) AddCollection(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -216,7 +216,7 @@ func (db *DB) PatchCollection(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -244,7 +244,7 @@ func (db *DB) SetActiveCollectionVersion(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -273,7 +273,7 @@ func (db *DB) SetMigration(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeMigrationSetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSetMigrationPerm); err != nil {
 		return "", err
 	}
 
@@ -307,7 +307,7 @@ func (db *DB) AddLens(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeAddLensPerm); err != nil {
 		return "", err
 	}
 
@@ -340,7 +340,7 @@ func (db *DB) ListLenses(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListLensPerm); err != nil {
 		return nil, err
 	}
 
@@ -364,7 +364,7 @@ func (db *DB) AddView(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeAddViewPerm); err != nil {
 		return nil, err
 	}
 
@@ -395,7 +395,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewRefreshPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeRefreshViewPerm); err != nil {
 		return err
 	}
 

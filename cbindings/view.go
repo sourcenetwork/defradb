@@ -23,8 +23,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export ViewAdd
-func ViewAdd(nodePtr C.uintptr_t,
+//export AddView
+func AddView(nodePtr C.uintptr_t,
 	query *C.char,
 	sdl *C.char,
 	transformCIDStr *C.char,
@@ -56,8 +56,8 @@ func ViewAdd(nodePtr C.uintptr_t,
 	return returnC(marshalJSONToGoCResult(defs))
 }
 
-//export ViewRefresh
-func ViewRefresh(nodePtr C.uintptr_t,
+//export RefreshView
+func RefreshView(nodePtr C.uintptr_t,
 	cOptions C.CollectionOptions,
 	identityPtr C.uintptr_t,
 ) C.Result {

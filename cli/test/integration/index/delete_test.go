@@ -30,12 +30,12 @@ func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection: "User",
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -47,11 +47,11 @@ func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 			},
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection:      "User",
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -64,7 +64,7 @@ func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 func TestIndexDelete_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				Collection:  "NonExistentCollection",
 				Name:        "SomeIndex",
 				ExpectError: "collection not found",
@@ -78,7 +78,7 @@ func TestIndexDelete_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 func TestIndexDelete_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				// Collection is empty
 				Name:        "SomeIndex",
 				ExpectError: "collection not found",
@@ -99,7 +99,7 @@ func TestIndexDelete_WithoutName_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				Collection: "User",
 				// Name is empty
 				ExpectError: "index name is required",
@@ -121,7 +121,7 @@ func TestIndexDelete_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				Collection:  "User",
 				Name:        "NonExistentIndex",
 				ExpectError: "index with name doesn't exists",
@@ -145,24 +145,24 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 				`,
 			},
 			// Create multiple indexes
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByEmail",
 				Fields:     []string{"email"},
 				Unique:     true,
 			},
 			// Verify all indexes exist
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection: "User",
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -189,12 +189,12 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 				},
 			},
 			// Delete one index
-			&action.IndexDelete{
+			&action.DeleteIndex{
 				Collection: "User",
 				Name:       "UsersByAge",
 			},
 			// Verify only two indexes remain
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection: "User",
 				ExpectedIndexes: []client.IndexDescription{
 					{

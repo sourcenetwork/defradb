@@ -531,7 +531,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/collection",
 	}
 	graphQLRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/graphql_request",
+		Ref: "#/components/schemas/request_graphql",
 	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
@@ -570,7 +570,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
 	addCollection := openapi3.NewOperation()
-	addCollection.OperationID = "collection_add"
+	addCollection.OperationID = "add_collection"
 	addCollection.Description = "Add a new collection"
 	addCollection.Tags = []string{"collection"}
 	addCollection.RequestBody = &openapi3.RequestBodyRef{
@@ -597,25 +597,25 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithJSONSchemaRef(backupConfigSchema)
 
-	backupExport := openapi3.NewOperation()
-	backupExport.OperationID = "backup_export"
-	backupExport.Description = "Export a database backup to file"
-	backupExport.Tags = []string{"backup"}
-	backupExport.Responses = openapi3.NewResponses()
-	backupExport.Responses.Set("200", successResponse)
-	backupExport.Responses.Set("400", errorResponse)
-	backupExport.RequestBody = &openapi3.RequestBodyRef{
+	exportBackup := openapi3.NewOperation()
+	exportBackup.OperationID = "export_backup"
+	exportBackup.Description = "Export a database backup to file"
+	exportBackup.Tags = []string{"backup"}
+	exportBackup.Responses = openapi3.NewResponses()
+	exportBackup.Responses.Set("200", successResponse)
+	exportBackup.Responses.Set("400", errorResponse)
+	exportBackup.RequestBody = &openapi3.RequestBodyRef{
 		Value: backupRequest,
 	}
 
-	backupImport := openapi3.NewOperation()
-	backupImport.OperationID = "backup_import"
-	backupImport.Description = "Import a database backup from file"
-	backupImport.Tags = []string{"backup"}
-	backupImport.Responses = openapi3.NewResponses()
-	backupImport.Responses.Set("200", successResponse)
-	backupImport.Responses.Set("400", errorResponse)
-	backupImport.RequestBody = &openapi3.RequestBodyRef{
+	importBackup := openapi3.NewOperation()
+	importBackup.OperationID = "import_backup"
+	importBackup.Description = "Import a database backup from file"
+	importBackup.Tags = []string{"backup"}
+	importBackup.Responses = openapi3.NewResponses()
+	importBackup.Responses.Set("200", successResponse)
+	importBackup.Responses.Set("400", errorResponse)
+	importBackup.RequestBody = &openapi3.RequestBodyRef{
 		Value: backupRequest,
 	}
 
@@ -645,28 +645,28 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithDescription("Collection(s) with matching name, collection id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
-	collectionDescribe := openapi3.NewOperation()
-	collectionDescribe.OperationID = "collection_describe"
-	collectionDescribe.Description = "Introspect collection(s) by name, collection id, or version id."
-	collectionDescribe.Tags = []string{"collection"}
-	collectionDescribe.AddParameter(collectionNameQueryParam)
-	collectionDescribe.AddParameter(collectionIDQueryParam)
-	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
-	collectionDescribe.AddParameter(collectionGetInactiveQueryParam)
-	collectionDescribe.AddResponse(200, collectionsResponse)
-	collectionDescribe.Responses.Set("400", errorResponse)
+	describeCollection := openapi3.NewOperation()
+	describeCollection.OperationID = "describe_collection"
+	describeCollection.Description = "Introspect collection(s) by name, collection id, or version id."
+	describeCollection.Tags = []string{"collection"}
+	describeCollection.AddParameter(collectionNameQueryParam)
+	describeCollection.AddParameter(collectionIDQueryParam)
+	describeCollection.AddParameter(collectionVersionIdQueryParam)
+	describeCollection.AddParameter(collectionGetInactiveQueryParam)
+	describeCollection.AddResponse(200, collectionsResponse)
+	describeCollection.Responses.Set("400", errorResponse)
 
-	viewRefresh := openapi3.NewOperation()
-	viewRefresh.OperationID = "view_refresh"
-	viewRefresh.Description = "Refresh view(s) by name, collection id, or version id."
-	viewRefresh.Tags = []string{"view"}
-	viewRefresh.AddParameter(collectionNameQueryParam)
-	viewRefresh.AddParameter(collectionIDQueryParam)
-	viewRefresh.AddParameter(collectionVersionIdQueryParam)
-	viewRefresh.AddParameter(collectionGetInactiveQueryParam)
-	viewRefresh.Responses = openapi3.NewResponses()
-	viewRefresh.Responses.Set("200", successResponse)
-	viewRefresh.Responses.Set("400", errorResponse)
+	refreshView := openapi3.NewOperation()
+	refreshView.OperationID = "refresh_view"
+	refreshView.Description = "Refresh view(s) by name, collection id, or version id."
+	refreshView.Tags = []string{"view"}
+	refreshView.AddParameter(collectionNameQueryParam)
+	refreshView.AddParameter(collectionIDQueryParam)
+	refreshView.AddParameter(collectionVersionIdQueryParam)
+	refreshView.AddParameter(collectionGetInactiveQueryParam)
+	refreshView.Responses = openapi3.NewResponses()
+	refreshView.Responses.Set("200", successResponse)
+	refreshView.Responses.Set("400", errorResponse)
 
 	patchCollectionRequest := openapi3.NewRequestBody().
 		WithJSONSchemaRef(patchCollectionRequestSchema)
@@ -718,7 +718,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithDescription("Lens info").
 		WithJSONSchemaRef(setMigrationSchema)
 	setMigration := openapi3.NewOperation()
-	setMigration.OperationID = "collection_set_migration"
+	setMigration.OperationID = "set_collection_migration"
 	setMigration.Description = "Set a lens migration between collection versions"
 	setMigration.Tags = []string{"collection"}
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
@@ -743,7 +743,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(addLensResponseSchema)
 
 	addLens := openapi3.NewOperation()
-	addLens.OperationID = "lens_add"
+	addLens.OperationID = "add_lens"
 	addLens.Description = "Add a lens to the lens store"
 	addLens.Tags = []string{"lens"}
 	addLens.RequestBody = &openapi3.RequestBodyRef{
@@ -762,7 +762,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(listLensesResponseSchema)
 
 	listLenses := openapi3.NewOperation()
-	listLenses.OperationID = "lens_list"
+	listLenses.OperationID = "list_lenses"
 	listLenses.Description = "List all stored lenses"
 	listLenses.Tags = []string{"lens"}
 	listLenses.Responses = openapi3.NewResponses()
@@ -776,30 +776,30 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithDescription("GraphQL response").
 		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
 
-	graphQLPost := openapi3.NewOperation()
-	graphQLPost.Description = "GraphQL POST endpoint"
-	graphQLPost.OperationID = "graphql_post"
-	graphQLPost.Tags = []string{"graphql"}
-	graphQLPost.RequestBody = &openapi3.RequestBodyRef{
+	postGraphQL := openapi3.NewOperation()
+	postGraphQL.Description = "GraphQL POST endpoint"
+	postGraphQL.OperationID = "post_graphql"
+	postGraphQL.Tags = []string{"graphql"}
+	postGraphQL.RequestBody = &openapi3.RequestBodyRef{
 		Value: graphQLRequest,
 	}
-	graphQLPost.AddResponse(200, graphQLResponse)
-	graphQLPost.Responses.Set("400", errorResponse)
+	postGraphQL.AddResponse(200, graphQLResponse)
+	postGraphQL.Responses.Set("400", errorResponse)
 
 	graphQLQueryParam := openapi3.NewQueryParameter("query").
 		WithSchema(openapi3.NewStringSchema())
 
-	graphQLGet := openapi3.NewOperation()
-	graphQLGet.Description = "GraphQL GET endpoint"
-	graphQLGet.OperationID = "graphql_get"
-	graphQLGet.Tags = []string{"graphql"}
-	graphQLGet.AddParameter(graphQLQueryParam)
-	graphQLGet.AddResponse(200, graphQLResponse)
-	graphQLGet.Responses.Set("400", errorResponse)
+	getGraphQL := openapi3.NewOperation()
+	getGraphQL.Description = "GraphQL GET endpoint"
+	getGraphQL.OperationID = "get_graphql"
+	getGraphQL.Tags = []string{"graphql"}
+	getGraphQL.AddParameter(graphQLQueryParam)
+	getGraphQL.AddResponse(200, graphQLResponse)
+	getGraphQL.Responses.Set("400", errorResponse)
 
 	debugDump := openapi3.NewOperation()
 	debugDump.Description = "Dump database"
-	debugDump.OperationID = "debug_dump"
+	debugDump.OperationID = "dump_debug"
 	debugDump.Tags = []string{"debug"}
 	debugDump.Responses = openapi3.NewResponses()
 	debugDump.Responses.Set("200", successResponse)
@@ -810,7 +810,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(identitySchema)
 
 	nodeIdentity := openapi3.NewOperation()
-	nodeIdentity.OperationID = "node_identity"
+	nodeIdentity.OperationID = "get_node_identity"
 	nodeIdentity.Description = "Get node's public identity"
 	nodeIdentity.Tags = []string{"node", "identity"}
 	nodeIdentity.AddResponse(200, identityResponse)
@@ -832,7 +832,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithJSONSchema(listIndexesMapSchema)
 
 	listIndexes := openapi3.NewOperation()
-	listIndexes.OperationID = "indexes_list_all"
+	listIndexes.OperationID = "list_all_indexes"
 	listIndexes.Description = "List all indexes for all collections"
 	listIndexes.Tags = []string{"index"}
 	listIndexes.AddResponse(200, listIndexesResponse)
@@ -854,24 +854,24 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithJSONSchema(listEncryptedIndexesMapSchema)
 
 	listEncryptedIndexes := openapi3.NewOperation()
-	listEncryptedIndexes.OperationID = "encrypted_indexes_list_all"
+	listEncryptedIndexes.OperationID = "list_all_encrypted_indexes"
 	listEncryptedIndexes.Description = "List all encrypted indexes for all collections"
 	listEncryptedIndexes.Tags = []string{"encrypted_index"}
 	listEncryptedIndexes.AddResponse(200, listEncryptedIndexesResponse)
 	listEncryptedIndexes.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
-	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
-	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
+	router.AddRoute("/backup/export", http.MethodPost, exportBackup, h.BasicExport)
+	router.AddRoute("/backup/import", http.MethodPost, importBackup, h.BasicImport)
+	router.AddRoute("/collections", http.MethodGet, describeCollection, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
 	router.AddRoute("/collections/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/encrypted-indexes", http.MethodGet, listEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
 	router.AddRoute("/collections/migrations", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
-	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
-	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
-	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
+	router.AddRoute("/view/refresh", http.MethodPost, refreshView, h.RefreshViews)
+	router.AddRoute("/graphql", http.MethodGet, getGraphQL, h.ExecRequest)
+	router.AddRoute("/graphql", http.MethodPost, postGraphQL, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/collections", http.MethodPost, addCollection, h.AddCollection)
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)

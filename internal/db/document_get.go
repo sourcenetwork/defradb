@@ -37,7 +37,7 @@ func (c *collection) GetDocument(
 	opt := utils.NewOptions(opts...)
 	showDeleted := opt.ShowDeleted
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeReadDocumentPerm); err != nil {
 		return nil, err
 	}
 

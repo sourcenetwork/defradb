@@ -39,12 +39,19 @@ var (
 	ErrEmptyCollectionSDL               = errors.New(errEmptyCollectionSDL)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
 	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
-	ErrReadingInput                     = errors.New("reading input")
 	ErrParsingSDL                       = errors.New("parsing SDL")
 	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
 		"really want to purge all data")
 )
+
+func NewErrParsingArgument(argName string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to parse %s", argName), inner)
+}
+
+func NewErrReadingArgument(argName string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to read %s", argName), inner)
+}
 
 func NewErrRequiredFlagEmpty(longName string, shortName string) error {
 	return errors.New(fmt.Sprintf(errRequiredFlag, longName, shortName, "empty"))

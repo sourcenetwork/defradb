@@ -29,11 +29,11 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID:      peerIDs[0],
 				Collections: []string{"Order"}, // Non-existent collection
 				ExpectError: "failed to get collections for replicator",
@@ -56,11 +56,11 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID:      invalidPeerID,
 				Collections: []string{"User"},
 				ExpectError: "replicator not found",
@@ -83,11 +83,11 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID:      peerIDs[0],
 				Collections: []string{"User"},
 			},
@@ -113,11 +113,11 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID: peerIDs[0],
 			},
 		},
@@ -142,11 +142,11 @@ func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSuc
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID:      peerIDs[0],
 				Collections: []string{"User"},
 			},

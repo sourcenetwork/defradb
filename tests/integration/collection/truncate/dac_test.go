@@ -46,7 +46,7 @@ resources:
     - actor
 `
 
-func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testing.T) {
+func TestTruncateCollectionDAC_RemovedPrivateDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -100,7 +100,7 @@ func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testing.T) {
+func TestTruncateCollectionDAC_RemovedPublicDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.AddDACPolicy{

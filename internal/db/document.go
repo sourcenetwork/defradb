@@ -142,7 +142,7 @@ func (c *collection) AddDocument(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeUpdateDocumentPerm); err != nil {
 		return err
 	}
 
@@ -174,7 +174,7 @@ func (c *collection) AddManyDocuments(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeUpdateDocumentPerm); err != nil {
 		return err
 	}
 
@@ -272,7 +272,7 @@ func (c *collection) add(
 		return err
 	}
 
-	err = c.indexNewDoc(ctx, doc)
+	err = c.addDocToIndex(ctx, doc)
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (c *collection) UpdateDocument(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeUpdateDocumentPerm); err != nil {
 		return err
 	}
 
@@ -386,7 +386,7 @@ func (c *collection) SaveDocument(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeUpdateDocumentPerm); err != nil {
 		return err
 	}
 
@@ -634,7 +634,7 @@ func (c *collection) DeleteDocument(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteDocumentPerm); err != nil {
 		return false, err
 	}
 
@@ -674,7 +674,7 @@ func (c *collection) ExistsDocument(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeReadDocumentPerm); err != nil {
 		return false, err
 	}
 

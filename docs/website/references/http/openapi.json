@@ -27,7 +27,7 @@
             }
         },
         "schemas": {
-            "acp_document_relationship_add_request": {
+            "add_acp_document_relationship_request": {
                 "properties": {
                     "CollectionName": {
                         "type": "string"
@@ -44,24 +44,7 @@
                 },
                 "type": "object"
             },
-            "acp_document_relationship_delete_request": {
-                "properties": {
-                    "CollectionName": {
-                        "type": "string"
-                    },
-                    "DocID": {
-                        "type": "string"
-                    },
-                    "Relation": {
-                        "type": "string"
-                    },
-                    "TargetActor": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_node_relationship_add_request": {
+            "add_acp_node_relationship_request": {
                 "properties": {
                     "Relation": {
                         "type": "string"
@@ -72,26 +55,7 @@
                 },
                 "type": "object"
             },
-            "acp_node_relationship_delete_request": {
-                "properties": {
-                    "Relation": {
-                        "type": "string"
-                    },
-                    "TargetActor": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_node_status_result": {
-                "properties": {
-                    "Status": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_policy_add_result": {
+            "add_acp_policy_result": {
                 "properties": {
                     "PolicyID": {
                         "type": "string"
@@ -99,7 +63,7 @@
                 },
                 "type": "object"
             },
-            "acp_relationship_add_result": {
+            "add_acp_relationship_result": {
                 "properties": {
                     "ExistedAlready": {
                         "type": "boolean"
@@ -107,9 +71,37 @@
                 },
                 "type": "object"
             },
-            "acp_relationship_delete_result": {
+            "add_encrypted_index": {
                 "properties": {
-                    "RecordFound": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "add_index": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
                         "type": "boolean"
                     }
                 },
@@ -356,21 +348,6 @@
                 },
                 "type": "object"
             },
-            "collection_delete": {
-                "properties": {
-                    "filter": {}
-                },
-                "type": "object"
-            },
-            "collection_update": {
-                "properties": {
-                    "filter": {},
-                    "updater": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "create_tx": {
                 "properties": {
                     "id": {
@@ -378,6 +355,48 @@
                         "minimum": 0,
                         "type": "integer"
                     }
+                },
+                "type": "object"
+            },
+            "delete_acp_document_relationship_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "delete_acp_node_relationship_request": {
+                "properties": {
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "delete_acp_relationship_result": {
+                "properties": {
+                    "RecordFound": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "delete_collection": {
+                "properties": {
+                    "filter": {}
                 },
                 "type": "object"
             },
@@ -425,34 +444,30 @@
                 },
                 "type": "object"
             },
-            "encrypted_index_add": {
-                "properties": {
-                    "FieldName": {
-                        "type": "string"
-                    },
-                    "Type": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "error": {
                 "properties": {
                     "error": {}
                 },
                 "type": "object"
             },
-            "graphql_request": {
+            "get_acp_node_status_result": {
                 "properties": {
-                    "operationName": {
+                    "Status": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "get_peer_info": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
                     },
-                    "query": {
+                    "ID": {
                         "type": "string"
-                    },
-                    "variables": {
-                        "additionalProperties": {},
-                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -488,31 +503,6 @@
                         "maximum": 4294967295,
                         "minimum": 0,
                         "type": "integer"
-                    },
-                    "Name": {
-                        "type": "string"
-                    },
-                    "Unique": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "index_add": {
-                "properties": {
-                    "Fields": {
-                        "items": {
-                            "properties": {
-                                "Descending": {
-                                    "type": "boolean"
-                                },
-                                "Name": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
                     },
                     "Name": {
                         "type": "string"
@@ -561,20 +551,6 @@
                 },
                 "type": "object"
             },
-            "peer_info": {
-                "properties": {
-                    "Addresses": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "ID": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "replicator": {
                 "properties": {
                     "Addresses": {
@@ -604,9 +580,33 @@
                 },
                 "type": "object"
             },
+            "request_graphql": {
+                "properties": {
+                    "operationName": {
+                        "type": "string"
+                    },
+                    "query": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "set_migration": {
                 "properties": {
                     "lensId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "update_collection": {
+                "properties": {
+                    "filter": {},
+                    "updater": {
                         "type": "string"
                     }
                 },
@@ -665,7 +665,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_policy_add_result"
+                                    "$ref": "#/components/schemas/add_acp_policy_result"
                                 }
                             }
                         },
@@ -691,7 +691,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_document_relationship_delete_request"
+                                "$ref": "#/components/schemas/delete_acp_document_relationship_request"
                             }
                         }
                     },
@@ -702,7 +702,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                    "$ref": "#/components/schemas/delete_acp_relationship_result"
                                 }
                             }
                         },
@@ -726,7 +726,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_document_relationship_add_request"
+                                "$ref": "#/components/schemas/add_acp_document_relationship_request"
                             }
                         }
                     },
@@ -737,7 +737,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                    "$ref": "#/components/schemas/add_acp_relationship_result"
                                 }
                             }
                         },
@@ -803,7 +803,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_node_relationship_delete_request"
+                                "$ref": "#/components/schemas/delete_acp_node_relationship_request"
                             }
                         }
                     },
@@ -814,7 +814,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                    "$ref": "#/components/schemas/delete_acp_relationship_result"
                                 }
                             }
                         },
@@ -838,7 +838,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_node_relationship_add_request"
+                                "$ref": "#/components/schemas/add_acp_node_relationship_request"
                             }
                         }
                     },
@@ -849,7 +849,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                    "$ref": "#/components/schemas/add_acp_relationship_result"
                                 }
                             }
                         },
@@ -876,7 +876,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/acp_node_status_result"
+                                    "$ref": "#/components/schemas/get_acp_node_status_result"
                                 }
                             }
                         },
@@ -897,7 +897,7 @@
         "/backup/export": {
             "post": {
                 "description": "Export a database backup to file",
-                "operationId": "backup_export",
+                "operationId": "export_backup",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -927,7 +927,7 @@
         "/backup/import": {
             "post": {
                 "description": "Import a database backup from file",
-                "operationId": "backup_import",
+                "operationId": "import_backup",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1005,7 +1005,7 @@
         "/ccip": {
             "post": {
                 "description": "CCIP POST endpoint",
-                "operationId": "ccip_post",
+                "operationId": "post_ccip",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1041,7 +1041,7 @@
         "/ccip/{sender}/{data}": {
             "get": {
                 "description": "CCIP GET endpoint",
-                "operationId": "ccip_get",
+                "operationId": "get_ccip",
                 "parameters": [
                     {
                         "description": "Hex encoded request data",
@@ -1088,7 +1088,7 @@
         "/collections": {
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
-                "operationId": "collection_describe",
+                "operationId": "describe_collection",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1184,7 +1184,7 @@
             },
             "post": {
                 "description": "Add a new collection",
-                "operationId": "collection_add",
+                "operationId": "add_collection",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -1252,7 +1252,7 @@
         "/collections/indexes": {
             "get": {
                 "description": "List all indexes for all collections",
-                "operationId": "indexes_list_all",
+                "operationId": "list_all_indexes",
                 "responses": {
                     "200": {
                         "content": {
@@ -1285,7 +1285,7 @@
         "/collections/migrations": {
             "post": {
                 "description": "Set a lens migration between collection versions",
-                "operationId": "collection_set_migration",
+                "operationId": "set_collection_migration",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1322,7 +1322,7 @@
         "/collections/{name}": {
             "delete": {
                 "description": "Delete document(s) from a collection",
-                "operationId": "collection_delete_with_filter",
+                "operationId": "delete_collection_with_filter",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1338,7 +1338,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/collection_delete"
+                                "$ref": "#/components/schemas/delete_collection"
                             }
                         }
                     },
@@ -1368,7 +1368,7 @@
             },
             "patch": {
                 "description": "Update document(s) in a collection",
-                "operationId": "collection_update_with_filter",
+                "operationId": "update_collection_with_filter",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1384,7 +1384,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/collection_update"
+                                "$ref": "#/components/schemas/update_collection"
                             }
                         }
                     },
@@ -1414,7 +1414,7 @@
             },
             "post": {
                 "description": "Add document(s) to a collection",
-                "operationId": "document_add",
+                "operationId": "add_document",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1465,7 +1465,7 @@
         "/collections/{name}/document/{docID}": {
             "delete": {
                 "description": "Delete a document by docID",
-                "operationId": "document_delete",
+                "operationId": "delete_document",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1502,7 +1502,7 @@
             },
             "get": {
                 "description": "Get a document by docID",
-                "operationId": "document_get",
+                "operationId": "get_document",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1546,7 +1546,7 @@
             },
             "patch": {
                 "description": "Update a document by docID",
-                "operationId": "document_update",
+                "operationId": "update_document",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1585,7 +1585,7 @@
         "/collections/{name}/encrypted-indexes": {
             "get": {
                 "description": "List encrypted indexes",
-                "operationId": "encrypted_index_list",
+                "operationId": "list_encrypted_indexes",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1624,7 +1624,7 @@
             },
             "post": {
                 "description": "Add an encrypted index",
-                "operationId": "encrypted_index_add",
+                "operationId": "add_encrypted_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1640,7 +1640,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/encrypted_index_add"
+                                "$ref": "#/components/schemas/add_encrypted_index"
                             }
                         }
                     },
@@ -1672,7 +1672,7 @@
         "/collections/{name}/encrypted-indexes/{field}": {
             "delete": {
                 "description": "Delete an encrypted index",
-                "operationId": "encrypted_index_delete",
+                "operationId": "delete_encrypted_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1712,7 +1712,7 @@
         "/collections/{name}/indexes": {
             "get": {
                 "description": "List secondary indexes",
-                "operationId": "index_list",
+                "operationId": "list_indexes",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1751,7 +1751,7 @@
             },
             "post": {
                 "description": "Add a secondary index",
-                "operationId": "index_add",
+                "operationId": "add_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1767,7 +1767,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_add"
+                                "$ref": "#/components/schemas/add_index"
                             }
                         }
                     },
@@ -1799,7 +1799,7 @@
         "/collections/{name}/indexes/{index}": {
             "delete": {
                 "description": "Delete a secondary index",
-                "operationId": "index_delete",
+                "operationId": "delete_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1869,7 +1869,7 @@
         "/debug/dump": {
             "get": {
                 "description": "Dump database",
-                "operationId": "debug_dump",
+                "operationId": "dump_debug",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -1889,7 +1889,7 @@
         "/encrypted-indexes": {
             "get": {
                 "description": "List all encrypted indexes for all collections",
-                "operationId": "encrypted_indexes_list_all",
+                "operationId": "list_all_encrypted_indexes",
                 "responses": {
                     "200": {
                         "content": {
@@ -1922,7 +1922,7 @@
         "/graphql": {
             "get": {
                 "description": "GraphQL GET endpoint",
-                "operationId": "graphql_get",
+                "operationId": "get_graphql",
                 "parameters": [
                     {
                         "in": "query",
@@ -1973,12 +1973,12 @@
             },
             "post": {
                 "description": "GraphQL POST endpoint",
-                "operationId": "graphql_post",
+                "operationId": "post_graphql",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/graphql_request"
+                                "$ref": "#/components/schemas/request_graphql"
                             }
                         }
                     }
@@ -2026,7 +2026,7 @@
         "/lens": {
             "get": {
                 "description": "List all stored lenses",
-                "operationId": "lens_list",
+                "operationId": "list_lenses",
                 "responses": {
                     "200": {
                         "content": {
@@ -2056,7 +2056,7 @@
             },
             "post": {
                 "description": "Add a lens to the lens store",
-                "operationId": "lens_add",
+                "operationId": "add_lens",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2093,7 +2093,7 @@
         "/node/identity": {
             "get": {
                 "description": "Get node's public identity",
-                "operationId": "node_identity",
+                "operationId": "get_node_identity",
                 "responses": {
                     "200": {
                         "content": {
@@ -2150,7 +2150,7 @@
         "/p2p/collections": {
             "delete": {
                 "description": "Delete peer collections",
-                "operationId": "peer_collections_delete",
+                "operationId": "delete_peer_collections",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2181,7 +2181,7 @@
             },
             "get": {
                 "description": "List peer collections",
-                "operationId": "peer_collections_list",
+                "operationId": "list_peer_collections",
                 "responses": {
                     "200": {
                         "content": {
@@ -2209,7 +2209,7 @@
             },
             "post": {
                 "description": "Add peer collections",
-                "operationId": "peer_collections_add",
+                "operationId": "add_peer_collections",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2242,7 +2242,7 @@
         "/p2p/collections/sync-branchable": {
             "post": {
                 "description": "Synchronize a branchable collection's DAG from the network",
-                "operationId": "peer_sync_branchable_collection",
+                "operationId": "sync_peer_branchable_collection",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2283,7 +2283,7 @@
         "/p2p/collections/sync-versions": {
             "post": {
                 "description": "Synchronize collection versions to the local node",
-                "operationId": "peer_sync_collection_versions",
+                "operationId": "sync_peer_collection_versions",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2346,7 +2346,7 @@
         "/p2p/documents": {
             "delete": {
                 "description": "Delete peer documents",
-                "operationId": "peer_documents_delete",
+                "operationId": "delete_peer_documents",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2377,7 +2377,7 @@
             },
             "get": {
                 "description": "List peer documents",
-                "operationId": "peer_documents_list",
+                "operationId": "list_peer_documents",
                 "responses": {
                     "200": {
                         "content": {
@@ -2405,7 +2405,7 @@
             },
             "post": {
                 "description": "Add peer documents",
-                "operationId": "peer_documents_add",
+                "operationId": "add_peer_documents",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2438,7 +2438,7 @@
         "/p2p/documents/sync": {
             "post": {
                 "description": "Synchronize documents from the network",
-                "operationId": "peer_sync_documents",
+                "operationId": "sync_peer_documents",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2484,13 +2484,13 @@
         },
         "/p2p/info": {
             "get": {
-                "operationId": "peer_info",
+                "operationId": "get_peer_info",
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/peer_info"
+                                    "$ref": "#/components/schemas/get_peer_info"
                                 }
                             }
                         },
@@ -2511,7 +2511,7 @@
         "/p2p/replicators": {
             "delete": {
                 "description": "Delete peer replicators",
-                "operationId": "peer_replicator_delete",
+                "operationId": "delete_peer_replicator",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2539,7 +2539,7 @@
             },
             "get": {
                 "description": "List peer replicators",
-                "operationId": "peer_replicator_list",
+                "operationId": "list_peer_replicators",
                 "responses": {
                     "200": {
                         "content": {
@@ -2567,7 +2567,7 @@
             },
             "post": {
                 "description": "Add peer replicators",
-                "operationId": "peer_replicator_add",
+                "operationId": "add_peer_replicator",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2690,7 +2690,7 @@
         "/tx/{id}": {
             "delete": {
                 "description": "Discard a transaction",
-                "operationId": "transaction_discard",
+                "operationId": "discard_transaction",
                 "parameters": [
                     {
                         "in": "path",
@@ -2719,7 +2719,7 @@
             },
             "post": {
                 "description": "Commit a transaction",
-                "operationId": "transaction_commit",
+                "operationId": "commit_transaction",
                 "parameters": [
                     {
                         "in": "path",
@@ -2797,7 +2797,7 @@
         "/view/refresh": {
             "post": {
                 "description": "Refresh view(s) by name, collection id, or version id.",
-                "operationId": "view_refresh",
+                "operationId": "refresh_view",
                 "parameters": [
                     {
                         "description": "Collection name",

@@ -37,7 +37,7 @@ func MakeDocumentGetCommand(ctx context.Context) *cobra.Command {
 
 			docID, err := client.NewDocIDFromString(args[0])
 			if err != nil {
-				return err
+				return NewErrParsingArgument("docID", err)
 			}
 
 			getOpt := options.WithIdentity(

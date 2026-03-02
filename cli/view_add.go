@@ -37,11 +37,11 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			query, err := pickDataOrReadFile(query, queryFile)
 			if err != nil {
-				return err
+				return NewErrReadingArgument("query-file", err)
 			}
 			sdl, err := pickDataOrReadFile(sdl, sdlFile)
 			if err != nil {
-				return err
+				return NewErrReadingArgument("sdl-file", err)
 			}
 			opt := options.WithIdentity(options.AddView(), identity.FromContext(cmd.Context()))
 			if lensCID != "" {

@@ -25,8 +25,8 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export IndexAdd
-func IndexAdd(
+//export AddIndex
+func AddIndex(
 	nodePtr C.uintptr_t,
 	indexName *C.char,
 	fieldsStr *C.char,
@@ -67,7 +67,7 @@ func IndexAdd(
 		})
 	}
 
-	desc := client.IndexAddRequest{
+	desc := client.AddIndexRequest{
 		Name:   C.GoString(indexName),
 		Fields: fields,
 		Unique: isUnique != 0,
@@ -84,7 +84,7 @@ func IndexAdd(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	descWithID, err := col.AddIndex(ctx, desc,
-		defraOpts.WithIdentity(defraOpts.CollectionAddIndex(), ident))
+		defraOpts.WithIdentity(defraOpts.AddCollectionIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -92,8 +92,8 @@ func IndexAdd(
 	return returnC(marshalJSONToGoCResult(descWithID))
 }
 
-//export IndexList
-func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
+//export ListIndexes
+func ListIndexes(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -116,7 +116,7 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		indices, err := col.ListIndexes(ctx,
-			defraOpts.WithIdentity(defraOpts.CollectionListIndexes(), ident))
+			defraOpts.WithIdentity(defraOpts.ListCollectionIndexes(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -132,8 +132,8 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 	}
 }
 
-//export IndexDelete
-func IndexDelete(nodePtr C.uintptr_t,
+//export DeleteIndex
+func DeleteIndex(nodePtr C.uintptr_t,
 	indexName *C.char,
 	options C.CollectionOptions,
 	identityPtr C.uintptr_t) C.Result {
@@ -157,7 +157,7 @@ func IndexDelete(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	err = col.DeleteIndex(ctx, C.GoString(indexName),
-		defraOpts.WithIdentity(defraOpts.CollectionDeleteIndex(), ident))
+		defraOpts.WithIdentity(defraOpts.DeleteCollectionIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

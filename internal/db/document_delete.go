@@ -38,7 +38,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteDocumentPerm); err != nil {
 		return nil, err
 	}
 

@@ -39,7 +39,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
-					return err
+					return NewErrParsingArgument("docID", err)
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))

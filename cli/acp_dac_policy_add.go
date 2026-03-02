@@ -50,14 +50,14 @@ Notes:
 			case policyFile != "":
 				data, err := os.ReadFile(policyFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				policy = string(data)
 
 			case extraArgsProvided > 0 && args[extraArgsProvided-1] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				policy = string(data)
 

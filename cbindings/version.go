@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/defradb/version"
 )
 
-//export VersionGet
-func VersionGet(flagFull C.int, flagJSON C.int) C.Result {
+//export GetVersion
+func GetVersion(flagFull C.int, flagJSON C.int) C.Result {
 	dv, err := version.NewDefraVersion()
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

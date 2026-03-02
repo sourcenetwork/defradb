@@ -28,8 +28,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export LensSet
-func LensSet(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
+//export SetLens
+func SetLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -61,8 +61,8 @@ func LensSet(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.c
 	return returnC(returnGoC(0, "", lensID))
 }
 
-//export LensAdd
-func LensAdd(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result {
+//export AddLens
+func AddLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -89,8 +89,8 @@ func LensAdd(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result
 	return returnC(returnGoC(0, "", lensID))
 }
 
-//export LensList
-func LensList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export ListLenses
+func ListLenses(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {

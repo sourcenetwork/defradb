@@ -44,7 +44,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 			case filter != "":
 				var filterValue any
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
-					return err
+					return NewErrParsingArgument("filter", err)
 				}
 
 				updateWithFilterOpt := options.WithIdentity(
@@ -58,7 +58,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
-					return err
+					return NewErrParsingArgument("docID", err)
 				}
 
 				getOpt := options.WithIdentity(
@@ -71,7 +71,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 				if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
-					return err
+					return NewErrParsingArgument("updater", err)
 				}
 
 				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
