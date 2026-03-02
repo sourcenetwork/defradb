@@ -82,6 +82,102 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError tests that when
+// three nodes concurrently modify the same pncounter field (some incrementing,
+// some decrementing), the final value is the algebraic sum of all deltas after sync.
+func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: pncounter)
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"points": 100
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 2,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"points": -30
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"points": 50
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// 100 + 10 + (-30) + 50 = 130
+							"points": int64(130),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
