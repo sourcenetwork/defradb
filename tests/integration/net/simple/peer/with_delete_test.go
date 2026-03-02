@@ -20,6 +20,77 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
+// TestP2PWithSingleDocumentConcurrentDeleteAndUpdate tests that when one node
+// updates a document and another node concurrently deletes it, both nodes converge
+// to the deleted state after sync. P2P updates do not undelete documents.
+func TestP2PWithSingleDocumentConcurrentDeleteAndUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "Jane"
+				}`,
+			},
+			testUtils.DeleteDoc{
+				NodeID: immutable.Some(1),
+				DocID:  0,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users(showDeleted: true) {
+						_deleted
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_deleted": true,
+							"Name":     testUtils.AnyOf("John", "Jane"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // The parent-child distinction in these tests is as much documentation and test
 // of the test system as of production.  See it as a santity check of sorts.
 func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
