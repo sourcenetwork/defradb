@@ -1084,7 +1084,6 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
-
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
 	hadTxn := false
@@ -1152,16 +1151,42 @@ func deleteDoc(
 	s *state.State,
 	action DeleteDoc,
 ) {
+
+	// We start by setting the docID from the DocIDs list. But this will be overriden
+	// later if a transaction is attached to the action.
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
 
+	doNotWaitForUpdate := false
 	var expectedErrorRaised bool
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		hadTxn := action.TransactionID.HasValue()
+		var txn client.Txn
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		} else {
+			// If a transaction was not provided, we will make an ephemeral one for this action.
+			txn, _ = node.NewTxn(false)
+		}
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+
+		// If we have a transaction, we will use it to get collections. Otherwise we will
+		// use the cached collections from the state.
+		var collection client.Collection
+		if hadTxn {
+			collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+			collection = collections[action.CollectionID]
+		} else {
+			collection = s.Nodes[nodeID].Collections[action.CollectionID]
+		}
 
 		opts := options.CollectionDelete()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1180,7 +1205,7 @@ func deleteDoc(
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" {
+	if action.ExpectedError == "" && !doNotWaitForUpdate {
 		expect := map[string]struct{}{
 			docID.String(): {},
 		}
@@ -1194,7 +1219,7 @@ func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
-	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection) error
+	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, client.Txn) error
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1207,21 +1232,54 @@ func updateDoc(
 	}
 
 	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		hadTxn := action.TransactionID.HasValue()
+		var txn client.Txn
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		} else {
+			// If a transaction was not provided, we will make an ephemeral one for this action.
+			txn, _ = node.NewTxn(false)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		// If we have a transaction, we will use it to get collections. Otherwise we will
+		// use the cached collections from the state.
+		var collection client.Collection
+		if hadTxn {
+			collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+			collection = collections[action.CollectionID]
+		} else {
+			collection = s.Nodes[nodeID].Collections[action.CollectionID]
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return mutation(
+				err := mutation(
 					s,
 					action,
 					node,
 					nodeID,
 					collection,
+					txn,
 				)
+				// If there was not an explicit transaction, here we will try to commit it.
+				if !hadTxn && err == nil {
+					err = txn.Commit()
+				}
+				// (It should not error, but we defensively discard it if it does.)
+				if !hadTxn && err != nil {
+					txn.Discard()
+				}
+				return err
 			},
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
@@ -1229,7 +1287,7 @@ func updateDoc(
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
 			action.NodeID,
@@ -1246,7 +1304,10 @@ func updateDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn client.Txn,
 ) error {
+	ctx := db.InitContext(s.Ctx, txn)
+
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1256,11 +1317,11 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.Get(ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1269,7 +1330,7 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Save(s.Ctx, doc, saveOpts)
+	return collection.Save(ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1278,7 +1339,10 @@ func updateDocViaColUpdate(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn client.Txn,
 ) error {
+	ctx := db.InitContext(s.Ctx, txn)
+
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1288,11 +1352,11 @@ func updateDocViaColUpdate(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.Get(ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1301,7 +1365,7 @@ func updateDocViaColUpdate(
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Update(s.Ctx, doc, updateOpts)
+	return collection.Update(ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1310,7 +1374,10 @@ func updateDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn client.Txn,
 ) error {
+	ctx := db.InitContext(s.Ctx, txn)
+
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1335,7 +1402,7 @@ func updateDocViaGQL(
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(s.Ctx, request, reqOption)
+	result := node.ExecRequest(ctx, request, reqOption)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}

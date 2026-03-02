@@ -154,6 +154,7 @@ func (c *Collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+	// Checked
 	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
 	if addOpts.EncryptDoc {
@@ -218,6 +219,7 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
+	// Checked
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
 	document, err := doc.ToJSONPatch()
@@ -264,6 +266,7 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
+	// Checked
 	saveOpt := utils.NewOptions(opts...)
 	getOpts := options.CollectionGet().SetShowDeleted(true)
 	if saveOpt.Identity.HasValue() {
@@ -613,6 +616,7 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
+	// Checked
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")

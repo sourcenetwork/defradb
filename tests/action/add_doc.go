@@ -112,14 +112,13 @@ func (a *AddDoc) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
 	for index, node := range nodes {
-
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		hadTxn := false
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
 			hadTxn = true
 			a.DoNotWaitForEvent = true // Don't wait for the event, because it won't be commited yet
-			txn, _ = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			txn, _ = a.s.GetTransaction(node, a.TransactionID)
 		} else {
 			// If a transaction was not provided, we will make an ephemeral one for this action.
 			txn, _ = node.NewTxn(false)
@@ -157,6 +156,7 @@ func (a *AddDoc) Execute() {
 				}
 				// (It should not error, but we defensively discard it if it does.)
 				if !hadTxn && err != nil {
+					fmt.Println("Discarding txn in AddDoc")
 					txn.Discard()
 				}
 				return err
@@ -383,31 +383,4 @@ func makeDocAddOptions(
 		opts.SetIdentity(identOption.Value())
 	}
 	return []options.Enumerable[options.CollectionAddOptions]{opts}
-}
-
-func (a *AddDoc) getTransaction(node client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		// If no TransactionID is provided, return nil
-		// so that collection calls use a manual txn when possible
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	// Ensure the slice can hold this txn
-	if transactionID >= len(a.s.Txns) {
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	// Lazily create txn if not yet created
-	if a.s.Txns[transactionID] == nil {
-		txn, err := node.NewTxn(true) // Manual transaction
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
-		}
-		a.s.Txns[transactionID] = txn
-	}
-
-	return a.s.Txns[transactionID]
 }

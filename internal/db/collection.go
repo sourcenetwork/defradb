@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -37,7 +38,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/utils"
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -63,9 +63,7 @@ func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[
 	col := &collection{
 		db:  db,
 		def: desc,
-	}
-	if txn.HasValue() {
-		col.txn = txn
+		txn: txn,
 	}
 	for _, index := range desc.Indexes {
 		colIndex, err := NewCollectionIndex(col, index)
@@ -200,7 +198,6 @@ func (db *DB) getCollections(
 		}
 
 		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
-
 		collection, err := db.newCollection(col, txnOpt)
 		if err != nil {
 			return nil, err
@@ -331,10 +328,13 @@ func (c *collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-
-	hadTxn := c.txn.HasValue()
-	if hadTxn {
-		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
 
 	ctx, span := tracer.Start(ctx)
@@ -372,10 +372,13 @@ func (c *collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-
-	hadTxn := c.txn.HasValue()
-	if hadTxn {
-		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
 
 	ctx, span := tracer.Start(ctx)
@@ -512,6 +515,15 @@ func (c *collection) Update(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -527,7 +539,9 @@ func (c *collection) Update(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
 	if err != nil {
@@ -550,7 +564,10 @@ func (c *collection) Update(
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given ID exists.
@@ -594,7 +611,14 @@ func (c *collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -846,6 +870,15 @@ func (c *collection) Delete(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -861,7 +894,9 @@ func (c *collection) Delete(
 	if err != nil {
 		return false, err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -877,7 +912,11 @@ func (c *collection) Delete(
 	if err != nil {
 		return false, err
 	}
-	return true, txn.Commit()
+
+	if !hadTxn {
+		return true, txn.Commit()
+	}
+	return true, nil
 }
 
 // Exists checks if a given document exists with supplied DocID.
@@ -886,6 +925,15 @@ func (c *collection) Exists(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -901,7 +949,10 @@ func (c *collection) Exists(
 	if err != nil {
 		return false, err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -912,7 +963,11 @@ func (c *collection) Exists(
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
 	}
-	return exists && !isDeleted, txn.Commit()
+
+	if !hadTxn {
+		return exists && !isDeleted, txn.Commit()
+	}
+	return exists && !isDeleted, nil
 }
 
 // check if a document exists with the given primary key

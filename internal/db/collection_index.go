@@ -753,7 +753,6 @@ func (db *DB) reindexNewActiveVersion(ctx context.Context, col client.Collection
 	}
 
 	txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
-
 	collection, err := db.newCollection(col, txnOpt)
 	if err != nil {
 		return err

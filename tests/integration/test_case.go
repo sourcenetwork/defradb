@@ -243,6 +243,9 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateDoc will attempt to update the given document using the set [state.MutationType].
@@ -288,6 +291,9 @@ type UpdateDoc struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateWithFilter will update the set of documents that match the given filter.
@@ -330,6 +336,9 @@ type UpdateWithFilter struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // AddEncryptedIndex will attempt to add the given encrypted index to the given collection

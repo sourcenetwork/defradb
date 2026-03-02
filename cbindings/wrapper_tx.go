@@ -114,7 +114,7 @@ func (txn *Transaction) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
-	// Skipped
+	// Checked
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
@@ -124,6 +124,7 @@ func (txn *Transaction) AddSchema(
 	sdl string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
@@ -218,6 +219,7 @@ func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListIndexes(ctx, opts...)
 }
