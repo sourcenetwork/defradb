@@ -79,14 +79,17 @@ func (c *Collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	var txn datastore.Txn
-	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if hadTxn {
-		txn = gotTxn
-	} else {
-		clientTxn, _ := c.w.NewTxn(false)
-		txn = clientTxn.(datastore.Txn)
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
 		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
 	}
 
 	addOpts := utils.NewOptions(opts...)
@@ -153,6 +156,19 @@ func (c *Collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
 	if addOpts.EncryptDoc {
@@ -194,8 +210,9 @@ func (c *Collection) AddMany(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionAdd(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cJSON,
 		C.int(isEncrypted),
 		encryptedFields,
@@ -209,6 +226,12 @@ func (c *Collection) AddMany(
 	for _, doc := range docs {
 		doc.Clean()
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return nil
 }
 
@@ -217,6 +240,19 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
 	document, err := doc.ToJSONPatch()
@@ -242,8 +278,9 @@ func (c *Collection) Update(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filter,
 		updater,
@@ -255,6 +292,12 @@ func (c *Collection) Update(
 		return errors.New(res.Error)
 	}
 	doc.Clean()
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return nil
 }
 
@@ -279,6 +322,7 @@ func (c *Collection) Save(
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
 		return c.Add(ctx, doc, opts...)
 	}
+
 	return err
 }
 
@@ -287,6 +331,19 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
 
@@ -307,8 +364,9 @@ func (c *Collection) Delete(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionDelete(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		filter,
 		copts,
@@ -318,6 +376,12 @@ func (c *Collection) Delete(
 	if res.Status != 0 {
 		return false, errors.New(res.Error)
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return true, nil
 }
 
@@ -326,7 +390,19 @@ func (c *Collection) Exists(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
-	// Skipped
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
@@ -346,8 +422,9 @@ func (c *Collection) Exists(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionGet(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		cShowDeleted,
 		copts,
@@ -357,6 +434,12 @@ func (c *Collection) Exists(
 	if res.Status != 0 {
 		return false, errors.New(res.Error)
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return true, nil
 }
 
@@ -366,12 +449,27 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	docID := C.CString("")
+
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, err
 	}
 	filterStr := C.CString(string(filterJSON))
+
 	cUpdater := C.CString(updater)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -391,8 +489,9 @@ func (c *Collection) UpdateWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filterStr,
 		cUpdater,
@@ -409,6 +508,12 @@ func (c *Collection) UpdateWithFilter(
 	if err := json.Unmarshal(retString, &updateRes); err != nil {
 		return nil, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return &updateRes, nil
 }
 
@@ -417,7 +522,19 @@ func (c *Collection) DeleteWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	// Skipped
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -442,8 +559,9 @@ func (c *Collection) DeleteWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionDelete(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filterStr,
 		copts,
@@ -459,6 +577,12 @@ func (c *Collection) DeleteWithFilter(
 	if err := json.Unmarshal(retString, &deleteRes); err != nil {
 		return nil, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return &deleteRes, nil
 }
 
@@ -467,7 +591,19 @@ func (c *Collection) Get(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
-	// Skipped
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
 	if opt.ShowDeleted {
@@ -491,8 +627,9 @@ func (c *Collection) Get(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionGet(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		cShowDeleted,
 		copts,
@@ -513,6 +650,12 @@ func (c *Collection) Get(
 		return nil, err
 	}
 	doc.Clean()
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return doc, nil
 }
 
@@ -521,6 +664,19 @@ func (c *Collection) AddIndex(
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")
@@ -555,8 +711,9 @@ func (c *Collection) AddIndex(
 		cUnique = 1
 	}
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.IndexAdd(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cIndexDescName,
 		fields,
 		cUnique,
@@ -572,6 +729,12 @@ func (c *Collection) AddIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return retRes, nil
 }
 
@@ -580,6 +743,19 @@ func (c *Collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
 	cVersion := C.CString("")
@@ -598,8 +774,9 @@ func (c *Collection) DeleteIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.IndexDelete(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cIndexName,
 		copts,
 		cIdentity,
@@ -608,6 +785,12 @@ func (c *Collection) DeleteIndex(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return nil
 }
 
@@ -615,6 +798,19 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -631,7 +827,8 @@ func (c *Collection) ListIndexes(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), copts, cIdentity))
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)
@@ -641,6 +838,12 @@ func (c *Collection) ListIndexes(
 	if err != nil {
 		return []client.IndexDescription{}, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return retRes, nil
 }
 
@@ -649,6 +852,19 @@ func (c *Collection) AddEncryptedIndex(
 	req client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
 	defer C.free(unsafe.Pointer(name))
@@ -657,8 +873,9 @@ func (c *Collection) AddEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.EncryptedIndexAdd(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		name,
 		fieldName,
 		cIdentity,
@@ -672,6 +889,12 @@ func (c *Collection) AddEncryptedIndex(
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return retRes, nil
 }
 
@@ -680,6 +903,19 @@ func (c *Collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	name := C.CString(c.def.Name)
 	cFieldName := C.CString(fieldName)
 	defer C.free(unsafe.Pointer(name))
@@ -688,8 +924,9 @@ func (c *Collection) DeleteEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		name,
 		cFieldName,
 		cIdentity,
@@ -698,18 +935,38 @@ func (c *Collection) DeleteEncryptedIndex(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return nil
 }
 
 func (c *Collection) ListEncryptedIndexes(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	name := C.CString(c.def.Name)
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(name))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(C.uintptr_t(c.w.handle), name, cIdentity))
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, name, cIdentity))
 
 	if res.Status != 0 {
 		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
@@ -719,12 +976,31 @@ func (c *Collection) ListEncryptedIndexes(
 	if err != nil {
 		return []client.EncryptedIndexDescription{}, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
+	}
+
 	return retRes, nil
 }
 
 func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection. If neither
+	// exist, then make a new one.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	} else {
+		newTxn, _ := c.w.NewTxn(false)
+		txn, _ = newTxn.(datastore.Txn) //nolint:forcetypeassert
+	}
+
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -741,15 +1017,21 @@ func (c *Collection) Truncate(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(
 		C.CollectionTruncate(
-			C.uintptr_t(c.w.handle),
+			callHandle,
 			copts,
 			cIdentity,
 		),
 	)
 	if res.Status != 0 {
 		return errors.New(res.Error)
+	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		txn.Commit()
 	}
 
 	return nil

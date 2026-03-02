@@ -75,7 +75,6 @@ func (txn *Transaction) AddDACPolicy(
 	policy string,
 	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	// Skipped
 	return txn.CWrapper.AddDACPolicy(ctx, policy, opts...)
 }
 
@@ -87,7 +86,6 @@ func (txn *Transaction) AddDACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	// Skipped
 	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
@@ -99,12 +97,10 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	// Skipped
 	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	// Skipped
 	return txn.CWrapper.GetNodeIdentity(ctx)
 }
 
@@ -114,6 +110,7 @@ func (txn *Transaction) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 

@@ -430,19 +430,16 @@ func (w *CWrapper) AddSchema(
 	schema string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
-	fmt.Println("Entering AddSchema for c binding wrapper")
-
+	// Attach transaction to context if one was passed in
 	var txn datastore.Txn
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if hadTxn {
 		txn = gotTxn
-		fmt.Println("Had a txn attached in AddSchema: ", txn.ID())
 	} else {
-		fmt.Println("No txn attached in AddSchema, making a new one")
 		clientTxn, _ := w.NewTxn(false)
 		txn = clientTxn.(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
@@ -462,10 +459,9 @@ func (w *CWrapper) AddSchema(
 	}
 
 	if !hadTxn {
-		fmt.Println("We made the txn, so we are commiting it")
+		defer txn.Discard()
 		err = txn.Commit()
 		if err != nil {
-			fmt.Println("Error committing txn in AddSchema:", err)
 			return nil, err
 		}
 	}
@@ -900,7 +896,15 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	ctxTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	var txn datastore.Txn
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		txn = gotTxn
+	} else {
+		clientTxn, _ := w.NewTxn(false)
+		txn = clientTxn.(datastore.Txn)
+	}
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
@@ -924,7 +928,7 @@ func (w *CWrapper) GetCollections(
 
 	var txnOpt immutable.Option[client.Txn]
 	if hadTxn {
-		if clientTxn, ok := ctxTxn.(client.Txn); ok {
+		if clientTxn, ok := txn.(client.Txn); ok {
 			txnOpt = immutable.Some(clientTxn)
 		} else {
 			return nil, errors.New("unsupported txn type in context")
@@ -1042,11 +1046,11 @@ func (w *CWrapper) ExecRequest(
 	if err := json.Unmarshal([]byte(res.Value), &retval.GQL); err != nil {
 		retval.GQL.Errors = append(retval.GQL.Errors, err)
 	}
+
 	return retval
 }
 
 func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	fmt.Println("Entering NewTxn for c binding wrapper")
 	var concurrent C.int = 0
 	var cReadOnly C.int = 0
 	if readOnly {
@@ -1064,8 +1068,7 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	handle := cgo.Handle(res.txnPtr)
 	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, dsTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
-	fmt.Println("NewTxn for c binding wrapper stored in map:", handle)
+	txnHandleMap.Store(retTxn.tx.ID(), handle)
 	return retTxn, nil
 }
 
@@ -1087,7 +1090,7 @@ func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	handle := cgo.Handle(res.txnPtr)
 	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, dsTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
+	txnHandleMap.Store(retTxn.tx.ID(), handle)
 
 	return retTxn, nil
 }
@@ -1161,7 +1164,8 @@ func (w *CWrapper) VerifySignature(
 	defer C.free(unsafe.Pointer(cBlockCid))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, cIdentity))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.BlockVerifySignature(callHandle, cKeyType, cPubKey, cBlockCid, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

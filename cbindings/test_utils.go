@@ -146,11 +146,17 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 	return ch
 }
 
-func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
-	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
-		if h, ok := txnHandleMap.Load(txn); ok {
-			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
-		}
+func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn {
+		return C.uintptr_t(nodeHandle)
 	}
-	return C.uintptr_t(h)
+
+	id := txn.ID()
+
+	if storedHandle, ok := txnHandleMap.Load(id); ok {
+		return C.uintptr_t(storedHandle.(cgo.Handle))
+	}
+
+	return C.uintptr_t(nodeHandle)
 }
