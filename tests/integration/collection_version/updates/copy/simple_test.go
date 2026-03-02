@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
+func TestCollectionVersionUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

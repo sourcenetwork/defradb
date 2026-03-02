@@ -21,11 +21,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaOneMany_Primary(t *testing.T) {
+func TestCollectionVersionOneMany_Primary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						dogs: [Dog]
@@ -94,11 +94,11 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
+func TestCollectionVersionOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						a: User
 						b: [User]
@@ -144,11 +144,11 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
+func TestCollectionVersionOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						b: User
 						a: [User]
@@ -192,14 +192,14 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
+func TestCollectionVersionOneMany_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// Note: The @primary directive is required due to
 				// https://github.com/sourcenetwork/defradb/issues/2620
 				// it should be removed when that ticket is closed.
-				Schema: `
+				SDL: `
 					type User {
 						boss: User @primary
 						minions: [User]

@@ -18,7 +18,7 @@ import (
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
-	if n.config.disableP2P {
+	if n.opts.DisableP2P {
 		return nil
 	}
 	return ErrP2PNotSupported

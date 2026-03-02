@@ -120,7 +120,7 @@ func TestReplicationCoordinator_WhenDocumentNotFound_ShouldNotPushToPeer(t *test
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
+	mockCollection.EXPECT().GetDocument(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, client.ErrDocumentNotFoundOrNotAuthorized).Maybe()
 	setup.mockGetCollections(mockCollection)
 
@@ -138,7 +138,7 @@ func TestReplicationCoordinator_WhenDocumentGetFails_ShouldNotPushToPeer(t *test
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
+	mockCollection.EXPECT().GetDocument(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, fmt.Errorf("database error")).Maybe()
 	setup.mockGetCollections(mockCollection)
 
@@ -163,7 +163,7 @@ func TestReplicationCoordinator_WhenNoEncryptedIndexes_ShouldNotPushToPeer(t *te
 	mockCollection.EXPECT().Version().Return(ver).Maybe()
 
 	doc, err := client.NewDocFromMap(ctx, map[string]any{"age": 21}, ver)
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
+	mockCollection.EXPECT().GetDocument(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
 
 	setup.mockGetCollections(mockCollection)
 

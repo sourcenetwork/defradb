@@ -54,16 +54,10 @@ func TestPurgeDevModeFalse(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, url, nil)
 	rec := httptest.NewRecorder()
 
-	purgeSub, err := cdb.Events().Subscribe(event.PurgeName)
-	require.NoError(t, err)
-
 	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
 	require.Equal(t, 400, res.StatusCode)
-
-	// test will timeout if purge never received
-	<-purgeSub.Message()
 }

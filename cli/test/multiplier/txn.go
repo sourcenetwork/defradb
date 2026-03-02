@@ -56,7 +56,7 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 		case *action.StartCli:
 			lastStartIndex = i
 
-		case *action.SchemaAdd:
+		case *action.AddCollection:
 			lastWriteIndex = i
 
 		case *action.TxCreate:

@@ -16,6 +16,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeDocumentACPPolicyAddCommand(ctx context.Context) *cobra.Command {
@@ -30,8 +33,8 @@ Notes:
   - Can not add a policy without specifying an identity.
   - ACP must be available (i.e. ACP can not be disabled).
   - A non-DRI policy will be accepted (will be registered with acp system).
-  - But only a valid DRI policyID & resource can be specified on a schema.
-  - DRI validation happens when attempting to add a schema with '@policy'.
+  - But only a valid DRI policyID & resource can be specified on a collection.
+  - DRI validation happens when attempting to add a collection with '@policy'.
   - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -66,9 +69,11 @@ Notes:
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
+			ctx := cmd.Context()
 			policyResult, err := cliClient.AddDACPolicy(
-				cmd.Context(),
+				ctx,
 				policy,
+				options.WithIdentity(options.AddDACPolicy(), identity.FromContext(ctx)),
 			)
 
 			if err != nil {

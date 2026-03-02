@@ -20,8 +20,8 @@ import (
 func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -32,7 +32,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name

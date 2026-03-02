@@ -17,7 +17,7 @@ import (
 
 // we explicitly set LWW CRDT type because we want to test encryption with this specific CRDT type
 // and we don't want to rely on the default behavior
-const userCollectionGQLSchema = (`
+const userCollection = (`
 	type Users {
 		name: String
 		age: Int @crdt(type: lww)
@@ -38,9 +38,9 @@ const (
 	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
 )
 
-func updateUserCollectionSchema() *action.AddSchema {
-	return &action.AddSchema{
-		Schema: userCollectionGQLSchema,
+func addUserCollection() *action.AddCollection {
+	return &action.AddCollection{
+		SDL: userCollection,
 	}
 }
 

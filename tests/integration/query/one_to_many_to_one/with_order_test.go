@@ -22,7 +22,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 			Book (order: [{rating: ASC}, {publisher: {yearOpened: DESC}}]) {
@@ -96,7 +96,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Book (order: [{publisher: {yearOpened: DESC}}, {rating: ASC}]) {

@@ -17,8 +17,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var SchemaForExplainTests = &action.AddSchema{
-	Schema: (`
+var SchemaForExplainTests = &action.AddCollection{
+	SDL: (`
 		type Article {
 			name: String
 			author: Author

@@ -34,24 +34,24 @@ extern Result IdentityNew(char* keyType);
 extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
-extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
-extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
-extern Result LensAdd(uintptr_t nodePtr, char* cfg);
-extern Result LensList(uintptr_t nodePtr);
+extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
+extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
+extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
-extern Result P2PInfo(uintptr_t nodePtr);
+extern Result P2PInfo(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
-extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
-extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PreplicatorList(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PreplicatorAdd(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PreplicatorDelete(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
+extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result P2PdocumentCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
@@ -61,7 +61,7 @@ extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
-extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
+extern Result AddCollection(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
@@ -82,6 +82,8 @@ import (
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -110,8 +112,13 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo() ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
+func (w *CWrapper) PeerInfo(
+	ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions],
+) ([]string, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -124,8 +131,12 @@ func (w *CWrapper) PeerInfo() ([]string, error) {
 	return addresses, nil
 }
 
-func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ActivePeersOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), cIdentity))
@@ -141,15 +152,20 @@ func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	return peers, nil
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *CWrapper) AddReplicator(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.AddReplicatorOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	addrStr := C.CString(strings.Join(addresses, ","))
-	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := identityFromContext(ctx)
+	colStr := C.CString(strings.Join(opt.CollectionNames, ","))
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorAdd(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -157,15 +173,20 @@ func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collec
 	return nil
 }
 
-func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (w *CWrapper) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	peerID := C.CString(id)
-	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := identityFromContext(ctx)
+	colStr := C.CString(strings.Join(opt.CollectionNames, ","))
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorDelete(C.uintptr_t(w.handle), colStr, peerID, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -173,10 +194,13 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections 
 	return nil
 }
 
-func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) ListReplicators(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
+) ([]client.Replicator, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PgetAllReplicators(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorList(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -189,12 +213,16 @@ func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, 
 	return replicators, nil
 }
 
-func (w *CWrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) AddP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PcollectionCreate(C.uintptr_t(w.handle), colStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -202,9 +230,13 @@ func (w *CWrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...st
 	return nil
 }
 
-func (w *CWrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *CWrapper) DeleteP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
+) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
@@ -216,8 +248,11 @@ func (w *CWrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...st
 	return nil
 }
 
-func (w *CWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) ListP2PCollections(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
+) ([]string, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PcollectionList(C.uintptr_t(w.handle), cIdentity))
 
@@ -232,13 +267,17 @@ func (w *CWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return collections, nil
 }
 
-func (w *CWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *CWrapper) AddP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
+) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentCreate(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -246,9 +285,13 @@ func (w *CWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) err
 	return nil
 }
 
-func (w *CWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *CWrapper) DeleteP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
+) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
@@ -260,8 +303,11 @@ func (w *CWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) err
 	return nil
 }
 
-func (w *CWrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
+) ([]string, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PdocumentList(C.uintptr_t(w.handle), cIdentity))
 
@@ -280,11 +326,14 @@ func (w *CWrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
-	cIdentity := identityFromContext(ctx)
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	docs := C.CString(strings.Join(docIDs, ","))
 	defer C.free(unsafe.Pointer(docs))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -296,7 +345,8 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cTimerStr))
 	defer C.free(unsafe.Pointer(cCollectionName))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentSync(
+		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -304,11 +354,14 @@ func (w *CWrapper) SyncDocuments(
 	return nil
 }
 
-func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -318,7 +371,11 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(
+		C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -326,11 +383,14 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 	return nil
 }
 
-func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	cCollectionID := C.CString(collectionID)
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -340,8 +400,11 @@ func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID st
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr,
-		cIdentity))
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(
+		C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -353,18 +416,26 @@ func (w *CWrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (w *CWrapper) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Enumerable[options.BasicExportOptions],
+) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) AddCollection(
+	ctx context.Context,
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
+) ([]client.CollectionVersion, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
-	cSchema := C.CString(schema)
-	defer C.free(unsafe.Pointer(cSchema))
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.AddSchema(callHandle, cSchema, cIdentity))
+	res := ConvertAndFreeCResult(C.AddCollection(callHandle, cSDL, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -380,8 +451,9 @@ func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.Colle
 func (w *CWrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cPolicy))
@@ -406,8 +478,9 @@ func (w *CWrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -446,8 +519,9 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -479,8 +553,11 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	return deleteRelationshipRes, nil
 }
 
-func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...options.Enumerable[options.GetNACStatusOptions],
+) (client.NACStatusResult, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -492,8 +569,8 @@ func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, er
 	return unmarshalResult[client.NACStatusResult](res.Value)
 }
 
-func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -505,8 +582,8 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 	return nil
 }
 
-func (w *CWrapper) DisableNAC(ctx context.Context) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -522,8 +599,9 @@ func (w *CWrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
@@ -544,8 +622,9 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
@@ -564,9 +643,10 @@ func (w *CWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	cPatch := C.CString(patch)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -592,8 +672,12 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
-func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) SetActiveCollectionVersion(
+	ctx context.Context,
+	collectionVersionID string,
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cVersion := C.CString(collectionVersionID)
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -603,14 +687,14 @@ func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVer
 	defer C.free(unsafe.Pointer(cName))
 	defer C.IdentityFree(cIdentity)
 
-	var opts C.CollectionOptions
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.getInactive = 0
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts, cIdentity))
+	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -622,15 +706,18 @@ func (w *CWrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	cIdentity := identityFromContext(ctx)
-	cTransformCID := C.CString(stringFromImmutableOptionString(transformCID))
+	opt := utils.NewOptions(opts...)
+
+	cTransformCID := C.CString(stringFromImmutableOptionString(opt.TransformCID))
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
 	defer C.free(unsafe.Pointer(cTransformCID))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
+
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -647,27 +734,15 @@ func (w *CWrapper) AddView(
 	return colDefRes, nil
 }
 
-func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
-	cIdentity := identityFromContext(ctx)
-	versionID := C.CString(stringFromImmutableOptionString(opts.VersionID))
-	collectionID := C.CString(stringFromImmutableOptionString(opts.CollectionID))
-	name := C.CString(stringFromImmutableOptionString(opts.Name))
-	var cGetInactive C.int = 0
-	if opts.IncludeInactive.HasValue() {
-		if opts.IncludeInactive.Value() {
-			cGetInactive = 1
-		}
-	}
-	defer C.free(unsafe.Pointer(versionID))
-	defer C.free(unsafe.Pointer(collectionID))
-	defer C.free(unsafe.Pointer(name))
-	defer C.IdentityFree(cIdentity)
+func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+	opt := utils.NewOptions(opts...)
+	copts := getCollectionsOptionsToCOptions(opt)
+	defer C.free(unsafe.Pointer(copts.version))
+	defer C.free(unsafe.Pointer(copts.collectionID))
+	defer C.free(unsafe.Pointer(copts.name))
 
-	var copts C.CollectionOptions
-	copts.version = versionID
-	copts.collectionID = collectionID
-	copts.name = name
-	copts.getInactive = cGetInactive
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, cIdentity))
@@ -678,7 +753,9 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	return nil
 }
 
-func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (w *CWrapper) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	src := C.CString(config.SourceCollectionVersionID)
 	dst := C.CString(config.DestinationCollectionVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
@@ -690,8 +767,11 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 	defer C.free(unsafe.Pointer(dst))
 	defer C.free(unsafe.Pointer(lens))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensSet(callHandle, src, dst, lens))
+	res := ConvertAndFreeCResult(C.LensSet(callHandle, cIdentity, src, dst, lens))
 
 	if res.Status != 0 {
 		return "", errors.New(res.Error)
@@ -699,7 +779,11 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 	return res.Value, nil
 }
 
-func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (w *CWrapper) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Enumerable[options.AddLensOptions],
+) (string, error) {
 	lensConfig, err := json.Marshal(lens)
 	if err != nil {
 		return "", err
@@ -707,8 +791,11 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	lensStr := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(lensStr))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensAdd(callHandle, lensStr))
+	res := ConvertAndFreeCResult(C.LensAdd(callHandle, cIdentity, lensStr))
 
 	if res.Status != 0 {
 		return "", errors.New(res.Error)
@@ -716,9 +803,15 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	return res.Value, nil
 }
 
-func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (w *CWrapper) ListLenses(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensList(callHandle))
+	res := ConvertAndFreeCResult(C.LensList(callHandle, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -731,8 +824,12 @@ func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error
 	return lenses, nil
 }
 
-func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+func (w *CWrapper) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
+) (client.Collection, error) {
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -745,55 +842,49 @@ func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.Collecti
 	return cols[0], nil
 }
 
-func (w *CWrapper) GetCollections(
-	ctx context.Context,
-	options client.CollectionFetchOptions,
-) ([]client.Collection, error) {
-	var name string
-	if options.Name.HasValue() {
-		name = options.Name.Value()
-	} else {
-		name = ""
-	}
+// getCollectionsOptionsToCOptions converts GetCollectionsOptions to C.CollectionOptions.
+// The caller is responsible for freeing the C strings (version, collectionID, name).
+func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.CollectionOptions {
+	var name, version, collectionID string
+	var getInactive C.int = 0
 
-	var version string
-	if options.VersionID.HasValue() {
-		version = options.VersionID.Value()
-	} else {
-		version = ""
-	}
-
-	var collectionID string
-	if options.CollectionID.HasValue() {
-		collectionID = options.CollectionID.Value()
-	} else {
-		collectionID = ""
-	}
-
-	var includeInactive int = 0
-	if options.IncludeInactive.HasValue() {
-		if options.IncludeInactive.Value() {
-			includeInactive = 1
+	if opts != nil {
+		if opts.CollectionName.HasValue() {
+			name = opts.CollectionName.Value()
+		}
+		if opts.VersionID.HasValue() {
+			version = opts.VersionID.Value()
+		}
+		if opts.CollectionID.HasValue() {
+			collectionID = opts.CollectionID.Value()
+		}
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
+			getInactive = 1
 		}
 	}
 
-	cVersion := C.CString(version)
-	cCollectionID := C.CString(collectionID)
-	cName := C.CString(name)
-	cIdentity := identityFromContext(ctx)
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
+	var copts C.CollectionOptions
+	copts.version = C.CString(version)
+	copts.collectionID = C.CString(collectionID)
+	copts.name = C.CString(name)
+	copts.getInactive = getInactive
+	return copts
+}
+
+func (w *CWrapper) GetCollections(
+	ctx context.Context,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
+) ([]client.Collection, error) {
+	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
+	defer C.free(unsafe.Pointer(copts.version))
+	defer C.free(unsafe.Pointer(copts.collectionID))
+	defer C.free(unsafe.Pointer(copts.name))
+
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
-	var opts C.CollectionOptions
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.getInactive = C.int(includeInactive)
-
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts, cIdentity))
+	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.Collection{}, errors.New(res.Error)
@@ -811,24 +902,27 @@ func (w *CWrapper) GetCollections(
 	return cols, nil
 }
 
-func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (w *CWrapper) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListIndexesOptions],
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.IdentityFree(cIdentity)
 
-	var opts C.CollectionOptions
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.getInactive = 0
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexList(callHandle, opts, cIdentity))
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -836,7 +930,7 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
 	if err != nil {
-		return nil, errors.New(res.Error)
+		return nil, err
 	}
 
 	return resValue, nil
@@ -844,12 +938,15 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 
 func (w *CWrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	colName := C.CString("")
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(colName))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName))
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -857,7 +954,7 @@ func (w *CWrapper) ListAllEncryptedIndexes(
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.EncryptedIndexDescription](res.Value)
 	if err != nil {
-		return nil, errors.New(res.Error)
+		return nil, err
 	}
 
 	return resValue, nil
@@ -866,9 +963,10 @@ func (w *CWrapper) ListAllEncryptedIndexes(
 func (w *CWrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
-	operation, variables, err := extractStringsFromRequestOptions(opts)
+	execRequestOpts := utils.NewOptions(opts...)
+	operation, variables, err := extractStringsFromRequestOptions(execRequestOpts)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -878,7 +976,7 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	cQuery := C.CString(query)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(execRequestOpts.GetIdentity())
 	cOperation := C.CString(operation)
 	cVariables := C.CString(variables)
 	defer C.free(unsafe.Pointer(cQuery))
@@ -971,8 +1069,12 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addresses []string) error {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.ConnectOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
 	defer C.IdentityFree(cIdentity)
@@ -1004,11 +1106,16 @@ func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identi
 	return immutable.Some(resVal), nil
 }
 
-func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+func (w *CWrapper) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Enumerable[options.VerifySignatureOptions],
+) error {
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))
 	cBlockCid := C.CString(blockCid)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cPubKey))
 	defer C.free(unsafe.Pointer(cKeyType))

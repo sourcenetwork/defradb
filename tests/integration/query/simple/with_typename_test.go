@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,

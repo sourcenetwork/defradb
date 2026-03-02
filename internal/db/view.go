@@ -18,16 +18,18 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) addView(
@@ -85,21 +87,19 @@ func (db *DB) addView(
 		parseResults[i].Definition.Query = immutable.Some(source)
 	}
 
-	returnDescriptions, err := db.createCollections(ctx, parseResults)
+	returnDescriptions, err := db.addCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.loadSchema(ctx)
+	err = db.loadCollectionDefinitions(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, client.CollectionFetchOptions{
-				VersionID: immutable.Some(view.VersionID),
-			})
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +109,7 @@ func (db *DB) addView(
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -139,7 +139,7 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	return nil
 }
 
-func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionVersion, error) {
+func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions) ([]client.CollectionVersion, error) {
 	cols, err := db.getCollections(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -301,7 +301,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	// of collision.
 	identifier := col.Name + "__-" + fieldName.Value()
 	if _, ok := typesHit[identifier]; ok {
-		// If this identifier is already in the set, the schema must be circular and we should return
+		// If this identifier is already in the set, the collection type must be circular and we should return
 		return nil, nil
 	}
 	typesHit[identifier] = struct{}{}
@@ -325,7 +325,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 			}
 
 			if innerSelect != nil {
-				// innerSelect may be nil if a circular relationship is defined in the schema and we have already
+				// innerSelect may be nil if a circular relationship is defined in the collection type and we have already
 				// added this field
 				childRequests = append(childRequests, innerSelect)
 			}

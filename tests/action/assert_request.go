@@ -35,7 +35,7 @@ type DocIndex struct {
 
 	// Index is the index within the target collection at which the document exists.
 	//
-	// This is dependent on the order in which test CreateDoc actions were defined.
+	// This is dependent on the order in which test AddDoc actions were defined.
 	Index int
 }
 
@@ -90,14 +90,14 @@ func assertRequestResults(
 	nodeID int,
 	ordered bool,
 ) bool {
-	s.CurrentNodeID = nodeID
+	s.CurrentAssertingNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if assertErrors(s.T, result.Errors, expectedError) || s.IsBench {
 		return true
 	}
 
 	if expectedResults == nil && result.Data == nil {
-		return true
+		return false
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).

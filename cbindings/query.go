@@ -18,11 +18,14 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -69,7 +72,7 @@ func removeSubscription(id string) {
 // it exists will see if there's a message in its result channel. If there isn't, it will
 // return with status 2, and a blank payload. If there is, it will return with status 0,
 // and the payload of the message. If an error occurs, status 1 is returned.
-//
+
 //export PollSubscription
 func PollSubscription(id *C.char) C.Result {
 	subID := C.GoString(id)
@@ -104,14 +107,29 @@ func ExecuteQuery(
 	variables *C.char,
 ) C.Result {
 	ctx := context.Background()
-	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
+
+	opt := options.ExecRequest()
+	opName := C.GoString(operationName)
+	if opName != "" {
+		opt.SetOperationName(opName)
+	}
+	varsStr := C.GoString(variables)
+	if varsStr != "" {
+		var vars map[string]any
+		if err := json.Unmarshal([]byte(varsStr), &vars); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		opt.SetVariables(vars)
+	}
+
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx, err = contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
+	ident := iIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		opt.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -121,7 +139,7 @@ func ExecuteQuery(
 
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	res := store.ExecRequest(ctx, C.GoString(query), opts...)
+	res := store.ExecRequest(ctx, C.GoString(query), opt)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,
 		resultChan: res.Subscription,

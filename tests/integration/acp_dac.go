@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -104,8 +105,9 @@ func addDACPolicy(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		policyResult, err := node.AddDACPolicy(ctx, action.Policy)
+		identOpt := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		opt := options.WithIdentity(options.AddDACPolicy(), identOpt)
+		policyResult, err := node.AddDACPolicy(s.Ctx, action.Policy, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -135,7 +137,7 @@ func addDACPolicy(
 	}
 }
 
-// AddDACActorRelationship will attempt to create a new relationship for a document with an actor.
+// AddDACActorRelationship will attempt to add a new relationship for a document with an actor.
 type AddDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
@@ -165,7 +167,7 @@ type AddDACActorRelationship struct {
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
 	TargetIdentity immutable.Option[state.Identity]
 
-	// The requestor identity, i.e. identity of the actor creating the relationship.
+	// The requestor identity, i.e. identity of the actor adding the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
@@ -194,12 +196,15 @@ func addDACActorRelationship(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
+		opt := options.WithIdentity(options.AddDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		exists, err := node.AddDACActorRelationship(
-			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
+			opt,
 		)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -284,12 +289,15 @@ func deleteDACActorRelationship(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
+		opt := options.WithIdentity(options.DeleteDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
-			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
+			opt,
 		)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

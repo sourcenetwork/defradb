@@ -15,18 +15,17 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/leveldb"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
-// LevelStore specifies the defradb in leveldb datastore
-const LevelStore = StoreType("level")
-
 func init() {
-	constructor := func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error) {
-		return leveldb.NewDatastore(options.path, nil)
+	constructor := func(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, error) {
+		return leveldb.NewDatastore(opts.Path, nil)
 	}
-	purge := func(ctx context.Context, options *StoreOptions) error {
+	purge := func(ctx context.Context, opts *options.NodeStoreOptions) error {
 		return nil
 	}
-	storeConstructors[LevelStore] = constructor
-	storePurgeFuncs[LevelStore] = purge
+	storeConstructors[options.NodeStoreType("level")] = constructor
+	storePurgeFuncs[options.NodeStoreType("level")] = purge
 }

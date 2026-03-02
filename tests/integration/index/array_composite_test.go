@@ -26,36 +26,36 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50, 30],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [40, 50, 30],
 					"age": 60
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [1, 2, 3],
@@ -92,36 +92,36 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
 					"age": 60
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [1, 2],
@@ -159,36 +159,36 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
 					"age": 60
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
@@ -227,8 +227,8 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}, {field: "age"}]) {
 						name: String 
 						numbers: [Int!] 
@@ -236,7 +236,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
@@ -244,7 +244,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
@@ -252,7 +252,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
@@ -260,7 +260,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 60
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
@@ -301,8 +301,8 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "numbers"}, {field: "name"}, {field: "age"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
@@ -310,7 +310,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 						age: Int
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
@@ -318,7 +318,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
@@ -326,7 +326,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
@@ -334,7 +334,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 60
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
@@ -376,8 +376,8 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "numbers1"}, {field: "numbers2"}, {field: "numbers3"}]) {
 						name: String 
 						numbers1: [Int!] 
@@ -385,7 +385,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 						numbers3: [Int!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers1": [1, 2, 3],
@@ -393,7 +393,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [100, 200, 300]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers1": [2, 3, 4],
@@ -401,7 +401,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [200, 300, 400]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Keenan",
 					"numbers1": [0, 1],
@@ -409,7 +409,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [900]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Islam",
 					"numbers1": [6, 7, 8],
@@ -417,7 +417,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [100, 700, 800]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"numbers1": [1, 4, 5, 8],
@@ -443,22 +443,22 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20, 40],
 					"hobbies": ["sports", "books"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 30],
@@ -553,22 +553,22 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
 						numbers: [Int!] 
 						hobbies: [String!] 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"hobbies": ["sports", "books"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 30, 50],

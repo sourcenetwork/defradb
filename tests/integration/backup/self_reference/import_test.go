@@ -89,10 +89,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: schemas,
+			&action.AddCollection{
+				SDL: userCollection,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -144,8 +144,8 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @relation(name: "author_book")
@@ -210,8 +210,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @relation(name: "author_book")
@@ -301,8 +301,8 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @primary @relation(name: "author_book")
@@ -315,7 +315,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
@@ -323,7 +323,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					"name": "John and the sourcerers' stone"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				Doc: `{

@@ -24,8 +24,8 @@ func execute(t *testing.T, test testUtils.TestCase) {
 			SupportedDatabaseTypes: test.SupportedDatabaseTypes,
 			Actions: append(
 				[]any{
-					&action.AddSchema{
-						Schema: `
+					&action.AddCollection{
+						SDL: `
 							type Book {
 								name: String
 								rating: Float

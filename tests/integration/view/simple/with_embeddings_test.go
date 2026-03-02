@@ -20,14 +20,14 @@ import (
 func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -40,7 +40,7 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"Alice"
 				}`,

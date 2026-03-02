@@ -38,7 +38,7 @@ The selected documents synchronize their events on the pubsub network.
 ### SEE ALSO
 
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client p2p document create](defradb_client_p2p_document_create.md)	 - Create P2P documents
+* [defradb client p2p document add](defradb_client_p2p_document_add.md)	 - Add P2P documents
 * [defradb client p2p document delete](defradb_client_p2p_document_delete.md)	 - Delete P2P documents
 * [defradb client p2p document list](defradb_client_p2p_document_list.md)	 - List P2P documents
 * [defradb client p2p document sync](defradb_client_p2p_document_sync.md)	 - Synchronize specific documents from the network

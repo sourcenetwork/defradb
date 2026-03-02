@@ -41,9 +41,9 @@ func TestNAC_GatesIndexList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -51,7 +51,7 @@ func TestNAC_GatesIndexList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:        testUtils.ClientIdentity(1),
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
@@ -80,9 +80,9 @@ func TestNAC_GatesIndexList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -90,7 +90,7 @@ func TestNAC_GatesIndexList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
@@ -121,9 +121,9 @@ func TestNAC_GatesIndexList_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -131,7 +131,7 @@ func TestNAC_GatesIndexList_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
@@ -160,9 +160,9 @@ func TestNAC_GatesIndexList_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -170,7 +170,7 @@ func TestNAC_GatesIndexList_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
@@ -201,9 +201,9 @@ func TestNAC_GatesIndexList_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedErro
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 					}
@@ -211,7 +211,7 @@ func TestNAC_GatesIndexList_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedErro
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.GetIndexes{
+			&action.ListIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),

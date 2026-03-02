@@ -62,7 +62,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 	}
 }
 
-// NewCollectionIndex creates a new collection index
+// NewCollectionIndex adds a new collection index
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
@@ -528,8 +528,8 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set
-		// when first creating the document. For newDoc, this will happen
-		// only if the field hasn't been set when first creating the document
+		// when first adding the document. For newDoc, this will happen
+		// only if the field hasn't been set when first adding the document
 		// AND the field hasn't been set on the update.
 		switch {
 		case getOldValErr != nil && getNewValErr != nil:

@@ -19,10 +19,11 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -33,6 +34,11 @@ const (
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
@@ -49,14 +55,26 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.BasicExport(req.Context(), &config)
+
+	opt := options.BasicExport().
+		SetFormat(config.Format).
+		SetPretty(config.Pretty).
+		SetCollections(config.Collections)
+
+	err := db.BasicExport(ctx, config.Filepath, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -64,15 +82,18 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	schema, err := io.ReadAll(req.Body)
+	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	cols, err := db.AddSchema(req.Context(), string(schema))
+
+	opt := options.WithIdentity(options.AddCollection(), identity.FromContext(ctx))
+	cols, err := db.AddCollection(ctx, string(sdl), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -82,6 +103,7 @@ func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var message patchCollectionRequest
 	err := requestJSON(req, &message)
@@ -90,7 +112,8 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	err = db.PatchCollection(req.Context(), message.Patch, message.Migration)
+	opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(ctx))
+	err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -100,13 +123,16 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 
 func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = db.SetActiveCollectionVersion(req.Context(), string(collectionVersionID))
+
+	opt := options.WithIdentity(options.SetActiveCollectionVersion(), identity.FromContext(ctx))
+	err = db.SetActiveCollectionVersion(ctx, string(collectionVersionID), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -116,6 +142,7 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 
 func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -124,7 +151,12 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
+	opt := options.WithIdentity(options.AddView(), identity.FromContext(ctx))
+	if message.TransformCID.HasValue() {
+		opt.SetTransformCID(message.TransformCID.Value())
+	}
+
+	defs, err := db.AddView(ctx, message.Query, message.SDL, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -146,7 +178,9 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	lensID, err := db.SetMigration(req.Context(), cfg)
+	opts := options.WithIdentity(options.SetMigration(), identity.FromContext(req.Context()))
+
+	lensID, err := db.SetMigration(req.Context(), cfg, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -172,7 +206,9 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	opts := options.WithIdentity(options.AddLens(), identity.FromContext(req.Context()))
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -187,8 +223,9 @@ type ListLensesResponse struct {
 
 func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	opts := options.WithIdentity(options.ListLenses(), identity.FromContext(req.Context()))
 
-	lenses, err := db.ListLenses(req.Context())
+	lenses, err := db.ListLenses(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -199,16 +236,17 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	options := client.CollectionFetchOptions{}
+	opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
 	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
+		opt.SetCollectionName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		opt.SetVersionID(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
-		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
+		opt.SetCollectionID(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
@@ -218,10 +256,10 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		options.IncludeInactive = immutable.Some(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 
-	cols, err := db.GetCollections(req.Context(), options)
+	cols, err := db.GetCollections(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -236,28 +274,27 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	options := client.CollectionFetchOptions{}
+	opt := options.WithIdentity(options.RefreshViews(), identity.FromContext(req.Context()))
 	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
+		opt.SetCollectionName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		opt.SetVersionID(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
-		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
+		opt.SetCollectionID(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
-		var err error
 		getInactive, err := strconv.ParseBool(getInactiveStr)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		options.IncludeInactive = immutable.Some(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 
-	err := db.RefreshViews(req.Context(), options)
+	err := db.RefreshViews(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -265,10 +302,10 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	indexes, err := db.GetAllIndexes(req.Context())
+	indexes, err := db.ListIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -279,7 +316,8 @@ func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	indexes, err := db.ListAllEncryptedIndexes(req.Context())
+	opts := options.WithIdentity(options.ListAllEncryptedIndexes(), identity.FromContext(req.Context()))
+	indexes, err := db.ListAllEncryptedIndexes(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -318,14 +356,16 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 
 func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	request, options, err := extractGraphQLRequest(req)
+	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+	opts = options.WithIdentity(opts, identity.FromContext(ctx))
+	result := db.ExecRequest(ctx, request.Query, opts)
 
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
@@ -339,12 +379,15 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 
 func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	request, options, err := extractGraphQLRequest(req)
+	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
+	opts = options.WithIdentity(opts, identity.FromContext(ctx))
 
 	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
@@ -359,7 +402,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+	result := db.ExecRequest(ctx, request.Query, opts)
 
 	// if we get an error in the initial GQL request, we need to emit
 	// it as a SSE event, then we can close the connection/subscription
@@ -430,7 +473,7 @@ func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string
 	return nil
 }
 
-func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequestOptionsBuilder, error) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
@@ -455,15 +498,15 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestO
 	default:
 		return GraphQLRequest{}, nil, ErrMissingRequest
 	}
-	var options []client.RequestOption
+	opt := options.ExecRequest()
 	if request.OperationName != "" {
-		options = append(options, client.WithOperationName(request.OperationName))
+		opt.SetOperationName(request.OperationName)
 	}
 	if len(request.Variables) > 0 {
-		options = append(options, client.WithVariables(request.Variables))
+		opt.SetVariables(request.Variables)
 	}
 
-	return request, options, nil
+	return request, opt, nil
 }
 
 func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
@@ -519,22 +562,22 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
 
-	addSchemaResponse := openapi3.NewResponse().
+	addCollectionResponse := openapi3.NewResponse().
 		WithDescription("Collection(s)").
 		WithJSONSchema(collectionArraySchema)
 
-	addSchemaRequest := openapi3.NewRequestBody().
+	addCollectionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	addSchema := openapi3.NewOperation()
-	addSchema.OperationID = "add_schema"
-	addSchema.Description = "Add a new schema definition"
-	addSchema.Tags = []string{"schema"}
-	addSchema.RequestBody = &openapi3.RequestBodyRef{
-		Value: addSchemaRequest,
+	addCollection := openapi3.NewOperation()
+	addCollection.OperationID = "collection_add"
+	addCollection.Description = "Add a new collection"
+	addCollection.Tags = []string{"collection"}
+	addCollection.RequestBody = &openapi3.RequestBodyRef{
+		Value: addCollectionRequest,
 	}
-	addSchema.AddResponse(200, addSchemaResponse)
-	addSchema.Responses.Set("400", errorResponse)
+	addCollection.AddResponse(200, addCollectionResponse)
+	addCollection.Responses.Set("400", errorResponse)
 
 	setActiveCollectionVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
@@ -579,11 +622,11 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("collection_id").
-		WithDescription("Collection schema root").
+	collectionIDQueryParam := openapi3.NewQueryParameter("collection_id").
+		WithDescription("Collection ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
-		WithDescription("Collection schema version id").
+		WithDescription("Collection version ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionGetInactiveQueryParam := openapi3.NewQueryParameter("get_inactive").
 		WithDescription("If true, inactive collections will be returned in addition to active ones").
@@ -599,15 +642,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	collectionsResponse := openapi3.NewResponse().
-		WithDescription("Collection(s) with matching name, schema id, or version id.").
+		WithDescription("Collection(s) with matching name, collection id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
 	collectionDescribe := openapi3.NewOperation()
 	collectionDescribe.OperationID = "collection_describe"
-	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.Description = "Introspect collection(s) by name, collection id, or version id."
 	collectionDescribe.Tags = []string{"collection"}
 	collectionDescribe.AddParameter(collectionNameQueryParam)
-	collectionDescribe.AddParameter(collectionSchemaRootQueryParam)
+	collectionDescribe.AddParameter(collectionIDQueryParam)
 	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
 	collectionDescribe.AddParameter(collectionGetInactiveQueryParam)
 	collectionDescribe.AddResponse(200, collectionsResponse)
@@ -615,10 +658,10 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	viewRefresh := openapi3.NewOperation()
 	viewRefresh.OperationID = "view_refresh"
-	viewRefresh.Description = "Refresh view(s) by name, schema id, or version id."
+	viewRefresh.Description = "Refresh view(s) by name, collection id, or version id."
 	viewRefresh.Tags = []string{"view"}
 	viewRefresh.AddParameter(collectionNameQueryParam)
-	viewRefresh.AddParameter(collectionSchemaRootQueryParam)
+	viewRefresh.AddParameter(collectionIDQueryParam)
 	viewRefresh.AddParameter(collectionVersionIdQueryParam)
 	viewRefresh.AddParameter(collectionGetInactiveQueryParam)
 	viewRefresh.Responses = openapi3.NewResponses()
@@ -646,7 +689,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	addViewResponse := openapi3.NewResponse().
-		WithDescription("The created collection and embedded schemas for the added view.").
+		WithDescription("The added collection and embedded schemas for the added view.").
 		WithJSONSchema(addViewResponseSchema)
 
 	addViewRequest := openapi3.NewRequestBody().
@@ -779,21 +822,21 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	indexArraySchema := openapi3.NewArraySchema()
 	indexArraySchema.Items = indexSchema
 
-	getAllIndexesMapSchema := openapi3.NewObjectSchema()
-	getAllIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+	listIndexesMapSchema := openapi3.NewObjectSchema()
+	listIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
 		Schema: openapi3.NewSchemaRef("", indexArraySchema),
 	}
 
-	getAllIndexesResponse := openapi3.NewResponse().
+	listIndexesResponse := openapi3.NewResponse().
 		WithDescription("Map of collection names to their indexes").
-		WithJSONSchema(getAllIndexesMapSchema)
+		WithJSONSchema(listIndexesMapSchema)
 
-	getAllIndexes := openapi3.NewOperation()
-	getAllIndexes.OperationID = "indexes_list_all"
-	getAllIndexes.Description = "List all indexes for all collections"
-	getAllIndexes.Tags = []string{"index"}
-	getAllIndexes.AddResponse(200, getAllIndexesResponse)
-	getAllIndexes.Responses.Set("400", errorResponse)
+	listIndexes := openapi3.NewOperation()
+	listIndexes.OperationID = "indexes_list_all"
+	listIndexes.Description = "List all indexes for all collections"
+	listIndexes.Tags = []string{"index"}
+	listIndexes.AddResponse(200, listIndexesResponse)
+	listIndexes.Responses.Set("400", errorResponse)
 
 	encryptedIndexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/encrypted_index",
@@ -801,28 +844,28 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	encryptedIndexArraySchema := openapi3.NewArraySchema()
 	encryptedIndexArraySchema.Items = encryptedIndexSchema
 
-	getAllEncryptedIndexesMapSchema := openapi3.NewObjectSchema()
-	getAllEncryptedIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+	listEncryptedIndexesMapSchema := openapi3.NewObjectSchema()
+	listEncryptedIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
 		Schema: openapi3.NewSchemaRef("", encryptedIndexArraySchema),
 	}
 
-	getAllEncryptedIndexesResponse := openapi3.NewResponse().
+	listEncryptedIndexesResponse := openapi3.NewResponse().
 		WithDescription("Map of collection names to their encrypted indexes").
-		WithJSONSchema(getAllEncryptedIndexesMapSchema)
+		WithJSONSchema(listEncryptedIndexesMapSchema)
 
-	getAllEncryptedIndexes := openapi3.NewOperation()
-	getAllEncryptedIndexes.OperationID = "encrypted_indexes_list_all"
-	getAllEncryptedIndexes.Description = "List all encrypted indexes for all collections"
-	getAllEncryptedIndexes.Tags = []string{"encrypted_index"}
-	getAllEncryptedIndexes.AddResponse(200, getAllEncryptedIndexesResponse)
-	getAllEncryptedIndexes.Responses.Set("400", errorResponse)
+	listEncryptedIndexes := openapi3.NewOperation()
+	listEncryptedIndexes.OperationID = "encrypted_indexes_list_all"
+	listEncryptedIndexes.Description = "List all encrypted indexes for all collections"
+	listEncryptedIndexes.Tags = []string{"encrypted_index"}
+	listEncryptedIndexes.AddResponse(200, listEncryptedIndexesResponse)
+	listEncryptedIndexes.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
-	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
-	router.AddRoute("/encrypted-indexes", http.MethodGet, getAllEncryptedIndexes, h.ListAllEncryptedIndexes)
+	router.AddRoute("/collections/indexes", http.MethodGet, listIndexes, h.ListIndexes)
+	router.AddRoute("/encrypted-indexes", http.MethodGet, listEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
 	router.AddRoute("/collections/migrations", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
@@ -830,7 +873,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
-	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
+	router.AddRoute("/collections", http.MethodPost, addCollection, h.AddCollection)
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)

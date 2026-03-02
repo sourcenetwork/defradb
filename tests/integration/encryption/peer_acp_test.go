@@ -73,8 +73,8 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -88,11 +88,11 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `
@@ -153,8 +153,8 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -168,11 +168,11 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `
@@ -242,8 +242,8 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -257,12 +257,12 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 			// encrypted, private, shared
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -280,7 +280,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Relation:          "reader",
 			},
 			// encrypted, private, not shared
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -292,7 +292,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				IsDocEncrypted: true,
 			},
 			// encrypted, public
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `
 					{
@@ -303,7 +303,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				IsDocEncrypted: true,
 			},
 			// not encrypted, private, shared
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -320,7 +320,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Relation:          "reader",
 			},
 			// not encrypted, private, not shared
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -331,7 +331,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 			},
 			// not encrypted, public
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `
 					{
@@ -383,8 +383,8 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -398,7 +398,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -406,11 +406,11 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				SourceNodeID: 2,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        2,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `

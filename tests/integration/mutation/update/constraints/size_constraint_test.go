@@ -20,15 +20,15 @@ import (
 func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						numbers: [Int!] @constraints(size: 2)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]
@@ -66,15 +66,15 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						numbers: [Int!] @constraints(size: 2)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]

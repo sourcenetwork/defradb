@@ -18,8 +18,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -63,21 +64,23 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.New("request cannot be empty")
 			}
 
-			var options []client.RequestOption
-			if variablesJSON != "" {
-				var variables map[string]any
-				err := json.Unmarshal([]byte(variablesJSON), &variables)
-				if err != nil {
-					return NewErrParsingArgument("variables", err)
+			opts := options.WithIdentity(options.ExecRequest(), identity.FromContext(cmd.Context()))
+			if variablesJSON != "" || operationName != "" {
+				if variablesJSON != "" {
+					var variables map[string]any
+					err := json.Unmarshal([]byte(variablesJSON), &variables)
+					if err != nil {
+						return NewErrParsingArgument("variables", err)
+					}
+					opts.SetVariables(variables)
 				}
-				options = append(options, client.WithVariables(variables))
-			}
-			if operationName != "" {
-				options = append(options, client.WithOperationName(operationName))
+				if operationName != "" {
+					opts.SetOperationName(operationName)
+				}
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			result := cliClient.ExecRequest(cmd.Context(), request, options...)
+			result := cliClient.ExecRequest(cmd.Context(), request, opts)
 
 			if result.Subscription == nil {
 				cmd.Print(REQ_RESULTS_HEADER)

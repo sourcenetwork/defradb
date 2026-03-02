@@ -20,25 +20,25 @@ import (
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 28
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// It is important to test negative values here, due to the auto-typing of numbers
 				Doc: `{
 					"Name": "Alice",
@@ -49,18 +49,18 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWith
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: Age, limit: 2})
+						MIN(GROUP: {field: Age, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_min": int64(28),
+							"MIN":  int64(28),
 						},
 						{
 							"Name": "Alice",
-							"_min": int64(-19),
+							"MIN":  int64(-19),
 						},
 					},
 				},

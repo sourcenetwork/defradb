@@ -19,6 +19,8 @@ import (
 	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -67,179 +69,18 @@ func (c *Collection) CollectionID() string {
 	return res[0].String()
 }
 
-func (c *Collection) Create(
+func (c *Collection) AddIndex(
 	ctx context.Context,
-	doc *client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	docVal, err := goji.MarshalJS(doc)
-	if err != nil {
-		return err
-	}
-	_, err = execute(ctx, c.client, "create", docVal, makeDocCreateOptions(opts))
-	if err != nil {
-		return err
-	}
-	doc.Clean()
-	return nil
-}
-
-func makeDocCreateOptions(opts []client.DocCreateOption) js.Value {
-	createOpts := client.DocCreateOptions{}
-	createOpts.Apply(opts)
-
-	optsVal, err := goji.MarshalJS(createOpts)
-	if err != nil {
-		return js.Undefined()
-	}
-	return optsVal
-}
-
-func (c *Collection) CreateMany(
-	ctx context.Context,
-	docs []*client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	docsVal, err := goji.MarshalJS(docs)
-	if err != nil {
-		return err
-	}
-	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocCreateOptions(opts))
-	if err != nil {
-		return err
-	}
-	for _, doc := range docs {
-		doc.Clean()
-	}
-	return nil
-}
-
-func (c *Collection) Update(
-	ctx context.Context,
-	doc *client.Document,
-) error {
-	patch, err := doc.ToJSONPatch()
-	if err != nil {
-		return err
-	}
-	docID := doc.ID().String()
-	_, err = execute(ctx, c.client, "update", docID, string(patch))
-	if err != nil {
-		return err
-	}
-	doc.Clean()
-	return nil
-}
-
-func (c *Collection) Save(
-	ctx context.Context,
-	doc *client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	_, err := c.Get(ctx, doc.ID(), true)
-	if err == nil {
-		return c.Update(ctx, doc)
-	}
-	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		return c.Create(ctx, doc, opts...)
-	}
-	return err
-}
-
-func (c *Collection) Delete(
-	ctx context.Context,
-	docID client.DocID,
-) (bool, error) {
-	res, err := execute(ctx, c.client, "delete", docID.String())
-	if err != nil {
-		return false, err
-	}
-	return res[0].Bool(), nil
-}
-
-func (c *Collection) Exists(
-	ctx context.Context,
-	docID client.DocID,
-) (bool, error) {
-	res, err := execute(ctx, c.client, "exists", docID.String())
-	if err != nil {
-		return false, err
-	}
-	return res[0].Bool(), nil
-}
-
-func (c *Collection) UpdateWithFilter(
-	ctx context.Context,
-	filter any,
-	updater string,
-) (*client.UpdateResult, error) {
-	res, err := execute(ctx, c.client, "updateWithFilter", filter, updater)
-	if err != nil {
-		return nil, err
-	}
-	var out client.UpdateResult
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *Collection) DeleteWithFilter(
-	ctx context.Context,
-	filter any,
-) (*client.DeleteResult, error) {
-	res, err := execute(ctx, c.client, "deleteWithFilter", filter)
-	if err != nil {
-		return nil, err
-	}
-	var out client.DeleteResult
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *Collection) Get(
-	ctx context.Context,
-	docID client.DocID,
-	showDeleted bool,
-) (*client.Document, error) {
-	res, err := execute(ctx, c.client, "get", docID.String(), showDeleted)
-	if err != nil {
-		return nil, err
-	}
-	var docMap map[string]any
-	if err := goji.UnmarshalJS(res[0], &docMap); err != nil {
-		return nil, err
-	}
-	doc, err := client.NewDocWithID(ctx, docID, c.Version())
-	if err != nil {
-		return nil, err
-	}
-	for f, v := range docMap {
-		if err := doc.Set(ctx, f, v); err != nil {
-			return nil, err
-		}
-	}
-	doc.Clean()
-	return doc, nil
-}
-
-func (c *Collection) GetAllDocIDs(
-	ctx context.Context,
-) (<-chan client.DocIDResult, error) {
-	panic("not implemented")
-}
-
-func (c *Collection) CreateIndex(
-	ctx context.Context,
-	indexDesc client.IndexCreateRequest,
+	indexDesc client.IndexAddRequest,
+	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	indexDescVal, err := goji.MarshalJS(indexDesc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "createIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "addIndex", indexDescVal)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -250,13 +91,17 @@ func (c *Collection) CreateIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	_, err := execute(ctx, c.client, "dropIndex", indexName)
+func (c *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions]) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	_, err := execute(ctx, c.client, "deleteIndex", indexName)
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	res, err := execute(ctx, c.client, "getIndexes")
+func (c *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	res, err := execute(ctx, c.client, "listIndexes")
 	if err != nil {
 		return nil, err
 	}
@@ -267,15 +112,20 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	return out, nil
 }
 
-func (c *Collection) CreateEncryptedIndex(
+func (c *Collection) AddEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		ctx = ctxWithOptIdentity(ctx, opt)
+	}
 	indexDescVal, err := goji.MarshalJS(req)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "createEncryptedIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "addEncryptedIndex", indexDescVal)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
@@ -286,7 +136,9 @@ func (c *Collection) CreateEncryptedIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "listEncryptedIndexes")
 	if err != nil {
 		return nil, err
@@ -298,12 +150,22 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 	return out, nil
 }
 
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		ctx = ctxWithOptIdentity(ctx, opt)
+	}
 	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context) error {
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "truncate")
 	return err
 }

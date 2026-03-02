@@ -22,17 +22,17 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithTxn(t *testing.T) {
+func TestCollectionMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -85,17 +85,17 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
+func TestCollectionMigrationQueryWithTxnAndCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,

@@ -18,11 +18,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -223,7 +225,7 @@ func toSelect(
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
-		Cid:             selectRequest.CID,
+		Cids:            selectRequest.CIDs,
 		CollectionName:  collectionName,
 		Fields:          fields,
 		IsEncrypted:     selectRequest.IsEncrypted,
@@ -976,14 +978,18 @@ func getTopLevelInfo(
 	}
 
 	if rootSelectType == ObjectSelection {
-		collection, err := store.GetCollectionByName(ctx, collectionName)
+		collection, err := store.GetCollectionByName(
+			ctx,
+			collectionName,
+			options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx)),
+		)
 		if err != nil {
 			return nil, client.CollectionVersion{}, err
 		}
 
 		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 
-		// Map all fields from schema into the map as they are fetched automatically
+		// Map all fields from collection into the map as they are fetched automatically
 		for _, f := range collection.Version().Fields {
 			if f.RelationName.HasValue() && f.Kind.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
@@ -1240,7 +1246,7 @@ func resolveSecondaryRelationIDs(
 	store client.TxnStore,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.CollectionVersion,
+	colDef client.CollectionVersion,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -1252,7 +1258,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := schema.GetFieldByName(existingField.Name)
+		fieldDesc, descFound := colDef.GetFieldByName(existingField.Name)
 		if !descFound {
 			continue
 		}
@@ -1323,9 +1329,7 @@ func toCommitSelect(
 	}
 	return &CommitSelect{
 		Select: *underlyingSelect,
-		DocID:  selectRequest.DocID,
 		Depth:  selectRequest.Depth,
-		Cid:    selectRequest.CID,
 	}, nil
 }
 
@@ -1358,7 +1362,7 @@ func toMutation(
 	return &Mutation{
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),
-		CreateInput:   mutationRequest.CreateInput,
+		AddInput:      mutationRequest.AddInput,
 		UpdateInput:   mutationRequest.UpdateInput,
 		Encrypt:       mutationRequest.Encrypt,
 		EncryptFields: mutationRequest.EncryptFields,

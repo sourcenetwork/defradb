@@ -43,9 +43,9 @@ func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -56,7 +56,7 @@ func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},

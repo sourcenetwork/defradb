@@ -21,8 +21,8 @@ import (
 func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex
@@ -61,11 +61,11 @@ func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexList_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
+func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int 
@@ -81,7 +81,7 @@ func TestEncryptedIndexList_IfIndexCreatedLater_ShouldReturnListOfExistingIndexe
 					},
 				},
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.ListEncryptedIndexes{
@@ -106,8 +106,8 @@ func TestEncryptedIndexList_IfIndexCreatedLater_ShouldReturnListOfExistingIndexe
 func TestEncryptedIndexList_WhenRequestingAllIndexes_ShouldReturn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex

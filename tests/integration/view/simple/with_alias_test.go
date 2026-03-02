@@ -20,14 +20,14 @@ import (
 func TestView_SimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						fullname: name
@@ -39,7 +39,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John"
 				}`,

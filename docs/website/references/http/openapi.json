@@ -151,6 +151,23 @@
                 },
                 "type": "object"
             },
+            "add_replicator_params": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -408,7 +425,7 @@
                 },
                 "type": "object"
             },
-            "encrypted_index_create": {
+            "encrypted_index_add": {
                 "properties": {
                     "FieldName": {
                         "type": "string"
@@ -481,7 +498,7 @@
                 },
                 "type": "object"
             },
-            "index_create": {
+            "index_add": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -591,23 +608,6 @@
                 "properties": {
                     "lensId": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "set_replicator_params": {
-                "properties": {
-                    "Addresses": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "Collections": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -1087,7 +1087,7 @@
         },
         "/collections": {
             "get": {
-                "description": "Introspect collection(s) by name, schema id, or version id.",
+                "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "collection_describe",
                 "parameters": [
                     {
@@ -1099,7 +1099,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -1107,7 +1107,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
@@ -1142,7 +1142,7 @@
                                 }
                             }
                         },
-                        "description": "Collection(s) with matching name, schema id, or version id."
+                        "description": "Collection(s) with matching name, collection id, or version id."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -1170,6 +1170,43 @@
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "post": {
+                "description": "Add a new collection",
+                "operationId": "collection_add",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/collection"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Collection(s)"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -1329,35 +1366,6 @@
                     "collection"
                 ]
             },
-            "get": {
-                "description": "Get all document IDs",
-                "operationId": "collection_keys",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            },
             "patch": {
                 "description": "Update document(s) in a collection",
                 "operationId": "collection_update_with_filter",
@@ -1405,8 +1413,8 @@
                 ]
             },
             "post": {
-                "description": "Create document(s) in a collection",
-                "operationId": "collection_create",
+                "description": "Add document(s) to a collection",
+                "operationId": "document_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1450,7 +1458,127 @@
                     }
                 },
                 "tags": [
-                    "collection"
+                    "document"
+                ]
+            }
+        },
+        "/collections/{name}/document/{docID}": {
+            "delete": {
+                "description": "Delete a document by docID",
+                "operationId": "document_delete",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "document"
+                ]
+            },
+            "get": {
+                "description": "Get a document by docID",
+                "operationId": "document_get",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/document"
+                                }
+                            }
+                        },
+                        "description": "Document value"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "document"
+                ]
+            },
+            "patch": {
+                "description": "Update a document by docID",
+                "operationId": "document_update",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "document"
                 ]
             }
         },
@@ -1495,8 +1623,8 @@
                 ]
             },
             "post": {
-                "description": "Create an encrypted index",
-                "operationId": "encrypted_index_create",
+                "description": "Add an encrypted index",
+                "operationId": "encrypted_index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1512,7 +1640,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/encrypted_index_create"
+                                "$ref": "#/components/schemas/encrypted_index_add"
                             }
                         }
                     },
@@ -1622,8 +1750,8 @@
                 ]
             },
             "post": {
-                "description": "Create a secondary index",
-                "operationId": "index_create",
+                "description": "Add a secondary index",
+                "operationId": "index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1639,7 +1767,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create"
+                                "$ref": "#/components/schemas/index_add"
                             }
                         }
                     },
@@ -1671,7 +1799,7 @@
         "/collections/{name}/indexes/{index}": {
             "delete": {
                 "description": "Delete a secondary index",
-                "operationId": "index_drop",
+                "operationId": "index_delete",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1735,126 +1863,6 @@
                 },
                 "tags": [
                     "truncate"
-                ]
-            }
-        },
-        "/collections/{name}/{docID}": {
-            "delete": {
-                "description": "Delete a document by docID",
-                "operationId": "collection_delete",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "in": "path",
-                        "name": "docID",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            },
-            "get": {
-                "description": "Get a document by docID",
-                "operationId": "collection_get",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "in": "path",
-                        "name": "docID",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/document"
-                                }
-                            }
-                        },
-                        "description": "Document value"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            },
-            "patch": {
-                "description": "Update a document by docID",
-                "operationId": "collection_update",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "in": "path",
-                        "name": "docID",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
                 ]
             }
         },
@@ -2200,8 +2208,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer collections",
-                "operationId": "peer_collections_create",
+                "description": "Add peer collections",
+                "operationId": "peer_collections_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2396,8 +2404,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer documents",
-                "operationId": "peer_documents_create",
+                "description": "Add peer documents",
+                "operationId": "peer_documents_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2559,12 +2567,12 @@
             },
             "post": {
                 "description": "Add peer replicators",
-                "operationId": "peer_replicator_set",
+                "operationId": "peer_replicator_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/set_replicator_params"
+                                "$ref": "#/components/schemas/add_replicator_params"
                             }
                         }
                     },
@@ -2601,45 +2609,6 @@
                         "description": ""
                     }
                 }
-            }
-        },
-        "/schema": {
-            "post": {
-                "description": "Add a new schema definition",
-                "operationId": "add_schema",
-                "requestBody": {
-                    "content": {
-                        "text/plain": {
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/collection"
-                                    },
-                                    "type": "array"
-                                }
-                            }
-                        },
-                        "description": "Collection(s)"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
             }
         },
         "/tx": {
@@ -2811,7 +2780,7 @@
                                 }
                             }
                         },
-                        "description": "The created collection and embedded schemas for the added view."
+                        "description": "The added collection and embedded schemas for the added view."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2827,7 +2796,7 @@
         },
         "/view/refresh": {
             "post": {
-                "description": "Refresh view(s) by name, schema id, or version id.",
+                "description": "Refresh view(s) by name, collection id, or version id.",
                 "operationId": "view_refresh",
                 "parameters": [
                     {
@@ -2839,7 +2808,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -2847,7 +2816,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
@@ -2888,12 +2857,12 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to create collections",
-            "name": "schema"
+            "description": "Add, describe, patch, and manage collections",
+            "name": "collection"
         },
         {
-            "description": "Add, remove, or update documents",
-            "name": "collection"
+            "description": "Add, get, update, or delete documents",
+            "name": "document"
         },
         {
             "description": "Add views",

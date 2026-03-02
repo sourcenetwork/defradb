@@ -26,14 +26,14 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Users {
 						name
@@ -45,13 +45,13 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Fred",
@@ -106,14 +106,14 @@ func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testin
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Users {
 						name
@@ -125,13 +125,13 @@ func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testin
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Fred",

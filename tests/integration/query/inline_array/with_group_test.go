@@ -20,13 +20,13 @@ import (
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [1, -2, 1, -1, 0]
@@ -36,7 +36,7 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 				Request: `query {
 					Users (groupBy: [name]) {
 						name
-						_group {
+						GROUP {
 							favouriteIntegers
 						}
 					}
@@ -45,7 +45,7 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 								},
@@ -66,19 +66,19 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3]
@@ -88,7 +88,7 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 				Request: `query {
 					Users (groupBy: [favouriteIntegers]) {
 						favouriteIntegers
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -97,14 +97,14 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{"name": "Shahzad"},
 								{"name": "Andy"},
 							},
 						},
 						{
 							"favouriteIntegers": []int64{1, 2, 3},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{"name": "John"},
 							},
 						},

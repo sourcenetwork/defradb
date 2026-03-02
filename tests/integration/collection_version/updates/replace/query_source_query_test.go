@@ -20,21 +20,21 @@ import (
 func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -47,7 +47,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
@@ -88,21 +88,21 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -115,7 +115,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

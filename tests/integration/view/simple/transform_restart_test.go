@@ -24,8 +24,8 @@ import (
 func TestView_SimpleWithTransformAndRestart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -46,7 +46,7 @@ func TestView_SimpleWithTransformAndRestart(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -60,7 +60,7 @@ func TestView_SimpleWithTransformAndRestart(t *testing.T) {
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.Restart{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Set the `name` field only
 				Doc: `{
 					"name":	"John"

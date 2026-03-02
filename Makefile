@@ -123,9 +123,9 @@ start:
 client\:dump:
 	./build/defradb client dump
 
-.PHONY: client\:add-schema
-client\:add-schema:
-	./build/defradb client schema add -f examples/schema/bookauthpub.graphql
+.PHONY: client\:collection-add
+client\:collection-add:
+	./build/defradb client collection add -f examples/collection/bookauthpub.graphql
 
 .PHONY: deps\:lint-go
 deps\:lint-go:

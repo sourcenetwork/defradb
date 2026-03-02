@@ -25,13 +25,13 @@ func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *t
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					upsert_ContactAddress(
 						filter: {city: {_eq: "Waterloo"}},
-						create: {city: "Waterloo", country: "USA"},
+						add: {city: "Waterloo", country: "USA"},
 						update: {country: "USA"}
 					) {
 						country
@@ -81,7 +81,7 @@ func TestExecuteExplainMutationRequest_WithUpsertAndNoMatchingFilter_Succeeds(t 
 				Request: `mutation @explain(type: execute) {
 					upsert_ContactAddress(
 						filter: {city: {_eq: "Waterloo"}},
-						create: {city: "Waterloo", country: "USA"},
+						add: {city: "Waterloo", country: "USA"},
 						update: {country: "USA"}
 					) {
 						country

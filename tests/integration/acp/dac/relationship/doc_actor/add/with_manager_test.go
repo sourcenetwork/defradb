@@ -63,8 +63,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -75,7 +75,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -233,8 +233,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -245,7 +245,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -430,8 +430,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -442,7 +442,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -608,8 +608,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -620,7 +620,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -863,8 +863,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -875,7 +875,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -1029,8 +1029,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -1041,7 +1041,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -1174,8 +1174,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -1186,7 +1186,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

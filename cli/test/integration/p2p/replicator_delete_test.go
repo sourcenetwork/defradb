@@ -20,8 +20,8 @@ import (
 func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -29,7 +29,7 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -47,8 +47,8 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -56,7 +56,7 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -74,8 +74,8 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -83,7 +83,7 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -100,8 +100,8 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -113,7 +113,7 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorAdd{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
@@ -129,8 +129,8 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -142,7 +142,7 @@ func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSuc
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorAdd{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},

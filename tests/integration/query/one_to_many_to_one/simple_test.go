@@ -22,7 +22,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// bae-9e70648f-c722-5875-97f5-574ec6f703e9, Has written 5 books
 				Doc: `{
@@ -31,7 +31,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
 				Doc: `{
@@ -40,7 +40,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// Has written no Book
 				Doc: `{
@@ -50,7 +50,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 				}`,
 			},
 			// Books
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
 				DocMap: map[string]any{
@@ -59,7 +59,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// "bae-4e3f217c-0dd4-5ff3-bee6-5740d8fe3ae6", Has 1 Publisher
 				DocMap: map[string]any{
@@ -68,7 +68,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// "bae-efa4a57f-e766-530f-a5a6-4a5669106c74", Has no Publisher.
 				DocMap: map[string]any{
@@ -78,7 +78,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 				},
 			},
 			// Publishers
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
@@ -87,7 +87,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",

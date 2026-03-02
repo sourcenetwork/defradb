@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -75,9 +76,13 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 	return txn.Client.PrintDump(ctx)
 }
 
-func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+func (txn *Transaction) AddDACPolicy(
+	ctx context.Context,
+	policy string,
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
+) (client.AddPolicyResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddDACPolicy(ctx, policy)
+	return txn.Client.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (txn *Transaction) AddDACActorRelationship(
@@ -86,9 +91,10 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) DeleteDACActorRelationship(
@@ -97,9 +103,10 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -107,94 +114,122 @@ func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[i
 	return txn.Client.GetNodeIdentity(ctx)
 }
 
-func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+func (txn *Transaction) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Enumerable[options.VerifySignatureOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.VerifySignature(ctx, blockCid, pubKey)
+	return txn.Client.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+func (txn *Transaction) AddCollection(
+	ctx context.Context,
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
+) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddSchema(ctx, sdl)
+	return txn.Client.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.PatchCollection(ctx, patch, migration)
+	return txn.Client.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
+func (txn *Transaction) SetActiveCollectionVersion(
+	ctx context.Context,
+	version string,
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.SetActiveCollectionVersion(ctx, version)
+	return txn.Client.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
 func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddView(ctx, gqlQuery, sdl, transformCID)
+	return txn.Client.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+func (txn *Transaction) RefreshViews(
+	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.RefreshViews(ctx, options)
+	return txn.Client.RefreshViews(ctx, opts...)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (txn *Transaction) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.SetMigration(ctx, config)
+	return txn.Client.SetMigration(ctx, config, opts...)
 }
 
-func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (txn *Transaction) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Enumerable[options.AddLensOptions],
+) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddLens(ctx, lens)
+	return txn.Client.AddLens(ctx, lens, opts...)
 }
 
-func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (txn *Transaction) ListLenses(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.ListLenses(ctx)
+	return txn.Client.ListLenses(ctx, opts...)
 }
 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetCollectionByName(ctx, name)
+	return txn.Client.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetCollections(ctx, options)
+	return txn.Client.GetCollections(ctx, opts...)
 }
 
-func (txn *Transaction) GetAllIndexes(
+func (txn *Transaction) ListIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetAllIndexes(ctx)
+	return txn.Client.ListIndexes(ctx, opts...)
 }
 
 func (txn *Transaction) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.ListAllEncryptedIndexes(ctx)
+	return txn.Client.ListAllEncryptedIndexes(ctx, opts...)
 }
 
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.ExecRequest(ctx, request, opts...)
@@ -205,7 +240,11 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 	return txn.Client.BasicImport(ctx, filepath)
 }
 
-func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (txn *Transaction) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Enumerable[options.BasicExportOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.BasicExport(ctx, config)
+	return txn.Client.BasicExport(ctx, filepath, opts...)
 }

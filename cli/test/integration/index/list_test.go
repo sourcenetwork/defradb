@@ -21,8 +21,8 @@ import (
 func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -42,8 +42,8 @@ func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -51,12 +51,12 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age:DESC"},
@@ -89,8 +89,8 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -103,23 +103,23 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 				`,
 			},
 			// Create indexes for User collection
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
 			// Create indexes for Product collection
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "Product",
 				Name:       "ProductsByTitle",
 				Fields:     []string{"title"},
 			},
-			&action.IndexCreate{
+			&action.IndexAdd{
 				Collection: "Product",
 				Name:       "ProductsByPrice",
 				Fields:     []string{"price:DESC"},

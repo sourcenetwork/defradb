@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -73,7 +74,10 @@ type DB interface {
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
-	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
+	GetCollections(
+		ctx context.Context,
+		opts ...options.Enumerable[options.GetCollectionsOptions],
+	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
 	// Events returns the event bus for the database.
@@ -343,12 +347,17 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return true
 	}
 
-	cols, err := p.db.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			VersionID: immutable.Some(block.Delta.GetCollectionVersionID()),
-		},
-	)
+	ident, err := p.db.GetNodeIdentity(p.ctx)
+	if err != nil {
+		log.ErrorE("Failed to get node identity", err)
+		return false
+	}
+	getColOpts := options.GetCollections().SetCollectionID(block.Delta.GetCollectionVersionID())
+	if ident.HasValue() {
+		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
+	}
+
+	cols, err := p.db.GetCollections(ctx, getColOpts)
 	if err != nil {
 		log.ErrorE("Failed to get collections", err)
 		return false
@@ -433,9 +442,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		options.GetCollections().SetCollectionID(collectionID),
 	)
 	if err != nil {
 		return false, err
@@ -611,7 +618,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 		}
 
 		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
+			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
 		}
 	}
 

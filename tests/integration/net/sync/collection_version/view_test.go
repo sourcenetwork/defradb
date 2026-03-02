@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
@@ -27,9 +28,9 @@ func TestSyncColVersion_WithView(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -51,7 +52,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -74,10 +75,8 @@ func TestSyncColVersion_WithView(t *testing.T) {
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
-				NodeID: immutable.Some(1),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name: "UserView",
@@ -130,8 +129,8 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -153,7 +152,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -179,7 +178,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID1}}",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

@@ -32,11 +32,11 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -114,16 +114,16 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, and keep NAC disbaled
 			// to test the disabled NAC case.
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -204,15 +204,15 @@ func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to make public document(s), and keep NAC disbaled to test the disabled NAC case.
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

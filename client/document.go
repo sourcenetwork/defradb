@@ -77,7 +77,7 @@ var CborNil []byte
 
 // Document is a generalized struct referring to a stored document in the database.
 //
-// It *can* have a reference to a enforced schema, which is enforced at the time
+// It *can* have a reference to an enforced collection definition, which is enforced at the time
 // of an operation.
 //
 // Documents are similar to JSON Objects stored in MongoDB, which are collections
@@ -90,7 +90,7 @@ var CborNil []byte
 //
 // @todo: Extract Document into a Interface
 // @body: A document interface can be implemented by both a TypedDocument and a
-// UnTypedDocument, which use a schema and schemaless approach respectively.
+// UnTypedDocument, which use a collection definition and definitionless approach respectively.
 type Document struct {
 	id     DocID
 	fields map[string]Field
@@ -957,9 +957,9 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 		return DocID{}, err
 	}
 
-	// The DocID must take into consideration the schema root, this ensures that
-	// otherwise identical documents created using different schema will have different
-	// document IDs - we do not want cross-schema docID collisions.
+	// The DocID must take into consideration the collection root, this ensures that
+	// otherwise identical documents created using different collections will have different
+	// document IDs - we do not want cross-collection docID collisions.
 	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
 
 	cid, err := ccid.NewSHA256CidV1(bytes)
@@ -1055,23 +1055,21 @@ docA := document.NewFromJSON(obj)
 
 // method 1
 docA.Patch(...)
-col.Save(docA)
+col.SaveDocument(docA)
 
 // method 2
 docA.Get("Author").Set("Name", "Eric")
-col.Save(docA)
+col.SaveDocument(docA)
 
 // method 3
 docB := docA.GetObject("Author")
 docB.Set("Name", "Eric")
-authorCollection.Save(docB)
+authorCollection.SaveDocument(docB)
 
 // method 4
 docA.Set("Author.Name")
 
 // method 5
-doc := col.GetWithRelations("key")
-// equivalent
-doc := col.Get(key, db.WithRelationsOpt)
+doc := col.GetDocument(key, db.WithRelationsOpt)
 
 */

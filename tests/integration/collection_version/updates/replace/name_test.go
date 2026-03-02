@@ -20,14 +20,14 @@ import (
 func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -53,8 +53,8 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

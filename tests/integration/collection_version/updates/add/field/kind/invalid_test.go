@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKind15(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -42,11 +42,11 @@ func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 
 // This test is currently the first unsupported value, if it becomes supported
 // please update this test to be the newly lowest unsupported value.
-func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -67,11 +67,11 @@ func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
 
 // Tests a semi-random but hardcoded unsupported kind to try and protect against anything odd permitting
 // high values.
-func TestSchemaUpdatesAddFieldKind198(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKind198(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -90,11 +90,11 @@ func TestSchemaUpdatesAddFieldKind198(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindInvalid(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindInvalid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

@@ -20,19 +20,19 @@ import (
 func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
@@ -40,10 +40,10 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age, filter: {Age: {_gt: 26}}})
+					AVG(Users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(31),
+					"AVG": float64(31),
 				},
 			},
 		},
@@ -55,21 +55,21 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30,
 					"CreatedAt": "2018-07-23T03:46:56-05:00"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32,
@@ -78,10 +78,10 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
+					AVG(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(31),
+					"AVG": float64(31),
 				},
 			},
 		},

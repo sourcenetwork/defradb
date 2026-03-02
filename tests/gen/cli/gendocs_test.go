@@ -28,7 +28,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	_, err := defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddCollection(ctx, `
 	type User { 
 		name: String 
 		devices: [Device]
@@ -69,7 +69,7 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	_, err := defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddCollection(ctx, `
         type User { 
             name: String 
         }`)
@@ -90,7 +90,7 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	_, err := defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddCollection(ctx, `
         type User { 
             name: String 
         }`)

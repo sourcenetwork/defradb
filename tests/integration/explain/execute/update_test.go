@@ -25,7 +25,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
@@ -82,7 +82,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {

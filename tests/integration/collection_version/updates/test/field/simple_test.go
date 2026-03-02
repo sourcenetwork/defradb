@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -40,11 +40,11 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -62,11 +62,11 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -85,11 +85,11 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -110,11 +110,11 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -135,11 +135,11 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

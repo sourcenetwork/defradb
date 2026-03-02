@@ -13,10 +13,9 @@ package test_acp_nac
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -33,10 +32,8 @@ func TestNAC_GatesCollectionGetByID_AuthorizedIdentity_AllowAccess(t *testing.T)
 
 			// This should work as the identity is authorized.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(1),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:        testUtils.ClientIdentity(1),
+				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -57,10 +54,8 @@ func TestNAC_GatesCollectionGetByID_NoIdentity_NotAuthorizedError(t *testing.T) 
 
 			// We haven't authorized non-identities. So, this should error.
 			&action.GetCollections{
-				Identity: testUtils.NoIdentity(),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:      testUtils.NoIdentity(),
+				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
@@ -81,10 +76,8 @@ func TestNAC_GatesCollectionGetByID_WrongIdentity_NotAuthorizedError(t *testing.
 
 			// Wrong user/identity will also not be authorized.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},

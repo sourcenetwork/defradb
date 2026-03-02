@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.T) {
+func TestACP_AddWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.T) {
 	// The same identity that is used to do the registering/creation should be used in the
 	// final read check to see the state of that registered document.
 	// Note: In this test that identity is empty (no identity).
@@ -54,8 +54,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -66,7 +66,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -116,7 +116,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
+func TestACP_AddWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 	// The same identity that is used to do the registering/creation should be used in the
 	// final read check to see the state of that registered document.
 	// Note: In this test that identity is empty (no identity).
@@ -150,8 +150,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -162,7 +162,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -213,7 +213,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
+func TestACP_AddWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -243,8 +243,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -255,7 +255,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -310,7 +310,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
+func TestACP_AddWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -346,8 +346,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -358,7 +358,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -413,7 +413,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
+func TestACP_AddWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -449,8 +449,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -461,7 +461,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -520,7 +520,7 @@ resources:
 
 // This separate GQL test should be merged with the ones above when all the clients are fixed
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
-func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
+func TestACP_AddWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -555,8 +555,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -567,7 +567,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -624,7 +624,7 @@ resources:
 
 // This separate GQL test should be merged with the ones above when all the clients are fixed
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
-func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
+func TestACP_AddWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -659,8 +659,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -671,7 +671,7 @@ resources:
 				`,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),

@@ -19,29 +19,29 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *testing.T) {
+func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will update the doc on
+				// Patch the collection on the node that we will update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -104,29 +104,29 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly update the doc on
+				// Patch the collection on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[

@@ -60,8 +60,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -73,7 +73,7 @@ resources:
 			},
 
 			// Creating two documents because need one to do the test on after one is deleted.
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -85,7 +85,7 @@ resources:
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

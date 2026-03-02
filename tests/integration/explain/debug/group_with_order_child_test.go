@@ -29,7 +29,7 @@ func TestDebugExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: DESC}){
+						GROUP (order: {age: DESC}){
 							age
 						}
 					}
@@ -54,7 +54,7 @@ func TestDebugExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: ASC}){
+						GROUP (order: {age: ASC}){
 							age
 						}
 					}
@@ -79,12 +79,12 @@ func TestDebugExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInne
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (
+						GROUP (
 							groupBy: [verified],
 							order: {verified: ASC}
 						){
 							verified
-							_group (order: {age: DESC}) {
+							GROUP (order: {age: DESC}) {
 								age
 							}
 						}

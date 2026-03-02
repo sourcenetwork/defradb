@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
@@ -89,6 +89,13 @@ type TestCase struct {
 	// The test will be skipped if the current active set of multipliers
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
+
+	// FlakeRetries specifies the number of times a flaky test should be retried
+	// if it fails. If a test succeeds on any attempt, it is considered passed.
+	// A value of 0 (default) means no retries - the test runs once as normal.
+	// A value of N means the test will be attempted up to N+1 times total
+	// (1 initial + N retries).
+	FlakeRetries uint
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -104,7 +111,7 @@ type KMS struct {
 // setup is complete so that it may split actions across database code-versions.
 //
 // If a SetupComplete action is not provided the change detector will split before
-// the first item that is neither a SchemaUpdate, CreateDoc or UpdateDoc action.
+// the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
 // ConfigureNode allows the explicit configuration of new Defra nodes.
@@ -115,7 +122,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() []node.Option
+type ConfigureNode func() options.NodeP2POptions
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -209,9 +216,9 @@ func NewDocIndex(collectionIndex int, index int) DocIndex {
 // DeleteDoc will attempt to delete the given document in the given collection
 // using the collection api.
 type DeleteDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
+	// NodeID may hold the ID (index) of a node to apply this delete to.
 	//
-	// If a value is not provided the document will be created in all nodes.
+	// If a value is not provided the document will be deleted in all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -329,21 +336,26 @@ type UpdateWithFilter struct {
 	SkipLocalUpdateEvent bool
 }
 
-// CreateEncryptedIndex will attempt to create the given encrypted index for the given collection
+// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
 // using the collection api.
-type CreateEncryptedIndex struct {
-	// NodeID may hold the ID (index) of a node to create the encrypted index on.
+type AddEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to add the encrypted index to.
 	//
-	// If a value is not provided the index will be created in all nodes.
+	// If a value is not provided the index will be added to all nodes.
 	NodeID immutable.Option[int]
 
-	// The collection for which this index should be created.
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// The collection to which this index should be added.
 	CollectionID int
 
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The type of the index to create.
+	// The type of the index to add.
 	Type string
 
 	// Any error expected from the action. Optional.
@@ -360,6 +372,11 @@ type ListEncryptedIndexes struct {
 	//
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection for which this encrypted indexes should be retrieved.
 	CollectionID int
@@ -381,6 +398,11 @@ type ListAllEncryptedIndexes struct {
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
 
+	// Identity is the identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The expected encrypted indexes by collection names to be returned.
 	ExpectedIndexes map[client.CollectionName][]client.EncryptedIndexDescription
 
@@ -398,6 +420,11 @@ type DeleteEncryptedIndex struct {
 	//
 	// If a value is not provided the index will be dropped on all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection for which this index should be dropped.
 	CollectionID int
@@ -451,7 +478,7 @@ type GenerateDocs struct {
 	ForCollections []string
 }
 
-// CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+// AddPredefinedDocs is an action that will trigger creation of predefined documents.
 // Predefined docs allows specifying a database state with complex schemas that can be used by
 // multiple tests while allowing each test to select a subset of the schemas (collection and
 // collection's fields) to work with.
@@ -470,7 +497,7 @@ type GenerateDocs struct {
 //	 }
 //
 // For more information refer to tests/predefined/README.md
-type CreatePredefinedDocs struct {
+type AddPredefinedDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//
 	// If a value is not provided the docs generation will be executed against all nodes,
@@ -628,10 +655,15 @@ type SyncDocs struct {
 	// NodeID holds the ID (index) of a node to execute the sync on.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection containing the documents to sync.
 	CollectionID int
 
-	// The indices of documents to sync (references to previously created documents).
+	// The indices of documents to sync (references to previously added documents).
 	// Uses the same DocIndex pattern as other test actions - these will be resolved
 	// to actual document IDs at runtime by the test framework.
 	DocIDs []int

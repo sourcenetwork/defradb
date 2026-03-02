@@ -21,14 +21,14 @@ import (
 func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
@@ -71,14 +71,14 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"points": 5

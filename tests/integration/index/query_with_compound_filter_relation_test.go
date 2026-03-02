@@ -20,8 +20,8 @@ import (
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -57,8 +57,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -94,8 +94,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -131,8 +131,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -143,40 +143,40 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Source Inc."
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "DefraDB",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "LensVM",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
                     "name": "ESA"
                 }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "Horizon",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zanzi"
@@ -214,8 +214,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -226,40 +226,40 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
                     "name": "Source Inc."
                 }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "DefraDB",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "LensVM",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
                     "name": "ESA"
                 }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "Horizon",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
                     "name": "Zanzi"
@@ -302,8 +302,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -314,33 +314,33 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
                     "name": "Source Inc."
                 }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "DefraDB",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
                     "name": "ESA"
                 }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":                 "Horizon",
 					"certificationBodyOrg": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
                     "name": "Zanzi"

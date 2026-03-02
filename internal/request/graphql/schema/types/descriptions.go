@@ -19,7 +19,7 @@ An optional set of field-orders which may be used to sort the results. An
 An optional set of fields for which to group the contents of this field by.
  If this argument is provided, only fields used to group may be rendered in
  the immediate child selector.  Additional fields may be selected by using
- the '_group' selector within the immediate child selector. If an empty set
+ the 'GROUP' selector within the immediate child selector. If an empty set
  is provided, the restrictions mentioned still apply, although all results
  will appear within the same group.
 `
@@ -50,7 +50,7 @@ An optional field name parameter for this commit query. Only commits for a field
  composite (document level) commits only. If no fields match, the result set will be empty.
 `
 	commitCIDArgDescription string = `
-An optional value that specifies the commit ID of the commits to return. If a
+An optional value that specifies the commit IDs of the commits to return. If a
  matching commit is not found then an empty set will be returned.
 `
 	commitDepthArgDescription string = `
@@ -68,7 +68,7 @@ The signature of the commit, if one exists. This is used to verify the integrity
 `
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
- and field level) on create will have a height of '1', each subsequent local update
+ and field level) on add will have a height of '1', each subsequent local update
  will increment this by one for the new commits.
 `
 	commitCIDFieldDescription string = `

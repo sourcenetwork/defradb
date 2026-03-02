@@ -39,15 +39,15 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -67,27 +67,27 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				}`, -math.MaxFloat64),
 			},
 			testUtils.ConnectPeers{
-				// Configure the peer connection after the document has been created and updated independently
+				// Configure the peer connection after the document has been added and updated independently
 				// on each node.  This allows us to be sure which update was applied on each node.
 				// If the connection was configured before the updates there would be a race condition resulting
 				// in a variable resultant state.
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
-				// This is an arbitrary update on both nodes to force the sync of the document created
+				// This is an arbitrary update on both nodes to force the sync of the document added
 				// before the peer connection was configured.
 				Doc: `{
 					"Name": "Fred"
@@ -150,15 +150,15 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -178,27 +178,27 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				}`, -math.MaxFloat64),
 			},
 			testUtils.ConnectPeers{
-				// Configure the peer connection after the document has been created and updated independently
+				// Configure the peer connection after the document has been added and updated independently
 				// on each node.  This allows us to be sure which update was applied on each node.
 				// If the connection was configured before the updates there would be a race condition resulting
 				// in a variable resultant state.
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
-				// This is an arbitrary update on both nodes to force the sync of the document created
+				// This is an arbitrary update on both nodes to force the sync of the document added
 				// before the peer connection was configured.
 				Doc: `{
 					"Name": "Fred"

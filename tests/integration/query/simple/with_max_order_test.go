@@ -20,14 +20,14 @@ import (
 func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Age": 30,
 					"HeightM": 1.8
 				}`,
 			}, // Max: 30
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Age": 25,
 					"HeightM": 1.6
@@ -38,7 +38,7 @@ func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _max(HeightM: {}, Age: {})
+						total: MAX(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _max(HeightM: {}, Age: {})
+						total: MAX(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{

@@ -20,8 +20,8 @@ import (
 func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int
@@ -30,7 +30,7 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age":  26,
@@ -38,7 +38,7 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age":  26,

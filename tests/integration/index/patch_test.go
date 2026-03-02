@@ -20,8 +20,8 @@ import (
 func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						email: String
@@ -57,8 +57,8 @@ func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						email: String @index
@@ -85,8 +85,8 @@ func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						email: String @index

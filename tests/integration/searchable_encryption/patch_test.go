@@ -23,8 +23,8 @@ import (
 func TestPatchCollection_AddEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -60,8 +60,8 @@ func TestPatchCollection_AddEncryptedIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String @encryptedIndex
@@ -91,8 +91,8 @@ func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_ModifyEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String @encryptedIndex

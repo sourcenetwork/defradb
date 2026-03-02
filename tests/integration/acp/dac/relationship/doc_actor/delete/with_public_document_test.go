@@ -60,8 +60,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -72,7 +72,7 @@ resources:
 					`,
 			},
 
-			&action.CreateDoc{ // Note: Is a public document (without an identity).
+			&action.AddDoc{ // Note: Is a public document (without an identity).
 				CollectionID: 0,
 
 				Doc: `

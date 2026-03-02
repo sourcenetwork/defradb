@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -96,14 +97,17 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if !n.prefix.HasValue() {
-		if n.commitSelect.DocID.HasValue() {
-			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
+		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
+			// todo - for now we just take the first docID and ignore the rest, an error
+			// should be thrown in the parser anyway if the user provides more than one.
+			// https://github.com/sourcenetwork/defradb/issues/4302
+			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocIDs.Value()[0])
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
 
 	// only need the head fetcher for non cid specific queries
-	if !n.commitSelect.Cid.HasValue() && len(n.queuedCids) == 0 {
+	if !n.commitSelect.Cids.HasValue() && len(n.queuedCids) == 0 {
 		n.fetcherStarted = true
 		return n.fetcher.Start(n.planner.ctx, n.prefix)
 	}
@@ -140,7 +144,7 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *dagScanNode) Close() error {
-	if !n.commitSelect.Cid.HasValue() {
+	if !n.commitSelect.Cids.HasValue() {
 		return n.fetcher.Close()
 	}
 	return nil
@@ -152,8 +156,8 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the cid attribute to the explanation if it exists.
-	if n.commitSelect.Cid.HasValue() {
-		simpleExplainMap["cid"] = n.commitSelect.Cid.Value()
+	if n.commitSelect.Cids.HasValue() {
+		simpleExplainMap["cid"] = n.commitSelect.Cids.Value()
 	} else {
 		simpleExplainMap["cid"] = nil
 	}
@@ -197,14 +201,18 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else if n.commitSelect.Cid.HasValue() && len(n.visitedNodes) == 0 {
-		cid, err := cid.Parse(n.commitSelect.Cid.Value())
+	} else if n.commitSelect.Cids.HasValue() && len(n.visitedNodes) == 0 {
+		if len(n.commitSelect.Cids.Value()) == 0 {
+			return false, nil
+		}
+
+		cid, err := cid.Parse(n.commitSelect.Cids.Value()[0])
 		if err != nil {
 			return false, err
 		}
 
 		currentCid = &cid
-	} else if !n.commitSelect.Cid.HasValue() && n.fetcherStarted {
+	} else if !n.commitSelect.Cids.HasValue() && n.fetcherStarted {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -248,10 +256,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid
 	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
-	if n.commitSelect.Cid.HasValue() &&
+	if n.commitSelect.Cids.HasValue() &&
 		len(n.visitedNodes) == 0 &&
-		n.commitSelect.DocID.HasValue() &&
-		currentDocID != n.commitSelect.DocID.Value() {
+		n.commitSelect.DocIDs.HasValue() &&
+		len(n.commitSelect.DocIDs.Value()) > 0 &&
+		// todo - for now we just take the first docID and ignore the rest, an error
+		// should be thrown in the parser anyway if the user provides more than one.
+		// https://github.com/sourcenetwork/defradb/issues/4302
+		currentDocID != n.commitSelect.DocIDs.Value()[0] {
 		return false, ErrIncorrectOrMissingCID
 	}
 
@@ -270,7 +282,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// doc ID, max depth
 	// just doc ID + CID, 0 depth
 	// doc ID + CID + depth, use depth
-	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cid.HasValue()) ||
+	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cids.HasValue()) ||
 		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
@@ -335,10 +347,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
-		client.CollectionFetchOptions{
-			IncludeInactive: immutable.Some(true),
-			VersionID:       immutable.Some(collectionVersionId),
-		},
+		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
 	)
 	if err != nil {
 		return core.Doc{}, err

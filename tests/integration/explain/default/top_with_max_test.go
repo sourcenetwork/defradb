@@ -48,7 +48,7 @@ func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_max(
+					MAX(
 						Author: {
 							field: age
 						}
@@ -100,7 +100,7 @@ func TestDefaultExplain_WithTopLevelMaxRequestWithFilter_Succeeds(t *testing.T) 
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_max(
+					MAX(
 						Author: {
 							field: age,
 							filter: {

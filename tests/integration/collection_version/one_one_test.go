@@ -21,11 +21,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
+func TestCollectionVersionOneOne_NoPrimary_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						dog: Dog
@@ -45,11 +45,11 @@ func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
+func TestCollectionVersionOneOne_TwoPrimaries_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						dog: Dog @primary
@@ -67,11 +67,11 @@ func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
+func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						boss: User @primary
 						minion: User

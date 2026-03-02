@@ -20,14 +20,14 @@ import (
 func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -55,14 +55,14 @@ func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -87,19 +87,19 @@ func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
+func TestCollectionTruncateAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	docID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -122,7 +122,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -150,19 +150,19 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
+func TestCollectionTruncateAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 	compositeCID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -185,7 +185,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -213,17 +213,17 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_CreatesDocWithBlocksAtHeight1(t *testing.T) {
+func TestCollectionTruncateAdd_AddsDocWithBlocksAtHeight1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -232,7 +232,7 @@ func TestCollectionTruncateAdd_CreatesDocWithBlocksAtHeight1(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

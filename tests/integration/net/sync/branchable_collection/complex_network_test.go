@@ -10,11 +10,6 @@
 
 package branchable_collection
 
-/*
-todo - these tests are too flaky and block the merging of PRs during the working day (EST)
-They should be added back in as part of https://github.com/sourcenetwork/defradb/issues/4308
-when their flakiness has at least been reduced to a tolerable level.
-
 import (
 	"testing"
 
@@ -35,49 +30,50 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 	//    └─────── Node 3 ──── Node 4
 
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"origin": "node3",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(4),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -151,26 +147,27 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 
 func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_ShouldSyncAll(t *testing.T) {
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
@@ -185,7 +182,7 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
@@ -238,41 +235,42 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 	sameCid4 := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -377,41 +375,42 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 	sameCid5 := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 						origin: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":   "John",
 					"origin": "node0",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":   "Islam",
 					"origin": "node1",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(2),
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"origin": "node2",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(3),
 				DocMap: map[string]any{
 					"name":   "Andy",
@@ -491,7 +490,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			},
 			testUtils.WaitForSync{},
 			// Create another doc on all nodes to make sure it picked up all heads properly
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":   "Bruno",
 					"origin": "all",
@@ -551,4 +550,3 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/

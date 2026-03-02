@@ -1,0 +1,109 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package query
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/lenses"
+)
+
+func TestCollectionMigrationQuery_WithBranchingCollection(t *testing.T) {
+	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "name",
+								"value": "Fred",
+							},
+						},
+					},
+				}),
+			},
+			&action.AddDoc{
+				// Add a document on the second collection version, with an email field value
+				Doc: `{
+					"name": "John",
+					"email": "john@source.hub"
+				}`,
+			},
+			testUtils.SetActiveCollectionVersion{
+				// Set the active collection version back to the first
+				VersionID: collectionVersion1ID,
+			},
+			&action.PatchCollection{
+				// The third collection version will be set as the active version, going from version 1 to 3
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "phone",
+								"value": "1234567890",
+							},
+						},
+					},
+				}),
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							name
+							phone
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// name has been cleared by the inverse of the migration from version 1 to 2
+							"name": nil,
+							// phone has been set by the migration from version 1 to 3
+							"phone": "1234567890",
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

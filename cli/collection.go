@@ -15,9 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeCollectionCommand(ctx context.Context) *cobra.Command {
@@ -30,7 +29,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
 		Short: "Interact with a collection.",
-		Long:  `Create, read, update, and delete documents within a collection.`,
+		Long:  `Add, describe, patch, set-active, and truncate collections.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
 			if err := setContextRootDir(cmd); err != nil {
@@ -48,23 +47,32 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			if err := setContextClient(cmd); err != nil {
 				return err
 			}
+
+			// The 'add' subcommand creates new collections and doesn't need to resolve an
+			// existing collection from the context.
+			// If we don't do this, we will hit the NAC gate for collection-get permission
+			// when we do the [GetCollections()] call below.
+			if cmd.Name() == "add" {
+				return nil
+			}
+
 			cliClient := mustGetContextCLIClient(cmd)
 
-			options := client.CollectionFetchOptions{}
+			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
 			if versionID != "" {
-				options.VersionID = immutable.Some(versionID)
+				opt.SetVersionID(versionID)
 			}
 			if collectionID != "" {
-				options.CollectionID = immutable.Some(collectionID)
+				opt.SetCollectionID(collectionID)
 			}
 			if name != "" {
-				options.Name = immutable.Some(name)
+				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				options.IncludeInactive = immutable.Some(getInactive)
+				opt.SetGetInactive(getInactive)
 			}
 
-			cols, err := cliClient.GetCollections(cmd.Context(), options)
+			cols, err := cliClient.GetCollections(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

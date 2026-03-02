@@ -28,42 +28,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
@@ -110,42 +110,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
@@ -192,42 +192,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
@@ -270,42 +270,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
@@ -352,42 +352,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Emma",
@@ -434,42 +434,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Emma",
@@ -516,42 +516,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Emma",
@@ -598,42 +598,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Emma",
@@ -672,28 +672,28 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						iq: Float32 @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Kate",
@@ -734,25 +734,25 @@ func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *
 func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index(direction: DESC)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Alice"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Aaron"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name":	"Andy"

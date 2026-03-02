@@ -11,6 +11,7 @@
 package node
 
 import (
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -23,15 +24,14 @@ const (
 var (
 	ErrSignerMissingForSourceHubACP = errors.New("a txn signer must be provided for SourceHub ACP")
 	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
-	ErrPurgeWithDevModeDisabled     = errors.New("cannot purge database when development mode is disabled")
 	ErrP2PNotSupported              = errors.New("p2p networking is not supported by this build")
 	ErrNodeACPTypeNotSupported      = errors.New(errNodeACPTypeNotSupported)
 )
 
-func NewErrStoreTypeNotSupported(store StoreType) error {
+func NewErrStoreTypeNotSupported(store options.NodeStoreType) error {
 	return errors.New(errStoreTypeNotSupported, errors.NewKV("Store", store))
 }
 
-func NewErrACPTypeNotSupported(acp DocumentACPType) error {
+func NewErrACPTypeNotSupported(acp options.NodeDocumentACPType) error {
 	return errors.New(errACPTypeNotSupported, errors.NewKV("ACP", acp))
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -25,9 +26,9 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -65,10 +66,8 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
-				NodeID: immutable.Some(1),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -101,11 +100,11 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
 				// Note - at the time of writing, having two fields of different kinds is important
 				// and an important bug did not surface when testing with a single field/kind.
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -125,7 +124,7 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID0}}",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",
