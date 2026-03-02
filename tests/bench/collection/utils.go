@@ -72,7 +72,7 @@ func runCollectionBenchGetSync(b *testing.B,
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get( //nolint:errcheck
+				collections[k].GetDocument( //nolint:errcheck
 					ctx,
 					listOfDocIDs[j][k],
 				)
@@ -101,7 +101,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
 				go func(ctx context.Context, col client.Collection, docID client.DocID) {
-					col.Get( //nolint:errcheck
+					col.GetDocument( //nolint:errcheck
 						ctx,
 						docID,
 					)
@@ -179,7 +179,7 @@ func runCollectionBenchAddMany(
 			docs[j], _ = client.NewDocFromJSON(ctx, []byte(d[0]), collections[0].Version())
 		}
 
-		collections[0].AddMany(ctx, docs) //nolint:errcheck
+		collections[0].AddManyDocuments(ctx, docs) //nolint:errcheck
 	}
 	b.StopTimer()
 
@@ -200,7 +200,7 @@ func runCollectionBenchAddSync(b *testing.B,
 			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
 				doc, _ := client.NewDocFromJSON(ctx, []byte(docs[k]), collections[k].Version())
-				collections[k].Add(ctx, doc) //nolint:errcheck
+				collections[k].AddDocument(ctx, doc) //nolint:errcheck
 			}
 		}
 	}
@@ -239,7 +239,7 @@ func runCollectionBenchAddAsync(b *testing.B,
 					// add the documents
 					for j := 0; j < numTypes; j++ {
 						doc, _ := client.NewDocFromJSON(ctx, []byte(docs[j]), collections[j].Version())
-						collections[j].Add(ctx, doc) //nolint:errcheck
+						collections[j].AddDocument(ctx, doc) //nolint:errcheck
 					}
 
 					wg.Done()

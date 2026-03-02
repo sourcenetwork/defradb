@@ -41,11 +41,11 @@ func MakeDocumentGetCommand(ctx context.Context) *cobra.Command {
 			}
 
 			getOpt := options.WithIdentity(
-				options.CollectionGet().SetShowDeleted(showDeleted),
+				options.GetDocument().SetShowDeleted(showDeleted),
 				identity.FromContext(ctx),
 			)
 
-			doc, err := col.Get(ctx, docID, getOpt)
+			doc, err := col.GetDocument(ctx, docID, getOpt)
 			if err != nil {
 				return err
 			}

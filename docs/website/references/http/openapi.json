@@ -2857,10 +2857,6 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to add collections",
-            "name": "schema"
-        },
-        {
             "description": "Add, remove, or update documents",
             "name": "collection"
         },

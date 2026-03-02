@@ -28,10 +28,10 @@ import (
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
-func (c *collection) DeleteWithFilter(
+func (c *collection) DeleteDocumentsWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

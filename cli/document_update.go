@@ -48,9 +48,9 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				updateWithFilterOpt := options.WithIdentity(
-					options.CollectionUpdateWithFilter(), identity.FromContext(ctx))
+					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
 
-				res, err := col.UpdateWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
+				res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
 					return err
 				}
@@ -62,11 +62,11 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				getOpt := options.WithIdentity(
-					options.CollectionGet().SetShowDeleted(true),
+					options.GetDocument().SetShowDeleted(true),
 					identity.FromContext(ctx),
 				)
 
-				doc, err := col.Get(ctx, docID, getOpt)
+				doc, err := col.GetDocument(ctx, docID, getOpt)
 				if err != nil {
 					return err
 				}
@@ -74,9 +74,9 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
+				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
 
-				return col.Update(ctx, doc, updateOpt)
+				return col.UpdateDocument(ctx, doc, updateOpt)
 			default:
 				return ErrNoDocIDOrFilter
 			}

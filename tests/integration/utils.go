@@ -1156,7 +1156,7 @@ func deleteDoc(
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
-		opts := options.CollectionDelete()
+		opts := options.DeleteDocument()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1164,7 +1164,7 @@ func deleteDoc(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.Delete(s.Ctx, docID, opts)
+				_, err := collection.DeleteDocument(s.Ctx, docID, opts)
 				return err
 			},
 		)
@@ -1245,11 +1245,11 @@ func updateDocViaColSave(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1258,11 +1258,11 @@ func updateDocViaColSave(
 		return err
 	}
 
-	saveOpts := options.CollectionSave()
+	saveOpts := options.SaveDocument()
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Save(s.Ctx, doc, saveOpts)
+	return collection.SaveDocument(s.Ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1277,11 +1277,11 @@ func updateDocViaColUpdate(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1290,11 +1290,11 @@ func updateDocViaColUpdate(
 		return err
 	}
 
-	updateOpts := options.CollectionUpdate()
+	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Update(s.Ctx, doc, updateOpts)
+	return collection.UpdateDocument(s.Ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1345,7 +1345,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
-		opts := options.CollectionUpdateWithFilter()
+		opts := options.UpdateDocumentsWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1354,7 +1354,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(s.Ctx, action.Filter, action.Updater, opts)
+				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, action.Filter, action.Updater, opts)
 				return err
 			},
 		)

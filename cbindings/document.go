@@ -69,7 +69,7 @@ func Add(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
-	addOpt := options.WithIdentity(options.CollectionAdd(), acpIdentity.FromContext(ctx))
+	addOpt := options.WithIdentity(options.AddDocument(), acpIdentity.FromContext(ctx))
 
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))
@@ -79,7 +79,7 @@ func Add(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.AddMany(ctx, docs, addOpt)
+		err = col.AddManyDocuments(ctx, docs, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -89,7 +89,7 @@ func Add(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Add(ctx, doc, addOpt)
+		err = col.AddDocument(ctx, doc, addOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -135,7 +135,7 @@ func Delete(nodePtr C.uintptr_t,
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		_, err = col.Delete(ctx, ID, options.WithIdentity(options.CollectionDelete(), ident))
+		_, err = col.DeleteDocument(ctx, ID, options.WithIdentity(options.DeleteDocument(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -145,8 +145,8 @@ func Delete(nodePtr C.uintptr_t,
 		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		deleteOpt := options.WithIdentity(options.CollectionDeleteWithFilter(), ident)
-		res, err := col.DeleteWithFilter(ctx, filterValue, deleteOpt)
+		deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), ident)
+		res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -194,8 +194,8 @@ func Get(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	getOpt := options.WithIdentity(options.CollectionGet().SetShowDeleted(showDeleted != 0), acpIdentity.FromContext(ctx))
-	doc, err := col.Get(ctx, docID, getOpt)
+	getOpt := options.WithIdentity(options.GetDocument().SetShowDeleted(showDeleted != 0), acpIdentity.FromContext(ctx))
+	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -249,8 +249,8 @@ func Update(
 		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		res, err := col.UpdateWithFilter(ctx, filterValue, updater,
-			options.WithIdentity(options.CollectionUpdateWithFilter(), ident))
+		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater,
+			options.WithIdentity(options.UpdateDocumentsWithFilter(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -266,15 +266,15 @@ func Update(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		doc, err := col.Get(ctx, newDocID,
-			options.WithIdentity(options.CollectionGet().SetShowDeleted(true), ident))
+		doc, err := col.GetDocument(ctx, newDocID,
+			options.WithIdentity(options.GetDocument().SetShowDeleted(true), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Update(ctx, doc, options.WithIdentity(options.CollectionUpdate(), ident))
+		err = col.UpdateDocument(ctx, doc, options.WithIdentity(options.UpdateDocument(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

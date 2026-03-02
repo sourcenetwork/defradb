@@ -39,7 +39,7 @@ func (c *clientCollection) add(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Add(ctx, doc, opts...)
+	err = c.col.AddDocument(ctx, doc, opts...)
 	return js.Undefined(), err
 }
 
@@ -66,7 +66,7 @@ func (c *clientCollection) addMany(this js.Value, args []js.Value) (js.Value, er
 		}
 		docs = append(docs, doc)
 	}
-	err = c.col.AddMany(ctx, docs, opts...)
+	err = c.col.AddManyDocuments(ctx, docs, opts...)
 	return js.Undefined(), err
 }
 
@@ -76,13 +76,13 @@ type addOptionsInput struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.CollectionAddOptions], error) {
+func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.AddDocumentOptions], error) {
 	var input addOptionsInput
 	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err
 	}
 
-	opt := options.CollectionAdd()
+	opt := options.AddDocument()
 	if input.EncryptDoc {
 		opt.SetEncryptDoc(true)
 	}
@@ -90,7 +90,7 @@ func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]opt
 		opt.SetEncryptedFields(input.EncryptedFields)
 	}
 	setOptIdentity(opt, args, ctxArgIndex)
-	return []options.Enumerable[options.CollectionAddOptions]{opt}, nil
+	return []options.Enumerable[options.AddDocumentOptions]{opt}, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {
@@ -110,18 +110,18 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	getOpt := options.CollectionGet().SetShowDeleted(true)
+	getOpt := options.GetDocument().SetShowDeleted(true)
 	setOptIdentity(getOpt, args, 2)
-	doc, err := c.col.Get(ctx, docID, getOpt)
+	doc, err := c.col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionUpdate()
+	opt := options.UpdateDocument()
 	setOptIdentity(opt, args, 2)
-	err = c.col.Update(ctx, doc, opt)
+	err = c.col.UpdateDocument(ctx, doc, opt)
 	return js.Undefined(), err
 }
 
@@ -138,9 +138,9 @@ func (c *clientCollection) delete(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionDelete()
+	opt := options.DeleteDocument()
 	setOptIdentity(opt, args, 1)
-	deleted, err := c.col.Delete(ctx, docID, opt)
+	deleted, err := c.col.DeleteDocument(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -160,9 +160,9 @@ func (c *clientCollection) exists(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionExists()
+	opt := options.ExistsDocument()
 	setOptIdentity(opt, args, 1)
-	exists, err := c.col.Exists(ctx, docID, opt)
+	exists, err := c.col.ExistsDocument(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -182,9 +182,9 @@ func (c *clientCollection) updateWithFilter(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionUpdateWithFilter()
+	opt := options.UpdateDocumentsWithFilter()
 	setOptIdentity(opt, args, 2)
-	result, err := c.col.UpdateWithFilter(ctx, filter, updater, opt)
+	result, err := c.col.UpdateDocumentsWithFilter(ctx, filter, updater, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -200,9 +200,9 @@ func (c *clientCollection) deleteWithFilter(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionDeleteWithFilter()
+	opt := options.DeleteDocumentsWithFilter()
 	setOptIdentity(opt, args, 1)
-	result, err := c.col.DeleteWithFilter(ctx, filter, opt)
+	result, err := c.col.DeleteDocumentsWithFilter(ctx, filter, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -226,9 +226,9 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionGet().SetShowDeleted(showDeleted)
+	opt := options.GetDocument().SetShowDeleted(showDeleted)
 	setOptIdentity(opt, args, 2)
-	doc, err := c.col.Get(ctx, docID, opt)
+	doc, err := c.col.GetDocument(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

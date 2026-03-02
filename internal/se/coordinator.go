@@ -336,8 +336,8 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		ctx = iIdentity.WithContext(ctx, coordinator.nodeIdentity)
 	}
 
-	getOpt := options.WithIdentity(options.CollectionGet(), coordinator.nodeIdentity)
-	doc, err := col.Get(ctx, docIDType, getOpt)
+	getOpt := options.WithIdentity(options.GetDocument(), coordinator.nodeIdentity)
+	doc, err := col.GetDocument(ctx, docIDType, getOpt)
 	if err != nil {
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 			return nil, nil
