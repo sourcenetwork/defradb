@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						custom: JSON

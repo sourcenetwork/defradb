@@ -25,7 +25,7 @@ import (
 func TestSchemaMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -104,7 +104,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -71,7 +71,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -280,7 +280,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",

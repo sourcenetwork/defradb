@@ -28,7 +28,7 @@ https://github.com/sourcenetwork/defradb/pull/2819
 func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Type0 {
 						f: String
@@ -88,7 +88,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Type0 {
 						f: String
@@ -151,7 +151,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Type0 {
 						f: String
@@ -179,7 +179,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -217,7 +217,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -280,7 +280,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Type0 {
 						f: String

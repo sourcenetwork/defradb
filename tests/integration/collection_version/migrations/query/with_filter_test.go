@@ -25,7 +25,7 @@ import (
 func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -114,7 +114,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -211,7 +211,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigration2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

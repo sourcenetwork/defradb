@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -43,7 +43,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -68,7 +68,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -94,7 +94,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -120,7 +120,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -183,7 +183,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationInSameBatch_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -269,7 +269,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationInSameBatch_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

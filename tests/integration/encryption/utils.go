@@ -38,8 +38,8 @@ const (
 	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
 )
 
-func updateUserCollectionSchema() *action.AddSchema {
-	return &action.AddSchema{
+func updateUserCollectionSchema() *action.AddCollection {
+	return &action.AddCollection{
 		Schema: userCollectionGQLSchema,
 	}
 }

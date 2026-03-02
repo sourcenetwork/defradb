@@ -20,14 +20,14 @@ import (
 func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {
 						name: String
@@ -88,14 +88,14 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {
 						name: String

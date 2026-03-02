@@ -21,7 +21,7 @@ import (
 func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -76,7 +76,7 @@ func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
 func TestCompositeIndexAdd_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -113,7 +113,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_SetsDefaultDirection(t *testing.
 func TestCompositeIndexAdd_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age", direction: ASC}]) {
 						name: String
@@ -150,7 +150,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_OverridesDefaultDirection(t *tes
 func TestCompositeIndexAdd_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @index(includes: [{field: "age"}])
@@ -184,7 +184,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_ImplicitlyAddsField(t *testing.T)
 func TestCompositeIndexAdd_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age"}])
@@ -221,7 +221,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_SetsDefaultDirection(t *testing.T
 func TestCompositeIndexAdd_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
@@ -258,7 +258,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_OverridesDefaultDirection(t *test
 func TestCompositeIndexAdd_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @index(includes: [{field: "age"}, {field: "name"}])

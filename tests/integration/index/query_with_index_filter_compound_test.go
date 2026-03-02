@@ -26,7 +26,7 @@ func TestQueryWithIndex_WithOrFilter_ShouldFetchCorrectDocs(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -91,7 +91,7 @@ func TestQueryWithIndex_WithOrFilterWithThreeBranches_ShouldUseIndex(t *testing.
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -160,7 +160,7 @@ func TestQueryWithIndex_WithOrFilterWithRangeConditions_ShouldUseIndex(t *testin
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -226,7 +226,7 @@ func TestQueryWithIndex_WithOrFilterWithOverlappingConditions_ShouldDeduplicateR
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -291,7 +291,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_ShouldNotUseInde
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -367,7 +367,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithOverlap_Shou
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -436,7 +436,7 @@ func TestQueryWithIndex_WithOrFilterOnIndexedAndNonIndexedField_ShouldFallbackTo
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -503,7 +503,7 @@ func TestQueryWithIndex_WithOrFilterOnOnlyNonIndexedFields_ShouldNotUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -569,7 +569,7 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -632,7 +632,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithRangeConditi
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

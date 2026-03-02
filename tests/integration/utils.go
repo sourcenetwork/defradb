@@ -591,7 +591,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case *action.AddSchema:
+		case *action.AddCollection:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -771,7 +771,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, *action.AddDoc, UpdateDoc, Restart:
+		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1984,7 +1984,7 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
-		case *action.AddSchema:
+		case *action.AddCollection:
 			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
 		}
 	}

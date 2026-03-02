@@ -20,7 +20,7 @@ import (
 func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -45,7 +45,7 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob")

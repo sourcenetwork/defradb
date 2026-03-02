@@ -25,7 +25,7 @@ import (
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -86,7 +86,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -147,7 +147,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -179,7 +179,7 @@ func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -216,7 +216,7 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -269,7 +269,7 @@ func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testi
 func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -304,7 +304,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -342,7 +342,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -407,7 +407,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -491,7 +491,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndLast(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -541,7 +541,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndLast(t *tes
 func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -591,7 +591,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *t
 func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -43,7 +43,7 @@ func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

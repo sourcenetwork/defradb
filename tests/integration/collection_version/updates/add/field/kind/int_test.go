@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindInt(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldKindInt(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindIntWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -98,7 +98,7 @@ func TestSchemaUpdatesAddFieldKindIntWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindIntSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

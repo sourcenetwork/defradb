@@ -48,7 +48,7 @@ func getSetupEmployeeCompanyActions() []any {
 			Policy:   employeeCompanyPolicy,
 		},
 
-		&action.AddSchema{
+		&action.AddCollection{
 			Schema: `
 					type Employee @policy(
 						id: "{{.Policy0}}",

@@ -20,7 +20,7 @@ import (
 func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

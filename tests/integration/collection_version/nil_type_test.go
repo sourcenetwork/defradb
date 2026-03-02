@@ -20,7 +20,7 @@ import (
 func TestSchema_WithMissingType_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name:

@@ -553,7 +553,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: userCollectionGQLSchema,
 			},
 			&action.AddDoc{
@@ -628,7 +628,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: userCollectionGQLSchema,
 			},
 			&action.AddDoc{

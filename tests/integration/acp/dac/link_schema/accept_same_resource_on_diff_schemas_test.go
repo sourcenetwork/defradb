@@ -47,7 +47,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: fmt.Sprintf(`
 					type OldUsers @policy(
 						id: "{{.Policy0}}",
@@ -100,7 +100,7 @@ resources:
 				},
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: fmt.Sprintf(`
 					type NewUsers @policy(
 						id: "{{.Policy0}}",

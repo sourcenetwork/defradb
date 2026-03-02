@@ -142,7 +142,7 @@ func TestAddLens_WithPatchCollection_TransformsDocuments(t *testing.T) {
 					},
 				},
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

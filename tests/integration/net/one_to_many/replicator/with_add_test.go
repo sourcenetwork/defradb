@@ -25,7 +25,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						Name: String

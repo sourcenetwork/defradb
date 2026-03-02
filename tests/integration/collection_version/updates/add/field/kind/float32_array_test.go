@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindFloat32ArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -98,7 +98,7 @@ func TestSchemaUpdatesAddFieldKindFloat32ArrayWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

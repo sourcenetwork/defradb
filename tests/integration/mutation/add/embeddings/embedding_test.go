@@ -33,7 +33,7 @@ func TestMutationAdd_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 			state.GoClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -89,7 +89,7 @@ func TestMutationAdd_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 func TestMutationAdd_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

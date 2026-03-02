@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Article {
 						name: String
@@ -145,7 +145,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *tes
 func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Article {
 						name: String

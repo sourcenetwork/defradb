@@ -21,7 +21,7 @@ import (
 func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -63,7 +63,7 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -108,7 +108,7 @@ func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T)
 func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -129,7 +129,7 @@ func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 func TestEncryptedIndexAdd_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 

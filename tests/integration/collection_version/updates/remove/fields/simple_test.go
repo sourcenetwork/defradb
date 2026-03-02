@@ -23,7 +23,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -67,7 +67,7 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -100,7 +100,7 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -124,7 +124,7 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -148,7 +148,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -23,7 +23,7 @@ import (
 func TestMutationAdd_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -65,7 +65,7 @@ func TestMutationAdd_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 func TestMutationAdd_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -104,7 +104,7 @@ func TestMutationAdd_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing.T)
 func TestMutationAdd_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -149,7 +149,7 @@ func TestMutationAdd_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing.T)
 func TestMutationAdd_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -188,7 +188,7 @@ func TestMutationAdd_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 func TestMutationAdd_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -227,7 +227,7 @@ func TestMutationAdd_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 func TestMutationAdd_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -266,7 +266,7 @@ func TestMutationAdd_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 func TestMutationAdd_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -312,7 +312,7 @@ func TestMutationAdd_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

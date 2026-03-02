@@ -176,7 +176,7 @@ In the following examples, we'll be using a simple `User` schema type.
 Add it to the database with the following command. By doing so, DefraDB generates the typed GraphQL endpoints for querying, mutation, and introspection.
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type User {
     name: String 
     age: Int 
@@ -421,7 +421,7 @@ defradb start
 In another terminal, add this example schema to it:
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type Article {
     content: String
     published: Boolean
@@ -440,7 +440,7 @@ Here we *do not* specify `--peers` as we will manually define a replicator after
 In another terminal, add the same schema to *nodeB*:
 
 ```shell
-defradb client schema add --url localhost:9182 '
+defradb client collection add --url localhost:9182 '
   type Article {
     content: String
     published: Boolean

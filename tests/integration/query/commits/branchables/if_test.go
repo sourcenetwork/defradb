@@ -29,7 +29,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: true) {
 						name: String
@@ -81,7 +81,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: false) {
 						name: String

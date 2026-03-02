@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package schema_add
+package add_collection
 
 import (
 	"testing"
@@ -18,10 +18,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestSchemaAdd(t *testing.T) {
+func TestAddCollection(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {}
 				`,

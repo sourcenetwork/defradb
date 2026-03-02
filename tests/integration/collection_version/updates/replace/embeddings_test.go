@@ -21,7 +21,7 @@ import (
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -50,7 +50,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -79,7 +79,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFieldKind_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -108,7 +108,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

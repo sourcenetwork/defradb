@@ -74,7 +74,7 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					FavoriteNumbers: [Int!]

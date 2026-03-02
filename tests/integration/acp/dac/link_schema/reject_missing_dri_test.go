@@ -25,7 +25,7 @@ func TestACP_LinkSchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 
 		Actions: []any{
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",
@@ -94,7 +94,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",

@@ -73,7 +73,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -153,7 +153,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -242,7 +242,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -383,7 +383,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",

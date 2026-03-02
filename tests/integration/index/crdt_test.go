@@ -22,7 +22,7 @@ import (
 func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -45,7 +45,7 @@ func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -68,7 +68,7 @@ func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -86,7 +86,7 @@ func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -104,7 +104,7 @@ func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -127,7 +127,7 @@ func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -171,7 +171,7 @@ func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -194,7 +194,7 @@ func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T)
 func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -218,7 +218,7 @@ func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 func TestIndexAdd_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "points"}]) {
 						name: String

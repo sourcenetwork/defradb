@@ -25,7 +25,7 @@ import (
 func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -88,7 +88,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

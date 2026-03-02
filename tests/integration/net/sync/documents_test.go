@@ -24,7 +24,7 @@ func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -90,7 +90,7 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -170,7 +170,7 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 				type Users {
 					Name: String
@@ -232,7 +232,7 @@ func TestDocSync_WithDifferentVersionsOnPeers_ShouldSyncLatest(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -335,7 +335,7 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String

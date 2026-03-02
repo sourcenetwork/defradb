@@ -22,7 +22,7 @@ import (
 func TestMutationAddWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -57,7 +57,7 @@ func TestMutationAddWithNonNullVariable(t *testing.T) {
 func TestMutationAddWithDefaultVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -87,7 +87,7 @@ func TestMutationAddWithDefaultVariable(t *testing.T) {
 func TestMutationAdd_WithVariableInJSONObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						embed: JSON
@@ -122,7 +122,7 @@ func TestMutationAdd_WithVariableInJSONObject_Succeeds(t *testing.T) {
 func TestMutationAdd_WithJSONVariable_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						embed: JSON

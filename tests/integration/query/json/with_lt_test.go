@@ -21,7 +21,7 @@ import (
 func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -66,7 +66,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *tes
 func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -106,7 +106,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *test
 func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -144,7 +144,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -191,7 +191,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -231,7 +231,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -269,7 +269,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilt
 func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -307,7 +307,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testin
 func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -347,7 +347,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *test
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -387,7 +387,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testi
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -425,7 +425,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testi
 func TestQueryJSON_WithLesserThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String

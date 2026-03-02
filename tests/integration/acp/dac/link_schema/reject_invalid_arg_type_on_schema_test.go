@@ -43,7 +43,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(id: 123 , resource: "users") {
 						name: String
@@ -104,7 +104,7 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 				type Users @policy(id: "{{.Policy0}}" , resource: 123) {
 						name: String

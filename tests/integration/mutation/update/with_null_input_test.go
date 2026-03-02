@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -55,7 +55,7 @@ func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -90,7 +90,7 @@ func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 func TestMutationUpdate_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

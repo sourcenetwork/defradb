@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -86,7 +86,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedInValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -108,7 +108,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -24,7 +24,7 @@ import (
 func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -87,7 +87,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

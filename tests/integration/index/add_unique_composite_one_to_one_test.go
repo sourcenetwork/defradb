@@ -21,7 +21,7 @@ import (
 func TestOneToOneUniqueIndex_OnPrimarySide_AutoAdded(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -55,7 +55,7 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoAdded(t *testing.T) {
 func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -89,7 +89,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 func TestOneToOneUniqueIndex_UserDefinedNonUniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -111,7 +111,7 @@ func TestOneToOneUniqueIndex_UserDefinedNonUniqueIndex_ReturnsError(t *testing.T
 func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "_addressID"}, {field: "name"}]) {
 						name: String
@@ -146,7 +146,7 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 func TestOneToOneUniqueIndex_TypeLevelNonUniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(unique: false, includes: [{field: "_addressID"}]) {
 						name: String
@@ -170,7 +170,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillAdded(
 	// the automatic unique index should still be created
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "_addressID"}]) {
 						name: String
@@ -213,7 +213,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillAdded(
 func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -255,7 +255,7 @@ func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *tes
 func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -302,7 +302,7 @@ func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 func TestOneToOneUniqueIndex_OneToMany_ShouldNotAddIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

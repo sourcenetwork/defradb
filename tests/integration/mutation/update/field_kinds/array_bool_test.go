@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -64,7 +64,7 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -108,7 +108,7 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -152,7 +152,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -196,7 +196,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

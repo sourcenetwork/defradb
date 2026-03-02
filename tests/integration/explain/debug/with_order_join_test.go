@@ -176,7 +176,7 @@ func TestDebugExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.T)
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -232,7 +232,7 @@ func TestDebugExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testing
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

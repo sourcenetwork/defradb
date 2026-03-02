@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -64,7 +64,7 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -108,7 +108,7 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -152,7 +152,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -196,7 +196,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

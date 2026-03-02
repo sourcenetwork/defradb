@@ -204,7 +204,7 @@ type Users @policy(
 
 CLI Command:
 ```sh
-defradb client schema add -f examples/schema/permissioned/users.graphql
+defradb client collection add -f examples/schema/permissioned/users.graphql
 ```
 
 Result:
@@ -494,7 +494,7 @@ Result:
 
 Add schema, linking to the users resource and our policyID:
 ```sh
-defradb client schema add '
+defradb client collection add '
 type Users @policy(
     id: "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
     resource: "users"

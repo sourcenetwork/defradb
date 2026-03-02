@@ -20,7 +20,7 @@ import (
 func TestMutationAdd_WithNullEncrypt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -50,7 +50,7 @@ func TestMutationAdd_WithNullEncrypt_Succeeds(t *testing.T) {
 func TestMutationAdd_WithNullInput_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -76,7 +76,7 @@ func TestMutationAdd_WithNullInput_Succeeds(t *testing.T) {
 func TestMutationAdd_WithNullInputEntry_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -100,7 +100,7 @@ func TestMutationAdd_WithNullInputEntry_ReturnsError(t *testing.T) {
 func TestMutationAdd_WithNullEncryptFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

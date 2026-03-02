@@ -28,7 +28,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -129,7 +129,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

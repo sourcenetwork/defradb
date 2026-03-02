@@ -22,7 +22,7 @@ import (
 func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

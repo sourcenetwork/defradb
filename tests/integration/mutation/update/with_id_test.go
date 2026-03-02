@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_WithId(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -66,7 +66,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

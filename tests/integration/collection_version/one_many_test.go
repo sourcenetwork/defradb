@@ -24,7 +24,7 @@ import (
 func TestSchemaOneMany_Primary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -97,7 +97,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						a: User
@@ -147,7 +147,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						b: User
@@ -195,7 +195,7 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// Note: The @primary directive is required due to
 				// https://github.com/sourcenetwork/defradb/issues/2620
 				// it should be removed when that ticket is closed.

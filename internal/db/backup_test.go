@@ -29,7 +29,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -119,7 +119,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -210,7 +210,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -283,7 +283,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 		book: [Book]
@@ -389,7 +389,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -470,7 +470,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -552,7 +552,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -588,7 +588,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -624,7 +624,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -661,7 +661,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}

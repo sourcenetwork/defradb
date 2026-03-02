@@ -204,13 +204,13 @@ func (txn *Txn) VerifySignature(
 	return txn.db.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Txn) AddSchema(
+func (txn *Txn) AddCollection(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddSchema(ctx, sdl, opts...)
+	return txn.db.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Txn) PatchCollection(

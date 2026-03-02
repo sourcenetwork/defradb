@@ -183,7 +183,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 				type Book {
 					name: String

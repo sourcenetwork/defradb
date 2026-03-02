@@ -24,7 +24,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -101,7 +101,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -160,7 +160,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -220,7 +220,7 @@ func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotR
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String

@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -44,7 +44,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -85,7 +85,7 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

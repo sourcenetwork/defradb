@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindFloatArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldKindFloatArray(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindFloatArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -98,7 +98,7 @@ func TestSchemaUpdatesAddFieldKindFloatArrayWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindFloatArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

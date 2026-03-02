@@ -21,7 +21,7 @@ import (
 func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

@@ -24,7 +24,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -76,7 +76,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -134,7 +134,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",

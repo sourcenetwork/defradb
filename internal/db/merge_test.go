@@ -44,7 +44,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -89,7 +89,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -147,7 +147,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")

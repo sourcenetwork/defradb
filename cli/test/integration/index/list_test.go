@@ -21,7 +21,7 @@ import (
 func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -42,7 +42,7 @@ func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -89,7 +89,7 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String

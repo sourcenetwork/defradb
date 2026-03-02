@@ -24,7 +24,7 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *te
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -78,7 +78,7 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *te
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -131,7 +131,7 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String

@@ -20,7 +20,7 @@ import (
 func TestMutationAdd_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -61,7 +61,7 @@ func TestMutationAdd_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 func TestMutationAdd_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

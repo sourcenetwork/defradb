@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -43,7 +43,7 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -65,7 +65,7 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -88,7 +88,7 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -113,7 +113,7 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -138,7 +138,7 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

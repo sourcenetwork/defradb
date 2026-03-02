@@ -21,7 +21,7 @@ func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

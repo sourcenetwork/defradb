@@ -20,7 +20,7 @@ import (
 func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -42,7 +42,7 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

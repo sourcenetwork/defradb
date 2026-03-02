@@ -24,7 +24,7 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 			SupportedMutationTypes: test.SupportedMutationTypes,
 			Actions: append(
 				[]any{
-					&action.AddSchema{
+					&action.AddCollection{
 						Schema: `
 							type Book {
 								name: String

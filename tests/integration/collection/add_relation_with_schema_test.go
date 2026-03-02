@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRelationToExistingCollection_ShouldSucceed(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindForeignObject_WithAddCollectionCreatingOneToManyRelationToExistingCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -91,24 +91,24 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRelationsToMultipleExistingCollections_ShouldSucceed(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindForeignObject_WithAddCollectionCreatingOneToManyRelationsToMultipleExistingCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -173,17 +173,17 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationAfterSeparateAddSchemas_ShouldSucceed(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationAfterSeparateAddCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -256,14 +256,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToExistingAndNewCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -330,14 +330,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToEx
 func TestSchemaUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcrossSeparateSchemas_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -345,7 +345,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcr
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

@@ -24,7 +24,7 @@ import (
 func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -86,7 +86,7 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 func TestSchemaMigrationQueryWithRestartAndMigrationBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

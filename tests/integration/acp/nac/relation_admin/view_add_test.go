@@ -28,7 +28,7 @@ func TestNAC_AdminRelation_CanAddView(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {

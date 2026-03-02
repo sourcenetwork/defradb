@@ -20,7 +20,7 @@ import (
 func TestSchemaInlineArrayAddsSchemaGivenSingleType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
@@ -50,14 +50,14 @@ func TestSchemaInlineArrayAddsSchemaGivenSingleType(t *testing.T) {
 func TestSchemaInlineArrayAddsSchemaGivenSecondType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {
 						pageNumbers: [Int!]

@@ -20,7 +20,7 @@ import (
 func TestSchemaAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -98,7 +98,7 @@ func TestSchemaAggregateTopLevelAddsCountGivenSchema(t *testing.T) {
 func TestSchemaAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -206,7 +206,7 @@ func TestSchemaAggregateTopLevelAddsSumGivenSchema(t *testing.T) {
 func TestSchemaAggregateTopLevelAddsAverageGivenSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,

@@ -20,7 +20,7 @@ import (
 func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -89,7 +89,7 @@ func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 func TestAddOneToOne_Input_SecondaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

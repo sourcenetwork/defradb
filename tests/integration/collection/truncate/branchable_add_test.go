@@ -20,7 +20,7 @@ import (
 func TestCollectionTruncateBranchableAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: true) {
 						name: String
@@ -55,7 +55,7 @@ func TestCollectionTruncateBranchableAdd_RemovesDocument(t *testing.T) {
 func TestCollectionTruncateBranchableAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: true) {
 						name: String

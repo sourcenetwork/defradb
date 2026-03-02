@@ -23,7 +23,7 @@ func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -116,7 +116,7 @@ func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndCommitQuery(t
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

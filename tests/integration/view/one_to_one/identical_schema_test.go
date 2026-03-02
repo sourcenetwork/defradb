@@ -20,7 +20,7 @@ import (
 func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type LeftHand {
 						name: String
@@ -97,7 +97,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -132,7 +132,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 			// that `BookView` is not forgotten.  A GQL error would appear if this
 			// was broken as `AuthorView.books` would reference a type that does
 			// not exist.
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

@@ -22,7 +22,7 @@ import (
 func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -55,7 +55,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindNillableIntArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -104,7 +104,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

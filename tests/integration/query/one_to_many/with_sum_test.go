@@ -155,7 +155,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

@@ -30,7 +30,7 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 		testUtils.TestCase{
 			Actions: append(
 				[]any{
-					&action.AddSchema{
+					&action.AddCollection{
 						Schema: schemas,
 					},
 				},

@@ -21,7 +21,7 @@ import (
 func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -72,7 +72,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 func TestUniqueIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -131,7 +131,7 @@ func TestUniqueIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testi
 func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -185,7 +185,7 @@ func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -245,7 +245,7 @@ func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 func TestUniqueIndexAdd_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -269,7 +269,7 @@ func TestUniqueIndexAdd_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 func TestUniqueIndexAdd_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -308,7 +308,7 @@ func TestUniqueIndexAdd_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testi
 func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 

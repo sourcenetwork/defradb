@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindDateTimeWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -98,7 +98,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

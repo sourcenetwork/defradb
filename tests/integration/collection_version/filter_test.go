@@ -20,7 +20,7 @@ import (
 func TestFilterForSimpleSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -153,7 +153,7 @@ var defaultUserArgsWithoutFilter = trimFields(
 func TestFilterForOneToOneSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -306,7 +306,7 @@ var defaultBookArgsWithoutFilter = trimFields(
 func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						custom: JSON

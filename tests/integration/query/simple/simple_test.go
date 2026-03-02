@@ -215,7 +215,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
                     type User {
                         name: String

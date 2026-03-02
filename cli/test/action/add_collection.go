@@ -12,8 +12,8 @@ package action
 
 import "github.com/stretchr/testify/require"
 
-// SchemaAdd executes the `client schema add` command using the given schema.
-type SchemaAdd struct {
+// AddCollection executes the `client collection add` command using the given schema.
+type AddCollection struct {
 	stateful
 	augmented
 
@@ -21,10 +21,10 @@ type SchemaAdd struct {
 	InlineSchema string
 }
 
-var _ Action = (*SchemaAdd)(nil)
+var _ Action = (*AddCollection)(nil)
 
-func (a *SchemaAdd) Execute() {
-	args := []string{"client", "schema", "add"}
+func (a *AddCollection) Execute() {
+	args := []string{"client", "collection", "add"}
 
 	args = append(args, a.InlineSchema)
 

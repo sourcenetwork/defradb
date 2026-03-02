@@ -20,7 +20,7 @@ import (
 func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

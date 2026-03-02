@@ -21,7 +21,7 @@ import (
 func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String @index(name: "name_index")
@@ -61,7 +61,7 @@ func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 func TestIndexList_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 

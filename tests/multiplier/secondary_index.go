@@ -56,8 +56,8 @@ func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	}
 
 	for _, a := range actions {
-		if schemaAdd, ok := a.(*action.AddSchema); ok {
-			if hasIndexDirective(schemaAdd.Schema) {
+		if collectionAdd, ok := a.(*action.AddCollection); ok {
+			if hasIndexDirective(collectionAdd.Schema) {
 				return true
 			}
 		}
@@ -71,15 +71,15 @@ func (m *secondaryIndex) Apply(source action.Actions) action.Actions {
 	modified := false
 
 	for i, a := range source {
-		if schemaAdd, ok := a.(*action.AddSchema); ok {
-			if !hasIndexDirective(schemaAdd.Schema) {
-				newSchema := addIndexesToSchema(schemaAdd.Schema)
-				if newSchema != schemaAdd.Schema {
+		if collectionAdd, ok := a.(*action.AddCollection); ok {
+			if !hasIndexDirective(collectionAdd.Schema) {
+				newSchema := addIndexesToSchema(collectionAdd.Schema)
+				if newSchema != collectionAdd.Schema {
 					log.InfoContext(context.Background(),
 						"Modified schema for secondary-index multiplier:\n"+newSchema)
-					newSchemaAdd := *schemaAdd
-					newSchemaAdd.Schema = newSchema
-					result[i] = &newSchemaAdd
+					newCollectionAdd := *collectionAdd
+					newCollectionAdd.Schema = newSchema
+					result[i] = &newCollectionAdd
 					modified = true
 					continue
 				}

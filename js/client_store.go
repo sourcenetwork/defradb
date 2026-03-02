@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-func (c *Client) addSchema(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error) {
 	schema, err := stringArg(args, 0, "schema")
 	if err != nil {
 		return js.Undefined(), err
@@ -33,9 +33,9 @@ func (c *Client) addSchema(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddSchema()
+	opt := options.AddCollection()
 	setOptIdentity(opt, args, 1)
-	cols, err := c.node.DB.AddSchema(ctx, schema, opt)
+	cols, err := c.node.DB.AddCollection(ctx, schema, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

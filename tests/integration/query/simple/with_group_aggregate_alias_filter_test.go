@@ -20,7 +20,7 @@ import (
 func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -75,7 +75,7 @@ func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -130,7 +130,7 @@ func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -185,7 +185,7 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -240,7 +240,7 @@ func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 func TestQuerySimple_WithGroupCountAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					Name: String
 					Score: Int

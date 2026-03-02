@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 func TestSchemaUpdates_AddFieldCRDTPCounterWithMismatchKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

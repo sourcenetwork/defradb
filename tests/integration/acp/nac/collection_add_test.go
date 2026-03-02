@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_nac_relation_admin
+package test_acp_nac
 
 import (
 	"testing"
@@ -18,7 +18,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
+func TestNAC_GatesCollectionAdd_AllowIfAuthorizedElseError(t *testing.T) {
+	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -28,8 +30,19 @@ func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			// This user, can not perform this gated operation yet.
-			&action.AddSchema{
+			// We haven't authorized non-identities. So, this should error.
+			&action.AddCollection{
+				Identity: testUtils.NoIdentity(),
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
+			},
+
+			// Wrong user/identity will also not be authorized.
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Schema: `
 					type Users {
@@ -39,17 +52,9 @@ func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
-			// Grant access to user.
-			testUtils.AddNACActorRelationship{
-				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
-				Relation:          "admin",
-				ExpectedExistence: false,
-			},
-
-			// This user, can now perform this gated operation.
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(2),
+			// This should work as the identity is authorized.
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
 						name: String

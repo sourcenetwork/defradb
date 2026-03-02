@@ -54,7 +54,7 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 		return f.users
 	}
 
-	_, err := f.db.AddSchema(
+	_, err := f.db.AddCollection(
 		f.ctx,
 		fmt.Sprintf(
 			`type %s {
@@ -404,7 +404,7 @@ func TestCollectionListIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) 
 	_, err := builder.WriteString("}")
 	require.NoError(f.t, err)
 
-	_, err = f.db.AddSchema(
+	_, err = f.db.AddCollection(
 		f.ctx,
 		builder.String(),
 	)

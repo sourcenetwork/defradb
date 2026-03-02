@@ -21,7 +21,7 @@ import (
 func TestMutationAddFieldKinds_WithDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						time: DateTime
@@ -56,7 +56,7 @@ func TestMutationAddFieldKinds_WithDateTime(t *testing.T) {
 func TestMutationAddFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						time: DateTime
@@ -108,7 +108,7 @@ func TestMutationAddFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 func TestMutationAddFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						time: DateTime
@@ -138,7 +138,7 @@ func TestMutationAdd_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

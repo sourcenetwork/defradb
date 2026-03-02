@@ -27,7 +27,7 @@ var (
 func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -58,7 +58,7 @@ func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testi
 func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -93,7 +93,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *
 func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldReturnOneCollection(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -132,7 +132,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldRet
 func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -172,7 +172,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(
 func TestReplicatorGetAll_WithMultiplePeersAndDeleteOfPeer_ShouldReturnOnePeer(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String

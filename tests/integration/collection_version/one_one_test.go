@@ -24,7 +24,7 @@ import (
 func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -48,7 +48,7 @@ func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -70,7 +70,7 @@ func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
 func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						boss: User @primary

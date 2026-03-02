@@ -244,15 +244,15 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	documentArraySchema := openapi3.NewArraySchema()
 	documentArraySchema.Items = documentSchema
 
-	collectionAddSchema := openapi3.NewOneOfSchema()
-	collectionAddSchema.OneOf = openapi3.SchemaRefs{
+	collectionAddCollection := openapi3.NewOneOfSchema()
+	collectionAddCollection.OneOf = openapi3.SchemaRefs{
 		documentSchema,
 		openapi3.NewSchemaRef("", documentArraySchema),
 	}
 
 	collectionAddRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(collectionAddSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(collectionAddCollection))
 
 	collectionAdd := openapi3.NewOperation()
 	collectionAdd.OperationID = "document_add"

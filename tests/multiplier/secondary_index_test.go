@@ -20,7 +20,7 @@ import (
 
 func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
@@ -29,7 +29,7 @@ func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.DeleteIndex{CollectionID: 0, IndexName: "User_name_idx"},
 	}
 
@@ -38,7 +38,7 @@ func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.ListIndexes{CollectionID: 0},
 	}
 
@@ -47,7 +47,7 @@ func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithNoIndexActions_ReturnsFalse(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 	}
 
 	assert.False(t, hasIndexActions(actions))
@@ -459,15 +459,15 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	result := m.Apply(actions)
 
-	schemaAdd, ok := result[0].(*action.AddSchema)
+	collectionAdd, ok := result[0].(*action.AddCollection)
 	assert.True(t, ok)
-	assert.Contains(t, schemaAdd.Schema, "@index")
+	assert.Contains(t, collectionAdd.Schema, "@index")
 
 	addIndex, ok := result[1].(*action.AddIndex)
 	assert.True(t, ok)
@@ -479,7 +479,7 @@ func TestApply_WithIndexDirective_ReturnsUnchanged(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String @index }"},
+		&action.AddCollection{Schema: "type User { name: String @index }"},
 	}
 
 	result := m.Apply(actions)
@@ -496,17 +496,17 @@ func TestApply_WithoutIndex_ModifiesSchema(t *testing.T) {
 }`
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: original},
+		&action.AddCollection{Schema: original},
 	}
 
 	result := m.Apply(actions)
 
 	assert.NotEqual(t, actions, result)
 
-	schemaAdd, ok := result[0].(*action.AddSchema)
+	collectionAdd, ok := result[0].(*action.AddCollection)
 	assert.True(t, ok)
-	assert.Contains(t, schemaAdd.Schema, "name: String @index")
-	assert.Contains(t, schemaAdd.Schema, "age: Int @index")
+	assert.Contains(t, collectionAdd.Schema, "name: String @index")
+	assert.Contains(t, collectionAdd.Schema, "age: Int @index")
 }
 
 func TestName_ReturnsSecondaryIndex(t *testing.T) {
@@ -519,7 +519,7 @@ func TestShouldSkip_WithIndexActions_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
@@ -530,7 +530,7 @@ func TestShouldSkip_WithIndexDirective_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String @index }"},
+		&action.AddCollection{Schema: "type User { name: String @index }"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))
@@ -540,7 +540,7 @@ func TestShouldSkip_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { email: String @index(unique: true) }"},
+		&action.AddCollection{Schema: "type User { email: String @index(unique: true) }"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))
@@ -550,7 +550,7 @@ func TestShouldSkip_WithExplainRequest_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.ExplainRequest{Request: `query @explain(type: debug) { User { name } }`},
 	}
 
@@ -561,7 +561,7 @@ func TestShouldSkip_WithRequestContainingExplainDirective_ReturnsTrue(t *testing
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 		&action.Request{Request: `query @explain(type: simple) { User { name } }`},
 	}
 
@@ -572,7 +572,7 @@ func TestShouldSkip_WithNoIndex_ReturnsFalse(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{Schema: "type User { name: String }"},
 	}
 
 	assert.False(t, m.ShouldSkip(actions))

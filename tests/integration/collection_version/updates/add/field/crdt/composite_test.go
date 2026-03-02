@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -43,7 +43,7 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 func TestSchemaUpdatesAddFieldCRDTCompositeErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

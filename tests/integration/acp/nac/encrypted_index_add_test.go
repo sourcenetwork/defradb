@@ -37,7 +37,7 @@ func TestNAC_GatesAddEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T)
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -71,7 +71,7 @@ func TestNAC_GatesAddEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) 
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -107,7 +107,7 @@ func TestNAC_GatesAddEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorize
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -142,7 +142,7 @@ func TestNAC_GatesAddEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -178,7 +178,7 @@ func TestNAC_GatesAddEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthor
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {

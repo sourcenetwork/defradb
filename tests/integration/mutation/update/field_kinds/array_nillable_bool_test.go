@@ -22,7 +22,7 @@ import (
 func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

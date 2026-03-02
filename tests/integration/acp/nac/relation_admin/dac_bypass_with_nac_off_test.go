@@ -32,7 +32,7 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
@@ -114,7 +114,7 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
@@ -204,7 +204,7 @@ func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},

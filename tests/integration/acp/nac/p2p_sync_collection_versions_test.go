@@ -43,7 +43,7 @@ func TestNAC_GatesSyncCollectionVersions_AuthorizedIdentity_AllowAccess(t *testi
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(1),
 				Schema: `

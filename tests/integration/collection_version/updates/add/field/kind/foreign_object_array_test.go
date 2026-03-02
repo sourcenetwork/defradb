@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -70,7 +70,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -24,7 +24,7 @@ import (
 func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -105,7 +105,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

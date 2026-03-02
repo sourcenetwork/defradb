@@ -5,7 +5,7 @@ Interact with a DefraDB node
 ### Synopsis
 
 Interact with a DefraDB node.
-Execute queries, add schema types, obtain node info, etc.
+Execute queries, add collections, obtain node info, etc.
 
 ### Options
 
@@ -51,7 +51,6 @@ Execute queries, add schema types, obtain node info, etc.
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client purge](defradb_client_purge.md)	 - Delete all persisted data and restart
 * [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 * [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
 * [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
 

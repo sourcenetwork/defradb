@@ -24,7 +24,7 @@ import (
 func TestColVersionUpdateRemoveView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -66,7 +66,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -113,7 +113,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -167,7 +167,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -212,7 +212,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -265,7 +265,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 		// action - this changes the test definition in a way that we do not want here.
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

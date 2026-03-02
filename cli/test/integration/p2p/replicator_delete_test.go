@@ -20,7 +20,7 @@ import (
 func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -47,7 +47,7 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -74,7 +74,7 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -100,7 +100,7 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -129,7 +129,7 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String

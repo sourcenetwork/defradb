@@ -21,7 +21,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
                     type Users {
                         name: String
@@ -63,7 +63,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *t
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
                     type Users {
                         name: String

@@ -20,7 +20,7 @@ import (
 func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -84,7 +84,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -154,7 +154,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -196,7 +196,7 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -226,7 +226,7 @@ func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -256,7 +256,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -286,7 +286,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @index(includes: [{field: "name"}, {field: "age"}], unique: true) {
 						name: String 

@@ -20,7 +20,7 @@ import (
 func TestMutationAddFieldKinds_WithFloat(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						points: Float
@@ -55,7 +55,7 @@ func TestMutationAddFieldKinds_WithFloat(t *testing.T) {
 func TestMutationAddFieldKinds_WithFloat32(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						points: Float32
@@ -90,7 +90,7 @@ func TestMutationAddFieldKinds_WithFloat32(t *testing.T) {
 func TestMutationAddFieldKinds_WithFloat64(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						points: Float64

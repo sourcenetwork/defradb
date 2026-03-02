@@ -20,7 +20,7 @@ import (
 func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -46,7 +46,7 @@ func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,

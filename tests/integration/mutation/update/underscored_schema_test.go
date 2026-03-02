@@ -21,7 +21,7 @@ func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type My_User {
 						name: String

@@ -44,7 +44,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 func TestQuerySimpleWithCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -81,7 +81,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 func TestQuerySimple_UnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -107,7 +107,7 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -152,7 +152,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						counter: Int @crdt(type: pcounter)
@@ -193,7 +193,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -236,7 +236,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 func TestQuerySimple_ListOfOneCID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -273,7 +273,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 func TestQuerySimple_MultipleCIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

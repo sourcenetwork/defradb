@@ -20,7 +20,7 @@ import (
 func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type user {
 						age: Int
@@ -117,7 +117,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type book {
 						name: String

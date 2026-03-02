@@ -31,7 +31,7 @@ func TestNAC_GatesCollectionSetActiveVersion_AuthorizedIdentity_AllowAccess(t *t
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -81,7 +81,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_NotAuthorizedError(t *te
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -129,7 +129,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_CLIClient_NotAuthorizedE
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -180,7 +180,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_NotAuthorizedError(t 
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {
@@ -228,7 +228,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_CLIClient_NotAuthoriz
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type Users {

@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{

@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -58,7 +58,7 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	err = n.Start(ctx)
 	require.NoError(t, err)
 
-	_, err = n.DB.AddSchema(ctx, "type User { name: String }")
+	_, err = n.DB.AddCollection(ctx, "type User { name: String }")
 	require.NoError(t, err)
 
 	err = n.PurgeAndRestart(ctx)

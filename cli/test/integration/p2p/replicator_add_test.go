@@ -20,7 +20,7 @@ import (
 func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -43,7 +43,7 @@ func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -66,7 +66,7 @@ func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -89,7 +89,7 @@ func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -111,7 +111,7 @@ func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testin
 func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -137,7 +137,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorSet_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String

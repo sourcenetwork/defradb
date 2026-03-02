@@ -24,7 +24,7 @@ import (
 func TestView_SimpleWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -100,7 +100,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -188,7 +188,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -263,7 +263,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

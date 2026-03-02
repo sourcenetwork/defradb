@@ -75,12 +75,12 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {}
 				`,
@@ -152,12 +152,12 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {}
 				`,
@@ -219,12 +219,12 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Books {}
 				`,

@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -92,7 +92,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -127,7 +127,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -184,7 +184,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -217,7 +217,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -252,7 +252,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -293,7 +293,7 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -316,7 +316,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -362,7 +362,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -385,7 +385,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -409,7 +409,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

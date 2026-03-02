@@ -82,7 +82,7 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
@@ -92,8 +92,8 @@ func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	opt := options.WithIdentity(options.AddSchema(), identity.FromContext(ctx))
-	cols, err := db.AddSchema(ctx, string(schema), opt)
+	opt := options.WithIdentity(options.AddCollection(), identity.FromContext(ctx))
+	cols, err := db.AddCollection(ctx, string(schema), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -562,22 +562,22 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
 
-	addSchemaResponse := openapi3.NewResponse().
+	addCollectionResponse := openapi3.NewResponse().
 		WithDescription("Collection(s)").
 		WithJSONSchema(collectionArraySchema)
 
-	addSchemaRequest := openapi3.NewRequestBody().
+	addCollectionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	addSchema := openapi3.NewOperation()
-	addSchema.OperationID = "add_schema"
-	addSchema.Description = "Add a new schema definition"
-	addSchema.Tags = []string{"schema"}
-	addSchema.RequestBody = &openapi3.RequestBodyRef{
-		Value: addSchemaRequest,
+	addCollection := openapi3.NewOperation()
+	addCollection.OperationID = "collection_add"
+	addCollection.Description = "Add a new collection"
+	addCollection.Tags = []string{"collection"}
+	addCollection.RequestBody = &openapi3.RequestBodyRef{
+		Value: addCollectionRequest,
 	}
-	addSchema.AddResponse(200, addSchemaResponse)
-	addSchema.Responses.Set("400", errorResponse)
+	addCollection.AddResponse(200, addCollectionResponse)
+	addCollection.Responses.Set("400", errorResponse)
 
 	setActiveCollectionVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
@@ -873,7 +873,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
-	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
+	router.AddRoute("/collections", http.MethodPost, addCollection, h.AddCollection)
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)

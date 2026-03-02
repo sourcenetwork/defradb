@@ -28,7 +28,7 @@ func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

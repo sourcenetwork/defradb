@@ -60,7 +60,7 @@ func SetupCollections(
 
 	// b.Logf("Loading schema: \n%s", schema)
 
-	if _, err := db.AddSchema(ctx, schema); err != nil {
+	if _, err := db.AddCollection(ctx, schema); err != nil {
 		return nil, errors.Wrap("couldn't load schema", err)
 	}
 

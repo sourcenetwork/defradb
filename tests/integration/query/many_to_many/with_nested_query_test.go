@@ -20,7 +20,7 @@ import (
 func TestManyToMany_QueryFromSecondary_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
                     type Student {
                         name: String

@@ -28,7 +28,7 @@ func TestNAC_GatesDocumentAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
@@ -65,7 +65,7 @@ func TestNAC_GatesDocumentAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
@@ -105,7 +105,7 @@ func TestNAC_GatesDocumentAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},

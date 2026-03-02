@@ -31,7 +31,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name:   String
@@ -39,7 +39,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						email:  String
 					}`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type IndexedUser {
 						name:   String
@@ -91,7 +91,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name:   String
@@ -99,7 +99,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						email:  String
 					}`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type IndexedUser {
 						name:   String

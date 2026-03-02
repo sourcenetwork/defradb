@@ -1181,6 +1181,43 @@
                 "tags": [
                     "collection"
                 ]
+            },
+            "post": {
+                "description": "Add a new collection",
+                "operationId": "collection_add",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/collection"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Collection(s)"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
             }
         },
         "/collections/default": {
@@ -2572,45 +2609,6 @@
                         "description": ""
                     }
                 }
-            }
-        },
-        "/schema": {
-            "post": {
-                "description": "Add a new schema definition",
-                "operationId": "add_schema",
-                "requestBody": {
-                    "content": {
-                        "text/plain": {
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/collection"
-                                    },
-                                    "type": "array"
-                                }
-                            }
-                        },
-                        "description": "Collection(s)"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
             }
         },
         "/tx": {

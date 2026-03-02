@@ -31,7 +31,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_AuthorizedIdentity_AllowAccess(t *tes
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type User {
@@ -87,7 +87,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type User {
@@ -145,7 +145,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type User {
@@ -202,7 +202,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type User {
@@ -260,7 +260,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIandCandHTTPClient_No
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Schema: `
 					type User {

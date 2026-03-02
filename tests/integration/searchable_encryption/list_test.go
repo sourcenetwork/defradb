@@ -21,7 +21,7 @@ import (
 func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @encryptedIndex
@@ -64,7 +64,7 @@ func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @encryptedIndex
@@ -106,7 +106,7 @@ func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(
 func TestEncryptedIndexList_WhenRequestingAllIndexes_ShouldReturn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @encryptedIndex

@@ -20,7 +20,7 @@ import (
 func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						someVector: [Int!]
@@ -112,7 +112,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						someVector: [Float32!]
@@ -204,7 +204,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 func TestSchemaInstrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						someVectorInt: [Int!]

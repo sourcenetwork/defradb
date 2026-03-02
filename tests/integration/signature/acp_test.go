@@ -58,7 +58,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",
@@ -101,7 +101,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",

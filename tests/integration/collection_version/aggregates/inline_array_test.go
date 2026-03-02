@@ -20,7 +20,7 @@ import (
 func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
@@ -144,7 +144,7 @@ func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
 func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						FavouriteFloats: [Float!]
@@ -266,7 +266,7 @@ func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
 func TestSchemaAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
@@ -480,7 +480,7 @@ var aggregateVersionArg = map[string]any{
 func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Boolean]
@@ -606,7 +606,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testin
 func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Boolean!]
@@ -732,7 +732,7 @@ func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Int]
@@ -882,7 +882,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testin
 func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Int!]
@@ -1032,7 +1032,7 @@ func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Float]
@@ -1182,7 +1182,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.
 func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [Float!]
@@ -1332,7 +1332,7 @@ func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [String]
@@ -1482,7 +1482,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing
 func TestSchemaAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Favourites: [String!]

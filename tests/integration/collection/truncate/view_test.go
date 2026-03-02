@@ -26,7 +26,7 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -106,7 +106,7 @@ func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testin
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

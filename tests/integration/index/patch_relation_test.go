@@ -21,7 +21,7 @@ import (
 func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -72,7 +72,7 @@ func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -147,7 +147,7 @@ func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testi
 func TestPatchRelation_OneToMany_DoesNotAddUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -194,7 +194,7 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

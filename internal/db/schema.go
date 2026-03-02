@@ -17,9 +17,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-// addSchema takes the provided schema in SDL format, and applies it to the database,
+// addCollection takes the provided schema in SDL format, and applies it to the database,
 // and adds the necessary collections, request types, etc.
-func (db *DB) addSchema(
+func (db *DB) addCollection(
 	ctx context.Context,
 	schemaString string,
 ) ([]client.CollectionVersion, error) {

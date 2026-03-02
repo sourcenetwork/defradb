@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// AddSchema is an action that will add the given GQL schema to the Defra nodes.
-type AddSchema struct {
+// AddCollection is an action that will add the given GQL schema to the Defra nodes.
+type AddCollection struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to apply this update to.
@@ -51,22 +51,22 @@ type AddSchema struct {
 	ExpectedError string
 }
 
-var _ Action = (*AddSchema)(nil)
-var _ Stateful = (*AddSchema)(nil)
+var _ Action = (*AddCollection)(nil)
+var _ Stateful = (*AddCollection)(nil)
 
-func (a *AddSchema) Execute() {
+func (a *AddCollection) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
 		schema := replace(a.s, nodeID, a.Schema)
 
-		opts := options.AddSchema()
+		opts := options.AddCollection()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		results, err := node.AddSchema(a.s.Ctx, schema, opts)
+		results, err := node.AddCollection(a.s.Ctx, schema, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)

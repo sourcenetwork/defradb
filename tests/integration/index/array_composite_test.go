@@ -26,7 +26,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -92,7 +92,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -159,7 +159,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -227,7 +227,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}, {field: "age"}]) {
 						name: String 
@@ -301,7 +301,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "numbers"}, {field: "name"}, {field: "age"}, {field: "hobbies"}]) {
 						name: String 
@@ -376,7 +376,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "numbers1"}, {field: "numbers2"}, {field: "numbers3"}]) {
 						name: String 
@@ -443,7 +443,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
@@ -553,7 +553,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 

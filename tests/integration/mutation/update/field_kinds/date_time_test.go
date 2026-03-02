@@ -20,7 +20,7 @@ import (
 func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -64,7 +64,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -114,7 +114,7 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						created_at: DateTime
@@ -156,7 +156,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -200,7 +200,7 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

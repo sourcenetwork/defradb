@@ -157,15 +157,15 @@ func (db *DB) ListAllEncryptedIndexes(
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
-// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// AddCollection takes the provided GQL schema in SDL format, and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *DB) AddSchema(
+func (db *DB) AddCollection(
 	ctx context.Context,
 	schemaString string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -182,7 +182,7 @@ func (db *DB) AddSchema(
 	}
 	defer txn.Discard()
 
-	cols, err := db.addSchema(ctx, schemaString)
+	cols, err := db.addCollection(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}

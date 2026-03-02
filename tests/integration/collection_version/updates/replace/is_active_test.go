@@ -20,7 +20,7 @@ import (
 func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -53,7 +53,7 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -99,7 +99,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 func TestColVersionUpdateReplaceIsActive_MultipleVersionsToTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,

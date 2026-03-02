@@ -23,7 +23,7 @@ import (
 func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -53,7 +53,7 @@ func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -84,7 +84,7 @@ func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -115,7 +115,7 @@ func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -174,7 +174,7 @@ func TestIndexAdd_WithoutCollection_ShouldReturnError(t *testing.T) {
 func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -197,7 +197,7 @@ func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -220,7 +220,7 @@ func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String
@@ -243,7 +243,7 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 func TestIndexAdd_WithDuplicateName_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
+			&action.AddCollection{
 				InlineSchema: `
 					type User {
 						name: String

@@ -20,7 +20,7 @@ import (
 func execute(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

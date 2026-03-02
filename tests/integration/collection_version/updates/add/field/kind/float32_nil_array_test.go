@@ -22,7 +22,7 @@ import (
 func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -55,7 +55,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -104,7 +104,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithAdd(t *testing.T) {
 func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

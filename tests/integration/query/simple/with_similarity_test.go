@@ -20,7 +20,7 @@ import (
 func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					vector: [Int!]
@@ -41,7 +41,7 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 				}`,
@@ -63,7 +63,7 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -88,7 +88,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pets: [String!]
@@ -112,7 +112,7 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -137,7 +137,7 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -174,7 +174,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -204,7 +204,7 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Float32!]
@@ -241,7 +241,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]
@@ -278,7 +278,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]
@@ -315,7 +315,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -368,7 +368,7 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -421,7 +421,7 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -475,7 +475,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]

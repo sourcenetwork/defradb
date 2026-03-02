@@ -21,7 +21,7 @@ import (
 func TestColVersionBranchable_NoArguments_DefaultTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable {}
 				`,
@@ -43,7 +43,7 @@ func TestColVersionBranchable_NoArguments_DefaultTrue(t *testing.T) {
 func TestColVersionBranchable_ArgumentIfTrue_ShouldBeTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: true) {}
 				`,
@@ -65,7 +65,7 @@ func TestColVersionBranchable_ArgumentIfTrue_ShouldBeTrue(t *testing.T) {
 func TestColVersionBranchable_ArgumentIfFalse_ShouldBeFalse(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @branchable(if: false) {}
 				`,

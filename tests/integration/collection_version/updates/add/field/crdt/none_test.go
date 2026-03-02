@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

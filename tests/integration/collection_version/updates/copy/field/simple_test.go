@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -55,7 +55,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -91,7 +91,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -131,7 +131,7 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -183,7 +183,7 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

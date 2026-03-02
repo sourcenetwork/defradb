@@ -21,12 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeSchemaAddCommand(ctx context.Context) *cobra.Command {
+func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
 	var schemaFiles []string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",
-		Short: "Add new schema",
-		Long: `Add new schema.
+		Short: "Add new collection",
+		Long: `Add new collection.
 
 Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
   - ACP is available (i.e. ACP is not disabled).
@@ -44,7 +44,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				for _, schemaFile := range schemaFiles {
 					data, err := os.ReadFile(schemaFile)
 					if err != nil {
-						return NewErrFailedToReadSchemaFile(schemaFile, err)
+						return NewErrFailedToReadCollectionFile(schemaFile, err)
 					}
 					combinedSchema += string(data) + "\n"
 				}
@@ -53,7 +53,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				// Read schema from stdin
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return NewErrFailedToReadSchemaFromStdin(err)
+					return NewErrFailedToReadCollectionFromStdin(err)
 				}
 				combinedSchema += string(data) + "\n"
 
@@ -62,14 +62,14 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				combinedSchema += args[0] + "\n"
 
 			default:
-				return ErrEmptySchemaString
+				return ErrEmptyCollectionSchema
 			}
 
-			opt := options.WithIdentity(options.AddSchema(), identity.FromContext(cmd.Context()))
+			opt := options.WithIdentity(options.AddCollection(), identity.FromContext(cmd.Context()))
 			// Process the combined schema
-			cols, err := cli.AddSchema(cmd.Context(), combinedSchema, opt)
+			cols, err := cli.AddCollection(cmd.Context(), combinedSchema, opt)
 			if err != nil {
-				return NewErrFailedToAddSchema(err)
+				return NewErrFailedToAddCollection(err)
 			}
 			if err := writeJSON(cmd, cols); err != nil {
 				return err
@@ -80,19 +80,19 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 	}
 
 	EmbedCLIExample(ctx, cmd, "add from an argument string",
-		`defradb client schema add 'type Foo { ... }'`)
+		`defradb client collection add 'type Foo { ... }'`)
 
 	EmbedCLIExample(ctx, cmd, "add from file",
-		`defradb client schema add -f schema.graphql`)
+		`defradb client collection add -f schema.graphql`)
 
 	EmbedCLIExample(ctx, cmd, "add from multiple files",
-		`defradb client schema add -f schema1.graphql -f schema2.graphql`)
+		`defradb client collection add -f schema1.graphql -f schema2.graphql`)
 
 	EmbedCLIExample(ctx, cmd, "add from multiple files (comma-separated)",
-		`defradb client schema add -f schema1.graphql,schema2.graphql`)
+		`defradb client collection add -f schema1.graphql,schema2.graphql`)
 
 	EmbedCLIExample(ctx, cmd, "add from stdin",
-		`cat schema.graphql | defradb client schema add -`)
+		`cat schema.graphql | defradb client collection add -`)
 
 	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File to load schema from")
 	return cmd

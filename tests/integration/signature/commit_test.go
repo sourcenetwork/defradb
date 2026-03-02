@@ -51,7 +51,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -124,7 +124,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -222,7 +222,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -284,7 +284,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -357,7 +357,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
 		},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -429,7 +429,7 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

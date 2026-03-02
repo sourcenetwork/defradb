@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -106,7 +106,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -175,7 +175,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -256,7 +256,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -359,7 +359,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -471,7 +471,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiveLike_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{
@@ -565,7 +565,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: bookAuthorGQLSchema,
 			},
 			&action.AddDoc{

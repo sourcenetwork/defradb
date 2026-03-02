@@ -173,15 +173,15 @@ type Store interface {
 		opts ...options.Enumerable[options.VerifySignatureOptions],
 	) error
 
-	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
+	// AddCollection takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(
+	AddCollection(
 		ctx context.Context,
 		sdl string,
-		opts ...options.Enumerable[options.AddSchemaOptions],
+		opts ...options.Enumerable[options.AddCollectionOptions],
 	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions

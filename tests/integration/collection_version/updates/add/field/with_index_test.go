@@ -23,7 +23,7 @@ import (
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String @index
@@ -108,7 +108,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *tes
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String @index

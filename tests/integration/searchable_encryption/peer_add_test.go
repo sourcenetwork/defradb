@@ -29,7 +29,7 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -63,7 +63,7 @@ func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 

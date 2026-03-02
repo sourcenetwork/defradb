@@ -23,7 +23,7 @@ import (
 func TestIndexAddWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String @index
@@ -77,7 +77,7 @@ func TestIndexAddWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 func TestIndexAdd_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String 
@@ -135,7 +135,7 @@ func TestIndexAdd_ShouldNotHinderQuerying(t *testing.T) {
 func TestIndexAdd_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String 
@@ -158,7 +158,7 @@ func TestIndexAdd_IfInvalidIndexName_ReturnError(t *testing.T) {
 func TestIndexAdd_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String 

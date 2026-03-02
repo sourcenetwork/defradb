@@ -20,7 +20,7 @@ import (
 func TestSchemaAggregateSimpleAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -116,7 +116,7 @@ func TestSchemaAggregateSimpleAddsUsersCount(t *testing.T) {
 func TestSchemaAggregateSimpleAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -314,7 +314,7 @@ func TestSchemaAggregateSimpleAddsUsersSum(t *testing.T) {
 func TestSchemaAggregateSimpleAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {}`,
 			},
 			testUtils.IntrospectionRequest{

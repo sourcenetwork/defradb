@@ -22,7 +22,7 @@ import (
 func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
@@ -99,7 +99,7 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: invalid)
@@ -116,7 +116,7 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						active: Boolean @default(int: 10)
@@ -133,7 +133,7 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
@@ -150,7 +150,7 @@ func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *te
 func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						friend: User @default(string: "Bob")
@@ -167,7 +167,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						names: [String] @default(string: "Bob")

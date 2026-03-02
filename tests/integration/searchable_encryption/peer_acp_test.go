@@ -82,7 +82,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User @policy(
 						id: "{{.Policy0}}",

@@ -295,7 +295,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `type Users {
 					name: String
 					custom: JSON

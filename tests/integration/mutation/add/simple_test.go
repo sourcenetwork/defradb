@@ -29,7 +29,7 @@ func TestMutationAdd_GivenNonExistantField_Errors(t *testing.T) {
 			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -65,7 +65,7 @@ func TestMutationAdd_GivenNonExistantField_Errors(t *testing.T) {
 func TestMutationAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -114,7 +114,7 @@ func TestMutationAdd_GivenDuplicate_Errors(t *testing.T) {
 			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -144,7 +144,7 @@ func TestMutationAdd_GivenDuplicate_Errors(t *testing.T) {
 func TestMutationAdd_GivenEmptyInput(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -174,7 +174,7 @@ func TestMutationAdd_GivenEmptyInput(t *testing.T) {
 func TestMutationAdd_With10Collections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Foo1 {
 						# The name used for the fields is important as the field shortID

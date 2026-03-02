@@ -25,7 +25,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 			testUtils.CachelessViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -99,7 +99,7 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

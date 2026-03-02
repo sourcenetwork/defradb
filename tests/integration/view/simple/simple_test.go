@@ -20,7 +20,7 @@ import (
 func TestView_Simple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -67,7 +67,7 @@ func TestView_Simple(t *testing.T) {
 func TestView_SimpleMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -123,7 +123,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -167,7 +167,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -217,7 +217,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String
@@ -269,7 +269,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 func TestView_SimpleViewOfView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type User {
 						name: String

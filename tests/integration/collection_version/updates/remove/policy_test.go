@@ -47,7 +47,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
                 `,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",

@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -124,7 +124,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -228,7 +228,7 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -331,7 +331,7 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 func TestQueryOneToOneToOneSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String

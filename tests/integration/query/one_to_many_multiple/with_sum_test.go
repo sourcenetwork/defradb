@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Article {
 						name: String

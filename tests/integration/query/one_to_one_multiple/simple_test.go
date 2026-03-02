@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -124,7 +124,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -228,7 +228,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Publisher {
 						name: String
@@ -329,10 +329,10 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestAddSchemaWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
+func TestAddCollectionWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Player {
 						name: String

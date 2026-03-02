@@ -34,7 +34,7 @@ var userCollectionGQLSchema = (`
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: userCollectionGQLSchema,
 			},
 		},

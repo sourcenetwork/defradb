@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_nac
+package test_acp_nac_relation_admin
 
 import (
 	"testing"
@@ -18,9 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
-	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-	// See: https://github.com/sourcenetwork/defradb/issues/4383
+func TestNAC_AdminRelation_CanAddCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -30,19 +28,8 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			// We haven't authorized non-identities. So, this should error.
-			&action.AddSchema{
-				Identity: testUtils.NoIdentity(),
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
-			},
-
-			// Wrong user/identity will also not be authorized.
-			&action.AddSchema{
+			// This user, can not perform this gated operation yet.
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Schema: `
 					type Users {
@@ -52,9 +39,17 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
-			// This should work as the identity is authorized.
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(1),
+			// Grant access to user.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+
+			// This user, can now perform this gated operation.
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(2),
 				Schema: `
 					type Users {
 						name: String

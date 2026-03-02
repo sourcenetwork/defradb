@@ -20,7 +20,7 @@ import (
 func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -76,7 +76,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -109,7 +109,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -22,7 +22,7 @@ import (
 func TestView_OneToManyWithCount_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -87,7 +87,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 func TestView_OneToManyWithAliasedCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String
@@ -160,7 +160,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Author {
 						name: String

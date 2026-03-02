@@ -72,7 +72,7 @@ In this example we will define a collection using a schema with an `emailAddress
 **Step One**, define the `Users` collection/schema:
 
 ```graphql
-defradb client schema add '
+defradb client collection add '
     type Users {
         emailAddress: String
     }

@@ -20,7 +20,7 @@ import (
 func TestColVersionUpdateReplacePolicy_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -46,7 +46,7 @@ func TestColVersionUpdateReplacePolicy_Errors(t *testing.T) {
 func TestColVersionUpdateReplacePolicyID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,
@@ -72,7 +72,7 @@ func TestColVersionUpdateReplacePolicyID_Errors(t *testing.T) {
 func TestColVersionUpdateReplacePolicyResource_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {}
 				`,

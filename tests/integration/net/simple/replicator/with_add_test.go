@@ -26,7 +26,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -72,7 +72,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -119,7 +119,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -163,7 +163,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -214,7 +214,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -266,7 +266,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			// Node[2] will not be configured
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -340,7 +340,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -399,7 +399,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String
@@ -461,7 +461,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -470,7 +470,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -533,7 +533,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -542,7 +542,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -602,7 +602,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						Name: String

@@ -53,7 +53,7 @@ func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -107,7 +107,7 @@ func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testin
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",

@@ -33,7 +33,7 @@ const (
 func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String @index
@@ -111,7 +111,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -198,7 +198,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -288,7 +288,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -378,7 +378,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String 
@@ -472,7 +472,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 // v1 (age: Int @index) -> v2 (adds level) -> v3 (adds points) -> v4 (adds rank) -> v5 (adds score)
 func setupDistantVersions() []any {
 	return []any{
-		&action.AddSchema{
+		&action.AddCollection{
 			Schema: `
 				type Users {
 					name: String
@@ -785,7 +785,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReind
 func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -874,7 +874,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -955,7 +955,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrationCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String
@@ -1112,7 +1112,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrationPerBranch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Users {
 						name: String

@@ -118,7 +118,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -201,7 +201,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -344,7 +344,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -395,7 +395,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

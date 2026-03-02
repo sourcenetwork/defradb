@@ -20,7 +20,7 @@ import (
 func TestQueryOneToOne_WithFragment(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String
@@ -81,7 +81,7 @@ func TestQueryOneToOne_WithFragment(t *testing.T) {
 func TestQueryOneToOne_WithFragmentWithObjectWithFragment(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				Schema: `
 					type Book {
 						name: String

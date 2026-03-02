@@ -136,15 +136,15 @@ func (c *Client) BasicExport(
 	return err
 }
 
-func (c *Client) AddSchema(
+func (c *Client) AddCollection(
 	ctx context.Context,
 	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	methodURL := c.http.apiURL.JoinPath("schema")
+	methodURL := c.http.apiURL.JoinPath("collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
 	if err != nil {
