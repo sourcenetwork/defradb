@@ -144,7 +144,7 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 					}
 				`,
 			},
-			// Create multiple indexes
+			// Make multiple indexes
 			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByName",

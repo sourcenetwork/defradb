@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
+func TestCompositeIndexNew_WhenAdded_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -73,7 +73,7 @@ func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
+func TestCompositeIndexNew_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -110,7 +110,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_SetsDefaultDirection(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
+func TestCompositeIndexNew_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -147,7 +147,7 @@ func TestCompositeIndexAdd_UsingObjectDirective_OverridesDefaultDirection(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
+func TestCompositeIndexNew_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -181,7 +181,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_ImplicitlyAddsField(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
+func TestCompositeIndexNew_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -218,7 +218,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_SetsDefaultDirection(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
+func TestCompositeIndexNew_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -255,7 +255,7 @@ func TestCompositeIndexAdd_UsingFieldDirective_OverridesDefaultDirection(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCompositeIndexAdd_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
+func TestCompositeIndexNew_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

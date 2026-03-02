@@ -48,11 +48,11 @@ const (
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
-	errNonExistingFieldForIndex                  string = "creating a new index on a non-existing property"
+	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
 	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
-	errCanNotCreateNewIndexWithPatch             string = "creating new indexes via patch is not supported"
+	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
@@ -219,7 +219,7 @@ func NewErrInvalidStoredIndexKey(key string) error {
 	return errors.New(errInvalidStoredIndexKey, errors.NewKV("Key", key))
 }
 
-// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to add an index
+// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to make a new index
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
@@ -430,8 +430,8 @@ func NewErrCorruptedIndex(indexName string) error {
 	)
 }
 
-// NewErrCannotCreateNewIndexWithPatch returns a new error indicating that a new index cannot be created
-// with a patch.
+// NewErrCannotCreateNewIndexWithPatch returns a new error indicating that making a new index
+// via patch is not supported.
 func NewErrCannotCreateNewIndexWithPatch(proposedName string) error {
 	return errors.New(
 		errCanNotCreateNewIndexWithPatch,

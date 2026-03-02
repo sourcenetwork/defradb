@@ -81,7 +81,7 @@ func TestIndexNew_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexNew_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
+func TestIndexNew_WithUniqueFlag_ShouldMakeNewUniqueIndex(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -232,7 +232,7 @@ func TestIndexNew_WithNonExistentField_ShouldReturnError(t *testing.T) {
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
-				ExpectError: "creating a new index on a non-existing property",
+				ExpectError: "making a new index on a non-existing property",
 			},
 		},
 	}

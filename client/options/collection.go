@@ -247,12 +247,12 @@ func (o *NewCollectionIndexOptions) GetIdentity() immutable.Option[identity.Iden
 	return o.Identity
 }
 
-// NewCollectionIndexOptionsBuilder is a builder for AddCollectionIndexOptions.
+// NewCollectionIndexOptionsBuilder is a builder for NewCollectionIndexOptions.
 type NewCollectionIndexOptionsBuilder struct {
 	enumerableBuilder[NewCollectionIndexOptions]
 }
 
-// AddCollectionIndex creates a new AddCollectionIndexOptionsBuilder instance.
+// NewCollectionIndex creates a new NewCollectionIndexOptionsBuilder instance.
 func NewCollectionIndex() *NewCollectionIndexOptionsBuilder {
 	return &NewCollectionIndexOptionsBuilder{}
 }

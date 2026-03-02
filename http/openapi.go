@@ -144,7 +144,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "index",
-				Description: "Add, update, or remove indexes",
+				Description: "Make, update, or remove indexes",
 			},
 			&openapi3.Tag{
 				Name:        "lens",

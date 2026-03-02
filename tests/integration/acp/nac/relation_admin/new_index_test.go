@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanCreateNewIndex(t *testing.T) {
+func TestNAC_AdminRelation_CanMakeNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -76,7 +76,7 @@ func TestNAC_AdminRelation_CanCreateNewIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCreateNewIndex(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanMakeNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383

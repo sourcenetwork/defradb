@@ -102,7 +102,7 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 					}
 				`,
 			},
-			// Create indexes for User collection
+			// Make indexes for User collection
 			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByName",
@@ -113,7 +113,7 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
-			// Create indexes for Product collection
+			// Make indexes for Product collection
 			&action.NewIndex{
 				Collection: "Product",
 				Name:       "ProductsByTitle",

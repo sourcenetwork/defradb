@@ -18,14 +18,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// NewIndex will attempt to create a new secondary index for the given collection
+// NewIndex will attempt to make a new secondary index for the given collection
 // using the collection api.
 type NewIndex struct {
 	stateful
 
-	// NodeID may hold the ID (index) of a node to add the secondary index on.
+	// NodeID may hold the ID (index) of a node to make the new secondary index on.
 	//
-	// If a value is not provided the index will be added on all nodes.
+	// If a value is not provided the index will be made on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.

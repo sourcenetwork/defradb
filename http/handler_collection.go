@@ -313,7 +313,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	newIndex := openapi3.NewOperation()
 	newIndex.OperationID = "new_index"
-	newIndex.Description = "Create a new secondary index"
+	newIndex.Description = "Make a new secondary index"
 	newIndex.Tags = []string{"index"}
 	newIndex.AddParameter(collectionNamePathParam)
 	newIndex.RequestBody = &openapi3.RequestBodyRef{

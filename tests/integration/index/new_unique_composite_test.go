@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestAddUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
+func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -64,7 +64,7 @@ func TestAddUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueCompositeIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
+func TestUniqueCompositeIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -101,7 +101,7 @@ func TestUniqueCompositeIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueCompositeIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
+func TestUniqueCompositeIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -170,7 +170,7 @@ func TestUniqueCompositeIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueCompositeIndexAdd_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
+func TestUniqueCompositeIndexNew_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

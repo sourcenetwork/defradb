@@ -39,5 +39,5 @@ Manage (new, delete, or list) collection indexes on a DefraDB node.
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client index delete](defradb_client_index_delete.md)	 - Delete a collection's secondary index
 * [defradb client index list](defradb_client_index_list.md)	 - Shows the list indexes in the database or for a specific collection
-* [defradb client index new](defradb_client_index_new.md)	 - Creates a new secondary index on a collection's field(s)
+* [defradb client index new](defradb_client_index_new.md)	 - Make a new secondary index on a collection's field(s)
 

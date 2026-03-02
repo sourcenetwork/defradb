@@ -1750,7 +1750,7 @@
                 ]
             },
             "post": {
-                "description": "Create a new secondary index",
+                "description": "Make a new secondary index",
                 "operationId": "new_index",
                 "parameters": [
                     {
@@ -2869,7 +2869,7 @@
             "name": "view"
         },
         {
-            "description": "Add, update, or remove indexes",
+            "description": "Make, update, or remove indexes",
             "name": "index"
         },
         {

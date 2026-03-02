@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_IndexAddWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
+func TestACP_IndexNewWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 
@@ -63,7 +63,7 @@ func TestACP_IndexAddWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_IndexAddWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) {
+func TestACP_IndexNewWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 

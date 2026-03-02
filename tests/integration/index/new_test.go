@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexAddWithCollection_ShouldNotHinderQuerying(t *testing.T) {
+func TestIndexNewWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

@@ -1,10 +1,10 @@
 ## defradb client index new
 
-Creates a new secondary index on a collection's field(s)
+Make a new secondary index on a collection's field(s)
 
 ### Synopsis
 
-Creates a new secondary index on a collection's field(s).
+Make a new secondary index on a collection's field(s).
 
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
@@ -17,13 +17,13 @@ defradb client index new -c --collection <collection> --fields <fields[:ASC|:DES
 ### Examples
 
 ```
-create a new index for 'Users' collection on 'name' field:  
+make a new index for 'Users' collection on 'name' field:  
   defradb client index new --collection Users --fields name
 
-create a new named index for 'Users' collection on 'name' field:  
+make a new named index for 'Users' collection on 'name' field:  
   defradb client index new --collection Users --fields name --name UsersByName
 
-create a new unique index for 'Users' collection on 'name' and 'age':  
+make a new unique index for 'Users' collection on 'name' and 'age':  
   defradb client index new --collection Users --fields name:ASC,age:DESC --unique
 ```
 
