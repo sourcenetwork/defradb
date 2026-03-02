@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250">
+  <defs>
+    <linearGradient id="bgLC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#161b22;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#484f58"/>
+    </marker>
+  </defs>
+
+  <rect width="800" height="250" rx="10" fill="url(#bgLC)"/>
+
+  <text x="400" y="35" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="bold" fill="#c9d1d9">Pull Request Lifecycle</text>
+
+  <!-- Stage 1: Draft/Open -->
+  <rect x="20" y="60" width="130" height="70" rx="10" fill="#21262d" stroke="#8b949e" stroke-width="2"/>
+  <text x="85" y="88" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22">📝</text>
+  <text x="85" y="115" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#c9d1d9" font-weight="bold">Open PR</text>
+
+  <line x1="150" y1="95" x2="180" y2="95" stroke="#484f58" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Stage 2: Link Issues -->
+  <rect x="185" y="60" width="130" height="70" rx="10" fill="#21262d" stroke="#1f6feb" stroke-width="2"/>
+  <text x="250" y="88" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22">🔗</text>
+  <text x="250" y="115" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#c9d1d9" font-weight="bold">Link Issues</text>
+
+  <line x1="315" y1="95" x2="345" y2="95" stroke="#484f58" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Stage 3: CI Checks -->
+  <rect x="350" y="60" width="130" height="70" rx="10" fill="#21262d" stroke="#f0883e" stroke-width="2"/>
+  <text x="415" y="88" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22">⚙️</text>
+  <text x="415" y="115" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#c9d1d9" font-weight="bold">CI Checks</text>
+
+  <line x1="480" y1="95" x2="510" y2="95" stroke="#484f58" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Stage 4: Review -->
+  <rect x="515" y="60" width="130" height="70" rx="10" fill="#21262d" stroke="#533483" stroke-width="2"/>
+  <text x="580" y="88" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22">👀</text>
+  <text x="580" y="115" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#c9d1d9" font-weight="bold">Code Review</text>
+
+  <line x1="645" y1="95" x2="665" y2="95" stroke="#484f58" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Stage 5: Merge -->
+  <rect x="670" y="60" width="110" height="70" rx="10" fill="#21262d" stroke="#238636" stroke-width="2.5"/>
+  <text x="725" y="88" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22">🎉</text>
+  <text x="725" y="115" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#c9d1d9" font-weight="bold">Merge!</text>
+
+  <!-- Detail labels below -->
+  <text x="85" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Use PR template</text>
+  <text x="85" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Sign CLA</text>
+
+  <text x="250" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Resolves #issue</text>
+  <text x="250" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Issue-driven dev</text>
+
+  <text x="415" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">18 workflow checks</text>
+  <text x="415" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">All must pass ✓</text>
+
+  <text x="580" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">database-team</text>
+  <text x="580" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Conv. comments</text>
+
+  <text x="725" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Squash &amp; merge</text>
+  <text x="725" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">into develop</text>
+
+  <!-- Footer note -->
+  <text x="400" y="220" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="11" fill="#484f58" font-style="italic">Rebase with upstream develop before merging · At least 1 approval required · No "DO NOT MERGE" label</text>
+</svg>
