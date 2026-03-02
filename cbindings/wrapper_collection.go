@@ -19,9 +19,9 @@ extern Result AddIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int 
 CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedAddIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result EncryptedListIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result EncryptedDeleteIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result AddEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
+extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
@@ -202,7 +202,7 @@ func (c *Collection) AddEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedAddIndex(
+	res := ConvertAndFreeCResult(C.AddEncryptedIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,
@@ -233,7 +233,7 @@ func (c *Collection) DeleteEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedDeleteIndex(
+	res := ConvertAndFreeCResult(C.DeleteEncryptedIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		cFieldName,
@@ -254,7 +254,7 @@ func (c *Collection) ListEncryptedIndexes(
 	defer C.free(unsafe.Pointer(name))
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedListIndexes(C.uintptr_t(c.w.handle), name, cIdentity))
+	res := ConvertAndFreeCResult(C.ListEncryptedIndexes(C.uintptr_t(c.w.handle), name, cIdentity))
 
 	if res.Status != 0 {
 		return []client.EncryptedIndexDescription{}, errors.New(res.Error)

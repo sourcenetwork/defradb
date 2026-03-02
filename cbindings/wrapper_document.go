@@ -14,13 +14,13 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result Add(uintptr_t nodePtr, char* json, int isEncrypted,
+extern Result AddDocument(uintptr_t nodePtr, char* json, int isEncrypted,
 char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
-extern Result Delete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
+extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 CollectionOptions options, uintptr_t identityPtr);
-extern Result Get(uintptr_t nodePtr, char* docIDStr, int showDeleted,
+extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
-extern Result Update(uintptr_t nodePtr, char* docIDStr, char* filterStr,
+extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
@@ -77,7 +77,7 @@ func (c *Collection) AddDocument(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.Add(
+	res := ConvertAndFreeCResult(C.AddDocument(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -140,7 +140,7 @@ func (c *Collection) AddManyDocuments(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(C.Add(
+	res := ConvertAndFreeCResult(C.AddDocument(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		C.int(isEncrypted),
@@ -189,7 +189,7 @@ func (c *Collection) UpdateDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Update(
+	res := ConvertAndFreeCResult(C.UpdateDocument(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filter,
@@ -254,7 +254,7 @@ func (c *Collection) DeleteDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Delete(
+	res := ConvertAndFreeCResult(C.DeleteDocument(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		filter,
@@ -292,7 +292,7 @@ func (c *Collection) ExistsDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Get(
+	res := ConvertAndFreeCResult(C.GetDocument(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		cShowDeleted,
@@ -337,7 +337,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Update(
+	res := ConvertAndFreeCResult(C.UpdateDocument(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filterStr,
@@ -387,7 +387,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Delete(
+	res := ConvertAndFreeCResult(C.DeleteDocument(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filterStr,
@@ -435,7 +435,7 @@ func (c *Collection) GetDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.Get(
+	res := ConvertAndFreeCResult(C.GetDocument(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		cShowDeleted,
