@@ -82,9 +82,6 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestP2PUpdate_WithPCounterThreeNodeSimultaneousUpdate_NoError tests that when
-// three nodes concurrently increment the same pcounter field on the same document,
-// the final value is the sum of all increments after sync.
 func TestP2PUpdate_WithPCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.

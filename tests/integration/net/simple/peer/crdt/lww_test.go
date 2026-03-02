@@ -20,9 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved tests that
-// when two nodes concurrently update different LWW fields on the same document,
-// both field values are preserved after sync.
 func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

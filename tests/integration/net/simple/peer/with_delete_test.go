@@ -20,9 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestP2PWithSingleDocumentConcurrentDeleteAndUpdate tests that when one node
-// updates a document and another node concurrently deletes it, both nodes converge
-// to the deleted state after sync. P2P updates do not undelete documents.
 func TestP2PWithSingleDocumentConcurrentDeleteAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

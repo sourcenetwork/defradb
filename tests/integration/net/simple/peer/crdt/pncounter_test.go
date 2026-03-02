@@ -82,9 +82,6 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError tests that when
-// three nodes concurrently modify the same pncounter field (some incrementing,
-// some decrementing), the final value is the algebraic sum of all deltas after sync.
 func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
