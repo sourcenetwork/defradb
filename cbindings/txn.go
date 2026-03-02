@@ -23,8 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-//export TransactionCreate
-func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int) C.NewTxnResult {
+//export CreateTransaction
+func CreateTransaction(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int) C.NewTxnResult {
 	h := cgo.Handle(nodePtr)
 	n := h.Value().(*node.Node) //nolint:forcetypeassert
 
@@ -42,8 +42,8 @@ func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int
 	return returnNewTxnResultC(0, "", tx)
 }
 
-//export TransactionCommit
-func TransactionCommit(txnPtr C.uintptr_t) C.Result {
+//export CommitTransaction
+func CommitTransaction(txnPtr C.uintptr_t) C.Result {
 	h := cgo.Handle(txnPtr)
 	defer h.Delete()
 	txn := h.Value().(client.Txn) //nolint:forcetypeassert
@@ -56,8 +56,8 @@ func TransactionCommit(txnPtr C.uintptr_t) C.Result {
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export TransactionDiscard
-func TransactionDiscard(txnPtr C.uintptr_t) {
+//export DiscardTransaction
+func DiscardTransaction(txnPtr C.uintptr_t) {
 	// Avoid panic in the case of a double discard
 	defer func() {
 		if r := recover(); r != nil {

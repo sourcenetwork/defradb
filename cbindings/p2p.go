@@ -24,8 +24,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export P2PInfo
-func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export GetP2PInfo
+func GetP2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -45,8 +45,8 @@ func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(addresses))
 }
 
-//export P2PActivePeers
-func P2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export ListP2PActivePeers
+func ListP2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -67,8 +67,8 @@ func P2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(peers))
 }
 
-//export P2PreplicatorList
-func P2PreplicatorList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export ListP2PReplicators
+func ListP2PReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -86,8 +86,8 @@ func P2PreplicatorList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(reps))
 }
 
-//export P2PreplicatorAdd
-func P2PreplicatorAdd(nodePtr C.uintptr_t,
+//export AddP2PReplicator
+func AddP2PReplicator(nodePtr C.uintptr_t,
 	collections *C.char,
 	addresses *C.char,
 	identityPtr C.uintptr_t) C.Result {
@@ -114,8 +114,8 @@ func P2PreplicatorAdd(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PreplicatorDelete
-func P2PreplicatorDelete(nodePtr C.uintptr_t, collections *C.char, id *C.char, identityPtr C.uintptr_t) C.Result {
+//export DeleteP2PReplicator
+func DeleteP2PReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -138,8 +138,8 @@ func P2PreplicatorDelete(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionAdd
-func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export AddP2PCollection
+func AddP2PCollection(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -159,8 +159,8 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionDelete
-func P2PcollectionDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export DeleteP2PCollection
+func DeleteP2PCollection(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -180,8 +180,8 @@ func P2PcollectionDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionList
-func P2PcollectionList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export ListP2PCollections
+func ListP2PCollections(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -200,8 +200,8 @@ func P2PcollectionList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(cols))
 }
 
-//export P2PdocumentAdd
-func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export AddP2PDocument
+func AddP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -221,8 +221,8 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PdocumentDelete
-func P2PdocumentDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export DeleteP2PDocument
+func DeleteP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -242,8 +242,8 @@ func P2PdocumentDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.u
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PdocumentList
-func P2PdocumentList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export ListP2PDocuments
+func ListP2PDocuments(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -261,8 +261,8 @@ func P2PdocumentList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(cols))
 }
 
-//export P2PdocumentSync
-func P2PdocumentSync(nodePtr C.uintptr_t,
+//export SyncP2PDocuments
+func SyncP2PDocuments(nodePtr C.uintptr_t,
 	collection *C.char,
 	docIDs *C.char,
 	timeoutStr *C.char,
@@ -302,8 +302,8 @@ func P2PdocumentSync(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionSyncVersions
-func P2PcollectionSyncVersions(nodePtr C.uintptr_t,
+//export SyncP2PCollectionVersions
+func SyncP2PCollectionVersions(nodePtr C.uintptr_t,
 	versionIDs *C.char,
 	timeoutStr *C.char,
 	identityPtr C.uintptr_t) C.Result {
@@ -342,8 +342,8 @@ func P2PcollectionSyncVersions(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PbranchableCollectionSync
-func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
+//export SyncP2PBranchableCollection
+func SyncP2PBranchableCollection(nodePtr C.uintptr_t,
 	collectionID *C.char,
 	timeoutStr *C.char,
 	identityPtr C.uintptr_t) C.Result {
@@ -373,8 +373,8 @@ func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2Pconnect
-func P2Pconnect(nodePtr C.uintptr_t, peerAddresses *C.char, identityPtr C.uintptr_t) C.Result {
+//export ConnectP2PPeers
+func ConnectP2PPeers(nodePtr C.uintptr_t, peerAddresses *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {

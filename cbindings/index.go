@@ -25,8 +25,8 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export IndexAdd
-func IndexAdd(
+//export AddIndex
+func AddIndex(
 	nodePtr C.uintptr_t,
 	indexName *C.char,
 	fieldsStr *C.char,
@@ -92,8 +92,8 @@ func IndexAdd(
 	return returnC(marshalJSONToGoCResult(descWithID))
 }
 
-//export IndexList
-func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
+//export ListIndexes
+func ListIndexes(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -132,8 +132,8 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 	}
 }
 
-//export IndexDelete
-func IndexDelete(nodePtr C.uintptr_t,
+//export DeleteIndex
+func DeleteIndex(nodePtr C.uintptr_t,
 	indexName *C.char,
 	options C.CollectionOptions,
 	identityPtr C.uintptr_t) C.Result {

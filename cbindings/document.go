@@ -27,8 +27,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export Add
-func Add(
+//export AddDocument
+func AddDocument(
 	nodePtr C.uintptr_t,
 	json *C.char,
 	isEncrypted C.int,
@@ -97,8 +97,8 @@ func Add(
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export Delete
-func Delete(nodePtr C.uintptr_t,
+//export DeleteDocument
+func DeleteDocument(nodePtr C.uintptr_t,
 	docIDStr *C.char,
 	filterStr *C.char,
 	opts C.CollectionOptions,
@@ -160,8 +160,8 @@ func Delete(nodePtr C.uintptr_t,
 	}
 }
 
-//export Get
-func Get(nodePtr C.uintptr_t,
+//export GetDocument
+func GetDocument(nodePtr C.uintptr_t,
 	docIDStr *C.char,
 	showDeleted C.int,
 	opts C.CollectionOptions,
@@ -207,8 +207,8 @@ func Get(nodePtr C.uintptr_t,
 	return returnC(marshalJSONToGoCResult(docMap))
 }
 
-//export Update
-func Update(
+//export UpdateDocument
+func UpdateDocument(
 	nodePtr C.uintptr_t,
 	docIDStr *C.char,
 	filterStr *C.char,

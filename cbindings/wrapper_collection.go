@@ -14,16 +14,16 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexAdd(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result AddIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
+extern Result EncryptedAddIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result EncryptedListIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
+extern Result EncryptedDeleteIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern void IdentityFree(uintptr_t identityPtr);
+extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
 
@@ -76,7 +76,7 @@ func (c *Collection) AddIndex(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexDescName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -100,7 +100,7 @@ func (c *Collection) AddIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(C.IndexAdd(
+	res := ConvertAndFreeCResult(C.AddIndex(
 		C.uintptr_t(c.w.handle),
 		cIndexDescName,
 		fields,
@@ -135,7 +135,7 @@ func (c *Collection) DeleteIndex(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -143,7 +143,7 @@ func (c *Collection) DeleteIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.IndexDelete(
+	res := ConvertAndFreeCResult(C.DeleteIndex(
 		C.uintptr_t(c.w.handle),
 		cIndexName,
 		copts,
@@ -168,7 +168,7 @@ func (c *Collection) ListIndexes(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -176,7 +176,7 @@ func (c *Collection) ListIndexes(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), copts, cIdentity))
+	res := ConvertAndFreeCResult(C.ListIndexes(C.uintptr_t(c.w.handle), copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)
@@ -200,9 +200,9 @@ func (c *Collection) AddEncryptedIndex(
 	defer C.free(unsafe.Pointer(fieldName))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedIndexAdd(
+	res := ConvertAndFreeCResult(C.EncryptedAddIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,
@@ -231,9 +231,9 @@ func (c *Collection) DeleteEncryptedIndex(
 	defer C.free(unsafe.Pointer(cFieldName))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
+	res := ConvertAndFreeCResult(C.EncryptedDeleteIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		cFieldName,
@@ -252,9 +252,9 @@ func (c *Collection) ListEncryptedIndexes(
 	name := C.CString(c.def.Name)
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(name))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(C.uintptr_t(c.w.handle), name, cIdentity))
+	res := ConvertAndFreeCResult(C.EncryptedListIndexes(C.uintptr_t(c.w.handle), name, cIdentity))
 
 	if res.Status != 0 {
 		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
@@ -278,7 +278,7 @@ func (c *Collection) Truncate(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion

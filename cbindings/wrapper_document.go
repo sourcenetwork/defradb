@@ -22,7 +22,7 @@ extern Result Get(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result Update(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern void IdentityFree(uintptr_t identityPtr);
+extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
 
@@ -62,7 +62,7 @@ func (c *Collection) AddDocument(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -117,7 +117,7 @@ func (c *Collection) AddManyDocuments(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -181,7 +181,7 @@ func (c *Collection) UpdateDocument(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(updater))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -246,7 +246,7 @@ func (c *Collection) DeleteDocument(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -284,7 +284,7 @@ func (c *Collection) ExistsDocument(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -329,7 +329,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cUpdater))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -379,7 +379,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -427,7 +427,7 @@ func (c *Collection) GetDocument(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion

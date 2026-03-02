@@ -24,8 +24,8 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export EncryptedIndexAdd
-func EncryptedIndexAdd(
+//export AddEncryptedIndex
+func AddEncryptedIndex(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
@@ -60,8 +60,8 @@ func EncryptedIndexAdd(
 	return returnC(marshalJSONToGoCResult(descWithID))
 }
 
-//export EncryptedIndexList
-func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char, identityPtr C.uintptr_t) C.Result {
+//export ListEncryptedIndexes
+func ListEncryptedIndexes(nodePtr C.uintptr_t, collectionName *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx, err := contextWithIdentity(context.Background(), identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -103,8 +103,8 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char, identityPtr
 	}
 }
 
-//export EncryptedIndexDelete
-func EncryptedIndexDelete(
+//export DeleteEncryptedIndex
+func DeleteEncryptedIndex(
 	nodePtr C.uintptr_t, collectionName *C.char, fieldName *C.char, identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()

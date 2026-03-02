@@ -226,13 +226,13 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	indexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/index",
 	}
-	indexAddRequestSchema := &openapi3.SchemaRef{
+	addIndexRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/add_index",
 	}
 	encryptedIndexSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/encrypted_index",
 	}
-	encryptedAddIndexRequestSchema := &openapi3.SchemaRef{
+	addEncryptedIndexRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/add_encrypted_index",
 	}
 
@@ -306,7 +306,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	addIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(indexAddRequestSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(addIndexRequestSchema))
 	addIndexResponse := openapi3.NewResponse().
 		WithDescription("Index description").
 		WithJSONSchemaRef(indexSchema)
@@ -390,7 +390,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	addEncryptedIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(encryptedAddIndexRequestSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(addEncryptedIndexRequestSchema))
 	addEncryptedIndexResponse := openapi3.NewResponse().
 		WithDescription("Encrypted index description").
 		WithJSONSchemaRef(encryptedIndexSchema)
