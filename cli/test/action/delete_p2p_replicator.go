@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// P2PReplicatorDelete executes the `client p2p replicator delete` command.
-type P2PReplicatorDelete struct {
+// DeleteP2PReplicator executes the `client p2p replicator delete` command.
+type DeleteP2PReplicator struct {
 	stateful
 	augmented
 
@@ -31,9 +31,9 @@ type P2PReplicatorDelete struct {
 	ExpectError string
 }
 
-var _ Action = (*P2PReplicatorDelete)(nil)
+var _ Action = (*DeleteP2PReplicator)(nil)
 
-func (a *P2PReplicatorDelete) Execute() {
+func (a *DeleteP2PReplicator) Execute() {
 	args := []string{"client", "p2p", "replicator", "delete"}
 
 	if a.Collections != nil {

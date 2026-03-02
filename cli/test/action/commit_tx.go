@@ -11,39 +11,25 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/stretchr/testify/require"
 )
 
-// P2PConnect executes the `client p2p connect` command.
-type P2PConnect struct {
+// CommitTx executes the `client tx commit` command using the txn id at the given
+// state-index.
+type CommitTx struct {
 	stateful
-	augmented
 
-	// The addresses to connect to (required).
-	Addresses []string
-
-	// ExpectError is the expected error string. If empty, no error is expected.
-	ExpectError string
+	TxnIndex int
 }
 
-var _ Action = (*P2PConnect)(nil)
+var _ Action = (*CommitTx)(nil)
 
-func (a *P2PConnect) Execute() {
-	args := []string{"client", "p2p", "connect"}
-
-	if a.Addresses != nil {
-		args = append(args, a.Addresses...)
-	}
-
+func (a *CommitTx) Execute() {
+	args := []string{"client", "tx", "commit", fmt.Sprint(a.s.Txns[a.TxnIndex])}
 	args = a.AppendDirections(args)
 
 	err := execute(a.s.Ctx, args)
-
-	if a.ExpectError != "" {
-		require.Error(a.s.T, err)
-		require.Contains(a.s.T, err.Error(), a.ExpectError)
-		return
-	}
-
 	require.NoError(a.s.T, err)
 }

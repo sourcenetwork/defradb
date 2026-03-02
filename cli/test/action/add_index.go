@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// IndexAdd executes the `client index add` command and requires that the returned
+// AddIndex executes the `client index add` command and requires that the returned
 // result matches the expected value.
-type IndexAdd struct {
+type AddIndex struct {
 	stateful
 	augmented
 
@@ -46,9 +46,9 @@ type IndexAdd struct {
 	ExpectError string
 }
 
-var _ Action = (*IndexAdd)(nil)
+var _ Action = (*AddIndex)(nil)
 
-func (a *IndexAdd) Execute() {
+func (a *AddIndex) Execute() {
 	args := []string{"client", "index", "add"}
 
 	if a.Collection != "" {

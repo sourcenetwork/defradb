@@ -11,38 +11,40 @@
 package action
 
 import (
+	"strings"
+
 	"github.com/stretchr/testify/require"
 )
 
-// IndexDelete executes the `client index delete` command.
-type IndexDelete struct {
+// AddP2PReplicator executes the `client p2p replicator add` command.
+type AddP2PReplicator struct {
 	stateful
 	augmented
 
-	// The collection name containing the index (required).
-	Collection string
+	// The addresses to connect to (required).
+	Addresses []string
 
-	// The name of the index to delete (required).
-	Name string
+	// The collections to replicate to the given addresses (optional).
+	Collections []string
 
 	// ExpectError is the expected error string. If empty, no error is expected.
 	ExpectError string
 }
 
-var _ Action = (*IndexDelete)(nil)
+var _ Action = (*AddP2PReplicator)(nil)
 
-func (a *IndexDelete) Execute() {
-	args := []string{"client", "index", "delete"}
+func (a *AddP2PReplicator) Execute() {
+	args := []string{"client", "p2p", "replicator", "add"}
 
-	if a.Collection != "" {
-		args = append(args, "--collection", a.Collection)
+	if a.Collections != nil {
+		args = append(args, "-c")
+		args = append(args, strings.Join(a.Collections, ","))
 	}
 
-	if a.Name != "" {
-		args = append(args, "--name", a.Name)
+	if a.Addresses != nil {
+		args = append(args, a.Addresses...)
 	}
 
-	args = append(args, a.AdditionalArgs...)
 	args = a.AppendDirections(args)
 
 	err := execute(a.s.Ctx, args)

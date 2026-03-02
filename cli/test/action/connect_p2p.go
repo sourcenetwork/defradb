@@ -11,35 +11,25 @@
 package action
 
 import (
-	"strings"
-
 	"github.com/stretchr/testify/require"
 )
 
-// P2PReplicatorAdd executes the `client p2p replicator add` command.
-type P2PReplicatorAdd struct {
+// ConnectP2P executes the `client p2p connect` command.
+type ConnectP2P struct {
 	stateful
 	augmented
 
 	// The addresses to connect to (required).
 	Addresses []string
 
-	// The collections to replicate to the given addresses (optional).
-	Collections []string
-
 	// ExpectError is the expected error string. If empty, no error is expected.
 	ExpectError string
 }
 
-var _ Action = (*P2PReplicatorAdd)(nil)
+var _ Action = (*ConnectP2P)(nil)
 
-func (a *P2PReplicatorAdd) Execute() {
-	args := []string{"client", "p2p", "replicator", "add"}
-
-	if a.Collections != nil {
-		args = append(args, "-c")
-		args = append(args, strings.Join(a.Collections, ","))
-	}
+func (a *ConnectP2P) Execute() {
+	args := []string{"client", "p2p", "connect"}
 
 	if a.Addresses != nil {
 		args = append(args, a.Addresses...)

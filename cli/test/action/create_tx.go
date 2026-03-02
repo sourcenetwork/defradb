@@ -12,15 +12,15 @@ package action
 
 import "github.com/stretchr/testify/require"
 
-// TxCreate executes the `client tx create` command and appends the returned transaction id
+// CreateTx executes the `client tx create` command and appends the returned transaction id
 // to state.Txns.
-type TxCreate struct {
+type CreateTx struct {
 	stateful
 }
 
-var _ Action = (*TxCreate)(nil)
+var _ Action = (*CreateTx)(nil)
 
-func (a *TxCreate) Execute() {
+func (a *CreateTx) Execute() {
 	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections([]string{"client", "tx", "create"}))
 	require.NoError(a.s.T, err)
 

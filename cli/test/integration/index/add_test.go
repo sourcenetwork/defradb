@@ -32,7 +32,7 @@ func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
@@ -62,7 +62,7 @@ func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UsersByNameAndAge",
 				Fields:     []string{"name:ASC", "age:DESC"},
@@ -93,7 +93,7 @@ func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "UniqueEmail",
 				Fields:     []string{"email"},
@@ -124,7 +124,7 @@ func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Fields:     []string{"age"},
 				Expected: immutable.Some(client.IndexDescription{
@@ -144,7 +144,7 @@ func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 func TestIndexAdd_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection:  "NonExistentCollection",
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -159,7 +159,7 @@ func TestIndexAdd_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 func TestIndexAdd_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexAdd{
+			&action.AddIndex{
 				// Collection is empty
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -182,7 +182,7 @@ func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "EmptyIndex",
 				// Fields is empty
@@ -205,7 +205,7 @@ func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection:  "User",
 				Name:        "InvalidOrderIndex",
 				Fields:      []string{"name:INVALID"},
@@ -228,7 +228,7 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
@@ -251,12 +251,12 @@ func TestIndexAdd_WithDuplicateName_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection: "User",
 				Name:       "DuplicateIndex",
 				Fields:     []string{"name"},
 			},
-			&action.IndexAdd{
+			&action.AddIndex{
 				Collection:  "User",
 				Name:        "DuplicateIndex",
 				Fields:      []string{"age"},

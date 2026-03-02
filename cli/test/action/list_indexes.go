@@ -16,9 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// IndexList executes the `client index list` command and requires that the returned
+// ListIndexes executes the `client index list` command and requires that the returned
 // result matches the expected value.
-type IndexList struct {
+type ListIndexes struct {
 	stateful
 	augmented
 
@@ -36,9 +36,9 @@ type IndexList struct {
 	ExpectError string
 }
 
-var _ Action = (*IndexList)(nil)
+var _ Action = (*ListIndexes)(nil)
 
-func (a *IndexList) Execute() {
+func (a *ListIndexes) Execute() {
 	args := []string{"client", "index", "list"}
 
 	if a.Collection != "" {

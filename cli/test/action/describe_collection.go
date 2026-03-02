@@ -16,9 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// CollectionDescribe executes the `client collection describe` command and requires that the returned
+// DescribeCollection executes the `client collection describe` command and requires that the returned
 // result matches the expected value.
-type CollectionDescribe struct {
+type DescribeCollection struct {
 	stateful
 	augmented
 
@@ -32,9 +32,9 @@ type CollectionDescribe struct {
 	Expected []client.CollectionVersion
 }
 
-var _ Action = (*CollectionDescribe)(nil)
+var _ Action = (*DescribeCollection)(nil)
 
-func (a *CollectionDescribe) Execute() {
+func (a *DescribeCollection) Execute() {
 	args := []string{"client", "collection", "describe"}
 	args = append(args, a.AdditionalArgs...)
 	args = a.AppendDirections(args)
