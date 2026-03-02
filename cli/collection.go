@@ -47,6 +47,14 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			if err := setContextClient(cmd); err != nil {
 				return err
 			}
+
+			// The 'add' subcommand creates new collections and doesn't need
+			// to resolve an existing collection from the context.
+			// Otherwise we will also hit the nac gate for collection 'get' before.
+			if cmd.Name() == "add" {
+				return nil
+			}
+
 			cliClient := mustGetContextCLIClient(cmd)
 
 			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
