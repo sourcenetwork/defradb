@@ -368,6 +368,9 @@ type AddEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListEncryptedIndexes will attempt to list encrypted index from the given collection
@@ -394,6 +397,9 @@ type ListEncryptedIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
@@ -442,6 +448,9 @@ type DeleteEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result

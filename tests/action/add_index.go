@@ -11,8 +11,6 @@
 package action
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -66,7 +64,6 @@ var _ Action = (*AddIndex)(nil)
 var _ Stateful = (*AddIndex)(nil)
 
 func (a *AddIndex) Execute() {
-	fmt.Println("Entering AddIndex Execute")
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, nodeID := range nodeIDs {
 
@@ -96,7 +93,6 @@ func (a *AddIndex) Execute() {
 		}
 
 		collection := collections[a.CollectionID]
-		fmt.Println("Collection that was found in AddIndex: ", collection.Name())
 
 		indexDesc := client.IndexAddRequest{
 			Name: a.IndexName,

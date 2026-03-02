@@ -11,6 +11,7 @@
 package action
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -37,6 +38,9 @@ type Truncate struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*Truncate)(nil)
@@ -44,16 +48,37 @@ var _ Stateful = (*Truncate)(nil)
 
 func (a *Truncate) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index := range nodes {
+	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if a.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionIndex]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+		collection := collections[a.CollectionIndex]
 
 		opts := options.CollectionTruncate()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := collection.Truncate(a.s.Ctx, opts)
+		err = collection.Truncate(a.s.Ctx, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

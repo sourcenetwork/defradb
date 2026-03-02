@@ -79,7 +79,6 @@ func (c *Collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	// Checked
 	var txn datastore.Txn
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if hadTxn {
@@ -154,7 +153,6 @@ func (c *Collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
-	// Checked
 	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
 	if addOpts.EncryptDoc {
@@ -219,7 +217,6 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
-	// Checked
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
 	document, err := doc.ToJSONPatch()
@@ -266,7 +263,6 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
-	// Checked
 	saveOpt := utils.NewOptions(opts...)
 	getOpts := options.CollectionGet().SetShowDeleted(true)
 	if saveOpt.Identity.HasValue() {
@@ -291,7 +287,6 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
-	// Checked
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
 
@@ -371,7 +366,6 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	// Checked
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -527,7 +521,6 @@ func (c *Collection) AddIndex(
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
-	// Checked
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")
@@ -622,7 +615,6 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
-	// Checked
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")

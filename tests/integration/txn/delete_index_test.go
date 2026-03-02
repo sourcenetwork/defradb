@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 // This test runs DeleteIndex inside of a transaction, and illustrates that committing the transaction
@@ -31,9 +32,75 @@ func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteIndex{
-				IndexName: "User_name_ASC",
+				TransactionID: immutable.Some(1),
+				IndexName:     "User_name_ASC",
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
 			},
 			&action.ListIndexes{
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test runs DeleteIndex inside of a transaction, and illustrates that not committing the transaction
+// results in the index still existing.
+func TestTxn_DeleteIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String @index
+					}
+				`,
+			},
+			&action.DeleteIndex{
+				TransactionID: immutable.Some(1),
+				IndexName:     "User_name_ASC",
+			},
+			&action.ListIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test runs DeleteIndex inside of a transaction, and illustrates that transactional isolation
+// is maintained, and it can see indexes on schemas created in the same transaction.
+func TestTxn_DeleteIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				TransactionID: immutable.Some(1),
+				Schema: `
+					type User {
+						name: String @index
+					}
+				`,
+			},
+			&action.DeleteIndex{
+				TransactionID: immutable.Some(1),
+				IndexName:     "User_name_ASC",
+			},
+			&action.ListIndexes{
+				TransactionID:   immutable.Some(1),
 				ExpectedIndexes: []client.IndexDescription{},
 			},
 		},

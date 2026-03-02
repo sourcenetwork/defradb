@@ -34,6 +34,15 @@ const hardDeleteChunkSize int = 10000
 func (c *collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -47,13 +56,20 @@ func (c *collection) Truncate(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	err = c.truncate(ctx)
 	if err != nil {
 		return err
 	}
-	return txn.Commit()
+
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 func (c *collection) truncate(

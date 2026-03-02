@@ -114,17 +114,14 @@ func (txn *Transaction) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
-	// Checked
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
 func (txn *Transaction) AddSchema(
-	// Checked
 	ctx context.Context,
 	sdl string,
 	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
@@ -135,7 +132,6 @@ func (txn *Transaction) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
 }
@@ -145,7 +141,6 @@ func (txn *Transaction) SetActiveCollectionVersion(
 	version string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
@@ -156,7 +151,6 @@ func (txn *Transaction) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
@@ -164,7 +158,6 @@ func (txn *Transaction) AddView(
 func (txn *Transaction) RefreshViews(
 	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
 ) error {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
@@ -172,7 +165,6 @@ func (txn *Transaction) RefreshViews(
 func (txn *Transaction) SetMigration(
 	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetMigration(ctx, config, opts...)
 }
@@ -182,7 +174,6 @@ func (txn *Transaction) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddLens(ctx, lens, opts...)
 }
@@ -191,7 +182,6 @@ func (txn *Transaction) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListLenses(ctx, opts...)
 }
@@ -201,7 +191,6 @@ func (txn *Transaction) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
@@ -210,7 +199,6 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }
@@ -219,7 +207,6 @@ func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListIndexes(ctx, opts...)
 }
@@ -229,7 +216,6 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
-	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }

@@ -19,40 +19,42 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs ListIndexes inside of a transaction with AddSchema, and illustrates that
-// the indexes are seen by the action.
-func TestTxn_ListIndexes_InsideTxn_Succeeds(t *testing.T) {
+// This test runs AddEncryptedIndex inside of a transaction, and illustrates that transactional isolation
+// is maintained, and that it can see indexes on schemas created in the same transaction.
+func TestTxn_AddEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				TransactionID: immutable.Some(1),
 				Schema: `
 					type User {
-						name: String @index
+						name: String 
 						age: Int
 					}
 				`,
 			},
 			&action.AddDoc{
 				TransactionID: immutable.Some(1),
+				CollectionID:  0,
 				Doc: `
 					{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			&action.ListIndexes{
+			testUtils.AddEncryptedIndex{
 				TransactionID: immutable.Some(1),
-				CollectionID:  0,
-				ExpectedIndexes: []client.IndexDescription{
+				FieldName:     "name",
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
+			},
+			testUtils.ListEncryptedIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
-						Name: "User_name_ASC",
-						ID:   1,
-						Fields: []client.IndexedFieldDescription{
-							{
-								Name: "name",
-							},
-						},
+						FieldName: "name",
+						Type:      client.EncryptedIndexTypeEquality,
 					},
 				},
 			},

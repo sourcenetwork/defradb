@@ -1445,7 +1445,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		}
 
 		collection := collections[action.CollectionID]
-		fmt.Println("Collection: ", collection.Name())
 
 		opts := options.CollectionUpdateWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1482,8 +1481,30 @@ func addEncryptedIndex(
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if action.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+		collection := collections[action.CollectionID]
+
 		if action.FieldName == "" {
 			s.T.Fatalf("fieldName is required for encrypted index")
 		}
@@ -1499,7 +1520,7 @@ func addEncryptedIndex(
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				_, err := collection.AddEncryptedIndex(s.Ctx, indexDesc, opts)
@@ -1525,8 +1546,32 @@ func listEncryptedIndexes(
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collections := s.Nodes[nodeID].Collections
+	for index, nodeID := range nodeIDs {
+
+		node := s.Nodes[nodeID]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if action.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		}
+
+		nodeID := nodeIDs[index]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
 
 		opts := options.CollectionListEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1534,7 +1579,7 @@ func listEncryptedIndexes(
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
 				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
@@ -1609,8 +1654,30 @@ func deleteEncryptedIndex(
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if action.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+		collection := collections[action.CollectionID]
+
 		if action.FieldName == "" {
 			s.T.Fatalf("fieldName is required for deleting encrypted index")
 		}
@@ -1621,7 +1688,7 @@ func deleteEncryptedIndex(
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName, opts)
