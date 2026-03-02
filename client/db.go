@@ -173,15 +173,15 @@ type Store interface {
 		opts ...options.Enumerable[options.VerifySignatureOptions],
 	) error
 
-	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
+	// AddCollection takes the provided GQL SDL and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//
-	// All schema types provided must not exist prior to calling this, and they may not reference existing
-	// types previously defined.
-	AddSchema(
+	// All collection types provided must not exist prior to calling this, and they may not reference
+	// existing types previously defined.
+	AddCollection(
 		ctx context.Context,
 		sdl string,
-		opts ...options.Enumerable[options.AddSchemaOptions],
+		opts ...options.Enumerable[options.AddCollectionOptions],
 	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
@@ -237,7 +237,7 @@ type Store interface {
 	//
 	//
 	// A GQL SDL that matches its output type must also be provided.  There can only be one `type` declaration,
-	// any nested objects must be declared as embedded/schema-only types using the `interface` keyword.
+	// any nested objects must be declared as embedded-only types using the `interface` keyword.
 	// Relations must only be specified on the parent side of the relationship.  For example:
 	//
 	// type AuthorView {
@@ -316,7 +316,7 @@ type Store interface {
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
 	//
-	// Inactive collections are not returned by default unless a specific schema version ID
+	// Inactive collections are not returned by default unless a specific collection version ID
 	// is provided.
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls

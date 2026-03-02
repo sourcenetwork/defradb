@@ -30,7 +30,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return cmd.Usage()
+				return client.ErrCollectionNotFound
 			}
 
 			ctx := cmd.Context()
@@ -42,15 +42,15 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
+				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
 
-				_, err = col.Delete(ctx, docID, deleteOpt)
+				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
 				deleteWithFilterOpt := options.WithIdentity(
-					options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
+					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
 
-				res, err := col.DeleteWithFilter(ctx, filter, deleteWithFilterOpt)
+				res, err := col.DeleteDocumentsWithFilter(ctx, filter, deleteWithFilterOpt)
 				if err != nil {
 					return err
 				}

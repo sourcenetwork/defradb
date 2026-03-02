@@ -46,17 +46,17 @@ func OptionFieldDirective(typeName, field, directive string) Option {
 type Generator struct {
 	ctx context.Context
 
-	schema string
-	types  []any
+	collectionName string
+	types          []any
 	// map of type name to field name to list of directives
 	directives map[string]map[string][]string
 }
 
-func ForSchema(ctx context.Context, schemaName string, options ...Option) Generator {
+func ForCollection(ctx context.Context, collectionName string, options ...Option) Generator {
 	g := Generator{
-		ctx:    ctx,
-		schema: schemaName,
-		types:  registeredFixtures[schemaName],
+		ctx:            ctx,
+		collectionName: collectionName,
+		types:          registeredFixtures[collectionName],
 	}
 
 	for _, o := range options {

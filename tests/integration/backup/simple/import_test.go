@@ -64,7 +64,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 		Actions: []any{
 			testUtils.BackupImport{
 				ImportContent: `{"Invalid":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
-				ExpectedError: "failed to get collection: key not found. Name: Invalid",
+				ExpectedError: "failed to get collection: collection not found. Name: Invalid",
 			},
 		},
 	}

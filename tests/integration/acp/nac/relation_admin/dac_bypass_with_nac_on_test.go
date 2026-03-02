@@ -38,9 +38,9 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -112,9 +112,9 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanDACBypass(t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -186,9 +186,9 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -269,9 +269,9 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanDACBypass(t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -352,9 +352,9 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -433,9 +433,9 @@ func TestNAC_AdminRelation_PublicDocument_MaterializedView_CanAccessPublicDocume
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -514,9 +514,9 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -596,9 +596,9 @@ func TestNAC_AdminRelation_DACByPassRevokation_MaterializedView_CanNotDACBypass(
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),

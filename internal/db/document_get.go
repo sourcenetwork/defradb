@@ -26,10 +26,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-func (c *collection) Get(
+func (c *collection) GetDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

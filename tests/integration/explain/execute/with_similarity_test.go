@@ -21,8 +21,8 @@ import (
 func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type User {
+			&action.AddCollection{
+				SDL: `type User {
 					name: String
 					pointsList: [Float64!]
 				}`,

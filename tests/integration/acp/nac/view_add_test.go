@@ -28,9 +28,9 @@ func TestNAC_GatesViewAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -67,9 +67,9 @@ func TestNAC_GatesViewAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -107,9 +107,9 @@ func TestNAC_GatesViewAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

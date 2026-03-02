@@ -34,8 +34,8 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 			state.JSClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable {
 						name: String
 					}

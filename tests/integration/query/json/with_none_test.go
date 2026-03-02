@@ -20,8 +20,8 @@ import (
 func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
@@ -61,8 +61,8 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,

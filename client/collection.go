@@ -19,7 +19,7 @@ import (
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
-// host, and many collections may share the same schema.
+// host, and many collection versions may share the same definition.
 //
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
@@ -29,77 +29,85 @@ type Collection interface {
 	// VersionID returns the VersionID of this Collection.
 	VersionID() string
 
-	// CollectionID returns the Root of the Schema used to define this Collection.
+	// CollectionID returns the Root of the definition used to define this Collection.
 	CollectionID() string
 
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion
 
-	// Add a new document.
+	// AddDocument adds a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Add(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
+	AddDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.AddDocumentOptions]) error
 
-	// AddMany new documents.
+	// AddManyDocuments adds new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	AddMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionAddOptions]) error
+	AddManyDocuments(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.AddDocumentOptions]) error
 
-	// Update an existing document with the new values.
+	// UpdateDocument updates an existing document with the new values.
 	//
 	// Any field that needs to be removed or cleared should call doc.Clear(field) before.
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, docs *Document, opts ...options.Enumerable[options.CollectionUpdateOptions]) error
+	UpdateDocument(ctx context.Context, docs *Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error
 
-	// Save the given document in the database.
+	// SaveDocument saves the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionSaveOptions]) error
+	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
-	// Delete will attempt to delete a document by DocID.
+	// DeleteDocument will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionDeleteOptions]) (bool, error)
+	DeleteDocument(
+		ctx context.Context,
+		docID DocID,
+		opts ...options.Enumerable[options.DeleteDocumentOptions],
+	) (bool, error)
 
-	// Exists checks if a given document exists with supplied DocID.
+	// ExistsDocument checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionExistsOptions]) (bool, error)
+	ExistsDocument(
+		ctx context.Context,
+		docID DocID,
+		opts ...options.Enumerable[options.ExistsDocumentOptions],
+	) (bool, error)
 
-	// UpdateWithFilter updates using a filter to target documents for update.
+	// UpdateDocumentsWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
-	UpdateWithFilter(
+	UpdateDocumentsWithFilter(
 		ctx context.Context,
 		filter any,
 		updater string,
-		opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
+		opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 	) (*UpdateResult, error)
 
-	// DeleteWithFilter deletes documents matching the given filter.
+	// DeleteDocumentsWithFilter deletes documents matching the given filter.
 	//
 	// This operation will soft-delete documents related to the given filter and update the composite block
 	// with a status of `Deleted`.
-	DeleteWithFilter(
+	DeleteDocumentsWithFilter(
 		ctx context.Context,
 		filter any,
-		opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
+		opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 	) (*DeleteResult, error)
 
-	// Get returns the document with the given DocID.
+	// GetDocument returns the document with the given DocID.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	Get(
+	GetDocument(
 		ctx context.Context,
 		docID DocID,
-		opts ...options.Enumerable[options.CollectionGetOptions],
+		opts ...options.Enumerable[options.GetDocumentOptions],
 	) (*Document, error)
 
 	// AddIndex adds a new index on the collection.

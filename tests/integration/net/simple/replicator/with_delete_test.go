@@ -24,8 +24,8 @@ func TestP2POneToOneReplicatorDeletesDocAddedBeforeReplicatorConfig(t *testing.T
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -80,8 +80,8 @@ func TestP2POneToOneReplicatorDeletesDocAddedBeforeReplicatorConfigWithNodesInve
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int

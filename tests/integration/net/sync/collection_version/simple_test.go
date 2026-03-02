@@ -26,9 +26,9 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -100,11 +100,11 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				NodeID: immutable.Some(0),
 				// Note - at the time of writing, having two fields of different kinds is important
 				// and an important bug did not surface when testing with a single field/kind.
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

@@ -29,8 +29,8 @@ func TestMutationAdd_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int

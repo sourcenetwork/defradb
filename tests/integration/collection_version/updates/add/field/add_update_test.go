@@ -17,14 +17,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterCollectionUpdateAndVersionJoin(t *testing.T) {
 	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -110,14 +110,14 @@ func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterCollectionUpdateAndCommitQuery(t *testing.T) {
 	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

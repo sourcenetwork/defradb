@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// CollectionAddOptions contains options for Add and AddMany operations.
-type CollectionAddOptions struct {
+// AddDocumentOptions contains options for AddDocument and AddManyDocuments operations.
+type AddDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 	// EncryptDoc enables document encryption when adding a document.
@@ -27,39 +27,39 @@ type CollectionAddOptions struct {
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionAddOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddDocumentOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionAddOptionsBuilder is a builder for CollectionAddOptions.
-type CollectionAddOptionsBuilder struct {
-	enumerableBuilder[CollectionAddOptions]
+// AddDocumentOptionsBuilder is a builder for AddDocumentOptions.
+type AddDocumentOptionsBuilder struct {
+	enumerableBuilder[AddDocumentOptions]
 }
 
-// CollectionAdd creates a new CollectionAddOptionsBuilder instance.
-func CollectionAdd() *CollectionAddOptionsBuilder {
-	return &CollectionAddOptionsBuilder{}
+// AddDocument creates a new AddDocumentOptionsBuilder instance.
+func AddDocument() *AddDocumentOptionsBuilder {
+	return &AddDocumentOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionAddOptionsBuilder) SetIdentity(id identity.Identity) *CollectionAddOptionsBuilder {
-	b.append(func(opts *CollectionAddOptions) {
+func (b *AddDocumentOptionsBuilder) SetIdentity(id identity.Identity) *AddDocumentOptionsBuilder {
+	b.append(func(opts *AddDocumentOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // SetEncryptDoc enables or disables document encryption.
-func (b *CollectionAddOptionsBuilder) SetEncryptDoc(encrypt bool) *CollectionAddOptionsBuilder {
-	b.append(func(opts *CollectionAddOptions) {
+func (b *AddDocumentOptionsBuilder) SetEncryptDoc(encrypt bool) *AddDocumentOptionsBuilder {
+	b.append(func(opts *AddDocumentOptions) {
 		opts.EncryptDoc = encrypt
 	})
 	return b
 }
 
 // SetEncryptedFields specifies fields to be encrypted.
-func (b *CollectionAddOptionsBuilder) SetEncryptedFields(fields []string) *CollectionAddOptionsBuilder {
-	b.append(func(opts *CollectionAddOptions) {
+func (b *AddDocumentOptionsBuilder) SetEncryptedFields(fields []string) *AddDocumentOptionsBuilder {
+	b.append(func(opts *AddDocumentOptions) {
 		if fields != nil {
 			opts.EncryptedFields = make([]string, len(fields))
 			copy(opts.EncryptedFields, fields)
@@ -68,75 +68,75 @@ func (b *CollectionAddOptionsBuilder) SetEncryptedFields(fields []string) *Colle
 	return b
 }
 
-// CollectionUpdateOptions contains options for Update operation.
-type CollectionUpdateOptions struct {
+// UpdateDocumentOptions contains options for UpdateDocument operation.
+type UpdateDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionUpdateOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *UpdateDocumentOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionUpdateOptionsBuilder is a builder for CollectionUpdateOptions.
-type CollectionUpdateOptionsBuilder struct {
-	enumerableBuilder[CollectionUpdateOptions]
+// UpdateDocumentOptionsBuilder is a builder for UpdateDocumentOptions.
+type UpdateDocumentOptionsBuilder struct {
+	enumerableBuilder[UpdateDocumentOptions]
 }
 
-// CollectionUpdate creates a new CollectionUpdateOptionsBuilder instance.
-func CollectionUpdate() *CollectionUpdateOptionsBuilder {
-	return &CollectionUpdateOptionsBuilder{}
+// UpdateDocument creates a new UpdateDocumentOptionsBuilder instance.
+func UpdateDocument() *UpdateDocumentOptionsBuilder {
+	return &UpdateDocumentOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionUpdateOptionsBuilder) SetIdentity(id identity.Identity) *CollectionUpdateOptionsBuilder {
-	b.append(func(opts *CollectionUpdateOptions) {
+func (b *UpdateDocumentOptionsBuilder) SetIdentity(id identity.Identity) *UpdateDocumentOptionsBuilder {
+	b.append(func(opts *UpdateDocumentOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
-type CollectionSaveOptions = CollectionAddOptions
+type SaveDocumentOptions = AddDocumentOptions
 
-type CollectionSaveOptionsBuilder = CollectionAddOptionsBuilder
+type SaveDocumentOptionsBuilder = AddDocumentOptionsBuilder
 
-// CollectionSave creates a new CollectionSaveOptionsBuilder instance.
-func CollectionSave() *CollectionSaveOptionsBuilder {
-	return &CollectionSaveOptionsBuilder{}
+// SaveDocument creates a new SaveDocumentOptionsBuilder instance.
+func SaveDocument() *SaveDocumentOptionsBuilder {
+	return &SaveDocumentOptionsBuilder{}
 }
 
-// CollectionDeleteOptions contains options for Delete operation.
-type CollectionDeleteOptions struct {
+// DeleteDocumentOptions contains options for DeleteDocument operation.
+type DeleteDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionDeleteOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *DeleteDocumentOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionDeleteOptionsBuilder is a builder for CollectionDeleteOptions.
-type CollectionDeleteOptionsBuilder struct {
-	enumerableBuilder[CollectionDeleteOptions]
+// DeleteDocumentOptionsBuilder is a builder for DeleteDocumentOptions.
+type DeleteDocumentOptionsBuilder struct {
+	enumerableBuilder[DeleteDocumentOptions]
 }
 
-// CollectionDelete creates a new CollectionDeleteOptionsBuilder instance.
-func CollectionDelete() *CollectionDeleteOptionsBuilder {
-	return &CollectionDeleteOptionsBuilder{}
+// DeleteDocument creates a new DeleteDocumentOptionsBuilder instance.
+func DeleteDocument() *DeleteDocumentOptionsBuilder {
+	return &DeleteDocumentOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionDeleteOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDeleteOptionsBuilder {
-	b.append(func(opts *CollectionDeleteOptions) {
+func (b *DeleteDocumentOptionsBuilder) SetIdentity(id identity.Identity) *DeleteDocumentOptionsBuilder {
+	b.append(func(opts *DeleteDocumentOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
-// CollectionGetOptions contains options for Get operation.
-type CollectionGetOptions struct {
+// GetDocumentOptions contains options for GetDocument operation.
+type GetDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 	// ShowDeleted specifies whether to return deleted documents.
@@ -144,93 +144,93 @@ type CollectionGetOptions struct {
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionGetOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *GetDocumentOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionGetOptionsBuilder is a builder for CollectionGetOptions.
-type CollectionGetOptionsBuilder struct {
-	enumerableBuilder[CollectionGetOptions]
+// GetDocumentOptionsBuilder is a builder for GetDocumentOptions.
+type GetDocumentOptionsBuilder struct {
+	enumerableBuilder[GetDocumentOptions]
 }
 
-// CollectionGet creates a new CollectionGetOptionsBuilder instance.
-func CollectionGet() *CollectionGetOptionsBuilder {
-	return &CollectionGetOptionsBuilder{}
+// GetDocument creates a new GetDocumentOptionsBuilder instance.
+func GetDocument() *GetDocumentOptionsBuilder {
+	return &GetDocumentOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionGetOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetOptionsBuilder {
-	b.append(func(opts *CollectionGetOptions) {
+func (b *GetDocumentOptionsBuilder) SetIdentity(id identity.Identity) *GetDocumentOptionsBuilder {
+	b.append(func(opts *GetDocumentOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // SetShowDeleted sets whether to return deleted documents.
-func (b *CollectionGetOptionsBuilder) SetShowDeleted(showDeleted bool) *CollectionGetOptionsBuilder {
-	b.append(func(opts *CollectionGetOptions) {
+func (b *GetDocumentOptionsBuilder) SetShowDeleted(showDeleted bool) *GetDocumentOptionsBuilder {
+	b.append(func(opts *GetDocumentOptions) {
 		opts.ShowDeleted = showDeleted
 	})
 	return b
 }
 
-// CollectionUpdateWithFilterOptions contains options for UpdateWithFilter operation.
-type CollectionUpdateWithFilterOptions struct {
+// UpdateDocumentsWithFilterOptions contains options for UpdateDocumentsWithFilter operation.
+type UpdateDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionUpdateWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *UpdateDocumentsWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionUpdateWithFilterOptionsBuilder is a builder for CollectionUpdateWithFilterOptions.
-type CollectionUpdateWithFilterOptionsBuilder struct {
-	enumerableBuilder[CollectionUpdateWithFilterOptions]
+// UpdateDocumentsWithFilterOptionsBuilder is a builder for UpdateDocumentsWithFilterOptions.
+type UpdateDocumentsWithFilterOptionsBuilder struct {
+	enumerableBuilder[UpdateDocumentsWithFilterOptions]
 }
 
-// CollectionUpdateWithFilter creates a new CollectionUpdateWithFilterOptionsBuilder instance.
-func CollectionUpdateWithFilter() *CollectionUpdateWithFilterOptionsBuilder {
-	return &CollectionUpdateWithFilterOptionsBuilder{}
+// UpdateDocumentsWithFilter creates a new UpdateDocumentsWithFilterOptionsBuilder instance.
+func UpdateDocumentsWithFilter() *UpdateDocumentsWithFilterOptionsBuilder {
+	return &UpdateDocumentsWithFilterOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionUpdateWithFilterOptionsBuilder) SetIdentity(
+func (b *UpdateDocumentsWithFilterOptionsBuilder) SetIdentity(
 	id identity.Identity,
-) *CollectionUpdateWithFilterOptionsBuilder {
-	b.append(func(opts *CollectionUpdateWithFilterOptions) {
+) *UpdateDocumentsWithFilterOptionsBuilder {
+	b.append(func(opts *UpdateDocumentsWithFilterOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
-// CollectionDeleteWithFilterOptions contains options for DeleteWithFilter operation.
-type CollectionDeleteWithFilterOptions struct {
+// DeleteDocumentsWithFilterOptions contains options for DeleteDocumentsWithFilter operation.
+type DeleteDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionDeleteWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *DeleteDocumentsWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionDeleteWithFilterOptionsBuilder is a builder for CollectionDeleteWithFilterOptions.
-type CollectionDeleteWithFilterOptionsBuilder struct {
-	enumerableBuilder[CollectionDeleteWithFilterOptions]
+// DeleteDocumentsWithFilterOptionsBuilder is a builder for DeleteDocumentsWithFilterOptions.
+type DeleteDocumentsWithFilterOptionsBuilder struct {
+	enumerableBuilder[DeleteDocumentsWithFilterOptions]
 }
 
-// CollectionDeleteWithFilter creates a new CollectionDeleteWithFilterOptionsBuilder instance.
-func CollectionDeleteWithFilter() *CollectionDeleteWithFilterOptionsBuilder {
-	return &CollectionDeleteWithFilterOptionsBuilder{}
+// DeleteDocumentsWithFilter creates a new DeleteDocumentsWithFilterOptionsBuilder instance.
+func DeleteDocumentsWithFilter() *DeleteDocumentsWithFilterOptionsBuilder {
+	return &DeleteDocumentsWithFilterOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionDeleteWithFilterOptionsBuilder) SetIdentity(
+func (b *DeleteDocumentsWithFilterOptionsBuilder) SetIdentity(
 	id identity.Identity,
-) *CollectionDeleteWithFilterOptionsBuilder {
-	b.append(func(opts *CollectionDeleteWithFilterOptions) {
+) *DeleteDocumentsWithFilterOptionsBuilder {
+	b.append(func(opts *DeleteDocumentsWithFilterOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -323,30 +323,30 @@ func (b *CollectionListIndexesOptionsBuilder) SetIdentity(id identity.Identity) 
 	return b
 }
 
-// CollectionExistsOptions contains options for Exists operation.
-type CollectionExistsOptions struct {
+// ExistsDocumentOptions contains options for ExistsDocument operation.
+type ExistsDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *CollectionExistsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ExistsDocumentOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionExistsOptionsBuilder is a builder for CollectionExistsOptions.
-type CollectionExistsOptionsBuilder struct {
-	enumerableBuilder[CollectionExistsOptions]
+// ExistsDocumentOptionsBuilder is a builder for ExistsDocumentOptions.
+type ExistsDocumentOptionsBuilder struct {
+	enumerableBuilder[ExistsDocumentOptions]
 }
 
-// CollectionExists creates a new CollectionExistsOptionsBuilder instance.
-func CollectionExists() *CollectionExistsOptionsBuilder {
-	return &CollectionExistsOptionsBuilder{}
+// ExistsDocument creates a new ExistsDocumentOptionsBuilder instance.
+func ExistsDocument() *ExistsDocumentOptionsBuilder {
+	return &ExistsDocumentOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionExistsOptionsBuilder) SetIdentity(id identity.Identity) *CollectionExistsOptionsBuilder {
-	b.append(func(opts *CollectionExistsOptions) {
+func (b *ExistsDocumentOptionsBuilder) SetIdentity(id identity.Identity) *ExistsDocumentOptionsBuilder {
+	b.append(func(opts *ExistsDocumentOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

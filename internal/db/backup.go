@@ -93,7 +93,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.Add(ctx, doc)
+			err = col.AddDocument(ctx, doc)
 			if err != nil {
 				return NewErrDocAdd(err)
 			}
@@ -104,7 +104,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				err = col.Update(ctx, doc)
+				err = col.UpdateDocument(ctx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -203,7 +203,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 					return err
 				}
 			}
-			doc, err := col.Get(ctx, docResultWithID.ID)
+			doc, err := col.GetDocument(ctx, docResultWithID.ID)
 			if err != nil {
 				return err
 			}
@@ -239,7 +239,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 							if err != nil {
 								return err
 							}
-							foreignDoc, err := foreignCol.Get(ctx, foreignDocID)
+							foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
 							if err != nil {
 								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
 								if err != nil {

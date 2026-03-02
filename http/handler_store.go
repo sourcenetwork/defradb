@@ -82,18 +82,18 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	schema, err := io.ReadAll(req.Body)
+	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	opt := options.WithIdentity(options.AddSchema(), identity.FromContext(ctx))
-	cols, err := db.AddSchema(ctx, string(schema), opt)
+	opt := options.WithIdentity(options.AddCollection(), identity.FromContext(ctx))
+	cols, err := db.AddCollection(ctx, string(sdl), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -562,22 +562,22 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
 
-	addSchemaResponse := openapi3.NewResponse().
+	addCollectionResponse := openapi3.NewResponse().
 		WithDescription("Collection(s)").
 		WithJSONSchema(collectionArraySchema)
 
-	addSchemaRequest := openapi3.NewRequestBody().
+	addCollectionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	addSchema := openapi3.NewOperation()
-	addSchema.OperationID = "add_schema"
-	addSchema.Description = "Add a new schema definition"
-	addSchema.Tags = []string{"schema"}
-	addSchema.RequestBody = &openapi3.RequestBodyRef{
-		Value: addSchemaRequest,
+	addCollection := openapi3.NewOperation()
+	addCollection.OperationID = "collection_add"
+	addCollection.Description = "Add a new collection"
+	addCollection.Tags = []string{"collection"}
+	addCollection.RequestBody = &openapi3.RequestBodyRef{
+		Value: addCollectionRequest,
 	}
-	addSchema.AddResponse(200, addSchemaResponse)
-	addSchema.Responses.Set("400", errorResponse)
+	addCollection.AddResponse(200, addCollectionResponse)
+	addCollection.Responses.Set("400", errorResponse)
 
 	setActiveCollectionVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
@@ -622,11 +622,11 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("collection_id").
-		WithDescription("Collection schema root").
+	collectionIDQueryParam := openapi3.NewQueryParameter("collection_id").
+		WithDescription("Collection ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
-		WithDescription("Collection schema version id").
+		WithDescription("Collection version ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionGetInactiveQueryParam := openapi3.NewQueryParameter("get_inactive").
 		WithDescription("If true, inactive collections will be returned in addition to active ones").
@@ -642,15 +642,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	collectionsResponse := openapi3.NewResponse().
-		WithDescription("Collection(s) with matching name, schema id, or version id.").
+		WithDescription("Collection(s) with matching name, collection id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
 	collectionDescribe := openapi3.NewOperation()
 	collectionDescribe.OperationID = "collection_describe"
-	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.Description = "Introspect collection(s) by name, collection id, or version id."
 	collectionDescribe.Tags = []string{"collection"}
 	collectionDescribe.AddParameter(collectionNameQueryParam)
-	collectionDescribe.AddParameter(collectionSchemaRootQueryParam)
+	collectionDescribe.AddParameter(collectionIDQueryParam)
 	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
 	collectionDescribe.AddParameter(collectionGetInactiveQueryParam)
 	collectionDescribe.AddResponse(200, collectionsResponse)
@@ -658,10 +658,10 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	viewRefresh := openapi3.NewOperation()
 	viewRefresh.OperationID = "view_refresh"
-	viewRefresh.Description = "Refresh view(s) by name, schema id, or version id."
+	viewRefresh.Description = "Refresh view(s) by name, collection id, or version id."
 	viewRefresh.Tags = []string{"view"}
 	viewRefresh.AddParameter(collectionNameQueryParam)
-	viewRefresh.AddParameter(collectionSchemaRootQueryParam)
+	viewRefresh.AddParameter(collectionIDQueryParam)
 	viewRefresh.AddParameter(collectionVersionIdQueryParam)
 	viewRefresh.AddParameter(collectionGetInactiveQueryParam)
 	viewRefresh.Responses = openapi3.NewResponses()
@@ -873,7 +873,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
-	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
+	router.AddRoute("/collections", http.MethodPost, addCollection, h.AddCollection)
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)

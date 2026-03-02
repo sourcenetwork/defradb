@@ -31,16 +31,16 @@ func TestQueryPerformance_Simple(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name:   String
 						age:    Int 
 						email:  String
 					}`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type IndexedUser {
 						name:   String
 						age:    Int @index
@@ -91,16 +91,16 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name:   String
 						points:    Float32 
 						email:  String
 					}`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type IndexedUser {
 						name:   String
 						points:    Float32 @index

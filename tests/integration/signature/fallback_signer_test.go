@@ -30,8 +30,8 @@ func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T)
 			state.CLIClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 

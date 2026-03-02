@@ -110,6 +110,9 @@ func GetCollectionByID(
 	key := keys.NewCollectionKey(id)
 	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			err = client.ErrCollectionNotFound
+		}
 		return client.CollectionVersion{}, err
 	}
 
@@ -141,6 +144,9 @@ func GetCollectionByName(
 	nameKey := keys.NewCollectionNameKey(name)
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			err = client.ErrCollectionNotFound
+		}
 		return client.CollectionVersion{}, err
 	}
 
@@ -175,7 +181,7 @@ func GetActiveCollectionByCollectionID(
 		}
 	}
 
-	return client.CollectionVersion{}, corekv.ErrNotFound
+	return client.CollectionVersion{}, client.ErrCollectionNotFound
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
@@ -190,7 +196,7 @@ func GetCollectionsByCollectionID(
 		if col, ok := cache.CollectionsByID[collectionID]; ok {
 			return col, nil
 		}
-		return nil, corekv.ErrNotFound
+		return []client.CollectionVersion{}, nil
 	}
 	// It is not practical to cache a sub set of collections at the moment as figuring
 	// out whether the set is complete or not if not possible without fetching the versionIDs
@@ -206,7 +212,7 @@ func GetCollectionsByCollectionID(
 	for _, versionID := range versionIDs {
 		versionCol, err := GetCollectionByID(ctx, versionID)
 		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
+			if errors.Is(err, client.ErrCollectionNotFound) {
 				continue
 			}
 			return nil, err
@@ -363,7 +369,7 @@ func GetCollectionVersionIDs(
 			}
 			return result, nil
 		}
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -416,7 +422,7 @@ func GetRelatedCollection(
 	switch typedKind := kind.(type) {
 	case *client.NamedKind:
 		col, err := GetCollectionByName(ctx, typedKind.Name)
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
 
@@ -424,7 +430,7 @@ func GetRelatedCollection(
 
 	case *client.CollectionKind:
 		col, err := GetActiveCollectionByCollectionID(ctx, typedKind.CollectionID)
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
 

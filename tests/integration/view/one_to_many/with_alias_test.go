@@ -20,8 +20,8 @@ import (
 func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -95,8 +95,8 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]

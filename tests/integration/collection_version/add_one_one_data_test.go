@@ -20,8 +20,8 @@ import (
 func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -89,8 +89,8 @@ func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 func TestAddOneToOne_Input_SecondaryObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author

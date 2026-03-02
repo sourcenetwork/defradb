@@ -26,8 +26,8 @@ func TestACP_IndexAddWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testi
 				Policy:   userPolicy,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -72,8 +72,8 @@ func TestACP_IndexAddWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) 
 				Policy:   userPolicy,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"

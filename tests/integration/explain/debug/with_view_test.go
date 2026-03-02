@@ -43,8 +43,8 @@ func TestDebugExplainRequestWithView(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

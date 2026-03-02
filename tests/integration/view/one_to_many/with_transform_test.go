@@ -24,8 +24,8 @@ import (
 func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -117,8 +117,8 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 					}

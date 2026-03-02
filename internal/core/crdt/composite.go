@@ -33,7 +33,7 @@ type DocCompositeDelta struct {
 	// document.  This would require a local index in order to handle field level commit-queries.
 	DocID    []byte
 	Priority uint64
-	// CollectionVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the collection version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	//

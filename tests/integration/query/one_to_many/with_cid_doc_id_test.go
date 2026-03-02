@@ -66,8 +66,8 @@ import (
 func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -136,8 +136,8 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -210,8 +210,8 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -284,8 +284,8 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float

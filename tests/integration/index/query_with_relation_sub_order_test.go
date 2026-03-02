@@ -28,8 +28,8 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -101,8 +101,8 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -174,8 +174,8 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -246,8 +246,8 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -343,8 +343,8 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -440,8 +440,8 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -536,8 +536,8 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -626,8 +626,8 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -737,8 +737,8 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]

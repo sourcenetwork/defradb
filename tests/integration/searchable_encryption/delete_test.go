@@ -22,8 +22,8 @@ import (
 func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -55,8 +55,8 @@ func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *test
 func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -76,8 +76,8 @@ func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 func TestEncryptedIndexDelete_AfterDelete_CanAddIndexAnew(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -112,8 +112,8 @@ func TestEncryptedIndexDelete_AfterDelete_CanAddIndexAnew(t *testing.T) {
 func TestEncryptedIndexDelete_MultipleIndexes_ShouldOnlyDeleteSpecified(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex

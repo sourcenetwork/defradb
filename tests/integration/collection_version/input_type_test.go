@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
+func TestInputTypeOfOrderFieldWhereCollectionHasManyRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type user {
 						age: Int
 						name: String
@@ -89,7 +89,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 											limitArg,
 											offsetArg,
 										},
-										testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
+										testInputTypeOfOrderFieldWhereCollectionHasRelationTypeArgProps,
 									),
 									map[string]any{
 										"name": "order",
@@ -114,11 +114,11 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
+func TestInputTypeOfOrderFieldWhereCollectionHasRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type book {
 						name: String
 						rating: Float
@@ -198,7 +198,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{
+var testInputTypeOfOrderFieldWhereCollectionHasRelationTypeArgProps = map[string]any{
 	"name": struct{}{},
 	"type": map[string]any{
 		"name": struct{}{},
@@ -239,5 +239,5 @@ var defaultGroupArgsWithoutOrder = trimFields(
 		limitArg,
 		offsetArg,
 	},
-	testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
+	testInputTypeOfOrderFieldWhereCollectionHasRelationTypeArgProps,
 )

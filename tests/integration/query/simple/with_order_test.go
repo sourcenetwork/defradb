@@ -133,8 +133,8 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					Points: Float32
 				}`,
@@ -200,8 +200,8 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					HeightM: Float
 				}`,
@@ -267,8 +267,8 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					Raw: Blob
 				}`,
@@ -460,8 +460,8 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					Points: Float32
 				}`,
@@ -527,8 +527,8 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					HeightM: Float
 				}`,
@@ -594,8 +594,8 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					Name: String
 					Raw: Blob
 				}`,

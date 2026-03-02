@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -44,7 +44,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	addOpt := options.WithIdentity(
-		options.CollectionAdd().
+		options.AddDocument().
 			SetEncryptDoc(encConf.IsDocEncrypted).
 			SetEncryptedFields(encConf.EncryptedFields),
 		identity.FromContext(ctx),
@@ -58,7 +58,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.AddMany(ctx, docList, addOpt); err != nil {
+		if err := col.AddManyDocuments(ctx, docList, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -69,7 +69,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Add(ctx, doc, addOpt); err != nil {
+		if err := col.AddDocument(ctx, doc, addOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -77,7 +77,7 @@ func (h *collectionHandler) Add(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	col := mustGetContextClientCollection(req)
 
@@ -88,11 +88,11 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(true),
+		options.GetDocument().SetShowDeleted(true),
 		identity.FromContext(ctx),
 	)
 
-	doc, err := col.Get(ctx, docID, getOpt)
+	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -113,9 +113,9 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
+	updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
 
-	err = col.Update(ctx, doc, updateOpt)
+	err = col.UpdateDocument(ctx, doc, updateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -123,7 +123,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DeleteDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -133,9 +133,9 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
+	deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
 
-	_, err = col.Delete(ctx, docID, deleteOpt)
+	_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -143,7 +143,7 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
@@ -155,11 +155,11 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(showDeleted),
+		options.GetDocument().SetShowDeleted(showDeleted),
 		identity.FromContext(ctx),
 	)
 
-	doc, err := col.Get(ctx, docID, getOpt)
+	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

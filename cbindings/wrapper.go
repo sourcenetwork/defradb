@@ -61,7 +61,7 @@ extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
-extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
+extern Result AddCollection(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
@@ -424,18 +424,18 @@ func (w *CWrapper) BasicExport(
 	panic("not implemented")
 }
 
-func (w *CWrapper) AddSchema(
+func (w *CWrapper) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
-	cSchema := C.CString(schema)
-	defer C.free(unsafe.Pointer(cSchema))
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.AddSchema(callHandle, cSchema, cIdentity))
+	res := ConvertAndFreeCResult(C.AddCollection(callHandle, cSDL, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

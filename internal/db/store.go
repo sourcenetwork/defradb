@@ -157,15 +157,15 @@ func (db *DB) ListAllEncryptedIndexes(
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
-// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// AddCollection takes the provided GQL SDL and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
-// All schema types provided must not exist prior to calling this, and they may not reference existing
-// types previously defined.
-func (db *DB) AddSchema(
+// All collection types provided must not exist prior to calling this, and they may not
+// reference existing types previously defined.
+func (db *DB) AddCollection(
 	ctx context.Context,
-	schemaString string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -182,7 +182,7 @@ func (db *DB) AddSchema(
 	}
 	defer txn.Discard()
 
-	cols, err := db.addSchema(ctx, schemaString)
+	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (db *DB) AddSchema(
 	return cols, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -201,7 +201,7 @@ func (db *DB) AddSchema(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// The collections (including the schema version ID) will only be updated if any changes have actually
+// The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
 

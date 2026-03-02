@@ -23,8 +23,8 @@ func addAuthorBooksSchemaWithPolicyAndAddDocs() []any {
 			Identity: testUtils.ClientIdentity(1),
 			Policy:   bookAuthorPolicy,
 		},
-		&action.AddSchema{
-			Schema: `
+		&action.AddCollection{
+			SDL: `
 				type Author @policy(
 					id: "{{.Policy0}}",
 					resource: "author"

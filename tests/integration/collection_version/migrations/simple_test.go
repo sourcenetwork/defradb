@@ -23,9 +23,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// Migrations need to be able to be registered for unknown schema ids, so they
+// Migrations need to be able to be registered for unknown collection version ids, so they
 // may migrate to/from them if recieved by the P2P system.
-func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
+func TestCollectionMigrationDoesNotErrorGivenUnknownCollectionRoots(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -68,7 +68,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
+func TestCollectionMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -140,7 +140,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
+func TestCollectionMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -208,14 +208,14 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestSchemaMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
+func TestCollectionMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
 	version1 := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
 	version3 := "bafyreih3uwvq6u5yqt65os3u5jdrrmy6gfi7wjq3vwvnm45jhjodbablhe"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users { }
 				`,
 			},

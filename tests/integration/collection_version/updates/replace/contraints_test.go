@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdate_ReplaceFieldSizeContraint_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						foo: [Int] @constraints(size: 2)
 					}

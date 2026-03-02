@@ -20,8 +20,8 @@ import (
 func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -57,8 +57,8 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean

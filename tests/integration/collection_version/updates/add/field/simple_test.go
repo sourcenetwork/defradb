@@ -21,14 +21,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
-	schemaVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	schemaVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+func TestCollectionVersionUpdatesAddFieldSimple(t *testing.T) {
+	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -53,16 +53,16 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetVersionID(schemaVersion2ID),
+				FilterOptions: options.GetCollections().SetVersionID(collectionVersion2ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
-						VersionID:      schemaVersion2ID,
-						CollectionID:   schemaVersion1ID,
+						VersionID:      collectionVersion2ID,
+						CollectionID:   collectionVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: schemaVersion1ID,
+							SourceCollectionID: collectionVersion1ID,
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -89,11 +89,11 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
+func TestCollectionVersionUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -121,14 +121,14 @@ func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testing.T) {
-	schemaVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	schemaVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+func TestCollectionVersionUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testing.T) {
+	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	collectionVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -143,18 +143,18 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetVersionID(schemaVersion2ID),
+				FilterOptions: options.GetCollections().SetVersionID(collectionVersion2ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name: "Users",
-						// Even though schema version 2 is not active, it should still be possible to
+						// Even though collection version 2 is not active, it should still be possible to
 						// fetch it.
-						VersionID:      schemaVersion2ID,
-						CollectionID:   schemaVersion1ID,
+						VersionID:      collectionVersion2ID,
+						CollectionID:   collectionVersion1ID,
 						IsActive:       false,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: schemaVersion1ID,
+							SourceCollectionID: collectionVersion1ID,
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -181,11 +181,11 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -214,11 +214,11 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -249,11 +249,11 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldMultiplePatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -290,11 +290,11 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -313,11 +313,11 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -344,7 +344,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				ExpectedError: "Cannot query field \"email\" on type \"Users\"",
 			},
 			&action.Request{
-				// Original schema is preserved
+				// Original collection definition is preserved
 				Request: `query {
 					Users {
 						name
@@ -359,11 +359,11 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -382,11 +382,11 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -406,11 +406,11 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

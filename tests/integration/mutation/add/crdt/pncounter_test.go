@@ -24,8 +24,8 @@ func TestPNCounterAdd_IntKindWithPositiveValue_NoError(t *testing.T) {
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Int @crdt(type: pncounter)
@@ -66,8 +66,8 @@ func TestPNCounterAdd_Float32KindWithPositiveValue_NoError(t *testing.T) {
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float32 @crdt(type: pncounter)
@@ -108,8 +108,8 @@ func TestPNCounterAdd_Float64KindWithPositiveValue_NoError(t *testing.T) {
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float64 @crdt(type: pncounter)

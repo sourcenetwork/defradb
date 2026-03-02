@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestFilterForSimpleSchema(t *testing.T) {
+func TestFilterForSimpleCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -129,7 +129,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-var testFilterForSimpleSchemaArgProps = map[string]any{
+var testFilterForSimpleCollectionArgProps = map[string]any{
 	"name": struct{}{},
 	"type": map[string]any{
 		"name":        struct{}{},
@@ -147,14 +147,14 @@ var defaultUserArgsWithoutFilter = trimFields(
 		offsetArg,
 		buildOrderArg("Users"),
 	},
-	testFilterForSimpleSchemaArgProps,
+	testFilterForSimpleCollectionArgProps,
 )
 
-func TestFilterForOneToOneSchema(t *testing.T) {
+func TestFilterForOneToOneCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -282,7 +282,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-var testFilterForOneToOneSchemaArgProps = map[string]any{
+var testFilterForOneToOneCollectionArgProps = map[string]any{
 	"name": struct{}{},
 	"type": map[string]any{
 		"name":        struct{}{},
@@ -300,14 +300,14 @@ var defaultBookArgsWithoutFilter = trimFields(
 		offsetArg,
 		buildOrderArg("Book"),
 	},
-	testFilterForOneToOneSchemaArgProps,
+	testFilterForOneToOneCollectionArgProps,
 )
 
-func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
+func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						custom: JSON
 					}

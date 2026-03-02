@@ -25,8 +25,8 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
@@ -65,8 +65,8 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 func TestArrayUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
@@ -99,8 +99,8 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
@@ -145,8 +145,8 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
@@ -180,8 +180,8 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
@@ -211,8 +211,8 @@ func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
@@ -270,8 +270,8 @@ func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
@@ -334,8 +334,8 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)

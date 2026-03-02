@@ -20,8 +20,8 @@ import (
 func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -55,8 +55,8 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}
@@ -90,8 +90,8 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}

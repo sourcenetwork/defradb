@@ -34,9 +34,9 @@ func TestNAC_AdminRelation_CanDocumentRead(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -87,9 +87,9 @@ func TestNAC_AdminRelation_MaterializedView_CanDocumentRead(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),

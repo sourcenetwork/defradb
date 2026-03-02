@@ -21,8 +21,8 @@ import (
 func TestAddUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -67,8 +67,8 @@ func TestAddUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testin
 func TestUniqueCompositeIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String 
 						age: Int 
@@ -104,8 +104,8 @@ func TestUniqueCompositeIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError
 func TestUniqueCompositeIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int 
@@ -173,8 +173,8 @@ func TestUniqueCompositeIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 func TestUniqueCompositeIndexAdd_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int 

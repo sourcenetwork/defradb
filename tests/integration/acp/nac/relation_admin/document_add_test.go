@@ -30,9 +30,9 @@ func TestNAC_AdminRelation_CanDocumentAdd(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type User { name: String }`,
+				SDL:      `type User { name: String }`,
 			},
 
 			// This user, can not perform this gated operation yet.

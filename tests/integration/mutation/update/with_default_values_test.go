@@ -20,8 +20,8 @@ import (
 func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						score: Int @default(int: 100)

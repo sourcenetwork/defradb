@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -45,8 +45,8 @@ func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -71,8 +71,8 @@ func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 func TestColVersionUpdateTestName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -93,8 +93,8 @@ func TestColVersionUpdateTestName(t *testing.T) {
 func TestColVersionUpdateTestName_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

@@ -31,9 +31,9 @@ func TestNAC_GatesDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -86,9 +86,9 @@ func TestNAC_GatesDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -143,9 +143,9 @@ func TestNAC_GatesDocumentDelete_NoIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -199,9 +199,9 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 
@@ -256,9 +256,9 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_CLIandCandHTTPClient_NotAuthorize
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String
 						age: Int 

@@ -25,7 +25,7 @@ func init() {
 	multiplier.Register(&secondaryIndex{})
 }
 
-// SecondaryIndex multiplier automatically adds @index directives to test schemas
+// SecondaryIndex multiplier automatically adds @index directives to test SDL definitions
 // that don't already use indexes.
 //
 // This ensures query results are consistent regardless of whether indexes are present,
@@ -44,7 +44,7 @@ func (m *secondaryIndex) Name() Name {
 // ShouldSkip implements [multiplier.ActionAwareSkipper].
 //
 // Returns true if the action set contains index-related actions, explain queries,
-// or schemas with existing @index directives. Index tests should not be modified,
+// or SDL with existing @index directives. Index tests should not be modified,
 // and explain tests verifying query produce different results with indexes.
 func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	if hasIndexActions(actions) {
@@ -56,8 +56,8 @@ func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	}
 
 	for _, a := range actions {
-		if schemaAdd, ok := a.(*action.AddSchema); ok {
-			if hasIndexDirective(schemaAdd.Schema) {
+		if collectionAdd, ok := a.(*action.AddCollection); ok {
+			if hasIndexDirective(collectionAdd.SDL) {
 				return true
 			}
 		}
@@ -71,15 +71,15 @@ func (m *secondaryIndex) Apply(source action.Actions) action.Actions {
 	modified := false
 
 	for i, a := range source {
-		if schemaAdd, ok := a.(*action.AddSchema); ok {
-			if !hasIndexDirective(schemaAdd.Schema) {
-				newSchema := addIndexesToSchema(schemaAdd.Schema)
-				if newSchema != schemaAdd.Schema {
+		if collectionAdd, ok := a.(*action.AddCollection); ok {
+			if !hasIndexDirective(collectionAdd.SDL) {
+				newSDL := addIndexesToSDL(collectionAdd.SDL)
+				if newSDL != collectionAdd.SDL {
 					log.InfoContext(context.Background(),
-						"Modified schema for secondary-index multiplier:\n"+newSchema)
-					newSchemaAdd := *schemaAdd
-					newSchemaAdd.Schema = newSchema
-					result[i] = &newSchemaAdd
+						"Modified SDL for secondary-index multiplier:\n"+newSDL)
+					newCollectionAdd := *collectionAdd
+					newCollectionAdd.SDL = newSDL
+					result[i] = &newCollectionAdd
 					modified = true
 					continue
 				}
@@ -121,9 +121,9 @@ func hasExplainActions(actions action.Actions) bool {
 	return false
 }
 
-// hasIndexDirective returns true if the schema contains @index directive.
-func hasIndexDirective(schema string) bool {
-	return strings.Contains(schema, "@index")
+// hasIndexDirective returns true if the SDL contains @index directive.
+func hasIndexDirective(sdl string) bool {
+	return strings.Contains(sdl, "@index")
 }
 
 // scalarTypes are the built-in types that can be indexed.
@@ -147,9 +147,9 @@ func init() {
 	}
 }
 
-// extractTypeNames returns all type names defined in the schema.
-func extractTypeNames(schema string) []string {
-	matches := typeNamePattern.FindAllStringSubmatch(schema, -1)
+// extractTypeNames returns all type names defined in the SDL.
+func extractTypeNames(sdl string) []string {
+	matches := typeNamePattern.FindAllStringSubmatch(sdl, -1)
 	names := make([]string, 0, len(matches))
 	for _, match := range matches {
 		if len(match) > 1 {
@@ -161,9 +161,9 @@ func extractTypeNames(schema string) []string {
 
 // extractTypeBody returns the body (fields) of a type definition.
 // Returns empty string if the type is not found.
-func extractTypeBody(schema, typeName string) string {
+func extractTypeBody(sdl, typeName string) string {
 	typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
-	match := typeBlockPattern.FindStringSubmatch(schema)
+	match := typeBlockPattern.FindStringSubmatch(sdl)
 	if len(match) < 2 {
 		return ""
 	}
@@ -171,8 +171,8 @@ func extractTypeBody(schema, typeName string) string {
 }
 
 // countSingleRelationsTo counts how many single (non-array) relation fields a type has pointing to targetType.
-func countSingleRelationsTo(schema, sourceType, targetType string) int {
-	typeBody := extractTypeBody(schema, sourceType)
+func countSingleRelationsTo(sdl, sourceType, targetType string) int {
+	typeBody := extractTypeBody(sdl, sourceType)
 	if typeBody == "" {
 		return 0
 	}
@@ -181,20 +181,20 @@ func countSingleRelationsTo(schema, sourceType, targetType string) int {
 }
 
 // hasSingleRelationTo checks if a type has a single (non-array) relation field pointing to targetType.
-func hasSingleRelationTo(schema, sourceType, targetType string) bool {
-	return countSingleRelationsTo(schema, sourceType, targetType) > 0
+func hasSingleRelationTo(sdl, sourceType, targetType string) bool {
+	return countSingleRelationsTo(sdl, sourceType, targetType) > 0
 }
 
 // isOneToOneRelation checks if there's a one-to-one relationship between two types.
 // One-to-one exists when both types have single (non-array) relations to each other.
 // For self-references, one-to-one exists when a type has exactly 2 single relations to itself.
-func isOneToOneRelation(schema, typeA, typeB string) bool {
+func isOneToOneRelation(sdl, typeA, typeB string) bool {
 	if typeA == typeB {
 		// Self-reference: one-to-one if there are exactly 2 single relations to itself
 		// e.g., type User { boss: User @primary; underling: User }
-		return countSingleRelationsTo(schema, typeA, typeA) == 2
+		return countSingleRelationsTo(sdl, typeA, typeA) == 2
 	}
-	return hasSingleRelationTo(schema, typeA, typeB) && hasSingleRelationTo(schema, typeB, typeA)
+	return hasSingleRelationTo(sdl, typeA, typeB) && hasSingleRelationTo(sdl, typeB, typeA)
 }
 
 // extractFieldName extracts the field name from a match like "fieldName: Type..."
@@ -208,17 +208,17 @@ func extractFieldName(match string) string {
 
 // findOneToOneFKFields returns a set of explicit FK field names that correspond to one-to-one relations.
 // For example, if there's a one-to-one relation "author: Author", this returns {"_authorID": true}.
-func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
+func findOneToOneFKFields(sdl string, typeNames []string) map[string]bool {
 	result := make(map[string]bool)
 
 	for _, typeName := range typeNames {
-		typeBody := extractTypeBody(schema, typeName)
+		typeBody := extractTypeBody(sdl, typeName)
 		if typeBody == "" {
 			continue
 		}
 
 		for _, otherType := range typeNames {
-			if !isOneToOneRelation(schema, typeName, otherType) {
+			if !isOneToOneRelation(sdl, typeName, otherType) {
 				continue
 			}
 
@@ -235,13 +235,13 @@ func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
 	return result
 }
 
-// addIndexesToSchema adds @index directives to indexable fields (scalars, arrays, and relations).
-// This function assumes the schema has no existing @index directives (checked by ShouldSkip/Apply).
-func addIndexesToSchema(schema string) string {
-	result := schema
+// addIndexesToSDL adds @index directives to indexable fields (scalars, arrays, and relations).
+// This function assumes the SDL has no existing @index directives (checked by ShouldSkip/Apply).
+func addIndexesToSDL(sdl string) string {
+	result := sdl
 
-	typeNames := extractTypeNames(schema)
-	oneToOneFKFields := findOneToOneFKFields(schema, typeNames)
+	typeNames := extractTypeNames(sdl)
+	oneToOneFKFields := findOneToOneFKFields(sdl, typeNames)
 
 	for i := range scalarTypes {
 		pattern := scalarPatterns[i]
@@ -259,20 +259,20 @@ func addIndexesToSchema(schema string) string {
 	// Add @index to relation fields that hold foreign keys.
 	// One-to-one relations are NOT indexed because DefraDB automatically creates a unique index.
 	for _, typeName := range typeNames {
-		result = addRelationIndexesForType(result, schema, typeName, typeNames)
+		result = addRelationIndexesForType(result, sdl, typeName, typeNames)
 	}
 
 	return result
 }
 
 // addRelationIndexesForType adds @index to relation fields in the given type that hold foreign keys.
-func addRelationIndexesForType(result, originalSchema, typeName string, allTypes []string) string {
+func addRelationIndexesForType(result, originalSDL, typeName string, allTypes []string) string {
 	typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
 
 	return typeBlockPattern.ReplaceAllStringFunc(result, func(typeBlock string) string {
 		for _, otherType := range allTypes {
 			// Skip one-to-one relations (DefraDB auto-creates unique index)
-			if isOneToOneRelation(originalSchema, typeName, otherType) {
+			if isOneToOneRelation(originalSDL, typeName, otherType) {
 				continue
 			}
 

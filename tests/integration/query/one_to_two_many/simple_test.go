@@ -20,8 +20,8 @@ import (
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -143,8 +143,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -270,8 +270,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -433,8 +433,8 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Book {
 							name: String
 							rating: Float

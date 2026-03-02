@@ -138,7 +138,7 @@ func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 	fd, ok := n.col.Version().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
-		// schema description. The scanner (and fetcher)
+		// collection definition. The scanner (and fetcher)
 		// is only responsible for basic fields
 		return false
 	}

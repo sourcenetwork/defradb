@@ -20,11 +20,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -39,7 +39,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *tes
 			},
 			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
+			// where patching a collection would result in the index disappearing from one of those locations.
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -105,11 +105,11 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -140,7 +140,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *te
 			},
 			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
+			// where patching a collection would result in the index disappearing from one of those locations.
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{

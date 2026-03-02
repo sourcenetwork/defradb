@@ -20,8 +20,8 @@ import (
 func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book
@@ -124,8 +124,8 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book @primary
@@ -228,8 +228,8 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Publisher {
 						name: String
 						printed: Book @primary
@@ -329,11 +329,11 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestAddSchemaWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
+func TestAddCollectionWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Player {
 						name: String
 						decks: [Deck] @relation(name: "deck_player")

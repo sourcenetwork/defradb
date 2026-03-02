@@ -121,6 +121,89 @@ func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context, opts 
 	return _c
 }
 
+// AddCollection provides a mock function for the type Txn
+func (_mock *Txn) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, sdl, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, sdl)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddCollection")
+	}
+
+	var r0 []client.CollectionVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error)); ok {
+		return returnFunc(ctx, sdl, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.AddCollectionOptions]) []client.CollectionVersion); ok {
+		r0 = returnFunc(ctx, sdl, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.CollectionVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...options.Enumerable[options.AddCollectionOptions]) error); ok {
+		r1 = returnFunc(ctx, sdl, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_AddCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddCollection'
+type Txn_AddCollection_Call struct {
+	*mock.Call
+}
+
+// AddCollection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sdl string
+//   - opts ...options.Enumerable[options.AddCollectionOptions]
+func (_e *Txn_Expecter) AddCollection(ctx interface{}, sdl interface{}, opts ...interface{}) *Txn_AddCollection_Call {
+	return &Txn_AddCollection_Call{Call: _e.mock.On("AddCollection",
+		append([]interface{}{ctx, sdl}, opts...)...)}
+}
+
+func (_c *Txn_AddCollection_Call) Run(run func(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions])) *Txn_AddCollection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []options.Enumerable[options.AddCollectionOptions]
+		var variadicArgs []options.Enumerable[options.AddCollectionOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.AddCollectionOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_AddCollection_Call) Return(collectionVersions []client.CollectionVersion, err error) *Txn_AddCollection_Call {
+	_c.Call.Return(collectionVersions, err)
+	return _c
+}
+
+func (_c *Txn_AddCollection_Call) RunAndReturn(run func(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error)) *Txn_AddCollection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Enumerable[options.AddDACActorRelationshipOptions]) (client.AddActorRelationshipResult, error) {
 	var tmpRet mock.Arguments
@@ -681,89 +764,6 @@ func (_c *Txn_AddReplicator_Call) Return(err error) *Txn_AddReplicator_Call {
 }
 
 func (_c *Txn_AddReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, opts ...options.Enumerable[options.AddReplicatorOptions]) error) *Txn_AddReplicator_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AddSchema provides a mock function for the type Txn
-func (_mock *Txn) AddSchema(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddSchemaOptions]) ([]client.CollectionVersion, error) {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, sdl, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, sdl)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddSchema")
-	}
-
-	var r0 []client.CollectionVersion
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.AddSchemaOptions]) ([]client.CollectionVersion, error)); ok {
-		return returnFunc(ctx, sdl, opts...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.AddSchemaOptions]) []client.CollectionVersion); ok {
-		r0 = returnFunc(ctx, sdl, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.CollectionVersion)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...options.Enumerable[options.AddSchemaOptions]) error); ok {
-		r1 = returnFunc(ctx, sdl, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_AddSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddSchema'
-type Txn_AddSchema_Call struct {
-	*mock.Call
-}
-
-// AddSchema is a helper method to define mock.On call
-//   - ctx context.Context
-//   - sdl string
-//   - opts ...options.Enumerable[options.AddSchemaOptions]
-func (_e *Txn_Expecter) AddSchema(ctx interface{}, sdl interface{}, opts ...interface{}) *Txn_AddSchema_Call {
-	return &Txn_AddSchema_Call{Call: _e.mock.On("AddSchema",
-		append([]interface{}{ctx, sdl}, opts...)...)}
-}
-
-func (_c *Txn_AddSchema_Call) Run(run func(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddSchemaOptions])) *Txn_AddSchema_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 []options.Enumerable[options.AddSchemaOptions]
-		var variadicArgs []options.Enumerable[options.AddSchemaOptions]
-		if len(args) > 2 {
-			variadicArgs = args[2].([]options.Enumerable[options.AddSchemaOptions])
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_AddSchema_Call) Return(collectionVersions []client.CollectionVersion, err error) *Txn_AddSchema_Call {
-	_c.Call.Return(collectionVersions, err)
-	return _c
-}
-
-func (_c *Txn_AddSchema_Call) RunAndReturn(run func(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddSchemaOptions]) ([]client.CollectionVersion, error)) *Txn_AddSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }

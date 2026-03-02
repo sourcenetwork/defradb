@@ -20,8 +20,8 @@ import (
 func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
@@ -83,8 +83,8 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
@@ -145,8 +145,8 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]

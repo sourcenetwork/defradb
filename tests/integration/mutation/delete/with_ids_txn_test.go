@@ -22,8 +22,8 @@ import (
 func TestMutationDeletion_WithIDsAndTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int

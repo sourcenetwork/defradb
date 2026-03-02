@@ -18,13 +18,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaUpdatesRemoveField(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveField(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -62,13 +62,13 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveAllFields(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -97,11 +97,11 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -121,11 +121,11 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -145,11 +145,11 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String

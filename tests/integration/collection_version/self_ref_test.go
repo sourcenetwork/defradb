@@ -20,11 +20,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						boss: User
 					}
@@ -105,12 +105,12 @@ func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -349,12 +349,12 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID_SingleSidedRelations(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID_SingleSidedRelations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 					}
@@ -441,17 +441,17 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID_SingleSidedRelatio
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// - User and Dog form a circular dependency.
 				// - Cat and Mouse form a another circular dependency.
 				// - There is a relationship from Cat to User, this does not form a circular dependency
 				// between the two (User/Dog and Cat/Mouse) circles, this is included to ensure that
 				// the code does not incorrectly merge the User/Dog and Cat/Mouse circles into a single
 				// circle.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -730,17 +730,17 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHaveSameBaseSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// - User and Dog form a circular dependency.
 				// - Cat and Mouse form a another circular dependency.
 				// - User and Cat form a circular dependency - this circle overlaps with the two otherwise
 				// independent User/Dog and Cat/Mouse circles, causing the 4 types to be locked together in
 				// a larger circle (a relationship DAG cannot be formed) - all 4 types must thus share the
 				// same base ID.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")
@@ -1043,17 +1043,17 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHave
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_SchemasAllHaveSameBaseSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				// - User and Dog form a circular dependency.
 				// - Cat and Mouse form a another circular dependency.
 				// - A larger circle is formed by bridging the two (User/Dog and Cat/Mouse) circles
 				// at different points in the same direction - this circle forms from
 				// User=>Dog=>Mouse=>Cat=>User=>etc.  This test ensures that the two independent circles do not
 				// confuse the code into ignoring the larger circle.
-				Schema: `
+				SDL: `
 					type User {
 						hosts: Dog @primary @relation(name:"hosts")
 						walks: Dog @relation(name:"walkies")

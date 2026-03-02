@@ -20,8 +20,8 @@ import (
 func TestMutationDeletion_WithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -55,8 +55,8 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int
@@ -108,8 +108,8 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -160,8 +160,8 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -191,8 +191,8 @@ func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 func TestMutationDeletion_WithFilterOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

@@ -23,8 +23,8 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -76,8 +76,8 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -137,8 +137,8 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -190,8 +190,8 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -233,8 +233,8 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Custom: JSON
@@ -294,8 +294,8 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithEqualFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						custom: JSON 

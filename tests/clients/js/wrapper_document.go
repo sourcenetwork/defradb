@@ -23,10 +23,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-func (c *Collection) Add(
+func (c *Collection) AddDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionAddOptions],
+	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -34,7 +34,7 @@ func (c *Collection) Add(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "add", docVal, makeDocAddOptions(opts))
+	_, err = execute(ctx, c.client, "addDocument", docVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ type addOptionsJS struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) js.Value {
+func makeDocAddOptions(opts []options.Enumerable[options.AddDocumentOptions]) js.Value {
 	jsOpts := addOptionsJS{}
 	addOpts := utils.NewOptions(opts...)
 	jsOpts.EncryptDoc = addOpts.EncryptDoc
@@ -61,10 +61,10 @@ func makeDocAddOptions(opts []options.Enumerable[options.CollectionAddOptions]) 
 	return optsVal
 }
 
-func (c *Collection) AddMany(
+func (c *Collection) AddManyDocuments(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionAddOptions],
+	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -72,7 +72,7 @@ func (c *Collection) AddMany(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "addMany", docsVal, makeDocAddOptions(opts))
+	_, err = execute(ctx, c.client, "addManyDocuments", docsVal, makeDocAddOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -82,10 +82,10 @@ func (c *Collection) AddMany(
 	return nil
 }
 
-func (c *Collection) Update(
+func (c *Collection) UpdateDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -94,7 +94,7 @@ func (c *Collection) Update(
 		return err
 	}
 	docID := doc.ID().String()
-	_, err = execute(ctx, c.client, "update", docID, string(patch))
+	_, err = execute(ctx, c.client, "updateDocument", docID, string(patch))
 	if err != nil {
 		return err
 	}
@@ -102,63 +102,63 @@ func (c *Collection) Update(
 	return nil
 }
 
-func (c *Collection) Save(
+func (c *Collection) SaveDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
 	saveOpts := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, saveOpts)
-	_, err := c.Get(ctx, doc.ID(), options.CollectionGet().SetShowDeleted(true))
+	_, err := c.GetDocument(ctx, doc.ID(), options.GetDocument().SetShowDeleted(true))
 	if err == nil {
-		return c.Update(ctx, doc)
+		return c.UpdateDocument(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		addOpts := options.CollectionAdd().
+		addOpts := options.AddDocument().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
-		return c.Add(ctx, doc, addOpts)
+		return c.AddDocument(ctx, doc, addOpts)
 	}
 	return err
 }
 
-func (c *Collection) Delete(
+func (c *Collection) DeleteDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "delete", docID.String())
+	res, err := execute(ctx, c.client, "deleteDocument", docID.String())
 	if err != nil {
 		return false, err
 	}
 	return res[0].Bool(), nil
 }
 
-func (c *Collection) Exists(
+func (c *Collection) ExistsDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "exists", docID.String())
+	res, err := execute(ctx, c.client, "existsDocument", docID.String())
 	if err != nil {
 		return false, err
 	}
 	return res[0].Bool(), nil
 }
 
-func (c *Collection) UpdateWithFilter(
+func (c *Collection) UpdateDocumentsWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
+	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "updateWithFilter", filter, updater)
+	res, err := execute(ctx, c.client, "updateDocumentsWithFilter", filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -169,14 +169,14 @@ func (c *Collection) UpdateWithFilter(
 	return &out, nil
 }
 
-func (c *Collection) DeleteWithFilter(
+func (c *Collection) DeleteDocumentsWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "deleteWithFilter", filter)
+	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter", filter)
 	if err != nil {
 		return nil, err
 	}
@@ -187,15 +187,15 @@ func (c *Collection) DeleteWithFilter(
 	return &out, nil
 }
 
-func (c *Collection) Get(
+func (c *Collection) GetDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	showDeleted := opt.ShowDeleted
-	res, err := execute(ctx, c.client, "get", docID.String(), showDeleted)
+	res, err := execute(ctx, c.client, "getDocument", docID.String(), showDeleted)
 	if err != nil {
 		return nil, err
 	}

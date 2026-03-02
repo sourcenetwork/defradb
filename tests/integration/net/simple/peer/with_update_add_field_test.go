@@ -19,13 +19,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *testing.T) {
+func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -45,7 +45,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 				CollectionIDs: []int{0},
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly add a doc on
+				// Patch the collection on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -108,13 +108,13 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -134,7 +134,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				CollectionIDs: []int{0},
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly update the doc on
+				// Patch the collection on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[

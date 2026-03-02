@@ -36,7 +36,7 @@ type CollectionUpdateRequest struct {
 	Updater string `json:"updater"`
 }
 
-func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -46,9 +46,9 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	deleteOpt := options.WithIdentity(options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
+	deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
 
-	result, err := col.DeleteWithFilter(ctx, request.Filter, deleteOpt)
+	result, err := col.DeleteDocumentsWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -56,7 +56,7 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
-func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
@@ -66,9 +66,9 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	updateOpt := options.WithIdentity(options.CollectionUpdateWithFilter(), identity.FromContext(ctx))
+	updateOpt := options.WithIdentity(options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
 
-	result, err := col.UpdateWithFilter(ctx, request.Filter, request.Updater, updateOpt)
+	result, err := col.UpdateDocumentsWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -244,27 +244,27 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	documentArraySchema := openapi3.NewArraySchema()
 	documentArraySchema.Items = documentSchema
 
-	collectionAddSchema := openapi3.NewOneOfSchema()
-	collectionAddSchema.OneOf = openapi3.SchemaRefs{
+	documentAddBodySchema := openapi3.NewOneOfSchema()
+	documentAddBodySchema.OneOf = openapi3.SchemaRefs{
 		documentSchema,
 		openapi3.NewSchemaRef("", documentArraySchema),
 	}
 
-	collectionAddRequest := openapi3.NewRequestBody().
+	documentAddRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(collectionAddSchema))
+		WithContent(openapi3.NewContentWithJSONSchema(documentAddBodySchema))
 
-	collectionAdd := openapi3.NewOperation()
-	collectionAdd.OperationID = "document_add"
-	collectionAdd.Description = "Add document(s) to a collection"
-	collectionAdd.Tags = []string{"document"}
-	collectionAdd.AddParameter(collectionNamePathParam)
-	collectionAdd.RequestBody = &openapi3.RequestBodyRef{
-		Value: collectionAddRequest,
+	documentAdd := openapi3.NewOperation()
+	documentAdd.OperationID = "document_add"
+	documentAdd.Description = "Add document(s) to a collection"
+	documentAdd.Tags = []string{"document"}
+	documentAdd.AddParameter(collectionNamePathParam)
+	documentAdd.RequestBody = &openapi3.RequestBodyRef{
+		Value: documentAddRequest,
 	}
-	collectionAdd.Responses = openapi3.NewResponses()
-	collectionAdd.Responses.Set("200", successResponse)
-	collectionAdd.Responses.Set("400", errorResponse)
+	documentAdd.Responses = openapi3.NewResponses()
+	documentAdd.Responses.Set("200", successResponse)
+	documentAdd.Responses.Set("400", errorResponse)
 
 	collectionUpdateWithRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -355,38 +355,38 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithSchema(openapi3.NewStringSchema())
 
-	collectionGetResponse := openapi3.NewResponse().
+	documentGetResponse := openapi3.NewResponse().
 		WithDescription("Document value").
 		WithJSONSchemaRef(documentSchema)
 
-	collectionGet := openapi3.NewOperation()
-	collectionGet.Description = "Get a document by docID"
-	collectionGet.OperationID = "document_get"
-	collectionGet.Tags = []string{"document"}
-	collectionGet.AddParameter(collectionNamePathParam)
-	collectionGet.AddParameter(documentIDPathParam)
-	collectionGet.AddResponse(200, collectionGetResponse)
-	collectionGet.Responses.Set("400", errorResponse)
+	documentGet := openapi3.NewOperation()
+	documentGet.Description = "Get a document by docID"
+	documentGet.OperationID = "document_get"
+	documentGet.Tags = []string{"document"}
+	documentGet.AddParameter(collectionNamePathParam)
+	documentGet.AddParameter(documentIDPathParam)
+	documentGet.AddResponse(200, documentGetResponse)
+	documentGet.Responses.Set("400", errorResponse)
 
-	collectionUpdate := openapi3.NewOperation()
-	collectionUpdate.Description = "Update a document by docID"
-	collectionUpdate.OperationID = "document_update"
-	collectionUpdate.Tags = []string{"document"}
-	collectionUpdate.AddParameter(collectionNamePathParam)
-	collectionUpdate.AddParameter(documentIDPathParam)
-	collectionUpdate.Responses = openapi3.NewResponses()
-	collectionUpdate.Responses.Set("200", successResponse)
-	collectionUpdate.Responses.Set("400", errorResponse)
+	documentUpdate := openapi3.NewOperation()
+	documentUpdate.Description = "Update a document by docID"
+	documentUpdate.OperationID = "document_update"
+	documentUpdate.Tags = []string{"document"}
+	documentUpdate.AddParameter(collectionNamePathParam)
+	documentUpdate.AddParameter(documentIDPathParam)
+	documentUpdate.Responses = openapi3.NewResponses()
+	documentUpdate.Responses.Set("200", successResponse)
+	documentUpdate.Responses.Set("400", errorResponse)
 
-	collectionDelete := openapi3.NewOperation()
-	collectionDelete.Description = "Delete a document by docID"
-	collectionDelete.OperationID = "document_delete"
-	collectionDelete.Tags = []string{"document"}
-	collectionDelete.AddParameter(collectionNamePathParam)
-	collectionDelete.AddParameter(documentIDPathParam)
-	collectionDelete.Responses = openapi3.NewResponses()
-	collectionDelete.Responses.Set("200", successResponse)
-	collectionDelete.Responses.Set("400", errorResponse)
+	documentDelete := openapi3.NewOperation()
+	documentDelete.Description = "Delete a document by docID"
+	documentDelete.OperationID = "document_delete"
+	documentDelete.Tags = []string{"document"}
+	documentDelete.AddParameter(collectionNamePathParam)
+	documentDelete.AddParameter(documentIDPathParam)
+	documentDelete.Responses = openapi3.NewResponses()
+	documentDelete.Responses.Set("200", successResponse)
+	documentDelete.Responses.Set("400", errorResponse)
 
 	addEncryptedIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -446,9 +446,9 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	truncate.Responses.Set("200", successResponse)
 	truncate.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/collections/{name}", http.MethodPost, collectionAdd, h.Add)
-	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
-	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
+	router.AddRoute("/collections/{name}", http.MethodPost, documentAdd, h.AddDocument)
+	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateDocumentsWithFilter)
+	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteDocumentsWithFilter)
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, addIndex, h.AddIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, deleteIndex, h.DeleteIndex)
@@ -460,7 +460,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		h.DeleteEncryptedIndex)
 	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
 
-	router.AddRoute("/collections/{name}/document/{docID}", http.MethodGet, collectionGet, h.Get)
-	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, collectionUpdate, h.Update)
-	router.AddRoute("/collections/{name}/document/{docID}", http.MethodDelete, collectionDelete, h.Delete)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodGet, documentGet, h.GetDocument)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, documentUpdate, h.UpdateDocument)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodDelete, documentDelete, h.DeleteDocument)
 }

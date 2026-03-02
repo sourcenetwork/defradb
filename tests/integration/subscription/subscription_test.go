@@ -435,8 +435,8 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						counter: Int @crdt(type: pcounter)
 					}
@@ -485,8 +485,8 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

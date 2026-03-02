@@ -29,8 +29,8 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
@@ -115,8 +115,8 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
@@ -192,8 +192,8 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
@@ -287,8 +287,8 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -383,8 +383,8 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -472,8 +472,8 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -555,8 +555,8 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -632,8 +632,8 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -733,8 +733,8 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]
@@ -816,8 +816,8 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						devices: [Device]

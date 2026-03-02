@@ -21,11 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
+func TestCollectionMigrationQueryWithUpdateRequest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -102,11 +102,11 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
+func TestCollectionMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

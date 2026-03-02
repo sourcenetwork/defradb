@@ -37,9 +37,9 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_CanAcc
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
@@ -91,9 +91,9 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
@@ -142,9 +142,9 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_CanAcce
 				Identity: testUtils.NodeIdentity(0), // Doesn't matter who adds the policy.
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),

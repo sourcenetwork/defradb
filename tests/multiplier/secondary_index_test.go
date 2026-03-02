@@ -20,7 +20,7 @@ import (
 
 func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
@@ -29,7 +29,7 @@ func TestHasIndexActions_WithAddIndex_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.DeleteIndex{CollectionID: 0, IndexName: "User_name_idx"},
 	}
 
@@ -38,7 +38,7 @@ func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.ListIndexes{CollectionID: 0},
 	}
 
@@ -47,39 +47,39 @@ func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 
 func TestHasIndexActions_WithNoIndexActions_ReturnsFalse(t *testing.T) {
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 	}
 
 	assert.False(t, hasIndexActions(actions))
 }
 
 func TestHasIndexDirective_WithIndexDirective_ReturnsTrue(t *testing.T) {
-	schema := `type User { name: String @index }`
-	assert.True(t, hasIndexDirective(schema))
+	sdl := `type User { name: String @index }`
+	assert.True(t, hasIndexDirective(sdl))
 }
 
 func TestHasIndexDirective_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
-	schema := `type User { email: String @index(unique: true) }`
-	assert.True(t, hasIndexDirective(schema))
+	sdl := `type User { email: String @index(unique: true) }`
+	assert.True(t, hasIndexDirective(sdl))
 }
 
 func TestHasIndexDirective_WithNoDirective_ReturnsFalse(t *testing.T) {
-	schema := `type User { name: String }`
-	assert.False(t, hasIndexDirective(schema))
+	sdl := `type User { name: String }`
+	assert.False(t, hasIndexDirective(sdl))
 }
 
-func TestAddIndexesToSchema_WithSimpleField_AddsIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithSimpleField_AddsIndex(t *testing.T) {
+	sdl := `type User {
 	name: String
 }`
 	expected := `type User {
 	name: String @index
 }`
-	assert.Equal(t, expected, addIndexesToSchema(schema))
+	assert.Equal(t, expected, addIndexesToSDL(sdl))
 }
 
-func TestAddIndexesToSchema_WithMultipleFields_AddsIndexToAll(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithMultipleFields_AddsIndexToAll(t *testing.T) {
+	sdl := `type User {
 	name: String
 	age: Int
 	active: Boolean
@@ -89,11 +89,11 @@ func TestAddIndexesToSchema_WithMultipleFields_AddsIndexToAll(t *testing.T) {
 	age: Int @index
 	active: Boolean @index
 }`
-	assert.Equal(t, expected, addIndexesToSchema(schema))
+	assert.Equal(t, expected, addIndexesToSDL(sdl))
 }
 
-func TestAddIndexesToSchema_WithAllScalarTypes_AddsIndexToAll(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithAllScalarTypes_AddsIndexToAll(t *testing.T) {
+	sdl := `type User {
 	name: String
 	age: Int
 	score: Float
@@ -115,54 +115,54 @@ func TestAddIndexesToSchema_WithAllScalarTypes_AddsIndexToAll(t *testing.T) {
 	docID: ID @index
 	custom: JSON @index
 }`
-	assert.Equal(t, expected, addIndexesToSchema(schema))
+	assert.Equal(t, expected, addIndexesToSDL(sdl))
 }
 
-func TestAddIndexesToSchema_WithOtherDirectives_AddsIndexBeforeDirective(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithOtherDirectives_AddsIndexBeforeDirective(t *testing.T) {
+	sdl := `type User {
 	name: String @crdt(type: lww)
 	points: Float @crdt(type: pcounter)
 	active: Boolean @default(bool: true)
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index @crdt(type: lww)")
 	assert.Contains(t, result, "points: Float @index @crdt(type: pcounter)")
 	assert.Contains(t, result, "active: Boolean @index @default(bool: true)")
 }
 
-func TestAddIndexesToSchema_WithNonNullFields_AddsIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithNonNullFields_AddsIndex(t *testing.T) {
+	sdl := `type User {
 	name: String!
 	age: Int!
 	score: Float!
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String! @index")
 	assert.Contains(t, result, "age: Int! @index")
 	assert.Contains(t, result, "score: Float! @index")
 }
 
-func TestAddIndexesToSchema_WithNonNullAndDirectives_AddsIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithNonNullAndDirectives_AddsIndex(t *testing.T) {
+	sdl := `type User {
 	name: String! @crdt(type: lww)
 	age: Int! @default(int: 0)
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String! @index @crdt(type: lww)")
 	assert.Contains(t, result, "age: Int! @index @default(int: 0)")
 }
 
-func TestAddIndexesToSchema_WithArrayFields_AddsIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithArrayFields_AddsIndex(t *testing.T) {
+	sdl := `type User {
 	names: [String]
 	numbers: [Int!]
 	scores: [Float]!
 	flags: [Boolean!]!
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "names: [String] @index")
 	assert.Contains(t, result, "numbers: [Int!] @index")
@@ -170,19 +170,19 @@ func TestAddIndexesToSchema_WithArrayFields_AddsIndex(t *testing.T) {
 	assert.Contains(t, result, "flags: [Boolean!]! @index")
 }
 
-func TestAddIndexesToSchema_WithArrayAndDirectives_AddsIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithArrayAndDirectives_AddsIndex(t *testing.T) {
+	sdl := `type User {
 	tags: [String] @crdt(type: lww)
 	numbers: [Int!] @default(int: [])
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "tags: [String] @index @crdt(type: lww)")
 	assert.Contains(t, result, "numbers: [Int!] @index @default(int: [])")
 }
 
-func TestAddIndexesToSchema_WithOneToManyRelation_IndexesManySide(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithOneToManyRelation_IndexesManySide(t *testing.T) {
+	sdl := `type User {
 	name: String
 	devices: [Device]
 }
@@ -191,7 +191,7 @@ type Device {
 	model: String
 	owner: User
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
@@ -202,8 +202,8 @@ type Device {
 	assert.Contains(t, result, "owner: User @index")
 }
 
-func TestAddIndexesToSchema_WithNonNullRelation_IndexesManySide(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithNonNullRelation_IndexesManySide(t *testing.T) {
+	sdl := `type User {
 	name: String
 	devices: [Device]
 }
@@ -212,17 +212,17 @@ type Device {
 	model: String
 	owner: User!
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
 	assert.Contains(t, result, "owner: User! @index")
 }
 
-func TestAddIndexesToSchema_WithOneToOne_DoesNotAddIndex(t *testing.T) {
+func TestAddIndexesToSDL_WithOneToOne_DoesNotAddIndex(t *testing.T) {
 	// One-to-one relations are NOT indexed because DefraDB automatically
 	// creates a unique index to maintain the one-to-one invariant
-	schema := `type User {
+	sdl := `type User {
 	name: String
 	address: Address
 }
@@ -231,7 +231,7 @@ type Address {
 	city: String
 	user: User @primary
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "city: String @index")
@@ -242,8 +242,8 @@ type Address {
 	assert.NotContains(t, result, "address: Address @index")
 }
 
-func TestAddIndexesToSchema_WithNonNullOneToOne_DoesNotAddIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithNonNullOneToOne_DoesNotAddIndex(t *testing.T) {
+	sdl := `type User {
 	name: String
 	address: Address!
 }
@@ -252,7 +252,7 @@ type Address {
 	city: String
 	user: User! @primary
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "city: String @index")
@@ -263,8 +263,8 @@ type Address {
 	assert.NotContains(t, result, "address: Address! @index")
 }
 
-func TestAddIndexesToSchema_WithExplicitFKFieldForOneToOne_DoesNotIndex(t *testing.T) {
-	schema := `type Book {
+func TestAddIndexesToSDL_WithExplicitFKFieldForOneToOne_DoesNotIndex(t *testing.T) {
+	sdl := `type Book {
 	name: String
 	_authorID: Int
 	author: Author @primary
@@ -274,7 +274,7 @@ type Author {
 	name: String
 	published: Book
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "_authorID: Int")
@@ -285,8 +285,8 @@ type Author {
 	assert.NotContains(t, result, "published: Book @index")
 }
 
-func TestAddIndexesToSchema_WithExplicitFKFieldForOneToMany_IndexesFKField(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithExplicitFKFieldForOneToMany_IndexesFKField(t *testing.T) {
+	sdl := `type User {
 	name: String
 	devices: [Device]
 }
@@ -296,7 +296,7 @@ type Device {
 	_ownerID: String
 	owner: User
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
@@ -304,8 +304,8 @@ type Device {
 	assert.Contains(t, result, "owner: User @index")
 }
 
-func TestAddIndexesToSchema_WithMultipleRelations_IndexesAllManySides(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithMultipleRelations_IndexesAllManySides(t *testing.T) {
+	sdl := `type User {
 	name: String
 	devices: [Device]
 }
@@ -320,7 +320,7 @@ type Manufacturer {
 	name: String
 	devices: [Device]
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
@@ -331,24 +331,24 @@ type Manufacturer {
 	assert.Contains(t, result, "manufacturer: Manufacturer @index")
 }
 
-func TestAddIndexesToSchema_WithSingleSelfReference_IndexesSelfReference(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithSingleSelfReference_IndexesSelfReference(t *testing.T) {
+	sdl := `type User {
 	name: String
 	boss: User
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "boss: User @index")
 }
 
-func TestAddIndexesToSchema_WithOneToOneSelfReference_DoesNotIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithOneToOneSelfReference_DoesNotIndex(t *testing.T) {
+	sdl := `type User {
 	name: String
 	boss: User @primary
 	underling: User
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "boss: User @primary")
@@ -357,8 +357,8 @@ func TestAddIndexesToSchema_WithOneToOneSelfReference_DoesNotIndex(t *testing.T)
 	assert.NotContains(t, result, "underling: User @index")
 }
 
-func TestAddIndexesToSchema_WithRelationDirective_DoesNotAddIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithRelationDirective_DoesNotAddIndex(t *testing.T) {
+	sdl := `type User {
 	hosts: Dog @primary @relation(name:"hosts")
 	walks: Dog @relation(name:"walkies")
 }
@@ -367,7 +367,7 @@ type Dog {
 	host: User @relation(name:"hosts")
 	walker: User @primary @relation(name:"walkies")
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "hosts: Dog @primary @relation(name:\"hosts\")")
 	assert.NotContains(t, result, "hosts: Dog @index")
@@ -380,8 +380,8 @@ type Dog {
 	assert.NotContains(t, result, "host: User @index")
 }
 
-func TestAddIndexesToSchema_WithCircularOneToOne_DoesNotAddIndex(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithCircularOneToOne_DoesNotAddIndex(t *testing.T) {
+	sdl := `type User {
 	toleratedBy: Cat @relation(name:"tolerates")
 }
 
@@ -393,7 +393,7 @@ type Cat {
 type Mouse {
 	lovedBy: Cat @relation(name:"loves")
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "loves: Mouse @primary")
 	assert.NotContains(t, result, "loves: Mouse @index")
@@ -406,8 +406,8 @@ type Mouse {
 	assert.NotContains(t, result, "lovedBy: Cat @index")
 }
 
-func TestAddIndexesToSchema_WithManyToManyJoinTable_IndexesJoinRelations(t *testing.T) {
-	schema := `type Student {
+func TestAddIndexesToSDL_WithManyToManyJoinTable_IndexesJoinRelations(t *testing.T) {
+	sdl := `type Student {
 	name: String
 }
 
@@ -419,7 +419,7 @@ type Enrollment {
 	student: Student @relation(name: "student_enrollments")
 	course: Course @relation(name: "course_enrollments")
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 
@@ -427,8 +427,8 @@ type Enrollment {
 	assert.Contains(t, result, "course: Course @index")
 }
 
-func TestAddIndexesToSchema_WithSingleRelationNoBackReference_AddsIndex(t *testing.T) {
-	schema := `type Author {
+func TestAddIndexesToSDL_WithSingleRelationNoBackReference_AddsIndex(t *testing.T) {
+	sdl := `type Author {
 	name: String
 }
 
@@ -436,7 +436,7 @@ type Book {
 	title: String
 	author: Author
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "title: String @index")
@@ -444,30 +444,30 @@ type Book {
 	assert.Contains(t, result, "author: Author @index")
 }
 
-func TestAddIndexesToSchema_WithVariousFormatting_PreservesWhitespace(t *testing.T) {
-	schema := `type User {
+func TestAddIndexesToSDL_WithVariousFormatting_PreservesWhitespace(t *testing.T) {
+	sdl := `type User {
 	name:    String
 	age:Int
 }`
-	result := addIndexesToSchema(schema)
+	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name:    String @index")
 	assert.Contains(t, result, "age:Int @index")
 }
 
-func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
+func TestApply_WithIndexActions_StillModifiesSDL(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
 	result := m.Apply(actions)
 
-	schemaAdd, ok := result[0].(*action.AddSchema)
+	collectionAdd, ok := result[0].(*action.AddCollection)
 	assert.True(t, ok)
-	assert.Contains(t, schemaAdd.Schema, "@index")
+	assert.Contains(t, collectionAdd.SDL, "@index")
 
 	addIndex, ok := result[1].(*action.AddIndex)
 	assert.True(t, ok)
@@ -479,7 +479,7 @@ func TestApply_WithIndexDirective_ReturnsUnchanged(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String @index }"},
+		&action.AddCollection{SDL: "type User { name: String @index }"},
 	}
 
 	result := m.Apply(actions)
@@ -487,7 +487,7 @@ func TestApply_WithIndexDirective_ReturnsUnchanged(t *testing.T) {
 	assert.Equal(t, actions, result)
 }
 
-func TestApply_WithoutIndex_ModifiesSchema(t *testing.T) {
+func TestApply_WithoutIndex_ModifiesSDL(t *testing.T) {
 	m := &secondaryIndex{}
 
 	original := `type User {
@@ -496,17 +496,17 @@ func TestApply_WithoutIndex_ModifiesSchema(t *testing.T) {
 }`
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: original},
+		&action.AddCollection{SDL: original},
 	}
 
 	result := m.Apply(actions)
 
 	assert.NotEqual(t, actions, result)
 
-	schemaAdd, ok := result[0].(*action.AddSchema)
+	collectionAdd, ok := result[0].(*action.AddCollection)
 	assert.True(t, ok)
-	assert.Contains(t, schemaAdd.Schema, "name: String @index")
-	assert.Contains(t, schemaAdd.Schema, "age: Int @index")
+	assert.Contains(t, collectionAdd.SDL, "name: String @index")
+	assert.Contains(t, collectionAdd.SDL, "age: Int @index")
 }
 
 func TestName_ReturnsSecondaryIndex(t *testing.T) {
@@ -519,7 +519,7 @@ func TestShouldSkip_WithIndexActions_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.AddIndex{CollectionID: 0, FieldName: "name"},
 	}
 
@@ -530,7 +530,7 @@ func TestShouldSkip_WithIndexDirective_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String @index }"},
+		&action.AddCollection{SDL: "type User { name: String @index }"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))
@@ -540,7 +540,7 @@ func TestShouldSkip_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { email: String @index(unique: true) }"},
+		&action.AddCollection{SDL: "type User { email: String @index(unique: true) }"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))
@@ -550,7 +550,7 @@ func TestShouldSkip_WithExplainRequest_ReturnsTrue(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.ExplainRequest{Request: `query @explain(type: debug) { User { name } }`},
 	}
 
@@ -561,7 +561,7 @@ func TestShouldSkip_WithRequestContainingExplainDirective_ReturnsTrue(t *testing
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 		&action.Request{Request: `query @explain(type: simple) { User { name } }`},
 	}
 
@@ -572,7 +572,7 @@ func TestShouldSkip_WithNoIndex_ReturnsFalse(t *testing.T) {
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
-		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.AddCollection{SDL: "type User { name: String }"},
 	}
 
 	assert.False(t, m.ShouldSkip(actions))

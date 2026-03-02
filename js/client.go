@@ -39,7 +39,7 @@ func NewClient(n *node.Node) *Client {
 
 func (c *Client) JSValue() js.Value {
 	return js.ValueOf(map[string]any{
-		"addSchema":                  goji.Async(c.addSchema),
+		"addCollection":              goji.Async(c.addCollection),
 		"patchCollection":            goji.Async(c.patchCollection),
 		"setActiveCollectionVersion": goji.Async(c.setActiveCollectionVersion),
 		"addView":                    goji.Async(c.addView),

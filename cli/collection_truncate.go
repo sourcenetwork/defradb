@@ -15,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -29,7 +30,7 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
-				return cmd.Usage()
+				return client.ErrCollectionNotFound
 			}
 
 			opt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(cmd.Context()))

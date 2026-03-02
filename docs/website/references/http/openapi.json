@@ -1087,7 +1087,7 @@
         },
         "/collections": {
             "get": {
-                "description": "Introspect collection(s) by name, schema id, or version id.",
+                "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "collection_describe",
                 "parameters": [
                     {
@@ -1099,7 +1099,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -1107,7 +1107,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
@@ -1142,7 +1142,7 @@
                                 }
                             }
                         },
-                        "description": "Collection(s) with matching name, schema id, or version id."
+                        "description": "Collection(s) with matching name, collection id, or version id."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -1170,6 +1170,43 @@
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
+            "post": {
+                "description": "Add a new collection",
+                "operationId": "collection_add",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/collection"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Collection(s)"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2574,45 +2611,6 @@
                 }
             }
         },
-        "/schema": {
-            "post": {
-                "description": "Add a new schema definition",
-                "operationId": "add_schema",
-                "requestBody": {
-                    "content": {
-                        "text/plain": {
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/collection"
-                                    },
-                                    "type": "array"
-                                }
-                            }
-                        },
-                        "description": "Collection(s)"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
-            }
-        },
         "/tx": {
             "post": {
                 "description": "Create a new transaction",
@@ -2798,7 +2796,7 @@
         },
         "/view/refresh": {
             "post": {
-                "description": "Refresh view(s) by name, schema id, or version id.",
+                "description": "Refresh view(s) by name, collection id, or version id.",
                 "operationId": "view_refresh",
                 "parameters": [
                     {
@@ -2810,7 +2808,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -2818,7 +2816,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
@@ -2859,12 +2857,12 @@
     ],
     "tags": [
         {
-            "description": "Upload GQL schemas to add collections",
-            "name": "schema"
+            "description": "Add, describe, patch, and manage collections",
+            "name": "collection"
         },
         {
-            "description": "Add, remove, or update documents",
-            "name": "collection"
+            "description": "Add, get, update, or delete documents",
+            "name": "document"
         },
         {
             "description": "Add views",

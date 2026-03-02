@@ -49,7 +49,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
-				ExpectedError: "key not found", // Note: it is authorized, just key not found.
+				ExpectedError: "collection not found", // Note: it is authorized, just collection not found.
 			},
 		},
 	}

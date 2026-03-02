@@ -21,8 +21,8 @@ import (
 func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -63,8 +63,8 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -108,8 +108,8 @@ func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T)
 func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -129,8 +129,8 @@ func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 func TestEncryptedIndexAdd_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex

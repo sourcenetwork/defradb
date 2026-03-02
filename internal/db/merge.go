@@ -356,7 +356,7 @@ func (mp *mergeProcessor) processBlock(
 		}
 
 		// If the CRDT is nil, it means the field is not part
-		// of the schema and we can safely ignore it.
+		// of the collection definition and we can safely ignore it.
 		if crdt == nil {
 			return nil
 		}
@@ -456,7 +456,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the schema, we can safely ignore it.
+			// If the field is not part of the collection definition, we can safely ignore it.
 			return nil, nil
 		}
 
@@ -486,7 +486,7 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.Get(ctx, docID)
+	doc, err := mp.col.GetDocument(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return nil
 	}
@@ -509,9 +509,9 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
+		return nil, client.NewErrCollectionNotFoundForRoot(collectionID)
 	}
-	// We currently only support one active collection per root schema
+	// We currently only support one active collection per collection root
 	// so it is safe to return the first one.
 	return cols[0].(*collection), nil
 }
@@ -574,7 +574,7 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.Get(ctx, docID)
+	newDoc, err := col.GetDocument(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}

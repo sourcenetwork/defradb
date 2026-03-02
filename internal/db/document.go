@@ -130,12 +130,12 @@ func (c *collection) getAllDocIDsChan(
 	return resCh, nil
 }
 
-// Add a new document.
+// AddDocument adds a new document.
 // Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Add(
+func (c *collection) AddDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionAddOptions],
+	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -162,12 +162,12 @@ func (c *collection) Add(
 	return txn.Commit()
 }
 
-// AddMany adds a collection of documents at once.
+// AddManyDocuments adds a collection of documents at once.
 // Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) AddMany(
+func (c *collection) AddManyDocuments(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Enumerable[options.CollectionAddOptions],
+	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -219,7 +219,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
-	opt *options.CollectionAddOptions,
+	opt *options.AddDocumentOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -282,7 +282,7 @@ func (c *collection) add(
 
 func setContextDocEncryption(
 	ctx context.Context,
-	opt *options.CollectionAddOptions,
+	opt *options.AddDocumentOptions,
 ) context.Context {
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
@@ -291,13 +291,13 @@ func setContextDocEncryption(
 	return ctx
 }
 
-// Update an existing document with the new values.
+// UpdateDocument updates an existing document with the new values.
 // Any field that needs to be removed or cleared should call doc.Clear(field) before.
 // Any field that is nil/empty that hasn't called Clear will be ignored.
-func (c *collection) Update(
+func (c *collection) UpdateDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -374,12 +374,12 @@ func (c *collection) update(
 	return nil
 }
 
-// Save a document into the db.
+// SaveDocument saves a document into the db.
 // Either by creating a new document or by updating an existing one.
-func (c *collection) Save(
+func (c *collection) SaveDocument(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Enumerable[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -620,14 +620,14 @@ func (c *collection) save(
 	return nil
 }
 
-// Delete will attempt to delete a document by docID and return true if a deletion is successful,
+// DeleteDocument will attempt to delete a document by docID and return true if a deletion is successful,
 // otherwise will return false, along with an error, if it cannot.
 // If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
 // This operation will all state relating to the given DocID. This includes data, block, and head storage.
-func (c *collection) Delete(
+func (c *collection) DeleteDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -663,11 +663,11 @@ func (c *collection) Delete(
 	return true, txn.Commit()
 }
 
-// Exists checks if a given document exists with supplied DocID.
-func (c *collection) Exists(
+// ExistsDocument checks if a given document exists with supplied DocID.
+func (c *collection) ExistsDocument(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Enumerable[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

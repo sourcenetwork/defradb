@@ -49,9 +49,9 @@ func TestNAC_GatesSyncBranchableCollection_AuthorizedIdentity_AllowAccess(t *tes
 
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -90,9 +90,9 @@ func TestNAC_GatesSyncBranchableCollection_NoIdentity_NotAuthorizedError(t *test
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -132,9 +132,9 @@ func TestNAC_GatesSyncBranchableCollection_WrongIdentity_NotAuthorizedError(t *t
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema: `
+				SDL: `
 					type User @branchable {
 						name: String
 					}

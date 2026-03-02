@@ -68,7 +68,7 @@ func getCollection(
 
 	// Only one collection should match the criteria
 	if len(cols) == 0 {
-		return nil, NewErrNoMatchingCollection()
+		return nil, client.ErrCollectionNotFound
 	}
 	if len(cols) > 1 {
 		return nil, NewErrAmbiguousCollection()

@@ -384,7 +384,7 @@ existingVersionLoop:
 		}
 	}
 
-	return db.loadSchema(ctx)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 const (
@@ -402,11 +402,11 @@ func substituteCollectionPatch(
 	patch jsonpatch.Patch,
 	collectionsByName map[string]client.CollectionVersion,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesBySchema := make(map[string]map[string]int, len(collectionsByName))
-	for schemaName, schema := range collectionsByName {
-		fieldIndexesByName := make(map[string]int, len(schema.Fields))
-		fieldIndexesBySchema[schemaName] = fieldIndexesByName
-		for i, field := range schema.Fields {
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
+	for collectionName, collection := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(collection.Fields))
+		fieldIndexesByCollection[collectionName] = fieldIndexesByName
+		for i, field := range collection.Fields {
 			fieldIndexesByName[field.Name] = i
 		}
 	}
@@ -451,7 +451,7 @@ func substituteCollectionPatch(
 
 					desc := collectionsByName[splitPath[collectionNamePathIndex]]
 					var index string
-					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
@@ -460,7 +460,7 @@ func substituteCollectionPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
@@ -517,13 +517,13 @@ func substituteCollectionPatch(
 	return patch, nil
 }
 
-// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
+// isFieldOrInner returns true if the given path points to a CollectionFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
 	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a SchemaFieldDescription.
+// isField returns true if the given path points to a CollectionFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
@@ -538,13 +538,13 @@ func containsLetter(s string) bool {
 	return false
 }
 
-// SetActiveCollectionVersion activates all collection versions with the given schema version, and deactivates all
-// those without it (if they share the same schema root).
+// SetActiveCollectionVersion activates all collection versions with the given collection version, and deactivates all
+// those without it (if they share the same collection root).
 //
-// This will affect all operations interacting with the schema where a schema version is not explicitly
+// This will affect all operations interacting with the collection where a collection version is not explicitly
 // provided.  This includes GQL queries and Collection operations.
 //
-// It will return an error if the provided schema version ID does not exist.
+// It will return an error if the provided collection version ID does not exist.
 func (db *DB) setActiveCollectionVersion(
 	ctx context.Context,
 	versionID string,
@@ -607,8 +607,8 @@ func (db *DB) setActiveCollectionVersion(
 		}
 	}
 
-	// Load the schema into the clients (e.g. GQL)
-	return db.loadSchema(ctx)
+	// Load the collection definitions into the clients (e.g. GQL)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
@@ -961,7 +961,7 @@ func ensureOneToOneUniqueIndex(
 
 // getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
-// standard schema creation flow that calls finalizeRelations.
+// standard collection creation flow that calls finalizeRelations.
 // Returns a map of collectionName -> []IndexAddRequest for indexes that need to be added.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,

@@ -103,10 +103,10 @@ All mandatory permissions are:
 - Specified in the `dpi.go` file within the variable `dpiRequiredPermissions`.
 
 ### DPI Resource Examples:
-- Check out tests here: [tests/integration/acp/schema/add_dpi](/tests/integration/acp/schema/add_dpi)
+- Check out tests here: [tests/integration/acp/dac/link_collection](/tests/integration/acp/dac/link_collection)
 - The tests linked are broken into `accept_*_test.go` and `reject_*_test.go` files.
-- Accepted tests document the valid DPIs (as the schema is accepted).
-- Rejected tests document invalid DPIs (as the schema is rejected).
+- Accepted tests document the valid DPIs (as the collection is accepted).
+- Rejected tests document invalid DPIs (as the collection is rejected).
 - There are also some Partially-DPI tests that are both accepted and rejected depending on the resource.
 
 ### Required Permission's Expression:
@@ -189,9 +189,9 @@ Result:
 }
 ```
 
-### Add schema, linking to a resource within the policy we added:
+### Add collection, linking to a resource within the policy we added:
 
-We have in `examples/schema/permissioned/users.graphql`:
+We have in `examples/collection/permissioned/users.graphql`:
 ```graphql
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
@@ -204,7 +204,7 @@ type Users @policy(
 
 CLI Command:
 ```sh
-defradb client schema add -f examples/schema/permissioned/users.graphql
+defradb client collection add -f examples/collection/permissioned/users.graphql
 ```
 
 Result:
@@ -492,9 +492,9 @@ Result:
 }
 ```
 
-Add schema, linking to the users resource and our policyID:
+Add collection, linking to the users resource and our policyID:
 ```sh
-defradb client schema add '
+defradb client collection add '
 type Users @policy(
     id: "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
     resource: "users"

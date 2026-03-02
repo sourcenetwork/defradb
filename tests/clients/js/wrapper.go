@@ -167,14 +167,14 @@ func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...opti
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddSchema(
+func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, w.value, "addSchema", schema)
+	res, err := execute(ctx, w.value, "addCollection", sdl)
 	if err != nil {
 		return nil, err
 	}

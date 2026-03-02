@@ -20,8 +20,8 @@ import (
 func TestManyToMany_QueryFromJoinCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Student {
                         name: String
                     }

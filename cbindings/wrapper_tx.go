@@ -113,12 +113,12 @@ func (txn *Transaction) VerifySignature(
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(
+func (txn *Transaction) AddCollection(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
+	return txn.CWrapper.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(

@@ -46,7 +46,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionVersion, error) {
 		return nil, err
 	}
 
-	_, err = node.DB.AddSchema(ctx, gqlSDL)
+	_, err = node.DB.AddCollection(ctx, gqlSDL)
 	if err != nil {
 		return nil, err
 	}

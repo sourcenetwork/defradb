@@ -375,13 +375,13 @@ func (w *Wrapper) BasicExport(
 	return err
 }
 
-func (w *Wrapper) AddSchema(
+func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	args := []string{"client", "schema", "add"}
-	args = append(args, schema)
+	args := []string{"client", "collection", "add"}
+	args = append(args, sdl)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

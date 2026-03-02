@@ -20,8 +20,8 @@ import (
 func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Article {
 						name: String
 						author: Author
@@ -140,8 +140,8 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Article {
 						name: String
 						author: Author

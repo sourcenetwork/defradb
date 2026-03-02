@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -84,7 +82,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	if len(cols) == 0 {
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	// cols will always have length == 1 here
@@ -94,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // getCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
 //
-// Inactive collections are not returned by default unless a specific schema version ID
+// Inactive collections are not returned by default unless a specific collection version ID
 // is provided.
 func (db *DB) getCollections(
 	ctx context.Context,
@@ -108,7 +106,7 @@ func (db *DB) getCollections(
 	switch {
 	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
 		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
-		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
@@ -187,6 +185,39 @@ func (db *DB) getCollections(
 	}
 
 	return collections, nil
+}
+
+// addCollection takes the provided SDL, and applies it to the database,
+// adding the necessary collections, request types, etc.
+func (db *DB) addCollection(
+	ctx context.Context,
+	sdl string,
+) ([]client.CollectionVersion, error) {
+	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := db.addCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.loadCollectionDefinitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
+	definitions, err := description.GetActiveCollections(ctx)
+	if err != nil {
+		return err
+	}
+
+	return db.parser.SetSchema(ctx, definitions)
 }
 
 // Version returns the client.CollectionVersion.

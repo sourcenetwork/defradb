@@ -20,8 +20,8 @@ import (
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
@@ -64,8 +64,8 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
@@ -108,8 +108,8 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
@@ -152,8 +152,8 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
@@ -196,8 +196,8 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]

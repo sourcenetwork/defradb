@@ -22,8 +22,8 @@ import (
 func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -50,8 +50,8 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t 
 func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

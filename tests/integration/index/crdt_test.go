@@ -22,8 +22,8 @@ import (
 func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
@@ -45,8 +45,8 @@ func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pcounter)
@@ -68,8 +68,8 @@ func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter) @index
@@ -86,8 +86,8 @@ func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pcounter) @index
@@ -104,8 +104,8 @@ func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						score: Float @crdt(type: pncounter)
@@ -127,8 +127,8 @@ func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int
@@ -171,8 +171,8 @@ func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
@@ -194,8 +194,8 @@ func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T)
 func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
@@ -218,8 +218,8 @@ func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 func TestIndexAdd_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "points"}]) {
 						name: String
 						points: Int @crdt(type: pncounter)

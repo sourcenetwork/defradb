@@ -21,8 +21,8 @@ import (
 func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -92,8 +92,8 @@ func TestIndexDelete_WithoutCollection_ShouldReturnError(t *testing.T) {
 func TestIndexDelete_WithoutName_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 					}
@@ -113,8 +113,8 @@ func TestIndexDelete_WithoutName_ShouldReturnError(t *testing.T) {
 func TestIndexDelete_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -135,8 +135,8 @@ func TestIndexDelete_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int

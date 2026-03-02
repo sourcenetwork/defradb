@@ -35,8 +35,8 @@ func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @encryptedIndex
 						age: Int

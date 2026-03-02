@@ -72,8 +72,8 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				type User {
 					name: String
 					age: Int
@@ -120,8 +120,8 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				type User {
 					name: String
 					age: Int

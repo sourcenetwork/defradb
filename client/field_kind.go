@@ -65,13 +65,13 @@ type NamedKind struct {
 
 // SelfKind represents a relationship with the host.
 //
-// This includes any other schema that formed a circular dependency with the
+// This includes any other collection type that formed a circular dependency with the
 // host at the point at which they were created.
 //
 // For example: the relations in User=>Dog=>User form a circle, and would be
 // defined using [SelfKind] instead of [CollectionKind].
 //
-// This is because schema IDs are content IDs and cannot be generated for a
+// This is because collection IDs are content IDs and cannot be generated for a
 // single element within a circular dependency tree.
 type SelfKind struct {
 	// todo: RelativeID should be made into an Option[int], see the following
@@ -310,7 +310,7 @@ const (
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
 // their enum values.
 //
-// It is currently used to by [db.PatchSchema] to allow string representations of
+// It is currently used by [db.PatchCollection] to allow string representations of
 // [FieldKind] to be provided instead of their raw int values.  This usage may expand
 // in the future.  They currently roughly correspond to the GQL field types, but this
 // equality is not guaranteed.
@@ -396,7 +396,7 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 		strKind = strKind[1 : len(strKind)-1]
 	}
 
-	// This is used by patch schema/collection, where new fields added
+	// This is used by patch collection, where new fields added
 	// by users will be initially added as [NamedKind]s.
 	return NewNamedKind(strKind, isArray), nil
 }

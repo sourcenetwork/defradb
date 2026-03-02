@@ -20,8 +20,8 @@ import (
 func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,

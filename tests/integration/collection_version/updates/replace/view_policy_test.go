@@ -50,8 +50,8 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
                         - actor
                 `,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

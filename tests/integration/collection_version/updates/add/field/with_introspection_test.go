@@ -18,11 +18,11 @@ import (
 	introspectionUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldIntrospection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -68,11 +68,11 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},

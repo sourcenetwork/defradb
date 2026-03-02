@@ -68,8 +68,8 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			getOpts := options.WithIdentity(options.CollectionGet(), n.p.identity)
-			doc, err := n.collection.Get(n.p.ctx, docID, getOpts)
+			getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
+			doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
 			if err != nil {
 				return false, err
 			}
@@ -78,8 +78,8 @@ func (n *updateNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			updateOpts := options.WithIdentity(options.CollectionUpdate(), n.p.identity)
-			err = n.collection.Update(n.p.ctx, doc, updateOpts)
+			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
+			err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
 			if err != nil {
 				return false, err
 			}
