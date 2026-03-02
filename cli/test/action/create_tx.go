@@ -12,7 +12,7 @@ package action
 
 import "github.com/stretchr/testify/require"
 
-// CreateTx executes the `client tx create` command and appends the returned transaction id
+// CreateTx executes the `client tx new` command and appends the returned transaction id
 // to state.Txns.
 type CreateTx struct {
 	stateful
@@ -21,7 +21,7 @@ type CreateTx struct {
 var _ Action = (*CreateTx)(nil)
 
 func (a *CreateTx) Execute() {
-	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections([]string{"client", "tx", "create"}))
+	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections([]string{"client", "tx", "new"}))
 	require.NoError(a.s.T, err)
 
 	txId, ok := result["id"].(float64)
