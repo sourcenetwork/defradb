@@ -434,10 +434,10 @@ func performAction(
 		deleteEncryptedIndex(s, action)
 
 	case BackupExport:
-		backupExport(s, action)
+		exportBackup(s, action)
 
 	case BackupImport:
-		backupImport(s, action)
+		importBackup(s, action)
 
 	case TransactionCommit:
 		commitTransaction(s, action)
@@ -1533,8 +1533,8 @@ func deleteEncryptedIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
-// backupExport generates a backup using the db api.
-func backupExport(
+// exportBackup generates a backup using the db api.
+func exportBackup(
 	s *state.State,
 	action BackupExport,
 ) {
@@ -1565,8 +1565,8 @@ func backupExport(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
-// backupImport imports data from a backup using the db api.
-func backupImport(
+// importBackup imports data from a backup using the db api.
+func importBackup(
 	s *state.State,
 	action BackupImport,
 ) {

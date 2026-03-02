@@ -212,7 +212,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
-	request := CollectionUpdateRequest{
+	request := UpdateCollectionRequest{
 		Filter:  filter,
 		Updater: updater,
 	}
@@ -242,7 +242,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
-	request := CollectionDeleteRequest{
+	request := DeleteCollectionRequest{
 		Filter: filter,
 	}
 
