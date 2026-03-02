@@ -96,7 +96,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, utils.NewOptions(options.GetCollections().SetCollectionName(name)))
+	cols, err := db.getCollections(ctx, utils.NewOptions(options.GetCollections().SetCollectionName(name)), true)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +114,12 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 //
 // Inactive collections are not returned by default unless a specific schema version ID
 // is provided.
+//
+// txnIsEphemeral indicates whether or not the txn should be attached to the collection
 func (db *DB) getCollections(
 	ctx context.Context,
 	opts *options.GetCollectionsOptions,
+	txnIsEphemeral bool,
 ) ([]client.Collection, error) {
 	if opts == nil {
 		opts = &options.GetCollectionsOptions{}
@@ -197,7 +200,14 @@ func (db *DB) getCollections(
 			}
 		}
 
-		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+		// In the case that the txn was ephemeral, we will not save a reference to it
+		// attached to the collection.
+		var txnOpt immutable.Option[client.Txn]
+		if txnIsEphemeral {
+			txnOpt = immutable.None[client.Txn]()
+		} else {
+			txnOpt = datastore.CtxTryGetClientTxnOption(ctx)
+		}
 		collection, err := db.newCollection(col, txnOpt)
 		if err != nil {
 			return nil, err

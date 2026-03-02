@@ -172,3 +172,153 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test runs UpdateWithFilter inside of a transaction, and illustrates that committing the transaction
+// results in the document being updated in the database.
+func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				TransactionID: immutable.Some(1),
+				Filter:        `{name: {_eq: "John"}}`,
+				Updater:       `{"name": "Chris"}`,
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Chris",
+							"age":  int64(27),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test runs UpdateWithFilter inside of a transaction, and illustrates that not committing
+// the transaction results in the document not yet being updated in the database.
+func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				TransactionID: immutable.Some(1),
+				Filter:        `{name: {_eq: "John"}}`,
+				Updater:       `{"name": "Chris"}`,
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(27),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test runs UpdateWithFilter inside of a transaction, and illustrates that it can work on
+// the documents created inside that transaction.
+func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				TransactionID: immutable.Some(1),
+				Filter:        `{name: {_eq: "John"}}`,
+				Updater:       `{"name": "Chris"}`,
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Chris",
+							"age":  int64(27),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -11,6 +11,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -55,15 +57,46 @@ type AddIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddIndex)(nil)
 var _ Stateful = (*AddIndex)(nil)
 
 func (a *AddIndex) Execute() {
+	fmt.Println("Entering AddIndex Execute")
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+	for index, nodeID := range nodeIDs {
+
+		node := a.s.Nodes[nodeID]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if a.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+		}
+
+		nodeID := nodeIDs[index]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+
+		collection := collections[a.CollectionID]
+		fmt.Println("Collection that was found in AddIndex: ", collection.Name())
 
 		indexDesc := client.IndexAddRequest{
 			Name: a.IndexName,
@@ -92,7 +125,7 @@ func (a *AddIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		_, err := collection.AddIndex(a.s.Ctx, indexDesc, opts)
+		_, err = collection.AddIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

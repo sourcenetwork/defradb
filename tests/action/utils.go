@@ -58,6 +58,7 @@ func RefreshCollections(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
+
 		allCollections, err := node.GetCollections(s.Ctx, opts)
 		require.Nil(s.T, err)
 

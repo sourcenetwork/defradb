@@ -75,19 +75,24 @@ func (a *ListIndexes) Execute() {
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, nodeID := range nodeIDs {
+	for index, nodeID := range nodeIDs {
 
-		var collection client.Collection
+		node := a.s.Nodes[index]
+		var collections []client.Collection
+		var err error
 		if hadTxn {
-			collections, err := txn.GetCollections(a.s.Ctx, options.GetCollections())
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
 			if err != nil {
 				return
 			}
-			collection = collections[a.CollectionID]
 		} else {
-			// Otherwise, we will use a cached collection from the state
-			collection = a.s.Nodes[nodeID].Collections[a.CollectionID]
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
 		}
+
+		collection := collections[a.CollectionID]
 
 		opts := options.CollectionListIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

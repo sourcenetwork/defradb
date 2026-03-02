@@ -201,7 +201,7 @@ func (txn *Transaction) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	// Skipped
+	// Checked
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }

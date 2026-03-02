@@ -126,7 +126,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()))
+		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()), true)
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}

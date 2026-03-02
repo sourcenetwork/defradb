@@ -13,6 +13,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -43,6 +44,9 @@ type DeleteIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*DeleteIndex)(nil)
@@ -52,8 +56,34 @@ func (a *DeleteIndex) Execute() {
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+	for index, nodeID := range nodeIDs {
+
+		node := a.s.Nodes[nodeID]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var hadTxn bool
+		var txn client.Txn
+		if a.TransactionID.HasValue() {
+			hadTxn = true
+			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+		}
+
+		nodeID := nodeIDs[index]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+
+		collection := collections[a.CollectionID]
 
 		opts := options.CollectionDeleteIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
@@ -61,7 +91,7 @@ func (a *DeleteIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
+		err = collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 	}

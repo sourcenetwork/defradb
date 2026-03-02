@@ -106,7 +106,6 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
@@ -119,7 +118,7 @@ func (db *DB) GetCollections(
 	}
 
 	var err error = nil
-	ctx, txn, err = ensureContextTxn(ctx, db, true)
+	ctx, txn, err = ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +127,7 @@ func (db *DB) GetCollections(
 		defer txn.Discard()
 	}
 
-	return db.getCollections(ctx, opt)
+	return db.getCollections(ctx, opt, !hadTxn)
 }
 
 // ListIndexes gets all the indexes in the database.

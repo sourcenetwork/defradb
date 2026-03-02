@@ -504,6 +504,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 	cols, err := db.getCollections(
 		ctx,
 		utils.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
+		true,
 	)
 	if err != nil {
 		return nil, err

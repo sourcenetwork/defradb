@@ -117,29 +117,30 @@ func (a *AddDoc) Execute() {
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
 			hadTxn = true
-			a.DoNotWaitForEvent = true // Don't wait for the event, because it won't be commited yet
+			a.DoNotWaitForEvent = true
 			txn, _ = a.s.GetTransaction(node, a.TransactionID)
 		} else {
-			// If a transaction was not provided, we will make an ephemeral one for this action.
 			txn, _ = node.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
-
-		// If we have a transaction, we have to use it to get the collection
-		var collection client.Collection
+		var collections []client.Collection
+		var err error
 		if hadTxn {
-			collections, err := txn.GetCollections(a.s.Ctx, options.GetCollections())
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
 			if err != nil {
 				return
 			}
-			collection = collections[a.CollectionID]
 		} else {
-			// Otherwise, we will use a cached collection from the state
-			collection = a.s.Nodes[nodeID].Collections[a.CollectionID]
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
 		}
 
-		err := withRetryOnNode(
+		collection := collections[a.CollectionID]
+
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error
@@ -156,7 +157,6 @@ func (a *AddDoc) Execute() {
 				}
 				// (It should not error, but we defensively discard it if it does.)
 				if !hadTxn && err != nil {
-					fmt.Println("Discarding txn in AddDoc")
 					txn.Discard()
 				}
 				return err

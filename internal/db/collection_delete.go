@@ -33,6 +33,15 @@ func (c *collection) DeleteWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -48,14 +57,19 @@ func (c *collection) DeleteWithFilter(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	res, err := c.deleteWithFilter(ctx, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, txn.Commit()
+	if !hadTxn {
+		return res, txn.Commit()
+	}
+	return res, nil
 }
 
 func (c *collection) deleteWithFilter(

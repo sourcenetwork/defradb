@@ -1413,18 +1413,46 @@ func updateDocViaGQL(
 func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	var res *client.UpdateResult
 	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		hadTxn := action.TransactionID.HasValue()
+		var txn client.Txn
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		} else {
+			// If a transaction was not provided, we will make an ephemeral one for this action.
+			txn, _ = node.NewTxn(false)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		var collections []client.Collection
+		var err error
+		if hadTxn {
+			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		} else {
+			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
+			if err != nil {
+				return
+			}
+		}
+
+		collection := collections[action.CollectionID]
+		fmt.Println("Collection: ", collection.Name())
 
 		opts := options.CollectionUpdateWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error
@@ -1437,7 +1465,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
 			action.NodeID,

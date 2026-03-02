@@ -291,6 +291,7 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
+	// Checked
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
 
@@ -330,6 +331,7 @@ func (c *Collection) Exists(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
+	// Skipped
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
@@ -369,6 +371,7 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	// Checked
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -420,6 +423,7 @@ func (c *Collection) DeleteWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	// Skipped
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -469,6 +473,7 @@ func (c *Collection) Get(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
+	// Skipped
 	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
 	if opt.ShowDeleted {
@@ -522,6 +527,7 @@ func (c *Collection) AddIndex(
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
+	// Checked
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")

@@ -110,3 +110,50 @@ func TestTxn_DeleteDoc_WithoutCommit_DoesNotDelete(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test runs DeleteDoc inside of a transaction, and illustrates that transactional isolation
+// is maintained, and that it can see documents created within the same transaction.
+func TestTxn_DeleteDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				TransactionID: immutable.Some(1),
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+			testUtils.DeleteDoc{
+				TransactionID: immutable.Some(1),
+				CollectionID:  0,
+				DocID:         0,
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 1,
+			},
+			&action.Request{
+				Request: `
+					query {
+						Users {
+							name
+							age
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
