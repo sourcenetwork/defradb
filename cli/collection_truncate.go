@@ -33,7 +33,7 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 				return client.ErrCollectionNotFound
 			}
 
-			opt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(cmd.Context()))
+			opt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(cmd.Context()))
 			return col.Truncate(cmd.Context(), opt)
 		},
 	}

@@ -29,7 +29,7 @@ var openApiSchemas = map[string]any{
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
-	"index_add":                                &client.IndexAddRequest{},
+	"index_add":                                &client.AddIndexRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
 	"encrypted_index_add":                      &client.EncryptedIndexDescription{},
 	"delete_result":                            &client.DeleteResult{},

@@ -81,7 +81,7 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char, identityPtr
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		opts := options.WithIdentity(
-			options.CollectionListEncryptedIndexes(),
+			options.ListCollectionEncryptedIndexes(),
 			iIdentity.FromContext(ctx),
 		)
 		indices, err := col.ListEncryptedIndexes(ctx, opts)

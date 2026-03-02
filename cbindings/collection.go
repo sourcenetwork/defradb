@@ -174,8 +174,8 @@ func SetActiveCollection(nodePtr C.uintptr_t, opts C.CollectionOptions, identity
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export CollectionTruncate
-func CollectionTruncate(
+//export TruncateCollection
+func TruncateCollection(
 	nodePtr C.uintptr_t,
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
@@ -203,7 +203,7 @@ func CollectionTruncate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = col.Truncate(ctx, options.WithIdentity(options.CollectionTruncate(), ident))
+	err = col.Truncate(ctx, options.WithIdentity(options.TruncateCollection(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

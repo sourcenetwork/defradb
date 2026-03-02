@@ -71,8 +71,8 @@ func (c *Collection) CollectionID() string {
 
 func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexAddRequest,
-	opts ...options.Enumerable[options.CollectionAddIndexOptions],
+	indexDesc client.AddIndexRequest,
+	opts ...options.Enumerable[options.AddCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -91,14 +91,14 @@ func (c *Collection) AddIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions]) error {
+func (c *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "deleteIndex", indexName)
 	return err
 }
 
-func (c *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error) {
+func (c *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "listIndexes")
@@ -136,7 +136,7 @@ func (c *Collection) AddEncryptedIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "listEncryptedIndexes")
@@ -163,7 +163,7 @@ func (c *Collection) DeleteEncryptedIndex(
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "truncate")

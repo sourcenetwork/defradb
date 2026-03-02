@@ -165,8 +165,8 @@ func (c *collection) deleteIndexedDocWithID(
 // the documents will be indexed by the new index.
 func (c *collection) AddIndex(
 	ctx context.Context,
-	desc client.IndexAddRequest,
-	opts ...options.Enumerable[options.CollectionAddIndexOptions],
+	desc client.AddIndexRequest,
+	opts ...options.Enumerable[options.AddCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -193,7 +193,7 @@ func (c *collection) AddIndex(
 func processAddIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
-	desc client.IndexAddRequest,
+	desc client.AddIndexRequest,
 ) (client.IndexDescription, error) {
 	err := validateIndexDescription(desc)
 	if err != nil {
@@ -232,7 +232,7 @@ func processAddIndexRequest(
 
 func (c *collection) addIndex(
 	ctx context.Context,
-	addReq client.IndexAddRequest,
+	addReq client.AddIndexRequest,
 ) (CollectionIndex, error) {
 	desc, err := processAddIndexRequest(ctx, c.Version(), addReq)
 	if err != nil {
@@ -361,7 +361,7 @@ func (c *collection) indexExistingDocs(
 func (c *collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -423,7 +423,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 // ListIndexes returns all indexes for the collection.
 func (c *collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -494,7 +494,7 @@ func (c *collection) addEncryptedIndex(
 // ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 func (c *collection) ListEncryptedIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
@@ -626,7 +626,7 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
-	addReq client.IndexAddRequest,
+	addReq client.AddIndexRequest,
 ) (string, error) {
 	indexName := addReq.Name
 	if indexName == "" {
@@ -663,7 +663,7 @@ func generateIndexNameIfNeeded(
 	return indexName, nil
 }
 
-func validateIndexDescription(desc client.IndexAddRequest) error {
+func validateIndexDescription(desc client.AddIndexRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return schema.NewErrIndexWithInvalidName("!")
 	}

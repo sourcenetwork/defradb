@@ -118,21 +118,21 @@ type Collection interface {
 	// WARNING: This method can not add index for a collection that has a policy.
 	AddIndex(
 		context.Context,
-		IndexAddRequest,
-		...options.Enumerable[options.CollectionAddIndexOptions],
+		AddIndexRequest,
+		...options.Enumerable[options.AddCollectionIndexOptions],
 	) (IndexDescription, error)
 
 	// DeleteIndex deletes an index from the collection.
 	DeleteIndex(
 		ctx context.Context,
 		indexName string,
-		opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+		opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 	) error
 
 	// ListIndexes returns all the indexes that exist on the collection.
 	ListIndexes(
 		ctx context.Context,
-		opts ...options.Enumerable[options.CollectionListIndexesOptions],
+		opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 	) ([]IndexDescription, error)
 
 	// AddEncryptedIndex adds a new encrypted index to the collection.
@@ -152,7 +152,7 @@ type Collection interface {
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 	ListEncryptedIndexes(
 		ctx context.Context,
-		opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+		opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 	) ([]EncryptedIndexDescription, error)
 
 	// Truncate this collection, permanently deleting all document state on this node.
@@ -162,7 +162,7 @@ type Collection interface {
 	//
 	// This call will lock the collection, and no other read or write document operations on this collection
 	// will progress whilst this is executing.
-	Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error
+	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
 }
 
 // UpdateResult wraps the result of an update call.

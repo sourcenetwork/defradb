@@ -62,7 +62,7 @@ If no order is specified for the field, the default value will be "ASC"`,
 				})
 			}
 
-			desc := client.IndexAddRequest{
+			desc := client.AddIndexRequest{
 				Name:   nameArg,
 				Fields: fields,
 				Unique: uniqueArg,
@@ -73,7 +73,7 @@ If no order is specified for the field, the default value will be "ASC"`,
 				return err
 			}
 
-			indOpt := options.WithIdentity(options.CollectionAddIndex(), identity.FromContext(cmd.Context()))
+			indOpt := options.WithIdentity(options.AddCollectionIndex(), identity.FromContext(cmd.Context()))
 			descWithID, err := col.AddIndex(cmd.Context(), desc, indOpt)
 			if err != nil {
 				return err

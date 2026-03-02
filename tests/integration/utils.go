@@ -1426,7 +1426,7 @@ func listEncryptedIndexes(
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
 
-		opts := options.CollectionListEncryptedIndexes()
+		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

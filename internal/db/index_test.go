@@ -107,13 +107,13 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 }
 
 func (f *indexTestFixture) addCollectionIndex(
-	desc client.IndexAddRequest,
+	desc client.AddIndexRequest,
 ) (client.IndexDescription, error) {
 	return f.addCollectionIndexFor(f.users, desc)
 }
 
-func getUsersIndexDescOnName() client.IndexAddRequest {
-	return client.IndexAddRequest{
+func getUsersIndexDescOnName() client.AddIndexRequest {
+	return client.AddIndexRequest{
 		Name: testUsersColIndexName,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNameFieldName},
@@ -121,8 +121,8 @@ func getUsersIndexDescOnName() client.IndexAddRequest {
 	}
 }
 
-func getUsersIndexDescOnAge() client.IndexAddRequest {
-	return client.IndexAddRequest{
+func getUsersIndexDescOnAge() client.AddIndexRequest {
+	return client.AddIndexRequest{
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersAgeFieldName},
@@ -152,7 +152,7 @@ func (f *indexTestFixture) commitTxn() {
 
 func (f *indexTestFixture) addCollectionIndexFor(
 	col client.Collection,
-	desc client.IndexAddRequest,
+	desc client.AddIndexRequest,
 ) (client.IndexDescription, error) {
 	txn := f.txn.(*Txn)
 	ctx := InitContext(f.ctx, txn)
@@ -167,7 +167,7 @@ func TestAddIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	_, err := f.addCollectionIndex(client.IndexAddRequest{
+	_, err := f.addCollectionIndex(client.AddIndexRequest{
 		Name: "some_index_name",
 	})
 	assert.EqualError(t, err, errIndexMissingFields)
@@ -177,7 +177,7 @@ func TestAddIndex_IfValidInput_AddIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexAddRequest{
+	desc := client.AddIndexRequest{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNameFieldName},
@@ -194,7 +194,7 @@ func TestAddIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexAddRequest{
+	desc := client.AddIndexRequest{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
 			{Name: ""},
@@ -208,7 +208,7 @@ func TestAddIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	desc := client.IndexAddRequest{
+	desc := client.AddIndexRequest{
 		Name:   "some_index_name",
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
@@ -222,11 +222,11 @@ func TestAddIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	defer f.db.Close()
 
 	name := "some_index_name"
-	desc1 := client.IndexAddRequest{
+	desc1 := client.AddIndexRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
-	desc2 := client.IndexAddRequest{
+	desc2 := client.AddIndexRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
@@ -241,15 +241,15 @@ func TestAddIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	defer f.db.Close()
 
 	name := usersColName + "_" + usersAgeFieldName + "_ASC"
-	desc1 := client.IndexAddRequest{
+	desc1 := client.AddIndexRequest{
 		Name:   name,
 		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
-	desc2 := client.IndexAddRequest{
+	desc2 := client.AddIndexRequest{
 		Name:   name + "_2",
 		Fields: []client.IndexedFieldDescription{{Name: usersWeightFieldName}},
 	}
-	desc3 := client.IndexAddRequest{
+	desc3 := client.AddIndexRequest{
 		Name:   "",
 		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
@@ -267,7 +267,7 @@ func TestAddIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	defer f.db.Close()
 
 	const field = "non_existing_field"
-	desc := client.IndexAddRequest{
+	desc := client.AddIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: field}},
 	}
 
@@ -301,7 +301,7 @@ func TestAddIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 		f.users.Version().Indexes)
 }
 
-func TestCollectionListIndexes_ShouldReturnIndexes(t *testing.T) {
+func TestListCollectionIndexes_ShouldReturnIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -314,7 +314,7 @@ func TestCollectionListIndexes_ShouldReturnIndexes(t *testing.T) {
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
 }
 
-func TestCollectionListIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+func TestListCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -331,7 +331,7 @@ func TestCollectionListIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) 
 	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
-func TestCollectionListIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
+func TestListCollectionIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -349,7 +349,7 @@ func TestCollectionListIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T
 	assert.Len(t, indexes, 2)
 }
 
-func TestCollectionListIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T) {
+func TestListCollectionIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
@@ -376,7 +376,7 @@ func TestCollectionListIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T
 	assert.Len(t, indexes, 0)
 }
 
-func TestCollectionListIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
+func TestListCollectionIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	const (
 		num             = 30
@@ -417,7 +417,7 @@ func TestCollectionListIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) 
 	require.NoError(f.t, err)
 	for i := 1; i <= num; i++ {
 		iStr := toSuffix(i)
-		indexDesc := client.IndexAddRequest{
+		indexDesc := client.AddIndexRequest{
 			Name: indexNamePrefix + iStr,
 			Fields: []client.IndexedFieldDescription{
 				{Name: fieldNamePrefix + iStr},

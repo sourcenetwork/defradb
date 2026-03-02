@@ -22,7 +22,7 @@ extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions 
 extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern void IdentityFree(uintptr_t identityPtr);
 */
 import "C"
@@ -63,8 +63,8 @@ func (c *Collection) CollectionID() string {
 
 func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexAddRequest,
-	opts ...options.Enumerable[options.CollectionAddIndexOptions],
+	indexDesc client.AddIndexRequest,
+	opts ...options.Enumerable[options.AddCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
@@ -123,7 +123,7 @@ func (c *Collection) AddIndex(
 func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
@@ -158,7 +158,7 @@ func (c *Collection) DeleteIndex(
 
 func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
@@ -247,7 +247,7 @@ func (c *Collection) DeleteEncryptedIndex(
 }
 
 func (c *Collection) ListEncryptedIndexes(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
@@ -268,7 +268,7 @@ func (c *Collection) ListEncryptedIndexes(
 }
 
 func (c *Collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
@@ -287,7 +287,7 @@ func (c *Collection) Truncate(
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(
-		C.CollectionTruncate(
+		C.TruncateCollection(
 			C.uintptr_t(c.w.handle),
 			copts,
 			cIdentity,

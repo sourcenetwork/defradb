@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestNAC_GatesCollectionTruncate_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesTruncateCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -48,7 +48,7 @@ func TestNAC_GatesCollectionTruncate_AuthorizedIdentity_AllowAccess(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionTruncate_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesTruncateCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
@@ -86,7 +86,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_NotAuthorizedError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesTruncateCollection_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
@@ -125,7 +125,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandCandHTTPClient_NotAuthoriz
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionTruncate_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesTruncateCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -162,7 +162,7 @@ func TestNAC_GatesCollectionTruncate_WrongIdentity_NotAuthorizedError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionTruncate_WrongIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesTruncateCollection_WrongIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383

@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -52,7 +52,7 @@ func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
+func TestTruncateCollectionAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -87,7 +87,7 @@ func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
+func TestTruncateCollectionAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	docID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
@@ -150,7 +150,7 @@ func TestCollectionTruncateAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
+func TestTruncateCollectionAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 	compositeCID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
@@ -213,7 +213,7 @@ func TestCollectionTruncateAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateAdd_AddsDocWithBlocksAtHeight1(t *testing.T) {
+func TestTruncateCollectionAdd_AddsDocWithBlocksAtHeight1(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

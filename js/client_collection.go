@@ -71,7 +71,7 @@ func (c *clientCollection) collectionID(this js.Value, args []js.Value) (js.Valu
 }
 
 func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, error) {
-	var request client.IndexAddRequest
+	var request client.AddIndexRequest
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
@@ -79,7 +79,7 @@ func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionAddIndex()
+	opt := options.AddCollectionIndex()
 	setOptIdentity(opt, args, 1)
 	desc, err := c.col.AddIndex(ctx, request, opt)
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *clientCollection) deleteIndex(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionDeleteIndex()
+	opt := options.DeleteCollectionIndex()
 	setOptIdentity(opt, args, 1)
 	err = c.col.DeleteIndex(ctx, name, opt)
 	return js.Undefined(), err
@@ -108,7 +108,7 @@ func (c *clientCollection) listIndexes(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionListIndexes()
+	opt := options.ListCollectionIndexes()
 	setOptIdentity(opt, args, 0)
 	desc, err := c.col.ListIndexes(ctx, opt)
 	if err != nil {
@@ -155,7 +155,7 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionListEncryptedIndexes()
+	opt := options.ListCollectionEncryptedIndexes()
 	setOptIdentity(opt, args, 0)
 	desc, err := c.col.ListEncryptedIndexes(ctx, opt)
 	if err != nil {
@@ -169,7 +169,7 @@ func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionTruncate()
+	opt := options.TruncateCollection()
 	setOptIdentity(opt, args, 0)
 	err = c.col.Truncate(ctx, opt)
 	return js.Undefined(), err

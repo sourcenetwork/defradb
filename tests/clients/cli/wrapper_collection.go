@@ -63,8 +63,8 @@ func (c *Collection) CollectionID() string {
 
 func (c *Collection) AddIndex(
 	ctx context.Context,
-	indexDesc client.IndexAddRequest,
-	opts ...options.Enumerable[options.CollectionAddIndexOptions],
+	indexDesc client.AddIndexRequest,
+	opts ...options.Enumerable[options.AddCollectionIndexOptions],
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "add"}
 	args = append(args, "--collection", c.Version().Name)
@@ -111,7 +111,7 @@ func (c *Collection) AddIndex(
 func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	args := []string{"client", "index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
@@ -126,7 +126,7 @@ func (c *Collection) DeleteIndex(
 
 func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -170,7 +170,7 @@ func (c *Collection) AddEncryptedIndex(
 
 // ListEncryptedIndexes implements client.Collection.
 func (c *Collection) ListEncryptedIndexes(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -206,7 +206,7 @@ func (c *Collection) DeleteEncryptedIndex(
 }
 
 func (c *Collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	args := []string{"client", "collection", "truncate"}
 	args = append(args, "--name", c.Version().Name)

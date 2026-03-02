@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestNAC_AdminRelation_CanCollectionTruncate(t *testing.T) {
+func TestNAC_AdminRelation_CanTruncateCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -72,7 +72,7 @@ func TestNAC_AdminRelation_CanCollectionTruncate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCollectionTruncate(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanTruncateCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
