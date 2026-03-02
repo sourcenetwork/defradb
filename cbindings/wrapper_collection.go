@@ -19,7 +19,7 @@ extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int 
 CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result AddEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -189,10 +189,10 @@ func (c *Collection) ListIndexes(
 	return retRes, nil
 }
 
-func (c *Collection) AddEncryptedIndex(
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
@@ -202,7 +202,7 @@ func (c *Collection) AddEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.AddEncryptedIndex(
+	res := ConvertAndFreeCResult(C.NewEncryptedIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,

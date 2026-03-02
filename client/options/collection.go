@@ -381,25 +381,25 @@ func (b *TruncateCollectionOptionsBuilder) SetIdentity(id identity.Identity) *Tr
 	return b
 }
 
-// AddEncryptedIndexOptions contains options for AddEncryptedIndex operation.
-type AddEncryptedIndexOptions struct {
+// NewEncryptedIndexOptions contains options for NewEncryptedIndex operation.
+type NewEncryptedIndexOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-func (o *AddEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *NewEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-type AddEncryptedIndexOptionsBuilder struct {
-	enumerableBuilder[AddEncryptedIndexOptions]
+type NewEncryptedIndexOptionsBuilder struct {
+	enumerableBuilder[NewEncryptedIndexOptions]
 }
 
-func AddEncryptedIndex() *AddEncryptedIndexOptionsBuilder {
-	return &AddEncryptedIndexOptionsBuilder{}
+func NewEncryptedIndex() *NewEncryptedIndexOptionsBuilder {
+	return &NewEncryptedIndexOptionsBuilder{}
 }
 
-func (b *AddEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *AddEncryptedIndexOptionsBuilder {
-	b.append(func(opts *AddEncryptedIndexOptions) {
+func (b *NewEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *NewEncryptedIndexOptionsBuilder {
+	b.append(func(opts *NewEncryptedIndexOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

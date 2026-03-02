@@ -91,7 +91,7 @@ func TestEncryptedIndexDelete_AfterDelete_CanCreateNewIndexAnew(t *testing.T) {
 				CollectionID:    0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{},
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.ListEncryptedIndexes{

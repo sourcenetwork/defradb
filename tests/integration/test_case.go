@@ -336,9 +336,9 @@ type UpdateWithFilter struct {
 	SkipLocalUpdateEvent bool
 }
 
-// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
+// NewEncryptedIndex will attempt to add the given encrypted index to the given collection
 // using the collection api.
-type AddEncryptedIndex struct {
+type NewEncryptedIndex struct {
 	// NodeID may hold the ID (index) of a node to add the encrypted index to.
 	//
 	// If a value is not provided the index will be added to all nodes.

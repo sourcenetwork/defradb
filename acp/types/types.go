@@ -95,7 +95,7 @@ const (
 	NodeListIndexPerm
 	NodeNewIndexPerm
 	NodeDeleteIndexPerm
-	NodeAddEncryptedIndexPerm
+	NodeNewEncryptedIndexPerm
 	NodeDeleteEncryptedIndexPerm
 	NodeListEncryptedIndexPerm
 	NodeListAllEncryptedIndexPerm
@@ -149,7 +149,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"list-index",
 	"new-index",
 	"delete-index",
-	"add-encrypted-index",
+	"new-encrypted-index",
 	"delete-encrypted-index",
 	"list-encrypted-index",
 	"list-all-encrypted-index",
@@ -237,7 +237,7 @@ resources:
   - name: delete-index
     expr: admin
 
-  - name: add-encrypted-index
+  - name: new-encrypted-index
     expr: admin
   - name: delete-encrypted-index
     expr: admin

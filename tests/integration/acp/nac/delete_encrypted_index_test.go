@@ -47,7 +47,7 @@ func TestNAC_GatesDeleteEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing
 				`,
 			},
 
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",

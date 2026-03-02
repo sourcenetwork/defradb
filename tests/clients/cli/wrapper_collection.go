@@ -145,13 +145,13 @@ func (c *Collection) ListIndexes(
 	return indexes, nil
 }
 
-// AddEncryptedIndex implements client.Collection.
-func (c *Collection) AddEncryptedIndex(
+// NewEncryptedIndex implements client.Collection.
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (index client.EncryptedIndexDescription, err error) {
-	args := []string{"client", "encrypted-index", "add"}
+	args := []string{"client", "encrypted-index", "new"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", indexDesc.FieldName)
 

@@ -71,17 +71,6 @@
                 },
                 "type": "object"
             },
-            "add_encrypted_index": {
-                "properties": {
-                    "FieldName": {
-                        "type": "string"
-                    },
-                    "Type": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "add_lens_request": {
                 "properties": {
                     "lens": {
@@ -512,6 +501,17 @@
                         "type": "array"
                     },
                     "SourceCollectionVersionID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "new_encrypted_index": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
                         "type": "string"
                     }
                 },
@@ -1623,8 +1623,8 @@
                 ]
             },
             "post": {
-                "description": "Add an encrypted index",
-                "operationId": "add_encrypted_index",
+                "description": "Make a new encrypted index",
+                "operationId": "new_encrypted_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1640,7 +1640,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/add_encrypted_index"
+                                "$ref": "#/components/schemas/new_encrypted_index"
                             }
                         }
                     },

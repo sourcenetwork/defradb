@@ -81,7 +81,7 @@ func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(
 					},
 				},
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.ListEncryptedIndexes{

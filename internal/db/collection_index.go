@@ -432,11 +432,11 @@ func (c *collection) ListIndexes(
 	return c.Version().Indexes, nil
 }
 
-// AddEncryptedIndex adds a new encrypted index to the collection.
-func (c *collection) AddEncryptedIndex(
+// NewEncryptedIndex adds a new encrypted index to the collection.
+func (c *collection) NewEncryptedIndex(
 	ctx context.Context,
 	addRequest client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -444,7 +444,7 @@ func (c *collection) AddEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeAddEncryptedIndexPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeNewEncryptedIndexPerm); err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
@@ -454,14 +454,14 @@ func (c *collection) AddEncryptedIndex(
 	}
 	defer txn.Discard()
 
-	index, err := c.addEncryptedIndex(ctx, addRequest)
+	index, err := c.newEncryptedIndex(ctx, addRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 	return index, txn.Commit()
 }
 
-func (c *collection) addEncryptedIndex(
+func (c *collection) newEncryptedIndex(
 	ctx context.Context,
 	encryptedIndex client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {

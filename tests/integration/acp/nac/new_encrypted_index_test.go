@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesAddEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -45,7 +45,7 @@ func TestNAC_GatesAddEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T)
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -55,7 +55,7 @@ func TestNAC_GatesAddEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -79,18 +79,18 @@ func TestNAC_GatesAddEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddEncryptedIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
 			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -115,7 +115,7 @@ func TestNAC_GatesAddEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorize
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -126,7 +126,7 @@ func TestNAC_GatesAddEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorize
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -150,18 +150,18 @@ func TestNAC_GatesAddEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddEncryptedIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
 			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -186,7 +186,7 @@ func TestNAC_GatesAddEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthor
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",

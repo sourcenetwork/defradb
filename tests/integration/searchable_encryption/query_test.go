@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexAdd_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
+func TestEncryptedIndexNew_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

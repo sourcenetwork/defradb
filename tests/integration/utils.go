@@ -421,8 +421,8 @@ func performAction(
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
-	case AddEncryptedIndex:
-		addEncryptedIndex(s, action)
+	case NewEncryptedIndex:
+		newEncryptedIndex(s, action)
 
 	case ListEncryptedIndexes:
 		listEncryptedIndexes(s, action)
@@ -1374,9 +1374,9 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	}
 }
 
-func addEncryptedIndex(
+func newEncryptedIndex(
 	s *state.State,
-	action AddEncryptedIndex,
+	action NewEncryptedIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
@@ -1391,7 +1391,7 @@ func addEncryptedIndex(
 			Type:      client.EncryptedIndexType(action.Type),
 		}
 
-		opts := options.AddEncryptedIndex()
+		opts := options.NewEncryptedIndex()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1400,7 +1400,7 @@ func addEncryptedIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.AddEncryptedIndex(s.Ctx, indexDesc, opts)
+				_, err := collection.NewEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)
