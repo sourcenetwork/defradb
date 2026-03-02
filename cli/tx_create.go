@@ -18,11 +18,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeTxCreateCommand(ctx context.Context) *cobra.Command {
+func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 	var concurrent bool
 	var readOnly bool
 	var cmd = &cobra.Command{
-		Use:   "create",
+		Use:   "new",
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

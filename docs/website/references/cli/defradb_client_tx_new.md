@@ -1,4 +1,4 @@
-## defradb client tx create
+## defradb client tx new
 
 Create a new DefraDB transaction.
 
@@ -7,14 +7,14 @@ Create a new DefraDB transaction.
 Create a new DefraDB transaction.
 
 ```
-defradb client tx create [flags]
+defradb client tx new [flags]
 ```
 
 ### Options
 
 ```
       --concurrent   Transaction is concurrent
-  -h, --help         help for create
+  -h, --help         help for new
       --read-only    Transaction is read only
 ```
 

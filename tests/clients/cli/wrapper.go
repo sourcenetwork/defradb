@@ -726,7 +726,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 }
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "create"}
+	args := []string{"client", "tx", "new"}
 	if readOnly {
 		args = append(args, "--read-only")
 	}
@@ -747,7 +747,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 }
 
 func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "create"}
+	args := []string{"client", "tx", "new"}
 	args = append(args, "--concurrent")
 
 	if readOnly {
