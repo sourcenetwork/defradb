@@ -957,9 +957,9 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 		return DocID{}, err
 	}
 
-	// The DocID must take into consideration the schema root, this ensures that
-	// otherwise identical documents created using different schema will have different
-	// document IDs - we do not want cross-schema docID collisions.
+	// The DocID must take into consideration the collection root, this ensures that
+	// otherwise identical documents created using different collections will have different
+	// document IDs - we do not want cross-collection docID collisions.
 	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
 
 	cid, err := ccid.NewSHA256CidV1(bytes)

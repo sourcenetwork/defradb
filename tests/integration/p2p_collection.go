@@ -23,8 +23,8 @@ import (
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
-	NonExistentCollectionID         int    = -1
-	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+	NonExistentCollectionID   int    = -1
+	NonExistentCollectionRoot string = "NonExistentCollectionRoot"
 )
 
 // AddCollectionSubscription sets up a subscription on the given node to the given collection.
@@ -111,7 +111,7 @@ func addCollectionSubscription(
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 
@@ -147,7 +147,7 @@ func deleteCollectionSubscription(
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 

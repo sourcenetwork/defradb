@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithTxn(t *testing.T) {
+func TestCollectionMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -85,7 +85,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
+func TestCollectionMigrationQueryWithTxnAndCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

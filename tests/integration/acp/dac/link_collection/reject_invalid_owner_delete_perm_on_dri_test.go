@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_OwnerMissingRequiredDeletePermissionLabelOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -32,8 +32,8 @@ name: test
 resources:
 - name: users
   permissions:
-  - name: delete
   - name: read
+  - name: update
   relations:
   - name: reader
     types:

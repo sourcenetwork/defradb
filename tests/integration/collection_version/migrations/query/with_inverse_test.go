@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
+func TestCollectionMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -105,7 +105,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

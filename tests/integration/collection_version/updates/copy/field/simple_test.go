@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -52,7 +52,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -88,7 +88,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -128,7 +128,7 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -180,7 +180,7 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

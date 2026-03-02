@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T) {
+func TestCollectionVersion_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -43,7 +43,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing.T) {
+func TestCollectionVersion_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -69,7 +69,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(t *testing.T) {
+func TestCollectionVersion_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -97,7 +97,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 						email
 					}
 				}`,
-				// As the email field did not exist at this schema version, it will return a gql error
+				// As the email field did not exist at this collection version, it will return a gql error
 				ExpectedError: `Cannot query field "email" on type "Users".`,
 			},
 		},
@@ -105,7 +105,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *testing.T) {
+func TestCollectionVersion_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

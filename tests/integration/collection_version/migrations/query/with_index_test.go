@@ -30,7 +30,7 @@ const (
 	schemaV5 = "bafyreia2ls3vfvwbgaunr5si5cpo3be5m7vtbmlzxuzvls5laz74zpwrg4"
 )
 
-func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
+func TestCollectionMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -108,7 +108,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
+func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -195,7 +195,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
+func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -285,7 +285,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
+func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -375,7 +375,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
+func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -557,7 +557,7 @@ func addMigrationBetweenV3AndV4() any {
 }
 
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
-func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
+func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -593,7 +593,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNo
 }
 
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
-func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
+func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -631,7 +631,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNo
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_ShouldReindexWithOldValues(t *testing.T) {
+func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_ShouldReindexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -667,7 +667,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_Sh
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_ShouldReindexWithMigratedValues(t *testing.T) {
+func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_ShouldReindexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -706,7 +706,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_Sh
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(t *testing.T) {
+func TestCollectionMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -746,7 +746,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(
 }
 
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
-func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReindex(t *testing.T) {
+func TestCollectionMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
@@ -782,7 +782,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReind
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_ShouldReindex(t *testing.T) {
+func TestCollectionMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -871,7 +871,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *testing.T) {
+func TestCollectionMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -952,7 +952,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrationCorrectly(t *testing.T) {
+func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrationCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1109,7 +1109,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrationPerBranch(t *testing.T) {
+func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrationPerBranch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

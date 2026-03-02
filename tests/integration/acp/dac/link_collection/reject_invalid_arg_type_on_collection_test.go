@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_LinkSchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_InvalidPolicyIDArgTypeWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -45,12 +45,12 @@ resources:
 
 			&action.AddCollection{
 				Schema: `
-					type Users @policy {
+					type Users @policy(id: 123 , resource: "users") {
 						name: String
 						age: Int
 					}
 				`,
-				ExpectedError: "missing policy arguments, must have both id and resource",
+				ExpectedError: `Argument "id" has invalid value 123`,
 			},
 
 			testUtils.IntrospectionRequest{
@@ -78,7 +78,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_LinkSchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_InvalidResourceArgTypeWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -106,13 +106,13 @@ resources:
 
 			&action.AddCollection{
 				Schema: `
-					type Users @policy(resource: "", id: "") {
+				type Users @policy(id: "{{.Policy0}}" , resource: 123) {
 						name: String
 						age: Int
 					}
 				`,
 
-				ExpectedError: "missing policy arguments, must have both id and resource",
+				ExpectedError: `Argument "resource" has invalid value 123`,
 			},
 
 			testUtils.IntrospectionRequest{

@@ -509,7 +509,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
+		return nil, client.NewErrCollectionNotFoundForRoot(collectionID)
 	}
 	// We currently only support one active collection per root schema
 	// so it is safe to return the first one.

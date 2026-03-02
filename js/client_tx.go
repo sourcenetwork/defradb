@@ -38,7 +38,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"id":                         txn.ID(),
 		"commit":                     goji.Async(wrapper.commit),
 		"discard":                    goji.Async(wrapper.discard),
-		"addCollection":                  goji.Async(wrapper.addCollection),
+		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),

@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesMoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -41,7 +41,7 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesMoveFieldErrorsMultiple(t *testing.T) {
+func TestCollectionVersionUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

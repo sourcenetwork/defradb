@@ -180,7 +180,7 @@ func updateConnectedNodes(
 // getUpdateEventKey gets the identifier to which this event is scoped to.
 //
 // For example, if this is scoped to a document, the document ID will be
-// returned.  If it is scoped to a schema, the schema root will be returned.
+// returned.  If it is scoped to a collection, the collection root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
 		return evt.CollectionID

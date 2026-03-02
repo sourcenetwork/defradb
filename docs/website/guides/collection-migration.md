@@ -1,75 +1,75 @@
 ---
-sidebar_label: Schema Migration Guide
+sidebar_label: Collection Migration Guide
 sidebar_position: 60
 ---
-# A Guide to Schema Migration in DefraDB
+# A Guide to Collection Migration in DefraDB
 
 ## Overview
-In a database system, an application’s requirements can change at any given time, to meet this change, Schema migrations are necessary. This is where Lens comes in, as a migration engine that produces effective schema migration.
+In a database system, an application’s requirements can change at any given time, to meet this change, collection migrations are necessary. This is where Lens comes in, as a migration engine that produces effective collection migration.
 
-This guide will provide an understanding of schema migrations, focusing on the Lens migration engine. Let’s dive in!
+This guide will provide an understanding of collection migrations, focusing on the Lens migration engine. Let’s dive in!
 
 Lens is a pipeline for user-defined transformations. It enables users to write their transformations in any programming language and run them through the Lens pipeline, which transforms the cached representation of the data.
 
 ## Goals of the Lens Migration System
 
-Here are some of the goals of the Lens schema migration system:
+Here are some of the goals of the Lens collection migration system:
 
-- **Presenting a consistent view of data across nodes**: The Lens schema migration system can present data across nodes consistently, regardless of the schema version being used.
+- **Presenting a consistent view of data across nodes**: The Lens collection migration system can present data across nodes consistently, regardless of the collection version being used.
 
-- **Verifiability of data**: Schema migration in the Lens migration system is presented as data, this preserves the user-defined mutations without corrupting system-defined mutations and also allows migrating from one schema version to another.
+- **Verifiability of data**: Collection migration in the Lens migration system is presented as data, this preserves the user-defined mutations without corrupting system-defined mutations and also allows migrating from one collection version to another.
 
-- **A language-agnostic way of writing schema migrations**: Schema migrations can be written in any programming language and executed properly as Lens is language-agnostic.
+- **A language-agnostic way of writing collection migrations**: Collection migrations can be written in any programming language and executed properly as Lens is language-agnostic.
 
 - **Safe usage of migrations by others through a sandbox**: Migrations written in Lens are run in a sandbox, which ensures safety and eliminates the concern for remote code executions (RCE).
 
-- **Peer-to-peer sync of schema migrations**: Lens allows peers to write their migrations in different application versions and sync without worrying about the versions other peers are using.
+- **Peer-to-peer sync of collection migrations**: Lens allows peers to write their migrations in different application versions and sync without worrying about the versions other peers are using.
 
-- **Local autonomy of schema migrations**: Lens enables local autonomy in writing schema migrations by giving users control of the schema version they choose to use. The users can stay in a particular schema version and still communicate with peers on different versions, as Lens is not restricted to a particular schema version.
+- **Local autonomy of collection migrations**: Lens enables local autonomy in writing collection migrations by giving users control of the collection version they choose to use. The users can stay in a particular collection version and still communicate with peers on different versions, as Lens is not restricted to a particular collection version.
 
-- **Reproducibility and deterministic nature of executing migrations**: When using the Lens migration system, changes to schemas can be written, tagged and shared with other peers regardless of their infrastructure and requirements for deployments.
+- **Reproducibility and deterministic nature of executing migrations**: When using the Lens migration system, changes to collections can be written, tagged and shared with other peers regardless of their infrastructure and requirements for deployments.
 
 
 ## Mechanism
 
 In this section, we’ll look at the mechanism behind the Lens migration system and explain how it works.
 
-Lens migration system functions as a bi-directional transformation engine, enabling the migration of data documents in both forward and reverse directions. It allows for the transformation of documents from schema X to Y in the forward direction and Y to X in the reverse direction.
+Lens migration system functions as a bi-directional transformation engine, enabling the migration of data documents in both forward and reverse directions. It allows for the transformation of documents from collection version X to Y in the forward direction and Y to X in the reverse direction.
 
 The above process is done foundationally, through a verifiable system powered by WebAssembly (Wasm). Wasm also enables the sandbox safety and language-agnostic feature of Lens.
 
-Internally, schema migrations are evaluated lazily. This avoids the upfront cost of doing a massive migration at once.
+Internally, collection migrations are evaluated lazily. This avoids the upfront cost of doing a massive migration at once.
 
 *Lazy evaluation is a technique in programming where an expression is only evaluated when its value is needed.*
 
-Adopting lazy evaluation in the migration system also allows rapid toggling between schema versions and representations.
+Adopting lazy evaluation in the migration system also allows rapid toggling between collection versions and representations.
 
 ## Usage
 
-The Lens migration system addresses critical use cases related to schema migrations in peer-to-peer, eventually consistent databases. These use cases include:
+The Lens migration system addresses critical use cases related to collection migrations in peer-to-peer, eventually consistent databases. These use cases include:
 
  
 
-- **Safe Schema Progression**: Ensuring the seamless progression of database schemas is vital for accommodating changing application requirements. Lens facilitates the modification, upgrade, or reversion of schemas while upholding data integrity.
+- **Safe Collection Progression**: Ensuring the seamless progression of database collections is vital for accommodating changing application requirements. Lens facilitates the modification, upgrade, or reversion of collections while upholding data integrity.
 
-- **Handling Peer-to-Peer Complexity**: In environments where different clients operate on varying application and database versions, Lens offers a solution to address the complexity of schema migrations. It ensures coherence and effectiveness across different networks.
+- **Handling Peer-to-Peer Complexity**: In environments where different clients operate on varying application and database versions, Lens offers a solution to address the complexity of collection migrations. It ensures coherence and effectiveness across different networks.
 
-- **Language-Agnostic Flexibility**: Functions in Lens are designed to be language-agnostic, offering the versatility to define schema changes in the preferred programming language. This adaptability makes Lens suitable for diverse development environments and preferences.
+- **Language-Agnostic Flexibility**: Functions in Lens are designed to be language-agnostic, offering the versatility to define collection changes in the preferred programming language. This adaptability makes Lens suitable for diverse development environments and preferences.
 
-- **Lazy Evaluation**: Lens employs a lazy evaluation mechanism, initiating migrations without immediate execution. Schema changes are applied only when documents are read, queried, or updated. This approach reduces the upfront cost of extensive schema migrations while maintaining data consistency.
+- **Lazy Evaluation**: Lens employs a lazy evaluation mechanism, initiating migrations without immediate execution. Collection changes are applied only when documents are read, queried, or updated. This approach reduces the upfront cost of extensive collection migrations while maintaining data consistency.
 
-- **On-Demand Schema Selection**: Lens supports on-demand schema selection during data queries. Users can specify the schema version they wish to work with, facilitating A/B testing and the seamless transition between different schema versions.
+- **On-Demand Collection Version Selection**: Lens supports on-demand collection version selection during data queries. Users can specify the collection version they wish to work with, facilitating A/B testing and the seamless transition between different collection versions.
 
 
 
-These use cases highlight how Lens empowers users to manage schema migrations effectively, ensuring data consistency and adaptability in evolving database systems.
+These use cases highlight how Lens empowers users to manage collection migrations effectively, ensuring data consistency and adaptability in evolving database systems.
 
 
 ## Example
 
-In this example we will define a collection using a schema with an `emailAddress` field.  We will then patch the schema to add a new field `email`, then define a bi-directional Lens to migrate data to/from the new field.
+In this example we will define a collection with an `emailAddress` field.  We will then patch the collection to add a new field `email`, then define a bi-directional Lens to migrate data to/from the new field.
 
-**Step One**, define the `Users` collection/schema:
+**Step One**, define the `Users` collection:
 
 ```graphql
 defradb client collection add '
@@ -79,20 +79,20 @@ defradb client collection add '
 '
 ```
 
-**Step Two**, patch the `Users` schema, adding the new field, here we pass in `--set-active=true` to automatically apply the schema change to the `Users` collection:
+**Step Two**, patch the `Users` collection, adding the new field, here we pass in `--set-active=true` to automatically apply the change to the `Users` collection:
 
 ```graphql
-defradb client schema patch '
+defradb client collection patch '
     [
     	{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
     ]
 ' --set-active=true
 ```
 
-**Step Three**, fetch the schema ids so that we can later tell Defra which schema versions we wish to migrate to/from:
+**Step Three**, fetch the collection version IDs so that we can later tell Defra which collection versions we wish to migrate to/from:
 
 ```graphql
-defradb client schema describe --name="Users"
+defradb client collection describe --name="Users"
 ```
 
 **Step Four**, in order to define our Lens module - we need to define 4 functions:
@@ -104,7 +104,7 @@ defradb client schema describe --name="Users"
 
 - `set_param(ptr: unsignedInteger8) unsignedInteger8`​, this function is only required by modules that accept a set of parameters.  As an input parameter it receives a single pointer that will point to the start of a json byte array containing the parameters defined in the configuration file.  It returns a pointer to either nil, or an error message. It will be called once, when the the migration is defined in Defra (and on restart of the database).  How it is implemented is up to you.
 
-- `transform() unsignedInteger8`​, this function is required by all Lens modules - it is the migration, and within this function you should define what the migration should do, in this example it will copy the data from the `emailAddress` field into the `email` field. Lens Modules can call the `next` function zero to many times to draw documents from the Defra datastore, however modules used in schema migrations should currently limit this to a single call per `transform` call (Lens based views may call it more or less frequently in order to filter or create documents).
+- `transform() unsignedInteger8`​, this function is required by all Lens modules - it is the migration, and within this function you should define what the migration should do, in this example it will copy the data from the `emailAddress` field into the `email` field. Lens Modules can call the `next` function zero to many times to draw documents from the Defra datastore, however modules used in collection migrations should currently limit this to a single call per `transform` call (Lens based views may call it more or less frequently in order to filter or create documents).
 
 - `inverse() unsignedInteger8`​, this function is optional, you only need to define it if you wish to define the inverse migration.  It follows the same pattern as the `transform` function, only you should implement it to do the reverse.  In this example we want this to copy the value from the `email` field into the `emailAddress`​ field.
 
@@ -227,10 +227,10 @@ and here: https://github.com/sourcenetwork/lens/tree/main/tests/modules
 
 We should then compile it to wasm, and copy the resultant `.wasm` file to a location that the Defra node has access to.  Make sure that the file is safe there, at the moment Defra will not copy it and will refer back to that location on database restart.
 
-**Step Five**, now that we have updated the collection, and defined our migration, we need to tell Defra to use it, by providing it the source and destination schema IDs from our earlier `defradb client schema describe`​ call, and a configuration file defining the parameters we wish to pass it:
+**Step Five**, now that we have updated the collection, and defined our migration, we need to tell Defra to use it, by providing it the source and destination collection version IDs from our earlier `defradb client collection describe`​ call, and a configuration file defining the parameters we wish to pass it:
 
 ```graphql
-defradb client schema migration set <The source schema ID> <The destination schema ID> '
+defradb client lens set <The source collection version ID> <The destination collection version ID> '
     {
         "lenses": [
             {
@@ -246,29 +246,29 @@ defradb client schema migration set <The source schema ID> <The destination sche
 ```
 
 
-Now the migration has been configured!  Any documents committed under the original schema version will now be returned as if they were committed using the newer schema version.
+Now the migration has been configured!  Any documents committed under the original collection version will now be returned as if they were committed using the newer collection version.
 
-As we have defined an inverse migration, we can give this migration to other nodes in our peer network still on the original schema version, and they will be able to query our documents committed using the new schema version applying the inverse.
+As we have defined an inverse migration, we can give this migration to other nodes in our peer network still on the original collection version, and they will be able to query our documents committed using the new collection version applying the inverse.
 
-We can also change our active schema version on this node back to the original to see the inverse in action:
+We can also change our active collection version on this node back to the original to see the inverse in action:
 
 ```graphql
-defradb client schema set-active <Original schema ID>
+defradb client collection set-active <Original collection version ID>
 ```
 
-Now when we query Defra, any documents committed after the schema update will be rendered as if they were committed on the original schema version, with `email` field values being copied to the `emailAddress` field at query time.
+Now when we query Defra, any documents committed after the collection update will be rendered as if they were committed on the original collection version, with `email` field values being copied to the `emailAddress` field at query time.
 
 ## Advantages 
 
-Here are some advantages of Lens as a schema migration system:
+Here are some advantages of Lens as a collection migration system:
 
 - Lens is not bound to a particular deployment, programming language, or interaction method. It can be used globally and is accessible to clients regardless of their location or infrastructure. 
-- Users can query on-demand even with different schema versions.
-- Migration between different schemas is a seamless process.
+- Users can query on-demand even with different collection versions.
+- Migration between different collections is a seamless process.
 
 ## Disadvantages
 
-The Lens migration system also has some downsides to schema migration which include:
+The Lens migration system also has some downsides to collection migration which include:
 
 - Using a Lazy execution approach, errors might be found later when querying through the migration.
 - There’s a time constraint as the Lens migration system is a work in progress
@@ -276,11 +276,11 @@ The Lens migration system also has some downsides to schema migration which incl
 
 ## Future Outlook
 
-The core problem we currently have in the Lens schema migration system is the performance issues when migrating schemas, hence for future versions, the following would be considered:
+The core problem we currently have in the Lens collection migration system is the performance issues when migrating collections, hence for future versions, the following would be considered:
 
 - Increasing the performance of the migration system.
 - Making migrations easier to write.
-- Expansion of the schema update system to include the removal of fields, not just adding fields.
-- Enabling users to query the schema version of their choice on-demand.
+- Expansion of the collection update system to include the removal of fields, not just adding fields.
+- Enabling users to query the collection version of their choice on-demand.
 - Support for Eager evaluation.
-- Implementing dry run testing for development and branching scenarios, and handling divergent schemas.
+- Implementing dry run testing for development and branching scenarios, and handling divergent collections.

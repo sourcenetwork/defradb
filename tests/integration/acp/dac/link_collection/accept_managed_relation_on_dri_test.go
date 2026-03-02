@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
@@ -18,10 +18,11 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
+func TestACP_LinkCollection_WithManagedRelation_AcceptCollections(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
+
 			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
@@ -33,8 +34,18 @@ resources:
 - name: users
   permissions:
   - name: delete
-  - name: read
+  - expr: reader
+    name: read
   - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
 `,
 			},
 

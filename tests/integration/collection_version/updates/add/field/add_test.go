@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -63,7 +63,7 @@ func TestSchemaUpdatesAddFieldWithAdd(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldWithAddAfterSchemaUpdate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddAfterSchemaUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

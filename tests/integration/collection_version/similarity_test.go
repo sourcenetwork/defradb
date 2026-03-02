@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
+func TestCollectionVersionIntrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -109,7 +109,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
+func TestCollectionVersionIntrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -201,7 +201,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaInstrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *testing.T) {
+func TestCollectionVersionIntrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

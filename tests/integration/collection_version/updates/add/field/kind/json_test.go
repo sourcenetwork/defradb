@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindJSON(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindJSONSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

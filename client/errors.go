@@ -175,10 +175,10 @@ func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) er
 	)
 }
 
-func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
+func NewErrCollectionNotFoundForRoot(collectionRoot string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaRoot", schemaRoot),
+		errors.NewKV("CollectionRoot", collectionRoot),
 	)
 }
 

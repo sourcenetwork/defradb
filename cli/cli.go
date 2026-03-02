@@ -74,8 +74,6 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeLensListCommand(ctx),
 	)
 
-	schema := MakeSchemaCommand(ctx)
-
 	acp_node_relationship := MakeNodeACPRelationshipCommand(ctx)
 	acp_node_relationship.AddCommand(
 		MakeNodeACPRelationshipAddCommand(ctx),
@@ -174,7 +172,6 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeDumpCommand(ctx),
 		MakeRequestCommand(ctx),
 		MakeNodeIdentityCommand(ctx),
-		schema,
 		acp,
 		view,
 		index,

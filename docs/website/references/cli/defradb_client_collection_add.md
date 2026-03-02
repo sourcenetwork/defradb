@@ -6,7 +6,7 @@ Add new collection
 
 Add new collection.
 
-Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
+Collection type with a '@policy(id:".." resource: "..")' linked will only be accepted if:
   - ACP is available (i.e. ACP is not disabled).
   - The specified resource adheres to the document resource interface (DRI).
   - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
@@ -14,7 +14,7 @@ Schema Object with a '@policy(id:".." resource: "..")' linked will only be accep
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client collection add [schema] [flags]
+defradb client collection add [sdl] [flags]
 ```
 
 ### Examples
@@ -39,7 +39,7 @@ add from stdin:
 ### Options
 
 ```
-  -f, --file strings   File to load schema from
+  -f, --file strings   File to load a collection definition from
   -h, --help           help for add
 ```
 

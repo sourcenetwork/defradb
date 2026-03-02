@@ -18,7 +18,7 @@ import (
 	introspectionUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

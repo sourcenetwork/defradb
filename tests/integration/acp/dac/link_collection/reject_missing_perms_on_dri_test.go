@@ -8,17 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
+func TestACP_LinkCollection_MissingRequiredReadPermissionOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -28,25 +27,10 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
+description: a policy
 name: test
-description: A Partially DRI Compliant Policy
 resources:
-- name: usersInvalid
-  permissions:
-  - expr: reader
-    name: delete
-  - expr: reader
-    name: update
-  relations:
-  - name: reader
-    types:
-    - actor
-- name: usersValid
-  permissions:
-  - name: delete
-  - name: read
-    expr: reader
-  - name: update
+- name: users
   relations:
   - name: reader
     types:
@@ -58,12 +42,14 @@ resources:
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "usersValid"
+						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				ExpectedError: "resource is missing required permission on policy.",
 			},
 
 			testUtils.IntrospectionRequest{
@@ -82,26 +68,7 @@ resources:
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
+					"__type": nil, // NOTE: No "Users" should exist.
 				},
 			},
 		},

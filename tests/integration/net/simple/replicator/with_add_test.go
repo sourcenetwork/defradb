@@ -496,7 +496,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 			testUtils.WaitForSync{},
 			&action.Request{
 				// The document should have been synced, and should contain the same values
-				// including document id and schema version id.
+				// including document id and collection version id.
 				Request: `query {
 					Users {
 						_docID
@@ -561,7 +561,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 				}`,
 			},
 			&action.Request{
-				// Assert that the document id and schema version id are the same across all nodes,
+				// Assert that the document id and collection version id are the same across all nodes,
 				// even though the schema field order is different.
 				Request: `query {
 					Users {

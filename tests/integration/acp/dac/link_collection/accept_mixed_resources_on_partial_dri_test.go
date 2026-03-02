@@ -8,16 +8,17 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_UseValidResource_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -27,14 +28,24 @@ func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-description: a policy
 name: test
+description: A Partially DRI Compliant Policy
 resources:
-- name: users
+- name: usersInvalid
+  permissions:
+  - expr: reader
+    name: delete
+  - expr: reader
+    name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+- name: usersValid
   permissions:
   - name: delete
-  - expr: reader
-    name: read
+  - name: read
+    expr: reader
   - name: update
   relations:
   - name: reader
@@ -47,14 +58,12 @@ resources:
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "doesntExist"
+						resource: "usersValid"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-
-				ExpectedError: "resource does not exist on the specified policy",
 			},
 
 			testUtils.IntrospectionRequest{
@@ -73,7 +82,26 @@ resources:
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
 				},
 			},
 		},

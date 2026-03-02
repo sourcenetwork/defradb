@@ -92,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // getCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
 //
-// Inactive collections are not returned by default unless a specific schema version ID
+// Inactive collections are not returned by default unless a specific collection version ID
 // is provided.
 func (db *DB) getCollections(
 	ctx context.Context,

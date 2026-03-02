@@ -316,7 +316,7 @@ type Store interface {
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
 	//
-	// Inactive collections are not returned by default unless a specific schema version ID
+	// Inactive collections are not returned by default unless a specific collection version ID
 	// is provided.
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls

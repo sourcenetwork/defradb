@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdateUnderscoredSchema(t *testing.T) {
+func TestMutationUpdateUnderscoredCollection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{

@@ -41,7 +41,7 @@ type CounterDelta struct {
 	// Nonce is an added randomly generated number that ensures
 	// that each increment operation is unique.
 	Nonce int64
-	// CollectionVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the collection version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	CollectionVersionID string

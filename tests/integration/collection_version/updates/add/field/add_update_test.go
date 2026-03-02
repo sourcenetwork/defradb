@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
 	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
@@ -110,7 +110,7 @@ func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndVersionJoin(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
 	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 

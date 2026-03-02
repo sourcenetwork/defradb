@@ -48,7 +48,7 @@ func setCollectionIDs(
 	collectionSets = sortCollectionSets(collectionSets)
 
 	for _, collectionSet := range collectionSets {
-		// The schemas within each set must be in a deterministic order to ensure that
+		// The collections within each set must be in a deterministic order to ensure that
 		// their IDs are deterministic.
 		sortSet(collectionSet)
 
@@ -279,35 +279,40 @@ func mapCollectionSetIDs(
 	}
 }
 
-// circlesBack returns true if any path from this schema through it's relations (and their relations) circles
-// back to this schema.
+// circlesBack returns true if any path from this collection through its relations (and their relations) circles
+// back to this collection.
 //
 // Parameters:
-//   - originalSchemaName: The original start schema of this recursive check - this will not change as this function
-//     recursively checks the relations on `currentSchemaName`.
-//   - currentSchemaName: The current schema to process.
-//   - schemasWithRelations: The full set of relevant schemas that may be referenced by this schema or its descendents.
-//   - schemasFullyProcessed: The set of schema names that have already been completely processed.  If `schema` is in
-//     this set the function will return.  This parameter is mutated by this function.
+//   - originalCollectionName: The original start collection of this recursive check -
+//     this will not change as this function recursively checks the relations
+//     on `currentCollectionName`.
+//   - currentCollectionName: The current collection to process.
+//   - collectionsWithRelations: The full set of relevant collections that may be
+//     referenced by this collection or its descendents.
+//   - collectionsFullyProcessed: The set of collection names that have already been
+//     completely processed. If the collection is in this set the function will return.
+//     This parameter is mutated by this function.
 func circlesBack(
-	originalSchemaName string,
-	currentSchemaName string,
-	schemasWithRelations map[string]collectionRelations,
-	schemasFullyProcessed map[string]struct{},
+	originalCollectionName string,
+	currentCollectionName string,
+	collectionsWithRelations map[string]collectionRelations,
+	collectionsFullyProcessed map[string]struct{},
 ) bool {
-	if _, ok := schemasFullyProcessed[currentSchemaName]; ok {
+	if _, ok := collectionsFullyProcessed[currentCollectionName]; ok {
 		// we've circled all the way through and not found the original
 		return false
 	}
 
-	if currentSchemaName == originalSchemaName {
+	if currentCollectionName == originalCollectionName {
 		return true
 	}
 
-	schemasFullyProcessed[currentSchemaName] = struct{}{}
+	collectionsFullyProcessed[currentCollectionName] = struct{}{}
 
-	for _, relation := range schemasWithRelations[currentSchemaName].relations {
-		ciclesBackToOriginal := circlesBack(originalSchemaName, relation, schemasWithRelations, schemasFullyProcessed)
+	for _, relation := range collectionsWithRelations[currentCollectionName].relations {
+		ciclesBackToOriginal := circlesBack(
+			originalCollectionName, relation, collectionsWithRelations, collectionsFullyProcessed,
+		)
 		if ciclesBackToOriginal {
 			return true
 		}
@@ -573,7 +578,7 @@ func substituteRelationFieldKinds(
 						collectionSet[i].Fields[j].Kind = client.NewSelfKind(fmt.Sprint(relativeIndex), kind.IsArray())
 					} else {
 						// If the relation root is simple and does not contain a relative index, then this relation
-						// must point to the host schema (self-reference, e.g. User=>User).
+						// must point to the host collection (self-reference, e.g. User=>User).
 						collectionSet[i].Fields[j].Kind = client.NewSelfKind("", kind.IsArray())
 					}
 				} else {

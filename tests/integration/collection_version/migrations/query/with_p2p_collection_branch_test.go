@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -114,7 +114,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 				NonOrderedResults: true,
 			},
 			&action.Request{
-				// Node 1 should yield results migrated down to schema version 1, then up to schema version 3.
+				// Node 1 should yield results migrated down to collection version 1, then up to collection version 3.
 				NodeID: immutable.Some(1),
 				Request: `
 					query {

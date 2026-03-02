@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_ACPEnforcesAccess(t *testing.T) {
+func TestACP_LinkCollection_WithMultipleResources_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -31,96 +31,19 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_ACPEn
 description: a policy
 name: test
 resources:
-- name: users
+- name: books
   permissions:
   - name: delete
   - name: read
-  - expr: ownerBad
-    name: update
-  relations:
-  - name: ownerBad
-    types:
-    - actor
-`,
-			},
-
-			&action.AddCollection{
-				Schema: `
- 					type Users @policy(
-						id: "{{.Policy0}}",
- 						resource: "users"
- 					) {
- 						name: String
- 						age: Int
- 					}
- 				`,
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
- 					query {
- 						__type (name: "Users") {
- 							name
- 							fields {
- 								name
- 								type {
- 								name
- 								kind
- 								}
- 							}
- 						}
- 					}
- 				`,
-				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-description: a policy
-name: test
-resources:
+  - name: update
 - name: users
   permissions:
   - name: delete
-  - expr: ownerBad
+  - expr: reader
     name: read
   - name: update
   relations:
-  - name: ownerBad
+  - name: reader
     types:
     - actor
 `,
@@ -178,10 +101,11 @@ resources:
 			},
 		},
 	}
+
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+func TestACP_LinkCollection_WithMultipleResourcesBothBeingUsed_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -194,14 +118,19 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_ACPEn
 description: a policy
 name: test
 resources:
-- name: users
+- name: books
   permissions:
-  - expr: ownerBad
-    name: delete
+  - name: delete
   - name: read
   - name: update
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
   relations:
-  - name: ownerBad
+  - name: reader
     types:
     - actor
 `,
@@ -209,31 +138,31 @@ resources:
 
 			&action.AddCollection{
 				Schema: `
- 					type Users @policy(
+					type Users @policy(
 						id: "{{.Policy0}}",
- 						resource: "users"
- 					) {
- 						name: String
- 						age: Int
- 					}
- 				`,
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
 			},
 
 			testUtils.IntrospectionRequest{
 				Request: `
- 					query {
- 						__type (name: "Users") {
- 							name
- 							fields {
- 								name
- 								type {
- 								name
- 								kind
- 								}
- 							}
- 						}
- 					}
- 				`,
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users", // NOTE: "Users" MUST exist
@@ -251,6 +180,48 @@ resources:
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+
+			&action.AddCollection{
+				Schema: `
+					type Books @policy(
+						id: "{{.Policy0}}",,
+						resource: "books"
+					) {
+						name: String
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Books") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Books", // NOTE: "Books" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
 								},
 							},
 						).Tidy(),

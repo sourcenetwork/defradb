@@ -29,7 +29,7 @@ type LWWDelta struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
-	// CollectionVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the collection version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	CollectionVersionID string

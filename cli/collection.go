@@ -48,9 +48,10 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			// The 'add' subcommand creates new collections and doesn't need
-			// to resolve an existing collection from the context.
-			// Otherwise we will also hit the nac gate for collection 'get' before.
+			// The 'add' subcommand creates new collections and doesn't need to resolve an
+			// existing collection from the context.
+			// If we don't do this, we will hit the NAC gate for collection-get permission
+			// when we do the [GetCollection()] call below.
 			if cmd.Name() == "add" {
 				return nil
 			}

@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -42,7 +42,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

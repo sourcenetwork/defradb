@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
+func TestCollectionVersionUpdatesMoveCollectionDoesNothing(t *testing.T) {
 	collectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{

@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -105,7 +105,7 @@ func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -349,7 +349,7 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID_SingleSidedRelations(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID_SingleSidedRelations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -441,7 +441,7 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID_SingleSidedRelatio
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -730,7 +730,7 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHaveSameBaseSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1043,7 +1043,7 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHave
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_SchemasAllHaveSameBaseSchemaID(t *testing.T) {
+func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

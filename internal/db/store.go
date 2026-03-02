@@ -201,7 +201,7 @@ func (db *DB) AddCollection(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// The collections (including the schema version ID) will only be updated if any changes have actually
+// The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
 

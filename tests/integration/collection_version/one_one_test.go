@@ -21,7 +21,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
+func TestCollectionVersionOneOne_NoPrimary_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -45,7 +45,7 @@ func TestSchemaOneOne_NoPrimary_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
+func TestCollectionVersionOneOne_TwoPrimaries_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -67,7 +67,7 @@ func TestSchemaOneOne_TwoPrimaries_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
+func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

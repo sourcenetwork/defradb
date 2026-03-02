@@ -46,7 +46,7 @@ Execute queries, add collections, obtain node info, etc.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
 * [defradb client encrypted-index](defradb_client_encrypted-index.md)	 - Manage collections' encrypted indexes on a running DefraDB node
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
-* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the collection migration system of a running DefraDB instance
 * [defradb client node-identity](defradb_client_node-identity.md)	 - Get the public information about the node's identity
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client purge](defradb_client_purge.md)	 - Delete all persisted data and restart

@@ -181,7 +181,7 @@ type QuerySource struct {
 // Data against all collection instances in a CollectionSource chain will be returned as-if
 // from the same dataset when queried.  Lens transforms may be applied between instances.
 //
-// Typically these are used to link together multiple schema versions into the same dataset.
+// Typically these are used to link together multiple collection versions into the same dataset.
 type CollectionSource struct {
 	// SourceCollectionID is the local identifier of the source [CollectionVersion] from which to
 	// share data.

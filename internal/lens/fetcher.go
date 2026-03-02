@@ -167,8 +167,8 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 		var resultDoc fetcher.EncodedDocument
 
 		if !f.hasMigrations || doc.CollectionVersionID() == f.targetVersionID {
-			// If there are no migrations registered for this schema, or if the document is already
-			// at the target schema version, no migration is required.
+			// If there are no migrations registered for this collection, or if the document is already
+			// at the target collection version, no migration is required.
 			resultDoc = doc
 		} else {
 			sourceLensDoc, err := encodedDocToLensDoc(doc)

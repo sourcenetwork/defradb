@@ -21,8 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+func TestCollectionMigrationQuery_WithBranchingSchema(t *testing.T) {
+	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -53,18 +53,18 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 				}),
 			},
 			&action.AddDoc{
-				// Add a document on the second schema version, with an email field value
+				// Add a document on the second collection version, with an email field value
 				Doc: `{
 					"name": "John",
 					"email": "john@source.hub"
 				}`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				// Set the active schema version back to the first
-				VersionID: schemaVersion1ID,
+				// Set the active collection version back to the first
+				VersionID: collectionVersion1ID,
 			},
 			&action.PatchCollection{
-				// The third schema version will be set as the active version, going from version 1 to 3
+				// The third collection version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },

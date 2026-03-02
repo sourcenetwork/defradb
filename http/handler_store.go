@@ -622,11 +622,11 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("collection_id").
-		WithDescription("Collection schema root").
+	collectionIDQueryParam := openapi3.NewQueryParameter("collection_id").
+		WithDescription("Collection ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
-		WithDescription("Collection schema version id").
+		WithDescription("Collection version ID").
 		WithSchema(openapi3.NewStringSchema())
 	collectionGetInactiveQueryParam := openapi3.NewQueryParameter("get_inactive").
 		WithDescription("If true, inactive collections will be returned in addition to active ones").
@@ -642,15 +642,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 
 	collectionsResponse := openapi3.NewResponse().
-		WithDescription("Collection(s) with matching name, schema id, or version id.").
+		WithDescription("Collection(s) with matching name, collection id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
 	collectionDescribe := openapi3.NewOperation()
 	collectionDescribe.OperationID = "collection_describe"
-	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.Description = "Introspect collection(s) by name, collection id, or version id."
 	collectionDescribe.Tags = []string{"collection"}
 	collectionDescribe.AddParameter(collectionNameQueryParam)
-	collectionDescribe.AddParameter(collectionSchemaRootQueryParam)
+	collectionDescribe.AddParameter(collectionIDQueryParam)
 	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
 	collectionDescribe.AddParameter(collectionGetInactiveQueryParam)
 	collectionDescribe.AddResponse(200, collectionsResponse)
@@ -658,10 +658,10 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	viewRefresh := openapi3.NewOperation()
 	viewRefresh.OperationID = "view_refresh"
-	viewRefresh.Description = "Refresh view(s) by name, schema id, or version id."
+	viewRefresh.Description = "Refresh view(s) by name, collection id, or version id."
 	viewRefresh.Tags = []string{"view"}
 	viewRefresh.AddParameter(collectionNameQueryParam)
-	viewRefresh.AddParameter(collectionSchemaRootQueryParam)
+	viewRefresh.AddParameter(collectionIDQueryParam)
 	viewRefresh.AddParameter(collectionVersionIdQueryParam)
 	viewRefresh.AddParameter(collectionGetInactiveQueryParam)
 	viewRefresh.Responses = openapi3.NewResponses()

@@ -10,7 +10,7 @@ Splitting local elements out from the global ones allows some local customizatio
 
 Local data definitions are always defined on the [collection](#collections).
 
-Examples include indexes, field IDs, and [lens transforms](https://docs.source.network/defradb/guides/schema-migration).
+Examples include indexes, field IDs, and [lens transforms](https://docs.source.network/defradb/guides/collection-migration).
 
 ## Global definitions
 
@@ -34,7 +34,7 @@ A collection will always have a [global](#global-definitions) shape defined by a
 
 When a new [schema](#schemas) version is created and has a collection defined for it, a new `CollectionVersion` instance will be created and linked to the new schema version.  The new `CollectionVersion` instance will share the same root ID as the previous, and may be active or inactive depending on what arguments the user defining the new schema specified.
 
-[Lens migrations](https://docs.source.network/defradb/guides/schema-migration) between collection versions may be defined.  These are, like everything on the collection, [local](#local-definitions).  They allow transformation of data between versions, allowing documents synced across the node network at one schema version to be presented to users at **query time** at another version.
+[Lens migrations](https://docs.source.network/defradb/guides/collection-migration) between collection versions may be defined.  These are, like everything on the collection, [local](#local-definitions).  They allow transformation of data between versions, allowing documents synced across the node network at one collection version to be presented to users at **query time** at another version.
 
 ### Collection fields
 

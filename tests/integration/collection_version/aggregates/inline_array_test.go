@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -141,7 +141,7 @@ func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -263,7 +263,7 @@ func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersAverage(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -477,7 +477,7 @@ var aggregateVersionArg = map[string]any{
 	},
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -603,7 +603,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -729,7 +729,7 @@ func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -879,7 +879,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1029,7 +1029,7 @@ func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1179,7 +1179,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1329,7 +1329,7 @@ func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1479,7 +1479,7 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

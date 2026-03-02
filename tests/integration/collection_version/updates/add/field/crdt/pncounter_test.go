@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
+func TestCollectionVersionUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -50,7 +50,7 @@ func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdates_AddFieldCRDTPNCounterWithMismatchKind_Error(t *testing.T) {
+func TestCollectionVersionUpdates_AddFieldCRDTPNCounterWithMismatchKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

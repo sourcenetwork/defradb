@@ -21,7 +21,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
+func TestGetCollectionVersion_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
@@ -34,7 +34,7 @@ func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
+func TestGetCollectionVersion_GivenNoCollectionReturnsEmptySet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
@@ -46,7 +46,7 @@ func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
+func TestGetCollectionVersion_GivenNoCollectionGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
@@ -59,7 +59,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
+func TestGetCollectionVersion_GivenNoCollectionGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
@@ -72,7 +72,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_ReturnsAllSchema(t *testing.T) {
+func TestGetCollectionVersion_ReturnsAllCollections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -146,9 +146,9 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
-	usersSchemaVersion1ID := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
-	usersSchemaVersion2ID := "bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq"
+func TestGetCollectionVersion_ReturnsCollectionForGivenRoot(t *testing.T) {
+	usersCollectionVersion1ID := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
+	usersCollectionVersion2ID := "bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -171,12 +171,12 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetGetInactive(true).SetCollectionID(usersSchemaVersion1ID),
+				FilterOptions: options.GetCollections().SetGetInactive(true).SetCollectionID(usersCollectionVersion1ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
-						CollectionID:   usersSchemaVersion1ID,
-						VersionID:      usersSchemaVersion1ID,
+						CollectionID:   usersCollectionVersion1ID,
+						VersionID:      usersCollectionVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -188,12 +188,12 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					},
 					{
 						Name:           "Users",
-						CollectionID:   usersSchemaVersion1ID,
-						VersionID:      usersSchemaVersion2ID,
+						CollectionID:   usersCollectionVersion1ID,
+						VersionID:      usersCollectionVersion2ID,
 						IsActive:       false,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: usersSchemaVersion1ID,
+							SourceCollectionID: usersCollectionVersion1ID,
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -216,7 +216,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
+func TestGetCollectionVersion_ReturnsCollectionForGivenName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

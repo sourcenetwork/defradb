@@ -22,7 +22,7 @@ import (
 )
 
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
-func TestSchemaMigrationQueryByDocID(t *testing.T) {
+func TestCollectionMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -101,7 +101,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 //
 // At the time of writing, the lens pool size is hardcoded to 5, so we should test with 6
 // documents/queries, if the size changes so should this test.
-func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
+func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

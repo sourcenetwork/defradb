@@ -8,17 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
+func TestACP_LinkCollection_OwnerMissingRequiredReadPermissionLabelOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -34,15 +33,8 @@ resources:
 - name: users
   permissions:
   - name: delete
-  - expr: reader
-    name: read
   - name: update
   relations:
-  - manages:
-    - reader
-    name: admin
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -59,6 +51,8 @@ resources:
 						age: Int
 					}
 				`,
+
+				ExpectedError: "resource is missing required permission on policy.",
 			},
 
 			testUtils.IntrospectionRequest{
@@ -69,34 +63,15 @@ resources:
 							fields {
 								name
 								type {
-								name
-								kind
+									name
+									kind
 								}
 							}
 						}
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
+					"__type": nil, // NOTE: No "Users" should exist.
 				},
 			},
 		},

@@ -18,7 +18,7 @@ import (
 )
 
 // This test ensures that nearby relation fields are not failing validation during a schema patch.
-func TestSchemaUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
+func TestCollectionVersionUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

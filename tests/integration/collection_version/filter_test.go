@@ -303,7 +303,7 @@ var defaultBookArgsWithoutFilter = trimFields(
 	testFilterForOneToOneSchemaArgProps,
 )
 
-func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
+func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

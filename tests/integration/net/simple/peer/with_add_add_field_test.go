@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PPeerAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2PPeerAddWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -96,7 +96,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PPeerAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
+func TestP2PPeerAddWithNewFieldSyncsDocsToNewerCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -155,7 +155,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
+func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

@@ -8,9 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -18,7 +19,9 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
+func TestACP_LinkCollection_UseSameResourceOnDifferentSchemas_AcceptCollections(t *testing.T) {
+	sharedSameResourceName := "users"
+
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -31,11 +34,6 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 description: a policy
 name: test
 resources:
-- name: books
-  permissions:
-  - name: delete
-  - name: read
-  - name: update
 - name: users
   permissions:
   - name: delete
@@ -50,21 +48,23 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
-					type Users @policy(
+				Schema: fmt.Sprintf(`
+					type OldUsers @policy(
 						id: "{{.Policy0}}",
-						resource: "users"
+						resource: "%s"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+					sharedSameResourceName,
+				),
 			},
 
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "Users") {
+						__type (name: "OldUsers") {
 							name
 							fields {
 								name
@@ -78,94 +78,7 @@ resources:
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-description: a policy
-name: test
-resources:
-- name: books
-  permissions:
-  - name: delete
-  - name: read
-  - name: update
-- name: users
-  permissions:
-  - name: delete
-  - expr: reader
-    name: read
-  - name: update
-  relations:
-  - name: reader
-    types:
-    - actor
-`,
-			},
-
-			&action.AddCollection{
-				Schema: `
-					type Users @policy(
-						id: "{{.Policy0}}",
-						resource: "users"
-					) {
-						name: String
-						age: Int
-					}
-				`,
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
-					query {
-						__type (name: "Users") {
-							name
-							fields {
-								name
-								type {
-								name
-								kind
-								}
-							}
-						}
-					}
-				`,
-				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
+						"name": "OldUsers", // NOTE: "OldUsers" MUST exist
 						"fields": schemaUtils.DefaultFields.Append(
 							schemaUtils.Field{
 								"name": "name",
@@ -188,20 +101,23 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: `
-					type Books @policy(
-						id: "{{.Policy0}}",,
-						resource: "books"
+				Schema: fmt.Sprintf(`
+					type NewUsers @policy(
+						id: "{{.Policy0}}",
+						resource: "%s"
 					) {
 						name: String
+						age: Int
 					}
 				`,
+					sharedSameResourceName,
+				),
 			},
 
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "Books") {
+						__type (name: "NewUsers") {
 							name
 							fields {
 								name
@@ -215,13 +131,21 @@ resources:
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "Books", // NOTE: "Books" MUST exist
+						"name": "NewUsers", // NOTE: "NewUsers" MUST exist
 						"fields": schemaUtils.DefaultFields.Append(
 							schemaUtils.Field{
 								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
 								},
 							},
 						).Tidy(),

@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -34,7 +34,7 @@ func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -50,7 +50,7 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -67,7 +67,7 @@ func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -84,7 +84,7 @@ func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -101,7 +101,7 @@ func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
+func TestCollectionVersion_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -118,7 +118,7 @@ func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -136,7 +136,7 @@ func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -155,7 +155,7 @@ func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -173,7 +173,7 @@ func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -191,7 +191,7 @@ func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -209,7 +209,7 @@ func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

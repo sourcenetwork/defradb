@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_AcceptSchema(t *testing.T) {
+func TestACP_LinkCollection_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_AcceptCollection(t *testing.T) {
 	const validResourceNameOnPolicyUsedByBoth string = "users"
 	const policyUsedByBoth string = `
 description: a policy

@@ -8,10 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -19,9 +18,7 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testing.T) {
-	sharedSameResourceName := "users"
-
+func TestACP_LinkCollection_WithExtraPermsHavingRequiredRelation_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -31,12 +28,14 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-description: a policy
 name: test
+description: a policy
 resources:
 - name: users
   permissions:
   - name: delete
+  - expr: reader
+    name: magic
   - expr: reader
     name: read
   - name: update
@@ -48,23 +47,21 @@ resources:
 			},
 
 			&action.AddCollection{
-				Schema: fmt.Sprintf(`
-					type OldUsers @policy(
+				Schema: `
+					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "%s"
+						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					sharedSameResourceName,
-				),
 			},
 
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "OldUsers") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -78,60 +75,7 @@ resources:
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "OldUsers", // NOTE: "OldUsers" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
-				},
-			},
-
-			&action.AddCollection{
-				Schema: fmt.Sprintf(`
-					type NewUsers @policy(
-						id: "{{.Policy0}}",
-						resource: "%s"
-					) {
-						name: String
-						age: Int
-					}
-				`,
-					sharedSameResourceName,
-				),
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
-					query {
-						__type (name: "NewUsers") {
-							name
-							fields {
-								name
-								type {
-								name
-								kind
-								}
-							}
-						}
-					}
-				`,
-				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "NewUsers", // NOTE: "NewUsers" MUST exist
+						"name": "Users", // NOTE: "Users" MUST exist
 						"fields": schemaUtils.DefaultFields.Append(
 							schemaUtils.Field{
 								"name": "name",

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_link_schema
+package test_acp_dac_link_collection
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_LinkSchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_NoArgWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -45,12 +45,12 @@ resources:
 
 			&action.AddCollection{
 				Schema: `
-					type Users @policy(resource: "users") {
+					type Users @policy {
 						name: String
 						age: Int
 					}
 				`,
-				ExpectedError: "policyID must not be empty",
+				ExpectedError: "missing policy arguments, must have both id and resource",
 			},
 
 			testUtils.IntrospectionRequest{
@@ -78,7 +78,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_LinkSchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
+func TestACP_LinkCollection_SpecifiedArgsAreEmptyOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -106,12 +106,13 @@ resources:
 
 			&action.AddCollection{
 				Schema: `
-					type Users @policy(resource: "users", id: "") {
+					type Users @policy(resource: "", id: "") {
 						name: String
 						age: Int
 					}
 				`,
-				ExpectedError: "policyID must not be empty",
+
+				ExpectedError: "missing policy arguments, must have both id and resource",
 			},
 
 			testUtils.IntrospectionRequest{

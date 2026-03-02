@@ -1087,7 +1087,7 @@
         },
         "/collections": {
             "get": {
-                "description": "Introspect collection(s) by name, schema id, or version id.",
+                "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "collection_describe",
                 "parameters": [
                     {
@@ -1099,7 +1099,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -1107,7 +1107,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
@@ -1142,7 +1142,7 @@
                                 }
                             }
                         },
-                        "description": "Collection(s) with matching name, schema id, or version id."
+                        "description": "Collection(s) with matching name, collection id, or version id."
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2796,7 +2796,7 @@
         },
         "/view/refresh": {
             "post": {
-                "description": "Refresh view(s) by name, schema id, or version id.",
+                "description": "Refresh view(s) by name, collection id, or version id.",
                 "operationId": "view_refresh",
                 "parameters": [
                     {
@@ -2808,7 +2808,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema root",
+                        "description": "Collection ID",
                         "in": "query",
                         "name": "collection_id",
                         "schema": {
@@ -2816,7 +2816,7 @@
                         }
                     },
                     {
-                        "description": "Collection schema version id",
+                        "description": "Collection version ID",
                         "in": "query",
                         "name": "version_id",
                         "schema": {
