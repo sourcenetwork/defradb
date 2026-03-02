@@ -28,8 +28,8 @@ func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testi
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int

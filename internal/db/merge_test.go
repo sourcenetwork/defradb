@@ -497,7 +497,7 @@ func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -549,7 +549,7 @@ func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	doc, err := col.Get(ctx, docID)
+	doc, err := col.GetDocument(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
@@ -580,7 +580,7 @@ func TestMerge_DiamondMerge_NoError(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -615,7 +615,7 @@ func TestMerge_DiamondMerge_NoError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	doc, err := col.Get(ctx, docID)
+	doc, err := col.GetDocument(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
@@ -649,7 +649,7 @@ func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -693,7 +693,7 @@ func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	doc, err := col.Get(ctx, docID)
+	doc, err := col.GetDocument(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
@@ -723,7 +723,7 @@ func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -762,7 +762,7 @@ func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
 	require.NoError(t, err)
 
 	// Document should not be accessible via normal Get (deleted).
-	_, err = col.Get(ctx, docID)
+	_, err = col.GetDocument(ctx, docID)
 	require.ErrorIs(t, err, client.ErrDocumentNotFoundOrNotAuthorized)
 }
 
@@ -783,7 +783,7 @@ func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchema)
+	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -822,7 +822,7 @@ func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
 	require.NoError(t, err)
 
 	// Document should still be deleted — P2P updates don't undelete.
-	_, err = col.Get(ctx, docID)
+	_, err = col.GetDocument(ctx, docID)
 	require.ErrorIs(t, err, client.ErrDocumentNotFoundOrNotAuthorized)
 }
 
@@ -842,7 +842,7 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(ctx, userSchemaWithCounter)
+	_, err = db.AddCollection(ctx, userSchemaWithCounter)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -923,7 +923,7 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	doc, err := col.Get(ctx, docID)
+	doc, err := col.GetDocument(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
