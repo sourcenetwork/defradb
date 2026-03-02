@@ -1,30 +1,30 @@
-## defradb client index add
+## defradb client index new
 
-Adds a secondary index on a collection's field(s)
+Creates a new secondary index on a collection's field(s)
 
 ### Synopsis
 
-Adds a secondary index on a collection's field(s).
+Creates a new secondary index on a collection's field(s).
 
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
 If no order is specified for the field, the default value will be "ASC"
 
 ```
-defradb client index add -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique] [flags]
+defradb client index new -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique] [flags]
 ```
 
 ### Examples
 
 ```
-add an index for 'Users' collection on 'name' field:  
-  defradb client index add --collection Users --fields name
+create a new index for 'Users' collection on 'name' field:  
+  defradb client index new --collection Users --fields name
 
-add a named index for 'Users' collection on 'name' field:  
-  defradb client index add --collection Users --fields name --name UsersByName
+create a new named index for 'Users' collection on 'name' field:  
+  defradb client index new --collection Users --fields name --name UsersByName
 
-add a unique index for 'Users' collection on 'name' and 'age':  
-  defradb client index add --collection Users --fields name:ASC,age:DESC --unique
+create a new unique index for 'Users' collection on 'name' and 'age':  
+  defradb client index new --collection Users --fields name:ASC,age:DESC --unique
 ```
 
 ### Options
@@ -32,7 +32,7 @@ add a unique index for 'Users' collection on 'name' and 'age':
 ```
   -c, --collection string   Collection name
       --fields strings      Fields to index
-  -h, --help                help for add
+  -h, --help                help for new
   -n, --name string         Index name
   -u, --unique              Make the index unique
 ```

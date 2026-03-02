@@ -236,30 +236,30 @@ func (b *DeleteDocumentsWithFilterOptionsBuilder) SetIdentity(
 	return b
 }
 
-// AddCollectionIndexOptions contains options for AddIndex operation.
-type AddCollectionIndexOptions struct {
+// NewCollectionIndexOptions contains options for NewIndex operation.
+type NewCollectionIndexOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *AddCollectionIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *NewCollectionIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// AddCollectionIndexOptionsBuilder is a builder for AddCollectionIndexOptions.
-type AddCollectionIndexOptionsBuilder struct {
-	enumerableBuilder[AddCollectionIndexOptions]
+// NewCollectionIndexOptionsBuilder is a builder for AddCollectionIndexOptions.
+type NewCollectionIndexOptionsBuilder struct {
+	enumerableBuilder[NewCollectionIndexOptions]
 }
 
 // AddCollectionIndex creates a new AddCollectionIndexOptionsBuilder instance.
-func AddCollectionIndex() *AddCollectionIndexOptionsBuilder {
-	return &AddCollectionIndexOptionsBuilder{}
+func NewCollectionIndex() *NewCollectionIndexOptionsBuilder {
+	return &NewCollectionIndexOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *AddCollectionIndexOptionsBuilder) SetIdentity(id identity.Identity) *AddCollectionIndexOptionsBuilder {
-	b.append(func(opts *AddCollectionIndexOptions) {
+func (b *NewCollectionIndexOptionsBuilder) SetIdentity(id identity.Identity) *NewCollectionIndexOptionsBuilder {
+	b.append(func(opts *NewCollectionIndexOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

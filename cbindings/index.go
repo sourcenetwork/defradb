@@ -25,8 +25,8 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export AddIndex
-func AddIndex(
+//export NewIndex
+func NewIndex(
 	nodePtr C.uintptr_t,
 	indexName *C.char,
 	fieldsStr *C.char,
@@ -67,7 +67,7 @@ func AddIndex(
 		})
 	}
 
-	desc := client.AddIndexRequest{
+	desc := client.NewIndexRequest{
 		Name:   C.GoString(indexName),
 		Fields: fields,
 		Unique: isUnique != 0,
@@ -83,8 +83,8 @@ func AddIndex(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	descWithID, err := col.AddIndex(ctx, desc,
-		defraOpts.WithIdentity(defraOpts.AddCollectionIndex(), ident))
+	descWithID, err := col.NewIndex(ctx, desc,
+		defraOpts.WithIdentity(defraOpts.NewCollectionIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

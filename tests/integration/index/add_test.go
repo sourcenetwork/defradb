@@ -74,7 +74,7 @@ func TestIndexAddWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_ShouldNotHinderQuerying(t *testing.T) {
+func TestIndexNew_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -92,7 +92,7 @@ func TestIndexAdd_ShouldNotHinderQuerying(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				IndexName: "some_index",
 				FieldName: "name",
 			},
@@ -132,7 +132,7 @@ func TestIndexAdd_ShouldNotHinderQuerying(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_IfInvalidIndexName_ReturnError(t *testing.T) {
+func TestIndexNew_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -143,7 +143,7 @@ func TestIndexAdd_IfInvalidIndexName_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "!",
 				FieldName:     "Name",
@@ -155,7 +155,7 @@ func TestIndexAdd_IfInvalidIndexName_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
+func TestIndexNew_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

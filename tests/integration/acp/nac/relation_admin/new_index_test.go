@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanAddIndex(t *testing.T) {
+func TestNAC_AdminRelation_CanCreateNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -49,11 +49,11 @@ func TestNAC_AdminRelation_CanAddIndex(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewIndexPerm),
 			},
 
 			// Grant access to user.
@@ -65,7 +65,7 @@ func TestNAC_AdminRelation_CanAddIndex(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -76,7 +76,7 @@ func TestNAC_AdminRelation_CanAddIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddIndex(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCreateNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -106,7 +106,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddIndex(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -122,7 +122,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddIndex(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",

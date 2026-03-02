@@ -299,7 +299,7 @@ func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOneToOneUniqueIndex_OneToMany_ShouldNotAddIndex(t *testing.T) {
+func TestOneToOneUniqueIndex_OneToMany_ShouldNotCreateNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

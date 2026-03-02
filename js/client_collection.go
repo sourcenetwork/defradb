@@ -44,7 +44,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"updateDocumentsWithFilter": goji.Async(c.updateDocumentsWithFilter),
 		"deleteDocumentsWithFilter": goji.Async(c.deleteDocumentsWithFilter),
 		"getDocument":               goji.Async(c.getDocument),
-		"addIndex":                  goji.Async(c.addIndex),
+		"newIndex":                  goji.Async(c.newIndex),
 		"deleteIndex":               goji.Async(c.deleteIndex),
 		"listIndexes":               goji.Async(c.listIndexes),
 		"addEncryptedIndex":         goji.Async(c.addEncryptedIndex),
@@ -70,8 +70,8 @@ func (c *clientCollection) collectionID(this js.Value, args []js.Value) (js.Valu
 	return js.ValueOf(c.col.CollectionID()), nil
 }
 
-func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, error) {
-	var request client.AddIndexRequest
+func (c *clientCollection) newIndex(this js.Value, args []js.Value) (js.Value, error) {
+	var request client.NewIndexRequest
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
@@ -79,9 +79,9 @@ func (c *clientCollection) addIndex(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddCollectionIndex()
+	opt := options.NewCollectionIndex()
 	setOptIdentity(opt, args, 1)
-	desc, err := c.col.AddIndex(ctx, request, opt)
+	desc, err := c.col.NewIndex(ctx, request, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

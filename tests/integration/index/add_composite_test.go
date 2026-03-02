@@ -45,7 +45,7 @@ func TestCompositeIndexAdd_WhenAdded_CanRetrieve(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID: 0,
 				IndexName:    "name_age_index",
 				Fields:       []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},

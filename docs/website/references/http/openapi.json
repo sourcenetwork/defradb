@@ -82,31 +82,6 @@
                 },
                 "type": "object"
             },
-            "add_index": {
-                "properties": {
-                    "Fields": {
-                        "items": {
-                            "properties": {
-                                "Descending": {
-                                    "type": "boolean"
-                                },
-                                "Name": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
-                    "Name": {
-                        "type": "string"
-                    },
-                    "Unique": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
             "add_lens_request": {
                 "properties": {
                     "lens": {
@@ -538,6 +513,31 @@
                     },
                     "SourceCollectionVersionID": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "new_index": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -1750,8 +1750,8 @@
                 ]
             },
             "post": {
-                "description": "Add a secondary index",
-                "operationId": "add_index",
+                "description": "Create a new secondary index",
+                "operationId": "new_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1767,7 +1767,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/add_index"
+                                "$ref": "#/components/schemas/new_index"
                             }
                         }
                     },

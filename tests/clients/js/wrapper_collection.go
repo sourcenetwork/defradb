@@ -69,10 +69,10 @@ func (c *Collection) CollectionID() string {
 	return res[0].String()
 }
 
-func (c *Collection) AddIndex(
+func (c *Collection) NewIndex(
 	ctx context.Context,
-	indexDesc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -80,7 +80,7 @@ func (c *Collection) AddIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "addIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "newIndex", indexDescVal)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}

@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesAddIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesNewIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -50,7 +50,7 @@ func TestNAC_GatesAddIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -61,7 +61,7 @@ func TestNAC_GatesAddIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -90,11 +90,11 @@ func TestNAC_GatesAddIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewIndexPerm),
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func TestNAC_GatesAddIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -132,7 +132,7 @@ func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t 
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -144,7 +144,7 @@ func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -173,11 +173,11 @@ func TestNAC_GatesAddIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewIndexPerm),
 			},
 		},
 	}
@@ -185,7 +185,7 @@ func TestNAC_GatesAddIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -215,7 +215,7 @@ func TestNAC_GatesAddIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.AddIndex{
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",

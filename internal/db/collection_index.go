@@ -148,7 +148,7 @@ func (c *collection) deleteIndexedDocWithID(
 	return c.deleteIndexedDoc(ctx, doc)
 }
 
-// AddIndex adds a new index on the collection.
+// NewIndex creates a new index on the collection.
 //
 // If the index name is empty, a name will be automatically generated.
 // Otherwise its uniqueness will be checked against existing indexes and
@@ -156,24 +156,22 @@ func (c *collection) deleteIndexedDocWithID(
 //
 // The provided index description must include at least one field with
 // a name that exists in the collection definition.
-// Also it's `ID` field must be zero. It will be assigned a unique
-// incremental value by the database.
 //
 // The index description will be stored in the system store.
 //
 // Once finished, if there are existing documents in the collection,
 // the documents will be indexed by the new index.
-func (c *collection) AddIndex(
+func (c *collection) NewIndex(
 	ctx context.Context,
-	desc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	desc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddIndexPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNewIndexPerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -183,17 +181,17 @@ func (c *collection) AddIndex(
 	}
 	defer txn.Discard()
 
-	index, err := c.addIndex(ctx, desc)
+	index, err := c.newIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
 	return index.Description(), txn.Commit()
 }
 
-func processAddIndexRequest(
+func processNewIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
-	desc client.AddIndexRequest,
+	desc client.NewIndexRequest,
 ) (client.IndexDescription, error) {
 	err := validateIndexDescription(desc)
 	if err != nil {
@@ -230,11 +228,11 @@ func processAddIndexRequest(
 	}, nil
 }
 
-func (c *collection) addIndex(
+func (c *collection) newIndex(
 	ctx context.Context,
-	addReq client.AddIndexRequest,
+	newReq client.NewIndexRequest,
 ) (CollectionIndex, error) {
-	desc, err := processAddIndexRequest(ctx, c.Version(), addReq)
+	desc, err := processNewIndexRequest(ctx, c.Version(), newReq)
 	if err != nil {
 		return nil, err
 	}
@@ -626,14 +624,14 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
-	addReq client.AddIndexRequest,
+	newReq client.NewIndexRequest,
 ) (string, error) {
-	indexName := addReq.Name
+	indexName := newReq.Name
 	if indexName == "" {
 		nameIncrement := 1
 		for {
 			var err error
-			indexName, err = generateIndexName(colVersion.Name, addReq.Fields, nameIncrement)
+			indexName, err = generateIndexName(colVersion.Name, newReq.Fields, nameIncrement)
 			if err != nil {
 				return "", err
 			}
@@ -663,9 +661,9 @@ func generateIndexNameIfNeeded(
 	return indexName, nil
 }
 
-func validateIndexDescription(desc client.AddIndexRequest) error {
+func validateIndexDescription(desc client.NewIndexRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
-		return schema.NewErrIndexWithInvalidName("!")
+		return schema.NewErrIndexWithInvalidName(desc.Name)
 	}
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields

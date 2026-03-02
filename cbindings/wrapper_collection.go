@@ -15,7 +15,7 @@ package cbindings
 #include <stdint.h>
 #include "defra_structs.h"
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result AddIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
@@ -61,10 +61,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) AddIndex(
+func (c *Collection) NewIndex(
 	ctx context.Context,
-	indexDesc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
@@ -100,7 +100,7 @@ func (c *Collection) AddIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(C.AddIndex(
+	res := ConvertAndFreeCResult(C.NewIndex(
 		C.uintptr_t(c.w.handle),
 		cIndexDescName,
 		fields,

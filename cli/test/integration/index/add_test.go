@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
+func TestIndexNew_WithSingleField_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -32,7 +32,7 @@ func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
@@ -50,7 +50,7 @@ func TestIndexAdd_WithSingleField_ShouldSucceed(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
+func TestIndexNew_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -62,7 +62,7 @@ func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByNameAndAge",
 				Fields:     []string{"name:ASC", "age:DESC"},
@@ -81,7 +81,7 @@ func TestIndexAdd_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
+func TestIndexNew_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -93,7 +93,7 @@ func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UniqueEmail",
 				Fields:     []string{"email"},
@@ -112,7 +112,7 @@ func TestIndexAdd_WithUniqueFlag_ShouldCreateUniqueIndex(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
+func TestIndexNew_WithoutName_ShouldGenerateName(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -124,7 +124,7 @@ func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Fields:     []string{"age"},
 				Expected: immutable.Some(client.IndexDescription{
@@ -141,10 +141,10 @@ func TestIndexAdd_WithoutName_ShouldGenerateName(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithUnknownCollection_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection:  "NonExistentCollection",
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -156,10 +156,10 @@ func TestIndexAdd_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithoutCollection_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.AddIndex{
+			&action.NewIndex{
 				// Collection is empty
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
@@ -171,7 +171,7 @@ func TestIndexAdd_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithoutFields_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -182,7 +182,7 @@ func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "EmptyIndex",
 				// Fields is empty
@@ -194,7 +194,7 @@ func TestIndexAdd_WithoutFields_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -205,7 +205,7 @@ func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection:  "User",
 				Name:        "InvalidOrderIndex",
 				Fields:      []string{"name:INVALID"},
@@ -217,7 +217,7 @@ func TestIndexAdd_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithNonExistentField_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -228,11 +228,11 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
-				ExpectError: "adding an index on a non-existing property",
+				ExpectError: "creating a new index on a non-existing property",
 			},
 		},
 	}
@@ -240,7 +240,7 @@ func TestIndexAdd_WithNonExistentField_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexAdd_WithDuplicateName_ShouldReturnError(t *testing.T) {
+func TestIndexNew_WithDuplicateName_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.AddCollection{
@@ -251,12 +251,12 @@ func TestIndexAdd_WithDuplicateName_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "DuplicateIndex",
 				Fields:     []string{"name"},
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				Collection:  "User",
 				Name:        "DuplicateIndex",
 				Fields:      []string{"age"},

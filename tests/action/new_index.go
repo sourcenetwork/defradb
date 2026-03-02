@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// AddIndex will attempt to add the given secondary index for the given collection
+// NewIndex will attempt to create a new secondary index for the given collection
 // using the collection api.
-type AddIndex struct {
+type NewIndex struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to add the secondary index on.
@@ -57,15 +57,15 @@ type AddIndex struct {
 	ExpectedError string
 }
 
-var _ Action = (*AddIndex)(nil)
-var _ Stateful = (*AddIndex)(nil)
+var _ Action = (*NewIndex)(nil)
+var _ Stateful = (*NewIndex)(nil)
 
-func (a *AddIndex) Execute() {
+func (a *NewIndex) Execute() {
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		indexDesc := client.AddIndexRequest{
+		indexDesc := client.NewIndexRequest{
 			Name: a.IndexName,
 		}
 
@@ -86,13 +86,13 @@ func (a *AddIndex) Execute() {
 
 		indexDesc.Unique = a.Unique
 
-		opts := options.AddCollectionIndex()
+		opts := options.NewCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		_, err := collection.AddIndex(a.s.Ctx, indexDesc, opts)
+		_, err := collection.NewIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

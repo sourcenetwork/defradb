@@ -61,12 +61,12 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) AddIndex(
+func (c *Collection) NewIndex(
 	ctx context.Context,
-	indexDesc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "add"}
+	args := []string{"client", "index", "new"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
