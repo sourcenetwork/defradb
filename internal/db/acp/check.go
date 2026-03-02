@@ -96,7 +96,7 @@ func CheckDocAccessWithIdentityFunc(
 		// resource is registered with the acp system, this is because it is possible that acp has
 		// a registered relation targeting "*" (any) actor which would mean that even a request
 		// without an identity might be able to access a document registered with acp, or might
-		// have dac-bypass nac privilage. So we pass an empty `did` to accommodate that case.
+		// have bypass-dac nac privilage. So we pass an empty `did` to accommodate that case.
 		identityValue = ""
 	} else {
 		identityValue = identity.Value().DID()
