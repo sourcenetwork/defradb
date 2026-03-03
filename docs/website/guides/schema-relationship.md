@@ -31,7 +31,7 @@ However, there are some shortcomings in how Defra handles these relationships. T
 
 When it comes to a one-to-many relationship, there is no primary side, i.e., the developer has no option of choosing which side is primary or  secondary. In this relationship type, the “many” type is the primary, and the “one” type is the secondary. Therefore, in the example of "author" to "books", if one "author" has many "books”, the book type holds the reference to the foreign key of the author type. This allows DefraDB to keep single fields on the respective type, otherwise "author" will have an array of values, thereby complicating the structure and breaking the normalization mechanism of databases.
 
-Note: When adding related types, the developer must add both types or all related types at the same time, i.e., define all the types within the Schema Definition Language (SDL), and send them as a single schema add operation, or the database will not understand the correlated types.
+Note: When adding related types, the developer must add both types or all related types at the same time, i.e., define all the types within the Schema Definition Language (SDL), and send them as a single collection add operation, or the database will not understand the correlated types.
 
 With respect to filtering on related types, for both one-to-one and one-to-many relationships, the developer can filter on parent objects, which have different semantics than filtering on the child objects or the related object. Filtering on the parent object only returns the parent object if the related type matches the filter. However, filtering on the related type returns the parent regardless, but it won't return the related sub-type unless it matches the filter. For example, if we ask for authors that have books in a certain genre, it will only return authors with those sub-values for the books. If we apply a filter to the sub-type, it will return all the authors, but only return the books that match that filter.
 
@@ -73,7 +73,7 @@ type Address {
 
 ```graphql
 mutation {
-  create_Address(input: {streetNumber: "123", streetName: "Test road", country: "Canada"}) {
+  add_Address(input: {streetNumber: "123", streetName: "Test road", country: "Canada"}) {
   	_docID
   }
 }
@@ -81,13 +81,13 @@ mutation {
 
 ```graphql
 mutation {
-  create_User(input: {name: "Alice", username: "awesomealice", age: 35, address_id: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
+  add_User(input: {name: "Alice", username: "awesomealice", age: 35, _addressID: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
   	_docID
   }
 }
 ```
 
-Note: Currently, the developer must create the secondary side of the relation (`Address`) first followed by the primary side with the secondary id (`address_id`) included, but in a future version of Defra, this can be done in either order.
+Note: Currently, the developer must create the secondary side of the relation (`Address`) first followed by the primary side with the secondary id (`_addressID`) included, but in a future version of Defra, this can be done in either order.
 
 3. Querying Types - After creating the required documents, the developer has to send a query request from the primary side. Therefore, in the above example, it will ask for the three respective fields of the "user", and it will also have the embedded address type in the selection set. As the developer will query from the "user" into the "address", and as defined above, the "user" is the primary type, this lookup of "user" into "address" will be an efficient lookup that will only require a single point. A single point lookup means that it won't incur a table scan. This is explained in the query below:
 
@@ -168,7 +168,7 @@ type Book {
 
 
 ```bash
-defradb client schema add -f schema.graphql
+defradb client collection add -f schema.graphql
 ```
 
 2. Create Documents - In this step, first the "one" type from the one-to-many type needs to be created. Therefore, in the above-mentioned example, a blank author type will be created. Once "author" is created, then the related books published by the author will be created. 
@@ -177,7 +177,7 @@ defradb client schema add -f schema.graphql
 
 ```graphql
 mutation {
-    create_Author(input: {name: "Saadi", dateOfBirth: "1210-07-23T03:46:56.647Z"}) {
+    add_Author(input: {name: "Saadi", dateOfBirth: "1210-07-23T03:46:56.647Z"}) {
     	_docID
     }
 }
@@ -186,7 +186,7 @@ mutation {
 
 ```graphql
 mutation {
-  	create_Book(input: {name: "Gulistan", genre: "Poetry", author_id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
+  	add_Book(input: {name: "Gulistan", genre: "Poetry", _authorID: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
       	_docID
     }
 }

@@ -14,7 +14,7 @@ import "github.com/sourcenetwork/immutable"
 
 // Aggregate represents an aggregate operation upon a set of child properties.
 //
-// Which aggregate this represents (e.g. _count, _avg, etc.) is determined by its
+// Which aggregate this represents (e.g. COUNT, AVG, etc.) is determined by its
 // [Name] property.
 type Aggregate struct {
 	Field

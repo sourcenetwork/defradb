@@ -13,30 +13,31 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 0,
+							"name":  "John",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -50,24 +51,24 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 0,
+							"name":  "John",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -81,24 +82,24 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 5,
+							"name":  "Shahzad",
+							"COUNT": 5,
 						},
 					},
 				},
@@ -112,24 +113,24 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(indexLikesDislikes: {})
+						COUNT(indexLikesDislikes: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 4,
+							"name":  "John",
+							"COUNT": 4,
 						},
 					},
 				},

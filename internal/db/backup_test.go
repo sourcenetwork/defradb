@@ -18,8 +18,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
@@ -28,7 +29,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -47,10 +48,10 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -59,14 +60,14 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -118,7 +119,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -138,10 +139,10 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -150,14 +151,14 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -209,7 +210,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -229,10 +230,10 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -241,14 +242,14 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -282,7 +283,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 		book: [Book]
@@ -303,10 +304,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 31}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Book")
@@ -320,22 +321,22 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc4, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Game of chains", "author": "`+doc1ID+`"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
-	err = col2.Create(ctx, doc4)
+	err = col2.AddDocument(ctx, doc4)
 	require.NoError(t, err)
 
 	err = doc1.Set(ctx, "age", 31)
 	require.NoError(t, err)
 
-	err = col1.Update(ctx, doc1)
+	err = col1.UpdateDocument(ctx, doc1)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -375,8 +376,8 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	bookNames := make([]string, 2)
 	for i, b := range books {
 		book, _ := b.(map[string]any)
-		require.Contains(t, book, "author_id")
-		require.Equal(t, johnNewDocID, book["author_id"])
+		require.Contains(t, book, "_authorID")
+		require.Equal(t, johnNewDocID, book["_authorID"])
 		bookNames[i], _ = book["name"].(string)
 	}
 	require.ElementsMatch(t, []string{"John and the sourcerers' stone", "Game of chains"}, bookNames)
@@ -388,7 +389,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -408,10 +409,10 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Create(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -420,14 +421,14 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Create(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -469,7 +470,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -480,7 +481,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	// First, create documents to get their actual docIDs
+	// First, add documents to get their actual docIDs
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
@@ -502,7 +503,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -520,7 +521,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err = db.NewTxn(true)
 	require.NoError(t, err)
 
-	ctx = identity.WithContext(ctx, identity.None)
+	ctx = identity.WithContext(ctx, acpIdentity.None)
 	ctx = InitContext(ctx, txn)
 
 	col1, err = db.getCollectionByName(ctx, "Address")
@@ -528,7 +529,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key1, err := client.NewDocIDFromString(addressID)
 	require.NoError(t, err)
-	_, err = col1.Get(ctx, key1, false)
+	_, err = col1.GetDocument(ctx, key1)
 	require.NoError(t, err)
 
 	col2, err = db.getCollectionByName(ctx, "User")
@@ -536,12 +537,12 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key2, err := client.NewDocIDFromString(bobID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key2, false)
+	_, err = col2.GetDocument(ctx, key2)
 	require.NoError(t, err)
 
 	key3, err := client.NewDocIDFromString(johnID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key3, false)
+	_, err = col2.GetDocument(ctx, key3)
 	require.NoError(t, err)
 }
 
@@ -551,7 +552,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -587,7 +588,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -623,7 +624,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -660,7 +661,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}

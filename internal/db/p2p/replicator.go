@@ -13,6 +13,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -24,15 +25,17 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -42,7 +45,7 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -77,7 +80,8 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
+			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -89,7 +93,8 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 		}
 
 	default:
-		fetchedCollections, err = clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
+		opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
+		fetchedCollections, err = clientTxn.GetCollections(ctx, opt)
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -150,7 +155,7 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 
 	txn.OnSuccessAsync(func() {
 		for id, addresses := range replicatorMap {
-			p.updateReplicators(ctx, id, addresses, storedRepCollectionIDs[id])
+			p.updateReplicators(context.Background(), id, addresses, storedRepCollectionIDs[id])
 			for _, col := range addedCols[id] {
 				err := p.pushHeadsForAllDocs(context.Background(), col, id)
 				if err != nil {
@@ -171,29 +176,42 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 // pushHeadsForAllDocs gets all the docID for the given collection and sends them to get
 // pushed to the given peer.
 func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, peerID string) error {
-	clientTxn, err := p.db.NewTxn(false)
+	// this method cannot be run inside of a transaction
+	// so we have to create an unsafe iterator manually
+	type unsafeDatastore interface {
+		Unsafe() corekv.ReaderWriter
+	}
+	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
-	docIDChan, err := col.GetAllDocIDs(ctx)
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
+	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
 		return err
 	}
-	for docIDResult := range docIDChan {
-		if docIDResult.Err != nil {
-			return docIDResult.Err
+	defer func() {
+		if iterErr := iter.Close(); iterErr != nil {
+			log.ErrorE("Failed to close docID iter", iterErr)
 		}
-		docID := docIDResult.ID.String()
-		err := p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
+	}()
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return err
+		}
+		if !hasNext {
+			return nil
+		}
+		splitString := strings.Split(string(iter.Key()), "/")
+		docID := splitString[len(splitString)-1]
+		err = p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
 }
 
 // pushHeadsForDoc gets the all the head blocks for a given docID and pushes them
@@ -265,7 +283,8 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	if len(collectionNames) > 0 {
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
+			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -278,7 +297,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 		storedCollectionIDs = make(map[string]struct{})
 	}
 
-	// Update the list of schemas for this replicator prior to persisting.
+	// Update the list of collections for this replicator prior to persisting.
 	storedRep.CollectionIDs = []string{}
 	for id := range storedCollectionIDs {
 		storedRep.CollectionIDs = append(storedRep.CollectionIDs, id)
@@ -302,25 +321,22 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 		}
 	}
 
-	txn.OnSuccess(func() {
-		p.updateReplicators(ctx, storedRep.ID, storedRep.Addresses, storedCollectionIDs)
+	txn.OnSuccessAsync(func() {
+		p.updateReplicators(context.Background(), storedRep.ID, storedRep.Addresses, storedCollectionIDs)
 		p.db.Events().Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 	})
 
 	return nil
 }
 
-func (p *P2P) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (p *P2P) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
-
-	clientTxn := datastore.CtxMustGetClientTxn(ctx)
-	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	_, reps, err := datastore.DeserializePrefix[client.Replicator](
 		ctx,
 		keys.NewReplicatorKey("").Bytes(),
-		txn.Peerstore(),
+		p.db.Multistore().Peerstore(),
 	)
 
 	return reps, err
@@ -371,14 +387,7 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 }
 
 func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard()
-	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
-
-	replicators, err := p.GetAllReplicators(ctx)
+	replicators, err := p.ListReplicators(ctx)
 	if err != nil {
 		return err
 	}
@@ -413,63 +422,55 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	p.handleRetryMutex.Lock()
 	defer p.handleRetryMutex.Unlock()
 
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		return err
+	// Check context after acquiring the mutex, as shutdown may have
+	// occurred while we were waiting.
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
 
-	err = updateReplicatorStatus(ctx, peerID, false)
+	err := updateReplicatorStatus(ctx, peerID, false, p.db.Multistore().Peerstore())
 	if err != nil {
 		return err
 	}
-	err = createIfNotExistsReplicatorRetry(ctx, peerID, p.retryIntervals)
+	err = createIfNotExistsReplicatorRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
 	if err != nil {
 		return err
 	}
 	docIDKey := keys.NewReplicatorRetryDocIDKey(peerID, docID)
-	err = txn.Peerstore().Set(ctx, docIDKey.Bytes(), []byte{})
-	if err != nil {
-		return err
-	}
-	return txn.Commit()
+	return p.db.Multistore().Peerstore().Set(ctx, docIDKey.Bytes(), []byte{})
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		return err
+	// Check if context is cancelled before attempting database operations.
+	// This prevents attempts to write to a closed database during shutdown.
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	if success {
-		done, err := deleteReplicatorRetryIfNoMoreDocs(ctx, peerID)
+		done, err := deleteReplicatorRetryIfNoMoreDocs(ctx, peerID, p.db.Multistore().Peerstore())
 		if err != nil {
 			return err
 		}
 		if done {
-			err := updateReplicatorStatus(ctx, peerID, true)
+			err := updateReplicatorStatus(ctx, peerID, true, p.db.Multistore().Peerstore())
 			if err != nil {
 				return err
 			}
 		} else {
 			// If there are more docs to retry, set the next retry time to be immediate.
-			err := setReplicatorNextRetry(ctx, peerID, []time.Duration{0})
+			err := addReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		err := setReplicatorNextRetry(ctx, peerID, p.retryIntervals)
+		err := addReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
 		if err != nil {
 			return err
 		}
 	}
-	return txn.Commit()
+	return nil
 }
 
 // updateReplicatorStatus updates the status of a replicator in the peerstore.
@@ -477,11 +478,10 @@ func updateReplicatorStatus(
 	ctx context.Context,
 	peerID string,
 	active bool,
+	peerstore corekv.ReaderWriter,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	key := keys.NewReplicatorKey(peerID)
-	repBytes, err := txn.Peerstore().Get(ctx, key.Bytes())
+	repBytes, err := peerstore.Get(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func updateReplicatorStatus(
 	if err != nil {
 		return err
 	}
-	return txn.Peerstore().Set(ctx, key.Bytes(), b)
+	return peerstore.Set(ctx, key.Bytes(), b)
 }
 
 type retryInfo struct {
@@ -519,10 +519,10 @@ func createIfNotExistsReplicatorRetry(
 	ctx context.Context,
 	peerID string,
 	retryIntervals []time.Duration,
+	peerstore corekv.ReaderWriter,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
 	key := keys.NewReplicatorRetryIDKey(peerID)
-	exists, err := txn.Peerstore().Has(ctx, key.Bytes())
+	exists, err := peerstore.Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -537,21 +537,11 @@ func createIfNotExistsReplicatorRetry(
 	if err != nil {
 		return err
 	}
-	err = txn.Peerstore().Set(ctx, key.Bytes(), b)
-	if err != nil {
-		return err
-	}
-	return nil
+	return peerstore.Set(ctx, key.Bytes(), b)
 }
 
 func (p *P2P) retryReplicators(ctx context.Context) {
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.REPLICATOR_RETRY_ID),
 	})
 	if err != nil {
@@ -597,16 +587,9 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 		}
 		// If the next retry time has passed and the replicator is not already retrying.
 		if now.After(rInfo.NextRetry) && !rInfo.Retrying {
-			clientTxn, err := p.db.NewTxn(false)
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
-			}
-			txn := datastore.MustGetFromClientTxn(clientTxn)
-
 			// The replicator might have been deleted by the time we reach this point.
 			// If it no longer exists, we delete the retry key and all retry docs.
-			exists, err := txn.Peerstore().Has(ctx, keys.NewReplicatorKey(key.PeerID).Bytes())
-			clientTxn.Discard()
+			exists, err := p.db.Multistore().Peerstore().Has(ctx, keys.NewReplicatorKey(key.PeerID).Bytes())
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to check if replicator exists", err)
 				continue
@@ -619,7 +602,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 				continue
 			}
 
-			err = p.setReplicatorAsRetrying(ctx, key, rInfo)
+			err = p.addReplicatorAsRetrying(ctx, key, rInfo)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to set replicator as retrying", err)
 				continue
@@ -629,31 +612,31 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 	}
 }
 
-func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+func (p *P2P) addReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	rInfo.Retrying = true
 	rInfo.NumRetries++
 	b, err := cbor.Marshal(rInfo)
 	if err != nil {
 		return err
 	}
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
 
-	return txn.Peerstore().Set(ctx, key.Bytes(), b)
+	return p.db.Multistore().Peerstore().Set(ctx, key.Bytes(), b)
 }
 
-func setReplicatorNextRetry(
+func addReplicatorNextRetry(
 	ctx context.Context,
 	peerID string,
 	retryIntervals []time.Duration,
+	peerstore corekv.ReaderWriter,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	key := keys.NewReplicatorRetryIDKey(peerID)
-	b, err := txn.Peerstore().Get(ctx, key.Bytes())
+	b, err := peerstore.Get(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -672,7 +655,7 @@ func setReplicatorNextRetry(
 	if err != nil {
 		return err
 	}
-	return txn.Peerstore().Set(ctx, key.Bytes(), b)
+	return peerstore.Set(ctx, key.Bytes(), b)
 }
 
 // retryReplicator retries all unsycned docs for a replicator.
@@ -691,14 +674,7 @@ func setReplicatorNextRetry(
 func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
 
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-
-	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
 	})
@@ -738,13 +714,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 			// if one doc fails, stop retrying the rest and just wait for the next retry
 			return
 		}
-		clientTxn, err := p.db.NewTxn(false)
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
-		}
-		txn := datastore.MustGetFromClientTxn(clientTxn)
-		err = txn.Peerstore().Delete(ctx, key.Bytes())
-		clientTxn.Discard()
+		err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
@@ -762,10 +732,8 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	headstore := txn.Headstore()
-	blockstore := blockstore.NewIPLDStore(txn.Blockstore())
+	headstore := p.db.Multistore().Headstore()
+	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
 		DocID:   docID,
@@ -818,14 +786,6 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 }
 
 func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
 	heads, err := p.getHeads(ctx, docID)
 	if err != nil {
 		return err
@@ -848,7 +808,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
-			CollectionID: head.block.Delta.GetSchemaVersionID(),
+			CollectionID: head.block.Delta.GetCollectionVersionID(),
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
@@ -864,13 +824,15 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 func deleteReplicatorRetryIfNoMoreDocs(
 	ctx context.Context,
 	peerID string,
+	peerstore corekv.ReaderWriter,
 ) (bool, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
 	entries, err := datastore.FetchKeysForPrefix(
 		ctx,
 		keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
-		txn.Peerstore(),
+		peerstore,
 	)
 	if err != nil {
 		return false, err
@@ -878,28 +840,23 @@ func deleteReplicatorRetryIfNoMoreDocs(
 
 	if len(entries) == 0 {
 		key := keys.NewReplicatorRetryIDKey(peerID)
-		return true, txn.Peerstore().Delete(ctx, key.Bytes())
+		return true, peerstore.Delete(ctx, key.Bytes())
 	}
 	return false, nil
 }
 
 // deleteReplicatorRetryAndDocs deletes the replicator retry and all retry docs.
 func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
-	clientTxn, err := p.db.NewTxn(false)
-	if err != nil {
-		return err
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
 	key := keys.NewReplicatorRetryIDKey(peerID)
-	err = txn.Peerstore().Delete(ctx, key.Bytes())
+	err := p.db.Multistore().Peerstore().Delete(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
 
-	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
 	})
@@ -916,7 +873,7 @@ func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) e
 			break
 		}
 
-		err = txn.Peerstore().Delete(ctx, keys.NewReplicatorRetryDocIDKey(peerID, string(iter.Key())).Bytes())
+		err = p.db.Multistore().Peerstore().Delete(ctx, keys.NewReplicatorRetryDocIDKey(peerID, string(iter.Key())).Bytes())
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}

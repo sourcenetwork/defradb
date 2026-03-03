@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_UnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -42,17 +42,17 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -67,17 +67,17 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_KnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {

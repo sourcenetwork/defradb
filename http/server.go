@@ -15,10 +15,12 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // PlaygroundEnabled is used to detect if the playground is enabled
@@ -36,85 +38,11 @@ var tlsCipherSuites = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
-type ServerOptions struct {
-	// Address is the bind address the server listens on.
-	Address string
-	// AllowedOrigins is the list of allowed origins for CORS.
-	AllowedOrigins []string
-	// TLSCertPath is the path to the TLS certificate.
-	TLSCertPath string
-	// TLSKeyPath is the path to the TLS key.
-	TLSKeyPath string
-	// ReadTimeout is the read timeout for connections.
-	ReadTimeout time.Duration
-	// WriteTimeout is the write timeout for connections.
-	WriteTimeout time.Duration
-	// IdleTimeout is the idle timeout for connections.
-	IdleTimeout time.Duration
-}
-
-// DefaultOpts returns the default options for the server.
-func DefaultServerOptions() *ServerOptions {
-	return &ServerOptions{
-		Address: "127.0.0.1:9181",
-	}
-}
-
-// ServerOpt is a function that configures server options.
-type ServerOpt func(*ServerOptions)
-
-// WithAllowedOrigins sets the allowed origins for CORS.
-func WithAllowedOrigins(origins ...string) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.AllowedOrigins = origins
-	}
-}
-
-// WithAddress sets the bind address for the server.
-func WithAddress(addr string) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.Address = addr
-	}
-}
-
-// WithReadTimeout sets the server read timeout.
-func WithReadTimeout(timeout time.Duration) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.ReadTimeout = timeout
-	}
-}
-
-// WithWriteTimeout sets the server write timeout.
-func WithWriteTimeout(timeout time.Duration) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.WriteTimeout = timeout
-	}
-}
-
-// WithIdleTimeout sets the server idle timeout.
-func WithIdleTimeout(timeout time.Duration) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.IdleTimeout = timeout
-	}
-}
-
-// WithTLSCertPath sets the server TLS certificate path.
-func WithTLSCertPath(path string) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.TLSCertPath = path
-	}
-}
-
-// WithTLSKeyPath sets the server TLS private key path.
-func WithTLSKeyPath(path string) ServerOpt {
-	return func(opts *ServerOptions) {
-		opts.TLSKeyPath = path
-	}
-}
+const defaultHTTPAddress = "127.0.0.1:9181"
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	options   *ServerOptions
+	options   *options.NodeHTTPOptions
 	server    *http.Server
 	listener  net.Listener
 	isTLS     bool
@@ -122,11 +50,12 @@ type Server struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
-	options := DefaultServerOptions()
-	for _, opt := range opts {
-		opt(options)
+func NewServer(handler http.Handler, opts ...options.Enumerable[options.NodeHTTPOptions]) (*Server, error) {
+	cfg := options.NodeHTTPOptions{
+		Address: defaultHTTPAddress,
 	}
+	utils.ApplyOptions(&cfg, opts...)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	// setup a mux with the default middleware stack
 	mux := chi.NewMux()
@@ -134,19 +63,19 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 		InjectServerContext(ctx),
 		middleware.RequestLogger(&logFormatter{}),
 		middleware.Recoverer,
-		CorsMiddleware(options.AllowedOrigins),
+		CorsMiddleware(cfg.AllowedOrigins),
 	)
 	mux.Handle("/*", handler)
 
 	server := &http.Server{
-		ReadTimeout:  options.ReadTimeout,
-		WriteTimeout: options.WriteTimeout,
-		IdleTimeout:  options.IdleTimeout,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+		IdleTimeout:  cfg.IdleTimeout,
 		Handler:      mux,
 	}
 
 	return &Server{
-		options:   options,
+		options:   &cfg,
 		server:    server,
 		ctxCancel: cancel,
 	}, nil

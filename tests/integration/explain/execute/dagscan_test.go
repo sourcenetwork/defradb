@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,9 +24,9 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_commits (docID: "bae-186c2484-c3ea-5993-95d6-cb886e1b13a1") {
 						links {

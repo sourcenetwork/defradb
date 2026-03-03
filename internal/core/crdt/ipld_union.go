@@ -126,17 +126,17 @@ func (c CRDT) GetDocID() []byte {
 	return nil
 }
 
-// GetSchemaVersionID returns the schema version ID of the delta.
-func (c CRDT) GetSchemaVersionID() string {
+// GetCollectionVersionID returns the collection version ID of the delta.
+func (c CRDT) GetCollectionVersionID() string {
 	switch {
 	case c.LWWDelta != nil:
-		return c.LWWDelta.SchemaVersionID
+		return c.LWWDelta.CollectionVersionID
 	case c.DocCompositeDelta != nil:
-		return c.DocCompositeDelta.SchemaVersionID
+		return c.DocCompositeDelta.CollectionVersionID
 	case c.CounterDelta != nil:
-		return c.CounterDelta.SchemaVersionID
+		return c.CounterDelta.CollectionVersionID
 	case c.CollectionDelta != nil:
-		return c.CollectionDelta.SchemaVersionID
+		return c.CollectionDelta.CollectionVersionID
 	}
 	return ""
 }
@@ -147,32 +147,32 @@ func (c CRDT) Clone() CRDT {
 	switch {
 	case c.LWWDelta != nil:
 		cloned.LWWDelta = &LWWDelta{
-			DocID:           c.LWWDelta.DocID,
-			FieldName:       c.LWWDelta.FieldName,
-			Priority:        c.LWWDelta.Priority,
-			SchemaVersionID: c.LWWDelta.SchemaVersionID,
-			Data:            c.LWWDelta.Data,
+			DocID:               c.LWWDelta.DocID,
+			FieldName:           c.LWWDelta.FieldName,
+			Priority:            c.LWWDelta.Priority,
+			CollectionVersionID: c.LWWDelta.CollectionVersionID,
+			Data:                c.LWWDelta.Data,
 		}
 	case c.DocCompositeDelta != nil:
 		cloned.DocCompositeDelta = &DocCompositeDelta{
-			DocID:           c.DocCompositeDelta.DocID,
-			Priority:        c.DocCompositeDelta.Priority,
-			SchemaVersionID: c.DocCompositeDelta.SchemaVersionID,
-			Status:          c.DocCompositeDelta.Status,
+			DocID:               c.DocCompositeDelta.DocID,
+			Priority:            c.DocCompositeDelta.Priority,
+			CollectionVersionID: c.DocCompositeDelta.CollectionVersionID,
+			Status:              c.DocCompositeDelta.Status,
 		}
 	case c.CounterDelta != nil:
 		cloned.CounterDelta = &CounterDelta{
-			DocID:           c.CounterDelta.DocID,
-			FieldName:       c.CounterDelta.FieldName,
-			Priority:        c.CounterDelta.Priority,
-			SchemaVersionID: c.CounterDelta.SchemaVersionID,
-			Nonce:           c.CounterDelta.Nonce,
-			Data:            c.CounterDelta.Data,
+			DocID:               c.CounterDelta.DocID,
+			FieldName:           c.CounterDelta.FieldName,
+			Priority:            c.CounterDelta.Priority,
+			CollectionVersionID: c.CounterDelta.CollectionVersionID,
+			Nonce:               c.CounterDelta.Nonce,
+			Data:                c.CounterDelta.Data,
 		}
 	case c.CollectionDelta != nil:
 		cloned.CollectionDelta = &CollectionDelta{
-			Priority:        c.CollectionDelta.Priority,
-			SchemaVersionID: c.CollectionDelta.SchemaVersionID,
+			Priority:            c.CollectionDelta.Priority,
+			CollectionVersionID: c.CollectionDelta.CollectionVersionID,
 		}
 	}
 	return cloned

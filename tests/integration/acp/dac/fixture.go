@@ -16,46 +16,29 @@ import (
 )
 
 const employeeCompanyPolicy = `
-name: test
 description: A Policy
-
-actor:
-  name: actor
-
+name: test
 resources:
-  employees:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-
-  companies:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
+- name: companies
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+- name: employees
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
 `
 
 func getSetupEmployeeCompanyActions() []any {
@@ -65,8 +48,8 @@ func getSetupEmployeeCompanyActions() []any {
 			Policy:   employeeCompanyPolicy,
 		},
 
-		&action.AddSchema{
-			Schema: `
+		&action.AddCollection{
+			SDL: `
 					type Employee @policy(
 						id: "{{.Policy0}}",
 						resource: "employees"
@@ -87,7 +70,7 @@ func getSetupEmployeeCompanyActions() []any {
 				`,
 		},
 
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 1,
 			Doc: `
 					{
@@ -96,7 +79,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 				`,
 		},
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 1,
 			Identity:     testUtils.ClientIdentity(1),
 			Doc: `
@@ -106,7 +89,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 				`,
 		},
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 0,
 			DocMap: map[string]any{
 				"name":    "PubEmp in PubCompany",
@@ -114,7 +97,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 0,
 			DocMap: map[string]any{
 				"name":    "PubEmp in PrivateCompany",
@@ -122,7 +105,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 1),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 0,
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
@@ -131,7 +114,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.AddDoc{
 			CollectionID: 0,
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{

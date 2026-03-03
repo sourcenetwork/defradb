@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/cli/test/action"
 	_ "github.com/sourcenetwork/defradb/cli/test/multiplier"
 	"github.com/sourcenetwork/defradb/cli/test/state"
+	_ "github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func init() {
@@ -47,11 +48,11 @@ func (test *Test) Execute(t testing.TB) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	multiplier.Skip(t, test.Includes, test.Excludes)
-
 	// Prepend a start action if there is not already one present, this saves each test from
 	// having to redeclare the same initial action.
 	actions := prependStart(test.Actions)
+
+	multiplier.Skip(t, actions, test.Includes, test.Excludes)
 
 	actions = multiplier.Apply(actions)
 

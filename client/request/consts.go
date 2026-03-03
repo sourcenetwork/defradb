@@ -15,12 +15,8 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	// This is appended to the related object name to give us the field name
-	// that corresponds to the related object's join relation id, i.e. `Author_id`.
-	RelatedObjectID = "_id"
-
 	Input              = "input"
-	CreateInput        = "create"
+	AddInput           = "add"
 	UpdateInput        = "update"
 	FieldArgName       = "field"
 	FieldIDName        = "fieldId"
@@ -44,17 +40,18 @@ const (
 	CidArgName    = "cid"
 	HeightArgName = "height"
 
-	AverageFieldName    = "_avg"
-	CountFieldName      = "_count"
-	DocIDFieldName      = "_docID"
-	GroupFieldName      = "_group"
-	DeletedFieldName    = "_deleted"
-	SumFieldName        = "_sum"
-	VersionFieldName    = "_version"
-	MaxFieldName        = "_max"
-	MinFieldName        = "_min"
-	AliasFieldName      = "_alias"
-	SimilarityFieldName = "_similarity"
+	DocIDFieldName   = "_docID"
+	DeletedFieldName = "_deleted"
+	VersionFieldName = "_version"
+	AliasFieldName   = "_alias"
+
+	MaxFieldName        = "MAX"
+	MinFieldName        = "MIN"
+	SimilarityFieldName = "SIMILARITY"
+	SumFieldName        = "SUM"
+	GroupFieldName      = "GROUP"
+	AverageFieldName    = "AVG"
+	CountFieldName      = "COUNT"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
@@ -64,20 +61,14 @@ const (
 
 	CommitsName = "_commits"
 
-	CommitTypeName           = "Commit"
-	LinksFieldName           = "links"
-	HeadsFieldName           = "heads"
-	SignatureFieldName       = "signature"
-	SignatureTypeName        = "Signature"
-	HeightFieldName          = "height"
-	SchemaVersionIDFieldName = "schemaVersionId"
-	DeltaFieldName           = "delta"
-
-	DeltaArgFieldName       = "FieldName"
-	DeltaArgData            = "Data"
-	DeltaArgSchemaVersionID = "SchemaVersionID"
-	DeltaArgPriority        = "Priority"
-	DeltaArgDocID           = "DocID"
+	CommitTypeName               = "Commit"
+	LinksFieldName               = "links"
+	HeadsFieldName               = "heads"
+	SignatureFieldName           = "signature"
+	SignatureTypeName            = "Signature"
+	HeightFieldName              = "height"
+	CollectionVersionIDFieldName = "collectionVersionId"
+	DeltaFieldName               = "delta"
 
 	// SelfTypeName is the name given to relation field types that reference the host type.
 	//
@@ -94,11 +85,19 @@ const (
 
 	DocIDsFieldName = "docIDs"
 
-	HeadLinkName = "_head"
-
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
 )
+
+var AggregateFields = []string{
+	MaxFieldName,
+	MinFieldName,
+	SimilarityFieldName,
+	SumFieldName,
+	GroupFieldName,
+	AverageFieldName,
+	CountFieldName,
+}
 
 var (
 	NameToOrderDirection = map[string]OrderDirection{
@@ -110,7 +109,7 @@ var (
 	//
 	// Users cannot define types using these names.
 	//
-	// For example, collections and schemas may not be defined using these names.
+	// For example, collections may not be defined using these names.
 	ReservedTypeNames = map[string]struct{}{
 		SelfTypeName: {},
 	}
@@ -138,10 +137,11 @@ var (
 	}
 
 	VersionFields = []string{
+		// DocIDArgName must be the first in this slice in order to align with document doc-id mappings
+		DocIDArgName,
 		HeightFieldName,
 		CidFieldName,
-		DocIDArgName,
-		SchemaVersionIDFieldName,
+		CollectionVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,
 		LinksNameFieldName,
@@ -158,3 +158,32 @@ var (
 		SignatureValueFieldName,
 	}
 )
+
+// This is appended to the related object name to give us the field name
+// that corresponds to the related object's join relation id, i.e. `_authorID`.
+const relatedObjectIDSuffix = "ID"
+
+// ToFieldID converts a field name to its relation ID field name.
+// For example: "author" becomes "_authorID"
+func ToFieldID(fieldName string) string {
+	return "_" + fieldName + relatedObjectIDSuffix
+}
+
+// ToRelatedObjectName extracts the object field name from a relation ID field name.
+// For example: "_authorID" returns ("author", true)
+// Returns ("", false) if the field name is not a valid relation ID field.
+func ToRelatedObjectName(fieldName string) (string, bool) {
+	if len(fieldName) <= len(relatedObjectIDSuffix)+1 {
+		return "", false
+	}
+	if fieldName[0] != '_' {
+		return "", false
+	}
+	if fieldName == DocIDFieldName {
+		return "", false
+	}
+	if fieldName[len(fieldName)-len(relatedObjectIDSuffix):] != relatedObjectIDSuffix {
+		return "", false
+	}
+	return fieldName[1 : len(fieldName)-len(relatedObjectIDSuffix)], true
+}

@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -21,13 +22,14 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/datastore"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -59,9 +61,10 @@ type docSyncItem struct {
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			Name: immutable.Some(collectionName),
-		},
+		options.WithIdentity(
+			options.GetCollections().SetCollectionName(collectionName),
+			iIdentity.FromContext(ctx),
+		),
 	)
 	if err != nil {
 		return err
@@ -81,6 +84,20 @@ func (p *P2P) syncDocuments(
 	collectionID string,
 	docIDs []string,
 ) (map[string][]cid.Cid, error) {
+	activePeers, err := p.ActivePeers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(activePeers) == 0 {
+		return nil, ErrTimeoutDocSync
+	}
+
+	pendingPeers := make(map[string]struct{}, len(activePeers))
+	for _, peer := range activePeers {
+		pendingPeers[peer] = struct{}{}
+	}
+
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
 
 	data, err := cbor.Marshal(pubsubReq)
@@ -93,33 +110,43 @@ func (p *P2P) syncDocuments(
 		return nil, err
 	}
 
-	return p.waitAndHandleDocSyncResponses(ctx, collectionID, docIDs, pubSubRespChan)
+	waitCtx := ctx
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+	}
+
+	return p.waitAndHandleDocSyncResponses(waitCtx, collectionID, docIDs, pubSubRespChan, pendingPeers)
 }
 
-// waitAndHandleDocSyncResponses handles multiple responses from different peers.
+// waitAndHandleDocSyncResponses handles responses from multiple peers.
+// It waits for all peers to respond or timeout, collecting all document heads.
 func (p *P2P) waitAndHandleDocSyncResponses(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
 	pubSubRespChan <-chan client.PubsubResponse,
-) (results map[string][]cid.Cid, err error) {
+	pendingPeers map[string]struct{},
+) (map[string][]cid.Cid, error) {
 	result := make(map[string][]cid.Cid)
 
-loop:
-	for {
+	requestedDocIDs := make(map[string]struct{}, len(docIDs))
+	for _, docID := range docIDs {
+		requestedDocIDs[docID] = struct{}{}
+	}
+
+	for len(pendingPeers) > 0 {
 		select {
 		case resp := <-pubSubRespChan:
-			p.handleDocSyncResponse(ctx, resp, collectionID, result)
-
-			if len(result) >= len(docIDs) {
-				break loop
-			}
+			senderID := p.handleDocSyncResponse(ctx, resp, collectionID, requestedDocIDs, result)
+			delete(pendingPeers, senderID)
 
 		case <-ctx.Done():
 			if len(result) == 0 {
 				return nil, ErrTimeoutDocSync
 			}
-			break loop
+			return result, nil
 		}
 	}
 
@@ -127,27 +154,38 @@ loop:
 }
 
 // handleDocSyncResponse processes a single response from a peer.
-// It mutates the results map with the document IDs and their corresponding CIDs.
+// It validates docIDs against the requested set and mutates the results map.
+// Returns the sender ID for peer tracking.
 func (p *P2P) handleDocSyncResponse(
 	ctx context.Context,
 	resp client.PubsubResponse,
 	collectionID string,
+	requestedDocIDs map[string]struct{},
 	results map[string][]cid.Cid,
-) {
+) string {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err)
-		return
+		return ""
 	}
 
 	var reply docSyncReply
 	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
 		log.ErrorE("Failed to unmarshal doc sync reply", err)
-		return
+		return ""
 	}
 
 	for _, item := range reply.Results {
+		if _, ok := requestedDocIDs[item.DocID]; !ok {
+			log.ErrorE("Received unrequested docID",
+				errors.New("docID not in request"),
+				corelog.String("DocID", item.DocID),
+				corelog.String("Sender", reply.Sender))
+			continue
+		}
 		p.handleDocSyncItem(ctx, item, reply.Sender, collectionID, results)
 	}
+
+	return reply.Sender
 }
 
 // handleDocSyncItem handles a single document sync item from a peer response.
@@ -256,19 +294,12 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
-	clientTxn, err := p.db.NewTxn(true)
-	if err != nil {
-		return docSyncItem{}, err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
 	}
 
-	headset := coreblock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
 
 	cids, _, err := headset.List(p.ctx)
 	if err != nil {

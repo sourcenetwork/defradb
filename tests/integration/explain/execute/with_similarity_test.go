@@ -21,23 +21,23 @@ import (
 func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type User {
+			&action.AddCollection{
+				SDL: `type User {
 					name: String
 					pointsList: [Float64!]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":       "John",
 					"pointsList": []float64{2, 4, 1},
 				},
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					User {
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				ExpectedFullGraph: dataMap{

@@ -13,16 +13,17 @@ package backup
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestBackupImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -48,7 +49,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				Filepath:      t.TempDir() + "/some/test.json",
 				ExpectedError: "failed to open file",
 			},
@@ -61,9 +62,9 @@ func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"Invalid":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
-				ExpectedError: "failed to get collection: key not found. Name: Invalid",
+				ExpectedError: "failed to get collection: collection not found. Name: Invalid",
 			},
 		},
 	}
@@ -74,11 +75,11 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
 				ExpectedError: "a document with the given ID already exists",
 			},
@@ -91,10 +92,10 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"age":30,"name":"John"}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -120,14 +121,14 @@ func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[
 					{"age":30,"name":"John"},
 					{"age":31,"name":"Smith"},
 					{"age":32,"name":"Bob"}
 				]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -161,10 +162,10 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[{}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -188,7 +189,7 @@ func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[
 					{"age":30,"name":"John"},
 					{"INVALID":31,"name":"Smith"},
@@ -196,7 +197,7 @@ func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 				]}`,
 				ExpectedError: "the given field does not exist. Name: INVALID",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

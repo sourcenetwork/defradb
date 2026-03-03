@@ -22,8 +22,8 @@ const userCollectionGQLSchema = (`
 	}
 `)
 
-func updateUserCollectionSchema() *action.AddSchema {
-	return &action.AddSchema{
-		Schema: userCollectionGQLSchema,
+func updateUserCollectionSchema() *action.AddCollection {
+	return &action.AddCollection{
+		SDL: userCollectionGQLSchema,
 	}
 }

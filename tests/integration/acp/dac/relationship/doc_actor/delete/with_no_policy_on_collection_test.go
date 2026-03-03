@@ -21,8 +21,8 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -30,7 +30,7 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

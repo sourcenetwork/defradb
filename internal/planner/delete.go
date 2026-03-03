@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -53,9 +54,11 @@ func (n *deleteNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = n.collection.Delete(
+	deleteOpts := options.WithIdentity(options.DeleteDocument(), n.p.identity)
+	_, err = n.collection.DeleteDocument(
 		n.p.ctx,
 		docID,
+		deleteOpts,
 	)
 	if err != nil {
 		return false, err
@@ -125,7 +128,11 @@ func (n *deleteNode) Explain(explainType request.ExplainType) (map[string]any, e
 }
 
 func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

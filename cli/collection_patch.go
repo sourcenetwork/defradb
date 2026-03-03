@@ -20,6 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
@@ -44,13 +46,13 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			case patchFile != "":
 				data, err := os.ReadFile(patchFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("patch-file", err)
 				}
 				patch = string(data)
 			case len(args) > 0 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				patch = string(data)
 			case len(args) >= 1:
@@ -64,9 +66,9 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			case lensFile != "":
 				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("lens-file", err)
 				}
-				patch = string(data)
+				lensCfgJson = string(data)
 			case len(args) == 2:
 				lensCfgJson = args[1]
 			}
@@ -83,7 +85,8 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				migration = immutable.Some(lensCfg)
 			}
 
-			return cliClient.PatchCollection(cmd.Context(), patch, migration)
+			opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(cmd.Context()))
+			return cliClient.PatchCollection(cmd.Context(), patch, migration, opt)
 		},
 	}
 

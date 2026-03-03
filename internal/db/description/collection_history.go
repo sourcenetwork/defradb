@@ -18,14 +18,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// collectionHistoryLink represents an item in a particular collection's schema history, it
+// collectionHistoryLink represents an item in a particular collection's version history, it
 // links to the previous and next version items if they exist.
 type collectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionVersion
 
 	// The history link to the next collection versions, if there are some
-	// (for the most recent schema version this will be empty).
+	// (for the most recent collection version this will be empty).
 	next []*collectionHistoryLink
 
 	// The history link to the previous collection versions, if there are
@@ -33,9 +33,9 @@ type collectionHistoryLink struct {
 	previous []*collectionHistoryLink
 }
 
-// TargetedCollectionHistoryLink represents an item in a particular collection's schema history, it
+// TargetedCollectionHistoryLink represents an item in a particular collection's version history, it
 // links to the previous and next version items if they exist and are on the path to
-// the target schema version.
+// the target collection version.
 type TargetedCollectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionVersion
@@ -64,23 +64,54 @@ func (t *TargetedCollectionHistoryLink) Previous() immutable.Option[*TargetedCol
 	return t.previous
 }
 
-// GetTargetedCollectionHistory returns the history of the schema of the given id, relative
-// to the given target schema version id.
+// HasMigrations checks if there are any migrations registered for the given collection version
+// by examining the full version history DAG.
 //
-// This includes any history items that are only known via registered schema migrations.
+// This properly handles branching version histories by checking if any version
+// reachable from the given version has a migration transform.
+func HasMigrations(
+	ctx context.Context,
+	collectionID string,
+	versionID string,
+) (bool, error) {
+	history, err := GetTargetedCollectionHistory(ctx, collectionID, versionID)
+	if err != nil {
+		return false, err
+	}
+
+	if history == nil {
+		return false, nil
+	}
+
+	for _, historyLink := range history {
+		if historyLink.Collection().PreviousVersion.HasValue() {
+			prevVersion := historyLink.Collection().PreviousVersion.Value()
+			if prevVersion.Transform.HasValue() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+// GetTargetedCollectionHistory returns the history of the collection of the given id, relative
+// to the given target collection version id.
+//
+// This includes any history items that are only known via registered collection migrations.
 func GetTargetedCollectionHistory(
 	ctx context.Context,
-	schemaRoot string,
-	targetSchemaVersionID string,
+	collectionRoot string,
+	targetCollectionVersionID string,
 ) (map[string]*TargetedCollectionHistoryLink, error) {
-	history, err := getCollectionHistory(ctx, schemaRoot)
+	history, err := getCollectionHistory(ctx, collectionRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	targetHistoryItem, ok := history[targetSchemaVersionID]
+	targetHistoryItem, ok := history[targetCollectionVersionID]
 	if !ok {
-		// If the target schema version is unknown then there are no possible migrations
+		// If the target collection version is unknown then there are no possible migrations
 		// that we can do.
 		return nil, nil
 	}
@@ -101,7 +132,7 @@ func GetTargetedCollectionHistory(
 // linkForwards traverses and links the history forwards from the given starting point.
 //
 // Forward collection versions found will in turn be linked both forwards and backwards, allowing
-// branches to be correctly mapped to the target schema version.
+// branches to be correctly mapped to the target collection version.
 func linkForwards(
 	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
@@ -128,7 +159,7 @@ func linkForwards(
 // linkBackwards traverses and links the history backwards from the given starting point.
 //
 // Backward collection versions found will in turn be linked both forwards and backwards, allowing
-// branches to be correctly mapped to the target schema version.
+// branches to be correctly mapped to the target collection version.
 func linkBackwards(
 	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
@@ -153,14 +184,14 @@ func linkBackwards(
 }
 
 // getCollectionHistory returns the history of the collection of the given root id as linked list
-// with each item mapped by schema version id.
+// with each item mapped by collection version id.
 //
-// This includes any history items that are only known via registered schema migrations.
+// This includes any history items that are only known via registered collection migrations.
 func getCollectionHistory(
 	ctx context.Context,
-	schemaRoot string,
+	collectionRoot string,
 ) (map[string]*collectionHistoryLink, error) {
-	cols, err := GetCollectionsByCollectionID(ctx, schemaRoot)
+	cols, err := GetCollectionsByCollectionID(ctx, collectionRoot)
 	if err != nil {
 		return nil, err
 	}

@@ -20,26 +20,26 @@ import (
 func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(cid: "bafyreihepwppwzqiig5taz3pm22ae5oi2b4amqzgyk37ruspe3cjbzs35q", docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536"]) {
+					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq", docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536"]) {
 						Name
 						_version {
 							fieldName
@@ -68,27 +68,27 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(
-						cid: "bafyreihepwppwzqiig5taz3pm22ae5oi2b4amqzgyk37ruspe3cjbzs35q",
+						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",
 						docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536", "bae-fda35cb5-cd39-5d52-80b8-b324f2d7a8b0"]
 					) {
 						Name
@@ -119,27 +119,27 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(
-						cid: "bafyreihepwppwzqiig5taz3pm22ae5oi2b4amqzgyk37ruspe3cjbzs35q",
+						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",
 						docID: ["bae-fda35cb5-cd39-5d52-80b8-b324f2d7a8b0"]
 					) {
 						Name

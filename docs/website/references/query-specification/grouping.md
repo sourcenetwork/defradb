@@ -6,14 +6,14 @@ sidebar_position: 110
 
 Grouping allows a collection of results from a query to be "grouped" into sections based on some field. These sections are called sub-groups, and are based on the equality of fields within objects, resulting in clusters of groups. Any object field may be used to group objects together. Additionally, multiple fields may be used in the group by clause to further segment the groups over multiple dimensions.
 
-Once one or more group by fields have been selected using the `groupBy` argument, which accepts an array of length one or more, you may only access certain fields in the return object. Only the indicated `groupBy` fields and aggregate function results may be included in the result object. If you wish to access the sub-groups of individual objects, a special return field called `_group` is available. This field matches the root query type, and can access any field in the object type.
+Once one or more group by fields have been selected using the `groupBy` argument, which accepts an array of length one or more, you may only access certain fields in the return object. Only the indicated `groupBy` fields and aggregate function results may be included in the result object. If you wish to access the sub-groups of individual objects, a special return field called `GROUP` is available. This field matches the root query type, and can access any field in the object type.
 
 In the example below, we are querying for all the books whose author's name begins with 'John'. The results will then be grouped by genre, and will return the genre name and the sub-groups `title` and `rating`.
 ```graphql
 {
     Books(filter: {author: {name: {_like: "John%"}}}, groupBy: [genre]) {
         genre
-        _group {
+        GROUP {
             title
             rating
         }
@@ -21,7 +21,7 @@ In the example below, we are querying for all the books whose author's name begi
 }
 ```
 
-In the above example, we can see how the `groupBy` argument is provided and that it accepts an array of field names. We can also see how the special `_group` field can be used to access the sub-group elements.
+In the above example, we can see how the `groupBy` argument is provided and that it accepts an array of field names. We can also see how the special `GROUP` field can be used to access the sub-group elements.
 
 It's important to note that in the above example, the only available field from the root `Book` type is the `groupBy` field `genre`, along with the special group and aggregate proxy fields.
 
@@ -32,7 +32,7 @@ As mentioned, we can include any number of fields in the `groupBy` argument to s
     Books(filter: {author: {name: {_like: "John%"}}}, groupBy: [genre, rating]) {
         genre
         rating
-        _group {
+        GROUP {
             title
             description
         }
@@ -69,7 +69,7 @@ We can create a group query over books and their authors, as demonstrated in the
         Author {
             name
         }
-        _group {
+        GROUP {
             title
             genre
             rating

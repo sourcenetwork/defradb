@@ -18,11 +18,10 @@ import (
 
 const (
 	errInvalidLensConfig            string = "invalid lens configuration"
-	errSchemaVersionNotOfSchema     string = "the given schema version is from a different schema"
 	errRequiredFlag                 string = "the required flag [--%s|-%s] is %s"
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
 	errInvalidIndexFieldDescription string = "invalid or malformed field description"
-	errEmptySchemaString            string = "schema cannot be empty"
+	errEmptyCollectionSDL           string = "collection definition cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
 )
@@ -34,15 +33,25 @@ var (
 	ErrInvalidExportFormat              = errors.New("invalid export format")
 	ErrNoLensConfig                     = errors.New("lens config cannot be empty")
 	ErrInvalidLensConfig                = errors.New("invalid lens configuration")
-	ErrSchemaVersionNotOfSchema         = errors.New(errSchemaVersionNotOfSchema)
 	ErrViewAddMissingArgs               = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty       = errors.New("policy file argument can not be empty")
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")
-	ErrEmptySchemaString                = errors.New(errEmptySchemaString)
+	ErrEmptyCollectionSDL               = errors.New(errEmptyCollectionSDL)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
+	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
+	ErrParsingSDL                       = errors.New("parsing SDL")
+	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
 		"really want to purge all data")
 )
+
+func NewErrParsingArgument(argName string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to parse %s", argName), inner)
+}
+
+func NewErrReadingArgument(argName string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to read %s", argName), inner)
+}
 
 func NewErrRequiredFlagEmpty(longName string, shortName string) error {
 	return errors.New(fmt.Sprintf(errRequiredFlag, longName, shortName, "empty"))
@@ -56,14 +65,6 @@ func NewErrInvalidLensConfig(inner error) error {
 	return errors.Wrap(errInvalidLensConfig, inner)
 }
 
-func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) error {
-	return errors.New(
-		errSchemaVersionNotOfSchema,
-		errors.NewKV("SchemaRoot", schemaRoot),
-		errors.NewKV("SchemaVersionID", schemaVersionID),
-	)
-}
-
 func NewErrInvalidAscensionOrder(fieldName string) error {
 	return errors.New(errInvalidAscensionOrder, errors.NewKV("Field", fieldName))
 }
@@ -72,16 +73,16 @@ func NewErrInvalidIndexFieldDescription(fieldName string) error {
 	return errors.New(errInvalidIndexFieldDescription, errors.NewKV("Field", fieldName))
 }
 
-func NewErrFailedToReadSchemaFile(schemaFile string, inner error) error {
-	return errors.Wrap(fmt.Sprintf("failed to read file %s", schemaFile), inner)
+func NewErrFailedToReadCollectionFile(sdlFile string, inner error) error {
+	return errors.Wrap(fmt.Sprintf("failed to read file %s", sdlFile), inner)
 }
 
-func NewErrFailedToReadSchemaFromStdin(inner error) error {
-	return errors.Wrap("failed to read schema from stdin", inner)
+func NewErrFailedToReadCollectionFromStdin(inner error) error {
+	return errors.Wrap("failed to read collection from stdin", inner)
 }
 
-func NewErrFailedToAddSchema(inner error) error {
-	return errors.Wrap("failed to add schema", inner)
+func NewErrFailedToAddCollection(inner error) error {
+	return errors.Wrap("failed to add collection", inner)
 }
 
 func NewErrMissingRequiredFlag(flag string) error {

@@ -13,23 +13,24 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
+						SUM(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -37,7 +38,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 						{
 							"name": "Shahzad",
 							// 0 + 1 + 2
-							"_sum": int64(3),
+							"SUM": int64(3),
 						},
 					},
 				},
@@ -51,17 +52,17 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
+						SUM(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -69,7 +70,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 						{
 							"name": "Shahzad",
 							// 5 + 2 + 1
-							"_sum": int64(8),
+							"SUM": int64(8),
 						},
 					},
 				},
@@ -83,17 +84,17 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [2, null, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {offset: 1, limit: 3, order: ASC})
+						SUM(testScores: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -101,7 +102,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 						{
 							"name": "Shahzad",
 							// 0 + 1 + 2
-							"_sum": int64(3),
+							"SUM": int64(3),
 						},
 					},
 				},
@@ -115,17 +116,17 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [null, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {offset: 1, limit: 3, order: DESC})
+						SUM(testScores: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -133,7 +134,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 						{
 							"name": "Shahzad",
 							// 5 + 2 + 1
-							"_sum": int64(8),
+							"SUM": int64(8),
 						},
 					},
 				},
@@ -147,17 +148,17 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {offset: 1, limit: 3, order: ASC})
+						SUM(favouriteFloats: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -165,7 +166,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 						{
 							"name": "Shahzad",
 							// 0.577 + 2.718 + 3.1425
-							"_sum": float64(6.4375),
+							"SUM": float64(6.4375),
 						},
 					},
 				},
@@ -179,17 +180,17 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {offset: 1, limit: 3, order: DESC})
+						SUM(favouriteFloats: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -197,7 +198,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 						{
 							"name": "Shahzad",
 							// 6.283 + 3.1425 + 2.718
-							"_sum": float64(12.1435),
+							"SUM": float64(12.1435),
 						},
 					},
 				},
@@ -211,17 +212,17 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {offset: 1, limit: 3, order: ASC})
+						SUM(pageRatings: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -229,7 +230,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 						{
 							"name": "Shahzad",
 							// 0.577 + 2.718 + 3.1425
-							"_sum": float64(6.4375),
+							"SUM": float64(6.4375),
 						},
 					},
 				},
@@ -243,17 +244,17 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {offset: 1, limit: 3, order: DESC})
+						SUM(pageRatings: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -261,7 +262,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 						{
 							"name": "Shahzad",
 							// 6.283 + 3.1425 + 2.718
-							"_sum": float64(12.1435),
+							"SUM": float64(12.1435),
 						},
 					},
 				},

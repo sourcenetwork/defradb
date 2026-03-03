@@ -20,8 +20,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -199,6 +201,12 @@ func (n *selectNode) Close() error {
 	return n.source.Close()
 }
 
+// checkForMigrations checks if there are any migrations registered for the given collection.
+// This is used to determine if the filter should be kept in selectNode for post-lens application.
+func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
+	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+}
+
 func (n *selectNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
@@ -261,9 +269,67 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	// @todo: simulate splitting for now
 	origScan, isScanNode := n.source.(*scanNode)
 	if isScanNode {
-		err := n.initScan(origScan)
+		origScan.showDeleted = n.selectReq.ShowDeleted
+		origScan.filter = n.filter
+		if n.selectReq.OrderBy != nil {
+			origScan.ordering = n.selectReq.OrderBy.Conditions
+		}
+
+		// If there are migrations, we keep the filter in selectNode so it can be applied
+		// after lens transformation. Otherwise, we nil it out as the scanNode will handle it.
+		hasMigrations, err := n.checkForMigrations(sourcePlan.collection)
 		if err != nil {
 			return nil, nil, err
+		}
+		if !hasMigrations {
+			n.filter = nil
+		}
+
+		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
+		// query, which means we need to propagate the values to the underlying VersionedFetcher
+		if n.selectReq.Cids.HasValue() {
+			prefixes := make([]keys.Walkable, len(n.selectReq.Cids.Value()))
+
+			for i, sCid := range n.selectReq.Cids.Value() {
+				c, err := cid.Decode(sCid)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				prefixes[i] = keys.HeadstoreDocKey{
+					Cid: c,
+				}
+			}
+
+			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
+			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
+			// as a prefix. And with this design limitation this is
+			// currently the least bad way of passing the cid in to the fetcher.
+			origScan.Prefixes(prefixes)
+		} else if n.selectReq.DocIDs.HasValue() {
+			shortID, err := id.GetShortCollectionID(
+				n.planner.ctx,
+				sourcePlan.collection.Version().CollectionID,
+			)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
+			// if we have a FindByDocID filter, create a prefix for it
+			// and propagate it to the scanNode
+			// @todo: When running the optimizer, check if the filter object
+			// contains a _docID equality condition, and upgrade it to a point lookup
+			// instead of a prefix scan + filter via the Primary Index (0), like here:
+			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+
+			for i, docID := range n.selectReq.DocIDs.Value() {
+				prefixes[i] = keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocID:             docID,
+				}
+			}
+			origScan.Prefixes(prefixes)
 		}
 	}
 
@@ -272,69 +338,16 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		return nil, nil, err
 	}
 
+	if isScanNode {
+		origScan.index = findIndexByFilteringField(origScan)
+		if !origScan.index.HasValue() {
+			// if we can not use index for filtering, try to use index for ordering
+			origScan.index = findIndexByOrderingField(origScan)
+		}
+		origScan.initFetcher(n.selectReq.Cids)
+	}
+
 	return aggregates, similarity, nil
-}
-
-func (n *selectNode) initScan(scan *scanNode) error {
-	scan.showDeleted = n.selectReq.ShowDeleted
-	scan.filter = n.filter
-	if n.selectReq.OrderBy != nil {
-		scan.ordering = n.selectReq.OrderBy.Conditions
-	}
-	n.filter = nil
-
-	// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
-	// query, which means we need to propagate the values to the underlying VersionedFetcher
-	if n.selectReq.Cid.HasValue() {
-		c, err := cid.Decode(n.selectReq.Cid.Value())
-		if err != nil {
-			return err
-		}
-
-		// This exists because the fetcher interface demands a []Prefixes, yet the versioned
-		// fetcher type (that will be the only one consuming this []Prefixes) does not use it
-		// as a prefix. And with this design limitation this is
-		// currently the least bad way of passing the cid in to the fetcher.
-		scan.Prefixes(
-			[]keys.Walkable{
-				keys.HeadstoreDocKey{
-					Cid: c,
-				},
-			},
-		)
-	} else if n.selectReq.DocIDs.HasValue() {
-		shortID, err := id.GetShortCollectionID(
-			n.planner.ctx,
-			n.collection.Version().CollectionID,
-		)
-		if err != nil {
-			return err
-		}
-
-		// If we *just* have a DocID(s), run a FindByDocID(s) optimization
-		// if we have a FindByDocID filter, create a prefix for it
-		// and propagate it to the scanNode
-		// @todo: When running the optimizer, check if the filter object
-		// contains a _docID equality condition, and upgrade it to a point lookup
-		// instead of a prefix scan + filter via the Primary Index (0), like here:
-		prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
-
-		for i, docID := range n.selectReq.DocIDs.Value() {
-			prefixes[i] = keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             docID,
-			}
-		}
-		scan.Prefixes(prefixes)
-	}
-
-	scan.index = findIndexByFilteringField(scan)
-	if !scan.index.HasValue() {
-		// if we can not use index for filtering, try to use index for ordering
-		scan.index = findIndexByOrderingField(scan)
-	}
-	scan.initFetcher(n.selectReq.Cid)
-	return nil
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
@@ -453,8 +466,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 					Select: *f,
 				}
 
-				if selectReq.Cid.HasValue() {
-					commitSlct.Cid = selectReq.Cid
+				if selectReq.Cids.HasValue() {
+					commitSlct.Cids = selectReq.Cids
 
 					// We want all the commits, so set the maximum depth
 					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
@@ -548,7 +561,11 @@ func (p *Planner) SelectTopNodeFromSource(
 	}
 
 	if fromCollection {
-		col, err := p.db.GetCollectionByName(p.ctx, selectReq.Name)
+		col, err := p.db.GetCollectionByName(
+			p.ctx,
+			selectReq.Name,
+			options.WithIdentity(options.GetCollectionByName(), p.identity),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -590,7 +607,11 @@ func (p *Planner) SelectTopNodeFromSource(
 
 // SelectEncrypted constructs a plan for searchable encryption queries
 func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
-	col, err := p.db.GetCollectionByName(p.ctx, selectReq.CollectionName)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		selectReq.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -13,20 +13,21 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Age": 30,
 					"HeightM": 1.8
 				}`,
 			}, // Average: 15.9
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Age": 25,
 					"HeightM": 1.6
@@ -34,10 +35,10 @@ func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 			}, // Sum: 13.3
 
 			// Test descending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(HeightM: {}, Age: {})
+						total: AVG(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -53,10 +54,10 @@ func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(HeightM: {}, Age: {})
+						total: AVG(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{

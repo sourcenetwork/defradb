@@ -13,30 +13,31 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {limit: 3})
+						COUNT(favouriteIntegers: {limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -50,24 +51,24 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {limit: 3})
+						COUNT(favouriteIntegers: {limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 3,
+							"name":  "Shahzad",
+							"COUNT": 3,
 						},
 					},
 				},

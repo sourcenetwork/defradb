@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -24,19 +25,19 @@ import (
 func TestColVersionUpdateCopyName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						fullName: String
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Books/Fields/-", "value": {"Name": "name", "Kind": "String"} },
@@ -49,10 +50,8 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Books"),
-				},
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("Books"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Books",

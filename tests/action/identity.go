@@ -11,7 +11,6 @@
 package action
 
 import (
-	"context"
 	"strconv"
 	"time"
 
@@ -46,11 +45,18 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 	ident := identHolder.Identity
 
 	if fullIdent, ok := ident.(acpIdentity.FullIdentity); ok {
+		audience := state.GetNodeAudience(s, nodeIndex)
 		token, ok := identHolder.NodeTokens[nodeIndex]
 		if ok {
 			fullIdent.SetBearerToken(token)
-		} else {
-			audience := state.GetNodeAudience(s, nodeIndex)
+		}
+
+		// Generate/regenerate the token if:
+		// - No token exists yet, OR
+		// - An audience is now available but the token was generated without one
+		//   (this can happen when the token is created during node setup before the
+		//    HTTP wrapper is ready, causing the audience to be unavailable at that time).
+		if !ok || (audience.HasValue() && !state.TokenHasAudience(token)) {
 			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
 				err := fullIdent.UpdateToken(
 					AuthTokenExpiration,
@@ -75,22 +81,4 @@ func getIdentityForRequestSpecificToNode(
 		return acpIdentity.None
 	}
 	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
-}
-
-// getContextWithIdentity returns a context with the identity for the given reference and node index.
-// If the identity does not exist, it will be generated.
-// The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
-func getContextWithIdentity(
-	ctx context.Context,
-	s *state.State,
-	identity immutable.Option[state.Identity],
-	nodeIndex int,
-) context.Context {
-	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
-}
-
-// resetStateContext resets identity for the ctx to avoid leaving it there and having the ctx
-// reuse the same identity for other requests that don't specify an identity.
-func resetStateContext(s *state.State) {
-	s.Ctx = acpIdentity.WithContext(s.Ctx, acpIdentity.None)
 }

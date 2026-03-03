@@ -20,8 +20,8 @@ import (
 func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type LeftHand {
 						name: String
 						holding: RightHand @primary @relation(name: "left_right")
@@ -34,7 +34,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				Query: `
 					LeftHand {
 						name
@@ -53,20 +53,20 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Left hand 1"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":       "Right hand 1",
-					"holding_id": testUtils.NewDocIndex(0, 0),
+					"_holdingID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						HandView {
@@ -97,8 +97,8 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -109,7 +109,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
@@ -132,8 +132,8 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 			// that `BookView` is not forgotten.  A GQL error would appear if this
 			// was broken as `AuthorView.books` would reference a type that does
 			// not exist.
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

@@ -18,189 +18,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
-			},
-
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: a policy
-                    description: another policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyIDs(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    {
-                      "name": "test",
-                      "description": "a policy",
-                      "actor": {
-                        "name": "actor"
-                      },
-                      "resources": {
-                        "users": {
-                          "permissions": {
-                            "read": {
-                              "expr": "owner"
-                            },
-                            "update": {
-                              "expr": "owner"
-                            },
-                            "delete": {
-                              "expr": "owner"
-                            }
-                          },
-                          "relations": {
-                            "owner": {
-                              "types": [
-                                "actor"
-                              ]
-                            }
-                          }
-                        }
-                      }
-                    }
-                `,
-
-				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
-				),
-			},
-
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: test2
-                    description: another policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
-
-				ExpectedPolicyID: immutable.Some(
-					"32371d1285f8662ba54c8d63439f823b72e3347d517aa00cd7e305d73df57dcc",
-				),
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testing.T) {
 	const policyUsedByBoth string = `
-        name: test
-        description: a policy
-
-        actor:
-          name: actor
-
-        resources:
-          users:
-            permissions:
-              read:
-                expr: owner
-			  update:
-				expr: owner
-			  delete:
-				expr: owner
-
-            relations:
-              owner:
-                types:
-                  - actor
-    `
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+`
 
 	test := testUtils.TestCase{
 
@@ -211,7 +39,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -221,7 +49,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
 			},
 		},
@@ -238,31 +66,18 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+`,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -270,31 +85,18 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+`,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
 			},
 		},
@@ -311,30 +113,18 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+`,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -342,40 +132,68 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    {
-                      "name": "test",
-                      "description": "a policy",
-                      "actor": {
-                        "name": "actor"
-                      },
-                      "resources": {
-                        "users": {
-                          "permissions": {
-                            "read": {
-                              "expr": "owner"
-                            },
-                            "update": {
-                              "expr": "owner"
-                            },
-                            "delete": {
-                              "expr": "owner"
-                            }
-                          },
-                          "relations": {
-                            "owner": {
-                              "types": [
-                                "actor"
-                              ]
-                            }
-                          }
-                        }
-                      }
-                    }
-               `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+`,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: a policy
+                    description: a policy
+                    resources:
+                    - name: users
+                      permissions:
+                      - name: read
+                      - name: update
+                      - name: delete
+                `,
+			},
+
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: a policy
+                    description: another policy
+                    resources:
+                    - name: users
+                      permissions:
+                      - name: read
+                        expr: reader
+                      - name: update
+                      - name: delete
+                      relations:
+                      - name: reader
+                        types:
+                        - actor
+                      - name: admin
+                        manages:
+                        - reader
+                        types:
+                        - actor
+                `,
 			},
 		},
 	}

@@ -17,28 +17,28 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
+func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {age: 40}
 					) {
 						name
@@ -54,7 +54,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -84,31 +84,31 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {age: 40}
 					) {
 						name
@@ -124,7 +124,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -154,31 +154,31 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
-						name: String 
+						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {name: "John"}
 					) {
 						name
@@ -194,7 +194,7 @@ func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -224,31 +224,31 @@ func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {age: 50}
 					) {
 						name
@@ -263,29 +263,29 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
+func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: null,
+						add: null,
 						update: {age: 50}
 					) {
 						name
 						age
 					}
 				}`,
-				ExpectedError: `Argument "create" has invalid value <nil>`,
+				ExpectedError: `Argument "add" has invalid value <nil>`,
 			},
 		},
 	}
@@ -296,19 +296,19 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: null,
 					) {
 						name
@@ -326,19 +326,19 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: null,
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {age: 50}
 					) {
 						name
@@ -356,31 +356,31 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @index(includes: [{field: "name"}, {field: "age"}], unique: true) {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 50
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Alice", age: 40},
+						add: {name: "Alice", age: 40},
 						update: {name: "Alice", age: 40}
 					) {
 						name
@@ -398,31 +398,31 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 func TestMutationUpsertSimple_WithFilterMatchAndVersion_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
-						name: String 
+						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
-						create: {name: "Bob", age: 40},
+						add: {name: "Bob", age: 40},
 						update: {age: 40}
 					) {
 						name
@@ -438,7 +438,7 @@ func TestMutationUpsertSimple_WithFilterMatchAndVersion_UpdatesDoc(t *testing.T)
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

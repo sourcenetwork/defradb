@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,7 +24,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -33,7 +34,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -43,9 +44,9 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_avg(
+					AVG(
 						Author: {
 							field: age
 						}
@@ -111,7 +112,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -121,7 +122,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -131,9 +132,9 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_count(Author: {})
+					COUNT(Author: {})
 				}`,
 
 				ExpectedFullGraph: dataMap{
@@ -182,7 +183,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -192,7 +193,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -202,9 +203,9 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_sum(
+					SUM(
 						Author: {
 							field: age
 						}

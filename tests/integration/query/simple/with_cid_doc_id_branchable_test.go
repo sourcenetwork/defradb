@@ -20,19 +20,19 @@ import (
 func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -42,12 +42,12 @@ func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// This is the cid of the collection-commit when the second doc (John) is created.
 				// Without the docID param both John and Fred should be returned.
 				Request: `query {
 					Users (
-							cid: "bafyreicbmj4ph5cjdn65ugobaqzwrwdcqkf2qqsdfimxdhvc2ceemfkdkq",
+							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4",
 							docID: "bae-235c64e3-abf7-549c-9aff-971c8afdfa3f"
 						) {
 						name

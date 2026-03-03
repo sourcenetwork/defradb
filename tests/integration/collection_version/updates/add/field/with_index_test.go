@@ -13,33 +13,34 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			// It is important to test that the index shows up in both the `GetIndexes` call,
+			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
-			testUtils.GetIndexes{
+			// where patching a collection would result in the index disappearing from one of those locations.
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",
@@ -53,7 +54,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -77,21 +78,21 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Shahzad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"John"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -104,11 +105,11 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -116,31 +117,31 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 			},
 			// It is important to test this with docs created *before* the patch, as well as after (see other test).
 			// A bug was missed by missing this test case.
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Shahzad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"John"
 					}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			// It is important to test that the index shows up in both the `GetIndexes` call,
+			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
-			testUtils.GetIndexes{
+			// where patching a collection would result in the index disappearing from one of those locations.
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",
@@ -154,7 +155,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -178,7 +179,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name

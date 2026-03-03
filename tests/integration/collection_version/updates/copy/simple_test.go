@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
+func TestCollectionVersionUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Users as a template, copying it and renaming the
 				// clone. It is deliberately blocked for now, but should function at somepoint.
 				Patch: `

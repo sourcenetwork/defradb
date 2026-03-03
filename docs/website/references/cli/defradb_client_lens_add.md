@@ -57,5 +57,5 @@ add from stdin:
 
 ### SEE ALSO
 
-* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the collection migration system of a running DefraDB instance
 

@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 )
 
 // Txn is a common interface to the BasicTxn struct.
@@ -97,15 +98,25 @@ type BasicTxn struct {
 var _ Txn = (*BasicTxn)(nil)
 
 // newTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool, chunkSize immutable.Option[int]) *BasicTxn {
+func NewTxnFrom(
+	rootstore corekv.TxnStore,
+	lockSet *lock.LockSet,
+	id uint64,
+	readonly bool,
+	chunkSize immutable.Option[int],
+) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
-	multistore := NewMultistore(rootTxn, chunkSize)
+	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
 	return &BasicTxn{
 		Multistore: multistore,
 		txn:        rootTxn,
 		id:         id,
 		ts:         time.Now(),
 	}
+}
+
+func (t *BasicTxn) Txn() corekv.Txn {
+	return t.txn
 }
 
 func (t *BasicTxn) ID() uint64 {

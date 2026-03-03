@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -21,19 +22,19 @@ import (
 func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				OperationName: immutable.Some("UsersByName"),
 				Request: `query UsersByName {
 					Users {
@@ -57,7 +58,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				OperationName: immutable.Some("UsersByAge"),
 				Request: `query UsersByName {
 					Users {
@@ -90,19 +91,19 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 func TestQuerySimpleMultipleOperationsWithNoOperationName_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query UsersByName {
 					Users {
 						Name

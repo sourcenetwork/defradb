@@ -18,8 +18,10 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
@@ -73,10 +75,11 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			resetMap := map[string]any{}
 			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
+					fieldID := request.ToFieldID(field.Name)
+					if val, ok := docMap[fieldID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
-							resetMap[field.Name+request.RelatedObjectID] = val
-							delete(docMap, field.Name+request.RelatedObjectID)
+							resetMap[fieldID] = val
+							delete(docMap, fieldID)
 						}
 					}
 				}
@@ -90,9 +93,9 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.Create(ctx, doc)
+			err = col.AddDocument(ctx, doc)
 			if err != nil {
-				return NewErrDocCreate(err)
+				return NewErrDocAdd(err)
 			}
 
 			// add back the self referencing fields and update doc.
@@ -101,7 +104,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				err = col.Update(ctx, doc)
+				err = col.UpdateDocument(ctx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -122,7 +125,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, client.CollectionFetchOptions{})
+		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()))
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
@@ -184,7 +187,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		if err != nil {
 			return err
 		}
-		docIDsCh, err := col.GetAllDocIDs(ctx)
+		docIDsCh, err := col.(*collection).getAllDocIDsChan(ctx)
 		if err != nil {
 			return err
 		}
@@ -200,7 +203,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 					return err
 				}
 			}
-			doc, err := col.Get(ctx, docResultWithID.ID, false)
+			doc, err := col.GetDocument(ctx, docResultWithID.ID)
 			if err != nil {
 				return err
 			}
@@ -210,15 +213,16 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
+					fieldID := request.ToFieldID(field.Name)
+					if foreignKey, err := doc.Get(fieldID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(ctx, field.Name+request.RelatedObjectID, newKey)
+							err := doc.Set(ctx, request.ToFieldID(field.Name), newKey)
 							if err != nil {
 								return err
 							}
 							if foreignKey.(string) == doc.ID().String() {
 								isSelfReference = true
-								refFieldName = field.Name + request.RelatedObjectID
+								refFieldName = fieldID
 							}
 						} else {
 							foreignDef, _, err := description.GetRelatedCollection(ctx, col.Version(), field.Kind)
@@ -235,9 +239,9 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 							if err != nil {
 								return err
 							}
-							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
+							foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
 							if err != nil {
-								err := doc.Set(ctx, field.Name+request.RelatedObjectID, nil)
+								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
 								if err != nil {
 									return err
 								}
@@ -249,12 +253,12 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 								delete(oldForeignDoc, request.DocIDFieldName)
 								if foreignDoc.ID().String() == foreignDocID.String() {
-									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
+									delete(oldForeignDoc, fieldID)
 								}
 
 								if foreignDoc.ID().String() == doc.ID().String() {
 									isSelfReference = true
-									refFieldName = field.Name + request.RelatedObjectID
+									refFieldName = fieldID
 								}
 
 								newForeignDoc, err := client.NewDocFromMap(ctx, oldForeignDoc, foreignCol.Version())
@@ -263,7 +267,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								}
 
 								if foreignDoc.ID().String() != doc.ID().String() {
-									err = doc.Set(ctx, field.Name+request.RelatedObjectID, newForeignDoc.ID().String())
+									err = doc.Set(ctx, request.ToFieldID(field.Name), newForeignDoc.ID().String())
 									if err != nil {
 										return err
 									}

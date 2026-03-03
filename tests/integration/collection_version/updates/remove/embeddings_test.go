@@ -21,8 +21,8 @@ import (
 func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -30,7 +30,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -40,7 +40,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:             "Users",

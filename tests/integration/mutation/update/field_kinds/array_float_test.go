@@ -20,15 +20,15 @@ import (
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 					"favouriteFloats": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -64,15 +64,15 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -83,7 +83,7 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 					"favouriteFloats": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -108,15 +108,15 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -127,7 +127,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 					"favouriteFloats": [3.1425, -0.00000000001, 1000000]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -152,15 +152,15 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -171,7 +171,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 					"favouriteFloats": [3.14]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -196,15 +196,15 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -215,7 +215,7 @@ func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 					"favouriteFloats": [3.1425, 0.00000000001, -10, 6.626070]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

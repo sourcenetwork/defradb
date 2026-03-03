@@ -20,26 +20,26 @@ import (
 func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -72,10 +72,10 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
 				Doc: `{
@@ -83,17 +83,17 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {name: {_eq: "Painted House"}}) {
 						name
@@ -126,10 +126,10 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
 				Doc: `{
@@ -137,17 +137,17 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
@@ -180,42 +180,42 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {published: {rating: {_eq: 4.9}}}}) {
 						name
@@ -248,26 +248,26 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
@@ -292,61 +292,61 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Other Writer",
 					"age":          30,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {verified: {_eq: true}}}
 					]}) {
 						name
@@ -371,83 +371,83 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.5
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Yet Another Book",
 					"rating": 3.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Other Writer",
 					"age":          35,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Yet Another Writer",
 					"age":          30,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 3),
+					"_publishedID": testUtils.NewDocIndex(0, 3),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{_and: [
-							{rating: {_ge: 4.0}},
-							{author: {age: {_le: 45}}}
+							{rating: {_geq: 4.0}},
+							{author: {age: {_leq: 45}}}
 						]},
 						{_and: [
-							{rating: {_le: 3.5}},
-							{author: {age: {_ge: 35}}}
+							{rating: {_leq: 3.5}},
+							{author: {age: {_geq: 35}}}
 						]}
 					]}) {
 						name
@@ -465,7 +465,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{_not: {author: {age: {_lt: 65}}} },
@@ -495,58 +495,58 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Other Writer",
 					"age":          30,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{rating: {_gt: 4.0}},
@@ -570,10 +570,10 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {age: {_eq: 45}}}
 					]}) {
 						name
@@ -589,11 +589,11 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					},
 				},
 			},
-			testUtils.Request{
-				// This is the same as {_not: {_and: [{rating: {_ge: 4.0}}, {author: {age: {_eq: 45}}}]}}
+			&action.Request{
+				// This is the same as {_not: {_and: [{rating: {_geq: 4.0}}, {author: {age: {_eq: 45}}}]}}
 				Request: `query {
 					Book(filter: {_not: {
-						rating: {_ge: 4.0},
+						rating: {_geq: 4.0},
 						author: {age: {_eq: 45}}
 					}}) {
 						name

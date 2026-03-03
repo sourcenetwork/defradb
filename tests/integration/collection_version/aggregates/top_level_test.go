@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsCountGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -54,7 +54,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_count",
+									"name": "COUNT",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -95,11 +95,11 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsSumGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -136,7 +136,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_sum",
+									"name": "SUM",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -203,11 +203,11 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
+func TestCollectionVersionAggregateTopLevelAddsAverageGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -244,7 +244,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_avg",
+									"name": "AVG",
 									"args": []any{
 										map[string]any{
 											"name": "Users",

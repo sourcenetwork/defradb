@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 )
 
 // Commit represents an individual commit to a MerkleCRDT
@@ -23,7 +24,7 @@ import (
 //		CID: String
 //		DocID: String
 //		CollectionID: Int
-//		SchemaVersionID: String
+//		CollectionVersionID: String
 //		Delta: String
 //		Links: [Commit]
 //		Heads: [Commit]
@@ -50,10 +51,10 @@ func CommitObject(
 			Description: commitLinksDescription,
 			Type:        gql.NewList(commitObject),
 			Args: gql.FieldConfigArgument{
-				request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+				request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
 				request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
 				"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-				request.CidArgName:   NewArgConfig(gql.ID, commitCIDArgDescription),
+				request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),
 				"groupBy": NewArgConfig(
 					gql.NewList(
 						gql.NewNonNull(
@@ -78,8 +79,8 @@ func CommitObject(
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.SchemaVersionIDFieldName: &gql.Field{
-				Description: commitSchemaVersionIDFieldDescription,
+			request.CollectionVersionIDFieldName: &gql.Field{
+				Description: commitCollectionVersionIDFieldDescription,
 				Type:        gql.String,
 			},
 			request.FieldNameName: &gql.Field{
@@ -105,7 +106,7 @@ func CommitObject(
 						},
 						request.SignatureIdentityFieldName: &gql.Field{
 							Description: "The identity of the signer, which is used to determine " +
-								"the public key used to verify the signature.ureIdentityFieldDescription",
+								"the public key used to verify the signature.",
 							Type: gql.String,
 						},
 						request.SignatureValueFieldName: &gql.Field{
@@ -155,11 +156,11 @@ func CommitsFilterFieldNameArg() *gql.InputObject {
 		Name:        "CommitsFieldNameFilterArg",
 		Description: "Filter operators for commit fieldName.",
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.String,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},
@@ -270,10 +271,10 @@ func QueryCommits(
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
 			request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
 			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			request.CidArgName:   NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(

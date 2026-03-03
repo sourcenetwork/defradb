@@ -30,14 +30,18 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var (
@@ -76,9 +80,6 @@ type DB struct {
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
-	// The options used to init the database.
-	options []Option
-
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
@@ -94,6 +95,7 @@ type DB struct {
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
+	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	// If true, block signing is disabled. By default, block signing is enabled.
@@ -110,6 +112,9 @@ type DB struct {
 	retryIntervals []time.Duration
 	// timeout duration for syncing block links.
 	p2pBlockSyncTimeout time.Duration
+
+	// lockSet contains and manages the set of locks held and available to this Defra instance.
+	lockSet *lock.LockSet
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -119,25 +124,21 @@ func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	documentACP immutable.Option[dac.DocumentACP],
-	options ...Option,
+	opts ...options.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
-	return newDB(ctx, rootstore, nodeACP, documentACP, options...)
+	return newDB(ctx, rootstore, nodeACP, opts...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	documentACP immutable.Option[dac.DocumentACP],
-	options ...Option,
+	opts ...options.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
-	opts := defaultDBOptions()
-	for _, opt := range options {
-		opt(opts)
-	}
+	cfg := defaultDBConfig()
+	utils.ApplyOptions(&cfg, opts...)
 
-	parser, err := graphql.NewParser(len(opts.searchableEncryptionKey) > 0)
+	parser, err := graphql.NewParser(len(cfg.SearchableEncryptionKey) > 0)
 	if err != nil {
 		return nil, err
 	}
@@ -145,54 +146,55 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:           rootstore,
-		blockStoreChunkSize: opts.ChunkSize,
-		nodeACP:             nodeACP,
-		documentACP:         documentACP,
-		parser:              parser,
-		options:             options,
-		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctxCancel:           cancel,
-		docMergeQueue:       newMergeQueue(),
-		colMergeQueue:       newMergeQueue(),
-		retryIntervals:      opts.retryIntervals,
-		p2pBlockSyncTimeout: opts.p2pBlockSyncTimeout,
+		rootstore:               rootstore,
+		blockStoreChunkSize:     cfg.ChunkSize,
+		maxTxnRetries:           cfg.MaxTxnRetries,
+		nodeIdentity:            cfg.Identity,
+		signingDisabled:         !cfg.EnableSigning,
+		searchableEncryptionKey: cfg.SearchableEncryptionKey,
+		nodeACP:                 nodeACP,
+		documentACP:             cfg.DocumentACP,
+		parser:                  parser,
+		events:                  event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctx:                     ctx,
+		ctxCancel:               cancel,
+		docMergeQueue:           newMergeQueue(),
+		colMergeQueue:           newMergeQueue(),
+		retryIntervals:          cfg.RetryIntervals,
+		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
+		lockSet:                 lock.NewLockSet(),
 	}
 
-	if opts.maxTxnRetries.HasValue() {
-		db.maxTxnRetries = opts.maxTxnRetries
-	}
-
-	db.nodeIdentity = opts.identity
-	db.signingDisabled = opts.disableSigning
-	db.searchableEncryptionKey = opts.searchableEncryptionKey
-
-	lensRuntime, err := newLensRuntime(opts.LensRuntimeType)
+	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
 	if err != nil {
 		return nil, err
 	}
 
-	// Overwrite a few key Lens options for now, by appending them to the end of the option
-	// slice.
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithRootstore(rootstore))
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithTxnSource(wrapSource(db)))
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithRuntime(lensRuntime))
-
-	if opts.p2p.HasValue() {
-		opts.LensOptions = appendLensP2POpt(opts.LensOptions, opts)
-	} else {
-		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
-		opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
+	lensOpts := []lensNode.Option{
+		lensNode.WithRootstore(rootstore),
+		lensNode.WithTxnSource(wrapSource(db)),
+		lensNode.WithRuntime(lensRuntime),
 	}
 
-	node, err := lensNode.New(ctx, opts.LensOptions...)
+	if cfg.ChunkSize.HasValue() {
+		lensOpts = append(lensOpts, lensNode.WithBlockstoreChunkSize(cfg.ChunkSize.Value()))
+	}
+
+	if cfg.P2P.HasValue() {
+		lensOpts = appendLensP2POpt(lensOpts, cfg.P2P.Value())
+	} else {
+		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
+		lensOpts = append(lensOpts, lensNode.WithP2PDisabled(true))
+	}
+
+	node, err := lensNode.New(ctx, lensOpts...)
 	if err != nil {
 		return nil, err
 	}
 	db.lensNode = node
 
-	if opts.p2p.HasValue() {
-		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+	if cfg.P2P.HasValue() {
+		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
 		if err != nil {
 			return nil, err
 		}
@@ -209,15 +211,21 @@ func newDB(
 
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
+	if db.ctx.Err() != nil {
+		return nil, db.ctx.Err()
+	}
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
+	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
+	if db.ctx.Err() != nil {
+		return nil, db.ctx.Err()
+	}
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
@@ -303,10 +311,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// if we're loading an existing database, just load the schema
+	// if we're loading an existing database, just load the collection definitions
 	// and migrations and finish initialization
 	if exists {
-		err = db.loadSchema(ctx)
+		err = db.loadCollectionDefinitions(ctx)
 		if err != nil {
 			return err
 		}
@@ -332,6 +340,10 @@ func (db *DB) initialize(ctx context.Context) error {
 
 func (db *DB) Rootstore() corekv.TxnStore {
 	return db.rootstore
+}
+
+func (db *DB) Multistore() *datastore.Multistore {
+	return datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 }
 
 // Events returns the events Channel.
@@ -377,11 +389,6 @@ func (db *DB) Close() {
 
 	db.events.Close()
 
-	err := db.rootstore.Close()
-	if err != nil {
-		log.ErrorE("Failure closing running process", err)
-	}
-
 	if db.nodeACP.NodeACP != nil {
 		if err := db.nodeACP.NodeACP.Close(); err != nil {
 			log.ErrorE("Failure closing node acp", err)
@@ -396,6 +403,11 @@ func (db *DB) Close() {
 
 	if db.p2p != nil && db.p2p.SECoordinator() != nil {
 		db.p2p.SECoordinator().Close()
+	}
+
+	err := db.rootstore.Close()
+	if err != nil {
+		log.ErrorE("Failure closing running process", err)
 	}
 
 	log.Info("Successfully closed running process")

@@ -22,19 +22,19 @@ import (
 func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9"]) {
@@ -49,7 +49,7 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {

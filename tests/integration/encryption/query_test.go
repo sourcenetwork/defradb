@@ -15,23 +15,24 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {
@@ -66,22 +67,25 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 		}`
 
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"points": 5
 					}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{
@@ -96,7 +100,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				DocID: 0,
 				Doc:   `{ "points": 3 }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{

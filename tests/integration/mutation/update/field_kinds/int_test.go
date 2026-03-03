@@ -20,14 +20,14 @@ import (
 func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"age": 33
 				}`,
@@ -37,7 +37,7 @@ func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"age": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

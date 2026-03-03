@@ -17,11 +17,11 @@ import (
 )
 
 // Note: Eventhough this file shows we can load a policy, that has no permissions. It is important
-// to know that DRI always has a set of permissions it requires. Therefore when a schema is loaded,
-// and it has policyID and resource defined on the collection, then before we accept that schema
+// to know that DRI always has a set of permissions it requires. Therefore when a collection is added,
+// and it has policyID and resource defined on the collection, then before we accept that collection
 // the validation occurs.
-// Inotherwords, we do not allow a non-DRI compliant policy to be specified on a collection schema, if
-// it is the schema would be rejected. However we register the policy with acp even if
+// Inotherwords, we do not allow a non-DRI compliant policy to be specified on a collection, if
+// it is the collection would be rejected. However we register the policy with acp even if
 // the policy is not DRI compliant.
 
 func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
@@ -32,22 +32,11 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+`,
 			},
 		},
 	}
@@ -63,25 +52,17 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: reader
+    types:
+    - actor
+  - name: foo
+  permissions:
+`,
 			},
 		},
 	}
@@ -89,7 +70,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
+func TestACP_AddPolicy_NoPermissionsLabelSingleRelation_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -97,20 +78,13 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: foo
+`,
 			},
 		},
 	}
@@ -126,23 +100,15 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}

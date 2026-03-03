@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -20,12 +20,16 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 
 <!--ts-->
    * [Install](#install)
+   * [Build Requirements](#build-requirements)
+      * [Prerequisites](#prerequisites)
+      * [System Resources](#system-resources)
+      * [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
    * [Key Management](#key-management)
    * [Start](#start)
    * [Configuration](#configuration)
    * [External port binding](#external-port-binding)
-   * [Add a schema type](#add-a-schema-type)
-   * [Create a document](#create-a-document)
+   * [Add a collection](#add-a-collection)
+   * [Add a document](#add-a-document)
    * [Query documents](#query-documents)
    * [Obtain document commits](#obtain-document-commits)
    * [DefraDB Query Language (DQL)](#defradb-query-language-dql)
@@ -61,6 +65,48 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
 
+## Build Requirements
+
+Building DefraDB from source requires significant system resources. If you encounter out-of-memory errors or build failures, review the requirements below.
+
+### Prerequisites
+
+- [Go](https://golang.org/) 1.24 or later
+- [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
+- Git
+
+### System Resources
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| RAM | 2 GB | 4+ GB |
+| Disk Space | 3 GB | 5+ GB |
+
+The Go compiler requires substantial memory during compilation. Builds with less than 2 GB of available RAM will likely fail with out-of-memory errors.
+
+### Building on Resource-Constrained Systems
+
+If you're building on a system with limited RAM (e.g., a small VM or container), you may encounter build failures. Common issues and solutions:
+
+**Out of Memory (OOM) errors:**
+- Ensure at least 2 GB of RAM is available
+- Add swap space if physical RAM is limited
+- Use `-p 1` to limit compiler parallelism: `go build -p 1 ./cmd/defradb`
+
+**`/tmp` running out of space:**
+On systems where `/tmp` is a small tmpfs (RAM-backed filesystem), the Go compiler may exhaust available space. Redirect Go's temp directories to a location with more space:
+```sh
+export GOTMPDIR=/path/with/space
+export GOCACHE=/path/with/space/go-cache
+export GOMODCACHE=/path/with/space/go-mod
+```
+
+**Reducing memory usage:**
+For extremely constrained environments, disable optimizations (produces slower binary):
+```sh
+go build -p 1 -gcflags="all=-N -l" ./cmd/defradb
+```
+
 ## Key Management
 
 DefraDB has a built in keyring that can be used to store private keys securely.
@@ -80,13 +126,13 @@ Alternatively, to randomly generate the required keys, run the following command
 Node identity is an identity assigned to the node. It is used to exchange encryption keys with other nodes. 
 
 ```
-defradb keyring generate
+defradb keyring new
 ```
 
 To import externally generated keys, run the following command:
 
 ```
-defradb keyring import <name> <private-key-hex>
+defradb keyring add <name> <private-key-hex>
 ```
 
 To learn more about the available options:
@@ -121,35 +167,35 @@ By default the HTTP API and P2P network will use localhost. If you want to expos
 defradb start --p2paddr /ip4/0.0.0.0/tcp/9171 --url 0.0.0.0:9181
 ```
 
-## Add a schema type
+## Add a collection
 
-Schemas are used to structure documents using a type system.
+Collections are used to structure documents using a type system.
 
-In the following examples, we'll be using a simple `User` schema type.
+In the following examples, we'll be using a simple `User` type.
 
 Add it to the database with the following command. By doing so, DefraDB generates the typed GraphQL endpoints for querying, mutation, and introspection.
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type User {
-    name: String 
-    age: Int 
-    verified: Boolean 
+    name: String
+    age: Int
+    verified: Boolean
     points: Float
   }
 '
 ```
 
-Find more examples of schema type definitions in the [examples/schema/](examples/schema/) folder.
+Find more examples of type definitions in the [examples/collection/](examples/collection/) folder.
 
-## Create a document
+## Add a document
 
-Submit a `mutation` request to create a document of the `User` type:
+Submit a `mutation` request to add a document of the `User` type:
 
 ```shell
 defradb client query '
   mutation {
-      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
+      add_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
           _docID
       }
   }
@@ -161,7 +207,7 @@ Expected response:
 ```json
 {
   "data": {
-    "create_User": [
+    "add_User": [
       {
         "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
       }
@@ -170,7 +216,7 @@ Expected response:
 }
 ```
 
-`_docID` is the document's unique identifier determined by its schema and initial data.
+`_docID` is the document's unique identifier determined by its collection and initial data.
 
 ## Query documents
 
@@ -196,7 +242,7 @@ You can further filter results with the `filter` argument.
 ```shell
 defradb client query '
   query {
-    User(filter: {points: {_ge: 50}}) {
+    User(filter: {points: {_geq: 50}}) {
       _docID
       age
       name
@@ -372,10 +418,10 @@ Start *nodeA*:
 defradb start
 ```
 
-In another terminal, add this example schema to it:
+In another terminal, add this example collection to it:
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type Article {
     content: String
     published: Boolean
@@ -391,10 +437,10 @@ defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0
 
 Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
 
-In another terminal, add the same schema to *nodeB*:
+In another terminal, add the same collection to *nodeB*:
 
 ```shell
-defradb client schema add --url localhost:9182 '
+defradb client collection add --url localhost:9182 '
   type Article {
     content: String
     published: Boolean
@@ -411,7 +457,7 @@ defradb client p2p info --url localhost:9182
 Set *nodeA* to actively replicate the Article collection to *nodeB*:
 
 ```shell
-defradb client p2p replicator set -c Article <nodeB_peer_info_json>
+defradb client p2p replicator add -c Article <nodeB_peer_info_json>
 ```
 
 As we add or update documents in the Article collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
@@ -506,5 +552,6 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Keenan Nemetz ([@nasdf](https://github.com/nasdf))
 - Ivan Vercenco ([@iverc](https://github.com/iverc))
 - Chris Quigley ([@ChrisBQu](https://github.com/ChrisBQu))
+- Jack Zampolin ([@jackzampolin](https://github.com/jackzampolin))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.

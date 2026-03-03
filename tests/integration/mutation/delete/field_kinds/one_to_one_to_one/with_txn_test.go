@@ -15,13 +15,15 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -30,36 +32,36 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
 					Publisher {
@@ -90,17 +92,17 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -109,26 +111,26 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
 					Book {
@@ -152,18 +154,25 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			testUtils.BadgerFileType,
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -172,23 +181,23 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Read the book (forward) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: immutable.Some(1),
 				Request: `query {
@@ -207,17 +216,17 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 							"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
 							"name":   "Website",
 							"published": map[string]any{
-								"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+								"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 								"name":   "Book By Website",
 							},
 						},
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
 					Publisher {
@@ -247,18 +256,25 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			testUtils.BadgerFileType,
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -267,23 +283,23 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a linked book that exists in transaction 0.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Read the book (backwards) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: immutable.Some(1),
 				Request: `query {
@@ -299,7 +315,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 							"name":   "Book By Website",
 							"publisher": map[string]any{
 								"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -309,10 +325,10 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
 					Book {
@@ -337,17 +353,17 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 				Doc: `{
 					"name": "Book By Online",
 					"rating": 4.0,
-					"publisher_id": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
+					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
@@ -356,7 +372,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a publisher and outside the transaction ensure it's linked
 				// book gets correctly unlinked too.
 				TransactionID: immutable.Some(0),
@@ -373,10 +389,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
 					Publisher {
@@ -401,17 +417,17 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 				Doc: `{
 					"name": "Book By Online",
 					"rating": 4.0,
-					"publisher_id": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
+					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
@@ -420,7 +436,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Delete a publisher and outside the transaction ensure it's linked
 				// book gets correctly unlinked too.
 				TransactionID: immutable.Some(0),
@@ -437,10 +453,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
 					Book {
@@ -455,7 +471,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID":    "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+							"_docID":    "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 							"name":      "Book By Online",
 							"publisher": nil,
 						},

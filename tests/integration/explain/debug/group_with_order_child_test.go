@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,12 +24,12 @@ func TestDebugExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: DESC}){
+						GROUP (order: {age: DESC}){
 							age
 						}
 					}
@@ -48,12 +49,12 @@ func TestDebugExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: ASC}){
+						GROUP (order: {age: ASC}){
 							age
 						}
 					}
@@ -73,17 +74,17 @@ func TestDebugExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInne
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
 						name
-						_group (
+						GROUP (
 							groupBy: [verified],
 							order: {verified: ASC}
 						){
 							verified
-							_group (order: {age: DESC}) {
+							GROUP (order: {age: DESC}) {
 								age
 							}
 						}

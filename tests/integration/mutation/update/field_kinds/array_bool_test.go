@@ -20,15 +20,15 @@ import (
 func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 					"likedIndexes": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -64,15 +64,15 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -83,7 +83,7 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 					"likedIndexes": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -108,15 +108,15 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -127,7 +127,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 					"likedIndexes": [true, false, true, false]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -152,15 +152,15 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -171,7 +171,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 					"likedIndexes": [false, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -196,15 +196,15 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean!]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -215,7 +215,7 @@ func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 					"likedIndexes": [true, false, true, false, true, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

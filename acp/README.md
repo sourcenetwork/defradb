@@ -52,7 +52,7 @@ A robust access control policy system is your first line of defense against unau
 ## ReBac Authorization Model
 
 ### Zanzibar
-In 2019, Google published their [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) paper, a paper explaining how they handle authorization across their many services. It uses access control lists but with relationship-based access control rather than role-based access control. Relationship-Based Access Control (ReBAC) establishes an authorization model where a subject's permission to access an object is defined by the presence of relationships between those subjects and objects.
+In 2019, Google published their [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) paper, a paper explaining how they handle authorization across their many services. It implements an enhanced type of access control list (ACL), which supports both object and subject grouping. Zanzibar's design is inspired on the relationship-based access control model, rather than the widely adopted role-based access control, which is incompatible with ACLs. Relationship-Based Access Control (ReBAC) establishes an authorization model where a subject's permission to access an object is defined by the presence of relationships between those subjects and objects.
 The way Zanzibar works is it exposes an API with (mainly) operations to manage `Relationships` (`tuples`) and Verify Access Requests (can Bob do X) through the `Check` call. A `tuple` includes subject, relation, and object. The Check call performs Graph Search over the `tuples` to find a path between the user and the object, if such a path exist then according to `RelBAC` the user has the queried permission. It operates as a Consistent and Partition-Tolerant System.
 
 ### Zanzi
@@ -92,11 +92,7 @@ We call these rules DPI A.K.A DefraDB Policy Interface.
 ## DAC DPI Rules
 
 To qualify as a DPI-compliant `resource`, the following rules **MUST** be satisfied:
-- The resource **must include** the mandatory `registerer` (`owner`) relation within the `relations` attribute.
 - The resource **must encompass** all the required permissions under the `permissions` attribute.
-- Every required permission must have the required registerer relation (`owner`) in `expr`.
-- The required registerer relation **must be positioned** as the leading (first) relation in `expr` (see example below).
-- Any relation after the required registerer relation must only be a union set operation (`+`).
 
 For a `Policy` to be `DPI` compliant for DAC, all of its `resources` must be DPI compliant.
 To be `Partially-DPI` at least one of its `resource` must be DPI compliant.
@@ -106,36 +102,19 @@ To be `Partially-DPI` at least one of its `resource` must be DPI compliant.
 All mandatory permissions are:
 - Specified in the `dpi.go` file within the variable `dpiRequiredPermissions`.
 
-The name of the required 'registerer' relation is:
-- Specified in the `dpi.go` file within the variable `requiredRegistererRelationName`.
-
 ### DPI Resource Examples:
-- Check out tests here: [tests/integration/acp/schema/add_dpi](/tests/integration/acp/schema/add_dpi)
+- Check out tests here: [tests/integration/acp/dac/link_collection](/tests/integration/acp/dac/link_collection)
 - The tests linked are broken into `accept_*_test.go` and `reject_*_test.go` files.
-- Accepted tests document the valid DPIs (as the schema is accepted).
-- Rejected tests document invalid DPIs (as the schema is rejected).
+- Accepted tests document the valid DPIs (as the collection is accepted).
+- Rejected tests document invalid DPIs (as the collection is rejected).
 - There are also some Partially-DPI tests that are both accepted and rejected depending on the resource.
 
 ### Required Permission's Expression:
-Even though the following expressions are valid generic policy expressions, they will make a
-DPI compliant resource lose its DPI status as these expressions are not in accordance to
-our DPI [rules](#dac-dpi-rules). Assuming these `expr` are under a required permission label:
-- `expr: owner-owner`
-- `expr: owner-reader`
-- `expr: owner&reader`
-- `expr: owner - reader`
-- `expr: ownerMalicious + owner`
-- `expr: ownerMalicious`
-- `expr: owner_new`
-- `expr: reader+owner`
-- `expr: reader-owner`
-- `expr: reader - owner`
-
 Here are some valid expression examples. Assuming these `expr` are under a required permission label:
-- `expr: owner`
-- `expr: owner + reader`
-- `expr: owner +reader`
-- `expr: owner+reader`
+- `expr: ` 
+- `expr: reader`
+- `expr: reader + writer`
+- `expr: reader & admin`
 
 ## DAC Usage CLI:
 
@@ -210,9 +189,9 @@ Result:
 }
 ```
 
-### Add schema, linking to a resource within the policy we added:
+### Add collection, linking to a resource within the policy we added:
 
-We have in `examples/schema/permissioned/users.graphql`:
+We have in `examples/collection/permissioned/users.graphql`:
 ```graphql
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
@@ -225,7 +204,7 @@ type Users @policy(
 
 CLI Command:
 ```sh
-defradb client schema add -f examples/schema/permissioned/users.graphql
+defradb client collection add -f examples/collection/permissioned/users.graphql
 ```
 
 Result:
@@ -235,7 +214,7 @@ Result:
     "Name": "Users",
     "ID": 1,
     "RootID": 1,
-    "SchemaVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+    "CollectionVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
     "Sources": [],
     "Fields": [
       {
@@ -261,61 +240,55 @@ Result:
 
 ```
 
-### Create private documents (with identity)
+### Add private documents (with identity)
 
 CLI Command:
 ```sh
-defradb client collection create --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document add --collection-name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
-### Create public documents (without identity)
+### Add public documents (without identity)
 
 CLI Command:
 ```sh
-defradb client collection create  --name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
+defradb client document add --collection-name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
 ```
 
-### Get all docIDs without an identity (shows only public):
+### Query documents without an identity (shows only public):
 CLI Command:
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }'
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83",
-  "error": ""
-}
-{
-  "docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83", "name": "PublicShahzad" },
+      { "_docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e", "name": "PublicLone" }
+    ]
+  }
 }
 ```
 
 
-### Get all docIDs with an identity (shows public and owned documents):
+### Query documents with an identity (shows public and owned documents):
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83",
-  "error": ""
-}
-{
-  "docID": "bae-a5830219-b8e7-5791-9836-2e494816fc0a",
-  "error": ""
-}
-{
-  "docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e",
-  "error": ""
-}
-{
-  "docID": "bae-eafad571-e40c-55a7-bc41-3cf7d61ee891",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-63ba68c9-78cb-5060-ab03-53ead1ec5b83", "name": "PublicShahzad" },
+      { "_docID": "bae-a5830219-b8e7-5791-9836-2e494816fc0a", "name": "SecretShahzad" },
+      { "_docID": "bae-ba315e98-fb37-5225-8a3b-34a1c75cba9e", "name": "PublicLone" },
+      { "_docID": "bae-eafad571-e40c-55a7-bc41-3cf7d61ee891", "name": "SecretLone" }
+    ]
+  }
 }
 ```
 
@@ -323,7 +296,7 @@ Result:
 ### Access the private document (including field names):
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -337,7 +310,7 @@ Result:
 ### Accessing the private document without an identity:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Error:
@@ -348,7 +321,7 @@ Error:
 ### Accessing the private document with wrong identity:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Error:
@@ -359,7 +332,7 @@ Error:
 ### Update private document:
 CLI Command:
 ```sh
-defradb client collection update --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document update --collection-name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -375,7 +348,7 @@ Result:
 #### Check if it actually got updated:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -391,7 +364,7 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document delete --collection-name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -407,7 +380,7 @@ Result:
 #### Check if it actually got deleted:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Error:
@@ -519,9 +492,9 @@ Result:
 }
 ```
 
-Add schema, linking to the users resource and our policyID:
+Add collection, linking to the users resource and our policyID:
 ```sh
-defradb client schema add '
+defradb client collection add '
 type Users @policy(
     id: "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
     resource: "users"
@@ -539,7 +512,7 @@ Result:
     "Name": "Users",
     "ID": 1,
     "RootID": 1,
-    "SchemaVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+    "CollectionVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
     "Sources": [],
     "Fields": [
       {
@@ -574,31 +547,41 @@ Result:
 ]
 ```
 
-Create a private document:
+Add a private document:
 ```sh
-defradb client collection create --name Users '[{ "name": "SecretShahzadLone" }]' \
+defradb client document add --collection-name Users '[{ "name": "SecretShahzadLone" }]' \
 --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Only the owner can see it:
 ```sh
-defradb client collection docIDs --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client query '{ Users { _docID name } }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c", "name": "SecretShahzadLone" }
+    ]
+  }
 }
 ```
 
 Another actor can not:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
-**Result is empty from the above command**
+Result:
+```json
+{
+  "data": {
+    "Users": []
+  }
+}
+```
 
 
 Now let's make the other actor a reader of the document by adding a relationship:
@@ -618,24 +601,27 @@ Result:
 }
 ```
 
-**Note: If the same relationship is created again the `ExistedAlready` would then be true, indicating no-op**
+**Note: If the same relationship is added again the `ExistedAlready` would then be true, indicating no-op**
 
 Now the other actor can read:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Result:
 ```json
 {
-  "docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c",
-  "error": ""
+  "data": {
+    "Users": [
+      { "_docID": "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c", "name": "SecretShahzadLone" }
+    ]
+  }
 }
 ```
 
 But, they still can not perform an update as they were only granted a read permission (through `reader` relation):
 ```sh
-defradb client collection update --name Users --docID "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c" \
+defradb client document update --collection-name Users --docID "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c" \
 --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5 '{ "name": "SecretUpdatedShahzad" }'
 ```
 
@@ -724,10 +710,17 @@ would be false, indicating no-op**
 
 Now the other actor can no longer read:
 ```sh
-defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client query '{ Users { _docID name } }' --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
-**Result is empty from the above command**
+Result:
+```json
+{
+  "data": {
+    "Users": []
+  }
+}
+```
 
 We can also revoke the previously granted implicit relationship which gave all actors access using the "*" actor.
 Similarly we can just specify "*" to revoke all access given to actors implicitly through this relationship:
@@ -827,10 +820,10 @@ defradb client acp node status
 ```
 
 ### Bypass DAC Checks
-You can bypass DAC checks for performance if you use owner identity or any identity that has the `dac-bypass`
+You can bypass DAC checks for performance if you use owner identity or any identity that has the `bypass-dac`
 permission.
 
-Note: When NAC is not enabled, `dac-bypass` permission is not automatically granted like other permissions,
+Note: When NAC is not enabled, `bypass-dac` permission is not automatically granted like other permissions,
 so DAC checks won't be bypassed if conditions that enable DAC are satisfied. We do plan to give users the
 ability to be able to disable DAC in the future (which would bypass DAC).
 

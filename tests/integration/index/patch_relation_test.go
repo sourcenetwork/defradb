@@ -18,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
+func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -31,14 +31,14 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
-							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_publishedID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
 							"Name": "author", "Kind": "Author", "RelationName": "author_book"
@@ -46,20 +46,20 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						ID:     1,
-						Name:   "Author_published_id_ASC",
+						Name:   "Author__publishedID_ASC",
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "published_id"},
+							{Name: "_publishedID"},
 						},
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -69,11 +69,11 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *testing.T) {
+func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -85,14 +85,14 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
 							"Name": "author", "Kind": "Author", "RelationName": "book_author", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "author_id", "Kind": 1, "RelationName": "book_author", "IsPrimary": true
+							"Name": "_authorID", "Kind": 1, "RelationName": "book_author", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "book", "Kind": "Book", "RelationName": "book_author"
@@ -101,7 +101,7 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 							"Name": "publisher", "Kind": "Publisher", "RelationName": "book_publisher", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "publisher_id", "Kind": 1, "RelationName": "book_publisher", "IsPrimary": true
+							"Name": "_publisherID", "Kind": 1, "RelationName": "book_publisher", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Publisher/Fields/-", "value": {
 							"Name": "book", "Kind": "Book", "RelationName": "book_publisher"
@@ -109,32 +109,32 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 1,
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						ID:     1,
-						Name:   "Book_author_id_ASC",
+						Name:   "Book__authorID_ASC",
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "author_id"},
+							{Name: "_authorID"},
 						},
 					},
 					{
 						ID:     2,
-						Name:   "Book_publisher_id_ASC",
+						Name:   "Book__publisherID_ASC",
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "publisher_id"},
+							{Name: "_publisherID"},
 						},
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    2,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -144,11 +144,11 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
+func TestPatchRelation_OneToMany_DoesNotAddUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -157,7 +157,7 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
@@ -167,16 +167,16 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_authorID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}}
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -189,13 +189,13 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *testing.T) {
 	const (
 		authorV1 = "bafyreibvcavbxqwimz5vdxe5q5href63g3skc6ytg45hm4fqh6wsx57wmq"
-		authorV2 = "bafyreih6dt5zss2dor3fyo74eplqhbmlyj2pzuw3amku5pv5inuqdnaukm"
+		authorV2 = "bafyreihr72os6adcvjpsex4phzeefe6k32szyuqdgmyj7vfgvadxulyw5i"
 	)
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 					}
@@ -204,14 +204,14 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
-							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_publishedID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
 							"Name": "author", "Kind": "Author", "RelationName": "author_book"
@@ -219,15 +219,15 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						ID:     1,
-						Name:   "Author_published_id_ASC",
+						Name:   "Author__publishedID_ASC",
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "published_id"},
+							{Name: "_publishedID"},
 						},
 					},
 				},
@@ -235,22 +235,22 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 			testUtils.SetActiveCollectionVersion{
 				VersionID: authorV1,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
 			testUtils.SetActiveCollectionVersion{
 				VersionID: authorV2,
 			},
-			testUtils.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						ID:     1,
-						Name:   "Author_published_id_ASC",
+						Name:   "Author__publishedID_ASC",
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "published_id"},
+							{Name: "_publishedID"},
 						},
 					},
 				},

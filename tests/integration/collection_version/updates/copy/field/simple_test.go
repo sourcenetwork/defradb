@@ -17,18 +17,18 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
@@ -36,7 +36,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 				`,
 				ExpectedError: "moving fields is not currently supported. Name: email",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -52,18 +52,18 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
@@ -72,7 +72,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 				`,
 				ExpectedError: "moving fields is not currently supported. Name: email, ProposedIndex: 2, ExistingIndex: 1\nmoving fields is not currently supported. Name: email, ProposedIndex: 3, ExistingIndex: 1\nmoving fields is not currently supported. Name: name, ProposedIndex: 4, ExistingIndex: 2\nduplicate field. Name: email\nduplicate field. Name: email",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -88,18 +88,18 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Email as a template, copying it and renaming the
 				// clone.
 				Patch: `
@@ -110,7 +110,7 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -128,17 +128,17 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Name as a template, copying it, and renaming and
 				// re-typing the clone.
 				Patch: `
@@ -150,14 +150,14 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"age": 3
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -180,17 +180,17 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
-func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
+func TestCollectionVersionUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Name as a template, copying it and renaming and
 				// re-typing the clone.
 				Patch: `

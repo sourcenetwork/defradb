@@ -22,15 +22,15 @@ import (
 func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, null, 3]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 					"favouriteIntegers": [null, 2, 3, null, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

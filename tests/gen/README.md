@@ -2,12 +2,12 @@
 
 `AutoGenerate` and `AutoGenerateFromSDL` are a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
 
-`AutoGenerateFromSDL` creates documents based on a specified GQL SDL, which may contain multiple schema/collection definitions, allowing for extensive customization of data generation. 
+`AutoGenerateFromSDL` adds documents based on a specified GQL SDL, which may contain multiple schema/collection definitions, allowing for extensive customization of data generation. 
 
 The function generates documents adhering to a defined collection and it's configuration.
-It interprets the types and relationships within the collection to create realistic, interconnected data structures.
+It interprets the types and relationships within the collection to add realistic, interconnected data structures.
 
-`AutoGenerate` creates documents based on the provider collections (`[]client.CollectionVersion`)
+`AutoGenerate` adds documents based on the provider collections (`[]client.CollectionVersion`)
 
 ### Demand Calculation:
 

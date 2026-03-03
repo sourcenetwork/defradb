@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,13 +42,13 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing.T
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
 						_docID
-						MinPages: _min(
+						MinPages: MIN(
 							books: {field: pages}
 						)
 					}
@@ -67,12 +68,12 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MinPages: _min(
+						MinPages: MIN(
 							articles: {
 								field: pages,
 								filter: {
@@ -99,12 +100,12 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succee
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MinPages: _min(
+						MinPages: MIN(
 							books: {field: pages},
 							articles: {field: pages}
 						)

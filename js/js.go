@@ -16,7 +16,7 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/goji"
 )
@@ -42,17 +42,16 @@ func open(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opts := []node.Option{
-		node.WithStoreType(node.BadgerStore),
-		node.WithBadgerInMemory(true),
-		node.WithDisableP2P(true),
-		node.WithDisableAPI(true),
-		db.WithNodeIdentity(ident),
-	}
+	opts := options.Node().
+		SetDisableP2P(true).
+		SetDisableAPI(true)
+	opts.Store().SetType(options.NodeStoreType("level"))
+	opts.DB().SetNodeIdentity(ident)
+
 	if acpType == "sourcehub" {
-		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
+		opts.DocumentACP().SetType(options.NodeSourceHubDocumentACPType)
 	}
-	n, err := node.New(context.Background(), opts...)
+	n, err := node.New(context.Background(), opts)
 	if err != nil {
 		return js.Undefined(), err
 	}

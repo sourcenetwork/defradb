@@ -20,13 +20,13 @@ import (
 func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -35,7 +35,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -44,18 +44,18 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
+					COUNT(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
 				}`,
 				Results: map[string]any{
-					"_count": 1,
+					"COUNT": 1,
 				},
 			},
 		},

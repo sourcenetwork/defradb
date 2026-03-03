@@ -70,7 +70,7 @@ func (a *WaitForPeersEvents) Execute() {
 		}
 		for _, peerNodeID := range peerNodeIDs {
 			targetNode := a.s.Nodes[peerNodeID]
-			targetAddresses, err := targetNode.PeerInfo()
+			targetAddresses, err := targetNode.PeerInfo(a.s.Ctx)
 			require.NoError(a.s.T, err)
 			require.NotEmpty(a.s.T, targetAddresses, "target node %d has no addresses", peerNodeID)
 
@@ -91,7 +91,10 @@ func (a *WaitForPeersEvents) Execute() {
 	}
 
 	for colDocIndex, peerNodeIDs := range a.ExpectedPeersByDocument {
+		a.s.DocIDsLock.RLock()
 		docID := a.s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		a.s.DocIDsLock.RUnlock()
+
 		topic := docID.String()
 		addExpectedPeers(topic, peerNodeIDs)
 	}

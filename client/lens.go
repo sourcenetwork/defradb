@@ -16,17 +16,17 @@ import (
 
 // LensConfig represents the configuration of a Lens migration in Defra.
 type LensConfig struct {
-	// SourceSchemaVersionID is the ID of the schema version from which to migrate
+	// SourceCollectionVersionID is the ID of the collection version from which to migrate
 	// from.
 	//
 	// The source and destination versions must be next to each other in the history.
-	SourceSchemaVersionID string
+	SourceCollectionVersionID string
 
-	// DestinationSchemaVersionID is the ID of the schema version from which to migrate
+	// DestinationCollectionVersionID is the ID of the collection version from which to migrate
 	// to.
 	//
 	// The source and destination versions must be next to each other in the history.
-	DestinationSchemaVersionID string
+	DestinationCollectionVersionID string
 
 	// The configuration of the Lens module.
 	//

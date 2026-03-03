@@ -21,11 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
+func TestCollectionMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -33,14 +33,14 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -49,8 +49,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
-					DestinationSchemaVersionID: "bafyreigl262d3mo7rswhwwpymsioyr6d6stzxqqaf5vpkq4ahxrl6owrmu",
+					SourceCollectionVersionID:      "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
+					DestinationCollectionVersionID: "bafyreigl262d3mo7rswhwwpymsioyr6d6stzxqqaf5vpkq4ahxrl6owrmu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -66,8 +66,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreigl262d3mo7rswhwwpymsioyr6d6stzxqqaf5vpkq4ahxrl6owrmu",
-					DestinationSchemaVersionID: "bafyreihiiez4vcgh4rys2zfs74macgwyybchutjslyw2oin747enuywn54",
+					SourceCollectionVersionID:      "bafyreigl262d3mo7rswhwwpymsioyr6d6stzxqqaf5vpkq4ahxrl6owrmu",
+					DestinationCollectionVersionID: "bafyreihiiez4vcgh4rys2zfs74macgwyybchutjslyw2oin747enuywn54",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -81,7 +81,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"age": 33,
@@ -91,7 +91,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			testUtils.SetActiveCollectionVersion{
 				VersionID: "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

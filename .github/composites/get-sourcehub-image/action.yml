@@ -1,0 +1,49 @@
+# Copyright 2026 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: 'Get SourceHub Docker Image Tag'
+
+description: 'Composite action to figure out the correct docker image to use for SourceHub'
+
+outputs:
+  image:
+    description: "SourceHub image to use"
+    value: ${{ steps.image-name.outputs.image }}
+
+runs:
+  # This is a composite action, setting this is required.
+  using: "composite"
+
+  steps:
+    # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
+    - name: Get SourceHub short commit
+      id: sourcehub-commit
+      shell: bash
+      run: |
+        SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
+        echo "short=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
+
+    # Fetch sourcehub repo to get the full commit sha.
+    # note: go.mod's automatically generated placeholder version only stores the short commit.
+    - name: Checkout sourcehub code into the directory
+      uses: actions/checkout@v6
+      with:
+        repository: sourcenetwork/sourcehub
+        path: _sourcehub
+        fetch-depth: 0
+
+    - name: Build SourceHub image name
+      id: image-name
+      working-directory: _sourcehub
+      shell: bash
+      run: |
+        commit=$(git rev-parse $short)
+        echo "image=ghcr.io/sourcenetwork/sourcehub:sha-$commit" >> "$GITHUB_ENV"
+        echo "image=ghcr.io/sourcenetwork/sourcehub:sha-$commit" >> "$GITHUB_OUTPUT"

@@ -13,46 +13,47 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						AVG(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(33),
+							"AVG":  float64(33),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -66,30 +67,30 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group {
+						AVG(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP {
 							Age
 						}
 					}
@@ -98,8 +99,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(33),
-							"_group": []map[string]any{
+							"AVG":  float64(33),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(32),
 								},
@@ -110,8 +111,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(0),
-							"_group": []map[string]any{
+							"AVG":  float64(0),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(19),
 								},
@@ -129,33 +130,33 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"CreatedAt": "2018-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
-						_group {
+						AVG(GROUP: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
+						GROUP {
 							Age
 						}
 					}
@@ -164,8 +165,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(33),
-							"_group": []map[string]any{
+							"AVG":  float64(33),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(34),
 								},
@@ -176,8 +177,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(0),
-							"_group": []map[string]any{
+							"AVG":  float64(0),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(19),
 								},
@@ -196,30 +197,30 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {Age: {_gt: 33}}})
-						_group(filter: {Age: {_gt: 33}}) {
+						AVG(GROUP: {field: Age, filter: {Age: {_gt: 33}}})
+						GROUP(filter: {Age: {_gt: 33}}) {
 							Age
 						}
 					}
@@ -228,17 +229,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(34),
-							"_group": []map[string]any{
+							"AVG":  float64(34),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(34),
 								},
 							},
 						},
 						{
-							"Name":   "Alice",
-							"_avg":   float64(0),
-							"_group": []map[string]any{},
+							"Name":  "Alice",
+							"AVG":   float64(0),
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -252,33 +253,33 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}})
-						_group(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}) {
+						AVG(GROUP: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}})
+						GROUP(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}) {
 							Age
 						}
 					}
@@ -287,17 +288,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(34),
-							"_group": []map[string]any{
+							"AVG":  float64(34),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(34),
 								},
 							},
 						},
 						{
-							"Name":   "Alice",
-							"_avg":   float64(0),
-							"_group": []map[string]any{},
+							"Name":  "Alice",
+							"AVG":   float64(0),
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -312,30 +313,30 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {Age: {_gt: 33}}})
-						_group(filter: {Age: {_lt: 33}}) {
+						AVG(GROUP: {field: Age, filter: {Age: {_gt: 33}}})
+						GROUP(filter: {Age: {_lt: 33}}) {
 							Age
 						}
 					}
@@ -344,8 +345,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(34),
-							"_group": []map[string]any{
+							"AVG":  float64(34),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(32),
 								},
@@ -353,8 +354,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(0),
-							"_group": []map[string]any{
+							"AVG":  float64(0),
+							"GROUP": []map[string]any{
 								{
 									"Age": int64(19),
 								},
@@ -372,30 +373,30 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						A1: _avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						A2: _avg(_group: {field: Age, filter: {Age: {_lt: 26}}})
+						A1: AVG(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						A2: AVG(GROUP: {field: Age, filter: {Age: {_lt: 26}}})
 					}
 				}`,
 				Results: map[string]any{
@@ -423,51 +424,51 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 	// This test checks that the appended/internal nil filter does not clash with the consumer-defined filter
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {Age: {_lt: 33}}})
+						AVG(GROUP: {field: Age, filter: {Age: {_lt: 33}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(31),
+							"AVG":  float64(31),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(19),
+							"AVG":  float64(19),
 						},
 					},
 				},

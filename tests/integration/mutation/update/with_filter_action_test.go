@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -31,7 +32,7 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 				CollectionID:  0,
 				Filter:        invalidFilterType{Number: 1},
 				Updater:       `{"name": "Eric"}`,
-				ExpectedError: "key not found",
+				ExpectedError: "collection not found",
 			},
 		},
 	}
@@ -74,7 +75,7 @@ func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -96,7 +97,7 @@ func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -118,7 +119,7 @@ func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -131,7 +132,7 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 				Updater:              `[{"name": "Eric"}, {"name": "Sam"}]`,
 				SkipLocalUpdateEvent: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query{
 					Users {
 						name
@@ -152,7 +153,7 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 func TestUpdateWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -164,7 +165,7 @@ func TestUpdateWithFilter_Succeeds(t *testing.T) {
 				Filter:       `{name: {_eq: "John"}}`,
 				Updater:      `{"name": "Eric"}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query{
 					Users {
 						name

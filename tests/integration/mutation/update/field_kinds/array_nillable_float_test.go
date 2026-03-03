@@ -22,15 +22,15 @@ import (
 func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteFloats: [Float]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, null, -0.00000000001, 10]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 					"favouriteFloats": [3.1425, -0.00000000001, null, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

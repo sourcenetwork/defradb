@@ -20,26 +20,26 @@ import (
 func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(cid: "bafyreihepwppwzqiig5taz3pm22ae5oi2b4amqzgyk37ruspe3cjbzs35q") {
+					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq") {
 						Name
 						_version {
 							fieldName

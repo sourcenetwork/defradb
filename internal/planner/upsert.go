@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -26,7 +27,7 @@ type upsertNode struct {
 	p             *Planner
 	collection    client.Collection
 	filter        *mapper.Filter
-	createInput   map[string]any
+	addInput      map[string]any
 	updateInput   map[string]any
 	isInitialized bool
 	source        planNode
@@ -56,7 +57,8 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			doc, err := n.collection.Get(n.p.ctx, docID, false)
+			getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
+			doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
 			if err != nil {
 				return false, err
 			}
@@ -65,7 +67,8 @@ func (n *upsertNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			err = n.collection.Update(n.p.ctx, doc)
+			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
+			err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
 			if err != nil {
 				return false, err
 			}
@@ -78,11 +81,12 @@ func (n *upsertNode) Next() (bool, error) {
 
 			updater = true
 		} else {
-			doc, err := client.NewDocFromMap(n.p.ctx, n.createInput, n.collection.Version())
+			doc, err := client.NewDocFromMap(n.p.ctx, n.addInput, n.collection.Version())
 			if err != nil {
 				return false, err
 			}
-			err = n.collection.Create(n.p.ctx, doc)
+			addOpts := options.WithIdentity(options.AddDocument(), n.p.identity)
+			err = n.collection.AddDocument(n.p.ctx, doc, addOpts)
 			if err != nil {
 				return false, err
 			}
@@ -175,9 +179,9 @@ func (n *upsertNode) simpleExplain() (map[string]any, error) {
 	// Add the filter attribute
 	simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 
-	// Add the attribute that represents the values to create or update.
+	// Add the attribute that represents the values to add or update.
 	simpleExplainMap[updateInputLabel] = n.updateInput
-	simpleExplainMap[createInputLabel] = n.createInput
+	simpleExplainMap[addInputLabel] = n.addInput
 
 	return simpleExplainMap, nil
 }
@@ -205,12 +209,16 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		docMapper:   docMapper{parsed.DocumentMapping},
 	}
 
-	if len(parsed.CreateInput) > 0 {
-		upsert.createInput = parsed.CreateInput[0]
+	if len(parsed.AddInput) > 0 {
+		upsert.addInput = parsed.AddInput[0]
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

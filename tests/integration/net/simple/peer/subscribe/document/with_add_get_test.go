@@ -23,14 +23,14 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -39,13 +39,13 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID: 1,
 				ExpectedDocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -62,26 +62,26 @@ func TestP2PDocumentAddGetMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				// Note: If a test is failing here in the error trace, you likely need to change the
-				// order of these schema types declared below (some renaming can cause this).
-				Schema: `
+				// order of these collection types declared below (some renaming can cause this).
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
@@ -90,14 +90,14 @@ func TestP2PDocumentAddGetMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 					state.NewColDocIndex(0, 1),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID: 1,
 				ExpectedDocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 1),

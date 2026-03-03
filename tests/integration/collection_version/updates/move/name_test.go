@@ -20,12 +20,12 @@ import (
 func TestColVersionUpdateMoveName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Make the second collection the active one by moving its name from the first to the second
 				Patch: `
 					[

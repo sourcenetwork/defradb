@@ -13,7 +13,10 @@ package planner
 import (
 	"sort"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -34,8 +37,6 @@ type updateNode struct {
 
 	// input map of fields and values
 	input map[string]any
-
-	isUpdating bool
 
 	results planNode
 
@@ -68,7 +69,8 @@ func (n *updateNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	doc, err := n.collection.Get(n.p.ctx, docID, false)
+	getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
+	doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
 	if err != nil {
 		return false, err
 	}
@@ -77,7 +79,8 @@ func (n *updateNode) Next() (bool, error) {
 			return false, err
 		}
 	}
-	err = n.collection.Update(n.p.ctx, doc)
+	updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
+	err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
 	if err != nil {
 		return false, err
 	}
@@ -153,13 +156,16 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		p:          p,
 		filter:     parsed.Filter,
 		docIDs:     parsed.DocIDs.Value(),
-		input:      parsed.UpdateInput,
-		isUpdating: true,
-		docMapper:  docMapper{parsed.DocumentMapping},
+		input:     parsed.UpdateInput,
+		docMapper: docMapper{parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +177,9 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 
 	selectFieldsToDelete := make([]int, 0)
 
-	// only keep base fields and non reserved selections
+	// Split fields between inner (pre-update filter/scan) and outer (post-update render) selects.
+	// The inner select only needs base fields and filter-related relations (SkipResolve).
+	// Render-only relations go only to the outer select to avoid unnecessary type joins.
 	for i, field := range parsed.Select.Fields {
 		if _, exists := request.ReservedFields[field.GetName()]; exists {
 			continue
@@ -179,9 +187,11 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		switch f := field.(type) {
 		case *mapper.Select:
 			if f.SkipResolve {
+				// Filter-only relation: include in inner select, remove from outer
+				preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
 				selectFieldsToDelete = append(selectFieldsToDelete, i)
 			}
-			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
+			// Render relations (SkipResolve=false) stay only on the outer select
 		case *mapper.Field:
 			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
 		}
@@ -194,9 +204,22 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Wire the inner selectTopNode's plan before it gets wrapped in the
+	// outer plan tree. This is needed because expandTypeJoin only expands
+	// the child side and won't reach this nested selectTopNode when a
+	// relation sub-select creates a type join on the outer select.
+	if top, ok := selectNode.(*selectTopNode); ok {
+		top.planNode = top.selectNode
+	}
+
 	update.results = selectNode
 
+	// The outer select only renders the post-update results. The inner select already
+	// handles pre-update filtering (by filter and/or docIDs), so we clear both on the
+	// outer select to prevent re-evaluation against potentially changed values.
 	parsed.Select.Filter = nil
+	parsed.Select.DocIDs = immutable.None[[]string]()
 	return p.SelectFromSource(&parsed.Select, update, true, update.collection)
 }
 

@@ -20,26 +20,26 @@ import (
 func TestQueryCommitsBranchables_WithFieldNameFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(
 							filter: {fieldName: {_eq: null}}
 						) {
-							schemaVersionId
+							collectionVersionId
 							docID
 							fieldName
 						}
@@ -47,9 +47,9 @@ func TestQueryCommitsBranchables_WithFieldNameFilter(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
-							"docID":           nil,
-							"fieldName":       nil,
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"docID":               nil,
+							"fieldName":           nil,
 						},
 					},
 				},

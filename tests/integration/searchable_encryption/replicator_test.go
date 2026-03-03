@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
+func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSearchableEncryption: true,
 		SupportedDatabaseTypes: immutable.Some(
@@ -35,29 +35,29 @@ func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testin
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @encryptedIndex
 						age: Int
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
 					"age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred",
@@ -68,7 +68,7 @@ func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testin
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					encrypted_Users(filter: {name: {_eq: "John"}}) {

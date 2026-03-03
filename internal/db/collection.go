@@ -11,30 +11,15 @@
 package db
 
 import (
-	"bytes"
 	"context"
-	"strconv"
-	"strings"
 
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -91,13 +76,13 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+	cols, err := db.getCollections(ctx, utils.NewOptions(options.GetCollections().SetCollectionName(name)))
 	if err != nil {
 		return nil, err
 	}
 
 	if len(cols) == 0 {
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	// cols will always have length == 1 here
@@ -107,31 +92,35 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // getCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
 //
-// Inactive collections are not returned by default unless a specific schema version ID
+// Inactive collections are not returned by default unless a specific collection version ID
 // is provided.
 func (db *DB) getCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts *options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
+	if opts == nil {
+		opts = &options.GetCollectionsOptions{}
+	}
+
 	var cols []client.CollectionVersion
 	switch {
-	case options.Name.HasValue() && !options.IncludeInactive.Value():
-		col, err := description.GetCollectionByName(ctx, options.Name.Value())
-		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
+		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
+		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, options.VersionID.Value())
+	case opts.VersionID.HasValue():
+		col, err := description.GetCollectionByID(ctx, opts.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.CollectionID.HasValue():
+	case opts.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, options.CollectionID.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, opts.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -141,10 +130,10 @@ func (db *DB) getCollections(
 	// in this being called, and so for now we tolerate a full scan plus filter instead of maintaining
 	// and index. The commented out case below, highlights its omission - if we want to index it in the
 	// future it should be uncommented and handled.
-	// case options.CollectionSetID.HasValue():
+	// case opts.CollectionSetID.HasValue():
 
 	default:
-		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
 			var err error
 			cols, err = description.GetCollections(ctx)
 			if err != nil {
@@ -161,29 +150,29 @@ func (db *DB) getCollections(
 
 	collections := []client.Collection{}
 	for _, col := range cols {
-		if options.VersionID.HasValue() {
-			if col.VersionID != options.VersionID.Value() {
+		if opts.VersionID.HasValue() {
+			if col.VersionID != opts.VersionID.Value() {
 				continue
 			}
 		}
 
-		if options.Name.HasValue() {
-			if col.Name != options.Name.Value() {
+		if opts.CollectionName.HasValue() {
+			if col.Name != opts.CollectionName.Value() {
 				continue
 			}
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.IsActive && !options.VersionID.HasValue() {
+		if !opts.GetInactive.Value() && !col.IsActive && !opts.VersionID.HasValue() {
 			continue
 		}
 
-		if options.CollectionSetID.HasValue() {
+		if opts.CollectionSetID.HasValue() {
 			if !col.CollectionSet.HasValue() {
 				continue
 			}
 
-			if col.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+			if col.CollectionSet.Value().CollectionSetID != opts.CollectionSetID.Value() {
 				continue
 			}
 		}
@@ -198,115 +187,37 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// GetAllDocIDs returns all the document IDs that exist in the collection.
-//
-// @todo: We probably need a lock on the collection for this kind of op since
-// it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *collection) GetAllDocIDs(
+// addCollection takes the provided SDL, and applies it to the database,
+// adding the necessary collections, request types, etc.
+func (db *DB) addCollection(
 	ctx context.Context,
-) (<-chan client.DocIDResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, err
-	}
-
-	ctx, _, err := ensureContextTxn(ctx, c.db, true)
+	sdl string,
+) ([]client.CollectionVersion, error) {
+	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
-	return c.getAllDocIDsChan(ctx)
+
+	result, err := db.addCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.loadCollectionDefinitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (c *collection) getAllDocIDsChan(
-	ctx context.Context,
-) (<-chan client.DocIDResult, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
+	definitions, err := description.GetActiveCollections(ctx)
 	if err != nil {
-		return nil, err
-	}
-	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionShortID: shortID,
-	}
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefix,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	resCh := make(chan client.DocIDResult)
-	go func() {
-		closeIterator := func() {
-			if err := iter.Close(); err != nil {
-				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
-			}
-		}
-		defer func() {
-			closeIterator()
-			close(resCh)
-		}()
-		for {
-			// check for Done on context first
-			select {
-			case <-ctx.Done():
-				// we've been cancelled! ;)
-				return
-			default:
-				// noop, just continue on the with the for loop
-			}
-
-			hasNext, err := iter.Next()
-			if err != nil {
-				closeIterator()
-				resCh <- client.DocIDResult{
-					Err: err,
-				}
-				return
-			}
-			if !hasNext {
-				break
-			}
-
-			splitString := strings.Split(string(iter.Key()), "/")
-			rawDocID := splitString[len(splitString)-1]
-
-			docID, err := client.NewDocIDFromString(rawDocID)
-			if err != nil {
-				closeIterator()
-				resCh <- client.DocIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			canRead, err := c.checkAccessOfDocWithACP(
-				ctx,
-				acpTypes.DocumentReadPerm,
-				docID.String(),
-			)
-
-			if err != nil {
-				closeIterator()
-				resCh <- client.DocIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			if canRead {
-				resCh <- client.DocIDResult{
-					ID: docID,
-				}
-			}
-		}
-	}()
-
-	return resCh, nil
+	return db.parser.SetSchema(ctx, definitions)
 }
 
 // Version returns the client.CollectionVersion.
@@ -326,589 +237,4 @@ func (c *collection) VersionID() string {
 
 func (c *collection) CollectionID() string {
 	return c.Version().CollectionID
-}
-
-// Create a new document.
-// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-func (c *collection) Create(
-	ctx context.Context,
-	doc *client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	err = c.create(ctx, doc, opts)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
-}
-
-// CreateMany creates a collection of documents at once.
-// Will verify the DocID/CID to ensure that the new documents are correctly formatted.
-func (c *collection) CreateMany(
-	ctx context.Context,
-	docs []*client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	for _, doc := range docs {
-		err = c.create(ctx, doc, opts)
-		if err != nil {
-			return err
-		}
-	}
-	return txn.Commit()
-}
-
-func (c *collection) getDocIDAndPrimaryKeyFromDoc(
-	ctx context.Context,
-	doc *client.Document,
-) (client.DocID, keys.PrimaryDataStoreKey, error) {
-	docID, err := doc.GenerateDocID()
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	if primaryKey.DocID != doc.ID().String() {
-		return client.DocID{}, keys.PrimaryDataStoreKey{},
-			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
-	}
-	return docID, primaryKey, nil
-}
-
-func (c *collection) create(
-	ctx context.Context,
-	doc *client.Document,
-	opts []client.DocCreateOption,
-) error {
-	err := c.setEmbedding(ctx, doc, true)
-	if err != nil {
-		return err
-	}
-
-	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return NewErrDocumentAlreadyExists(primaryKey.DocID)
-	}
-	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
-	}
-
-	// write value object marker if we have an empty doc
-	if len(doc.Values()) == 0 {
-		txn := datastore.CtxMustGetTxn(ctx)
-
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-
-		valueKey := keys.DataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             docID.String(),
-			InstanceType:      keys.ValueKey,
-		}
-
-		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
-		if err != nil {
-			return err
-		}
-	}
-
-	ctx = setContextDocEncryption(ctx, opts)
-
-	// write data to DB via MerkleClock/CRDT
-	err = c.save(ctx, doc, true)
-	if err != nil {
-		return err
-	}
-
-	err = c.indexNewDoc(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	return c.registerDocWithACP(ctx, doc.ID().String())
-}
-
-func setContextDocEncryption(ctx context.Context, opts []client.DocCreateOption) context.Context {
-	createOptions := client.DocCreateOptions{}
-	createOptions.Apply(opts)
-	if !createOptions.EncryptDoc && len(createOptions.EncryptedFields) == 0 {
-		return ctx
-	}
-	ctx = encryption.SetContextConfigFromParams(ctx, createOptions.EncryptDoc, createOptions.EncryptedFields)
-	return ctx
-}
-
-// Update an existing document with the new values.
-// Any field that needs to be removed or cleared should call doc.Clear(field) before.
-// Any field that is nil/empty that hasn't called Clear will be ignored.
-func (c *collection) Update(
-	ctx context.Context,
-	doc *client.Document,
-) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
-	if err != nil {
-		return err
-	}
-
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return client.ErrDocumentNotFoundOrNotAuthorized
-	}
-	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
-	}
-
-	err = c.update(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
-}
-
-// Contract: DB Exists check is already performed, and a doc with the given ID exists.
-// Note: Should we CompareAndSet the update, IE: Query(read-only) the state, and update if changed
-// or, just update everything regardless.
-// Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
-// add to the bloat.
-func (c *collection) update(
-	ctx context.Context,
-	doc *client.Document,
-) error {
-	// Stop the update if the correct permissions aren't there.
-	canUpdate, err := c.checkAccessOfDocWithACP(
-		ctx,
-		acpTypes.DocumentUpdatePerm,
-		doc.ID().String(),
-	)
-	if err != nil {
-		return err
-	}
-	if !canUpdate {
-		return client.ErrDocumentNotFoundOrNotAuthorized
-	}
-
-	err = c.setEmbedding(ctx, doc, false)
-	if err != nil {
-		return err
-	}
-
-	err = c.save(ctx, doc, false)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Save a document into the db.
-// Either by creating a new document or by updating an existing one
-func (c *collection) Save(
-	ctx context.Context,
-	doc *client.Document,
-	opts ...client.DocCreateOption,
-) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	// Check if document already exists with primary DS key.
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
-	if err != nil {
-		return err
-	}
-
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil {
-		return err
-	}
-
-	if isDeleted {
-		return NewErrDocumentDeleted(doc.ID().String())
-	}
-
-	if exists {
-		err = c.update(ctx, doc)
-	} else {
-		err = c.create(ctx, doc, opts)
-	}
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
-}
-
-// hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
-func hasPrivateKey(ident identity.Identity) bool {
-	if fullIdent, ok := ident.(identity.FullIdentity); ok {
-		return fullIdent.PrivateKey() != nil
-	}
-	return false
-}
-
-func (c *collection) validateEncryptedFields(ctx context.Context) error {
-	encConf := encryption.GetContextConfig(ctx)
-	if !encConf.HasValue() {
-		return nil
-	}
-	fields := encConf.Value().EncryptedFields
-	if len(fields) == 0 {
-		return nil
-	}
-
-	for _, field := range fields {
-		if _, exists := c.Version().GetFieldByName(field); !exists {
-			return client.NewErrFieldNotExist(field)
-		}
-		if strings.HasPrefix(field, "_") {
-			return NewErrCanNotEncryptBuiltinField(field)
-		}
-	}
-	return nil
-}
-
-// save saves the document state. save MUST not be called outside the `c.create`
-// and `c.update` methods as we wrap the acp logic within those methods. Calling
-// save elsewhere could cause the omission of acp checks.
-func (c *collection) save(
-	ctx context.Context,
-	doc *client.Document,
-	isCreate bool,
-) error {
-	if err := c.validateEncryptedFields(ctx); err != nil {
-		return err
-	}
-
-	if !isCreate {
-		err := c.updateIndexedDoc(ctx, doc)
-		if err != nil {
-			return err
-		}
-	}
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
-	}
-
-	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
-	}
-
-	// NOTE: We delay the final Clean() call until we know
-	// the commit on the transaction is successful. If we didn't
-	// wait, and just did it here, then *if* the commit fails down
-	// the line, then we have no way to roll back the state
-	// side-effect on the document func called here.
-	txn.OnSuccess(func() {
-		doc.Clean()
-	})
-
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	// New batch transaction/store (optional/todo)
-	// Ensute/Set doc object marker
-	// Loop through doc values
-	//	=> 		instantiate MerkleCRDT objects
-	//	=> 		Set/Publish new CRDT values
-	primaryKey := keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             doc.ID().String(),
-	}
-
-	links := make([]coreblock.DAGLink, 0)
-	for k, v := range doc.Fields() {
-		val, err := doc.GetValueWithField(v)
-		if err != nil {
-			return err
-		}
-
-		if val.IsDirty() {
-			fieldDescription, valid := c.Version().GetFieldByName(k)
-			if !valid {
-				return client.NewErrFieldNotExist(k)
-			}
-
-			fieldID, err := id.GetShortFieldID(ctx, shortID, fieldDescription.FieldID)
-			if err != nil {
-				return err
-			}
-			fieldKey := keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             primaryKey.DocID,
-				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
-			}
-
-			// by default the type will have been set to LWW_REGISTER. We need to ensure
-			// that it's set to the same as the field description CRDT type.
-			val.SetType(fieldDescription.Typ)
-
-			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				txn.Datastore(),
-				c.VersionID(),
-				val.Type(),
-				fieldDescription.Kind,
-				fieldKey,
-				fieldDescription.Name,
-			)
-			if err != nil {
-				return err
-			}
-
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocID, k, val))
-			if err != nil {
-				return err
-			}
-
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
-			if err != nil {
-				return err
-			}
-
-			links = append(links, coreblock.NewDAGLink(k, link))
-		}
-	}
-
-	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
-		c.Version().VersionID,
-		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
-	)
-
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
-	if err != nil {
-		return err
-	}
-
-	// publish an update event when the txn succeeds
-	updateEvent := event.Update{
-		DocID:        doc.ID().String(),
-		Cid:          link.Cid,
-		CollectionID: c.Version().CollectionID,
-		Block:        headNode,
-	}
-	txn.OnSuccess(func() {
-		c.db.sendUpdate(updateEvent)
-	})
-
-	txn.OnSuccess(func() {
-		doc.SetHead(link.Cid)
-	})
-
-	if c.def.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-		collectionCRDT := crdt.NewCollection(
-			c.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		)
-
-		link, headNode, err := coreblock.AddDelta(
-			ctx,
-			collectionCRDT,
-			collectionCRDT.Delta(),
-			[]coreblock.DAGLink{{Link: link}}...,
-		)
-		if err != nil {
-			return err
-		}
-
-		updateEvent := event.Update{
-			Cid:          link.Cid,
-			CollectionID: c.Version().CollectionID,
-			Block:        headNode,
-		}
-
-		txn.OnSuccess(func() {
-			c.db.sendUpdate(updateEvent)
-		})
-	}
-
-	return nil
-}
-
-// Delete will attempt to delete a document by docID and return true if a deletion is successful,
-// otherwise will return false, along with an error, if it cannot.
-// If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
-// This operation will all state relating to the given DocID. This includes data, block, and head storage.
-func (c *collection) Delete(
-	ctx context.Context,
-	docID client.DocID,
-) (bool, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
-		return false, err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return false, err
-	}
-	defer txn.Discard()
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return false, err
-	}
-
-	err = c.deleteIndexedDocWithID(ctx, docID)
-	if err != nil {
-		return false, err
-	}
-
-	err = c.applyDelete(ctx, primaryKey)
-	if err != nil {
-		return false, err
-	}
-	return true, txn.Commit()
-}
-
-// Exists checks if a given document exists with supplied DocID.
-func (c *collection) Exists(
-	ctx context.Context,
-	docID client.DocID,
-) (bool, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return false, err
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return false, err
-	}
-	defer txn.Discard()
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return false, err
-	}
-
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return false, err
-	}
-	return exists && !isDeleted, txn.Commit()
-}
-
-// check if a document exists with the given primary key
-func (c *collection) exists(
-	ctx context.Context,
-	primaryKey keys.PrimaryDataStoreKey,
-) (exists bool, isDeleted bool, err error) {
-	canRead, err := c.checkAccessOfDocWithACP(
-		ctx,
-		acpTypes.DocumentReadPerm,
-		primaryKey.DocID,
-	)
-	if err != nil {
-		return false, false, err
-	} else if !canRead {
-		return false, false, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-	val, err := txn.Datastore().Get(ctx, primaryKey)
-	if err != nil && errors.Is(err, corekv.ErrNotFound) {
-		return false, false, nil
-	} else if err != nil {
-		return false, false, err
-	}
-	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
-		return true, true, nil
-	}
-
-	return true, false, nil
-}
-
-func (c *collection) getPrimaryKeyFromDocID(
-	ctx context.Context,
-	docID client.DocID,
-) (keys.PrimaryDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-	if err != nil {
-		return keys.PrimaryDataStoreKey{}, err
-	}
-
-	return keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docID.String(),
-	}, nil
 }

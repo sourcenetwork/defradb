@@ -20,11 +20,11 @@ import (
 func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
-						author_id: Int
+						_authorID: Int
 						author: Author
 					}
 
@@ -33,7 +33,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 						published: [Book]
 					}
 				`,
-				ExpectedError: "duplicate field. Name: author_id",
+				ExpectedError: "duplicate field. Name: _authorID",
 			},
 		},
 	}

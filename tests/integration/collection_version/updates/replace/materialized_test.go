@@ -13,9 +13,8 @@ package replace
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -23,14 +22,14 @@ import (
 func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -51,14 +50,14 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t 
 func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name
@@ -70,13 +69,13 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// Create John when the view is materialized
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -87,7 +86,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// Create Fred when the view is not materialized, noting that there is no `RefreshView`
 				// call after this action, meaning that if the view was still materialized Fred would not
 				// be returned by the query.
@@ -95,10 +94,8 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					"name": "Fred",
 				},
 			},
-			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "UserView",
@@ -107,7 +104,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name

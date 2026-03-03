@@ -24,11 +24,17 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export LensSet
-func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
+//export SetLens
+func SetLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
 	decoder.DisallowUnknownFields()
@@ -37,9 +43,9 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Resul
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	migrationCfg := client.LensConfig{
-		SourceSchemaVersionID:      C.GoString(src),
-		DestinationSchemaVersionID: C.GoString(dst),
-		Lens:                       lensCfg,
+		SourceCollectionVersionID:      C.GoString(src),
+		DestinationCollectionVersionID: C.GoString(dst),
+		Lens:                           lensCfg,
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -47,16 +53,21 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Resul
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lensID, err := store.SetMigration(ctx, migrationCfg)
+	setOpt := options.WithIdentity(options.SetMigration(), acpIdentity.FromContext(ctx))
+	lensID, err := store.SetMigration(ctx, migrationCfg, setOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", lensID))
 }
 
-//export LensAdd
-func LensAdd(nodePtr C.uintptr_t, cfg *C.char) C.Result {
+//export AddLens
+func AddLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
 	decoder.DisallowUnknownFields()
@@ -70,23 +81,29 @@ func LensAdd(nodePtr C.uintptr_t, cfg *C.char) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lensID, err := store.AddLens(ctx, lensCfg)
+	addOpt := options.WithIdentity(options.AddLens(), acpIdentity.FromContext(ctx))
+	lensID, err := store.AddLens(ctx, lensCfg, addOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", lensID))
 }
 
-//export LensList
-func LensList(nodePtr C.uintptr_t) C.Result {
+//export ListLenses
+func ListLenses(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lenses, err := store.ListLenses(ctx)
+	listOpt := options.WithIdentity(options.ListLenses(), acpIdentity.FromContext(ctx))
+	lenses, err := store.ListLenses(ctx, listOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

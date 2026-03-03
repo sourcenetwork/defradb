@@ -13,15 +13,16 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_sum
+					SUM
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -34,9 +35,9 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_sum(Users: {})
+					SUM(Users: {})
 				}`,
 				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 			},
@@ -49,12 +50,12 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age})
+					SUM(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(0),
+					"SUM": int64(0),
 				},
 			},
 		},
@@ -66,24 +67,24 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age})
+					SUM(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(51),
+					"SUM": int64(51),
 				},
 			},
 		},

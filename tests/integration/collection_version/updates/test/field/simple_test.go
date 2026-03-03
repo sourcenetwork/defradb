@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/name", "value": "Email" }
@@ -40,17 +40,17 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/Name", "value": "name" }
@@ -62,17 +62,17 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {"Name": "name", "Kind": 11} }
@@ -85,17 +85,17 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {
@@ -110,17 +110,17 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name", "value": {
@@ -135,17 +135,17 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
+func TestCollectionVersionUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name/Kind", "value": 11 }

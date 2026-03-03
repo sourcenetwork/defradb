@@ -20,28 +20,28 @@ import (
 func TestMutationUpdate_WithId(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"points": 66.6
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: "bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202", input: {points: 59}) {
 						name
@@ -66,22 +66,22 @@ func TestMutationUpdate_WithId(t *testing.T) {
 func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: "bae-does-not-exist", input: {points: 59}) {
 						_docID

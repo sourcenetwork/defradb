@@ -18,6 +18,7 @@ import (
 	"syscall/js"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
@@ -37,7 +38,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"id":                         txn.ID(),
 		"commit":                     goji.Async(wrapper.commit),
 		"discard":                    goji.Async(wrapper.discard),
-		"addSchema":                  goji.Async(wrapper.addSchema),
+		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),
@@ -47,7 +48,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"listLenses":                 goji.Async(wrapper.listLenses),
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
-		"getAllIndexes":              goji.Async(wrapper.getAllIndexes),
+		"listIndexes":                goji.Async(wrapper.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(wrapper.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(wrapper.execRequest),
 		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
@@ -73,8 +74,8 @@ func (t *transaction) discard(this js.Value, args []js.Value) (js.Value, error) 
 	return js.Undefined(), nil
 }
 
-func (t *transaction) addSchema(this js.Value, args []js.Value) (js.Value, error) {
-	schema, err := stringArg(args, 0, "schema")
+func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, error) {
+	sdl, err := stringArg(args, 0, "sdl")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -82,7 +83,9 @@ func (t *transaction) addSchema(this js.Value, args []js.Value) (js.Value, error
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := t.txn.AddSchema(ctx, schema)
+	opt := options.AddCollection()
+	setOptIdentity(opt, args, 1)
+	cols, err := t.txn.AddCollection(ctx, sdl, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -102,7 +105,9 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.PatchCollection(ctx, patch, migration)
+	opt := options.PatchCollection()
+	setOptIdentity(opt, args, 2)
+	err = t.txn.PatchCollection(ctx, patch, migration, opt)
 	return js.Undefined(), err
 }
 
@@ -115,7 +120,9 @@ func (t *transaction) setActiveCollectionVersion(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.SetActiveCollectionVersion(ctx, version)
+	opt := options.SetActiveCollectionVersion()
+	setOptIdentity(opt, args, 1)
+	err = t.txn.SetActiveCollectionVersion(ctx, version, opt)
 	return js.Undefined(), err
 }
 
@@ -128,15 +135,20 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var transform immutable.Option[model.Lens]
-	if err := structArg(args, 2, "transform", &transform); err != nil {
+	var transformCID immutable.Option[string]
+	if err := structArg(args, 2, "transformCID", &transformCID); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 3, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, transform)
+	opts := options.AddView()
+	setOptIdentity(opts, args, 3)
+	if transformCID.HasValue() {
+		opts.SetTransformCID(transformCID.Value())
+	}
+	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, opts)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -144,15 +156,17 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (t *transaction) refreshViews(this js.Value, args []js.Value) (js.Value, error) {
-	var options client.CollectionFetchOptions
-	if err := structArg(args, 0, "options", &options); err != nil {
+	var input collectionFetchOptions
+	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 1, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.RefreshViews(ctx, options)
+	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
+	err = t.txn.RefreshViews(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -165,7 +179,9 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := t.txn.SetMigration(ctx, config)
+	opt := options.SetMigration()
+	setOptIdentity(opt, args, 1)
+	lensID, err := t.txn.SetMigration(ctx, config, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -181,7 +197,9 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := t.txn.AddLens(ctx, lens)
+	opt := options.AddLens()
+	setOptIdentity(opt, args, 1)
+	lensID, err := t.txn.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -193,7 +211,9 @@ func (t *transaction) listLenses(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lenses, err := t.txn.ListLenses(ctx)
+	opt := options.ListLenses()
+	setOptIdentity(opt, args, 0)
+	lenses, err := t.txn.ListLenses(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -209,7 +229,9 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	col, err := t.txn.GetCollectionByName(ctx, name)
+	opt := options.GetCollectionByName()
+	setOptIdentity(opt, args, 1)
+	col, err := t.txn.GetCollectionByName(ctx, name, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -217,15 +239,17 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 }
 
 func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, error) {
-	var options client.CollectionFetchOptions
-	if err := structArg(args, 0, "options", &options); err != nil {
+	var input collectionFetchOptions
+	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 1, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := t.txn.GetCollections(ctx, options)
+	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
+	cols, err := t.txn.GetCollections(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -236,12 +260,14 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 	return js.ValueOf(wrappers), nil
 }
 
-func (t *transaction) getAllIndexes(this js.Value, args []js.Value) (js.Value, error) {
+func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := t.txn.GetAllIndexes(ctx)
+	opt := options.ListIndexes()
+	setOptIdentity(opt, args, 0)
+	indexes, err := t.txn.ListIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -253,7 +279,9 @@ func (t *transaction) listAllEncryptedIndexes(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := t.txn.ListAllEncryptedIndexes(ctx)
+	opt := options.ListAllEncryptedIndexes()
+	setOptIdentity(opt, args, 0)
+	indexes, err := t.txn.ListAllEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -265,26 +293,31 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var opts []client.RequestOption
+	var opt *options.ExecRequestOptionsBuilder
 	if args[1].Type() == js.TypeObject {
-		operationName := args[1].Get("operationName")
+		opt = options.ExecRequest()
+		operationName := args[1].Get("OperationName")
 		if operationName.Type() == js.TypeString {
-			opts = append(opts, client.WithOperationName(operationName.String()))
+			opt.SetOperationName(operationName.String())
 		}
-		variables := args[1].Get("variables")
+		variables := args[1].Get("Variables")
 		if variables.Type() == js.TypeObject {
 			var variablesMap map[string]any
 			if err := goji.UnmarshalJS(variables, &variablesMap); err != nil {
 				return js.Undefined(), fmt.Errorf("failed to parse variables %w", err)
 			}
-			opts = append(opts, client.WithVariables(variablesMap))
+			opt.SetVariables(variablesMap)
 		}
 	}
 	ctx, err := contextArg(args, 2, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res := t.txn.ExecRequest(ctx, request, opts...)
+	if opt == nil {
+		opt = options.ExecRequest()
+	}
+	setOptIdentity(opt, args, 2)
+	res := t.txn.ExecRequest(ctx, request, opt)
 	gql, err := goji.MarshalJS(res.GQL)
 	if err != nil {
 		return js.Undefined(), err
@@ -307,7 +340,9 @@ func (t *transaction) addDACPolicy(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.AddDACPolicy(ctx, policy)
+	opt := options.AddDACPolicy()
+	setOptIdentity(opt, args, 1)
+	res, err := t.txn.AddDACPolicy(ctx, policy, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -335,7 +370,9 @@ func (t *transaction) addDACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	opt := options.AddDACActorRelationship()
+	setOptIdentity(opt, args, 4)
+	res, err := t.txn.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -363,7 +400,9 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	opt := options.DeleteDACActorRelationship()
+	setOptIdentity(opt, args, 4)
+	res, err := t.txn.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -375,7 +414,9 @@ func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.GetNACStatus(ctx)
+	opt := options.GetNACStatus()
+	setOptIdentity(opt, args, 0)
+	res, err := t.txn.GetNACStatus(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -387,7 +428,9 @@ func (t *transaction) reEnableNAC(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.ReEnableNAC(ctx)
+	opt := options.ReEnableNAC()
+	setOptIdentity(opt, args, 0)
+	err = t.txn.ReEnableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -396,7 +439,9 @@ func (t *transaction) disableNAC(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.DisableNAC(ctx)
+	opt := options.DisableNAC()
+	setOptIdentity(opt, args, 0)
+	err = t.txn.DisableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -413,7 +458,9 @@ func (t *transaction) addNACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.AddNACActorRelationship(ctx, relation, targetActor)
+	opt := options.AddNACActorRelationship()
+	setOptIdentity(opt, args, 2)
+	res, err := t.txn.AddNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -433,7 +480,9 @@ func (t *transaction) deleteNACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := t.txn.DeleteNACActorRelationship(ctx, relation, targetActor)
+	opt := options.DeleteNACActorRelationship()
+	setOptIdentity(opt, args, 2)
+	res, err := t.txn.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -473,6 +522,8 @@ func (t *transaction) verifySignature(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = t.txn.VerifySignature(ctx, blockCID, pubKey)
+	opt := options.VerifySignature()
+	setOptIdentity(opt, args, 3)
+	err = t.txn.VerifySignature(ctx, blockCID, pubKey, opt)
 	return js.Undefined(), err
 }

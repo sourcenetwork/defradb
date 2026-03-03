@@ -8,7 +8,9 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -86,8 +88,14 @@ func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
 }
 
 // GetCollections provides a mock function for the type DB
-func (_mock *DB) GetCollections(context1 context.Context, collectionFetchOptions client.CollectionFetchOptions) ([]client.Collection, error) {
-	ret := _mock.Called(context1, collectionFetchOptions)
+func (_mock *DB) GetCollections(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error) {
+	var tmpRet mock.Arguments
+	if len(vs) > 0 {
+		tmpRet = _mock.Called(context1, vs)
+	} else {
+		tmpRet = _mock.Called(context1)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCollections")
@@ -95,18 +103,18 @@ func (_mock *DB) GetCollections(context1 context.Context, collectionFetchOptions
 
 	var r0 []client.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)); ok {
-		return returnFunc(context1, collectionFetchOptions)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error)); ok {
+		return returnFunc(context1, vs...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) []client.Collection); ok {
-		r0 = returnFunc(context1, collectionFetchOptions)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) []client.Collection); ok {
+		r0 = returnFunc(context1, vs...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.CollectionFetchOptions) error); ok {
-		r1 = returnFunc(context1, collectionFetchOptions)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) error); ok {
+		r1 = returnFunc(context1, vs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -120,24 +128,27 @@ type DB_GetCollections_Call struct {
 
 // GetCollections is a helper method to define mock.On call
 //   - context1 context.Context
-//   - collectionFetchOptions client.CollectionFetchOptions
-func (_e *DB_Expecter) GetCollections(context1 interface{}, collectionFetchOptions interface{}) *DB_GetCollections_Call {
-	return &DB_GetCollections_Call{Call: _e.mock.On("GetCollections", context1, collectionFetchOptions)}
+//   - vs ...options.Enumerable[options.GetCollectionsOptions]
+func (_e *DB_Expecter) GetCollections(context1 interface{}, vs ...interface{}) *DB_GetCollections_Call {
+	return &DB_GetCollections_Call{Call: _e.mock.On("GetCollections",
+		append([]interface{}{context1}, vs...)...)}
 }
 
-func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, collectionFetchOptions client.CollectionFetchOptions)) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions])) *DB_GetCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.CollectionFetchOptions
-		if args[1] != nil {
-			arg1 = args[1].(client.CollectionFetchOptions)
+		var arg1 []options.Enumerable[options.GetCollectionsOptions]
+		var variadicArgs []options.Enumerable[options.GetCollectionsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.GetCollectionsOptions])
 		}
+		arg1 = variadicArgs
 		run(
 			arg0,
-			arg1,
+			arg1...,
 		)
 	})
 	return _c
@@ -148,7 +159,7 @@ func (_c *DB_GetCollections_Call) Return(collections []client.Collection, err er
 	return _c
 }
 
-func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, collectionFetchOptions client.CollectionFetchOptions) ([]client.Collection, error)) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error)) *DB_GetCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -197,64 +208,48 @@ func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_
 	return _c
 }
 
-// NewTxn provides a mock function for the type DB
-func (_mock *DB) NewTxn(readOnly bool) (client.Txn, error) {
-	ret := _mock.Called(readOnly)
+// Multistore provides a mock function for the type DB
+func (_mock *DB) Multistore() *datastore.Multistore {
+	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for NewTxn")
+		panic("no return value specified for Multistore")
 	}
 
-	var r0 client.Txn
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bool) (client.Txn, error)); ok {
-		return returnFunc(readOnly)
-	}
-	if returnFunc, ok := ret.Get(0).(func(bool) client.Txn); ok {
-		r0 = returnFunc(readOnly)
+	var r0 *datastore.Multistore
+	if returnFunc, ok := ret.Get(0).(func() *datastore.Multistore); ok {
+		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Txn)
+			r0 = ret.Get(0).(*datastore.Multistore)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
-		r1 = returnFunc(readOnly)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// DB_NewTxn_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewTxn'
-type DB_NewTxn_Call struct {
+// DB_Multistore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Multistore'
+type DB_Multistore_Call struct {
 	*mock.Call
 }
 
-// NewTxn is a helper method to define mock.On call
-//   - readOnly bool
-func (_e *DB_Expecter) NewTxn(readOnly interface{}) *DB_NewTxn_Call {
-	return &DB_NewTxn_Call{Call: _e.mock.On("NewTxn", readOnly)}
+// Multistore is a helper method to define mock.On call
+func (_e *DB_Expecter) Multistore() *DB_Multistore_Call {
+	return &DB_Multistore_Call{Call: _e.mock.On("Multistore")}
 }
 
-func (_c *DB_NewTxn_Call) Run(run func(readOnly bool)) *DB_NewTxn_Call {
+func (_c *DB_Multistore_Call) Run(run func()) *DB_Multistore_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 bool
-		if args[0] != nil {
-			arg0 = args[0].(bool)
-		}
-		run(
-			arg0,
-		)
+		run()
 	})
 	return _c
 }
 
-func (_c *DB_NewTxn_Call) Return(txn client.Txn, err error) *DB_NewTxn_Call {
-	_c.Call.Return(txn, err)
+func (_c *DB_Multistore_Call) Return(multistore *datastore.Multistore) *DB_Multistore_Call {
+	_c.Call.Return(multistore)
 	return _c
 }
 
-func (_c *DB_NewTxn_Call) RunAndReturn(run func(readOnly bool) (client.Txn, error)) *DB_NewTxn_Call {
+func (_c *DB_Multistore_Call) RunAndReturn(run func() *datastore.Multistore) *DB_Multistore_Call {
 	_c.Call.Return(run)
 	return _c
 }

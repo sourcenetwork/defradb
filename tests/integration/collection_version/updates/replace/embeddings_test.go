@@ -21,8 +21,8 @@ import (
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -30,7 +30,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -50,8 +50,8 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -59,7 +59,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -79,8 +79,8 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFieldKind_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -88,7 +88,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -108,8 +108,8 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -117,7 +117,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -143,7 +143,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

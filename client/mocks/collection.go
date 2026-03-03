@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,6 +37,150 @@ type Collection_Expecter struct {
 
 func (_m *Collection) EXPECT() *Collection_Expecter {
 	return &Collection_Expecter{mock: &_m.Mock}
+}
+
+// AddDocument provides a mock function for the type Collection
+func (_mock *Collection) AddDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, doc, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, doc)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddDocument")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Enumerable[options.AddDocumentOptions]) error); ok {
+		r0 = returnFunc(ctx, doc, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_AddDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDocument'
+type Collection_AddDocument_Call struct {
+	*mock.Call
+}
+
+// AddDocument is a helper method to define mock.On call
+//   - ctx context.Context
+//   - doc *client.Document
+//   - opts ...options.Enumerable[options.AddDocumentOptions]
+func (_e *Collection_Expecter) AddDocument(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_AddDocument_Call {
+	return &Collection_AddDocument_Call{Call: _e.mock.On("AddDocument",
+		append([]interface{}{ctx, doc}, opts...)...)}
+}
+
+func (_c *Collection_AddDocument_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.AddDocumentOptions])) *Collection_AddDocument_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *client.Document
+		if args[1] != nil {
+			arg1 = args[1].(*client.Document)
+		}
+		var arg2 []options.Enumerable[options.AddDocumentOptions]
+		var variadicArgs []options.Enumerable[options.AddDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.AddDocumentOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_AddDocument_Call) Return(err error) *Collection_AddDocument_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_AddDocument_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error) *Collection_AddDocument_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddManyDocuments provides a mock function for the type Collection
+func (_mock *Collection) AddManyDocuments(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docs)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddManyDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...options.Enumerable[options.AddDocumentOptions]) error); ok {
+		r0 = returnFunc(ctx, docs, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_AddManyDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddManyDocuments'
+type Collection_AddManyDocuments_Call struct {
+	*mock.Call
+}
+
+// AddManyDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docs []*client.Document
+//   - opts ...options.Enumerable[options.AddDocumentOptions]
+func (_e *Collection_Expecter) AddManyDocuments(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_AddManyDocuments_Call {
+	return &Collection_AddManyDocuments_Call{Call: _e.mock.On("AddManyDocuments",
+		append([]interface{}{ctx, docs}, opts...)...)}
+}
+
+func (_c *Collection_AddManyDocuments_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.AddDocumentOptions])) *Collection_AddManyDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*client.Document
+		if args[1] != nil {
+			arg1 = args[1].([]*client.Document)
+		}
+		var arg2 []options.Enumerable[options.AddDocumentOptions]
+		var variadicArgs []options.Enumerable[options.AddDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.AddDocumentOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_AddManyDocuments_Call) Return(err error) *Collection_AddManyDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_AddManyDocuments_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error) *Collection_AddManyDocuments_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // CollectionID provides a mock function for the type Collection
@@ -82,321 +227,53 @@ func (_c *Collection_CollectionID_Call) RunAndReturn(run func() string) *Collect
 	return _c
 }
 
-// Create provides a mock function for the type Collection
-func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+// DeleteDocument provides a mock function for the type Collection
+func (_mock *Collection) DeleteDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, doc, opts)
+		tmpRet = _mock.Called(ctx, docID, opts)
 	} else {
-		tmpRet = _mock.Called(ctx, doc)
+		tmpRet = _mock.Called(ctx, docID)
 	}
 	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Create")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
-		r0 = returnFunc(ctx, doc, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Collection_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
-type Collection_Create_Call struct {
-	*mock.Call
-}
-
-// Create is a helper method to define mock.On call
-//   - ctx context.Context
-//   - doc *client.Document
-//   - opts ...client.DocCreateOption
-func (_e *Collection_Expecter) Create(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Create_Call {
-	return &Collection_Create_Call{Call: _e.mock.On("Create",
-		append([]interface{}{ctx, doc}, opts...)...)}
-}
-
-func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Create_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *client.Document
-		if args[1] != nil {
-			arg1 = args[1].(*client.Document)
-		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
-		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_Create_Call) Return(err error) *Collection_Create_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Create_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateEncryptedIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(context1, encryptedIndexDescription)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateEncryptedIndex")
-	}
-
-	var r0 client.EncryptedIndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(context1, encryptedIndexDescription)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(context1, encryptedIndexDescription)
-	} else {
-		r0 = ret.Get(0).(client.EncryptedIndexDescription)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexDescription) error); ok {
-		r1 = returnFunc(context1, encryptedIndexDescription)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_CreateEncryptedIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateEncryptedIndex'
-type Collection_CreateEncryptedIndex_Call struct {
-	*mock.Call
-}
-
-// CreateEncryptedIndex is a helper method to define mock.On call
-//   - context1 context.Context
-//   - encryptedIndexDescription client.EncryptedIndexDescription
-func (_e *Collection_Expecter) CreateEncryptedIndex(context1 interface{}, encryptedIndexDescription interface{}) *Collection_CreateEncryptedIndex_Call {
-	return &Collection_CreateEncryptedIndex_Call{Call: _e.mock.On("CreateEncryptedIndex", context1, encryptedIndexDescription)}
-}
-
-func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription)) *Collection_CreateEncryptedIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 client.EncryptedIndexDescription
-		if args[1] != nil {
-			arg1 = args[1].(client.EncryptedIndexDescription)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_CreateEncryptedIndex_Call) Return(encryptedIndexDescription1 client.EncryptedIndexDescription, err error) *Collection_CreateEncryptedIndex_Call {
-	_c.Call.Return(encryptedIndexDescription1, err)
-	return _c
-}
-
-func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)) *Collection_CreateEncryptedIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest) (client.IndexDescription, error) {
-	ret := _mock.Called(context1, indexCreateRequest)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateIndex")
-	}
-
-	var r0 client.IndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest) (client.IndexDescription, error)); ok {
-		return returnFunc(context1, indexCreateRequest)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest) client.IndexDescription); ok {
-		r0 = returnFunc(context1, indexCreateRequest)
-	} else {
-		r0 = ret.Get(0).(client.IndexDescription)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest) error); ok {
-		r1 = returnFunc(context1, indexCreateRequest)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_CreateIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateIndex'
-type Collection_CreateIndex_Call struct {
-	*mock.Call
-}
-
-// CreateIndex is a helper method to define mock.On call
-//   - context1 context.Context
-//   - indexCreateRequest client.IndexCreateRequest
-func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}) *Collection_CreateIndex_Call {
-	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex", context1, indexCreateRequest)}
-}
-
-func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest)) *Collection_CreateIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 client.IndexCreateRequest
-		if args[1] != nil {
-			arg1 = args[1].(client.IndexCreateRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_CreateIndex_Call) Return(indexDescription client.IndexDescription, err error) *Collection_CreateIndex_Call {
-	_c.Call.Return(indexDescription, err)
-	return _c
-}
-
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateMany provides a mock function for the type Collection
-func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, docs, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, docs)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateMany")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...client.DocCreateOption) error); ok {
-		r0 = returnFunc(ctx, docs, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Collection_CreateMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateMany'
-type Collection_CreateMany_Call struct {
-	*mock.Call
-}
-
-// CreateMany is a helper method to define mock.On call
-//   - ctx context.Context
-//   - docs []*client.Document
-//   - opts ...client.DocCreateOption
-func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_CreateMany_Call {
-	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany",
-		append([]interface{}{ctx, docs}, opts...)...)}
-}
-
-func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption)) *Collection_CreateMany_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []*client.Document
-		if args[1] != nil {
-			arg1 = args[1].([]*client.Document)
-		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
-		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_CreateMany_Call) Return(err error) *Collection_CreateMany_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error) *Collection_CreateMany_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Delete provides a mock function for the type Collection
-func (_mock *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
-	ret := _mock.Called(ctx, docID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Delete")
+		panic("no return value specified for DeleteDocument")
 	}
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.DeleteDocumentOptions]) bool); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Enumerable[options.DeleteDocumentOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Collection_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
-type Collection_Delete_Call struct {
+// Collection_DeleteDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocument'
+type Collection_DeleteDocument_Call struct {
 	*mock.Call
 }
 
-// Delete is a helper method to define mock.On call
+// DeleteDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-func (_e *Collection_Expecter) Delete(ctx interface{}, docID interface{}) *Collection_Delete_Call {
-	return &Collection_Delete_Call{Call: _e.mock.On("Delete", ctx, docID)}
+//   - opts ...options.Enumerable[options.DeleteDocumentOptions]
+func (_e *Collection_Expecter) DeleteDocument(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_DeleteDocument_Call {
+	return &Collection_DeleteDocument_Call{Call: _e.mock.On("DeleteDocument",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, docID client.DocID)) *Collection_Delete_Call {
+func (_c *Collection_DeleteDocument_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions])) *Collection_DeleteDocument_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -406,35 +283,131 @@ func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, docID client
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
+		var arg2 []options.Enumerable[options.DeleteDocumentOptions]
+		var variadicArgs []options.Enumerable[options.DeleteDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteDocumentOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_Delete_Call) Return(b bool, err error) *Collection_Delete_Call {
+func (_c *Collection_DeleteDocument_Call) Return(b bool, err error) *Collection_DeleteDocument_Call {
 	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *Collection_Delete_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID) (bool, error)) *Collection_Delete_Call {
+func (_c *Collection_DeleteDocument_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error)) *Collection_DeleteDocument_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteDocumentsWithFilter provides a mock function for the type Collection
+func (_mock *Collection) DeleteDocumentsWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, filter, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, filter)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDocumentsWithFilter")
+	}
+
+	var r0 *client.DeleteResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error)); ok {
+		return returnFunc(ctx, filter, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) *client.DeleteResult); ok {
+		r0 = returnFunc(ctx, filter, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.DeleteResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, any, ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) error); ok {
+		r1 = returnFunc(ctx, filter, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Collection_DeleteDocumentsWithFilter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocumentsWithFilter'
+type Collection_DeleteDocumentsWithFilter_Call struct {
+	*mock.Call
+}
+
+// DeleteDocumentsWithFilter is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter any
+//   - opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]
+func (_e *Collection_Expecter) DeleteDocumentsWithFilter(ctx interface{}, filter interface{}, opts ...interface{}) *Collection_DeleteDocumentsWithFilter_Call {
+	return &Collection_DeleteDocumentsWithFilter_Call{Call: _e.mock.On("DeleteDocumentsWithFilter",
+		append([]interface{}{ctx, filter}, opts...)...)}
+}
+
+func (_c *Collection_DeleteDocumentsWithFilter_Call) Run(run func(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions])) *Collection_DeleteDocumentsWithFilter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 any
+		if args[1] != nil {
+			arg1 = args[1].(any)
+		}
+		var arg2 []options.Enumerable[options.DeleteDocumentsWithFilterOptions]
+		var variadicArgs []options.Enumerable[options.DeleteDocumentsWithFilterOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteDocumentsWithFilterOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_DeleteDocumentsWithFilter_Call) Return(deleteResult *client.DeleteResult, err error) *Collection_DeleteDocumentsWithFilter_Call {
+	_c.Call.Return(deleteResult, err)
+	return _c
+}
+
+func (_c *Collection_DeleteDocumentsWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error)) *Collection_DeleteDocumentsWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteEncryptedIndex provides a mock function for the type Collection
-func (_mock *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
-	ret := _mock.Called(ctx, fieldName)
+func (_mock *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, fieldName, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, fieldName)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteEncryptedIndex")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, fieldName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error); ok {
+		r0 = returnFunc(ctx, fieldName, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -449,11 +422,13 @@ type Collection_DeleteEncryptedIndex_Call struct {
 // DeleteEncryptedIndex is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fieldName string
-func (_e *Collection_Expecter) DeleteEncryptedIndex(ctx interface{}, fieldName interface{}) *Collection_DeleteEncryptedIndex_Call {
-	return &Collection_DeleteEncryptedIndex_Call{Call: _e.mock.On("DeleteEncryptedIndex", ctx, fieldName)}
+//   - opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]
+func (_e *Collection_Expecter) DeleteEncryptedIndex(ctx interface{}, fieldName interface{}, opts ...interface{}) *Collection_DeleteEncryptedIndex_Call {
+	return &Collection_DeleteEncryptedIndex_Call{Call: _e.mock.On("DeleteEncryptedIndex",
+		append([]interface{}{ctx, fieldName}, opts...)...)}
 }
 
-func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context, fieldName string)) *Collection_DeleteEncryptedIndex_Call {
+func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions])) *Collection_DeleteEncryptedIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -463,9 +438,16 @@ func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Enumerable[options.DeleteEncryptedIndexOptions]
+		var variadicArgs []options.Enumerable[options.DeleteEncryptedIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteEncryptedIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -476,109 +458,49 @@ func (_c *Collection_DeleteEncryptedIndex_Call) Return(err error) *Collection_De
 	return _c
 }
 
-func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, fieldName string) error) *Collection_DeleteEncryptedIndex_Call {
+func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error) *Collection_DeleteEncryptedIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteWithFilter provides a mock function for the type Collection
-func (_mock *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
-	ret := _mock.Called(ctx, filter)
+// DeleteIndex provides a mock function for the type Collection
+func (_mock *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, indexName, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, indexName)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteWithFilter")
-	}
-
-	var r0 *client.DeleteResult
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any) (*client.DeleteResult, error)); ok {
-		return returnFunc(ctx, filter)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any) *client.DeleteResult); ok {
-		r0 = returnFunc(ctx, filter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.DeleteResult)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, any) error); ok {
-		r1 = returnFunc(ctx, filter)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_DeleteWithFilter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWithFilter'
-type Collection_DeleteWithFilter_Call struct {
-	*mock.Call
-}
-
-// DeleteWithFilter is a helper method to define mock.On call
-//   - ctx context.Context
-//   - filter any
-func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, filter interface{}) *Collection_DeleteWithFilter_Call {
-	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter", ctx, filter)}
-}
-
-func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, filter any)) *Collection_DeleteWithFilter_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 any
-		if args[1] != nil {
-			arg1 = args[1].(any)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_DeleteWithFilter_Call) Return(deleteResult *client.DeleteResult, err error) *Collection_DeleteWithFilter_Call {
-	_c.Call.Return(deleteResult, err)
-	return _c
-}
-
-func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DropIndex provides a mock function for the type Collection
-func (_mock *Collection) DropIndex(ctx context.Context, indexName string) error {
-	ret := _mock.Called(ctx, indexName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DropIndex")
+		panic("no return value specified for DeleteIndex")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, indexName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.DeleteCollectionIndexOptions]) error); ok {
+		r0 = returnFunc(ctx, indexName, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// Collection_DropIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DropIndex'
-type Collection_DropIndex_Call struct {
+// Collection_DeleteIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteIndex'
+type Collection_DeleteIndex_Call struct {
 	*mock.Call
 }
 
-// DropIndex is a helper method to define mock.On call
+// DeleteIndex is a helper method to define mock.On call
 //   - ctx context.Context
 //   - indexName string
-func (_e *Collection_Expecter) DropIndex(ctx interface{}, indexName interface{}) *Collection_DropIndex_Call {
-	return &Collection_DropIndex_Call{Call: _e.mock.On("DropIndex", ctx, indexName)}
+//   - opts ...options.Enumerable[options.DeleteCollectionIndexOptions]
+func (_e *Collection_Expecter) DeleteIndex(ctx interface{}, indexName interface{}, opts ...interface{}) *Collection_DeleteIndex_Call {
+	return &Collection_DeleteIndex_Call{Call: _e.mock.On("DeleteIndex",
+		append([]interface{}{ctx, indexName}, opts...)...)}
 }
 
-func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName string)) *Collection_DropIndex_Call {
+func (_c *Collection_DeleteIndex_Call) Run(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions])) *Collection_DeleteIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -588,63 +510,78 @@ func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Enumerable[options.DeleteCollectionIndexOptions]
+		var variadicArgs []options.Enumerable[options.DeleteCollectionIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteCollectionIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_DropIndex_Call) Return(err error) *Collection_DropIndex_Call {
+func (_c *Collection_DeleteIndex_Call) Return(err error) *Collection_DeleteIndex_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Collection_DropIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string) error) *Collection_DropIndex_Call {
+func (_c *Collection_DeleteIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error) *Collection_DeleteIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Exists provides a mock function for the type Collection
-func (_mock *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
-	ret := _mock.Called(ctx, docID)
+// ExistsDocument provides a mock function for the type Collection
+func (_mock *Collection) ExistsDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Exists")
+		panic("no return value specified for ExistsDocument")
 	}
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.ExistsDocumentOptions]) bool); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Enumerable[options.ExistsDocumentOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Collection_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
-type Collection_Exists_Call struct {
+// Collection_ExistsDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsDocument'
+type Collection_ExistsDocument_Call struct {
 	*mock.Call
 }
 
-// Exists is a helper method to define mock.On call
+// ExistsDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-func (_e *Collection_Expecter) Exists(ctx interface{}, docID interface{}) *Collection_Exists_Call {
-	return &Collection_Exists_Call{Call: _e.mock.On("Exists", ctx, docID)}
+//   - opts ...options.Enumerable[options.ExistsDocumentOptions]
+func (_e *Collection_Expecter) ExistsDocument(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_ExistsDocument_Call {
+	return &Collection_ExistsDocument_Call{Call: _e.mock.On("ExistsDocument",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, docID client.DocID)) *Collection_Exists_Call {
+func (_c *Collection_ExistsDocument_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions])) *Collection_ExistsDocument_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -654,66 +591,80 @@ func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, docID client
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
+		var arg2 []options.Enumerable[options.ExistsDocumentOptions]
+		var variadicArgs []options.Enumerable[options.ExistsDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.ExistsDocumentOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_Exists_Call) Return(b bool, err error) *Collection_Exists_Call {
+func (_c *Collection_ExistsDocument_Call) Return(b bool, err error) *Collection_ExistsDocument_Call {
 	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *Collection_Exists_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID) (bool, error)) *Collection_Exists_Call {
+func (_c *Collection_ExistsDocument_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error)) *Collection_ExistsDocument_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Get provides a mock function for the type Collection
-func (_mock *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-	ret := _mock.Called(ctx, docID, showDeleted)
+// GetDocument provides a mock function for the type Collection
+func (_mock *Collection) GetDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.GetDocumentOptions]) (*client.Document, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetDocument")
 	}
 
 	var r0 *client.Document
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool) (*client.Document, error)); ok {
-		return returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.GetDocumentOptions]) (*client.Document, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool) *client.Document); ok {
-		r0 = returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Enumerable[options.GetDocumentOptions]) *client.Document); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.Document)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, bool) error); ok {
-		r1 = returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Enumerable[options.GetDocumentOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Collection_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
-type Collection_Get_Call struct {
+// Collection_GetDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDocument'
+type Collection_GetDocument_Call struct {
 	*mock.Call
 }
 
-// Get is a helper method to define mock.On call
+// GetDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - showDeleted bool
-func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, showDeleted interface{}) *Collection_Get_Call {
-	return &Collection_Get_Call{Call: _e.mock.On("Get", ctx, docID, showDeleted)}
+//   - opts ...options.Enumerable[options.GetDocumentOptions]
+func (_e *Collection_Expecter) GetDocument(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_GetDocument_Call {
+	return &Collection_GetDocument_Call{Call: _e.mock.On("GetDocument",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, showDeleted bool)) *Collection_Get_Call {
+func (_c *Collection_GetDocument_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.GetDocumentOptions])) *Collection_GetDocument_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -723,156 +674,40 @@ func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.Do
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
-		var arg2 bool
-		if args[2] != nil {
-			arg2 = args[2].(bool)
+		var arg2 []options.Enumerable[options.GetDocumentOptions]
+		var variadicArgs []options.Enumerable[options.GetDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.GetDocumentOptions])
 		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
-			arg2,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_Get_Call) Return(document *client.Document, err error) *Collection_Get_Call {
+func (_c *Collection_GetDocument_Call) Return(document *client.Document, err error) *Collection_GetDocument_Call {
 	_c.Call.Return(document, err)
 	return _c
 }
 
-func (_c *Collection_Get_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error)) *Collection_Get_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllDocIDs provides a mock function for the type Collection
-func (_mock *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllDocIDs")
-	}
-
-	var r0 <-chan client.DocIDResult
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (<-chan client.DocIDResult, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) <-chan client.DocIDResult); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(<-chan client.DocIDResult)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_GetAllDocIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllDocIDs'
-type Collection_GetAllDocIDs_Call struct {
-	*mock.Call
-}
-
-// GetAllDocIDs is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}) *Collection_GetAllDocIDs_Call {
-	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs", ctx)}
-}
-
-func (_c *Collection_GetAllDocIDs_Call) Run(run func(ctx context.Context)) *Collection_GetAllDocIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_GetAllDocIDs_Call) Return(docIDResultCh <-chan client.DocIDResult, err error) *Collection_GetAllDocIDs_Call {
-	_c.Call.Return(docIDResultCh, err)
-	return _c
-}
-
-func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(ctx context.Context) (<-chan client.DocIDResult, error)) *Collection_GetAllDocIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetIndexes provides a mock function for the type Collection
-func (_mock *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetIndexes")
-	}
-
-	var r0 []client.IndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.IndexDescription, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.IndexDescription); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.IndexDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_GetIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIndexes'
-type Collection_GetIndexes_Call struct {
-	*mock.Call
-}
-
-// GetIndexes is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Collection_Expecter) GetIndexes(ctx interface{}) *Collection_GetIndexes_Call {
-	return &Collection_GetIndexes_Call{Call: _e.mock.On("GetIndexes", ctx)}
-}
-
-func (_c *Collection_GetIndexes_Call) Run(run func(ctx context.Context)) *Collection_GetIndexes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_GetIndexes_Call) Return(indexDescriptions []client.IndexDescription, err error) *Collection_GetIndexes_Call {
-	_c.Call.Return(indexDescriptions, err)
-	return _c
-}
-
-func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.IndexDescription, error)) *Collection_GetIndexes_Call {
+func (_c *Collection_GetDocument_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.GetDocumentOptions]) (*client.Document, error)) *Collection_GetDocument_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListEncryptedIndexes provides a mock function for the type Collection
-func (_mock *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListEncryptedIndexes")
@@ -880,18 +715,18 @@ func (_mock *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Enc
 
 	var r0 []client.EncryptedIndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) []client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.EncryptedIndexDescription)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -905,18 +740,27 @@ type Collection_ListEncryptedIndexes_Call struct {
 
 // ListEncryptedIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) ListEncryptedIndexes(ctx interface{}) *Collection_ListEncryptedIndexes_Call {
-	return &Collection_ListEncryptedIndexes_Call{Call: _e.mock.On("ListEncryptedIndexes", ctx)}
+//   - opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]
+func (_e *Collection_Expecter) ListEncryptedIndexes(ctx interface{}, opts ...interface{}) *Collection_ListEncryptedIndexes_Call {
+	return &Collection_ListEncryptedIndexes_Call{Call: _e.mock.On("ListEncryptedIndexes",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Collection_ListEncryptedIndexes_Call) Run(run func(ctx context.Context)) *Collection_ListEncryptedIndexes_Call {
+func (_c *Collection_ListEncryptedIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions])) *Collection_ListEncryptedIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Enumerable[options.ListCollectionEncryptedIndexesOptions]
+		var variadicArgs []options.Enumerable[options.ListCollectionEncryptedIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.ListCollectionEncryptedIndexesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -927,7 +771,84 @@ func (_c *Collection_ListEncryptedIndexes_Call) Return(encryptedIndexDescription
 	return _c
 }
 
-func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
+func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListIndexes provides a mock function for the type Collection
+func (_mock *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListIndexes")
+	}
+
+	var r0 []client.IndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) []client.IndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.IndexDescription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Collection_ListIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListIndexes'
+type Collection_ListIndexes_Call struct {
+	*mock.Call
+}
+
+// ListIndexes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Enumerable[options.ListCollectionIndexesOptions]
+func (_e *Collection_Expecter) ListIndexes(ctx interface{}, opts ...interface{}) *Collection_ListIndexes_Call {
+	return &Collection_ListIndexes_Call{Call: _e.mock.On("ListIndexes",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Collection_ListIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions])) *Collection_ListIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Enumerable[options.ListCollectionIndexesOptions]
+		var variadicArgs []options.Enumerable[options.ListCollectionIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.ListCollectionIndexesOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_ListIndexes_Call) Return(indexDescriptions []client.IndexDescription, err error) *Collection_ListIndexes_Call {
+	_c.Call.Return(indexDescriptions, err)
+	return _c
+}
+
+func (_c *Collection_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error)) *Collection_ListIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -976,57 +897,66 @@ func (_c *Collection_Name_Call) RunAndReturn(run func() string) *Collection_Name
 	return _c
 }
 
-// Save provides a mock function for the type Collection
-func (_mock *Collection) Save(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+// NewEncryptedIndex provides a mock function for the type Collection
+func (_mock *Collection) NewEncryptedIndex(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.NewEncryptedIndexOptions]) (client.EncryptedIndexDescription, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, doc, opts)
+		tmpRet = _mock.Called(ctx, desc, opts)
 	} else {
-		tmpRet = _mock.Called(ctx, doc)
+		tmpRet = _mock.Called(ctx, desc)
 	}
 	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Save")
+		panic("no return value specified for NewEncryptedIndex")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
-		r0 = returnFunc(ctx, doc, opts...)
-	} else {
-		r0 = ret.Error(0)
+	var r0 client.EncryptedIndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.NewEncryptedIndexOptions]) (client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(ctx, desc, opts...)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.NewEncryptedIndexOptions]) client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(ctx, desc, opts...)
+	} else {
+		r0 = ret.Get(0).(client.EncryptedIndexDescription)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.NewEncryptedIndexOptions]) error); ok {
+		r1 = returnFunc(ctx, desc, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// Collection_Save_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Save'
-type Collection_Save_Call struct {
+// Collection_NewEncryptedIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewEncryptedIndex'
+type Collection_NewEncryptedIndex_Call struct {
 	*mock.Call
 }
 
-// Save is a helper method to define mock.On call
+// NewEncryptedIndex is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doc *client.Document
-//   - opts ...client.DocCreateOption
-func (_e *Collection_Expecter) Save(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Save_Call {
-	return &Collection_Save_Call{Call: _e.mock.On("Save",
-		append([]interface{}{ctx, doc}, opts...)...)}
+//   - desc client.EncryptedIndexDescription
+//   - opts ...options.Enumerable[options.NewEncryptedIndexOptions]
+func (_e *Collection_Expecter) NewEncryptedIndex(ctx interface{}, desc interface{}, opts ...interface{}) *Collection_NewEncryptedIndex_Call {
+	return &Collection_NewEncryptedIndex_Call{Call: _e.mock.On("NewEncryptedIndex",
+		append([]interface{}{ctx, desc}, opts...)...)}
 }
 
-func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Save_Call {
+func (_c *Collection_NewEncryptedIndex_Call) Run(run func(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.NewEncryptedIndexOptions])) *Collection_NewEncryptedIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *client.Document
+		var arg1 client.EncryptedIndexDescription
 		if args[1] != nil {
-			arg1 = args[1].(*client.Document)
+			arg1 = args[1].(client.EncryptedIndexDescription)
 		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
+		var arg2 []options.Enumerable[options.NewEncryptedIndexOptions]
+		var variadicArgs []options.Enumerable[options.NewEncryptedIndexOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
+			variadicArgs = args[2].([]options.Enumerable[options.NewEncryptedIndexOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -1038,46 +968,135 @@ func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Do
 	return _c
 }
 
-func (_c *Collection_Save_Call) Return(err error) *Collection_Save_Call {
-	_c.Call.Return(err)
+func (_c *Collection_NewEncryptedIndex_Call) Return(encryptedIndexDescription client.EncryptedIndexDescription, err error) *Collection_NewEncryptedIndex_Call {
+	_c.Call.Return(encryptedIndexDescription, err)
 	return _c
 }
 
-func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Save_Call {
+func (_c *Collection_NewEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.NewEncryptedIndexOptions]) (client.EncryptedIndexDescription, error)) *Collection_NewEncryptedIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Update provides a mock function for the type Collection
-func (_mock *Collection) Update(ctx context.Context, docs *client.Document) error {
-	ret := _mock.Called(ctx, docs)
+// NewIndex provides a mock function for the type Collection
+func (_mock *Collection) NewIndex(context1 context.Context, newIndexRequest client.NewIndexRequest, vs ...options.Enumerable[options.NewCollectionIndexOptions]) (client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(vs) > 0 {
+		tmpRet = _mock.Called(context1, newIndexRequest, vs)
+	} else {
+		tmpRet = _mock.Called(context1, newIndexRequest)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Update")
+		panic("no return value specified for NewIndex")
+	}
+
+	var r0 client.IndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.NewIndexRequest, ...options.Enumerable[options.NewCollectionIndexOptions]) (client.IndexDescription, error)); ok {
+		return returnFunc(context1, newIndexRequest, vs...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.NewIndexRequest, ...options.Enumerable[options.NewCollectionIndexOptions]) client.IndexDescription); ok {
+		r0 = returnFunc(context1, newIndexRequest, vs...)
+	} else {
+		r0 = ret.Get(0).(client.IndexDescription)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.NewIndexRequest, ...options.Enumerable[options.NewCollectionIndexOptions]) error); ok {
+		r1 = returnFunc(context1, newIndexRequest, vs...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Collection_NewIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewIndex'
+type Collection_NewIndex_Call struct {
+	*mock.Call
+}
+
+// NewIndex is a helper method to define mock.On call
+//   - context1 context.Context
+//   - newIndexRequest client.NewIndexRequest
+//   - vs ...options.Enumerable[options.NewCollectionIndexOptions]
+func (_e *Collection_Expecter) NewIndex(context1 interface{}, newIndexRequest interface{}, vs ...interface{}) *Collection_NewIndex_Call {
+	return &Collection_NewIndex_Call{Call: _e.mock.On("NewIndex",
+		append([]interface{}{context1, newIndexRequest}, vs...)...)}
+}
+
+func (_c *Collection_NewIndex_Call) Run(run func(context1 context.Context, newIndexRequest client.NewIndexRequest, vs ...options.Enumerable[options.NewCollectionIndexOptions])) *Collection_NewIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.NewIndexRequest
+		if args[1] != nil {
+			arg1 = args[1].(client.NewIndexRequest)
+		}
+		var arg2 []options.Enumerable[options.NewCollectionIndexOptions]
+		var variadicArgs []options.Enumerable[options.NewCollectionIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.NewCollectionIndexOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_NewIndex_Call) Return(indexDescription client.IndexDescription, err error) *Collection_NewIndex_Call {
+	_c.Call.Return(indexDescription, err)
+	return _c
+}
+
+func (_c *Collection_NewIndex_Call) RunAndReturn(run func(context1 context.Context, newIndexRequest client.NewIndexRequest, vs ...options.Enumerable[options.NewCollectionIndexOptions]) (client.IndexDescription, error)) *Collection_NewIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveDocument provides a mock function for the type Collection
+func (_mock *Collection) SaveDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, doc, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, doc)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveDocument")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = returnFunc(ctx, docs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Enumerable[options.SaveDocumentOptions]) error); ok {
+		r0 = returnFunc(ctx, doc, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// Collection_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
-type Collection_Update_Call struct {
+// Collection_SaveDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveDocument'
+type Collection_SaveDocument_Call struct {
 	*mock.Call
 }
 
-// Update is a helper method to define mock.On call
+// SaveDocument is a helper method to define mock.On call
 //   - ctx context.Context
-//   - docs *client.Document
-func (_e *Collection_Expecter) Update(ctx interface{}, docs interface{}) *Collection_Update_Call {
-	return &Collection_Update_Call{Call: _e.mock.On("Update", ctx, docs)}
+//   - doc *client.Document
+//   - opts ...options.Enumerable[options.SaveDocumentOptions]
+func (_e *Collection_Expecter) SaveDocument(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_SaveDocument_Call {
+	return &Collection_SaveDocument_Call{Call: _e.mock.On("SaveDocument",
+		append([]interface{}{ctx, doc}, opts...)...)}
 }
 
-func (_c *Collection_Update_Call) Run(run func(ctx context.Context, docs *client.Document)) *Collection_Update_Call {
+func (_c *Collection_SaveDocument_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions])) *Collection_SaveDocument_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1087,66 +1106,219 @@ func (_c *Collection_Update_Call) Run(run func(ctx context.Context, docs *client
 		if args[1] != nil {
 			arg1 = args[1].(*client.Document)
 		}
+		var arg2 []options.Enumerable[options.SaveDocumentOptions]
+		var variadicArgs []options.Enumerable[options.SaveDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.SaveDocumentOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_Update_Call) Return(err error) *Collection_Update_Call {
+func (_c *Collection_SaveDocument_Call) Return(err error) *Collection_SaveDocument_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Collection_Update_Call) RunAndReturn(run func(ctx context.Context, docs *client.Document) error) *Collection_Update_Call {
+func (_c *Collection_SaveDocument_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error) *Collection_SaveDocument_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateWithFilter provides a mock function for the type Collection
-func (_mock *Collection) UpdateWithFilter(ctx context.Context, filter any, updater string) (*client.UpdateResult, error) {
-	ret := _mock.Called(ctx, filter, updater)
+// Truncate provides a mock function for the type Collection
+func (_mock *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateWithFilter")
+		panic("no return value specified for Truncate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.TruncateCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_Truncate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Truncate'
+type Collection_Truncate_Call struct {
+	*mock.Call
+}
+
+// Truncate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Enumerable[options.TruncateCollectionOptions]
+func (_e *Collection_Expecter) Truncate(ctx interface{}, opts ...interface{}) *Collection_Truncate_Call {
+	return &Collection_Truncate_Call{Call: _e.mock.On("Truncate",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Collection_Truncate_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions])) *Collection_Truncate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Enumerable[options.TruncateCollectionOptions]
+		var variadicArgs []options.Enumerable[options.TruncateCollectionOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.TruncateCollectionOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_Truncate_Call) Return(err error) *Collection_Truncate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_Truncate_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error) *Collection_Truncate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateDocument provides a mock function for the type Collection
+func (_mock *Collection) UpdateDocument(ctx context.Context, docs *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docs)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDocument")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Enumerable[options.UpdateDocumentOptions]) error); ok {
+		r0 = returnFunc(ctx, docs, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_UpdateDocument_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDocument'
+type Collection_UpdateDocument_Call struct {
+	*mock.Call
+}
+
+// UpdateDocument is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docs *client.Document
+//   - opts ...options.Enumerable[options.UpdateDocumentOptions]
+func (_e *Collection_Expecter) UpdateDocument(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_UpdateDocument_Call {
+	return &Collection_UpdateDocument_Call{Call: _e.mock.On("UpdateDocument",
+		append([]interface{}{ctx, docs}, opts...)...)}
+}
+
+func (_c *Collection_UpdateDocument_Call) Run(run func(ctx context.Context, docs *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions])) *Collection_UpdateDocument_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *client.Document
+		if args[1] != nil {
+			arg1 = args[1].(*client.Document)
+		}
+		var arg2 []options.Enumerable[options.UpdateDocumentOptions]
+		var variadicArgs []options.Enumerable[options.UpdateDocumentOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.UpdateDocumentOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_UpdateDocument_Call) Return(err error) *Collection_UpdateDocument_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_UpdateDocument_Call) RunAndReturn(run func(ctx context.Context, docs *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error) *Collection_UpdateDocument_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateDocumentsWithFilter provides a mock function for the type Collection
+func (_mock *Collection) UpdateDocumentsWithFilter(ctx context.Context, filter any, updater string, opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]) (*client.UpdateResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, filter, updater, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, filter, updater)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDocumentsWithFilter")
 	}
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string) (*client.UpdateResult, error)); ok {
-		return returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string, ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]) (*client.UpdateResult, error)); ok {
+		return returnFunc(ctx, filter, updater, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string) *client.UpdateResult); ok {
-		r0 = returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string, ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]) *client.UpdateResult); ok {
+		r0 = returnFunc(ctx, filter, updater, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, any, string) error); ok {
-		r1 = returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, any, string, ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]) error); ok {
+		r1 = returnFunc(ctx, filter, updater, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Collection_UpdateWithFilter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWithFilter'
-type Collection_UpdateWithFilter_Call struct {
+// Collection_UpdateDocumentsWithFilter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDocumentsWithFilter'
+type Collection_UpdateDocumentsWithFilter_Call struct {
 	*mock.Call
 }
 
-// UpdateWithFilter is a helper method to define mock.On call
+// UpdateDocumentsWithFilter is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter any
 //   - updater string
-func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, filter interface{}, updater interface{}) *Collection_UpdateWithFilter_Call {
-	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter", ctx, filter, updater)}
+//   - opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]
+func (_e *Collection_Expecter) UpdateDocumentsWithFilter(ctx interface{}, filter interface{}, updater interface{}, opts ...interface{}) *Collection_UpdateDocumentsWithFilter_Call {
+	return &Collection_UpdateDocumentsWithFilter_Call{Call: _e.mock.On("UpdateDocumentsWithFilter",
+		append([]interface{}{ctx, filter, updater}, opts...)...)}
 }
 
-func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, filter any, updater string)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateDocumentsWithFilter_Call) Run(run func(ctx context.Context, filter any, updater string, opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions])) *Collection_UpdateDocumentsWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1160,21 +1332,28 @@ func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, fi
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 []options.Enumerable[options.UpdateDocumentsWithFilterOptions]
+		var variadicArgs []options.Enumerable[options.UpdateDocumentsWithFilterOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Enumerable[options.UpdateDocumentsWithFilterOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_UpdateWithFilter_Call) Return(updateResult *client.UpdateResult, err error) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateDocumentsWithFilter_Call) Return(updateResult *client.UpdateResult, err error) *Collection_UpdateDocumentsWithFilter_Call {
 	_c.Call.Return(updateResult, err)
 	return _c
 }
 
-func (_c *Collection_UpdateWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, updater string) (*client.UpdateResult, error)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateDocumentsWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, updater string, opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions]) (*client.UpdateResult, error)) *Collection_UpdateDocumentsWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }

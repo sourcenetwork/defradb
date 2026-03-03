@@ -13,30 +13,31 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(likedIndexes: {filter: {_eq: true}})
+						COUNT(likedIndexes: {filter: {_eq: true}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 3,
+							"name":  "Shahzad",
+							"COUNT": 3,
 						},
 					},
 				},
@@ -50,24 +51,24 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(indexLikesDislikes: {filter: {_eq: true}})
+						COUNT(indexLikesDislikes: {filter: {_eq: true}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 2,
+							"name":  "John",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -81,24 +82,24 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {filter: {_gt: 0}})
+						COUNT(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -112,24 +113,24 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, 1, null, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(testScores: {filter: {_gt: 0}})
+						COUNT(testScores: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -143,24 +144,24 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0, -2]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
+						COUNT(favouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 4,
+							"name":  "Shahzad",
+							"COUNT": 4,
 						},
 					},
 				},
@@ -174,24 +175,24 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(favouriteFloats: {filter: {_lt: 9}})
+						COUNT(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -205,24 +206,24 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(pageRatings: {filter: {_lt: 9}})
+						COUNT(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -236,24 +237,24 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(preferredStrings: {filter: {_in: ["", "the first"]}})
+						COUNT(preferredStrings: {filter: {_in: ["", "the first"]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -267,24 +268,24 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageHeaders": ["", "the previous", null, "empty string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
-						_count(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
+						COUNT(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},

@@ -12,42 +12,14 @@ package client
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
-
-// DocCreateOption is a functional option for creating a document.
-type DocCreateOption func(*DocCreateOptions)
-
-// DocCreateOptions contains options for creating a document.
-type DocCreateOptions struct {
-	EncryptDoc      bool
-	EncryptedFields []string
-}
-
-// Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
-func (o *DocCreateOptions) Apply(opts []DocCreateOption) {
-	for _, opt := range opts {
-		opt(o)
-	}
-}
-
-// CreateDocEncrypted enables or disables document encryption when creating a document.
-func CreateDocEncrypted(encryptDoc bool) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptDoc = encryptDoc
-	}
-}
-
-// CreateDocWithEncryptedFields specifies a list of fields to be encrypted when creating a document.
-func CreateDocWithEncryptedFields(encryptedFields []string) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptedFields = encryptedFields
-	}
-}
 
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
-// host, and many collections may share the same schema.
+// host, and many collection versions may share the same definition.
 //
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
@@ -57,110 +29,140 @@ type Collection interface {
 	// VersionID returns the VersionID of this Collection.
 	VersionID() string
 
-	// CollectionID returns the Root of the Schema used to define this Collection.
+	// CollectionID returns the Root of the definition used to define this Collection.
 	CollectionID() string
 
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion
 
-	// Create a new document.
+	// AddDocument adds a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	AddDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.AddDocumentOptions]) error
 
-	// CreateMany new documents.
+	// AddManyDocuments adds new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
+	AddManyDocuments(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.AddDocumentOptions]) error
 
-	// Update an existing document with the new values.
+	// UpdateDocument updates an existing document with the new values.
 	//
 	// Any field that needs to be removed or cleared should call doc.Clear(field) before.
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, docs *Document) error
+	UpdateDocument(ctx context.Context, docs *Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error
 
-	// Save the given document in the database.
+	// SaveDocument saves the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
-	// Delete will attempt to delete a document by DocID.
+	// DeleteDocument will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, docID DocID) (bool, error)
+	DeleteDocument(
+		ctx context.Context,
+		docID DocID,
+		opts ...options.Enumerable[options.DeleteDocumentOptions],
+	) (bool, error)
 
-	// Exists checks if a given document exists with supplied DocID.
+	// ExistsDocument checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, docID DocID) (bool, error)
+	ExistsDocument(
+		ctx context.Context,
+		docID DocID,
+		opts ...options.Enumerable[options.ExistsDocumentOptions],
+	) (bool, error)
 
-	// UpdateWithFilter updates using a filter to target documents for update.
+	// UpdateDocumentsWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
-	UpdateWithFilter(
+	UpdateDocumentsWithFilter(
 		ctx context.Context,
 		filter any,
 		updater string,
+		opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 	) (*UpdateResult, error)
 
-	// DeleteWithFilter deletes documents matching the given filter.
+	// DeleteDocumentsWithFilter deletes documents matching the given filter.
 	//
 	// This operation will soft-delete documents related to the given filter and update the composite block
 	// with a status of `Deleted`.
-	DeleteWithFilter(
+	DeleteDocumentsWithFilter(
 		ctx context.Context,
 		filter any,
+		opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 	) (*DeleteResult, error)
 
-	// Get returns the document with the given DocID.
+	// GetDocument returns the document with the given DocID.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
-	Get(
+	GetDocument(
 		ctx context.Context,
 		docID DocID,
-		showDeleted bool,
+		opts ...options.Enumerable[options.GetDocumentOptions],
 	) (*Document, error)
 
-	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
-
-	// CreateIndex creates a new index on the collection.
-	// `IndexDescription` contains the description of the index to be created.
-	// `IndexDescription.Name` must start with a letter or an underscore and can
+	// NewIndex makes a new index on the collection.
+	// `NewIndexRequest` contains the description of the new index.
+	// `NewIndexRequest.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
-	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexCreateRequest) (IndexDescription, error)
+	// WARNING: This method can not make a new index for a collection that has a policy.
+	NewIndex(
+		context.Context,
+		NewIndexRequest,
+		...options.Enumerable[options.NewCollectionIndexOptions],
+	) (IndexDescription, error)
 
-	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string) error
+	// DeleteIndex deletes an index from the collection.
+	DeleteIndex(
+		ctx context.Context,
+		indexName string,
+		opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
+	) error
 
-	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+	// ListIndexes returns all the indexes that exist on the collection.
+	ListIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.ListCollectionIndexesOptions],
+	) ([]IndexDescription, error)
 
-	// CreateEncryptedIndex creates a new encrypted index on the collection.
-	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)
+	// NewEncryptedIndex makes a new encrypted index on the collection.
+	NewEncryptedIndex(
+		ctx context.Context,
+		desc EncryptedIndexDescription,
+		opts ...options.Enumerable[options.NewEncryptedIndexOptions],
+	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
-	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
+	DeleteEncryptedIndex(
+		ctx context.Context,
+		fieldName string,
+		opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+	) error
 
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-	ListEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
-}
+	ListEncryptedIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
+	) ([]EncryptedIndexDescription, error)
 
-// DocIDResult wraps the result of an attempt at a DocID retrieval operation.
-type DocIDResult struct {
-	// If a DocID was successfully retrieved, this will be that DocID.
-	ID DocID
-	// If an error was generated whilst attempting to retrieve the DocID, this will be the error.
-	Err error
+	// Truncate this collection, permanently deleting all document state on this node.
+	//
+	// Changes made by this call will not impact other nodes, and cannot be synced to them over the P2P
+	// system.
+	//
+	// This call will lock the collection, and no other read or write document operations on this collection
+	// will progress whilst this is executing.
+	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
 }
 
 // UpdateResult wraps the result of an update call.

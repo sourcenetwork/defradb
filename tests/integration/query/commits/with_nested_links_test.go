@@ -15,10 +15,11 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
+func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 	ageCreateCid := testUtils.NewSameValue()
 	nameCreateCid := testUtils.NewSameValue()
 	createCompositeCid := testUtils.NewSameValue()
@@ -26,13 +27,13 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -93,17 +94,17 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *testing.T) {
+func TestQueryCommits_WithSingleAddNestedLinksCompositeFilter_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
@@ -140,17 +141,17 @@ func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommits_WithSingleCreateNestedLinksNestedFilter_Succeed(t *testing.T) {
+func TestQueryCommits_WithSingleAddNestedLinksNestedFilter_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
@@ -195,7 +196,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
@@ -206,7 +207,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {

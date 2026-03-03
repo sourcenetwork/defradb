@@ -11,85 +11,58 @@
 package test_acp_dac_index
 
 const userPolicy = `
-name: test
 description: a test policy which marks a collection in a database as a resource
-
-actor:
-  name: actor
-
+name: test
 resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
 `
 
 const bookAuthorPolicy = `
-name: test
 description: a test policy which marks a collection in a database as a resource
-
-actor:
-  name: actor
-
+name: test
 resources:
-  author:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
-
-  book:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
+- name: author
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+- name: book
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
 `

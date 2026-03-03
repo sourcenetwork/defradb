@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
+func TestCollectionVersionAggregateSimpleAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -53,10 +53,10 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__CountSelector",
 											"inputFields": []any{
@@ -113,11 +113,11 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
+func TestCollectionVersionAggregateSimpleAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -241,12 +241,12 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 										},
 									},
 								},
-								"name": "_group",
+								"name": "GROUP",
 							},
 							map[string]any{
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"inputFields": []any{
 												map[string]any{
@@ -298,7 +298,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 										},
 									},
 								},
-								"name": "_sum",
+								"name": "SUM",
 							},
 						},
 						"name": "Users",
@@ -311,11 +311,11 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
+func TestCollectionVersionAggregateSimpleAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {}`,
+			&action.AddCollection{
+				SDL: `type Users {}`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
@@ -343,10 +343,10 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_avg",
+								"name": "AVG",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__NumericSelector",
 											"inputFields": []any{

@@ -24,8 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-//export IdentityNew
-func IdentityNew(keyType *C.char) C.NewIdentityResult {
+//export NewIdentity
+func NewIdentity(keyType *C.char) C.NewIdentityResult {
 	// Default key type, if left blank, is Secp256k1
 	cryptoKeyType := crypto.KeyTypeSecp256k1
 	keyTypeStr := C.GoString(keyType)
@@ -39,8 +39,8 @@ func IdentityNew(keyType *C.char) C.NewIdentityResult {
 	return returnNewIdentityResultC(0, "", newIdentity)
 }
 
-//export NodeIdentity
-func NodeIdentity(nodePtr C.uintptr_t) C.Result {
+//export GetNodeIdentity
+func GetNodeIdentity(nodePtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -57,8 +57,8 @@ func NodeIdentity(nodePtr C.uintptr_t) C.Result {
 	return returnC(returnGoC(0, "", "Node has no identity assigned to it."))
 }
 
-//export IdentityFree
-func IdentityFree(identityPtr C.uintptr_t) {
+//export FreeIdentity
+func FreeIdentity(identityPtr C.uintptr_t) {
 	_, err := getIdentityFromPointer(identityPtr)
 	if err == nil && identityPtr != 0 {
 		cgo.Handle(identityPtr).Delete()

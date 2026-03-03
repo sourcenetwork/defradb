@@ -42,35 +42,35 @@ In this document, we use the default configuration, which has the following beha
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
-## Add a schema type
+## Add a collection
 
-Schemas are used to structure documents using a type system.
+Collections are used to structure documents using a type system.
 
-In the following examples, we'll be using a simple `User` schema type.
+In the following examples, we'll be using a simple `User` type.
 
 Add it to the database with the following command. By doing so, DefraDB generates the typed GraphQL endpoints for querying, mutation, and introspection.
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type User {
-    name: String 
-    age: Int 
-    verified: Boolean 
+    name: String
+    age: Int
+    verified: Boolean
     points: Float
   }
 '
 ```
 
-Find more examples of schema type definitions in the [examples/schema/](https://github.com/sourcenetwork/defradb/examples/schema/) folder.
+Find more examples of type definitions in the [examples/collection/](https://github.com/sourcenetwork/defradb/examples/collection/) folder.
 
-## Create a document
+## Add a document
 
-Submit a `mutation` request to create a document of the `User` type:
+Submit a `mutation` request to add a document of the `User` type:
 
 ```shell
 defradb client query '
   mutation {
-      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
+      add_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
           _docID
       }
   }
@@ -89,7 +89,7 @@ Expected response:
 }
 ```
 
-`_docID` is the document's key, a unique identifier of the document, determined by its schema and initial data.
+`_docID` is the document's key, a unique identifier of the document, determined by its collection and initial data.
 
 ## Query documents
 
@@ -254,7 +254,7 @@ This starts two nodes and connects them via pubsub networking.
 
 ### Collection subscription example
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `schemaVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
 
 ```shell
 defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
@@ -276,10 +276,10 @@ Start *nodeA*:
 defradb start
 ```
 
-In another terminal, add this example schema to it:
+In another terminal, add this example collection to it:
 
 ```shell
-defradb client schema add '
+defradb client collection add '
   type Article {
     content: String
     published: Boolean
@@ -295,10 +295,10 @@ defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0
 
 Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
 
-In another terminal, add the same schema to *nodeB*:
+In another terminal, add the same collection to *nodeB*:
 
 ```shell
-defradb client schema add --url localhost:9182 '
+defradb client collection add --url localhost:9182 '
   type Article {
     content: String
     published: Boolean

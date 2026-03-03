@@ -22,15 +22,15 @@ import (
 func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						likedIndexes: [Boolean]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 					"likedIndexes": [true, true, false, true, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

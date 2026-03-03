@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version ID")
+	ErrDeltaMissingCollectionVersionID     = errors.New("commit Delta missing collection version ID")
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
 	ErrDeltaMissingDocID                   = errors.New("commit Delta missing document ID")
 	ErrDeltaMissingFieldName               = errors.New("commit Delta missing field name")
@@ -33,7 +33,7 @@ var (
 	ErrOperationDefinitionMissingSelection = errors.New("operationDefinition is missing selections")
 	ErrFailedToFindGroupSource             = errors.New("failed to identify group source")
 	ErrCantExplainSubscriptionRequest      = errors.New("can not explain a subscription request")
-	ErrGroupOutsideOfGroupBy               = errors.New("_group may only be referenced when within a groupBy request")
+	ErrGroupOutsideOfGroupBy               = errors.New("group may only be referenced when within a groupBy request")
 	ErrMissingChildSelect                  = errors.New("expected child select but none was found")
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")

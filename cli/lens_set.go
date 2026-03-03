@@ -22,15 +22,17 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeLensSetCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
-		Short: "Set a schema migration within DefraDB",
-		Long: `Set a migration from a source schema version to a destination schema version for
-all collections that are on the given source schema version within the local DefraDB node.
+		Short: "Set a collection migration within DefraDB",
+		Long: `Set a migration from a source collection version to a destination collection version for
+all collections that are on the given source collection version within the local DefraDB node.
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
@@ -42,13 +44,13 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			case lensFile != "":
 				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 3 && args[2] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 3:
@@ -57,8 +59,8 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return ErrNoLensConfig
 			}
 
-			srcSchemaVersionID := args[0]
-			dstSchemaVersionID := args[1]
+			srcCollectionVersionID := args[0]
+			dstCollectionVersionID := args[1]
 
 			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 			decoder.DisallowUnknownFields()
@@ -69,12 +71,13 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			}
 
 			migrationCfg := client.LensConfig{
-				SourceSchemaVersionID:      srcSchemaVersionID,
-				DestinationSchemaVersionID: dstSchemaVersionID,
-				Lens:                       lensCfg,
+				SourceCollectionVersionID:      srcCollectionVersionID,
+				DestinationCollectionVersionID: dstCollectionVersionID,
+				Lens:                           lensCfg,
 			}
 
-			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg)
+			setOpt := options.WithIdentity(options.SetMigration(), iIdentity.FromContext(cmd.Context()))
+			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg, setOpt)
 			if err != nil {
 				return err
 			}
@@ -87,10 +90,10 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		`defradb client lens set bae123 bae456 '{"lenses": [...'`)
 
 	EmbedCLIExample(ctx, cmd, "set from file",
-		`defradb client lens set bae123 bae456 -f schema_migration.lens`)
+		`defradb client lens set bae123 bae456 -f collection_migration.lens`)
 
 	EmbedCLIExample(ctx, cmd, "add from stdin",
-		`cat schema_migration.lens | defradb client lens set bae123 bae456 -`)
+		`cat collection_migration.lens | defradb client lens set bae123 bae456 -`)
 
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
 	return cmd

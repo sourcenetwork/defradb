@@ -20,21 +20,21 @@ import (
 func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -47,12 +47,12 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
@@ -64,7 +64,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name
@@ -88,21 +88,21 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -115,12 +115,12 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
@@ -132,7 +132,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name

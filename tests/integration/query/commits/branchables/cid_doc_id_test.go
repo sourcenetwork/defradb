@@ -20,21 +20,21 @@ import (
 func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// This request uses the document's docID, and the collection's cid.
 				// It would be very nice if this worked:
 				// https://github.com/sourcenetwork/defradb/issues/3213

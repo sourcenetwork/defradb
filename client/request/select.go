@@ -12,6 +12,7 @@ package request
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -97,7 +98,7 @@ func (s *Select) validateGroupBy() []error {
 				if typedChildSelection.Name == groupByField {
 					fieldExistsInGroupBy = true
 					break
-				} else if typedChildSelection.Name == groupByField+RelatedObjectID {
+				} else if typedChildSelection.Name == ToFieldID(groupByField) {
 					isAliasFieldInGroupBy = true
 					break
 				}
@@ -132,11 +133,33 @@ func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 		Filterable:   s.Filterable,
 		DocIDsFilter: docIDFilter,
 		CIDFilter: CIDFilter{
-			immutable.Some(cid),
+			immutable.Some([]string{cid}),
 		},
 		Groupable:   s.Groupable,
 		ShowDeleted: s.ShowDeleted,
 	}
+}
+
+// CheckCIDFilter checks if the given cid passes the CID filter.
+// Returns true if the cid passes the filter, false otherwise.
+// If no CID filter is set, it always passes.
+func (s *Select) CheckCIDFilter(cid string) bool {
+	return !s.CIDs.HasValue() || slices.Contains(s.CIDs.Value(), cid)
+}
+
+// CheckDocIDFilter checks if the given docID passes the DocID filter.
+// Returns true if the docID passes the filter, false otherwise.
+// If no DocID filter is set, it always passes.
+func (s *Select) CheckDocIDFilter(docID string) bool {
+	if s.DocIDs.HasValue() {
+		for _, id := range s.DocIDs.Value() {
+			if id == docID {
+				return true
+			}
+		}
+		return false
+	}
+	return true
 }
 
 // selectJson is a private object used for handling json deserialization
@@ -165,7 +188,7 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 
 	s.Field = selectMap.Field
 	s.DocIDs = selectMap.DocIDs
-	s.CID = selectMap.CID
+	s.CIDs = selectMap.CIDs
 	s.Limitable = selectMap.Limitable
 	s.Offsetable = selectMap.Offsetable
 	s.Orderable = selectMap.Orderable

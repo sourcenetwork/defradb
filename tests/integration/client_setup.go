@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	cbindings "github.com/sourcenetwork/defradb/cbindings"
+	prodHttp "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -39,6 +40,10 @@ func init() {
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
 func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
+	// The test suite completely bypasses the way production consumes the node options,
+	// including the configuration of IsDevMode, so we have to hard code it here for now.
+	prodHttp.IsDevMode = true
+
 	switch s.ClientType {
 	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)

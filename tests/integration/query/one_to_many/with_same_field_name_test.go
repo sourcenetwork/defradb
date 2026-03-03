@@ -35,8 +35,8 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 		testUtils.TestCase{
 			Actions: append(
 				[]any{
-					&action.AddSchema{
-						Schema: sameFieldNameGQLSchema,
+					&action.AddCollection{
+						SDL: sameFieldNameGQLSchema,
 					},
 				},
 				test.Actions...,
@@ -48,20 +48,20 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"relationship1_id": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -90,20 +90,20 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"relationship1_id": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name

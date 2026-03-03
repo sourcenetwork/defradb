@@ -13,46 +13,47 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						MIN(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_min": int64(32),
+							"Age": int64(32),
+							"MIN": int64(32),
 						},
 						{
-							"Age":  int64(19),
-							"_min": nil,
+							"Age": int64(19),
+							"MIN": nil,
 						},
 					},
 				},
@@ -66,30 +67,30 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group {
+						MIN(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP {
 							Name
 						}
 					}
@@ -97,9 +98,9 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_min": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MIN": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
@@ -109,9 +110,9 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 							},
 						},
 						{
-							"Age":  int64(19),
-							"_min": nil,
-							"_group": []map[string]any{
+							"Age": int64(19),
+							"MIN": nil,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Alice",
 								},
@@ -130,30 +131,30 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Name: {_eq: "John"}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						MIN(GROUP: {field: Age, filter: {Name: {_eq: "John"}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -161,18 +162,18 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_min": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MIN": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_min":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"MIN":   nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -186,30 +187,30 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithDifferentFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						MIN(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -217,18 +218,18 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_min": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MIN": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_min":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"MIN":   nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -242,30 +243,30 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithDifferentFilters_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						S1: _min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						S2: _min(_group: {field: Age, filter: {Age: {_lt: 26}}})
+						S1: MIN(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						S2: MIN(GROUP: {field: Age, filter: {Age: {_lt: 26}}})
 					}
 				}`,
 				Results: map[string]any{

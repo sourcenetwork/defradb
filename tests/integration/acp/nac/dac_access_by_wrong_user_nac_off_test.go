@@ -37,18 +37,18 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_CanAcc
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// Document owner and no NAC so can access as DAC will be satisfied.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -91,11 +91,11 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -103,7 +103,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_
 
 			// Not authorized user, so can't see the private documents due to DAC.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3),
 				Request: `
 					query {
@@ -142,18 +142,18 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_CanAcce
 				Identity: testUtils.NodeIdentity(0), // Doesn't matter who adds the policy.
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// Public document so anyone can access if NAC is temporarily disabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

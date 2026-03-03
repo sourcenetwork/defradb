@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -28,6 +29,34 @@ import (
 // Supporting action properties will replace any templated elements with data drawn from these
 // sets.
 var templateDataGenerators = map[string]func(*state.State, int) map[string]string{
+	"CID": func(s *state.State, nodeID int) map[string]string {
+		s.Nodes[nodeID].CompositesLock.RLock()
+		defer s.Nodes[nodeID].CompositesLock.RUnlock()
+		docIDsToCIDs := s.Nodes[nodeID].Composites
+
+		res := map[string]string{}
+
+		s.DocIDsLock.RLock()
+		defer s.DocIDsLock.RUnlock()
+		for colIndex, docIndexes := range s.DocIDs {
+			for docIndex, docID := range docIndexes {
+				cids := docIDsToCIDs[docID.String()]
+				for cidIndex, cid := range cids {
+					templateCIDRef := "CID" +
+						// The index of the collection in the test.
+						strconv.Itoa(colIndex) + "_" +
+						// The index of the document within that collection.
+						strconv.Itoa(docIndex) + "_" +
+						// The index of the CID for that document.
+						// WARNING: This mights be difficult for the writer of the
+						// test to accurately determine when testing P2P functionalities.
+						strconv.Itoa(cidIndex)
+					res[templateCIDRef] = cid.String()
+				}
+			}
+		}
+		return res
+	},
 	"Policy": func(s *state.State, nodeID int) map[string]string {
 		if nodeID >= len(s.PolicyIDs) {
 			return map[string]string{}
@@ -52,7 +81,15 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	"PeerAddresses": func(s *state.State, nodeID int) map[string]string {
 		res := map[string]string{}
 		for i, node := range s.Nodes {
-			addresses, err := node.PeerInfo()
+			// Inject node's identity into the context while generating templates, to bypass NAC for
+			// the gated [PeerInfo] operation, otherwise due to lack of authorization(s) we might not
+			// be able to see the peer addresses at all.
+			opts := options.PeerInfo()
+			identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(i), i)
+			if identOption.HasValue() {
+				opts.SetIdentity(identOption.Value())
+			}
+			addresses, err := node.PeerInfo(s.Ctx, opts)
 			require.NoError(s.T, err)
 
 			for j, address := range addresses {

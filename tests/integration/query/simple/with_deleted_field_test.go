@@ -20,19 +20,19 @@ import (
 func TestQuerySimple_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy"
 				}`,
@@ -43,7 +43,7 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(showDeleted: true) {
 							_deleted

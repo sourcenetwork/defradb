@@ -22,15 +22,15 @@ import (
 func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						preferredStrings: [String]
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string", null]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					"preferredStrings": ["", "the previous", null, "empty string", "blank string", "hitchi"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

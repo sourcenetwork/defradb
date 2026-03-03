@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -47,12 +48,12 @@ func TestDebugExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: age})
+						AVG(GROUP: {field: age})
 					}
 				}`,
 
@@ -70,15 +71,15 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T)
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-							_avg(_group: {field: age})
+							AVG(GROUP: {field: age})
 						}
 					}
 				}`,
@@ -97,16 +98,16 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroup
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
 								}
 						}
@@ -127,18 +128,18 @@ func TestDebugExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAv
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
-									_avg(_group: {field: age})
+									AVG(GROUP: {field: age})
 								}
 						}
 					}

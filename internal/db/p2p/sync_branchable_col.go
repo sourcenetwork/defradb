@@ -20,13 +20,13 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	dbid "github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -51,13 +51,15 @@ type syncBranchableCollectionReply struct {
 //
 // This function call will block until there is a response for the collection.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
-func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	cols, err := p.db.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
-	)
+func (p *P2P) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts *options.SyncBranchableCollectionOptions,
+) error {
+	getColOpts := options.GetCollections().SetCollectionID(collectionID)
+	options.WithIdentity(getColOpts, opts.Identity)
+
+	cols, err := p.db.GetCollections(ctx, getColOpts)
 	if err != nil {
 		return err
 	}
@@ -265,18 +267,16 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 
 // processSyncBranchableCollection processes a branchable collection sync request and returns all head CIDs.
 func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, error) {
-	clientTxn, err := p.db.NewTxn(true)
+	ident, err := p.db.GetNodeIdentity(p.ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer clientTxn.Discard()
+	getColOpts := options.GetCollections().SetCollectionID(collectionID)
+	if ident.HasValue() {
+		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
+	}
 
-	cols, err := p.db.GetCollections(
-		p.ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
-	)
+	cols, err := p.db.GetCollections(p.ctx, getColOpts)
 	if err != nil || len(cols) == 0 {
 		return nil, err
 	}
@@ -286,19 +286,15 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 		return nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-
-	txnCtx := dbid.InitCollectionShortIDCache(p.ctx)
-	txnCtx = datastore.CtxSetTxn(txnCtx, txn)
-	shortID, err := dbid.GetShortCollectionID(txnCtx, col.CollectionID)
+	shortID, err := dbid.GetUncachedShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}
 
 	key := keys.NewHeadstoreColKey(shortID)
-	headset := coreblock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
 
-	cids, _, err := headset.List(txnCtx)
+	cids, _, err := headset.List(p.ctx)
 	if err != nil {
 		return nil, err
 	}

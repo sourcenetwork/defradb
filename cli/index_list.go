@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeIndexListCommand(ctx context.Context) *cobra.Command {
@@ -31,17 +34,20 @@ Otherwise, all indexes in the database will be shown.`,
 
 			switch {
 			case collectionArg != "":
-				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+				opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))
+				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, opt)
 				if err != nil {
 					return err
 				}
-				indexes, err := col.GetIndexes(cmd.Context())
+				indOpt := options.WithIdentity(options.ListCollectionIndexes(), identity.FromContext(cmd.Context()))
+				indexes, err := col.ListIndexes(cmd.Context(), indOpt)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				indexes, err := cliClient.GetAllIndexes(cmd.Context())
+				opt := options.WithIdentity(options.ListIndexes(), identity.FromContext(cmd.Context()))
+				indexes, err := cliClient.ListIndexes(cmd.Context(), opt)
 				if err != nil {
 					return err
 				}

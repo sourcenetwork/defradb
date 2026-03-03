@@ -62,7 +62,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 	}
 }
 
-// NewCollectionIndex creates a new collection index
+// NewCollectionIndex adds a new collection index
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
@@ -84,6 +84,9 @@ func NewCollectionIndex(
 		base.fieldsDescs[i] = field
 		if !isSupportedKind(field.Kind) {
 			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
+		}
+		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
+			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
@@ -127,6 +130,13 @@ type JSONFieldGenerator struct{}
 
 func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
 	json, _ := value.JSON()
+	if json == nil {
+		val, err := client.NewNormalNil(client.FieldKind_NILLABLE_JSON)
+		if err != nil {
+			return err
+		}
+		return f(val)
+	}
 	return client.TraverseJSON(json, func(value client.JSON) error {
 		val, err := client.NewNormalValue(value)
 		if err != nil {
@@ -518,8 +528,8 @@ func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Docum
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set
-		// when first creating the document. For newDoc, this will happen
-		// only if the field hasn't been set when first creating the document
+		// when first adding the document. For newDoc, this will happen
+		// only if the field hasn't been set when first adding the document
 		// AND the field hasn't been set on the update.
 		switch {
 		case getOldValErr != nil && getNewValErr != nil:

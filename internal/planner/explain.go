@@ -30,11 +30,19 @@ type explainablePlanNode interface {
 	Explain(explainType request.ExplainType) (map[string]any, error)
 }
 
+// typeJoinExplainable is implemented by type join nodes (typeJoinOne, typeJoinMany)
+// to provide access to parent and child plans for explain.
+type typeJoinExplainable interface {
+	planNode
+	parentPlan() planNode
+	childPlan() planNode
+}
+
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
 var (
 	_ explainablePlanNode = (*averageNode)(nil)
 	_ explainablePlanNode = (*countNode)(nil)
-	_ explainablePlanNode = (*createNode)(nil)
+	_ explainablePlanNode = (*addNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)
 	_ explainablePlanNode = (*deleteNode)(nil)
 	_ explainablePlanNode = (*groupNode)(nil)
@@ -58,7 +66,7 @@ const (
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
 	inputLabel          = "input"
-	createInputLabel    = "create"
+	addInputLabel       = "add"
 	updateInputLabel    = "update"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
@@ -94,55 +102,23 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 		nodeLabelTitle := strcase.ToLowerCamel(node.Kind())
 		explainGraph[nodeLabelTitle] = multiChildExplainGraph
 
-	case *typeJoinMany:
+	case typeJoinExplainable:
 		var explainGraphBuilder = map[string]any{}
 
-		// If root is not the last child then keep walking and explaining the root graph.
-		if node.parentSide.plan != nil {
-			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.parentSide.plan)
+		if node.parentPlan() != nil {
+			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.parentPlan())
 			if err != nil {
 				return nil, err
 			}
-			// Add the explaination of the rest of the explain graph under the "root" graph.
 			explainGraphBuilder[joinRootLabel] = indexJoinRootExplainGraph
 		}
 
-		if node.childSide.plan != nil {
-			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.childSide.plan)
+		if node.childPlan() != nil {
+			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.childPlan())
 			if err != nil {
 				return nil, err
 			}
-			// Add the explaination of the rest of the explain graph under the "subType" graph.
 			explainGraphBuilder[joinSubTypeLabel] = indexJoinSubTypeExplainGraph
-		}
-
-		nodeLabelTitle := strcase.ToLowerCamel(node.Kind())
-		explainGraph[nodeLabelTitle] = explainGraphBuilder
-
-	case *typeJoinOne:
-		var explainGraphBuilder = map[string]any{}
-
-		// If root is not the last child then keep walking and explaining the root graph.
-		if node.parentSide.plan != nil {
-			indexJoinRootExplainGraph, err := buildDebugExplainGraph(node.parentSide.plan)
-			if err != nil {
-				return nil, err
-			}
-			// Add the explaination of the rest of the explain graph under the "root" graph.
-			explainGraphBuilder[joinRootLabel] = indexJoinRootExplainGraph
-		} else {
-			explainGraphBuilder[joinRootLabel] = nil
-		}
-
-		if node.childSide.plan != nil {
-			indexJoinSubTypeExplainGraph, err := buildDebugExplainGraph(node.childSide.plan)
-			if err != nil {
-				return nil, err
-			}
-			// Add the explaination of the rest of the explain graph under the "subType" graph.
-			explainGraphBuilder[joinSubTypeLabel] = indexJoinSubTypeExplainGraph
-		} else {
-			explainGraphBuilder[joinSubTypeLabel] = nil
 		}
 
 		nodeLabelTitle := strcase.ToLowerCamel(node.Kind())
@@ -308,6 +284,28 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 		}
 		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
 		executeExplainInfo[explainNodeLabelTitle] = multiChildExplainGraph
+
+	case typeJoinExplainable:
+		explainGraphBuilder := map[string]any{}
+
+		if executedNode.parentPlan() != nil {
+			rootExplainGraph, err := collectExecuteExplainInfo(executedNode.parentPlan())
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinRootLabel] = rootExplainGraph
+		}
+
+		if executedNode.childPlan() != nil {
+			subTypeExplainGraph, err := collectExecuteExplainInfo(executedNode.childPlan())
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinSubTypeLabel] = subTypeExplainGraph
+		}
+
+		nodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
+		executeExplainInfo[nodeLabelTitle] = explainGraphBuilder
 
 	case explainablePlanNode:
 		executeExplainBuilder, err := executedNode.Explain(request.ExecuteExplain)

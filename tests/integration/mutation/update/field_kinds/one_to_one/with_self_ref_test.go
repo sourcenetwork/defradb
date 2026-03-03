@@ -19,12 +19,12 @@ import (
 )
 
 func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
-	user1ID := "bae-0e45c185-722e-5795-9205-98d8a488e364"
+	user1ID := "bae-1d57efc8-a1f3-5b0e-9d08-51e03359285e"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						boss: User @primary
@@ -32,12 +32,12 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -46,12 +46,12 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 				DocID: 1,
 				Doc: fmt.Sprintf(
 					`{
-						"boss_id": "%s"
+						"_bossID": "%s"
 					}`,
 					user1ID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -77,7 +77,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {

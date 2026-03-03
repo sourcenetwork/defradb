@@ -20,8 +20,8 @@ import (
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -38,7 +38,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -46,7 +46,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -54,34 +54,34 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -143,8 +143,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -161,7 +161,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -169,7 +169,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -177,34 +177,34 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -270,8 +270,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float
@@ -295,21 +295,21 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				Doc: `{
 						"currency": "GBP",
 						"value": 12.99
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				Doc: `{
 						"currency": "SEK",
 						"value": 129
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -317,7 +317,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Cornelia Funke",
@@ -325,37 +325,37 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"verified": false
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -433,8 +433,8 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Book {
 							name: String
 							rating: Float
@@ -458,21 +458,21 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 						}
 					`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				Doc: `{
 						"currency": "GBP",
 						"value": 12.99
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				Doc: `{
 						"currency": "SEK",
 						"value": 129
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -480,7 +480,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 						"verified": true
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Cornelia Funke",
@@ -488,37 +488,37 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 						"verified": false
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

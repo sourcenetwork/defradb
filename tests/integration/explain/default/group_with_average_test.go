@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -45,18 +46,18 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: age})
+						AVG(GROUP: {field: age})
 					}
 				}`,
 
 				ExpectedPatterns: groupAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -71,7 +72,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 									"orderBy":        nil,
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -89,10 +90,10 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"fieldName": "_group",
+									"fieldName": "GROUP",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -106,10 +107,10 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 							"sources": []dataMap{
 								{
 									"childFieldName": "age",
-									"fieldName":      "_group",
+									"fieldName":      "GROUP",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -130,22 +131,22 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-							_avg(_group: {field: age})
+							AVG(GROUP: {field: age})
 						}
 					}
 				}`,
 
 				ExpectedPatterns: groupAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -174,7 +175,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"fieldName": "_group",
+									"fieldName": "GROUP",
 									"filter":    nil,
 								},
 							},
@@ -186,8 +187,8 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"childFieldName": "_avg",
-									"fieldName":      "_group",
+									"childFieldName": "AVG",
+									"fieldName":      "GROUP",
 									"filter":         nil,
 								},
 							},
@@ -207,16 +208,16 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
 								}
 						}
@@ -225,7 +226,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 
 				ExpectedPatterns: groupAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -254,7 +255,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"fieldName": "_group",
+									"fieldName": "GROUP",
 									"filter":    nil,
 								},
 							},
@@ -266,8 +267,8 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"childFieldName": "_avg",
-									"fieldName":      "_group",
+									"childFieldName": "AVG",
+									"fieldName":      "GROUP",
 									"filter":         nil,
 								},
 							},
@@ -287,18 +288,18 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [name]) {
 						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
+						AVG(GROUP: {field: AVG})
+						GROUP(groupBy: [verified]) {
 							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
+								AVG(GROUP: {field: age})
+								GROUP (groupBy: [age]){
 									age
-									_avg(_group: {field: age})
+									AVG(GROUP: {field: age})
 								}
 						}
 					}
@@ -306,7 +307,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 
 				ExpectedPatterns: groupAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -335,7 +336,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"fieldName": "_group",
+									"fieldName": "GROUP",
 									"filter":    nil,
 								},
 							},
@@ -347,8 +348,8 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"childFieldName": "_avg",
-									"fieldName":      "_group",
+									"childFieldName": "AVG",
+									"fieldName":      "GROUP",
 									"filter":         nil,
 								},
 							},

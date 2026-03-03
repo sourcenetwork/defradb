@@ -13,36 +13,37 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {Age: {_gt: 26}}})
+					COUNT(Users: {filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},
@@ -54,33 +55,33 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30,
 					"CreatedAt": "2017-09-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 32,
 					"CreatedAt": "2017-10-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
+					COUNT(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},

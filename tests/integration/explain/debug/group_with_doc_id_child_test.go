@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,14 +24,14 @@ func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
 						groupBy: [age]
 					) {
 						age
-						_group(docID: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
+						GROUP(docID: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
 							name
 						}
 					}

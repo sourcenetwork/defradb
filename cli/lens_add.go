@@ -19,6 +19,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
@@ -40,13 +42,13 @@ will return the same CID without duplicating storage.`,
 			case lensFile != "":
 				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 1 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 1:
@@ -63,7 +65,8 @@ will return the same CID without duplicating storage.`,
 				return NewErrInvalidLensConfig(err)
 			}
 
-			lensID, err := cliClient.AddLens(cmd.Context(), lensCfg)
+			opt := options.WithIdentity(options.AddLens(), identity.FromContext(cmd.Context()))
+			lensID, err := cliClient.AddLens(cmd.Context(), lensCfg, opt)
 			if err != nil {
 				return err
 			}

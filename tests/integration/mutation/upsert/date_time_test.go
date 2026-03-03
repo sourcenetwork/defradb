@@ -21,33 +21,33 @@ func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						created_at: DateTime
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
 			// Perform mutations to update using UTC_NOW
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					john: upsert_Users(
 						filter: {name: {_eq: "John"}},
-						create: {name: "John", created_at: UTC_NOW},
+						add: {name: "John", created_at: UTC_NOW},
 						update: {created_at: UTC_NOW}
 					) {
 						created_at
 					}
 					chris: upsert_Users(
 						filter: {name: {_eq: "Chris"}},
-						create: {name: "Chris", created_at: UTC_NOW},
+						add: {name: "Chris", created_at: UTC_NOW},
 						update: {created_at: UTC_NOW}
 					) {
 						created_at

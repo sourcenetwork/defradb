@@ -21,6 +21,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // tlsKey is the TLS private key in PEM format
@@ -75,7 +77,7 @@ func TestServerServeWithNoListener(t *testing.T) {
 
 func TestServerServeWithTLSAndNoListener(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetCertPath(certPath).SetKeyPath(keyPath))
 	require.NoError(t, err)
 
 	err = srv.Serve()
@@ -83,7 +85,7 @@ func TestServerServeWithTLSAndNoListener(t *testing.T) {
 }
 
 func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAddress("invalid"))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("invalid"))
 	require.NoError(t, err)
 
 	err = srv.SetListener()
@@ -92,7 +94,7 @@ func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
 
 func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("invalid").SetCertPath(certPath).SetKeyPath(keyPath))
 	require.NoError(t, err)
 
 	err = srv.SetListener()
@@ -102,10 +104,10 @@ func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
 func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
 	srv, err := NewServer(
 		testHandler,
-		WithAddress("invalid"),
-		WithTLSCertPath("invalid.crt"),
-		WithTLSKeyPath("invalid.key"),
-		WithAddress("127.0.0.1:30001"),
+		options.NodeHTTP().
+			SetCertPath("invalid.crt").
+			SetKeyPath("invalid.key").
+			SetAddress("127.0.0.1:30001"),
 	)
 	require.NoError(t, err)
 
@@ -118,7 +120,7 @@ func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
 }
 
 func TestServerListenAndServeWithAddress(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:30001"))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
 
 	go func() {
@@ -143,7 +145,7 @@ func TestServerListenAndServeWithAddress(t *testing.T) {
 
 func TestServerListenAndServeWithTLS(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:8443"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("127.0.0.1:8443").SetCertPath(certPath).SetKeyPath(keyPath))
 	require.NoError(t, err)
 
 	go func() {
@@ -167,7 +169,7 @@ func TestServerListenAndServeWithTLS(t *testing.T) {
 }
 
 func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAllowedOrigins("localhost"), WithAddress("127.0.0.1:30001"))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAllowedOrigins("localhost").SetAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
 
 	go func() {
@@ -198,19 +200,19 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 }
 
 func TestServerWithReadTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithReadTimeout(time.Second))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetReadTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.ReadTimeout)
 }
 
 func TestServerWithWriteTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithWriteTimeout(time.Second))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetWriteTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.WriteTimeout)
 }
 
 func TestServerWithIdleTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithIdleTimeout(time.Second))
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetIdleTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.IdleTimeout)
 }

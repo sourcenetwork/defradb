@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
+func TestCollectionVersionInlineArrayAddsCollectionGivenSingleType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -47,18 +47,18 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
+func TestCollectionVersionInlineArrayAddsCollectionGivenSecondType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {
 						pageNumbers: [Int!]
 					}

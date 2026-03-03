@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
@@ -41,7 +40,7 @@ func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return cid.String(), nil
+	return cid, nil
 }
 
 func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
@@ -52,16 +51,16 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 
 	result := make(map[string]model.Lens, len(lenses))
 	for cid, lens := range lenses {
-		result[cid.String()] = lens
+		result[cid] = lens
 	}
 	return result, nil
 }
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
-	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
+	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			dstFound = false
 		} else {
 			return "", err
@@ -69,9 +68,9 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	srcFound := true
-	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceSchemaVersionID)
+	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			srcFound = false
 		} else {
 			return "", err
@@ -80,7 +79,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	if !srcFound {
 		sourceCol = client.CollectionVersion{
-			VersionID:      cfg.SourceSchemaVersionID,
+			VersionID:      cfg.SourceCollectionVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
@@ -95,7 +94,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	if !dstFound {
 		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
-			VersionID:      cfg.DestinationSchemaVersionID,
+			VersionID:      cfg.DestinationCollectionVersionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
@@ -103,7 +102,8 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
+			cfg.DestinationCollectionVersionID)
 	}
 
 	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
@@ -113,7 +113,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
 		SourceCollectionID: sourceCol.VersionID,
-		Transform:          immutable.Some(id.String()),
+		Transform:          immutable.Some(id),
 	})
 
 	err = description.SaveCollection(ctx, dstCol)
@@ -133,7 +133,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		}
 	}
 
-	return id.String(), nil
+	return id, nil
 }
 
 // shouldReindexAfterMigration determines if reindexing is needed after adding a migration.
@@ -151,7 +151,7 @@ func (db *DB) shouldReindexAfterMigration(
 
 	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return false, client.CollectionVersion{}, nil
 		}
 		return false, client.CollectionVersion{}, err

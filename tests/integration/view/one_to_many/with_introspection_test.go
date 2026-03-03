@@ -21,8 +21,8 @@ import (
 func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -33,7 +33,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
@@ -109,7 +109,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 					"__type": map[string]any{
 						"name": "BookView",
 						// Note: `_docID`, `_version`, `_deleted`, etc should not be present,
-						// although aggregates and `_group` should be.
+						// although aggregates and `GROUP` should be.
 						// There should also be no `Author` field - the relationship field
 						// should only exist on the parent.
 						"fields": collection_version.DefaultViewObjFields.Append(

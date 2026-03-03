@@ -41,7 +41,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
+		fixtures.ForCollection(ctx, "user_simple", makeUserAgeIndexOption()),
 		1,
 		userSimpleWithFilterQuery,
 		false,
@@ -56,7 +56,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
+		fixtures.ForCollection(ctx, "user_simple", makeUserAgeIndexOption()),
 		10,
 		userSimpleWithFilterQuery,
 		false,
@@ -71,7 +71,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1000(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
+		fixtures.ForCollection(ctx, "user_simple", makeUserAgeIndexOption()),
 		1000,
 		userSimpleWithFilterQuery,
 		false,
@@ -86,7 +86,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10000(b *testing.B) 
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
+		fixtures.ForCollection(ctx, "user_simple", makeUserAgeIndexOption()),
 		10000,
 		userSimpleWithFilterQuery,
 		false,

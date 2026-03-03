@@ -19,32 +19,32 @@ import (
 
 func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedCommit(t *testing.T) {
 	const userDocID = "bae-32a035a1-1d5c-5a38-9637-04abfe64dd16"
-	const deviceDocID = "bae-2004b120-5f2b-5b37-bd42-2c956d11749a"
+	const deviceDocID = "bae-3d4ad011-fdf2-502a-a672-9df76b4bbc51"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						devices: [Device]
 					}
 
 					type Device {
-						model: String 
+						model: String
 						manufacturer: String
 						owner: User
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -53,7 +53,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				},
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -66,6 +66,21 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
+							"docID":     userDocID,
+							"fieldName": "name",
+						},
+						{
+							"delta":     nil,
+							"docID":     userDocID,
+							"fieldName": "_C",
+						},
+						{
+							"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
+							"docID":     deviceDocID,
+							"fieldName": "_ownerID",
+						},
+						{
 							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
 							"docID":     deviceDocID,
 							"fieldName": "manufacturer",
@@ -76,23 +91,8 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 							"fieldName": "model",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
-							"docID":     deviceDocID,
-							"fieldName": "owner_id",
-						},
-						{
 							"delta":     nil,
 							"docID":     deviceDocID,
-							"fieldName": "_C",
-						},
-						{
-							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
-							"docID":     userDocID,
-							"fieldName": "name",
-						},
-						{
-							"delta":     nil,
-							"docID":     userDocID,
 							"fieldName": "_C",
 						},
 					},

@@ -13,15 +13,16 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_avg
+					AVG
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -34,9 +35,9 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_avg(Users: {})
+					AVG(Users: {})
 				}`,
 				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 			},
@@ -49,12 +50,12 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age})
+					AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(0),
+					"AVG": float64(0),
 				},
 			},
 		},
@@ -66,24 +67,24 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 28
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age})
+					AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(29),
+					"AVG": float64(29),
 				},
 			},
 		},
@@ -95,9 +96,9 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					average: _avg(Users: {field: Age})
+					average: AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
 					"average": float64(0),

@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -43,7 +44,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -52,7 +53,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 						offset: 1
 					) {
 						name
-						_group {
+						GROUP {
 							age
 						}
 					}
@@ -72,7 +73,7 @@ func TestDebugExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *te
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -80,7 +81,7 @@ func TestDebugExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *te
 						limit: 1
 					) {
 						name
-						_group(limit: 2) {
+						GROUP(limit: 2) {
 							age
 						}
 					}

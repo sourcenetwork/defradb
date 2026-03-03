@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesTestAddField(t *testing.T) {
+func TestCollectionVersionUpdatesTestAddField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Users" },
@@ -35,7 +35,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -51,17 +51,17 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
+func TestCollectionVersionUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Author" },
@@ -70,7 +70,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 				`,
 				ExpectedError: "test failed",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

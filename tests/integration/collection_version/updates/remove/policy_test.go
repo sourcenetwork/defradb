@@ -28,36 +28,27 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
                     name: test
                     description: a test policy which marks a collection in a database as a resource
 
-                    actor:
-                      name: actor
-
                     resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
+                    - name: users
+                      permissions:
+                      - name: read
+                        expr: reader
+                      - name: update
+                      - name: delete
+                      relations:
+                      - name: reader
+                        types:
+                        - actor
+                      - name: admin
+                        manages:
+                        - reader
+                        types:
+                        - actor
                 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -68,7 +59,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
 				`,
 			},
 
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

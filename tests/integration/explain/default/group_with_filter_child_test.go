@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,12 +24,12 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [age]) {
 						age
-						_group(filter: {age: {_gt: 63}}) {
+						GROUP(filter: {age: {_gt: 63}}) {
 							name
 						}
 					}
@@ -36,7 +37,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -63,7 +64,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",
@@ -84,7 +85,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 			Author (
@@ -92,7 +93,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 				filter: {age: {_gt: 62}}
 			) {
 				age
-				_group(filter: {age: {_gt: 63}}) {
+				GROUP(filter: {age: {_gt: 63}}) {
 					name
 				}
 			}
@@ -100,7 +101,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -131,7 +132,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 									"_gt": int32(62),
 								},
 							},
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",

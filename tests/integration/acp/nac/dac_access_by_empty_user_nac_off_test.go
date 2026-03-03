@@ -33,24 +33,24 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNod
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
-			// Temporarily disable NAC to test the behavior when NAC is temporarily disbaled.
+			// Temporarily disable NAC to test the behavior when NAC is temporarily disabled.
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},
 
 			// Empty user can not access the private document.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -89,11 +89,11 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNon
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -101,7 +101,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNon
 
 			// Empty user can not access the private document.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -140,18 +140,18 @@ func TestNAC_Disabled_WithDACEnabled_AccessEmptyUser_PublicDocument_CanAccess(t 
 				Identity: testUtils.NodeIdentity(0), // Doesn't matter who adds the policy.
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// Empty user can access the public document as NAC is not enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {

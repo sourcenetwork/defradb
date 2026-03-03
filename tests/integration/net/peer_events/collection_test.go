@@ -23,18 +23,18 @@ func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTo
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -59,8 +59,8 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -69,11 +69,11 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0, 1},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},
@@ -100,22 +100,22 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        2,
 				CollectionIDs: []int{0},
 			},
@@ -144,18 +144,18 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -169,7 +169,7 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 					0: {1},
 				},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -191,8 +191,8 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -201,11 +201,11 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0, 1},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},
@@ -220,7 +220,7 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 					1: {1},
 				},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},

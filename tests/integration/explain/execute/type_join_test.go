@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,11 +24,11 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -49,17 +50,29 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(0),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(8),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(2),
+															"filterMatches": uint64(2),
+															"scanNode": dataMap{
+																"iterations":   uint64(2),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(6),
+																"indexFetches": uint64(0),
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -81,11 +94,11 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -113,34 +126,58 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											{
 												"typeIndexJoin": dataMap{
 													"iterations": uint64(3),
-													"scanNode": dataMap{
-														"iterations":   uint64(3),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(8),
-														"indexFetches": uint64(0),
-													},
-													"subTypeScanNode": dataMap{
-														"iterations":   uint64(2),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(6),
-														"indexFetches": uint64(0),
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(3),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(8),
+																"indexFetches": uint64(0),
+															},
+														},
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(2),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(2),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(6),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
 											{
 												"typeIndexJoin": dataMap{
 													"iterations": uint64(3),
-													"scanNode": dataMap{
-														"iterations":   uint64(3),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(8),
-														"indexFetches": uint64(0),
-													},
-													"subTypeScanNode": dataMap{
-														"iterations":   uint64(2),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(6),
-														"indexFetches": uint64(0),
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(3),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(8),
+																"indexFetches": uint64(0),
+															},
+														},
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(2),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(2),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(6),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
@@ -164,11 +201,11 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -194,17 +231,50 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(0),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(8),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(2),
+															"filterMatches": uint64(2),
+															"typeIndexJoin": dataMap{
+																"iterations": uint64(2),
+																"typeJoinOne": dataMap{
+																	"root": dataMap{
+																		"scanNode": dataMap{
+																			"iterations":   uint64(2),
+																			"docFetches":   uint64(2),
+																			"fieldFetches": uint64(6),
+																			"indexFetches": uint64(0),
+																		},
+																	},
+																	"subType": dataMap{
+																		"selectTopNode": dataMap{
+																			"selectNode": dataMap{
+																				"iterations":    uint64(2),
+																				"filterMatches": uint64(2),
+																				"scanNode": dataMap{
+																					"iterations":   uint64(2),
+																					"docFetches":   uint64(2),
+																					"fieldFetches": uint64(4),
+																					"indexFetches": uint64(0),
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -226,13 +296,11 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
+			add2AddressDocuments(),
+			add2AuthorContactDocuments(),
+			add2AuthorDocuments(),
 
-			// Query from ContactAddress (secondary side) to AuthorContact (primary side).
-			// This should use the unique index on AuthorContact.address_id to find the related contact.
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress {
 						city
@@ -255,19 +323,29 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
-											},
-											// The subTypeScanNode uses the unique index (indexFetches: 2)
-											// to find AuthorContact documents by their address_id field.
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(4),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(2),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(4),
+															"filterMatches": uint64(2),
+															"scanNode": dataMap{
+																"iterations":   uint64(4),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(6),
+																"indexFetches": uint64(2),
+															},
+														},
+													},
+												},
 											},
 										},
 									},

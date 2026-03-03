@@ -1,5 +1,5 @@
 # The below policy contains a valid document acp resource interface that can be linked to a collection
-# object during the schema add command to have access control enabled for documents of that collection.
+# object during the collection add command to have access control enabled for documents of that collection.
 #
 # This policy specifically has the manages attribute defined under admin relation which gives admin
 # of a resource, the ability to add/remove relationships with `reader` relation name.
@@ -10,51 +10,41 @@ name: An Example Document ACP Policy With Manages
 
 description: A Document ACP Policy With Manages
 
-actor:
-  name: actor
-
 resources:
-  users:
+  - name: users
     permissions:
-      read:
-        expr: owner + writer + updater + deleter + reader
-
-      update:
-        expr: owner + writer + updater
-
-      delete:
-        expr: owner + writer + deleter
-
-      nothing:
+      - name: read
+        expr: writer + updater + deleter + reader
+      - name: update
+        expr: writer + updater
+      - name: delete
+        expr: writer + deleter
+      - name: nothing
         expr: dummy
 
     relations:
-      owner:
+      - name: reader
         types:
           - actor
 
-      reader:
+      - name: updater
         types:
           - actor
 
-      updater:
+      - name: deleter
         types:
           - actor
 
-      deleter:
+      - name: writer
         types:
           - actor
 
-      writer:
-        types:
-          - actor
-
-      admin:
+      - name: admin
         manages:
           - reader
         types:
           - actor
 
-      dummy:
+      - name: dummy
         types:
           - actor

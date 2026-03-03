@@ -11,11 +11,17 @@
 package action
 
 import (
+	"strings"
+	"time"
+
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -41,12 +47,16 @@ func refreshCollections(
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		// Inject node's identity into the context while refreshing so the [GetCollections] call
+		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		opts := options.GetCollections()
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		allCollections, err := node.GetCollections(s.Ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -80,4 +90,28 @@ func appendCollectionVersion(s *state.State, versionID string) {
 	}
 
 	s.CollectionVersions = append(s.CollectionVersions, versionID)
+}
+
+// withRetryOnNode attempts to perform the given action, retrying up to a DB-defined
+// maximum attempt count if a transaction conflict error is returned.
+//
+// If a P2P-sync commit for the given document is already in progress this
+// Save call can fail as the transaction will conflict. We dont want to worry
+// about this in our tests so we just retry a few times until it works (or the
+// retry limit is breached - important incase this is a different error)
+func withRetryOnNode(
+	node clients.Client,
+	action func() error,
+) error {
+	for i := 0; i < node.MaxTxnRetries(); i++ {
+		err := action()
+		// Check the contents of the error instead of the type, because it may have
+		// lost its type while passing through the C binding layer.
+		if err != nil && strings.Contains(err.Error(), corekv.ErrTxnConflict.Error()) {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		return err
+	}
+	return nil
 }

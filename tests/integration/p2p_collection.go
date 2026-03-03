@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -22,15 +23,15 @@ import (
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
-	NonExistentCollectionID         int    = -1
-	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+	NonExistentCollectionID   int    = -1
+	NonExistentCollectionRoot string = "NonExistentCollectionRoot"
 )
 
-// SubscribeToCollection sets up a subscription on the given node to the given collection.
+// AddCollectionSubscription sets up a subscription on the given node to the given collection.
 //
 // Changes made to subscribed collections in peers connected to this node will be synced from
 // them to this node.
-type SubscribeToCollection struct {
+type AddCollectionSubscription struct {
 	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
 	// Changes made to subscribed collections in peers connected to this node will be synced from
@@ -54,9 +55,9 @@ type SubscribeToCollection struct {
 	ExpectedError string
 }
 
-// UnsubscribeToCollection removes the given collections from the set of active subscriptions on
+// DeleteCollectionSubscription removes the given collections from the set of active subscriptions on
 // the given node.
-type UnsubscribeToCollection struct {
+type DeleteCollectionSubscription struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
 
@@ -77,9 +78,9 @@ type UnsubscribeToCollection struct {
 	ExpectedError string
 }
 
-// GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
+// ListP2PCollections gets the active subscriptions for the given node and compares them against the
 // expected results.
-type GetAllP2PCollections struct {
+type ListP2PCollections struct {
 	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
 	NodeID int
 
@@ -98,19 +99,19 @@ type GetAllP2PCollections struct {
 	ExpectedError string
 }
 
-// subscribeToCollection sets up a collection subscription on the given node/collection.
+// addCollectionSubscription sets up a collection subscription on the given node/collection.
 //
 // Any errors generated during this process will result in a test failure.
-func subscribeToCollection(
+func addCollectionSubscription(
 	s *state.State,
-	action SubscribeToCollection,
+	action AddCollectionSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 
@@ -118,10 +119,11 @@ func subscribeToCollection(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PCollections(ctx, collectionNames...)
+	opt := options.WithIdentity(options.AddP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	err := node.AddP2PCollections(s.Ctx, collectionNames, opt)
 	if err == nil {
-		waitForSubscribeToCollectionEvent(s, action)
+		waitForAddCollectionSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -133,19 +135,19 @@ func subscribeToCollection(
 	time.Sleep(100 * time.Millisecond)
 }
 
-// unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
+// deleteCollectionSubscription removes the given collections from subscriptions on the given nodes.
 //
 // Any errors generated during this process will result in a test failure.
-func unsubscribeToCollection(
+func deleteCollectionSubscription(
 	s *state.State,
-	action UnsubscribeToCollection,
+	action DeleteCollectionSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 
@@ -153,10 +155,11 @@ func unsubscribeToCollection(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PCollections(ctx, collectionNames...)
+	opt := options.WithIdentity(options.DeleteP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	err := node.DeleteP2PCollections(s.Ctx, collectionNames, opt)
 	if err == nil {
-		waitForUnsubscribeToCollectionEvent(s, action)
+		waitForDeleteCollectionSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -168,13 +171,13 @@ func unsubscribeToCollection(
 	time.Sleep(100 * time.Millisecond)
 }
 
-// getAllP2PCollections gets all the active peer subscriptions and compares them against the
+// listP2PCollections gets all the active peer subscriptions and compares them against the
 // given expected results.
 //
 // Any errors generated during this process will result in a test failure.
-func getAllP2PCollections(
+func listP2PCollections(
 	s *state.State,
-	action GetAllP2PCollections,
+	action ListP2PCollections,
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
@@ -183,8 +186,9 @@ func getAllP2PCollections(
 	}
 
 	node := s.Nodes[action.NodeID]
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	cols, err := node.GetAllP2PCollections(ctx)
+	opt := options.WithIdentity(options.ListP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	cols, err := node.ListP2PCollections(s.Ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

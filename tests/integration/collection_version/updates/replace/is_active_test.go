@@ -20,12 +20,12 @@ import (
 func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -36,7 +36,7 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -53,12 +53,12 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -69,7 +69,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -80,7 +80,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -99,19 +99,19 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 func TestColVersionUpdateReplaceIsActive_MultipleVersionsToTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

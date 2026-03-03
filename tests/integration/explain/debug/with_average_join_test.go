@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -45,12 +46,12 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						_avg(books: {field: pages})
+						AVG(books: {field: pages})
 					}
 				}`,
 
@@ -68,12 +69,12 @@ func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testi
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						_avg(
+						AVG(
 							books: {field: pages},
 							articles: {field: pages, filter: {pages: {_gt: 3}}}
 						)

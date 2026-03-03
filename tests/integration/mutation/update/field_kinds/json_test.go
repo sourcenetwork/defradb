@@ -20,14 +20,14 @@ import (
 func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						custom: JSON
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"custom": {"foo": "bar"}
 				}`,
@@ -37,7 +37,7 @@ func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
