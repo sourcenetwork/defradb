@@ -55,8 +55,7 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 type selectTopNode struct {
 	docMapper
 
-	update     *updateNode
-	group      *groupNode
+	group *groupNode
 	order      *orderNode
 	limit      *limitNode
 	aggregates []aggregateNode
@@ -262,56 +261,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	// @todo: simulate splitting for now
 	origScan, isScanNode := n.source.(*scanNode)
 	if isScanNode {
-		origScan.showDeleted = n.selectReq.ShowDeleted
-		origScan.filter = n.filter
-		if n.selectReq.OrderBy != nil {
-			origScan.ordering = n.selectReq.OrderBy.Conditions
-		}
-		n.filter = nil
-
-		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
-		// query, which means we need to propagate the values to the underlying VersionedFetcher
-		if n.selectReq.Cid.HasValue() {
-			c, err := cid.Decode(n.selectReq.Cid.Value())
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
-			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
-			// as a prefix. And with this design limitation this is
-			// currently the least bad way of passing the cid in to the fetcher.
-			origScan.Prefixes(
-				[]keys.Walkable{
-					keys.HeadstoreDocKey{
-						Cid: c,
-					},
-				},
-			)
-		} else if n.selectReq.DocIDs.HasValue() {
-			shortID, err := id.GetShortCollectionID(
-				n.planner.ctx,
-				sourcePlan.collection.Version().CollectionID,
-			)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
-			// if we have a FindByDocID filter, create a prefix for it
-			// and propagate it to the scanNode
-			// @todo: When running the optimizer, check if the filter object
-			// contains a _docID equality condition, and upgrade it to a point lookup
-			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
-
-			for i, docID := range n.selectReq.DocIDs.Value() {
-				prefixes[i] = keys.DataStoreKey{
-					CollectionShortID: shortID,
-					DocID:             docID,
-				}
-			}
-			origScan.Prefixes(prefixes)
+		err := n.initScan(origScan)
+		if err != nil {
+			return nil, nil, err
 		}
 	}
 
@@ -320,16 +272,69 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		return nil, nil, err
 	}
 
-	if isScanNode {
-		origScan.index = findIndexByFilteringField(origScan)
-		if !origScan.index.HasValue() {
-			// if we can not use index for filtering, try to use index for ordering
-			origScan.index = findIndexByOrderingField(origScan)
+	return aggregates, similarity, nil
+}
+
+func (n *selectNode) initScan(scan *scanNode) error {
+	scan.showDeleted = n.selectReq.ShowDeleted
+	scan.filter = n.filter
+	if n.selectReq.OrderBy != nil {
+		scan.ordering = n.selectReq.OrderBy.Conditions
+	}
+	n.filter = nil
+
+	// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
+	// query, which means we need to propagate the values to the underlying VersionedFetcher
+	if n.selectReq.Cid.HasValue() {
+		c, err := cid.Decode(n.selectReq.Cid.Value())
+		if err != nil {
+			return err
 		}
-		origScan.initFetcher(n.selectReq.Cid)
+
+		// This exists because the fetcher interface demands a []Prefixes, yet the versioned
+		// fetcher type (that will be the only one consuming this []Prefixes) does not use it
+		// as a prefix. And with this design limitation this is
+		// currently the least bad way of passing the cid in to the fetcher.
+		scan.Prefixes(
+			[]keys.Walkable{
+				keys.HeadstoreDocKey{
+					Cid: c,
+				},
+			},
+		)
+	} else if n.selectReq.DocIDs.HasValue() {
+		shortID, err := id.GetShortCollectionID(
+			n.planner.ctx,
+			n.collection.Version().CollectionID,
+		)
+		if err != nil {
+			return err
+		}
+
+		// If we *just* have a DocID(s), run a FindByDocID(s) optimization
+		// if we have a FindByDocID filter, create a prefix for it
+		// and propagate it to the scanNode
+		// @todo: When running the optimizer, check if the filter object
+		// contains a _docID equality condition, and upgrade it to a point lookup
+		// instead of a prefix scan + filter via the Primary Index (0), like here:
+		prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+
+		for i, docID := range n.selectReq.DocIDs.Value() {
+			prefixes[i] = keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}
+		}
+		scan.Prefixes(prefixes)
 	}
 
-	return aggregates, similarity, nil
+	scan.index = findIndexByFilteringField(scan)
+	if !scan.index.HasValue() {
+		// if we can not use index for filtering, try to use index for ordering
+		scan.index = findIndexByOrderingField(scan)
+	}
+	scan.initFetcher(n.selectReq.Cid)
+	return nil
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
@@ -516,6 +521,15 @@ func (p *Planner) SelectFromSource(
 	fromCollection bool,
 	collection client.Collection,
 ) (planNode, error) {
+	return p.SelectTopNodeFromSource(selectReq, source, fromCollection, collection)
+}
+
+func (p *Planner) SelectTopNodeFromSource(
+	selectReq *mapper.Select,
+	source planNode,
+	fromCollection bool,
+	collection client.Collection,
+) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:    p,
 		source:     source,

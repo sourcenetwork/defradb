@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -110,9 +108,6 @@ func (p *parallelNode) Init() error {
 	p.children = newChildren
 	p.childIndexes = newChildIndexes
 
-	for _, c := range p.children {
-		fmt.Printf("child: %T %+v\n", c, c)
-	}
 	return p.applyToPlans(func(n planNode) error {
 		return n.Init()
 	})
@@ -189,7 +184,6 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 		return false, nil
 	}
 
-
 	// pass the doc key as a reference through the prefixes interface
 	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
 	plan.Prefixes(prefixes)
@@ -229,7 +223,7 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	switch sourceNode := n.source.(type) {
 	// if its a scan node, we either replace or create a multinode
-	case *scanNode, *pipeNode:
+	case *updateNode, *scanNode, *pipeNode:
 		switch newPlan.(type) {
 		case *typeIndexJoin:
 			n.source = newPlan
@@ -249,13 +243,31 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	case *typeIndexJoin:
 		var multiscan *multiScanNode
 		var source planNode
-		origScan, _ := walkAndFindPlanType[*scanNode](newPlan)
-		if origScan != nil {
-			multiscan = &multiScanNode{scanNode: origScan}
-			if err := n.planner.walkAndReplacePlan(n.source, origScan, multiscan); err != nil {
+		var origSource planNode
+
+		// we need to replace the original "source" with the appropriate
+		// multiScanNode type. However, not all "source" types are equal.
+		// For query ops the target source is a `*scanNode`, for mutations
+		// the target source is either a `*createNode`, `*updateNode`, or
+		// a `*upsertNode`
+		//
+		// This is necessary since the `*typeIndexJoin` join will read
+		// from this source multiple times per iteration, so we need
+		// to make sure that we're chaching the necessary state. Eg during
+		// a mutation multiple reads shouldn't trigger multiple mutations.
+		switch n.origSource.(type) {
+		case *updateNode:
+			origSource, _ = walkAndFindPlanType[*updateNode](newPlan)
+		default:
+			origSource, _ = walkAndFindPlanType[*scanNode](newPlan)
+		}
+
+		if origSource != nil {
+			multiscan = &multiScanNode{planNode: origSource}
+			if err := n.planner.walkAndReplacePlan(n.source, origSource, multiscan); err != nil {
 				return err
 			}
-			if err := n.planner.walkAndReplacePlan(newPlan, origScan, multiscan); err != nil {
+			if err := n.planner.walkAndReplacePlan(newPlan, origSource, multiscan); err != nil {
 				return err
 			}
 			multiscan.addReader()

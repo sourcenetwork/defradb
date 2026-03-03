@@ -225,29 +225,6 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	// wire up source to plan
 	plan.planNode = plan.selectNode
 
-	// wire up any potential update mutation plan
-	// note: we need to also wire up the versionSelect
-	// planNode if its defined, using a parallelNode.
-	// Similar patterns would need to be taken for other
-	// plan nodes that would need to explicitly happen
-	// *after* an update that would've usally happened
-	// during the original Select plan.
-	if plan.update != nil {
-		plan.update.results = plan.planNode
-		if plan.update.versionSelect != nil {
-			m := &parallelNode{
-				p:         p,
-				source:    plan.update.versionSelect,
-				docMapper: docMapper{plan.update.results.DocumentMap()},
-			}
-			m.addChild(-1, plan.update)
-			m.addChild(plan.update.versionSelectIndex, plan.update.versionSelect)
-			plan.planNode = m
-		} else {
-			plan.planNode = plan.update
-		}
-	}
-
 	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise
 	// it wont be taken into consideration if one of them tries to targets it.
 	p.expandSimilarityPlans(plan)
@@ -483,6 +460,10 @@ func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTop
 		return err
 	}
 
+	err = p.expandPlan(node.parentSide.plan, parentPlan)
+	if err != nil {
+		return err
+	}
 	return p.expandPlan(node.childSide.plan, parentPlan)
 }
 

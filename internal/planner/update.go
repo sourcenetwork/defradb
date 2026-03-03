@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"slices"
+	"sort"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -38,9 +38,6 @@ type updateNode struct {
 	isUpdating bool
 
 	results planNode
-
-	versionSelect      *dagScanNode
-	versionSelectIndex int
 
 	execInfo updateExecInfo
 }
@@ -168,47 +165,74 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 	update.collection = col
 
-	// There is a single problem with the `SelectTopNode` approach as
-	// the update result plan. It will run an entire plan, including nodes
-	// we might want to run *after* the update has been applied, such
-	// as the version query. So we need to handle those nodes specially.
-	// At the moment, this is only the `dagScanNode` so we can
-	// extract the `_version` field if it exists, so we can manually
-	// add it later via a parallelNode
-	var versionSelect *mapper.Select
-	deleteIndex := -1
+	// shallow and deep copy on the fields since we're going to mutate
+	preUpdateSelect := parsed.Select
+	preUpdateSelect.Fields = make([]mapper.Requestable, 0)
+
+	selectFieldsToDelete := make([]int, 0)
+
+	// only keep base fields and non reserved selections
 	for i, field := range parsed.Select.Fields {
+		if _, exists := request.ReservedFields[field.GetName()]; exists {
+			continue
+		}
 		switch f := field.(type) {
 		case *mapper.Select:
-			if f.Name == request.VersionFieldName {
-				versionSelect = f
-				deleteIndex = i
+			if f.SkipResolve {
+				selectFieldsToDelete = append(selectFieldsToDelete, i)
 			}
+			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
+		case *mapper.Field:
+			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
 		}
-	}
-	if deleteIndex >= 0 {
-		parsed.Select.Fields = slices.Delete(parsed.Select.Fields, deleteIndex, deleteIndex+1)
-		commitSlct := &mapper.CommitSelect{
-			Select: *versionSelect,
-		}
-		update.versionSelect = p.DAGScan(commitSlct)
-		update.versionSelectIndex = versionSelect.Index
 	}
 
-	// create the results Select node
-	selectTopNode, err := p.SelectTopNode(&parsed.Select)
+	// removed unnecessary fields we get from the pre update select
+	parsed.Select.Fields = deleteIndexes(parsed.Select.Fields, selectFieldsToDelete)
+
+	selectNode, err := p.Select(&preUpdateSelect)
 	if err != nil {
 		return nil, err
 	}
+	update.results = selectNode
 
-	// IMPORTANT: This assignment is a noop, but is left in place for
-	// documentation reasons. The undelying results plan is set during
-	// plan expansion, including the rewiring to support nodes that
-	// need to run after the update. The rewiring can be found in the
-	// `expandSelectTopNode` function.
-	update.results = nil
+	parsed.Select.Filter = nil
+	return p.SelectFromSource(&parsed.Select, update, true, update.collection)
+}
 
-	selectTopNode.update = update
+/* Update TypeJoin conditions
 
-	return selectTopNode, nil
+NO MUTATION																					TypeJoin Inclusion
+1) No type join interaction 	(filter: NO 	| select: NO  	| RelationMutation: NO) => 	BEFORE: NO  | AFTER: NO
+2) filter without mutation 		(filter: YES 	| select: NO 	| RelationMutation: NO) => 	BEFORE: YES  | AFTER: NO
+3) Select without mutation 		(filter: NO 	| select: YES 	| RelationMutation: NO) => 	BEFORE: NO  | AFTER: YES
+4) filter & select without mut	(filter: YES	| select: YES	| RelationMutation: NO) => 	BEFORE: YES  | AFTER: NO
+
+MUTATION
+1) No type join interaction 	(filter: NO 	| select: NO 	| RelationMutation: YES) => BEFORE: NO  | AFTER: NO
+2) filter with mutation 		(filter: YES 	| select: NO 	| RelationMutation: YES) => BEFORE: YES | AFTER: NO
+3) Select with mutation 		(filter: NO 	| select: YES 	| RelationMutation: YES) => BEFORE: NO  | AFTER: YES
+4) filter & select without mut	(filter: YES	| select: YES	| RelationMutation: YES) => BEFORE: YES | AFTER: YES
+
+*/
+
+func deleteIndexes[T any](s []T, idx []int) []T {
+	if len(idx) == 0 {
+		return s
+	}
+
+	sort.Ints(idx)
+
+	out := s[:0]
+	j := 0
+
+	for i := 0; i < len(s); i++ {
+		if j < len(idx) && i == idx[j] {
+			j++
+			continue
+		}
+		out = append(out, s[i])
+	}
+
+	return out
 }
