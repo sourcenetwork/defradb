@@ -57,7 +57,7 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 type selectTopNode struct {
 	docMapper
 
-	group *groupNode
+	group      *groupNode
 	order      *orderNode
 	limit      *limitNode
 	aggregates []aggregateNode

@@ -153,9 +153,9 @@ func (n *updateNode) Explain(explainType request.ExplainType) (map[string]any, e
 
 func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
-		p:          p,
-		filter:     parsed.Filter,
-		docIDs:     parsed.DocIDs.Value(),
+		p:         p,
+		filter:    parsed.Filter,
+		docIDs:    parsed.DocIDs.Value(),
 		input:     parsed.UpdateInput,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}
