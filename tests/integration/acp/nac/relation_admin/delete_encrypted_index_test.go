@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanDeleteEncryptedIndex(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -123,7 +123,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanDeleteEncryptedIndex(t *testi
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",

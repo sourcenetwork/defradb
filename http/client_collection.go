@@ -46,10 +46,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) AddIndex(
+func (c *Collection) NewIndex(
 	ctx context.Context,
-	indexDesc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -112,10 +112,10 @@ func (c *Collection) ListIndexes(
 	return indexes, nil
 }
 
-func (c *Collection) AddEncryptedIndex(
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

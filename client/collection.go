@@ -110,16 +110,16 @@ type Collection interface {
 		opts ...options.Enumerable[options.GetDocumentOptions],
 	) (*Document, error)
 
-	// AddIndex adds a new index on the collection.
-	// `IndexDescription` contains the description of the index to be added.
-	// `IndexDescription.Name` must start with a letter or an underscore and can
+	// NewIndex makes a new index on the collection.
+	// `NewIndexRequest` contains the description of the new index.
+	// `NewIndexRequest.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
-	// WARNING: This method can not add index for a collection that has a policy.
-	AddIndex(
+	// WARNING: This method can not make a new index for a collection that has a policy.
+	NewIndex(
 		context.Context,
-		AddIndexRequest,
-		...options.Enumerable[options.AddCollectionIndexOptions],
+		NewIndexRequest,
+		...options.Enumerable[options.NewCollectionIndexOptions],
 	) (IndexDescription, error)
 
 	// DeleteIndex deletes an index from the collection.
@@ -135,11 +135,11 @@ type Collection interface {
 		opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 	) ([]IndexDescription, error)
 
-	// AddEncryptedIndex adds a new encrypted index to the collection.
-	AddEncryptedIndex(
+	// NewEncryptedIndex makes a new encrypted index on the collection.
+	NewEncryptedIndex(
 		ctx context.Context,
 		desc EncryptedIndexDescription,
-		opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+		opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.

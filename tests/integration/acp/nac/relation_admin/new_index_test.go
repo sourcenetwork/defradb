@@ -1,4 +1,4 @@
-// Copyright 2026 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanAddEncryptedIndex(t *testing.T) {
+func TestNAC_AdminRelation_CanMakeNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -31,42 +31,52 @@ func TestNAC_AdminRelation_CanAddEncryptedIndex(t *testing.T) {
 			},
 		),
 		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type Users {
+					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+
+			// This user, can not perform this gated operation yet.
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddEncryptedIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewIndexPerm),
 			},
+
+			// Grant access to user.
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
-			testUtils.AddEncryptedIndex{
+
+			// This user, can now perform this gated operation.
+			&action.NewIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
 			},
 		},
 	}
+
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddEncryptedIndex(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanMakeNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -78,37 +88,47 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddEncryptedIndex(t *testing.
 			},
 		),
 		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type Users {
+					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+
+			// This user, can not perform this gated operation yet.
+			&action.NewIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
+
+			// Grant access to user.
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
-			testUtils.AddEncryptedIndex{
+
+			// This user, can now perform this gated operation.
+			&action.NewIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
 			},
 		},
 	}
+
 	testUtils.ExecuteTestCase(t, test)
 }

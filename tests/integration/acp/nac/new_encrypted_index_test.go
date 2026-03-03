@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,47 +21,41 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesAddIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
-				state.GoClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
+				state.GoClientType,
 				state.CClientType,
 			},
 		),
 		Actions: []any{
-			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-
-			// This should work as the identity is authorized.
-			&action.AddIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -72,37 +66,31 @@ func TestNAC_GatesAddIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 		),
 		Actions: []any{
-			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-
-			// We haven't authorized non-identities. So, this should error.
-			&action.AddIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -114,25 +102,20 @@ func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t 
 			},
 		),
 		Actions: []any{
-			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-
-			// We haven't authorized non-identities. So, this should error.
-			&action.AddIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -140,11 +123,10 @@ func TestNAC_GatesAddIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t 
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -155,37 +137,31 @@ func TestNAC_GatesAddIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 		),
 		Actions: []any{
-			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-
-			// Wrong user/identity will also not be authorized.
-			&action.AddIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeAddIndexPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesAddIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesNewEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -197,25 +173,20 @@ func TestNAC_GatesAddIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError
 			},
 		),
 		Actions: []any{
-			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-
-			// Wrong user/identity will also not be authorized.
-			&action.AddIndex{
+			testUtils.NewEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -223,6 +194,5 @@ func TestNAC_GatesAddIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }

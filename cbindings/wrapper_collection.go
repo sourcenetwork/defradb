@@ -15,11 +15,11 @@ package cbindings
 #include <stdint.h>
 #include "defra_structs.h"
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result AddIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result AddEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -61,10 +61,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) AddIndex(
+func (c *Collection) NewIndex(
 	ctx context.Context,
-	indexDesc client.AddIndexRequest,
-	opts ...options.Enumerable[options.AddCollectionIndexOptions],
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
@@ -100,7 +100,7 @@ func (c *Collection) AddIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(C.AddIndex(
+	res := ConvertAndFreeCResult(C.NewIndex(
 		C.uintptr_t(c.w.handle),
 		cIndexDescName,
 		fields,
@@ -189,10 +189,10 @@ func (c *Collection) ListIndexes(
 	return retRes, nil
 }
 
-func (c *Collection) AddEncryptedIndex(
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
@@ -202,7 +202,7 @@ func (c *Collection) AddEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.AddEncryptedIndex(
+	res := ConvertAndFreeCResult(C.NewEncryptedIndex(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,

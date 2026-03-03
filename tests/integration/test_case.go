@@ -336,12 +336,12 @@ type UpdateWithFilter struct {
 	SkipLocalUpdateEvent bool
 }
 
-// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
+// NewEncryptedIndex will attempt to make a new encrypted index on the given collection
 // using the collection api.
-type AddEncryptedIndex struct {
-	// NodeID may hold the ID (index) of a node to add the encrypted index to.
+type NewEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to make the new encrypted index on.
 	//
-	// If a value is not provided the index will be added to all nodes.
+	// If a value is not provided the index will be made on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -349,13 +349,13 @@ type AddEncryptedIndex struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection to which this index should be added.
+	// The collection on which this index should be made.
 	CollectionID int
 
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The type of the index to add.
+	// The type of new index to make.
 	Type string
 
 	// Any error expected from the action. Optional.

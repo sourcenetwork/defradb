@@ -73,7 +73,7 @@ func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexDelete_AfterDelete_CanAddIndexAnew(t *testing.T) {
+func TestEncryptedIndexDelete_AfterDelete_CanMakeNewIndexAnew(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -91,7 +91,7 @@ func TestEncryptedIndexDelete_AfterDelete_CanAddIndexAnew(t *testing.T) {
 				CollectionID:    0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{},
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.ListEncryptedIndexes{

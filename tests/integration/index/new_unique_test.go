@@ -53,7 +53,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				FieldName:     "age",
 				Unique:        true,
@@ -69,7 +69,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
+func TestUniqueIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -128,7 +128,7 @@ func TestUniqueIndexAdd_UponAddingDocWithExistingFieldValue_ReturnError(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
+func TestUniqueIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -155,7 +155,7 @@ func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",
@@ -182,7 +182,7 @@ func TestUniqueIndexAdd_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
+func TestUniqueIndexNew_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -215,7 +215,7 @@ func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 						"name":	"Keenan"
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",
@@ -242,7 +242,7 @@ func TestUniqueIndexAdd_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexAdd_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
+func TestUniqueIndexNew_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -266,7 +266,7 @@ func TestUniqueIndexAdd_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexAdd_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
+func TestUniqueIndexNew_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

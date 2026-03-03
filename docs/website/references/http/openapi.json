@@ -71,42 +71,6 @@
                 },
                 "type": "object"
             },
-            "add_encrypted_index": {
-                "properties": {
-                    "FieldName": {
-                        "type": "string"
-                    },
-                    "Type": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "add_index": {
-                "properties": {
-                    "Fields": {
-                        "items": {
-                            "properties": {
-                                "Descending": {
-                                    "type": "boolean"
-                                },
-                                "Name": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
-                    "Name": {
-                        "type": "string"
-                    },
-                    "Unique": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
             "add_lens_request": {
                 "properties": {
                     "lens": {
@@ -538,6 +502,42 @@
                     },
                     "SourceCollectionVersionID": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "new_encrypted_index": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "new_index": {
+                "properties": {
+                    "Fields": {
+                        "items": {
+                            "properties": {
+                                "Descending": {
+                                    "type": "boolean"
+                                },
+                                "Name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "Name": {
+                        "type": "string"
+                    },
+                    "Unique": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -1623,8 +1623,8 @@
                 ]
             },
             "post": {
-                "description": "Add an encrypted index",
-                "operationId": "add_encrypted_index",
+                "description": "Make a new encrypted index",
+                "operationId": "new_encrypted_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1640,7 +1640,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/add_encrypted_index"
+                                "$ref": "#/components/schemas/new_encrypted_index"
                             }
                         }
                     },
@@ -1750,8 +1750,8 @@
                 ]
             },
             "post": {
-                "description": "Add a secondary index",
-                "operationId": "add_index",
+                "description": "Make a new secondary index",
+                "operationId": "new_index",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1767,7 +1767,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/add_index"
+                                "$ref": "#/components/schemas/new_index"
                             }
                         }
                     },
@@ -2869,7 +2869,7 @@
             "name": "view"
         },
         {
-            "description": "Add, update, or remove indexes",
+            "description": "Make, update, or remove indexes",
             "name": "index"
         },
         {

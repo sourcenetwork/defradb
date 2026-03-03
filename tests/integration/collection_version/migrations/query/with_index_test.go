@@ -344,7 +344,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocs
 					},
 				},
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				FieldName: "age",
 			},
 			&action.Request{
@@ -437,7 +437,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIn
 			testUtils.SetActiveCollectionVersion{
 				VersionID: colVersionV1,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				FieldName: "age",
 			},
 			&action.Request{

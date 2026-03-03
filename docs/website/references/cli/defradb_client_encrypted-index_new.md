@@ -1,24 +1,24 @@
-## defradb client encrypted-index add
+## defradb client encrypted-index new
 
-Adds an encrypted index on a collection's field
+Make a new encrypted index on a collection's field
 
 ### Synopsis
 
-Adds an encrypted index on a collection's field.
+Make a new encrypted index on a collection's field.
 
 The --type flag is optional. If not provided, the default value will be "equality".
 
 Currently only "equality" type is supported.
 
 ```
-defradb client encrypted-index add -c --collection <collection> --field <field> [--type <type>] [flags]
+defradb client encrypted-index new -c --collection <collection> --field <field> [--type <type>] [flags]
 ```
 
 ### Examples
 
 ```
-add an index for 'Users' collection on 'name' field:  
-  defradb client encrypted-index add --collection Users --field name
+make a new index for 'Users' collection on 'name' field:  
+  defradb client encrypted-index new --collection Users --field name
 ```
 
 ### Options
@@ -26,8 +26,8 @@ add an index for 'Users' collection on 'name' field:
 ```
   -c, --collection string   Collection name
       --field string        Field to index
-  -h, --help                help for add
-      --type string         Type of index to add
+  -h, --help                help for new
+      --type string         Type of new index to make
 ```
 
 ### Options inherited from parent commands

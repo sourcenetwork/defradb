@@ -29,9 +29,9 @@ var openApiSchemas = map[string]any{
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
-	"add_index":                                &client.AddIndexRequest{},
+	"new_index":                                &client.NewIndexRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
-	"add_encrypted_index":                      &client.EncryptedIndexDescription{},
+	"new_encrypted_index":                      &client.EncryptedIndexDescription{},
 	"delete_result":                            &client.DeleteResult{},
 	"update_result":                            &client.UpdateResult{},
 	"lens_config":                              &client.LensConfig{},
@@ -144,7 +144,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "index",
-				Description: "Add, update, or remove indexes",
+				Description: "Make, update, or remove indexes",
 			},
 			&openapi3.Tag{
 				Name:        "lens",
