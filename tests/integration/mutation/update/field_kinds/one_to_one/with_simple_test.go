@@ -373,8 +373,6 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 }
 
 func TestMutationUpdateOneToOne_WithGQLRequest_ReturnsResults(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -388,16 +386,6 @@ func TestMutationUpdateOneToOne_WithGQLRequest_ReturnsResults(t *testing.T) {
 				Doc: `{
 					"name": "John Grisham"
 				}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 1,
-				DocID:        0,
-				Doc: fmt.Sprintf(
-					`{
-						"published_id": "%s"
-					}`,
-					bookID,
-				),
 			},
 			testUtils.Request{
 				Request: `

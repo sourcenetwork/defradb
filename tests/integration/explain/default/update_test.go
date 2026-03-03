@@ -22,9 +22,13 @@ var updatePattern = dataMap{
 		"operationNode": []dataMap{
 			{
 				"selectTopNode": dataMap{
-					"updateNode": dataMap{
-						"selectNode": dataMap{
-							"scanNode": dataMap{},
+					"selectNode": dataMap{
+						"updateNode": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"scanNode": dataMap{},
+								},
+							},
 						},
 					},
 				},

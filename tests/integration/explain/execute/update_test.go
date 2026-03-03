@@ -48,17 +48,23 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 						"operationNode": []dataMap{
 							{
 								"selectTopNode": dataMap{
-									"updateNode": dataMap{
-										"iterations": uint64(3),
-										"updates":    uint64(2),
-										"selectNode": dataMap{
-											"iterations":    uint64(3),
-											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+									"selectNode": dataMap{
+										"iterations":    uint64(3),
+										"filterMatches": uint64(2),
+										"updateNode": dataMap{
+											"iterations": uint64(3),
+											"updates":    uint64(2),
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"iterations":    uint64(3),
+													"filterMatches": uint64(2),
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
 											},
 										},
 									},
@@ -105,19 +111,24 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
-
 								"selectTopNode": dataMap{
-									"updateNode": dataMap{
-										"iterations": uint64(2),
-										"updates":    uint64(1),
-										"selectNode": dataMap{
-											"iterations":    uint64(2),
-											"filterMatches": uint64(1),
-											"scanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+									"selectNode": dataMap{
+										"iterations":    uint64(2),
+										"filterMatches": uint64(1),
+										"updateNode": dataMap{
+											"iterations": uint64(2),
+											"updates":    uint64(1),
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"iterations":    uint64(2),
+													"filterMatches": uint64(1),
+													"scanNode": dataMap{
+														"iterations":   uint64(2),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
 											},
 										},
 									},

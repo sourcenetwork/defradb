@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationUpdate_WithBooleanFilter_ResultNotFilteredOut(t *testing.T) {
@@ -106,6 +107,258 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 						{
 							"name":   "Fred",
 							"points": float64(59),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestMutationUpdate_WithFilterOnUpdatedField_ReturnsResult is a regression test for
+// https://github.com/sourcenetwork/defradb/issues/4279
+// When an update modifies the field used in the filter, the result should still be returned.
+func TestMutationUpdate_WithFilterOnUpdatedField_ReturnsResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					update_Users(filter: {name: {_eq: "John"}}, input: {name: "Jane"}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name": "Jane",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdate_WithRelationSelectInResponse_ReturnsRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `mutation($docID: [ID!]) {
+					update_Author(docID: $docID, input: {name: "Jane Grisham"}) {
+						name
+						published {
+							name
+						}
+					}
+				}`,
+				Variables: immutable.Some(map[string]any{
+					"docID": testUtils.NewDocIndex(1, 0),
+				}),
+				Results: map[string]any{
+					"update_Author": []map[string]any{
+						{
+							"name": "Jane Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdate_WithRelationFilter_CorrectlyFilters(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Boring Book",
+					"rating": 2.0
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Bad Writer",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					update_Author(
+						filter: {published: {rating: {_gt: 3}}},
+						input: {name: "Jane Grisham"}
+					) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"update_Author": []map[string]any{
+						{
+							"name": "Jane Grisham",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdate_WithRelationFilterAndRelationSelect_ReturnsBoth(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Boring Book",
+					"rating": 2.0
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "John Grisham",
+					"published_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Bad Writer",
+					"published_id": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					update_Author(
+						filter: {published: {rating: {_gt: 3}}},
+						input: {name: "Jane Grisham"}
+					) {
+						name
+						published {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"update_Author": []map[string]any{
+						{
+							"name": "Jane Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
 						},
 					},
 				},
