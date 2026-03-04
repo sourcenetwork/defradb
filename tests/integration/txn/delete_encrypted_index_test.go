@@ -24,8 +24,8 @@ import (
 func TestTxn_DeleteEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -40,14 +40,14 @@ func TestTxn_DeleteEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "name",
 			},
 			testUtils.DeleteEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			testUtils.ListEncryptedIndexes{
@@ -65,8 +65,8 @@ func TestTxn_DeleteEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_DeleteEncryptedIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -81,7 +81,7 @@ func TestTxn_DeleteEncryptedIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "name",
 			},
 			testUtils.DeleteEncryptedIndex{
@@ -108,8 +108,8 @@ func TestTxn_DeleteEncryptedIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 func TestTxn_DeleteEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -124,7 +124,7 @@ func TestTxn_DeleteEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *tes
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},

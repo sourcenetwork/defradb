@@ -23,8 +23,8 @@ import (
 func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -42,7 +42,7 @@ func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 				CollectionID:  0,
 				DocID:         0,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -69,8 +69,8 @@ func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_DeleteDoc_WithoutCommit_DoesNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -116,8 +116,8 @@ func TestTxn_DeleteDoc_WithoutCommit_DoesNotDelete(t *testing.T) {
 func TestTxn_DeleteDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -136,7 +136,7 @@ func TestTxn_DeleteDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 				CollectionID:  0,
 				DocID:         0,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

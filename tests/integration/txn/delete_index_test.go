@@ -24,8 +24,8 @@ import (
 func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 					}
@@ -35,7 +35,7 @@ func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 				TransactionID: immutable.Some(1),
 				IndexName:     "User_name_ASC",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{
@@ -52,8 +52,8 @@ func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_DeleteIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 					}
@@ -87,9 +87,9 @@ func TestTxn_DeleteIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 func TestTxn_DeleteIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index
 					}

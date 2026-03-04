@@ -23,8 +23,8 @@ import (
 func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -41,7 +41,7 @@ func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 				TransactionID: immutable.Some(1),
 				VersionID:     "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -63,8 +63,8 @@ func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_SetActiveCollectionVersion_WithoutCommit_VersionNotChanged(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

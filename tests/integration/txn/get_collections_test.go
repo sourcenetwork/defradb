@@ -20,14 +20,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs GetCollections inside of a transaction with AddSchema, and illustrates that
-// the schemas are seen by the action.
+// This test runs GetCollections inside of a transaction with AddCollection, and illustrates that
+// the collections are seen by the action.
 func TestTxn_GetCollections_InsideTxnWithAddSchema_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -52,14 +52,14 @@ func TestTxn_GetCollections_InsideTxnWithAddSchema_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs GetCollections inside of a transaction separate from the one that AddSchema is run in,
-// and illustrates that the schemas are not seen by the action.
+// This test runs GetCollections inside of a transaction separate from the one that AddCollection is run in,
+// and illustrates that the collections are not seen by the action.
 func TestTxn_GetCollections_InsideTxnWithoutAddSchema_NoCollections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

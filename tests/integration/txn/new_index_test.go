@@ -19,13 +19,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs AddIndex inside of a transaction, and illustrates that committing the transaction
+// This test runs NewIndex inside of a transaction, and illustrates that committing the transaction
 // results in the index being created.
-func TestTxn_AddIndex_WithCommit_Succeeds(t *testing.T) {
+func TestTxn_NewIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -39,12 +39,12 @@ func TestTxn_AddIndex_WithCommit_Succeeds(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				TransactionID: immutable.Some(1),
 				IndexName:     "some_index",
 				FieldName:     "name",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{
@@ -66,13 +66,13 @@ func TestTxn_AddIndex_WithCommit_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs AddIndex inside of a transaction, and illustrates that not committing the transaction
+// This test runs NewIndex inside of a transaction, and illustrates that not committing the transaction
 // results in the index not yet being created.
-func TestTxn_AddIndex_WithoutCommit_NoIndexes(t *testing.T) {
+func TestTxn_NewIndex_WithoutCommit_NoIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -86,7 +86,7 @@ func TestTxn_AddIndex_WithoutCommit_NoIndexes(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				TransactionID: immutable.Some(1),
 				IndexName:     "some_index",
 				FieldName:     "name",
@@ -100,14 +100,14 @@ func TestTxn_AddIndex_WithoutCommit_NoIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs AddIndex inside of a transaction, and illustrates that transactional isolation
+// This test runs NewIndex inside of a transaction, and illustrates that transactional isolation
 // is maintained, and it can see documents created in the same transaction.
-func TestTxn_AddIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
+func TestTxn_NewIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -122,12 +122,12 @@ func TestTxn_AddIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				TransactionID: immutable.Some(1),
 				IndexName:     "some_index",
 				FieldName:     "name",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{

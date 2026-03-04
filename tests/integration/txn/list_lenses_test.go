@@ -25,8 +25,8 @@ import (
 func TestTxn_ListLenses_InsideTxnWithAddLens_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -73,8 +73,8 @@ func TestTxn_ListLenses_InsideTxnWithAddLens_Succeeds(t *testing.T) {
 func TestTxn_ListLenses_InsideTxnWithoutAddLens_NoLenses(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

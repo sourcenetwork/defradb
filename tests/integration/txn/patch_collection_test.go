@@ -23,8 +23,8 @@ import (
 func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -39,7 +39,7 @@ func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -62,8 +62,8 @@ func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_PatchCollection_WithoutCommit_PatchNotApplied(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String

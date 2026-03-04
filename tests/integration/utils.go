@@ -1562,8 +1562,8 @@ func listEncryptedIndexes(
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collections := s.Nodes[nodeID].Collections
+	for index, nodeID := range nodeIDs {
+		node := s.Nodes[index]
 
 		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1571,10 +1571,26 @@ func listEncryptedIndexes(
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		} else {
+			// If a transaction was not provided, we will make an ephemeral one for this action.
+			txn, _ = s.Client.NewTxn(false)
+		}
+
+		collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
+		if err != nil {
+			return
+		}
+		collection := collections[action.CollectionID]
+
+		err = withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
+				actualIndexes, err := collection.ListEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}

@@ -89,8 +89,6 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
-	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
-
 	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -104,7 +102,7 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 	if !hadTxn {
 		cols, err = db.AddCollection(ctx, string(sdl), opt)
 	} else {
-		cols, err = txn.AddSchema(ctx, string(schema), opt)
+		cols, err = txn.AddCollection(ctx, string(sdl), opt)
 	}
 
 	if err != nil {

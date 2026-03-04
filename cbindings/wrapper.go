@@ -894,15 +894,10 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	var txn datastore.Txn
-	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if hadTxn {
-		txn = gotTxn
-	} else {
-		clientTxn, _ := w.NewTxn(false)
-		txn = clientTxn.(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
-	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))

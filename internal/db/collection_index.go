@@ -453,6 +453,15 @@ func (c *collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {

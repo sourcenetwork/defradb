@@ -137,6 +137,15 @@ func (c *collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -152,14 +161,21 @@ func (c *collection) AddDocument(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	err = c.add(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+
+	return nil
 }
 
 // AddManyDocuments adds a collection of documents at once.
@@ -169,6 +185,15 @@ func (c *collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -184,7 +209,10 @@ func (c *collection) AddManyDocuments(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	for _, doc := range docs {
 		err = c.add(ctx, doc, opt)
@@ -192,7 +220,11 @@ func (c *collection) AddManyDocuments(
 			return err
 		}
 	}
-	return txn.Commit()
+
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
@@ -299,6 +331,15 @@ func (c *collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -314,7 +355,10 @@ func (c *collection) UpdateDocument(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
 	if err != nil {
@@ -337,7 +381,10 @@ func (c *collection) UpdateDocument(
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given ID exists.
@@ -381,6 +428,15 @@ func (c *collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -396,7 +452,10 @@ func (c *collection) SaveDocument(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard()
+
+	if !hadTxn {
+		defer txn.Discard()
+	}
 
 	// Check if document already exists with primary DS key.
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -422,7 +481,10 @@ func (c *collection) SaveDocument(
 		return err
 	}
 
-	return txn.Commit()
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
@@ -629,6 +691,15 @@ func (c *collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -669,6 +740,15 @@ func (c *collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
+	// Check for a transaction that was attached to the context first, and failing
+	// that, check for a transaction that is attached to the collection.
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn && c.txn.HasValue() {
+		hadTxn = true
+		txn = c.txn.Value().(datastore.Txn)
+		ctx = datastore.CtxSetTxn(ctx, txn)
+	}
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -54,7 +53,6 @@ func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, re
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	responseJSON(rw, http.StatusOK, result)
 }
 
@@ -75,121 +73,12 @@ func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, re
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	responseJSON(rw, http.StatusOK, result)
 }
 
 func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) {
-func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	col := mustGetContextClientCollection(req)
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(true),
-		identity.FromContext(ctx),
-	)
-
-	doc, err := col.Get(ctx, docID, getOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
-		return
-	}
-
-	patch, err := io.ReadAll(req.Body)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	if err := doc.SetWithJSON(ctx, patch); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
-
-	err = col.Update(ctx, doc, updateOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
-
-	_, err = col.Delete(ctx, docID, deleteOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-	ctx := req.Context()
-
-	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
-
-	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	getOpt := options.WithIdentity(
-		options.CollectionGet().SetShowDeleted(showDeleted),
-		identity.FromContext(ctx),
-	)
-
-	doc, err := col.Get(ctx, docID, getOpt)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
-		return
-	}
-
-	docMap, err := doc.ToMap()
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	responseJSON(rw, http.StatusOK, docMap)
-}
-
-func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) {
-	col := mustGetContextClientCollection(req)
-	ctx := req.Context()
-
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	var indexDesc client.IndexDescription
 	if err := requestJSON(req, &indexDesc); err != nil {
@@ -209,22 +98,12 @@ func (h *collectionHandler) AddIndex(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
-	if !hadTxn {
-		defer txn.Discard()
-		if err := txn.Commit(); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-	}
-
 	responseJSON(rw, http.StatusOK, index)
 }
 
 func (h *collectionHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
-
 	name := chi.URLParam(req, "name")
 	ident := identity.FromContext(ctx)
 	col, err := db.GetCollectionByName(ctx, name, options.WithIdentity(options.GetCollectionByName(), ident))
@@ -240,7 +119,6 @@ func (h *collectionHandler) ListIndexes(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
-
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
@@ -255,14 +133,11 @@ func (h *collectionHandler) DeleteIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *collectionHandler) NewEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
-
-	ctx := req.Context()
 
 	var indexDesc client.EncryptedIndexDescription
 	if err := requestJSON(req, &indexDesc); err != nil {
@@ -272,34 +147,28 @@ func (h *collectionHandler) NewEncryptedIndex(rw http.ResponseWriter, req *http.
 
 	opts := options.WithIdentity(options.NewEncryptedIndex(), identity.FromContext(req.Context()))
 
-	index, err := col.NewEncryptedIndex(ctx, indexDesc, opts)
+	index, err := col.NewEncryptedIndex(req.Context(), indexDesc, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	responseJSON(rw, http.StatusOK, index)
 }
 
 func (h *collectionHandler) ListEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
-	ctx := req.Context()
-
 	opts := options.WithIdentity(options.ListCollectionEncryptedIndexes(), identity.FromContext(req.Context()))
-	indexes, err := col.ListEncryptedIndexes(ctx, opts)
+	indexes, err := col.ListEncryptedIndexes(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
-
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
 func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
-
-	ctx := req.Context()
 
 	fieldName := chi.URLParam(req, "field")
 	if fieldName == "" {
@@ -309,18 +178,16 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 
 	opts := options.WithIdentity(options.DeleteEncryptedIndex(), identity.FromContext(req.Context()))
 
-	err := col.DeleteEncryptedIndex(ctx, fieldName, opts)
+	err := col.DeleteEncryptedIndex(req.Context(), fieldName, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
-
 	ctx := req.Context()
 
 	truncateOpt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(ctx))

@@ -19,14 +19,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs ListIndexes inside of a transaction with AddSchema, and illustrates that
+// This test runs ListIndexes inside of a transaction with AddCollection, and illustrates that
 // the indexes are seen by the action.
 func TestTxn_ListIndexes_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String @index
 						age: Int

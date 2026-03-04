@@ -25,8 +25,8 @@ import (
 func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -46,7 +46,7 @@ func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.AddView{
@@ -103,8 +103,8 @@ func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_AddLens_WithoutCommit_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

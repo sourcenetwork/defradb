@@ -28,9 +28,9 @@ func TestTxn_VerifyBlockSignature_InsideTxn_Succeeds(t *testing.T) {
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
@@ -63,9 +63,9 @@ func TestTxn_VerifyBlockSignature_OutsideTxn_Fails(t *testing.T) {
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int 

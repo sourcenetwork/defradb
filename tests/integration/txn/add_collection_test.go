@@ -20,21 +20,21 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs AddSchema inside of a transaction, and illustrates that committing the transaction
-// results in the schema being added to the database.
-func TestTxn_AddSchema_WithCommit_Succeeds(t *testing.T) {
+// This test runs AddCollection inside of a transaction, and illustrates that committing the transaction
+// results in the collection being added to the database.
+func TestTxn_AddCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.GetCollections{
@@ -55,13 +55,13 @@ func TestTxn_AddSchema_WithCommit_Succeeds(t *testing.T) {
 }
 
 // This test runs AddSchema inside of a transaction, and illustrates that not committing the transaction
-// results in the schema not yet being added to the database.
-func TestTxn_AddSchema_WithoutCommit_EmptyResults(t *testing.T) {
+// results in the collection not yet being added to the database.
+func TestTxn_AddCollection_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int

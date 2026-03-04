@@ -23,8 +23,8 @@ import (
 func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -43,7 +43,7 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 28
 				}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -75,8 +75,8 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -124,9 +124,9 @@ func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -146,7 +146,7 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 					"age": 28
 				}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -178,8 +178,8 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -197,7 +197,7 @@ func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -229,8 +229,8 @@ func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -272,16 +272,18 @@ func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// todo: The following test should be enabled once any bugs inside UpdateWithFilter are resolved
+// see: https://github.com/sourcenetwork/defradb/issues/4614
+
 // This test runs UpdateWithFilter inside of a transaction, and illustrates that it can work on
 // the documents created inside that transaction.
-// TODO: Fix this one
 /*
 func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -300,7 +302,7 @@ func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

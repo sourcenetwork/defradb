@@ -23,8 +23,8 @@ import (
 func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -50,7 +50,7 @@ func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -84,8 +84,8 @@ func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_Request_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int

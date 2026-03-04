@@ -19,13 +19,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs AddEncryptedIndex inside of a transaction, and illustrates that committing the transaction
+// This test runs NewEncryptedIndex inside of a transaction, and illustrates that committing the transaction
 // results in the index being created.
-func TestTxn_AddEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
+func TestTxn_NewEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -40,11 +40,11 @@ func TestTxn_AddEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			testUtils.ListEncryptedIndexes{
@@ -62,13 +62,13 @@ func TestTxn_AddEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs AddEncryptedIndex inside of a transaction, and illustrates that not committing the transaction
+// This test runs NewEncryptedIndex inside of a transaction, and illustrates that not committing the transaction
 // results in the index not yet being created.
-func TestTxn_AddEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
+func TestTxn_NewEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -83,7 +83,7 @@ func TestTxn_AddEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
@@ -97,13 +97,13 @@ func TestTxn_AddEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs ListEncryptedIndexes inside of a transaction with Add, and illustrates that
+// This test runs ListEncryptedIndexes inside of a transaction with NewEncryptedIndex, and illustrates that
 // the indexes are seen by the action.
 func TestTxn_ListEncryptedIndexes_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -118,7 +118,7 @@ func TestTxn_ListEncryptedIndexes_InsideTxn_Succeeds(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},

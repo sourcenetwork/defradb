@@ -146,6 +146,7 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 	return ch
 }
 
+// getNodeOrTxnHandle is a helper function that gets a node or transaction handle from a context
 func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t {
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if !hadTxn {
@@ -159,4 +160,13 @@ func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t 
 	}
 
 	return C.uintptr_t(nodeHandle)
+}
+
+// setCtxTxnFromCollection is a helper function that checks if a collection has a transaction
+// attached to it, and if so, attaches it to the context
+func setCtxTxnFromCollection(ctx context.Context, c *Collection) context.Context {
+	if c.txn.HasValue() {
+		return datastore.CtxSetTxn(ctx, c.txn.Value().(datastore.Txn))
+	}
+	return ctx
 }

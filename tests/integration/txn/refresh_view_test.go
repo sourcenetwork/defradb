@@ -26,8 +26,8 @@ func TestTxn_RefreshView_WithCommit_Succeeds(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -58,7 +58,7 @@ func TestTxn_RefreshView_WithCommit_Succeeds(t *testing.T) {
 			&action.RefreshViews{
 				TransactionID: immutable.Some(1),
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -94,8 +94,8 @@ func TestTxn_RefreshView_WithoutCommit_DoesNotRefresh(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

@@ -23,8 +23,8 @@ import (
 func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -38,7 +38,7 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -72,8 +72,8 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 func TestTxn_AddDoc_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -107,14 +107,14 @@ func TestTxn_AddDoc_WithoutCommit_EmptyResults(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test runs AddDoc inside of the same transaction as AddSchema, and illustrates that committing the transaction
+// This test runs AddDoc inside of the same transaction as AddCollection, and illustrates that committing the transaction
 // results in the document being added to the database.
-func TestTxn_AddDoc_InsideTxnWithAddSchema_WiithCommit_Succeeds(t *testing.T) {
+func TestTxn_AddDoc_InsideTxnWithAddCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -128,7 +128,7 @@ func TestTxn_AddDoc_InsideTxnWithAddSchema_WiithCommit_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

@@ -19,14 +19,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// This test runs AddEncryptedIndex inside of a transaction, and illustrates that transactional isolation
+// This test runs NewEncryptedIndex inside of a transaction, and illustrates that transactional isolation
 // is maintained, and that it can see indexes on schemas created in the same transaction.
 func TestTxn_AddEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
+			&action.AddCollection{
 				TransactionID: immutable.Some(1),
-				Schema: `
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -42,11 +42,11 @@ func TestTxn_AddEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testin
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			testUtils.ListEncryptedIndexes{
