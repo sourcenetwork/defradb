@@ -311,7 +311,7 @@ func (m *DocumentMapping) TryToFindIndexFromRenderKey(key string) (int, bool) {
 	return -1, false
 }
 
-// DocFromDocument creates a core.Doc from a client.Document using the provided DocumentMapping.
+// DocFromClient creates a core.Doc from a client.Document using the provided DocumentMapping.
 //
 // The mapping is used to determine the correct field indices for each field in the document.
 // Fields that are not found in the mapping are skipped.
