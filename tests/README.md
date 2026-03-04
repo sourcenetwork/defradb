@@ -39,3 +39,15 @@ The `--with-expecter` option adds a helper struct for each method, making the mo
 This leads to more generated code, but it removes the need to pass strings around and increases type safety.
 
 For more information on mockery, please refer to the [official repository](https://github.com/vektra/mockery).
+
+## License
+
+The contents of this directory form the DefraDB integration test suite.
+
+Unlike the rest of the repository, which is licensed under the
+Business Source License (BSL), the test suite is dual-licensed:
+
+- GNU Affero General Public License v3 (AGPLv3)
+- Business Source License 1.1 with additional use restrictions
+
+See LICENSE in this directory for details.
