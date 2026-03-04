@@ -151,6 +151,76 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Alice",
+					"age": 40
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Bob",
+					"age": 30
+				}`,
+			},
+			&action.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: {name: {_eq: "Bob"}},
+						add: {name: "Bob", age: 40},
+						update: {name: "John"}
+					) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"upsert_Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+						{
+							"name": "Alice",
+							"age":  int64(40),
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -318,6 +388,76 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 					}
 				}`,
 				ExpectedError: `can not index a doc's field(s) that violates unique index`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpsertSimple_WithFilterMatchAndVersion_UpdatesDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Alice",
+					"age": 40
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Bob",
+					"age": 30
+				}`,
+			},
+			&action.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: {name: {_eq: "Bob"}},
+						add: {name: "Bob", age: 40},
+						update: {age: 40}
+					) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"upsert_Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  int64(40),
+						},
+						{
+							"name": "Alice",
+							"age":  int64(40),
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

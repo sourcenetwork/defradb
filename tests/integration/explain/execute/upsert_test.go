@@ -51,12 +51,6 @@ func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *t
 										"selectNode": dataMap{
 											"iterations":    uint64(4),
 											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(4),
-												"docFetches":   uint64(4),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
 										},
 									},
 								},

@@ -111,7 +111,7 @@ nodeLoop:
 			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			reqOption.SetVariables(a.Variables.Value())
+			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
@@ -136,6 +136,23 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// resolveVariables resolves any DocIndex values in the variables map to their
+// corresponding document ID strings.
+func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+	resolved := make(map[string]any, len(vars))
+	for k, v := range vars {
+		if index, ok := v.(DocIndex); ok {
+			s.DocIDsLock.RLock()
+			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			s.DocIDsLock.RUnlock()
+			resolved[k] = docID.String()
+		} else {
+			resolved[k] = v
+		}
+	}
+	return resolved
 }
 
 // getTransaction returns the transaction for this request, creating one if needed.

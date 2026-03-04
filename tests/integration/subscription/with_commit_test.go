@@ -176,6 +176,7 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
 	addoUpdateCid := testUtils.NewSameValue()
 	addoDocID := testUtils.NewSameValue()
+	addoCreateCid := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -245,6 +246,9 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 							"_version": []map[string]any{
 								{
 									"cid": addoUpdateCid,
+								},
+								{
+									"cid": addoCreateCid,
 								},
 							},
 						},

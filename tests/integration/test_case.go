@@ -204,7 +204,7 @@ type SetActiveCollectionVersion struct {
 // This is a type alias for backward compatibility.
 type DocIndex = action.DocIndex
 
-// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
+// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be referenced without worrying
 // about the specific document id.
 func NewDocIndex(collectionIndex int, index int) DocIndex {
 	return DocIndex{
