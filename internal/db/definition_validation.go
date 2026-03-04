@@ -517,11 +517,11 @@ func validateEncryptedIndexesNotModified(
 
 		if len(oldCol.EncryptedIndexes) != len(newCol.EncryptedIndexes) {
 			errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
-		}
-
-		for i := range oldCol.EncryptedIndexes {
-			if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
-				errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+		} else {
+			for i := range oldCol.EncryptedIndexes {
+				if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
+					errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+				}
 			}
 		}
 	}
