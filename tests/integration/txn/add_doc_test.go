@@ -69,7 +69,7 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 
 // This test runs AddDoc inside of a transaction, and illustrates that not committing the transaction
 // results in the document not yet being in the database.
-func TestTxn_AddDoc_WithCommit_EmptyResults(t *testing.T) {
+func TestTxn_AddDoc_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

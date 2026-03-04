@@ -30,8 +30,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
@@ -582,6 +584,8 @@ func (w *Wrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
@@ -606,9 +610,21 @@ func (w *Wrapper) GetCollections(
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		if clientTxn, ok := txn.(client.Txn); ok {
+			txnOpt = immutable.Some(clientTxn)
+		} else {
+			return nil, errors.New("unsupported txn type in context")
+		}
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	cols := make([]client.Collection, len(colDesc))
 	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
+		cols[i] = &Collection{w.cmd, v, txnOpt}
 	}
 	return cols, err
 }

@@ -90,7 +90,6 @@ var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
-	fmt.Println("\nExecute is called for Add Doc")
 	hadTxn := a.TransactionID.HasValue()
 
 	if a.DocMap != nil {
@@ -141,7 +140,6 @@ func (a *AddDoc) Execute() {
 		if err != nil {
 			return
 		}
-		fmt.Println("Collections: ", collections)
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(

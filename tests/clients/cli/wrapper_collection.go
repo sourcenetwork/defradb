@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -39,11 +40,20 @@ func appendIdentityArg(args []string, ident immutable.Option[identity.Identity])
 	return args
 }
 
+// appendTxnArg extracts the txn from an immutable.Option and appends the --tx flag to args
+func appendTxnArg(args []string, txn immutable.Option[client.Txn]) []string {
+	if txn.HasValue() {
+		args = append(args, "--tx", strconv.FormatUint(txn.Value().ID(), 10))
+	}
+	return args
+}
+
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
 	cmd *cliWrapper
 	def client.CollectionVersion
+	txn immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -73,7 +83,9 @@ func (c *Collection) Add(
 	if err != nil {
 		return err
 	}
+
 	args = append(args, document)
+	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -98,7 +110,9 @@ func (c *Collection) AddMany(
 		}
 		docStrings[i] = docStr
 	}
+
 	args = append(args, "["+strings.Join(docStrings, ",")+"]")
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -146,6 +160,7 @@ func (c *Collection) Update(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -198,6 +213,7 @@ func (c *Collection) Delete(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -242,6 +258,7 @@ func (c *Collection) UpdateWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -271,6 +288,7 @@ func (c *Collection) DeleteWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -299,6 +317,7 @@ func (c *Collection) Get(
 		args = append(args, "--show-deleted")
 	}
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -352,6 +371,7 @@ func (c *Collection) AddIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -374,6 +394,7 @@ func (c *Collection) DeleteIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
@@ -388,6 +409,7 @@ func (c *Collection) ListIndexes(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -412,6 +434,7 @@ func (c *Collection) AddEncryptedIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -431,6 +454,7 @@ func (c *Collection) ListEncryptedIndexes(
 	args = append(args, "--collection", c.Version().Name)
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -455,6 +479,7 @@ func (c *Collection) DeleteEncryptedIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
@@ -468,6 +493,7 @@ func (c *Collection) Truncate(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
