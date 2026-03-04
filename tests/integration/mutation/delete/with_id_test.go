@@ -20,8 +20,8 @@ import (
 func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -46,14 +46,14 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Not the id below"
 				}`,

@@ -26,32 +26,32 @@ func TestQueryWithIndex_WithOrFilter_ShouldFetchCorrectDocs(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -91,32 +91,32 @@ func TestQueryWithIndex_WithOrFilterWithThreeBranches_ShouldUseIndex(t *testing.
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -160,32 +160,32 @@ func TestQueryWithIndex_WithOrFilterWithRangeConditions_ShouldUseIndex(t *testin
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -226,32 +226,32 @@ func TestQueryWithIndex_WithOrFilterWithOverlappingConditions_ShouldDeduplicateR
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -291,36 +291,36 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_ShouldNotUseInde
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 						score: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "John",
 					"age":   21,
 					"score": 100,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Bob",
 					"age":   32,
 					"score": 80,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Carlo",
 					"age":   55,
 					"score": 90,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Alice",
 					"age":   19,
@@ -367,36 +367,36 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithOverlap_Shou
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 						score: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "John",
 					"age":   21,
 					"score": 100, // Matches both age=21 AND score=100
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Bob",
 					"age":   32,
 					"score": 80,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Carlo",
 					"age":   55,
 					"score": 90,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Alice",
 					"age":   19,
@@ -436,32 +436,32 @@ func TestQueryWithIndex_WithOrFilterOnIndexedAndNonIndexedField_ShouldFallbackTo
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -503,32 +503,32 @@ func TestQueryWithIndex_WithOrFilterOnOnlyNonIndexedFields_ShouldNotUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 					"age":  32,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Carlo",
 					"age":  55,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  19,
@@ -569,32 +569,32 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						numbers: [Int!] @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bob",
 					"numbers": [30, 40, 50]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Carlo",
 					"numbers": [20, 20, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Alice",
 					"numbers": [5, 15, 25]
@@ -632,36 +632,36 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithRangeConditi
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 						score: Int @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "John",
 					"age":   21,
 					"score": 100,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Bob",
 					"age":   32,
 					"score": 80,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Carlo",
 					"age":   55,
 					"score": 90,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name":  "Alice",
 					"age":   19,

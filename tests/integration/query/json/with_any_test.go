@@ -20,43 +20,43 @@ import (
 func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": null
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": 0
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": ""
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": true
@@ -85,49 +85,49 @@ func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, [2, 3]]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": null
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": 3
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": [null, 3]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": ""
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": true

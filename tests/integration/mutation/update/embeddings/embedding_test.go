@@ -33,8 +33,8 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 			state.GoClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						about: String
@@ -42,7 +42,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
@@ -56,7 +56,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"about": "He loves tacos."
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with only one embedding field
 				Doc: `{
 					"name": "Johnny"
@@ -111,8 +111,8 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 			state.GoClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						about: String
@@ -120,7 +120,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
@@ -166,8 +166,8 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 			state.GoClientType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						about: String
@@ -176,7 +176,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",

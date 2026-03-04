@@ -60,7 +60,7 @@ func (fieldSet fields) array() []any {
 }
 
 // DefaultFields contains the list of fields every
-// defra schema-object should have.
+// defra collection should have.
 var DefaultFields = concat(
 	fields{
 		keyField,
@@ -107,7 +107,7 @@ var versionField = Field{
 }
 
 var groupField = Field{
-	"name": "_group",
+	"name": "GROUP",
 	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
@@ -116,35 +116,35 @@ var groupField = Field{
 
 var aggregateFields = fields{
 	map[string]any{
-		"name": "_avg",
+		"name": "AVG",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_max",
+		"name": "MAX",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_min",
+		"name": "MIN",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_count",
+		"name": "COUNT",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Int",
 		},
 	},
 	map[string]any{
-		"name": "_sum",
+		"name": "SUM",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
@@ -153,7 +153,7 @@ var aggregateFields = fields{
 }
 
 var similarityField = Field{
-	"name": "_similarity",
+	"name": "SIMILARITY",
 	"type": map[string]any{
 		"kind": "SCALAR",
 		"name": "Float",
@@ -163,8 +163,12 @@ var similarityField = Field{
 var cidArg = Field{
 	"name": "cid",
 	"type": map[string]any{
-		"name":        "String",
+		"name":        nil,
 		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
 	},
 }
 var docIDArg = Field{

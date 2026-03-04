@@ -27,8 +27,8 @@ type Select struct {
 	// for this select can be accessed and rendered.
 	*core.DocumentMapping
 
-	// A commit identifier that can be specified to request data at a given time.
-	Cid immutable.Option[string]
+	// Commit identifiers that can be specified to request data at a given time.
+	Cids immutable.Option[[]string]
 
 	// The name of the collection that this Select selects data from.
 	CollectionName string
@@ -65,7 +65,7 @@ func (s *Select) cloneTo(index int) *Select {
 	return &Select{
 		Targetable:      *s.Targetable.cloneTo(index),
 		DocumentMapping: s.DocumentMapping,
-		Cid:             s.Cid,
+		Cids:            s.Cids,
 		CollectionName:  s.CollectionName,
 		Fields:          s.Fields,
 		SkipResolve:     s.SkipResolve,

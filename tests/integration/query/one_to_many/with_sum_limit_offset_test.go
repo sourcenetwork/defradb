@@ -20,7 +20,7 @@ import (
 func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -28,7 +28,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -36,7 +36,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
@@ -44,7 +44,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
@@ -52,7 +52,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -60,7 +60,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -72,18 +72,18 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_sum(published: {field: rating, offset: 1, limit: 2})
+						SUM(published: {field: rating, offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"_sum": 9.100000000000001,
+							"SUM":  9.100000000000001,
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 					},
 				},

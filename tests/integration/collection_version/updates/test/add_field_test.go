@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesTestAddField(t *testing.T) {
+func TestCollectionVersionUpdatesTestAddField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -51,11 +51,11 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
+func TestCollectionVersionUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

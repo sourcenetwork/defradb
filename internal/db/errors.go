@@ -29,7 +29,7 @@ const (
 	errRemovingP2PCollection                     string = "cannot remove collection ID"
 	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
 	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
-	errSchemaRootDoesntMatch                     string = "SchemaRoot does not match existing"
+	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
 	errCannotSetVersionID                        string = "setting the VersionID is not supported"
 	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
 	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
@@ -39,7 +39,7 @@ const (
 	errCannotMoveField                           string = "moving fields is not currently supported"
 	errCannotDeleteField                         string = "deleting an existing field is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
-	errFieldKindDoesNotMatchFieldSchema          string = "field Kind does not match field Schema"
+	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
 	errDocumentDeleted                           string = "a document with the given ID has been deleted"
 	errIndexMissingFields                        string = "index missing fields"
@@ -48,11 +48,11 @@ const (
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
-	errNonExistingFieldForIndex                  string = "creating an index on a non-existing property"
+	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
 	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
-	errCanNotAddIndexWithPatch                   string = "adding indexes via patch is not supported"
+	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
@@ -69,7 +69,7 @@ const (
 	errFailedToWriteString                       string = "failed to write string"
 	errJSONDecode                                string = "failed to decode JSON"
 	errDocFromMap                                string = "failed to create a new doc from map"
-	errDocCreate                                 string = "failed to save a new doc to collection"
+	errDocAdd                                    string = "failed to add a new doc to collection"
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
@@ -106,7 +106,7 @@ const (
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
-	errCollectionWithSchemaRootNotFound    string = "collection with schema root not found"
+	errCollectionRootNotFound              string = "collection root not found"
 	errGetEmbeddingFunc                    string = "failed to get embedding function"
 	errGetEmbeddingField                   string = "failed getting vector embedding field"
 	errFieldNotFound                       string = "field not found"
@@ -137,8 +137,7 @@ var (
 	ErrInvalidFilter                             = errors.New("invalid filter")
 	ErrCollectionAlreadyExists                   = errors.New(errCollectionAlreadyExists)
 	ErrCollectionNameEmpty                       = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty                           = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty                           = errors.New("schema root can't be empty")
+	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
@@ -171,7 +170,7 @@ var (
 	ErrColNotMaterialized                        = errors.New(errColNotMaterialized)
 	ErrMaterializedViewAndACPNotSupported        = errors.New(errMaterializedViewAndACPNotSupported)
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
-	ErrorCollectionWithSchemaRootNotFound        = errors.New(errCollectionWithSchemaRootNotFound)
+	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
@@ -220,7 +219,7 @@ func NewErrInvalidStoredIndexKey(key string) error {
 	return errors.New(errInvalidStoredIndexKey, errors.NewKV("Key", key))
 }
 
-// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to create an index
+// NewErrNonExistingFieldForIndex returns a new error indicating the attempt to make a new index
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
@@ -263,7 +262,7 @@ func NewErrFailedToGetAllCollections(inner error) error {
 
 // NewErrDocVerification returns a new error indicating that the document verification failed.
 //
-// This occurs when a documents contents fail the verification during a Create()
+// This occurs when a documents contents fail the verification during an Add()
 // call against the supplied Document ID (docID).
 func NewErrDocVerification(expected string, actual string) error {
 	return errors.New(
@@ -301,9 +300,9 @@ func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID string) e
 	)
 }
 
-func NewErrSchemaRootDoesntMatch(name, existingRoot, proposedRoot string) error {
+func NewErrCollectionRootDoesntMatch(name, existingRoot, proposedRoot string) error {
 	return errors.New(
-		errSchemaRootDoesntMatch,
+		errCollectionRootDoesntMatch,
 		errors.NewKV("Name", name),
 		errors.NewKV("ExistingRoot", existingRoot),
 		errors.NewKV("ProposedRoot", proposedRoot),
@@ -351,11 +350,11 @@ func NewErrFieldKindNotFound(name string, kind string) error {
 	)
 }
 
-func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
+func NewErrFieldKindDoesNotMatchFieldDefinition(kind string, definition string) error {
 	return errors.New(
-		errFieldKindDoesNotMatchFieldSchema,
+		errFieldKindDoesNotMatchFieldDefinition,
 		errors.NewKV("Kind", kind),
-		errors.NewKV("Schema", schema),
+		errors.NewKV("Definition", definition),
 	)
 }
 
@@ -431,11 +430,11 @@ func NewErrCorruptedIndex(indexName string) error {
 	)
 }
 
-// NewErrCannotAddIndexWithPatch returns a new error indicating that an index cannot be added
-// with a patch.
-func NewErrCannotAddIndexWithPatch(proposedName string) error {
+// NewErrCannotCreateNewIndexWithPatch returns a new error indicating that making a new index
+// via patch is not supported.
+func NewErrCannotCreateNewIndexWithPatch(proposedName string) error {
 	return errors.New(
-		errCanNotAddIndexWithPatch,
+		errCanNotCreateNewIndexWithPatch,
 		errors.NewKV("ProposedName", proposedName),
 	)
 }
@@ -546,10 +545,10 @@ func NewErrDocFromMap(inner error) error {
 	return errors.Wrap(errDocFromMap, inner)
 }
 
-// NewErrDocCreate returns a new error indicating there was a failure to save
+// NewErrDocAdd returns a new error indicating there was a failure to add
 // a new doc to a collection
-func NewErrDocCreate(inner error) error {
-	return errors.Wrap(errDocCreate, inner)
+func NewErrDocAdd(inner error) error {
+	return errors.Wrap(errDocAdd, inner)
 }
 
 // NewErrDocUpdate returns a new error indicating there was a failure to update
@@ -738,8 +737,8 @@ func NewErrDocIDNotFound(docID string) error {
 	return errors.New(errDocIDNotFound, errors.NewKV("DocID", docID))
 }
 
-func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
-	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
+func NewErrCollectionRootNotFound(collectionRoot string) error {
+	return errors.New(errCollectionRootNotFound, errors.NewKV("CollectionRoot", collectionRoot))
 }
 
 func NewErrGetEmbeddingField(inner error) error {

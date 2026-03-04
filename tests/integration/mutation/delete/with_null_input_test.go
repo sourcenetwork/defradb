@@ -20,14 +20,14 @@ import (
 func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
@@ -55,14 +55,14 @@ func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
@@ -90,14 +90,14 @@ func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},

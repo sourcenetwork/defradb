@@ -31,7 +31,7 @@ import (
 // Since we know acp is enabled we have these components to check in this function:
 // (1) the request is permissioned (has an identity).
 // (2) the collection is permissioned (has a policy).
-// (3) the identity has "dac-bypass" Node ACP permission.
+// (3) the identity has "bypass-dac" Node ACP permission.
 //
 // Unrestricted Access to document if:
 // - (2) is false.
@@ -71,7 +71,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 // Since we know acp is enabled we have these components to check in this function:
 // (1) the request is permissioned (has an identity).
 // (2) the collection is permissioned (has a policy).
-// (3) the identity has "dac-bypass" Node ACP permission.
+// (3) the identity has "bypass-dac" Node ACP permission.
 //
 // Unrestricted Access to document if:
 // - (2) is false.
@@ -96,7 +96,7 @@ func CheckDocAccessWithIdentityFunc(
 		// resource is registered with the acp system, this is because it is possible that acp has
 		// a registered relation targeting "*" (any) actor which would mean that even a request
 		// without an identity might be able to access a document registered with acp, or might
-		// have dac-bypass nac privilage. So we pass an empty `did` to accommodate that case.
+		// have bypass-dac nac privilage. So we pass an empty `did` to accommodate that case.
 		identityValue = ""
 	} else {
 		identityValue = identity.Value().DID()
@@ -170,7 +170,7 @@ func CheckNodeOperationAccess(
 	objectID string,
 ) error {
 	if nacInfo.NodeACPDesc.Status != client.NACEnabled &&
-		permission != acpTypes.NodeNACReEnablePerm {
+		permission != acpTypes.NodeReEnableNACPerm {
 		// Unrestricted access if node acp is off, and not trying to turn it back on.
 		return nil
 	}

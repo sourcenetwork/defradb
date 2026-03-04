@@ -24,22 +24,22 @@ func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Andy",
@@ -90,22 +90,22 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Name": "Andy",
@@ -154,8 +154,8 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 }
 
 func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
-	createDocOnNode := func(nodeId int) *action.CreateDoc {
-		return &action.CreateDoc{
+	addDocOnNode := func(nodeId int) *action.AddDoc {
+		return &action.AddDoc{
 			NodeID: immutable.Some(nodeId),
 			Doc: `{
 				"Name": "John",
@@ -170,17 +170,17 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				type Users {
 					Name: String
 					Age: Int
 				}
 			`,
 			},
-			createDocOnNode(0),
-			createDocOnNode(1),
-			createDocOnNode(2),
+			addDocOnNode(0),
+			addDocOnNode(1),
+			addDocOnNode(2),
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
@@ -226,20 +226,21 @@ const docSyncTopic = "doc-sync"
 
 func TestDocSync_WithDifferentVersionsOnPeers_ShouldSyncLatest(t *testing.T) {
 	test := testUtils.TestCase{
+		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -334,15 +335,15 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -99,25 +100,29 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := a.getTransaction(node)
-		ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeID)
+		ctx := db.InitContext(a.s.Ctx, txn)
 
-		var options []client.RequestOption
+		reqOption := options.ExecRequest()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			reqOption.SetIdentity(identOption.Value())
+		}
 		if a.OperationName.HasValue() {
-			options = append(options, client.WithOperationName(a.OperationName.Value()))
+			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			options = append(options, client.WithVariables(a.Variables.Value()))
+			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
-			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
+			expectedErrorRaised = refreshViews(a.s, node, identOption, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}
 		}
 
 		request := replace(a.s, nodeID, a.Request)
-		result := node.ExecRequest(ctx, request, options...)
+		result := node.ExecRequest(ctx, request, reqOption)
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,
@@ -131,6 +136,23 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// resolveVariables resolves any DocIndex values in the variables map to their
+// corresponding document ID strings.
+func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+	resolved := make(map[string]any, len(vars))
+	for k, v := range vars {
+		if index, ok := v.(DocIndex); ok {
+			s.DocIDsLock.RLock()
+			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			s.DocIDsLock.RUnlock()
+			resolved[k] = docID.String()
+		} else {
+			resolved[k] = v
+		}
+	}
+	return resolved
 }
 
 // getTransaction returns the transaction for this request, creating one if needed.

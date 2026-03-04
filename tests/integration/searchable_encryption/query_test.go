@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
+func TestEncryptedIndexNew_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex

@@ -51,14 +51,14 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
@@ -124,13 +124,13 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -222,13 +222,13 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -284,14 +284,14 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
@@ -357,14 +357,14 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
 		},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `{
 					"name": "John",
@@ -429,14 +429,14 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,

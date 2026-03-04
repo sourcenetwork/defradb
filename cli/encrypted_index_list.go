@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeEncryptedIndexListCommand(ctx context.Context) *cobra.Command {
@@ -31,17 +34,20 @@ Otherwise, all encrypted indexes in the database will be shown.`,
 
 			switch {
 			case collectionArg != "":
-				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+				getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(cmd.Context()))
+				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, getColOpt)
 				if err != nil {
 					return err
 				}
-				indexes, err := col.ListEncryptedIndexes(cmd.Context())
+				listOpt := options.WithIdentity(options.ListCollectionEncryptedIndexes(), iIdentity.FromContext(cmd.Context()))
+				indexes, err := col.ListEncryptedIndexes(cmd.Context(), listOpt)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				indexes, err := cliClient.ListAllEncryptedIndexes(cmd.Context())
+				opt := options.WithIdentity(options.ListAllEncryptedIndexes(), iIdentity.FromContext(cmd.Context()))
+				indexes, err := cliClient.ListAllEncryptedIndexes(cmd.Context(), opt)
 				if err != nil {
 					return err
 				}

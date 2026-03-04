@@ -27,15 +27,15 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -46,7 +46,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -87,15 +87,15 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -106,7 +106,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -146,15 +146,15 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -165,13 +165,13 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -219,15 +219,15 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			// This last node is not marked for peer sync
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -238,7 +238,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -312,15 +312,15 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 			// This node is unmapped, updates applied to this node should
 			// not be synced to the other nodes.
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -398,15 +398,15 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -417,13 +417,13 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -487,21 +487,21 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 }
 
 // TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection tests document syncing between two nodes by
-// ensuring that the created document and its update reach the node that subscribes to the P2P collection topic.
+// ensuring that the added document and its update reach the node that subscribes to the P2P collection topic.
 func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -512,11 +512,11 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",
@@ -555,22 +555,22 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 }
 
 // TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection tests document syncing between two nodes with multiple
-// updates per node as well as ensuring that the created document and its update reach the node that
+// updates per node as well as ensuring that the added document and its update reach the node that
 // subscribes to the P2P collection topic.
 func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "John",
@@ -581,11 +581,11 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",

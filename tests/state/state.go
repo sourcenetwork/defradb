@@ -12,6 +12,7 @@ package state
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -21,9 +22,9 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
@@ -39,8 +40,8 @@ type StatefulMatcher interface {
 type TestState interface {
 	// GetClientType returns the client type of the test.
 	GetClientType() ClientType
-	// GetCurrentNodeID returns the node id that is currently being asserted.
-	GetCurrentNodeID() int
+	// GetCurrentAssertingNodeID returns the node id that is currently being asserted.
+	GetCurrentAssertingNodeID() int
 	// GetIdentity returns the identity for the given node index.
 	GetIdentity(Identity) acpIdentity.Identity
 	// GetDocID returns the document ID for the given collection index and document index.
@@ -199,8 +200,8 @@ type NodeState struct {
 	Event *EventState
 	// P2P contains P2P states for the node.
 	P2P *P2PState
-	// The network configurations for the nodes
-	NetOpts []node.Option
+	// The P2P network configurations for the node, cached for restarts.
+	P2POpts options.NodeP2POptions
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -212,7 +213,8 @@ type NodeState struct {
 	// restarted with the same address configuration.
 	CachedAddresses []string
 	// Map of docIDs to their composite CIDs.
-	Composites map[string][]cid.Cid
+	Composites     map[string][]cid.Cid
+	CompositesLock sync.RWMutex
 }
 
 // State contains all testing State.
@@ -239,7 +241,7 @@ type State struct {
 	DocumentACPType DocumentACPType
 
 	// The Document ACP options to share between each node (currently only used for sourcehub).
-	DocumentACPOptions []node.DocumentACPOpt
+	DocumentACPOptions *options.NodeDocumentACPOptions
 
 	// Any explicit transactions active in this test.
 	//
@@ -296,7 +298,8 @@ type State struct {
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
-	DocIDs [][]client.DocID
+	DocIDs     [][]client.DocID
+	DocIDsLock sync.RWMutex
 
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
@@ -311,12 +314,16 @@ type State struct {
 	// test run. After a single test run, the StatefulMatchers are reset.
 	StatefulMatchers []StatefulMatcher
 
+	// CurrentSetupNodeID is used during setup stage to find specific attributes that are unique to a
+	// node, for example finding a specific node's NodeIdentity inorder to bypass NAC.
+	CurrentSetupNodeID int
+
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different
 	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
 	// should have the same Cid.
-	CurrentNodeID int
+	CurrentAssertingNodeID int
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
@@ -326,8 +333,8 @@ func (s *State) GetClientType() ClientType {
 	return s.ClientType
 }
 
-func (s *State) GetCurrentNodeID() int {
-	return s.CurrentNodeID
+func (s *State) GetCurrentAssertingNodeID() int {
+	return s.CurrentAssertingNodeID
 }
 
 func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
@@ -335,7 +342,11 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 }
 
 func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
-	return s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RUnlock()
+
+	return docID
 }
 
 // NewState returns a new fresh state for the given testCase.
@@ -359,7 +370,6 @@ func NewState(
 		ClientType:                      clientType,
 		ViewType:                        viewType,
 		DocumentACPType:                 documentACPType,
-		DocumentACPOptions:              []node.DocumentACPOpt{},
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
 		EnableSearchableEncryption:      enableSearchableEncryption,

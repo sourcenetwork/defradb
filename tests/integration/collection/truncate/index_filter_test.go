@@ -17,17 +17,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -52,17 +52,17 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -87,17 +87,17 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -106,7 +106,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocumen
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				// If the unique index had not been deleted, then this create would
 				// error, as the unique index would have been violated.

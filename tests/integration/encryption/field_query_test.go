@@ -20,14 +20,14 @@ import (
 func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"name"},
 			},

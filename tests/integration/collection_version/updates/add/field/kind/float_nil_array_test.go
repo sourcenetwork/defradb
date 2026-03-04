@@ -19,11 +19,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindNillableFloatArray(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableFloatArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -52,11 +52,11 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableFloatArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -69,7 +69,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -101,11 +101,11 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableFloatArraySubstitutionWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableFloatArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArraySubstitutionWithCreate(t *te
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

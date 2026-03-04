@@ -20,7 +20,7 @@ import (
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -30,7 +30,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Authors
 				CollectionID: 1,
 				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
@@ -41,7 +41,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -73,7 +73,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -83,7 +83,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Authors
 				CollectionID: 1,
 				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
@@ -94,7 +94,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -126,7 +126,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -136,7 +136,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Authors
 				CollectionID: 1,
 				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
@@ -147,7 +147,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -156,7 +156,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"address": "Online"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-df73d5f3-1d99-5269-ac5a-ea75c4b18815

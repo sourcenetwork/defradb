@@ -20,15 +20,15 @@ import (
 func TestMutationUpdate_WithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						data: Blob
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"data": "00FE"
@@ -64,14 +64,14 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Blob
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"data": "00FE"
 				}`,

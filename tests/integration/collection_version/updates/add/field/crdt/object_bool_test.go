@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -40,11 +40,11 @@ func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

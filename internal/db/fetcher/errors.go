@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	errFieldIdNotFound            string = "unable to find SchemaFieldDescription for given FieldId"
+	errFieldIdNotFound            string = "unable to find CollectionFieldDescription for given FieldId"
 	errFailedToSeek               string = "seek failed"
 	errFailedToMergeState         string = "failed merging state"
 	errVFetcherFailedToFindBlock  string = "(version fetcher) failed to find block in blockstore"

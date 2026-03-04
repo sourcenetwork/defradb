@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -137,7 +138,7 @@ func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 	fd, ok := n.col.Version().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
-		// schema description. The scanner (and fetcher)
+		// collection definition. The scanner (and fetcher)
 		// is only responsible for basic fields
 		return false
 	}
@@ -160,7 +161,7 @@ func (n *scanNode) addField(field client.CollectionFieldDescription) {
 	}
 }
 
-func (n *scanNode) initFetcher(cid immutable.Option[string]) {
+func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
@@ -310,7 +311,11 @@ func (p *Planner) Scan(
 		docMapper: docMapper{mapperSelect.DocumentMapping},
 	}
 
-	col, err := p.db.GetCollectionByName(p.ctx, mapperSelect.CollectionName)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		mapperSelect.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +340,7 @@ func (p *Planner) Scan(
 // doesn't not provide idempotency guarantees. Counting is purely for performance
 // reasons and removing it should be safe.
 type multiScanNode struct {
-	scanNode   *scanNode
+	planNode   planNode
 	numReaders int
 	nextCount  int
 	initCount  int
@@ -352,14 +357,14 @@ type multiScanNode struct {
 // reasons and removing it should be safe.
 func (n *multiScanNode) Init() error {
 	n.countAndCall(&n.initCount, func() error {
-		return n.scanNode.Init()
+		return n.planNode.Init()
 	})
 	return n.err
 }
 
 func (n *multiScanNode) Start() error {
 	n.countAndCall(&n.startCount, func() error {
-		return n.scanNode.Start()
+		return n.planNode.Start()
 	})
 	return n.err
 }
@@ -389,7 +394,7 @@ func (n *multiScanNode) countAndCall(count *int, f func() error) {
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
 	n.countAndCall(&n.nextCount, func() (err error) {
-		n.nextResult, err = n.scanNode.Next()
+		n.nextResult, err = n.planNode.Next()
 		return
 	})
 
@@ -397,15 +402,15 @@ func (n *multiScanNode) Next() (bool, error) {
 }
 
 func (n *multiScanNode) Value() core.Doc {
-	return n.scanNode.documentIterator.Value()
+	return n.planNode.Value()
 }
 
 func (n *multiScanNode) Prefixes(prefixes []keys.Walkable) {
-	n.scanNode.Prefixes(prefixes)
+	n.planNode.Prefixes(prefixes)
 }
 
 func (n *multiScanNode) Source() planNode {
-	return n.scanNode
+	return n.planNode
 }
 
 func (n *multiScanNode) Kind() string {
@@ -414,13 +419,13 @@ func (n *multiScanNode) Kind() string {
 
 func (n *multiScanNode) Close() error {
 	n.countAndCall(&n.closeCount, func() error {
-		return n.scanNode.Close()
+		return n.planNode.Close()
 	})
 	return n.err
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
-	return n.scanNode.DocumentMap()
+	return n.planNode.DocumentMap()
 }
 
 func (n *multiScanNode) addReader() {

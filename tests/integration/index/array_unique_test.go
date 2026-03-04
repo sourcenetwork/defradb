@@ -25,20 +25,20 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -65,20 +65,20 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 func TestArrayUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"nfts": [50, 30]
@@ -99,20 +99,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -145,20 +145,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -180,20 +180,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -211,26 +211,26 @@ func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
@@ -270,32 +270,32 @@ func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Islam",
 					"numbers": [null, null]
@@ -334,26 +334,26 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]

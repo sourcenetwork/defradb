@@ -14,17 +14,21 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const marker = byte(0xff)
 
-func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) AddP2PCollections(
+	ctx context.Context,
+	collectionNames ...string,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -33,12 +37,11 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
+	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				Name: immutable.Some(col),
-			},
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
 		)
 		if err != nil {
 			return err
@@ -59,7 +62,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, col := range storeCollections {
 			err := p.host.AddPubSubTopic(col.CollectionID(), true, p.pubSubMessageHandler, p.peerEventHandler)
 			if err != nil {
@@ -71,7 +74,10 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	return nil
 }
 
-func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) DeleteP2PCollections(
+	ctx context.Context,
+	collectionNames ...string,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -80,12 +86,11 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
+	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				Name: immutable.Some(col),
-			},
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
 		)
 		if err != nil {
 			return err
@@ -106,7 +111,7 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, col := range storeCollections {
 			err := p.host.RemovePubSubTopic(col.CollectionID())
 			if err != nil {
@@ -118,7 +123,9 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	return nil
 }
 
-func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (p *P2P) ListP2PCollections(
+	ctx context.Context,
+) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -134,6 +141,7 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	}
 
 	collectionNames := []string{}
+	ident := identity.FromContext(ctx)
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -150,15 +158,13 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				CollectionID: immutable.Some(key.CollectionID),
-			},
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionID(key.CollectionID),
 		)
 		if err != nil {
 			return nil, err
 		}
 		if len(storeCol) == 0 {
-			return nil, client.NewErrCollectionNotFoundForSchema(key.CollectionID)
+			return nil, client.NewErrCollectionNotFoundForRoot(key.CollectionID)
 		}
 		collectionNames = append(collectionNames, storeCol[0].Name())
 	}

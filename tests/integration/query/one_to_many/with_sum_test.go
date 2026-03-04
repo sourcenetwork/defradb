@@ -20,7 +20,7 @@ import (
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -28,7 +28,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -36,7 +36,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -44,7 +44,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -52,7 +52,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 0}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -90,7 +90,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -98,7 +98,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -106,7 +106,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -114,7 +114,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -122,7 +122,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -134,7 +134,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -155,8 +155,8 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						rating: Float32
@@ -171,7 +171,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -179,7 +179,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -187,7 +187,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -195,7 +195,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -203,7 +203,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -215,7 +215,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

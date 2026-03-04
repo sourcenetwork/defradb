@@ -19,15 +19,15 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2PCollectionAddSingle ensures that created documents reach the node that subscribes
+// TestP2PCollectionAddSingle ensures that added documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PCollectionAddSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -37,17 +37,17 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
@@ -101,8 +101,8 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -118,24 +118,24 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 2},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
 					"name": "Gillian"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 2,
 				Doc: `{
@@ -197,8 +197,8 @@ func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -208,12 +208,12 @@ func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -243,8 +243,8 @@ func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -254,12 +254,12 @@ func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -290,8 +290,8 @@ func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -301,16 +301,16 @@ func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -344,8 +344,8 @@ func TestP2PCollectionAddNone(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -355,11 +355,11 @@ func TestP2PCollectionAddNone(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"

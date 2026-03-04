@@ -19,11 +19,13 @@ import "C"
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export BlockVerifySignature
-func BlockVerifySignature(nodePtr C.uintptr_t,
+//export VerifyBlockSignature
+func VerifyBlockSignature(nodePtr C.uintptr_t,
 	keyType *C.char,
 	publicKey *C.char,
 	cid *C.char,
@@ -50,7 +52,8 @@ func BlockVerifySignature(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = store.VerifySignature(ctx, C.GoString(cid), pubKey)
+	verifyOpt := options.WithIdentity(options.VerifySignature(), iIdentity.FromContext(ctx))
+	err = store.VerifySignature(ctx, C.GoString(cid), pubKey, verifyOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

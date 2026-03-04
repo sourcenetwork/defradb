@@ -15,7 +15,9 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -57,7 +59,8 @@ func (h *blockHandler) verifySignature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.VerifySignature(r.Context(), cid, pubKey)
+	opt := options.WithIdentity(options.VerifySignature(), identity.FromContext(r.Context()))
+	err = db.VerifySignature(r.Context(), cid, pubKey, opt)
 	if err != nil {
 		responseJSON(w, http.StatusBadRequest, errorResponse{err})
 		return

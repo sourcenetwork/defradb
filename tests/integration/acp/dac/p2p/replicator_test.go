@@ -53,8 +53,8 @@ resources:
     - actor
 `,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -64,7 +64,7 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -107,8 +107,8 @@ resources:
     - actor
 `,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -118,11 +118,11 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{

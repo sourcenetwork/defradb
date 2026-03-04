@@ -21,14 +21,14 @@ import (
 func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						name

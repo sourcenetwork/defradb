@@ -28,8 +28,8 @@ https://github.com/sourcenetwork/defradb/pull/2819
 func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -57,7 +57,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 7,
 				DocMap: map[string]any{
 					"name": "John",
@@ -88,8 +88,8 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -120,7 +120,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 8,
 				DocMap: map[string]any{
 					"name": "John",
@@ -151,8 +151,8 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -179,14 +179,14 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 					}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 8,
 				DocMap: map[string]any{
 					"name": "John",
@@ -217,8 +217,8 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -249,7 +249,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -280,8 +280,8 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Type0 {
 						f: String
 					}
@@ -313,7 +313,7 @@ func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 7,
 				DocMap: map[string]any{
 					"name": "John",

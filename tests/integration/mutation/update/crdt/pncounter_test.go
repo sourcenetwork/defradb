@@ -29,15 +29,15 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -98,15 +98,15 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %d
@@ -146,15 +146,15 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -201,15 +201,15 @@ func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *tes
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float32 @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -255,15 +255,15 @@ func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *tes
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float64 @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -318,15 +318,15 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 			},
 		),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -374,15 +374,15 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 			},
 		),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -422,15 +422,15 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g

@@ -25,20 +25,20 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
@@ -71,32 +71,32 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Shahzad",
 						"birthday": "2001-08-24T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-08-22T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"John",
 						"birthday": "2001-08-25T03:00:00-00:00"
@@ -130,26 +130,26 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Keenan",
 						"birthday": "2001-01-01T00:00:00-00:00"
@@ -183,20 +183,20 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
@@ -229,26 +229,26 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Keenan",
 						"birthday": "2001-01-01T00:00:00-00:00"
@@ -276,20 +276,20 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"

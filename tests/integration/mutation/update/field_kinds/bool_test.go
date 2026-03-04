@@ -20,14 +20,14 @@ import (
 func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						valid: Boolean
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"valid": true
 				}`,

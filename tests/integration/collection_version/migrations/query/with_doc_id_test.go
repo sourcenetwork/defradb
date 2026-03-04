@@ -22,23 +22,23 @@ import (
 )
 
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
-func TestSchemaMigrationQueryByDocID(t *testing.T) {
+func TestCollectionMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -101,11 +101,11 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 //
 // At the time of writing, the lens pool size is hardcoded to 5, so we should test with 6
 // documents/queries, if the size changes so should this test.
-func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
+func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -114,37 +114,37 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			// We want 6 documents, and 6 queries, as lens pool is limited to 5
 			// and we want to make sure that lenses are being correctly returned
 			// to the pool for reuse after.
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-235c64e3-abf7-549c-9aff-971c8afdfa3f
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-eadc6f5f-a52b-57de-ad6c-e76315fff6bd
 				Doc: `{
 					"name": "Chris"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-aa68c022-519a-50cf-8a91-2ff6d4349c90
 				Doc: `{
 					"name": "Islam"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// bae-81418211-7e0c-5e0c-8505-6288318c7248
 				Doc: `{
 					"name": "Dave"

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -23,14 +24,14 @@ import (
 func TestColVersionUpdateRemoveView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -53,9 +54,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -67,14 +66,14 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -86,7 +85,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -102,9 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -116,14 +113,14 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -135,7 +132,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -154,9 +151,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -172,14 +167,14 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -191,7 +186,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -217,14 +212,14 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -247,9 +242,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{
@@ -258,7 +251,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 						name
 					}
 				}`,
-				ExpectedError: `key not found`,
+				ExpectedError: `collection not found`,
 			},
 		},
 	}
@@ -272,14 +265,14 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 		// action - this changes the test definition in a way that we do not want here.
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -302,9 +295,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{

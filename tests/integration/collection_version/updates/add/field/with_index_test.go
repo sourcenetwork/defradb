@@ -20,11 +20,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -37,10 +37,10 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					]
 				`,
 			},
-			// It is important to test that the index shows up in both the `GetIndexes` call,
+			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
-			&action.GetIndexes{
+			// where patching a collection would result in the index disappearing from one of those locations.
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",
@@ -78,14 +78,14 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					},
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Shahzad"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -105,11 +105,11 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -117,14 +117,14 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 			},
 			// It is important to test this with docs created *before* the patch, as well as after (see other test).
 			// A bug was missed by missing this test case.
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Shahzad"
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -138,10 +138,10 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					]
 				`,
 			},
-			// It is important to test that the index shows up in both the `GetIndexes` call,
+			// It is important to test that the index shows up in both the `ListIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
-			// where patching a schema would result in the index disappearing from one of those locations.
-			&action.GetIndexes{
+			// where patching a collection would result in the index disappearing from one of those locations.
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",

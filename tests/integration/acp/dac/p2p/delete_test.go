@@ -73,8 +73,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 						type Users @policy(
 							id: "{{.Policy0}}",
 							resource: "users"
@@ -85,12 +85,12 @@ resources:
 					`,
 			},
 
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
@@ -102,7 +102,7 @@ resources:
 				},
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(1),

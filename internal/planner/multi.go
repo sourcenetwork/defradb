@@ -142,13 +142,11 @@ func (p *parallelNode) Next() (bool, error) {
 	for i, plan := range p.children {
 		var next bool
 		var err error
-		// isMerge := false
 		switch n := plan.(type) {
-		case *scanNode, *typeIndexJoin:
-			// isMerge = true
-			next, err = p.nextMerge(i, n)
 		case *dagScanNode:
 			next, err = p.nextAppend(i, n)
+		default: // anything else is a merge
+			next, err = p.nextMerge(i, n)
 		}
 		if err != nil {
 			return false, err
@@ -223,7 +221,7 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	switch sourceNode := n.source.(type) {
 	// if its a scan node, we either replace or create a multinode
-	case *scanNode, *pipeNode:
+	case *updateNode, *scanNode, *pipeNode:
 		switch newPlan.(type) {
 		case *typeIndexJoin:
 			n.source = newPlan
@@ -243,13 +241,31 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	case *typeIndexJoin:
 		var multiscan *multiScanNode
 		var source planNode
-		origScan, _ := walkAndFindPlanType[*scanNode](newPlan)
-		if origScan != nil {
-			multiscan = &multiScanNode{scanNode: origScan}
-			if err := n.planner.walkAndReplacePlan(n.source, origScan, multiscan); err != nil {
+		var origSource planNode
+
+		// we need to replace the original "source" with the appropriate
+		// multiScanNode type. However, not all "source" types are equal.
+		// For query ops the target source is a `*scanNode`, for mutations
+		// the target source is either a `*createNode`, `*updateNode`, or
+		// a `*upsertNode`
+		//
+		// This is necessary since the `*typeIndexJoin` join will read
+		// from this source multiple times per iteration, so we need
+		// to make sure that we're caching the necessary state. Eg during
+		// a mutation multiple reads shouldn't trigger multiple mutations.
+		switch n.origSource.(type) {
+		case *updateNode:
+			origSource, _ = walkAndFindPlanType[*updateNode](newPlan)
+		default:
+			origSource, _ = walkAndFindPlanType[*scanNode](newPlan)
+		}
+
+		if origSource != nil {
+			multiscan = &multiScanNode{planNode: origSource}
+			if err := n.planner.walkAndReplacePlan(n.source, origSource, multiscan); err != nil {
 				return err
 			}
-			if err := n.planner.walkAndReplacePlan(newPlan, origScan, multiscan); err != nil {
+			if err := n.planner.walkAndReplacePlan(newPlan, origSource, multiscan); err != nil {
 				return err
 			}
 			multiscan.addReader()

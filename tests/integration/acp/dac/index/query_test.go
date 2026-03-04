@@ -24,8 +24,8 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -35,14 +35,14 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name": "Shahzad"
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{
@@ -76,8 +76,8 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -87,14 +87,14 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name": "Shahzad"
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{
@@ -134,8 +134,8 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -145,14 +145,14 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `
 					{
 						"name": "Shahzad"
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				Doc: `
 					{

@@ -24,11 +24,15 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/internal/utils"
+
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -104,8 +108,21 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	return err
 }
 
-func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (c *Client) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Enumerable[options.BasicExportOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
 	methodURL := c.http.apiURL.JoinPath("backup", "export")
+
+	config := &client.BackupConfig{
+		Filepath:    filepath,
+		Format:      opt.Format,
+		Pretty:      opt.Pretty,
+		Collections: opt.Collections,
+	}
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -119,10 +136,17 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 	return err
 }
 
-func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	methodURL := c.http.apiURL.JoinPath("schema")
+func (c *Client) AddCollection(
+	ctx context.Context,
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
+) ([]client.CollectionVersion, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
+	methodURL := c.http.apiURL.JoinPath("collections")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(sdl))
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +166,11 @@ func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 
 	body, err := json.Marshal(patchCollectionRequest{patch, migration})
@@ -158,7 +186,14 @@ func (c *Client) PatchCollection(
 	return err
 }
 
-func (c *Client) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+func (c *Client) SetActiveCollectionVersion(
+	ctx context.Context,
+	collectionVersionID string,
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(),
@@ -180,11 +215,14 @@ func (c *Client) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl, transformCID})
+	body, err := json.Marshal(addViewRequest{query, sdl, opt.TransformCID})
 	if err != nil {
 		return nil, err
 	}
@@ -202,20 +240,22 @@ func (c *Client) AddView(
 	return descriptions, nil
 }
 
-func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+func (c *Client) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+	if opt.CollectionName.HasValue() {
+		params.Add("name", opt.CollectionName.Value())
 	}
-	if options.VersionID.HasValue() {
-		params.Add("version_id", options.VersionID.Value())
+	if opt.VersionID.HasValue() {
+		params.Add("version_id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		params.Add("collection_id", options.CollectionID.Value())
+	if opt.CollectionID.HasValue() {
+		params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -228,7 +268,14 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	return err
 }
 
-func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (c *Client) SetMigration(
+	ctx context.Context,
+	config client.LensConfig,
+	opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", "migrations")
 
 	body, err := json.Marshal(config)
@@ -249,7 +296,14 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 	return res.LensID, nil
 }
 
-func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (c *Client) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Enumerable[options.AddLensOptions],
+) (string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(AddLensRequest{Lens: lens})
@@ -270,7 +324,13 @@ func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return res.LensID, nil
 }
 
-func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (c *Client) ListLenses(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -286,8 +346,16 @@ func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) 
 	return res.Lenses, nil
 }
 
-func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+func (c *Client) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
+) (client.Collection, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	colsOpt := options.WithIdentity(options.GetCollections(), opt.GetIdentity())
+	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name), colsOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -302,21 +370,24 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 
 func (c *Client) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
+	if opt.CollectionName.HasValue() {
+		params.Add("name", opt.CollectionName.Value())
 	}
-	if options.VersionID.HasValue() {
-		params.Add("version_id", options.VersionID.Value())
+	if opt.VersionID.HasValue() {
+		params.Add("version_id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		params.Add("collection_id", options.CollectionID.Value())
+	if opt.CollectionID.HasValue() {
+		params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -335,7 +406,13 @@ func (c *Client) GetCollections(
 	return collections, nil
 }
 
-func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (c *Client) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListIndexesOptions],
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -351,7 +428,10 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 
 func (c *Client) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("encrypted-indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -368,20 +448,20 @@ func (c *Client) ListAllEncryptedIndexes(
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
-	gqlOptions := &client.GQLOptions{}
-	for _, o := range opts {
-		o(gqlOptions)
-	}
 	gqlRequest := &GraphQLRequest{
-		Query:         query,
-		OperationName: gqlOptions.OperationName,
-		Variables:     gqlOptions.Variables,
+		Query: query,
 	}
+	if opt.OperationName.HasValue() {
+		gqlRequest.OperationName = opt.OperationName.Value()
+	}
+	gqlRequest.Variables = opt.Variables
 
 	body, err := json.Marshal(gqlRequest)
 	if err != nil {
@@ -497,21 +577,29 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	methodURL := c.http.apiURL.JoinPath("node", "identity")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
-	var ident immutable.Option[identity.PublicRawIdentity]
+	var ident immutable.Option[acpIdentity.PublicRawIdentity]
 	if err := c.http.requestJson(req, &ident); err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
 	return ident, err
 }
 
-func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+func (c *Client) VerifySignature(
+	ctx context.Context,
+	cid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Enumerable[options.VerifySignatureOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
 
 	params := url.Values{}

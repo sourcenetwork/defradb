@@ -20,8 +20,8 @@ import (
 func TestQuerySimpleWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -29,7 +29,7 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 				`,
 			},
 			testUtils.Restart{},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age": 30

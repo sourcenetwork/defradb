@@ -24,7 +24,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {

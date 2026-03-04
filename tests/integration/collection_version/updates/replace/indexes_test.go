@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdateReplaceIndexes_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},

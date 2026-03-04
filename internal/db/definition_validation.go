@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// definitionState holds collection and schema descriptions in easily accessible
+// definitionState holds collection descriptions in easily accessible
 // sets.
 //
 // It is read only and will not and should not be mutated.
@@ -118,7 +118,7 @@ func (s *definitionState) getCollection(
 	return client.CollectionVersion{}, false
 }
 
-// definitionValidator aliases the signature that all schema and collection
+// definitionValidator aliases the signature that all collection
 // validation functions should follow.
 type definitionValidator = func(
 	ctx context.Context,
@@ -127,9 +127,9 @@ type definitionValidator = func(
 	oldState *definitionState,
 ) error
 
-// createOnlyValidators are executed on the creation of new descriptions only
+// addOnlyValidators are executed on the addition of new descriptions only
 // they will not be executed for updates to existing records.
-var createOnlyValidators = []definitionValidator{}
+var addOnlyValidators = []definitionValidator{}
 
 // updateOnlyValidators are executed on the update of existing descriptions only
 // they will not be executed for new records.
@@ -160,7 +160,7 @@ var collectionUpdateValidators = append(
 	globalValidators...,
 )
 
-// globalValidators are run on create and update of records.
+// globalValidators are run on add and update of records.
 var globalValidators = []definitionValidator{
 	validateCollectionNameUnique,
 	validateRelationPointsToValidKind,
@@ -186,8 +186,8 @@ var globalValidators = []definitionValidator{
 	validateEncryptedIndexes,
 }
 
-var createValidators = append(
-	append([]definitionValidator{}, createOnlyValidators...),
+var addValidators = append(
+	append([]definitionValidator{}, addOnlyValidators...),
 	globalValidators...,
 )
 
@@ -217,7 +217,7 @@ func (db *DB) validateNewCollection(
 	newState := newDefinitionState(newCollections)
 	oldState := newDefinitionState(oldCollections)
 	var errs []error
-	for _, validator := range createValidators {
+	for _, validator := range addValidators {
 		err := validator(ctx, db, newState, oldState)
 		if err != nil {
 			errs = append(errs, err)

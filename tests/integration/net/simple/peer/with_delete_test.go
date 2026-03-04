@@ -27,22 +27,22 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -53,7 +53,7 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -93,22 +93,22 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -119,7 +119,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -165,22 +165,22 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -199,7 +199,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -245,22 +245,22 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -287,7 +287,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -333,22 +333,22 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -379,7 +379,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 1),

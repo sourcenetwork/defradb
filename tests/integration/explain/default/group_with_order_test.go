@@ -50,7 +50,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 						order: {name: DESC}
 					) {
 						name
-						_group {
+						GROUP {
 							age
 						}
 					}
@@ -103,7 +103,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 						order: {name: ASC}
 					) {
 						name
-						_group {
+						GROUP {
 							age
 						}
 					}
@@ -156,7 +156,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 						order: {name: DESC}
 					) {
 						name
-						_group (order: {age: ASC}){
+						GROUP (order: {age: ASC}){
 							age
 						}
 					}

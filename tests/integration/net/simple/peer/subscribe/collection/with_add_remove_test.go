@@ -24,8 +24,8 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -35,21 +35,21 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
@@ -83,8 +83,8 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -97,22 +97,22 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID: 1,
 				// Unsubscribe from Users, but remain subscribed to Giraffes
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
@@ -159,8 +159,8 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -170,16 +170,16 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -213,8 +213,8 @@ func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -224,15 +224,15 @@ func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"

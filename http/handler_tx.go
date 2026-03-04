@@ -136,7 +136,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 		WithSchema(openapi3.NewInt64Schema())
 
 	txnCommit := openapi3.NewOperation()
-	txnCommit.OperationID = "transaction_commit"
+	txnCommit.OperationID = "commit_transaction"
 	txnCommit.Description = "Commit a transaction"
 	txnCommit.Tags = []string{"transaction"}
 	txnCommit.AddParameter(txnIdPathParam)
@@ -145,7 +145,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCommit.Responses.Set("400", errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
-	txnDiscard.OperationID = "transaction_discard"
+	txnDiscard.OperationID = "discard_transaction"
 	txnDiscard.Description = "Discard a transaction"
 	txnDiscard.Tags = []string{"transaction"}
 	txnDiscard.AddParameter(txnIdPathParam)

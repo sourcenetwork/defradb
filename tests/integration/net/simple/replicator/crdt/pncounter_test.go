@@ -28,16 +28,16 @@ func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.CreateDoc{
-				// This document is created in first node before the replicator is set up.
+			&action.AddDoc{
+				// This document is added in first node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -45,7 +45,7 @@ func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 					"points": 10
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

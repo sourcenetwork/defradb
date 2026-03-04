@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestIntrospectionExplainTypeDefined tests that the introspection query returns a schema that
+// TestIntrospectionExplainTypeDefined tests that the introspection query returns a GQL schema that
 // defines the ExplainType enum.
 func TestIntrospectionExplainTypeDefined(t *testing.T) {
 	test := testUtils.TestCase{

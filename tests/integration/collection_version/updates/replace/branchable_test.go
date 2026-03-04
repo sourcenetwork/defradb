@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdateReplaceIsBranchable_UpdatingFromTrueToFalse_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -48,8 +48,8 @@ func TestColVersionUpdateReplaceIsBranchable_UpdatingFromTrueToFalse_Errors(t *t
 func TestColVersionUpdateReplaceIsBranchable_UpdatingFromFalseToTrue_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable(if: false) {
 						name: String
 					}

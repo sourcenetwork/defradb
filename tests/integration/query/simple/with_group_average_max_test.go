@@ -20,35 +20,35 @@ import (
 func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"Verified": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55,
 					"Verified": true
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
@@ -59,10 +59,10 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_max(_group: {field: _avg})
-						_group (groupBy: [Verified]){
+						MAX(GROUP: {field: AVG})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_avg(_group: {field: Age})
+							AVG(GROUP: {field: Age})
 						}
 					}
 				}`,
@@ -70,35 +70,35 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_max": float64(34),
-							"_group": []map[string]any{
+							"MAX":  float64(34),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(28.5),
+									"AVG":      float64(28.5),
 								},
 								{
 									"Verified": false,
-									"_avg":     float64(34),
+									"AVG":      float64(34),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_max": float64(19),
-							"_group": []map[string]any{
+							"MAX":  float64(19),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_avg":     float64(19),
+									"AVG":      float64(19),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
-							"_max": float64(55),
-							"_group": []map[string]any{
+							"MAX":  float64(55),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(55),
+									"AVG":      float64(55),
 								},
 							},
 						},
@@ -115,19 +115,19 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// It is important to test negative values here, due to the auto-typing of numbers
 				Doc: `{
 					"Name": "Alice",
@@ -138,21 +138,21 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverage
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age})
-						_max(_group: {field: Age})
+						AVG(GROUP: {field: Age})
+						MAX(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(35),
-							"_max": int64(38),
+							"AVG":  float64(35),
+							"MAX":  int64(38),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(-19),
-							"_max": int64(-19),
+							"AVG":  float64(-19),
+							"MAX":  int64(-19),
 						},
 					},
 				},

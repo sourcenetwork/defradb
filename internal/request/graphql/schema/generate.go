@@ -13,6 +13,7 @@ package schema
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -568,7 +569,7 @@ func (g *Generator) buildTypes(
 }
 
 // buildMutationInputTypes creates the input object types
-// for collection create and update mutation operations.
+// for collection add and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersion) error {
 	for _, collection := range collections {
 		if collection.IsEmbeddedOnly {
@@ -1215,13 +1216,13 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
-	create := &gql.Field{
-		Name:        "create_" + obj.Name(),
-		Description: createDocumentDescription,
+	add := &gql.Field{
+		Name:        "add_" + obj.Name(),
+		Description: addDocumentDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.Input: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(mutationInput)),
-				"Create "+obj.Name()+" documents"),
+				"Add "+obj.Name()+" documents"),
 			request.EncryptDocArgName: schemaTypes.NewArgConfig(gql.Boolean, encryptArgDescription),
 			request.EncryptFieldsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(explicitUserFieldsEnum)),
 				encryptFieldsArgDescription),
@@ -1255,12 +1256,12 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
-			request.CreateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Create field values"),
+			request.AddInput:     schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Add field values"),
 			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
 		},
 	}
 
-	return []*gql.Field{create, update, delete, upsert}, nil
+	return []*gql.Field{add, update, delete, upsert}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
@@ -1284,6 +1285,9 @@ func (g *Generator) genUserExplicitTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 
 	for f, field := range obj.Fields() {
 		if strings.HasPrefix(field.Name, "_") {
+			continue
+		}
+		if slices.Contains(request.AggregateFields, field.Name) {
 			continue
 		}
 		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
@@ -1556,7 +1560,7 @@ func (g *Generator) genTypeQueryableFieldList(
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), docIDsArgDescription),
-			"cid":                schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			request.CidArgName:   schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), cidArgDescription),
 			"filter":             schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),

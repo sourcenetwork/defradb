@@ -15,7 +15,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 type txnSigner struct {
@@ -26,7 +26,7 @@ type txnSigner struct {
 	accAddress string
 }
 
-var _ node.TxSigner = (*txnSigner)(nil)
+var _ options.NodeTxSigner = (*txnSigner)(nil)
 
 // NewTxSignerFromKeyringKey creates a new TxSigner backed by a keyring.
 //

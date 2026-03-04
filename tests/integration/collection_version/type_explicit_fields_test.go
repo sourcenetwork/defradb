@@ -17,12 +17,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptFieldsForCreateMutation(t *testing.T) {
+func TestEncryptFieldsForAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age:  Int

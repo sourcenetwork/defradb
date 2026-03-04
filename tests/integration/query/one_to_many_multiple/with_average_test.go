@@ -20,8 +20,8 @@ import (
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Article {
 						name: String
 						author: Author
@@ -43,7 +43,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -51,7 +51,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"verified": true,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -59,7 +59,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"verified": false,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -67,7 +67,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"rating":    3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -75,7 +75,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"rating":    2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"rating":    1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -91,7 +91,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"score":     1,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -99,7 +99,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"score":     2,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -107,7 +107,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 					"score":     3,
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -119,18 +119,18 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							_avg(books: {field: score}, articles: {field: rating})
+							AVG(books: {field: score}, articles: {field: rating})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"_avg": float64(2.25),
+							"AVG":  float64(2.25),
 						},
 						{
 							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
+							"AVG":  float64(2.3333333333333335),
 						},
 					},
 				},

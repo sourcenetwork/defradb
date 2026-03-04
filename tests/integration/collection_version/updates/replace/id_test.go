@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -46,8 +46,8 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -72,8 +72,8 @@ func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -110,13 +110,13 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Dogs {}
 				`,
 			},
@@ -146,8 +146,8 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 func TestColVersionUpdateReplaceID_WithNew_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},

@@ -20,39 +20,39 @@ import (
 func TestQueryJSON_WithLikeFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						custom: JSON
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"custom": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"custom": "Viserys I Targaryen, King of the Andals",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"custom": [1, 2]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"custom": {"one": 1}
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"custom": false
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"custom": 32
 				}`,

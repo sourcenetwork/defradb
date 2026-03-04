@@ -20,15 +20,15 @@ import (
 func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -64,15 +64,15 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -108,15 +108,15 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -152,15 +152,15 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -196,15 +196,15 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -240,15 +240,15 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]

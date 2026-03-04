@@ -24,8 +24,8 @@ import (
 func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						firstName: String
 						lastName: String
@@ -58,7 +58,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					},
 				},
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					User {
 						firstName
@@ -83,7 +83,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				// Set the `name` field only
 				Doc: `{
 					"firstName": "John",

@@ -20,8 +20,8 @@ import (
 func TestColVersionUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -42,8 +42,8 @@ func TestColVersionUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 func TestColVersionUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -64,8 +64,8 @@ func TestColVersionUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 func TestColVersionUpdateAddCollections_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -89,8 +89,8 @@ func TestColVersionUpdateAddCollections_Errors(t *testing.T) {
 func TestColVersionUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},

@@ -20,14 +20,14 @@ import (
 func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5],
 					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Count: 6
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, 6],
 					"pageRatings": [1.0, 2.0, 3.0, 4.0]
@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _count(testScores: {}, pageRatings: {})
+						total: COUNT(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _count(testScores: {}, pageRatings: {})
+						total: COUNT(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -80,14 +80,14 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArray_WithNullAndCountAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, null],
 					"pageRatings": [1.0, 2.0, 3.0, null]
 				}`, // Count: 8
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, 6, null],
 					"pageRatings": [1.0, 2.0, 3.0, 4.0, null]
@@ -98,7 +98,7 @@ func TestQueryInlineIntegerArray_WithNullAndCountAndOrder_Succeeds(t *testing.T)
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _count(testScores: {}, pageRatings: {})
+						total: COUNT(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -117,7 +117,7 @@ func TestQueryInlineIntegerArray_WithNullAndCountAndOrder_Succeeds(t *testing.T)
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _count(testScores: {}, pageRatings: {})
+						total: COUNT(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

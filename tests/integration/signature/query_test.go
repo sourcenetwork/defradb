@@ -21,14 +21,14 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -63,14 +63,14 @@ func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *t
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

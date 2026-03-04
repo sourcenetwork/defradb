@@ -12,7 +12,9 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -25,15 +27,18 @@ type upsertNode struct {
 	p             *Planner
 	collection    client.Collection
 	filter        *mapper.Filter
-	createInput   map[string]any
+	addInput      map[string]any
 	updateInput   map[string]any
 	isInitialized bool
 	source        planNode
+	origScanNode  *scanNode
+	valuesNode    *valuesNode
 }
 
 // Next only returns once.
 func (n *upsertNode) Next() (bool, error) {
 	if !n.isInitialized {
+		var updater bool
 		next, err := n.source.Next()
 		if err != nil {
 			return false, err
@@ -52,7 +57,8 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			doc, err := n.collection.Get(n.p.ctx, docID, false)
+			getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
+			doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
 			if err != nil {
 				return false, err
 			}
@@ -61,16 +67,26 @@ func (n *upsertNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			err = n.collection.Update(n.p.ctx, doc)
+			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
+			err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
 			if err != nil {
 				return false, err
 			}
+			coreDoc, err := core.DocFromClient(doc, n.documentMapping)
+			if err != nil {
+				return false, err
+			}
+
+			n.valuesNode.docs.AddDoc(coreDoc)
+
+			updater = true
 		} else {
-			doc, err := client.NewDocFromMap(n.p.ctx, n.createInput, n.collection.Version())
+			doc, err := client.NewDocFromMap(n.p.ctx, n.addInput, n.collection.Version())
 			if err != nil {
 				return false, err
 			}
-			err = n.collection.Create(n.p.ctx, doc)
+			addOpts := options.WithIdentity(options.AddDocument(), n.p.identity)
+			err = n.collection.AddDocument(n.p.ctx, doc, addOpts)
 			if err != nil {
 				return false, err
 			}
@@ -82,6 +98,18 @@ func (n *upsertNode) Next() (bool, error) {
 
 			n.source.Prefixes(prefixes)
 		}
+
+		if updater {
+			// we have cached the document result set from the original Select
+			// in the valuesNode, now we can replace the original scanNode with
+			// our valuesNode, and avoid any additional fetches/kv ops.
+			// This is cheaper than building two seperate plans.
+			err := n.p.walkAndReplacePlan(n.source, n.origScanNode, n.valuesNode)
+			if err != nil {
+				return false, err
+			}
+		}
+
 		err = n.source.Init()
 		if err != nil {
 			return false, err
@@ -124,7 +152,13 @@ func (n *upsertNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *upsertNode) Init() error {
-	return n.source.Init()
+	err := n.source.Init()
+	if err != nil {
+		return err
+	}
+
+	n.origScanNode = getNode[*scanNode](n.source)
+	return nil
 }
 
 func (n *upsertNode) Start() error {
@@ -145,9 +179,9 @@ func (n *upsertNode) simpleExplain() (map[string]any, error) {
 	// Add the filter attribute
 	simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 
-	// Add the attribute that represents the values to create or update.
+	// Add the attribute that represents the values to add or update.
 	simpleExplainMap[updateInputLabel] = n.updateInput
-	simpleExplainMap[createInputLabel] = n.createInput
+	simpleExplainMap[addInputLabel] = n.addInput
 
 	return simpleExplainMap, nil
 }
@@ -175,12 +209,16 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		docMapper:   docMapper{parsed.DocumentMapping},
 	}
 
-	if len(parsed.CreateInput) > 0 {
-		upsert.createInput = parsed.CreateInput[0]
+	if len(parsed.AddInput) > 0 {
+		upsert.addInput = parsed.AddInput[0]
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +230,7 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 	upsert.source = resultsNode
+	upsert.valuesNode = p.newContainerValuesNode(nil)
 
 	return upsert, nil
 }

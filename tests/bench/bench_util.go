@@ -53,15 +53,13 @@ func SetupCollections(
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
-	schema, err := ConstructSchema(fixture)
+	sdl, err := ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
 
-	// b.Logf("Loading schema: \n%s", schema)
-
-	if _, err := db.AddSchema(ctx, schema); err != nil {
-		return nil, errors.Wrap("couldn't load schema", err)
+	if _, err := db.AddCollection(ctx, sdl); err != nil {
+		return nil, errors.Wrap("couldn't load SDL", err)
 	}
 
 	// loop to get collections
@@ -77,22 +75,22 @@ func SetupCollections(
 	return collections, nil
 }
 
-func ConstructSchema(fixture fixtures.Generator) (string, error) {
+func ConstructSDL(fixture fixtures.Generator) (string, error) {
 	numTypes := len(fixture.Types())
-	var schema string
+	var sdl string
 
-	// loop to get the schemas
+	// loop to get the collection definitions
 	for i := 0; i < numTypes; i++ {
 		gql, err := fixture.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
 			return "", errors.Wrap("failed generating GQL", err)
 		}
 
-		schema += gql
-		schema += "\n\n"
+		sdl += gql
+		sdl += "\n\n"
 	}
 
-	return schema, nil
+	return sdl, nil
 }
 
 func SetupDBAndCollections(
@@ -156,12 +154,12 @@ func BackfillBenchmarkDB(
 						return
 					}
 
-					// create the documents
+					// add the documents
 					docIDs := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
 						doc, err := client.NewDocFromJSON(ctx, []byte(docs[j]), cols[j].Version())
 						if err != nil {
-							errCh <- errors.Wrap("failed to create document from fixture", err)
+							errCh <- errors.Wrap("failed to add document from fixture", err)
 							return
 						}
 
@@ -170,7 +168,7 @@ func BackfillBenchmarkDB(
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Create(ctx, doc); err != nil &&
+							if err := cols[j].AddDocument(ctx, doc); err != nil &&
 								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,
@@ -179,7 +177,7 @@ func BackfillBenchmarkDB(
 								)
 								continue
 							} else if err != nil {
-								errCh <- errors.Wrap("failed to create document", err)
+								errCh <- errors.Wrap("failed to add document", err)
 							}
 							docIDs[j] = doc.ID()
 							break

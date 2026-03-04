@@ -39,11 +39,11 @@ input IntListOperatorBlock {
 }
 
 enum AuthorNumericFieldsArg {
-    _sum
-    _avg
-    _min
-    _max
-    _count
+    SUM
+    AVG
+    MIN
+    MAX
+    COUNT
     age
 }
 
@@ -56,7 +56,7 @@ enum commitFields {
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -92,7 +92,7 @@ type Subscription {
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -111,7 +111,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -150,7 +150,7 @@ showDeleted: Boolean): [Author]
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -169,7 +169,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -208,11 +208,11 @@ showDeleted: Boolean): [Book]
     """
     _commits(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional value that specifies the maximum depth to which the commit DAG graph
     should be traversed from matching commits.
@@ -225,13 +225,13 @@ depth: Int,     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -339,7 +339,7 @@ input StringOperatorBlock {
     _nlike: String
 }
 
-"Used to create an index from a field."
+"Used to add an index from a field."
 input IndexField {
     direction: Ordering
     field: String
@@ -359,7 +359,7 @@ type Query {
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -378,7 +378,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -417,7 +417,7 @@ showDeleted: Boolean): [Author]
     If a matching commit is not found then an empty set will be returned.
 
     """
-cid: String,     """
+cid: [ID!],     """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -436,7 +436,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -474,7 +474,7 @@ showDeleted: Boolean): [Book]
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    AVG(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
@@ -483,11 +483,11 @@ showDeleted: Boolean): [Book]
     """
     _commits(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional value that specifies the maximum depth to which the commit DAG graph
     should be traversed from matching commits.
@@ -500,13 +500,13 @@ depth: Int,     """
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -537,7 +537,7 @@ order: [commitsOrderArg]): [Commit]
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(Author: Author__CountSelector, Book: Book__CountSelector): Int
+    COUNT(Author: Author__CountSelector, Book: Book__CountSelector): Int
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
@@ -545,7 +545,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _max(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    MAX(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the minimum of the specified field values within the specified child sets. If
@@ -553,7 +553,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _min(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    MIN(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -561,7 +561,7 @@ order: [commitsOrderArg]): [Commit]
     a single value.
 
     """
-    _sum(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    SUM(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
 }
 
 """
@@ -760,7 +760,7 @@ type Commit {
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(field: commitCountFieldArg): Int
+    COUNT(field: commitCountFieldArg): Int
     """
     
     The group field may be used to return a set of records belonging to the group.
@@ -769,7 +769,7 @@ type Commit {
     groupBy.
 
     """
-    _group: [Commit]
+    GROUP: [Commit]
     """
     
     The unique CID of this commit, and the primary means through which to safely identify
@@ -812,24 +812,24 @@ type Commit {
     """
     heads(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional docID parameter for this commit query. Only commits for a document
     with a matching docID will be returned.  If no documents match, the result
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -844,7 +844,7 @@ order: [commitsOrderArg]): [Commit]
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -858,24 +858,24 @@ order: [commitsOrderArg]): [Commit]
     """
     links(    """
     
-    An optional value that specifies the commit ID of the commits to return. If a
+    An optional value that specifies the commit IDs of the commits to return. If a
     matching commit is not found then an empty set will be returned.
 
     """
-cid: ID,     """
+cid: [ID!],     """
     
     An optional docID parameter for this commit query. Only commits for a document
     with a matching docID will be returned.  If no documents match, the result
     set will be empty.
 
     """
-docID: ID,     "Filter results based on specified conditions."
+docID: [ID!],  "Filter results based on specified conditions."
 filter: CommitsFilterArg,     """
     
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -917,7 +917,7 @@ type Book {
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(_group: Book__NumericSelector,     """
+    AVG(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -929,7 +929,7 @@ rating: ScalarAggregateNumericBlock): Float
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(_group: Book__CountSelector, _version: Book___version__CountSelector): Int
+    COUNT(GROUP: Book__CountSelector, _version: Book___version__CountSelector): Int
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -950,7 +950,7 @@ rating: ScalarAggregateNumericBlock): Float
     groupBy.
 
     """
-    _group(    """
+    GROUP(    """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -970,7 +970,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1002,7 +1002,7 @@ order: [BookOrderArg]): [Book]
     will be returned as a single value.
 
     """
-    _max(_group: Book__NumericSelector,     """
+    MAX(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1015,14 +1015,14 @@ rating: ScalarAggregateNumericBlock): Float
     will be returned as a single value.
 
     """
-    _min(_group: Book__NumericSelector,     """
+    MIN(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
     """
 rating: ScalarAggregateNumericBlock): Float
     "Returns the cosine similarity between the specified field and the provided vector."
-    _similarity: Float
+    SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -1030,7 +1030,7 @@ rating: ScalarAggregateNumericBlock): Float
     a single value.
 
     """
-    _sum(_group: Book__NumericSelector,     """
+    SUM(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1151,7 +1151,7 @@ type Author {
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(_group: Author__NumericSelector,     """
+    AVG(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1163,7 +1163,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(_group: Author__CountSelector, _version: Author___version__CountSelector, published: Book__CountSelector): Int
+    COUNT(GROUP: Author__CountSelector, _version: Author___version__CountSelector, published: Book__CountSelector): Int
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -1184,7 +1184,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     groupBy.
 
     """
-    _group(    """
+    GROUP(    """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -1204,7 +1204,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1236,7 +1236,7 @@ order: [AuthorOrderArg]): [Author]
     will be returned as a single value.
 
     """
-    _max(_group: Author__NumericSelector,     """
+    MAX(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1249,14 +1249,14 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     will be returned as a single value.
 
     """
-    _min(_group: Author__NumericSelector,     """
+    MIN(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
     """
 age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     "Returns the cosine similarity between the specified field and the provided vector."
-    _similarity: Float
+    SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -1264,7 +1264,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     a single value.
 
     """
-    _sum(_group: Author__NumericSelector,     """
+    SUM(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1298,7 +1298,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1801,7 +1801,7 @@ input commitsOrderArg {
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on create will have a height of '1', each subsequent local update
+    and field level) on add will have a height of '1', each subsequent local update
     will increment this by one for the new commits.
 
     """
@@ -1848,16 +1848,16 @@ enum AuthorField {
     name
     published
     verified
-    _group
+    GROUP
 }
 
 enum BookNumericFieldsArg {
-    _min
-    _max
+    MIN
+    MAX
     rating
-    _count
-    _sum
-    _avg
+    COUNT
+    SUM
+    AVG
 }
 
 input Book___version__CountSelector {
@@ -1913,10 +1913,10 @@ type Mutation {
     _: Boolean
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Author(    """
+    add_Author(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1931,14 +1931,14 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [AuthorExplicitField!],     "Create Author documents"
+encryptFields: [AuthorExplicitField!],     "Add Author documents"
 input: [AuthorMutationInputArg!]): [Author]
     """
     
-    Creates one or more documents of this type using the data provided.
+    Adds one or more documents of this type using the data provided.
 
     """
-    create_Book(    """
+    add_Book(    """
     
     Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
     DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
@@ -1953,7 +1953,7 @@ encrypt: Boolean,     """
     be encrypted with the same key.
 
     """
-encryptFields: [BookExplicitField!],     "Create Book documents"
+encryptFields: [BookExplicitField!],     "Add Book documents"
 input: [BookMutationInputArg!]): [Book]
     """
     
@@ -2047,38 +2047,38 @@ filter: BookFilterArg,     "Update field values"
 input: BookMutationInputArg): [Book]
     """
     
-    Update or create a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided 
-    update input, or if no matching document is found, a new document will be created with the
-    provided create input.
+    Update or add a document in this collection using the data provided. The provided filter
+    must match at most one document. The matching document will be updated with the provided
+    update input, or if no matching document is found, a new document will be added with the
+    provided add input.
 
-    NOTE: It is highly recommended to create an index on the fields used to filter.
+    NOTE: It is highly recommended to add an index on the fields used to filter.
     """
-    upsert_Author(    "Create field values"
-create: AuthorMutationInputArg!,     """
+    upsert_Author(    "Add field values"
+add: AuthorMutationInputArg!,     """
     
     A required filter for this upsert that must match one or zero documents.
     If a matching document is found it will be updated, otherwise a new
-    document will be created.
+    document will be added.
 
     """
 filter: AuthorFilterArg!,     "Update field values"
 update: AuthorMutationInputArg!): [Author]
     """
     
-    Update or create a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided 
-    update input, or if no matching document is found, a new document will be created with the
-    provided create input.
+    Update or add a document in this collection using the data provided. The provided filter
+    must match at most one document. The matching document will be updated with the provided
+    update input, or if no matching document is found, a new document will be added with the
+    provided add input.
 
-    NOTE: It is highly recommended to create an index on the fields used to filter.
+    NOTE: It is highly recommended to add an index on the fields used to filter.
     """
-    upsert_Book(    "Create field values"
-create: BookMutationInputArg!,     """
+    upsert_Book(    "Add field values"
+add: BookMutationInputArg!,     """
     
     A required filter for this upsert that must match one or zero documents.
     If a matching document is found it will be updated, otherwise a new
-    document will be created.
+    document will be added.
 
     """
 filter: BookFilterArg!,     "Update field values"
@@ -2192,7 +2192,7 @@ input Float64ListOperatorBlock {
 }
 
 enum BookField {
-    _group
+    GROUP
     _version
     _deleted
     _docID
@@ -2675,7 +2675,7 @@ input Float32ListOperatorBlock {
     _none: Float32OperatorBlock
 }
 
-input Book___group__CountSelector {
+input Book__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
@@ -2847,7 +2847,7 @@ input BookFilterArg {
     rating: Float64OperatorBlock
 }
 
-input Author___group__CountSelector {
+input Author__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
@@ -3082,7 +3082,7 @@ directive @policy(
     resource: String
 ) on OBJECT
 
-"@index is a directive that can be used to create an index on a type or a field."
+"@index is a directive that can be used to add an index on a type or a field."
 directive @index(
     "Sets the index name."
     name: String
@@ -3096,7 +3096,7 @@ directive @index(
     """
     direction: Ordering
     """
-    Sets the fields the index is created on.
+    Sets the fields the index is added on.
 
     When used on a field definition and the field is not in the includes list
     it will be implicitly added as the first entry.

@@ -376,8 +376,8 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	_ = openKeyring.Delete("searchable-encryption-key")
 }
 
-// This will test the callback_ImportIdentityKey function using the file keyring, and a secp256r1 key.
-func Test_ImportIdentityKey_Secp256r1_FileKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the file keyring, and a secp256r1 key.
+func Test_AddIdentityKey_Secp256r1_FileKeyring(t *testing.T) {
 	testSecretValue := "test-secret"
 
 	// Set up a clean test environment
@@ -390,21 +390,21 @@ func Test_ImportIdentityKey_Secp256r1_FileKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {0},
-			"stepQueryImportingIdentityKeyType": {2},
-			"stepGettingIdentityKeyForImport":   {dummyKey_secp256r1},
+			"stepKeyringStorageLocation":     {0},
+			"stepQueryAddingIdentityKeyType": {2},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256r1},
 		},
 		RootDir: tmpDir,
 	}
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	openKeyring, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
@@ -412,8 +412,8 @@ func Test_ImportIdentityKey_Secp256r1_FileKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256r1", 32, dummyKey_secp256r1)
 }
 
-// This will test the callback_ImportIdentityKey function using the system keyring, and a secp256r1 key.
-func Test_ImportIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the system keyring, and a secp256r1 key.
+func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -423,9 +423,9 @@ func Test_ImportIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {1},
-			"stepQueryImportingIdentityKeyType": {2},
-			"stepGettingIdentityKeyForImport":   {dummyKey_secp256r1},
+			"stepKeyringStorageLocation":     {1},
+			"stepQueryAddingIdentityKeyType": {2},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256r1},
 		},
 	}
 
@@ -434,12 +434,12 @@ func Test_ImportIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
 	if err != nil {
@@ -448,8 +448,8 @@ func Test_ImportIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256r1", 32, dummyKey_secp256r1)
 }
 
-// This will test the callback_ImportIdentityKey function using the file keyring, and a secp256k1 key.
-func Test_ImportIdentityKey_Secp256k1_FileKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the file keyring, and a secp256k1 key.
+func Test_AddIdentityKey_Secp256k1_FileKeyring(t *testing.T) {
 	testSecretValue := "test-secret"
 
 	// Set up a clean test environment
@@ -462,21 +462,21 @@ func Test_ImportIdentityKey_Secp256k1_FileKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {0},
-			"stepQueryImportingIdentityKeyType": {1},
-			"stepGettingIdentityKeyForImport":   {dummyKey_secp256k1},
+			"stepKeyringStorageLocation":     {0},
+			"stepQueryAddingIdentityKeyType": {1},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256k1},
 		},
 		RootDir: tmpDir,
 	}
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	openKeyring, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
@@ -484,8 +484,8 @@ func Test_ImportIdentityKey_Secp256k1_FileKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, dummyKey_secp256k1)
 }
 
-// This will test the callback_ImportIdentityKey function using the system keyring, and a secp256k1 key.
-func Test_ImportIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the system keyring, and a secp256k1 key.
+func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -495,9 +495,9 @@ func Test_ImportIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {1},
-			"stepQueryImportingIdentityKeyType": {2},
-			"stepGettingIdentityKeyForImport":   {dummyKey_secp256k1},
+			"stepKeyringStorageLocation":     {1},
+			"stepQueryAddingIdentityKeyType": {2},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256k1},
 		},
 	}
 
@@ -506,12 +506,12 @@ func Test_ImportIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
 	if err != nil {
@@ -520,8 +520,8 @@ func Test_ImportIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, dummyKey_secp256k1)
 }
 
-// This will test the callback_ImportIdentityKey function using the file keyring, and a ed25519 key.
-func Test_ImportIdentityKey_Ed25519_FileKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the file keyring, and a ed25519 key.
+func Test_AddIdentityKey_Ed25519_FileKeyring(t *testing.T) {
 	testSecretValue := "test-secret"
 
 	// Set up a clean test environment
@@ -535,21 +535,21 @@ func Test_ImportIdentityKey_Ed25519_FileKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {0},
-			"stepQueryImportingIdentityKeyType": {0},
-			"stepGettingIdentityKeyForImport":   {dummyKey_ed25519},
+			"stepKeyringStorageLocation":     {0},
+			"stepQueryAddingIdentityKeyType": {0},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_ed25519},
 		},
 		RootDir: tmpDir,
 	}
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	openKeyring, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
@@ -557,8 +557,8 @@ func Test_ImportIdentityKey_Ed25519_FileKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "ed25519", 64, dummyKey_ed25519)
 }
 
-// This will test the callback_ImportIdentityKey function using the system keyring, and a ed25519 key.
-func Test_ImportIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
+// This will test the callback_AddIdentityKey function using the system keyring, and a ed25519 key.
+func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -569,9 +569,9 @@ func Test_ImportIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":        {1},
-			"stepQueryImportingIdentityKeyType": {2},
-			"stepGettingIdentityKeyForImport":   {dummyKey_ed25519},
+			"stepKeyringStorageLocation":     {1},
+			"stepQueryAddingIdentityKeyType": {2},
+			"stepGettingIdentityKeyForAdd":   {dummyKey_ed25519},
 		},
 	}
 
@@ -580,12 +580,12 @@ func Test_ImportIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
-	err := callback_ImportIdentityKey(nil, ctx)
+	err := callback_AddIdentityKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was imported correctly
+	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
 	if err != nil {
@@ -594,9 +594,9 @@ func Test_ImportIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "ed25519", 64, dummyKey_ed25519)
 }
 
-// This will test the callback_ImportPeerKey, callback_ImportEncryptionKey, and
-// callback_ImportSearchableEncryptionKey functions using the file keyring.
-func Test_ImportMultipleKeys_FileKeyring(t *testing.T) {
+// This will test the callback_AddPeerKey, callback_AddEncryptionKey, and
+// callback_AddSearchableEncryptionKey functions using the file keyring.
+func Test_AddMultipleKeys_FileKeyring(t *testing.T) {
 	testSecretValue := "test-secret"
 
 	// Set up a clean test environment
@@ -612,30 +612,30 @@ func Test_ImportMultipleKeys_FileKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":                  {0},
-			"stepGettingPeerKeyForImport":                 {dummyKey_peer},
-			"stepGettingEncryptionKeyForImport":           {dummyKey_encryption},
-			"stepGettingSearchableEncryptionKeyForImport": {dummyKey_searchableEncryption},
+			"stepKeyringStorageLocation":               {0},
+			"stepGettingPeerKeyForAdd":                 {dummyKey_peer},
+			"stepGettingEncryptionKeyForAdd":           {dummyKey_encryption},
+			"stepGettingSearchableEncryptionKeyForAdd": {dummyKey_searchableEncryption},
 		},
 		RootDir: tmpDir,
 	}
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Execute the callbacks, then the first check will be that they didn't error
-	err := callback_ImportPeerKey(nil, ctx)
+	err := callback_AddPeerKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = callback_ImportEncryptionKey(nil, ctx)
+	err = callback_AddEncryptionKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = callback_ImportSearchableEncryptionKey(nil, ctx)
+	err = callback_AddSearchableEncryptionKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the keys were imported correctly
+	// Then, check that the keys were added correctly
 	openKeyring, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
@@ -645,9 +645,9 @@ func Test_ImportMultipleKeys_FileKeyring(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "searchable-encryption-key", "", 32, dummyKey_searchableEncryption)
 }
 
-// This will test the callback_ImportPeerKey, callback_ImportEncryptionKey, and
-// callback_ImportSearchableEncryptionKey functions using the system keyring.
-func Test_ImportMultipleKeys_SystemKeyring(t *testing.T) {
+// This will test the callback_AddPeerKey, callback_AddEncryptionKey, and
+// callback_AddSearchableEncryptionKey functions using the system keyring.
+func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -668,10 +668,10 @@ func Test_ImportMultipleKeys_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":                  {0},
-			"stepGettingPeerKeyForImport":                 {dummyKey_peer},
-			"stepGettingEncryptionKeyForImport":           {dummyKey_encryption},
-			"stepGettingSearchableEncryptionKeyForImport": {dummyKey_searchableEncryption},
+			"stepKeyringStorageLocation":               {0},
+			"stepGettingPeerKeyForAdd":                 {dummyKey_peer},
+			"stepGettingEncryptionKeyForAdd":           {dummyKey_encryption},
+			"stepGettingSearchableEncryptionKeyForAdd": {dummyKey_searchableEncryption},
 		},
 		RootDir: tmpDir,
 	}
@@ -682,20 +682,20 @@ func Test_ImportMultipleKeys_SystemKeyring(t *testing.T) {
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callbacks, then the first check will be that they didn't error
-	err := callback_ImportPeerKey(nil, ctx)
+	err := callback_AddPeerKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = callback_ImportEncryptionKey(nil, ctx)
+	err = callback_AddEncryptionKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = callback_ImportSearchableEncryptionKey(nil, ctx)
+	err = callback_AddSearchableEncryptionKey(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Then, check that the keys were imported correctly
+	// Then, check that the keys were added correctly
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)

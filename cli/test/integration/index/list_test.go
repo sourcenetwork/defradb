@@ -21,15 +21,15 @@ import (
 func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection:      "User",
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -42,8 +42,8 @@ func TestIndexList_WithEmptyCollection_ShouldReturnEmptyList(t *testing.T) {
 func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -51,17 +51,17 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 					}
 				`,
 			},
-			&action.IndexCreate{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age:DESC"},
 			},
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection: "User",
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -89,8 +89,8 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -102,31 +102,31 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 					}
 				`,
 			},
-			// Create indexes for User collection
-			&action.IndexCreate{
+			// Make indexes for User collection
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByName",
 				Fields:     []string{"name"},
 			},
-			&action.IndexCreate{
+			&action.NewIndex{
 				Collection: "User",
 				Name:       "UsersByAge",
 				Fields:     []string{"age"},
 			},
-			// Create indexes for Product collection
-			&action.IndexCreate{
+			// Make indexes for Product collection
+			&action.NewIndex{
 				Collection: "Product",
 				Name:       "ProductsByTitle",
 				Fields:     []string{"title"},
 			},
-			&action.IndexCreate{
+			&action.NewIndex{
 				Collection: "Product",
 				Name:       "ProductsByPrice",
 				Fields:     []string{"price:DESC"},
 				Unique:     true,
 			},
 			// List all indexes
-			&action.IndexList{
+			&action.ListIndexes{
 				ExpectedAllIndexes: map[client.CollectionName][]client.IndexDescription{
 					"User": {
 						{
@@ -172,7 +172,7 @@ func TestIndexList_WithEmptyDatabase_ShouldReturnEmptyMap(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			// List all indexes when no collections exist
-			&action.IndexList{
+			&action.ListIndexes{
 				ExpectedAllIndexes: map[client.CollectionName][]client.IndexDescription{},
 			},
 		},
@@ -184,7 +184,7 @@ func TestIndexList_WithEmptyDatabase_ShouldReturnEmptyMap(t *testing.T) {
 func TestIndexList_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexList{
+			&action.ListIndexes{
 				Collection:  "NonExistentCollection",
 				ExpectError: "collection not found",
 			},

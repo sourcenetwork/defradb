@@ -20,19 +20,19 @@ import (
 func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, 2]]
@@ -61,37 +61,37 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 3}, [1, 3]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", 3, {"one": 1}, [1, 2]]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": 3
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": null
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "John",
 					"custom": false

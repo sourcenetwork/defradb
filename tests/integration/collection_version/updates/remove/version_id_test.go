@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesRemoveVersionIDErrors(t *testing.T) {
+func TestCollectionVersionUpdatesRemoveVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String

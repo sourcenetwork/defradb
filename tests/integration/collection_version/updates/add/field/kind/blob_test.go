@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBlob(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -50,11 +50,11 @@ func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBlobWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -95,11 +95,11 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBlobSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

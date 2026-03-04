@@ -24,14 +24,14 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
@@ -68,14 +68,14 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
@@ -95,14 +95,14 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
@@ -123,14 +123,14 @@ func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int 
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,

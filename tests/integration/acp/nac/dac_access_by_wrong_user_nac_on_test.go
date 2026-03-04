@@ -13,13 +13,18 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -38,11 +43,11 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -61,7 +66,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
 	}
@@ -69,8 +74,11 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthorizedError(t *testing.T) {
+func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_MaterializedView_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -89,11 +97,65 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 				Identity: testUtils.ClientIdentity(2),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(2),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
+				Identity:     testUtils.ClientIdentity(2),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			// With materialized views, the view refresh gate is hit first.
+			&action.Request{
+				Identity: testUtils.ClientIdentity(2),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			// Temporarily disable to allow a non-node-owner to own some documents.
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+			// Make a non-node-owner own a document.
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(2),
+				Policy:   examplePolicy,
+			},
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(2),
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+			},
+			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -112,7 +174,61 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_MaterializedView_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			// Temporarily disable to allow a non-node-owner to own some documents.
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+			// Make a non-node-owner own a document.
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(2),
+				Policy:   examplePolicy,
+			},
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(2),
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+			},
+			&action.AddDoc{
+				Identity:     testUtils.ClientIdentity(2),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			// With materialized views, the view refresh gate is hit first.
+			&action.Request{
+				Identity: testUtils.ClientIdentity(3),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}
@@ -121,7 +237,10 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 }
 
 func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -140,11 +259,11 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *t
 				Identity: testUtils.NodeIdentity(0), // Doesn't matter who adds the policy.
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.NoIdentity(),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -163,7 +282,61 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *t
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_MaterializedView_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			// Temporarily disable to allow easy creation of public document.
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+			// Make a non-node-owner own a document.
+			testUtils.AddDACPolicy{
+				Identity: testUtils.NodeIdentity(0), // Doesn't matter who adds the policy.
+				Policy:   examplePolicy,
+			},
+			&action.AddCollection{
+				Identity: testUtils.NoIdentity(),
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+			},
+			&action.AddDoc{
+				Identity:     testUtils.NoIdentity(),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			// With materialized views, the view refresh gate is hit first.
+			&action.Request{
+				Identity: testUtils.ClientIdentity(2),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}

@@ -16,55 +16,56 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 	ctx := context.Background()
 
-	opts := []Option{
-		WithDisableAPI(true),
-		WithDisableP2P(true),
-		WithStorePath(t.TempDir()),
-	}
-
-	n, err := New(ctx, opts...)
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(t.TempDir()).
+			Node(),
+	)
 	require.NoError(t, err)
 
 	err = n.Start(ctx)
 	require.NoError(t, err)
 
 	err = n.PurgeAndRestart(ctx)
-	require.ErrorIs(t, err, ErrPurgeWithDevModeDisabled)
+	require.ErrorIs(t, err, client.ErrOperationRequiresDeveloperMode)
 }
 
 func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	ctx := context.Background()
 
-	opts := []Option{
-		WithDisableAPI(true),
-		WithDisableP2P(true),
-		WithStorePath(t.TempDir()),
-		WithEnableDevelopment(true),
-	}
-
-	n, err := New(ctx, opts...)
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			SetEnableDevelopment(true).
+			Store().SetPath(t.TempDir()).
+			Node(),
+	)
 	require.NoError(t, err)
 
 	err = n.Start(ctx)
 	require.NoError(t, err)
 
-	_, err = n.DB.AddSchema(ctx, "type User { name: String }")
+	_, err = n.DB.AddCollection(ctx, "type User { name: String }")
 	require.NoError(t, err)
 
 	err = n.PurgeAndRestart(ctx)
 	require.NoError(t, err)
 
-	schemas, err := n.DB.GetCollections(ctx, client.CollectionFetchOptions{})
+	collections, err := n.DB.GetCollections(ctx)
 	require.NoError(t, err)
 
-	assert.Len(t, schemas, 0)
+	assert.Len(t, collections, 0)
 }

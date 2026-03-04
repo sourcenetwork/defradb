@@ -111,7 +111,7 @@ func buildParser(
 	ctx context.Context,
 	fixture fixtures.Generator,
 ) (core.Parser, error) {
-	schema, err := benchutils.ConstructSchema(fixture)
+	sdl, err := benchutils.ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionVersions, err := parser.ParseSDL(ctx, schema)
+	collectionVersions, err := parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}

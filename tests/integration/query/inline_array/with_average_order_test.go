@@ -20,14 +20,14 @@ import (
 func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5],
 					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Average: 3.0
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [30, 40, 50],
 					"pageRatings": [10.0, 20.0, 30.0]
@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -80,14 +80,14 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, null],
 					"pageRatings": [1.0, 2.0, 3.0, null]
 				}`, // Average: 3.0
 			},
 
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"testScores": [30, 40, 50, null],
 					"pageRatings": [10.0, 20.0, 30.0, null]
@@ -98,7 +98,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -117,7 +117,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

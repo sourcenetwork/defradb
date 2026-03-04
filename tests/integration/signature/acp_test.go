@@ -58,8 +58,8 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
  					type Users @policy(
 						id: "{{.Policy0}}",
  						resource: "users"
@@ -69,7 +69,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
  					}
  				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -101,8 +101,8 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
  					type Users @policy(
 						id: "{{.Policy0}}",
  						resource: "users"
@@ -112,7 +112,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
  					}
  				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",

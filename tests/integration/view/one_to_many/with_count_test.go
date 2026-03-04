@@ -22,8 +22,8 @@ import (
 func TestView_OneToManyWithCount_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -34,35 +34,35 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
-						_count(books: {})
+						COUNT(books: {})
 					}
 				`,
 				SDL: `
 					type AuthorView @materialized(if: false) {
 						name: String
-						_count: Int
+						COUNT: Int
 					}
 				`,
 			},
 			// bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name":	"To Kill a Mockingbird",
 					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name":	"Go Set a Watchman",
@@ -73,7 +73,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 				Request: `query {
 							AuthorView {
 								name
-								_count
+								COUNT
 							}
 						}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -87,8 +87,8 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 func TestView_OneToManyWithAliasedCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -99,11 +99,11 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				`,
 				SDL: `
@@ -113,20 +113,20 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Go Set a Watchman",
@@ -160,8 +160,8 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -172,11 +172,11 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
-						_count(books: {})
+						COUNT(books: {})
 					}
 				`,
 				SDL: `
@@ -185,7 +185,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"

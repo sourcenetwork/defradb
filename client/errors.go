@@ -51,10 +51,7 @@ const (
 	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
-)
-
-var (
-	errNotFound string = corekv.ErrNotFound.Error()
+	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 )
 
 // Errors returnable from this package.
@@ -91,13 +88,14 @@ var (
 	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
-	ErrNotFound                              = errors.New(errNotFound)
 	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
 	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
 	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
 	ErrNACIsEnabledButInstanceIsNotAvailable = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
+	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
+	ErrIndexNameRequired                     = errors.New("index name is required")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -177,10 +175,10 @@ func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) er
 	)
 }
 
-func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
+func NewErrCollectionNotFoundForRoot(collectionRoot string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaRoot", schemaRoot),
+		errors.NewKV("CollectionRoot", collectionRoot),
 	)
 }
 
@@ -267,10 +265,13 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
 }
 
-func NewErrNotFound(kv errors.KV) error {
-	return errors.New(errNotFound, kv)
-}
-
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
 	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
+}
+
+func NewErrOperationRequiresDeveloperMode(operationName string) error {
+	return errors.New(
+		errOperationRequiresDeveloperMode,
+		errors.NewKV("Operation", operationName),
+	)
 }

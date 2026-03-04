@@ -20,7 +20,7 @@ import (
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"User":[
 						{"age":30,"name":"John"},
@@ -87,7 +87,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Book":[
 						{
@@ -159,7 +159,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Book":[
 						{
@@ -193,8 +193,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				type User {
 					name: String
 					age: Int
@@ -208,7 +208,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				}
 				`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_favouriteID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
 			},
 			&action.Request{

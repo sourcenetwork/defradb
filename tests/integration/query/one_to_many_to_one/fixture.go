@@ -15,9 +15,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func gqlSchemaOneToManyToOne() *action.AddSchema {
-	return &action.AddSchema{
-		Schema: (`
+func gqlSchemaOneToManyToOne() *action.AddCollection {
+	return &action.AddCollection{
+		SDL: (`
 			type Author {
 				name: String
 				age: Int
@@ -43,8 +43,8 @@ func gqlSchemaOneToManyToOne() *action.AddSchema {
 	}
 }
 
-func createDocsWith6BooksAnd5Publishers() []*action.CreateDoc {
-	return []*action.CreateDoc{
+func addDocsWith6BooksAnd5Publishers() []*action.AddDoc {
+	return []*action.AddDoc{
 		// Authors
 		{
 			CollectionID: 0,

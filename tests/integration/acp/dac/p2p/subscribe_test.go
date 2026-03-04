@@ -58,8 +58,8 @@ resources:
 `,
 			},
 
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -75,12 +75,12 @@ resources:
 				TargetNodeID: 0,
 			},
 
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				NodeID:                1,
 				ExpectedCollectionIDs: []int{0},
 			},
@@ -123,8 +123,8 @@ resources:
     - actor
 `,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
@@ -138,11 +138,11 @@ resources:
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{

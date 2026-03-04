@@ -20,8 +20,8 @@ import (
 func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -32,7 +32,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						fullName: name
@@ -51,13 +51,13 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
@@ -95,8 +95,8 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -107,7 +107,7 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateView{
+			&action.AddView{
 				Query: `
 					Author {
 						name
@@ -126,13 +126,13 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",

@@ -16,6 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/immutable"
 )
 
 type enabledSigningContextKey struct{}
@@ -26,18 +28,34 @@ func ContextWithEnabledSigning(ctx context.Context) context.Context {
 }
 
 // EnabledSigningFromContext returns true if block signing is enabled in the context.
-func EnabledSigningFromContext(ctx context.Context) bool {
+func EnabledSigningFromContext(ctx context.Context) (bool, immutable.Option[identity.FullIdentity]) {
 	val := ctx.Value(enabledSigningContextKey{})
 	if val == nil {
-		return false
+		return false, immutable.None[identity.FullIdentity]()
 	}
-	return val.(bool) //nolint:forcetypeassert
+
+	return val.(bool), extractFullIdentity(ctx) //nolint:forcetypeassert
+}
+
+func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIdentity] {
+	ident := iIdentity.FromContext(ctx)
+	if !ident.HasValue() {
+		return immutable.None[identity.FullIdentity]()
+	}
+
+	fullIdent, ok := ident.Value().(identity.FullIdentity)
+	if !ok {
+		return immutable.None[identity.FullIdentity]()
+	}
+
+	return immutable.Some(fullIdent)
 }
 
 func signBlock(
 	ctx context.Context,
 	blockstore datastore.Blockstore,
 	block *Block,
+	ident identity.FullIdentity,
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -50,29 +68,18 @@ func signBlock(
 		return err
 	}
 
-	ident := identity.FromContext(ctx)
-	if !ident.HasValue() {
-		return nil
-	}
-
-	// Check if the identity is a FullIdentity (has private key)
-	fullIdent, ok := ident.Value().(identity.FullIdentity)
-	if !ok {
-		return nil
-	}
-
 	var sigType string
 
-	switch fullIdent.PrivateKey().Type() {
+	switch ident.PrivateKey().Type() {
 	case crypto.KeyTypeSecp256k1:
 		sigType = SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
 		sigType = SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedKeyForSigning(fullIdent.PrivateKey().Type())
+		return NewErrUnsupportedKeyForSigning(ident.PrivateKey().Type())
 	}
 
-	sigBytes, err := fullIdent.PrivateKey().Sign(blockBytes)
+	sigBytes, err := ident.PrivateKey().Sign(blockBytes)
 	if err != nil {
 		return err
 	}
@@ -80,7 +87,7 @@ func signBlock(
 	sig := &Signature{
 		Header: SignatureHeader{
 			Type:     sigType,
-			Identity: []byte(fullIdent.PublicKey().String()),
+			Identity: []byte(ident.PublicKey().String()),
 		},
 		Value: sigBytes,
 	}

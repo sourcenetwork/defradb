@@ -23,7 +23,7 @@ func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
-			create2AddressDocuments(),
+			add2AddressDocuments(),
 			&action.Request{
 				Request: `mutation  {
 					delete_ContactAddress(docID: ["bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"]) {

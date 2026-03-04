@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -109,6 +110,9 @@ func GetCollectionByID(
 	key := keys.NewCollectionKey(id)
 	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			err = client.ErrCollectionNotFound
+		}
 		return client.CollectionVersion{}, err
 	}
 
@@ -140,6 +144,9 @@ func GetCollectionByName(
 	nameKey := keys.NewCollectionNameKey(name)
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			err = client.ErrCollectionNotFound
+		}
 		return client.CollectionVersion{}, err
 	}
 
@@ -174,7 +181,7 @@ func GetActiveCollectionByCollectionID(
 		}
 	}
 
-	return client.CollectionVersion{}, corekv.ErrNotFound
+	return client.CollectionVersion{}, client.ErrCollectionNotFound
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
@@ -189,7 +196,7 @@ func GetCollectionsByCollectionID(
 		if col, ok := cache.CollectionsByID[collectionID]; ok {
 			return col, nil
 		}
-		return nil, corekv.ErrNotFound
+		return []client.CollectionVersion{}, nil
 	}
 	// It is not practical to cache a sub set of collections at the moment as figuring
 	// out whether the set is complete or not if not possible without fetching the versionIDs
@@ -205,7 +212,7 @@ func GetCollectionsByCollectionID(
 	for _, versionID := range versionIDs {
 		versionCol, err := GetCollectionByID(ctx, versionID)
 		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
+			if errors.Is(err, client.ErrCollectionNotFound) {
 				continue
 			}
 			return nil, err
@@ -362,7 +369,7 @@ func GetCollectionVersionIDs(
 			}
 			return result, nil
 		}
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -415,7 +422,7 @@ func GetRelatedCollection(
 	switch typedKind := kind.(type) {
 	case *client.NamedKind:
 		col, err := GetCollectionByName(ctx, typedKind.Name)
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
 
@@ -423,7 +430,7 @@ func GetRelatedCollection(
 
 	case *client.CollectionKind:
 		col, err := GetActiveCollectionByCollectionID(ctx, typedKind.CollectionID)
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
 
@@ -462,8 +469,15 @@ func GetRelatedCollection(
 
 func DeleteCollection(
 	ctx context.Context,
+	lockSet *lock.LockSet,
 	version client.CollectionVersion,
 ) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
+	if err != nil {
+		return err
+	}
+
 	versions, err := GetCollectionsByCollectionID(ctx, version.CollectionID)
 	if err != nil {
 		return err
@@ -471,8 +485,6 @@ func DeleteCollection(
 
 	cache := CollectionCacheFromContext(ctx)
 	cache.Delete(version)
-
-	txn := datastore.CtxMustGetTxn(ctx)
 
 	key := keys.NewCollectionKey(version.VersionID)
 	err = txn.Systemstore().Delete(ctx, key.Bytes())
@@ -499,12 +511,16 @@ func DeleteCollection(
 
 	// WARNING - DeleteShortFieldIDs is dependent on the collection short id still existing, it should be called
 	// before deleting the collection short id.
-	err = id.DeleteShortFieldIDs(ctx, version, versions)
+	err = id.DeleteShortFieldIDs(ctx, lockSet, version, versions)
 	if err != nil {
 		return err
 	}
 
-	if len(versions) == 0 {
+	if len(versions) == 1 {
+		// It is impossible to recreate the collection short ID once it is deleted, so we must lock the collection
+		// whilst we finalize this operation, otherwise other threads/operations may try and make use of it.
+		lockSet.CollectionLock(txn, shortID)
+
 		// Only delete the collection short ID if this was the last local version
 		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
 		if err != nil {

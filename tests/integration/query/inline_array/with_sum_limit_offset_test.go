@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0]
@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {offset: 1, limit: 2})
+						SUM(favouriteIntegers: {offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(7),
+							"SUM":  int64(7),
 						},
 					},
 				},

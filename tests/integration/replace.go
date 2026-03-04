@@ -24,10 +24,13 @@ import (
 // sets.
 var templateDataGenerators = map[string]func(*state.State, int) map[string]string{
 	"CID": func(s *state.State, nodeID int) map[string]string {
-
+		s.Nodes[nodeID].CompositesLock.RLock()
+		defer s.Nodes[nodeID].CompositesLock.RUnlock()
 		docIDsToCIDs := s.Nodes[nodeID].Composites
 
 		res := map[string]string{}
+		s.DocIDsLock.RLock()
+		defer s.DocIDsLock.RUnlock()
 		for colIndex, docIndexes := range s.DocIDs {
 			for docIndex, docID := range docIndexes {
 				cids := docIDsToCIDs[docID.String()]

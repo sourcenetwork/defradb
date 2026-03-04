@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -50,11 +50,11 @@ func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBoolArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -95,11 +95,11 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindBoolArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) 
 					]
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

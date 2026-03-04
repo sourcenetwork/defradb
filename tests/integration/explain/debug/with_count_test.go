@@ -45,7 +45,7 @@ func TestDebugExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Book {
 						name
-						_count(chapterPages: {})
+						COUNT(chapterPages: {})
 					}
 				}`,
 

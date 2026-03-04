@@ -24,12 +24,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
 						NewestPublishersBook: book(order: {publisher: {yearOpened: DESC}}, limit: 2) {
 							name
 						}
@@ -77,12 +77,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
 						NewestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}
@@ -133,13 +133,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
-						s2: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s2: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
@@ -176,12 +176,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
-			createDocsWith6BooksAnd5Publishers(),
+			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
 						OldestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}

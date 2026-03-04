@@ -20,19 +20,19 @@ import (
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -42,18 +42,18 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_max(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						MAX(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_max": int64(32),
+							"Age": int64(32),
+							"MAX": int64(32),
 						},
 						{
-							"Age":  int64(19),
-							"_max": nil,
+							"Age": int64(19),
+							"MAX": nil,
 						},
 					},
 				},
@@ -67,19 +67,19 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -89,8 +89,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_max(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group {
+						MAX(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP {
 							Name
 						}
 					}
@@ -98,9 +98,9 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_max": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MAX": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
@@ -110,9 +110,9 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 							},
 						},
 						{
-							"Age":  int64(19),
-							"_max": nil,
-							"_group": []map[string]any{
+							"Age": int64(19),
+							"MAX": nil,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Alice",
 								},
@@ -131,19 +131,19 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWithMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -153,8 +153,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_max(_group: {field: Age, filter: {Name: {_eq: "John"}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						MAX(GROUP: {field: Age, filter: {Name: {_eq: "John"}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -162,18 +162,18 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_max": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MAX": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_max":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"MAX":   nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -187,19 +187,19 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWithDifferentFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -209,8 +209,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_max(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						MAX(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -218,18 +218,18 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":  int64(32),
-							"_max": int64(32),
-							"_group": []map[string]any{
+							"Age": int64(32),
+							"MAX": int64(32),
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_max":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"MAX":   nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -243,19 +243,19 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithDifferentFilters_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -265,8 +265,8 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithDiffere
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						S1: _max(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						S2: _max(_group: {field: Age, filter: {Age: {_lt: 26}}})
+						S1: MAX(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						S2: MAX(GROUP: {field: Age, filter: {Age: {_lt: 26}}})
 					}
 				}`,
 				Results: map[string]any{

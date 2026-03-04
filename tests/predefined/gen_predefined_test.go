@@ -36,7 +36,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs, err := CreateFromSDL(ctx, schema, docsList)
+	docs, err := AddFromSDL(ctx, schema, docsList)
 	assert.NoError(t, err)
 
 	colDefMap, err := gen.ParseSDL(schema)
@@ -55,7 +55,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 			name: String
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
@@ -88,7 +88,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 			owner: User @primary
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -144,7 +144,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -204,7 +204,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 			device: Device
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -256,7 +256,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -308,7 +308,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 			user: User 
 		}`
 
-	docs, err := CreateFromSDL(ctx, schema, DocsList{
+	docs, err := AddFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -340,201 +340,3 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 		t.Error(errorMsg)
 	}
 }
-
-// func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
-// 	schema := `
-// 		type User {
-// 			name: String
-// 			devices: [Device]
-// 		}
-// 		type Device {
-// 			model: String
-// 			owner: User
-// 		}`
-
-// 	docs, err := CreateFromSDL(schema, DocsList{
-// 		ColName: "User",
-// 		Docs: []map[string]any{
-// 			{
-// 				"name": "John",
-// 				"devices": []map[string]any{
-// 					{"model": "iPhone"},
-// 					{"model": "PlayStation"},
-// 				},
-// 			},
-// 			{
-// 				"name": "Fred",
-// 				"devices": []map[string]any{
-// 					{"model": "Surface"},
-// 					{"model": "Pixel"},
-// 				},
-// 			},
-// 		},
-// 	})
-// 	assert.NoError(t, err)
-
-// 	colDefMap, err := parseSDL(schema)
-// 	require.NoError(t, err)
-
-// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
-// 	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, colDefMap["User"].Schema)
-// 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
-// 		{"name": "John"},
-// 		{"name": "Fred"},
-// 		{"model": "iPhone", "_ownerID": johnDocID},
-// 		{"model": "PlayStation", "_ownerID": johnDocID},
-// 		{"model": "Surface", "_ownerID": fredDocID},
-// 		{"model": "Pixel", "_ownerID": fredDocID},
-// 	}, col), docs)
-// 	if errorMsg != "" {
-// 		t.Error(errorMsg)
-// 	}
-// }
-
-// func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
-// 	schema := `
-// 		type User {
-// 			name: String
-// 			devices: [Device]
-// 		}
-// 		type Device {
-// 			model: String
-// 			owner: User
-// 			specs: Specs
-// 		}
-// 		type Specs {
-// 			CPU: String
-// 			device: Device @primary
-// 		}`
-
-// 	docs, err := CreateFromSDL(schema, DocsList{
-// 		ColName: "User",
-// 		Docs: []map[string]any{
-// 			{
-// 				"name": "John",
-// 				"devices": []map[string]any{
-// 					{
-// 						"model": "iPhone",
-// 						"specs": map[string]any{
-// 							"CPU": "A13",
-// 						},
-// 					},
-// 					{
-// 						"model": "MacBook",
-// 						"specs": map[string]any{
-// 							"CPU": "M2",
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 	})
-// 	assert.NoError(t, err)
-
-// 	colDefMap, err := parseSDL(schema)
-// 	require.NoError(t, err)
-
-// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
-// 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
-// 		{"name": "John"},
-// 		{"model": "iPhone", "_ownerID": johnDocID},
-// 		{"model": "MacBook", "_ownerID": johnDocID},
-// 		{
-// 			"CPU": "A13",
-// 			"_deviceID": mustGetDocIDFromDocMap(map[string]any{
-// 				"model":    "iPhone",
-// 				"_ownerID": johnDocID,
-// 			}, colDefMap["Device"].Schema),
-// 		},
-// 		{
-// 			"CPU": "M2",
-// 			"_deviceID": mustGetDocIDFromDocMap(map[string]any{
-// 				"model":    "MacBook",
-// 				"_ownerID": johnDocID,
-// 			}, colDefMap["Device"].Schema),
-// 		},
-// 	}), docs)
-// 	if errorMsg != "" {
-// 		t.Error(errorMsg)
-// 	}
-// }
-
-// func TestGeneratePredefined_OneToMany(t *testing.T) {
-// 	defs := []client.CollectionDefinition{
-// 		{
-// 			Description: client.CollectionVersion{
-// 				Name: "User",
-// 				ID:   0,
-// 			},
-// 			Schema: client.SchemaDescription{
-// 				Name: "User",
-// 				Fields: []client.SchemaFieldDescription{
-// 					{
-// 						Name: "name",
-// 						Kind: client.FieldKind_STRING,
-// 					},
-// 					{
-// 						Name:         "devices",
-// 						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
-// 						Schema:       "Device",
-// 					},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			Description: client.CollectionVersion{
-// 				Name: "Device",
-// 				ID:   1,
-// 			},
-// 			Schema: client.SchemaDescription{
-// 				Name: "Device",
-// 				Fields: []client.SchemaFieldDescription{
-// 					{
-// 						Name: "model",
-// 						Kind: client.FieldKind_STRING,
-// 					},
-// 					{
-// 						Name:   "owner",
-// 						Kind:   client.FieldKind_FOREIGN_OBJECT,
-// 						Schema: "User",
-// 						IsPrimary: true,
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-// 	docs, err := Create(defs, DocsList{
-// 		ColName: "User",
-// 		Docs: []map[string]any{
-// 			{
-// 				"name": "John",
-// 				"devices": []map[string]any{
-// 					{"model": "iPhone"},
-// 					{"model": "PlayStation"},
-// 				},
-// 			},
-// 			{
-// 				"name": "Fred",
-// 				"devices": []map[string]any{
-// 					{"model": "Surface"},
-// 					{"model": "Pixel"},
-// 				},
-// 			},
-// 		},
-// 	})
-// 	assert.NoError(t, err)
-
-// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, defs[0].Schema)
-// 	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, defs[0].Schema)
-// 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
-// 		{"name": "John"},
-// 		{"name": "Fred"},
-// 		{"model": "iPhone", "_ownerID": johnDocID},
-// 		{"model": "PlayStation", "_ownerID": johnDocID},
-// 		{"model": "Surface", "_ownerID": fredDocID},
-// 		{"model": "Pixel", "_ownerID": fredDocID},
-// 	}), docs)
-// 	if errorMsg != "" {
-// 		t.Error(errorMsg)
-// 	}
-// }

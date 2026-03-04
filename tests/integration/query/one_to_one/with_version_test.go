@@ -20,8 +20,8 @@ import (
 func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -33,13 +33,13 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",
@@ -85,8 +85,8 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -98,13 +98,13 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",

@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -57,19 +57,19 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"Age": 60
 				}`,
@@ -99,13 +99,13 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -133,13 +133,13 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMa
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilterWithMatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32
@@ -167,7 +167,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilte
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectMultipleFieldsButNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21

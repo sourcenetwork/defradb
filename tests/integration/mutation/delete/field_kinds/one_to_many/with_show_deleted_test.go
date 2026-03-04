@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var schemas = `
+var userCollection = `
 type Book {
 	name: String
 	rating: Float
@@ -33,17 +33,17 @@ type Author {
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: schemas,
+			&action.AddCollection{
+				SDL: userCollection,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John",
 					"age": 30
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John and the philosopher are stoned",
@@ -51,7 +51,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John has a chamber of secrets",

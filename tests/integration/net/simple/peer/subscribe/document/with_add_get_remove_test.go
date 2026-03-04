@@ -23,14 +23,14 @@ func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -39,19 +39,19 @@ func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID:         1,
 				ExpectedDocIDs: []state.ColDocIndex{},
 			},
@@ -66,19 +66,19 @@ func TestP2PDocumentAddRemoveGetMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 				},
@@ -87,20 +87,20 @@ func TestP2PDocumentAddRemoveGetMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 					state.NewColDocIndex(0, 1),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID: 1,
 				ExpectedDocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 1),

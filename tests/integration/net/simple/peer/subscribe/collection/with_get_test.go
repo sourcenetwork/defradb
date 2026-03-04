@@ -25,11 +25,11 @@ func TestP2PCollectionGetAll(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				NodeID:                0,
 				ExpectedCollectionIDs: []int{},
 			},
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				NodeID:                1,
 				ExpectedCollectionIDs: []int{},
 			},

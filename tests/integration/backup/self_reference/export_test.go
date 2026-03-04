@@ -21,15 +21,15 @@ import (
 func TestBackupExport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-1635f80b-612a-5378-a185-cad7a3018354"}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
@@ -44,11 +44,11 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-1635f80b-612a-5378-a185-cad7a3018354"}`,
 			},
@@ -57,7 +57,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"age": 31}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				ExpectedContent: `{"User":[{"_docID":"bae-1635f80b-612a-5378-a185-cad7a3018354","_docIDNew":"bae-32c15b83-186c-565f-be06-caa21431c38b","age":31,"name":"John"},{"_bossID":"bae-32c15b83-186c-565f-be06-caa21431c38b","_docID":"bae-692a9178-a258-5224-990f-9ad703a2bbea","_docIDNew":"bae-69f87811-246f-5203-ae83-ff043c6fce10","age":31,"name":"Bob"}]}`,
 			},
 		},

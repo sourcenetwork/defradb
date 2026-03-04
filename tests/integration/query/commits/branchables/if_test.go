@@ -29,15 +29,15 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable(if: true) {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -81,15 +81,15 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable(if: false) {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

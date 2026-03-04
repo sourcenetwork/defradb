@@ -37,7 +37,7 @@ Manage collections' encrypted indexes on a running DefraDB node.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client encrypted-index create](defradb_client_encrypted-index_create.md)	 - Creates an encrypted index on a collection's field
 * [defradb client encrypted-index delete](defradb_client_encrypted-index_delete.md)	 - Delete an encrypted index from a collection's field
 * [defradb client encrypted-index list](defradb_client_encrypted-index_list.md)	 - Lists the encrypted indexes in the database or for a specific collection
+* [defradb client encrypted-index new](defradb_client_encrypted-index_new.md)	 - Make a new encrypted index on a collection's field
 
