@@ -83,6 +83,7 @@ func RefreshCollections(
 			}
 		}
 	}
+
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {

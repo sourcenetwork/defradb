@@ -90,6 +90,9 @@ var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	fmt.Println("\nExecute is called for Add Doc")
+	hadTxn := a.TransactionID.HasValue()
+
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
@@ -113,31 +116,32 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		hadTxn := false
 		var txn client.Txn
-		if a.TransactionID.HasValue() {
-			hadTxn = true
+		if hadTxn {
+			var err error
 			a.DoNotWaitForEvent = true
-			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			if err != nil {
+				return
+			}
 		} else {
-			txn, _ = node.NewTxn(false)
+			// Otherwise we will make a new one from the client
+			txn, _ = a.s.Client.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
+
 		var collections []client.Collection
 		var err error
 		if hadTxn {
 			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
 		} else {
 			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
 		}
-
+		if err != nil {
+			return
+		}
+		fmt.Println("Collections: ", collections)
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(
@@ -181,7 +185,7 @@ func (a *AddDoc) Execute() {
 	}
 
 	// If there was an explicit transaction, then we will not be waiting for update events.
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }

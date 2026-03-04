@@ -93,6 +93,5 @@ func (a *PatchCollection) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
 	RefreshCollections(a.s)
 }

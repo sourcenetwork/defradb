@@ -327,6 +327,9 @@ type State struct {
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
+
+	// The client that is currently being used.
+	Client clients.Client
 }
 
 func (s *State) GetClientType() ClientType {

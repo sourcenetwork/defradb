@@ -31,7 +31,8 @@ func (s *State) GetTransaction(
 	}
 
 	if s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
+		// It is important to use the client to create the transaction, not the db
+		txn, err := s.Client.NewTxn(false)
 		if err != nil {
 			txn.Discard()
 			return nil, err

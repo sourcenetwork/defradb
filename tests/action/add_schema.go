@@ -60,9 +60,8 @@ var _ Stateful = (*AddSchema)(nil)
 func (a *AddSchema) Execute() {
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
+	hadTxn := a.TransactionID.HasValue()
+	if hadTxn {
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
 		if err != nil {
@@ -103,6 +102,5 @@ func (a *AddSchema) Execute() {
 		}
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
 	RefreshCollections(a.s)
 }

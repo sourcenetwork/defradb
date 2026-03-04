@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -83,9 +84,10 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
-	// fmt.Println("To do for txn")
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -94,17 +96,28 @@ func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	opt := options.WithIdentity(options.AddSchema(), identity.FromContext(ctx))
-	cols, err := db.AddSchema(ctx, string(schema), opt)
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var cols []client.CollectionVersion
+	if !hadTxn {
+		cols, err = db.AddSchema(ctx, string(schema), opt)
+	} else {
+		cols, err = txn.AddSchema(ctx, string(schema), opt)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	responseJSON(rw, http.StatusOK, cols)
 }
 
 func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	var message patchCollectionRequest
 	err := requestJSON(req, &message)
@@ -114,17 +127,26 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 	}
 
 	opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(ctx))
-	err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	if !hadTxn {
+		err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
+	} else {
+		err = txn.PatchCollection(ctx, message.Patch, message.Migration, opt)
+	}
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -133,17 +155,26 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 	}
 
 	opt := options.WithIdentity(options.SetActiveCollectionVersion(), identity.FromContext(ctx))
-	err = db.SetActiveCollectionVersion(ctx, string(collectionVersionID), opt)
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	if !hadTxn {
+		err = db.SetActiveCollectionVersion(ctx, string(collectionVersionID), opt)
+	} else {
+		err = txn.SetActiveCollectionVersion(ctx, string(collectionVersionID), opt)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -157,7 +188,14 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		opt.SetTransformCID(message.TransformCID.Value())
 	}
 
-	defs, err := db.AddView(ctx, message.Query, message.SDL, opt)
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var defs []client.CollectionVersion
+	if !hadTxn {
+		defs, err = db.AddView(ctx, message.Query, message.SDL, opt)
+	} else {
+		defs, err = txn.AddView(ctx, message.Query, message.SDL, opt)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -173,15 +211,26 @@ type SetMigrationResponse struct {
 func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
+	ctx := req.Context()
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	opts := options.WithIdentity(options.SetMigration(), identity.FromContext(req.Context()))
+	opts := options.WithIdentity(options.SetMigration(), identity.FromContext(ctx))
 
-	lensID, err := db.SetMigration(req.Context(), cfg, opts)
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var lensID string
+	var err error
+	if !hadTxn {
+		lensID, err = db.SetMigration(ctx, cfg, opts)
+	} else {
+		lensID, err = txn.SetMigration(ctx, cfg, opts)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -201,15 +250,25 @@ type AddLensResponse struct {
 func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
+	ctx := req.Context()
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	var addLensReq AddLensRequest
 	if err := requestJSON(req, &addLensReq); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	opts := options.WithIdentity(options.AddLens(), identity.FromContext(req.Context()))
+	opts := options.WithIdentity(options.AddLens(), identity.FromContext(ctx))
 
-	lensID, err := db.AddLens(req.Context(), addLensReq.Lens, opts)
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var lensID string
+	var err error
+	if !hadTxn {
+		lensID, err = db.AddLens(ctx, addLensReq.Lens, opts)
+	} else {
+		lensID, err = txn.AddLens(ctx, addLensReq.Lens, opts)
+	}
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -224,9 +283,20 @@ type ListLensesResponse struct {
 
 func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	opts := options.WithIdentity(options.ListLenses(), identity.FromContext(req.Context()))
 
-	lenses, err := db.ListLenses(req.Context(), opts)
+	ctx := req.Context()
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
+	opts := options.WithIdentity(options.ListLenses(), identity.FromContext(ctx))
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var lenses map[string]model.Lens
+	var err error
+	if !hadTxn {
+		lenses, err = db.ListLenses(ctx, opts)
+	} else {
+		lenses, err = txn.ListLenses(ctx, opts)
+	}
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -238,6 +308,8 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
 	if req.URL.Query().Has("name") {
@@ -260,7 +332,13 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		opt.SetGetInactive(getInactive)
 	}
 
-	cols, err := db.GetCollections(ctx, opt)
+	var cols []client.Collection
+	var err error
+	if !hadTxn {
+		cols, err = db.GetCollections(ctx, opt)
+	} else {
+		cols, err = txn.GetCollections(ctx, opt)
+	}
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -274,6 +352,9 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+
+	ctx := req.Context()
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	opt := options.WithIdentity(options.RefreshViews(), identity.FromContext(req.Context()))
 	if req.URL.Query().Has("name") {
@@ -295,34 +376,64 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		opt.SetGetInactive(getInactive)
 	}
 
-	err := db.RefreshViews(req.Context(), opt)
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var err error
+	if !hadTxn {
+		err = db.RefreshViews(ctx, opt)
+	} else {
+		err = txn.RefreshViews(ctx, opt)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *storeHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	indexes, err := db.ListIndexes(req.Context())
+	txn, hadTxn := datastore.CtxTryGetClientTxn(req.Context())
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var indexes map[client.CollectionName][]client.IndexDescription
+	var err error
+	if !hadTxn {
+		indexes, err = db.ListIndexes(req.Context())
+	} else {
+		indexes, err = txn.ListIndexes(req.Context())
+	}
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
 func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
-	opts := options.WithIdentity(options.ListAllEncryptedIndexes(), identity.FromContext(req.Context()))
-	indexes, err := db.ListAllEncryptedIndexes(req.Context(), opts)
+	opts := options.WithIdentity(options.ListAllEncryptedIndexes(), identity.FromContext(ctx))
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var indexes map[client.CollectionName][]client.EncryptedIndexDescription
+	var err error
+	if !hadTxn {
+		indexes, err = db.ListAllEncryptedIndexes(ctx, opts)
+	} else {
+		indexes, err = txn.ListAllEncryptedIndexes(ctx, opts)
+	}
+
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
@@ -359,6 +470,9 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
+	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -366,7 +480,12 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	opts = options.WithIdentity(opts, identity.FromContext(ctx))
-	result := db.ExecRequest(ctx, request.Query, opts)
+	var result *client.RequestResult
+	if !hadTxn {
+		result = db.ExecRequest(ctx, request.Query, opts)
+	} else {
+		result = txn.ExecRequest(ctx, request.Query, opts)
+	}
 
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error

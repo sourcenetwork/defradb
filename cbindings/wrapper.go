@@ -460,10 +460,7 @@ func (w *CWrapper) AddSchema(
 
 	if !hadTxn {
 		defer txn.Discard()
-		err = txn.Commit()
-		if err != nil {
-			return nil, err
-		}
+		txn.Commit()
 	}
 
 	return collectionVersions, nil
@@ -690,6 +687,7 @@ func (w *CWrapper) PatchCollection(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
 	return nil
 }
 

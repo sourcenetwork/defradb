@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/valyala/fastjson"
 
@@ -61,9 +60,6 @@ func (c *collection) UpdateWithFilter(
 	if err != nil {
 		return nil, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
 
 	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
@@ -71,6 +67,7 @@ func (c *collection) UpdateWithFilter(
 	}
 
 	if !hadTxn {
+		defer txn.Discard()
 		return res, txn.Commit()
 	}
 	return res, nil
@@ -173,11 +170,6 @@ func (c *collection) makeSelectionPlan(
 	ctx context.Context,
 	filter any,
 ) (planner.RequestPlan, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if hadTxn {
-		fmt.Println("I found something")
-	}
-
 	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {

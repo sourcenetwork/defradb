@@ -819,6 +819,8 @@ func setStartingNodes(
 			testCase,
 			nodeBuilder,
 		)
+		s.Client = st.Client
+
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
 	}
@@ -845,6 +847,8 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			testCase,
 			opts,
 		)
+		s.Client = node.Client
+
 		databaseDir = originalPath
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -988,6 +992,7 @@ func configureNode(
 	opts.P2P().SetAll(p2pOpts)
 
 	node, err := setupNode(s, acpIdentity.None, testCase, opts)
+	s.Client = node.Client
 	require.NoError(s.T, err)
 
 	node.P2POpts = p2pOpts
@@ -1171,7 +1176,7 @@ func deleteDoc(
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		} else {
 			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = node.NewTxn(false)
+			txn, _ = s.Client.NewTxn(false)
 		}
 		nodeID := nodeIDs[index]
 
@@ -1244,7 +1249,7 @@ func updateDoc(
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		} else {
 			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = node.NewTxn(false)
+			txn, _ = s.Client.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
@@ -1419,31 +1424,22 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	for index, node := range nodes {
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		hadTxn := action.TransactionID.HasValue()
 		var txn client.Txn
+		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
 			doNotWaitForUpdate = true
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		} else {
 			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = node.NewTxn(false)
+			txn, _ = s.Client.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
-		var collections []client.Collection
-		var err error
-		if hadTxn {
-			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		} else {
-			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		}
 
+		collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
+		if err != nil {
+			return
+		}
 		collection := collections[action.CollectionID]
 
 		opts := options.CollectionUpdateWithFilter()
@@ -1459,7 +1455,14 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 				return err
 			},
 		)
+
+		if !hadTxn {
+			defer txn.Discard()
+			txn.Commit()
+		}
+
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+
 	}
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

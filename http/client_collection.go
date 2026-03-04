@@ -21,8 +21,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -31,6 +33,7 @@ var _ client.Collection = (*Collection)(nil)
 type Collection struct {
 	http *httpClient
 	def  client.CollectionVersion
+	txn  immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -54,6 +57,10 @@ func (c *Collection) Add(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -83,6 +90,10 @@ func (c *Collection) AddMany(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -137,6 +148,10 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
@@ -163,6 +178,10 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	getOpts := options.CollectionGet()
@@ -196,6 +215,9 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
@@ -217,6 +239,9 @@ func (c *Collection) Exists(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	_, err := c.Get(ctx, docID)
@@ -232,6 +257,10 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -262,6 +291,10 @@ func (c *Collection) DeleteWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -292,6 +325,10 @@ func (c *Collection) Get(
 	docID client.DocID,
 	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	query := url.Values{}
@@ -328,6 +365,10 @@ func (c *Collection) AddIndex(
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (client.IndexDescription, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
@@ -352,6 +393,10 @@ func (c *Collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -369,6 +414,10 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -390,6 +439,10 @@ func (c *Collection) AddEncryptedIndex(
 	indexDesc client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
@@ -412,6 +465,10 @@ func (c *Collection) AddEncryptedIndex(
 func (c *Collection) ListEncryptedIndexes(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
@@ -432,6 +489,10 @@ func (c *Collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -449,6 +510,10 @@ func (c *Collection) DeleteEncryptedIndex(
 func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 

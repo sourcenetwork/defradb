@@ -49,6 +49,8 @@ var _ Action = (*SyncCollectionVersions)(nil)
 var _ Stateful = (*SyncCollectionVersions)(nil)
 
 func (a *SyncCollectionVersions) Execute() {
+	txn, _ := a.s.Client.NewTxn(false)
+
 	replacedVersionIDs := replaceMap(a.s, 0, a.VersionIDs)
 	versionIDs := make([]string, len(a.VersionIDs))
 	for i, originalID := range a.VersionIDs {
@@ -74,6 +76,8 @@ func (a *SyncCollectionVersions) Execute() {
 		return
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
 	RefreshCollections(a.s)
+
+	defer txn.Discard()
+	txn.Commit()
 }

@@ -24,6 +24,8 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/immutable"
@@ -372,8 +374,12 @@ func (c *Client) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	// If there is an explicit transaction, we need to get it to attach to the collection
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
@@ -400,8 +406,20 @@ func (c *Client) GetCollections(
 		return nil, err
 	}
 	collections := make([]client.Collection, len(descriptions))
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		if clientTxn, ok := txn.(client.Txn); ok {
+			txnOpt = immutable.Some(clientTxn)
+		} else {
+			return nil, errors.New("unsupported txn type in context")
+		}
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
+		collections[i] = &Collection{c.http, d, txnOpt}
 	}
 	return collections, nil
 }
