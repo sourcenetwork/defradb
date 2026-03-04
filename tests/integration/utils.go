@@ -212,21 +212,34 @@ func ExecuteTestCase(
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				// Some goroutine depend on the context to be cancelled in order to exit.
-				// Cancelling the context after each text case should limit the chances of
-				// having leaking goroutines.
-				ctx, cancel := context.WithCancel(context.Background())
-				executeTestCase(
-					ctx,
-					t,
-					collectionNames,
-					testCase,
-					kms,
-					dbt,
-					ct,
-					documentACPType,
-				)
-				cancel()
+				run := func(st testing.TB) {
+					// Some goroutines depend on the context to be cancelled in order to exit.
+					// Defer ensures cancel runs on all exit paths, including runtime.Goexit().
+					ctx, cancel := context.WithCancel(context.Background())
+					defer cancel()
+					executeTestCase(
+						ctx,
+						st,
+						collectionNames,
+						testCase,
+						kms,
+						dbt,
+						ct,
+						documentACPType,
+					)
+				}
+
+				if testCase.FlakeRetries > 0 {
+					passed := runTestWithRetry(t, testCase.FlakeRetries, run)
+					if !passed {
+						t.Errorf(
+							"test failed after %d retries for client=%v db=%v kms=%v",
+							testCase.FlakeRetries, ct, dbt, kms,
+						)
+					}
+				} else {
+					run(t)
+				}
 			}
 		}
 	}
@@ -409,8 +422,8 @@ func performAction(
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
-	case AddEncryptedIndex:
-		addEncryptedIndex(s, action)
+	case NewEncryptedIndex:
+		newEncryptedIndex(s, action)
 
 	case ListEncryptedIndexes:
 		listEncryptedIndexes(s, action)
@@ -421,13 +434,13 @@ func performAction(
 	case DeleteEncryptedIndex:
 		deleteEncryptedIndex(s, action)
 
-	case BackupExport:
-		backupExport(s, action)
+	case ExportBackup:
+		exportBackup(s, action)
 
-	case BackupImport:
-		backupImport(s, action)
+	case ImportBackup:
+		importBackup(s, action)
 
-	case TransactionCommit:
+	case CommitTransaction:
 		commitTransaction(s, action)
 
 	case IntrospectionRequest:
@@ -572,20 +585,20 @@ func benchmarkAction(
 // referenced across multiple nodes by a consistent, predictable index - allowing a single
 // action to target the same collection across multiple nodes.
 //
-// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
 func getCollectionNames(testCase TestCase) []string {
 	nextIndex := 0
 	collectionIndexByName := map[string]int{}
 
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case *action.AddSchema:
+		case *action.AddCollection:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 
 		case *action.AddView:
 			if action.ExpectedError != "" {
@@ -593,7 +606,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.SDL, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 		}
 	}
 
@@ -605,9 +618,9 @@ func getCollectionNames(testCase TestCase) []string {
 	return collectionNames
 }
 
-func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
-	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
-	splitByType := strings.Split(schema, "type ")
+func getCollectionNamesFromSDL(result map[string]int, sdl string, nextIndex int) int {
+	// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
+	splitByType := strings.Split(sdl, "type ")
 	// Skip the first, as that precede `type ` if `type ` is present,
 	// else there are no types.
 	for i := 1; i < len(splitByType); i++ {
@@ -739,7 +752,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 // will be split.
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
-// they will be split at the first non SchemaUpdate/AddDoc/UpdateDoc action.
+// they will be split at the first non AddCollection/AddDoc/UpdateDoc action.
 func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
@@ -759,7 +772,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, *action.AddDoc, UpdateDoc, Restart:
+		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1193,7 +1206,7 @@ func deleteDoc(
 			collection = s.Nodes[nodeID].Collections[action.CollectionID]
 		}
 
-		opts := options.CollectionDelete()
+		opts := options.DeleteDocument()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1201,7 +1214,7 @@ func deleteDoc(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.Delete(s.Ctx, docID, opts)
+				_, err := collection.DeleteDocument(s.Ctx, docID, opts)
 				return err
 			},
 		)
@@ -1318,11 +1331,11 @@ func updateDocViaColSave(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1331,11 +1344,11 @@ func updateDocViaColSave(
 		return err
 	}
 
-	saveOpts := options.CollectionSave()
+	saveOpts := options.SaveDocument()
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Save(ctx, doc, saveOpts)
+	return collection.SaveDocument(ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1353,11 +1366,11 @@ func updateDocViaColUpdate(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1366,11 +1379,11 @@ func updateDocViaColUpdate(
 		return err
 	}
 
-	updateOpts := options.CollectionUpdate()
+	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Update(ctx, doc, updateOpts)
+	return collection.UpdateDocument(ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1442,7 +1455,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		}
 		collection := collections[action.CollectionID]
 
-		opts := options.CollectionUpdateWithFilter()
+		opts := options.UpdateDocumentsWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1451,7 +1464,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(s.Ctx, action.Filter, action.Updater, opts)
+				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, action.Filter, action.Updater, opts)
 				return err
 			},
 		)
@@ -1478,9 +1491,9 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	}
 }
 
-func addEncryptedIndex(
+func newEncryptedIndex(
 	s *state.State,
-	action AddEncryptedIndex,
+	action NewEncryptedIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
@@ -1517,7 +1530,7 @@ func addEncryptedIndex(
 			Type:      client.EncryptedIndexType(action.Type),
 		}
 
-		opts := options.AddEncryptedIndex()
+		opts := options.NewEncryptedIndex()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1526,7 +1539,7 @@ func addEncryptedIndex(
 		err = withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.AddEncryptedIndex(s.Ctx, indexDesc, opts)
+				_, err := collection.NewEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)
@@ -1549,40 +1562,16 @@ func listEncryptedIndexes(
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, nodeID := range nodeIDs {
+	for _, nodeID := range nodeIDs {
+		collections := s.Nodes[nodeID].Collections
 
-		node := s.Nodes[nodeID]
-
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var hadTxn bool
-		var txn client.Txn
-		if action.TransactionID.HasValue() {
-			hadTxn = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
-		}
-
-		nodeID := nodeIDs[index]
-		var collections []client.Collection
-		var err error
-		if hadTxn {
-			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		} else {
-			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		}
-
-		opts := options.CollectionListEncryptedIndexes()
+		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err = withRetryOnNode(
+		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
 				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
@@ -1705,10 +1694,10 @@ func deleteEncryptedIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
-// backupExport generates a backup using the db api.
-func backupExport(
+// exportBackup generates a backup using the db api.
+func exportBackup(
 	s *state.State,
-	action BackupExport,
+	action ExportBackup,
 ) {
 	if action.Config.Filepath == "" {
 		action.Config.Filepath = s.T.TempDir() + testJSONFile
@@ -1737,10 +1726,10 @@ func backupExport(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
-// backupImport imports data from a backup using the db api.
-func backupImport(
+// importBackup imports data from a backup using the db api.
+func importBackup(
 	s *state.State,
-	action BackupImport,
+	action ImportBackup,
 ) {
 	if action.Filepath == "" {
 		action.Filepath = s.T.TempDir() + testJSONFile
@@ -1825,7 +1814,7 @@ func getTransaction(
 // an error is returned on commit.
 func commitTransaction(
 	s *state.State,
-	action TransactionCommit,
+	action CommitTransaction,
 ) {
 	err := s.Txns[action.TransactionID].Commit()
 	if err != nil {
@@ -2141,9 +2130,9 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case BackupImport:
+		case ImportBackup:
 			hasBackupAction = true
-		case BackupExport:
+		case ExportBackup:
 			hasBackupAction = true
 		}
 	}
@@ -2153,13 +2142,13 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions
-// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
+// contain a collection definition with vector embedding generation and skipVectoEmbeeddingTest is true.
 func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
-		case *action.AddSchema:
-			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+		case *action.AddCollection:
+			hasVectorEmbedding = strings.Contains(a.SDL, "@embedding")
 		}
 	}
 	if !runVectorEmbeddingTests && hasVectorEmbedding {

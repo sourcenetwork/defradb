@@ -17,14 +17,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestPatchCollection_AddEncryptedIndex_ShouldError verifies that encrypted indexes cannot be added via patch.
+// TestPatchCollection_NewEncryptedIndex_ShouldError verifies that encrypted indexes cannot be added via patch.
 // Since EncryptedIndexes is not exposed in the JSON representation, attempting to patch it
 // results in an unmarshaling error, effectively preventing the mutation.
-func TestPatchCollection_AddEncryptedIndex_ShouldError(t *testing.T) {
+func TestPatchCollection_NewEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String
@@ -60,8 +60,8 @@ func TestPatchCollection_AddEncryptedIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String @encryptedIndex
@@ -91,8 +91,8 @@ func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 func TestPatchCollection_ModifyEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String @encryptedIndex

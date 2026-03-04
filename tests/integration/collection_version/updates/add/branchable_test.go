@@ -25,8 +25,8 @@ import (
 func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 					}
@@ -79,8 +79,8 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @branchable {
 						name: String
 					}

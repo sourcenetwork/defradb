@@ -85,7 +85,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[option
 
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACReEnablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeReEnableNACPerm); err != nil {
 		return err
 	}
 
@@ -117,7 +117,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Enumerable[options
 	opt := utils.NewOptions(opts...)
 
 	// Check if this request is authorized to disable node access control.
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACDisablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDisableNACPerm); err != nil {
 		return err
 	}
 
@@ -134,7 +134,7 @@ func (db *DB) GetNACStatus(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACStatusPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetNACStatusPerm); err != nil {
 		return client.NACStatusResult{}, err
 	}
 
@@ -154,7 +154,7 @@ func (db *DB) AddNACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddNACRelationPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -174,7 +174,7 @@ func (db *DB) DeleteNACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteNACRelationPerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
@@ -286,7 +286,7 @@ func (db *DB) checkNodeAccess(
 	// For nac specific operations, the node acp setup must be configured.
 	if permissionNeeded.IsForNACOperation() &&
 		db.nodeACP.NodeACPDesc.Status == client.NACNotConfigured &&
-		permissionNeeded != acpTypes.NodeNACStatusPerm {
+		permissionNeeded != acpTypes.NodeGetNACStatusPerm {
 		return ErrNACIsNotConfigured
 	}
 

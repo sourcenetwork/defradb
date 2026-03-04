@@ -21,8 +21,8 @@ import (
 func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						age: Int 
@@ -66,8 +66,8 @@ func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String @index
 						age: Int @index
@@ -113,8 +113,8 @@ func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 func TestIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int

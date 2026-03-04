@@ -19,11 +19,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindNillableStringArray(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -52,11 +52,11 @@ func TestSchemaUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableStringArrayWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableStringArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -101,11 +101,11 @@ func TestSchemaUpdatesAddFieldKindNillableStringArrayWithAdd(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKindNillableStringArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

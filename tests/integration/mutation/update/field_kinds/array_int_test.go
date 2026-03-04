@@ -20,8 +20,8 @@ import (
 func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
@@ -64,8 +64,8 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
@@ -108,8 +108,8 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
@@ -152,8 +152,8 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
@@ -196,8 +196,8 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]
@@ -240,8 +240,8 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int!]

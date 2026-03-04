@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
+func TestCollectionMigrationGetMigrationsWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{

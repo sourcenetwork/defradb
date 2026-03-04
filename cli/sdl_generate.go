@@ -49,7 +49,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			if len(args) == 1 && args[0] == "-" {
 				sdlByteBuf, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				sdlBuf = string(sdlByteBuf)
 			} else {
@@ -60,7 +60,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					}
 					fileBuf, err := os.ReadFile(arg)
 					if err != nil {
-						return err
+						return NewErrReadingArgument("file", err)
 					}
 
 					if i != 0 {

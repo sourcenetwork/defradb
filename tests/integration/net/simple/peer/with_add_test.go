@@ -24,8 +24,8 @@ func TestP2PAddDoesNotSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -99,8 +99,8 @@ func TestP2PAddWithP2PCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -210,8 +210,8 @@ func TestP2PAdd_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         Name: String
                         Age: Int
@@ -286,8 +286,8 @@ func TestP2PAdd_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         Name: String
                         Age: Int
@@ -348,8 +348,8 @@ func TestP2PAdd_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         Name: String
                         Age: Int

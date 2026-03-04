@@ -14,32 +14,22 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result CollectionAdd(uintptr_t nodePtr, char* json, int isEncrypted,
-char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
-extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
+extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
-extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexAdd(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern void IdentityFree(uintptr_t identityPtr);
+extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
+extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
+extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"unsafe"
 
@@ -74,8 +64,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Add(
+func (c *Collection) NewIndex(
 	ctx context.Context,
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
@@ -687,7 +679,7 @@ func (c *Collection) AddIndex(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexDescName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -712,7 +704,7 @@ func (c *Collection) AddIndex(
 	}
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexAdd(
+	res := ConvertAndFreeCResult(C.NewIndex(
 		callHandle,
 		cIndexDescName,
 		fields,
@@ -741,7 +733,7 @@ func (c *Collection) AddIndex(
 func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection. If neither
@@ -766,7 +758,7 @@ func (c *Collection) DeleteIndex(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexName))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -775,7 +767,7 @@ func (c *Collection) DeleteIndex(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexDelete(
+	res := ConvertAndFreeCResult(C.DeleteIndex(
 		callHandle,
 		cIndexName,
 		copts,
@@ -796,7 +788,7 @@ func (c *Collection) DeleteIndex(
 
 func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection. If neither
@@ -819,7 +811,7 @@ func (c *Collection) ListIndexes(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -828,7 +820,7 @@ func (c *Collection) ListIndexes(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexList(callHandle, copts, cIdentity))
+	res := ConvertAndFreeCResult(C.ListIndexes(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)
@@ -847,10 +839,10 @@ func (c *Collection) ListIndexes(
 	return retRes, nil
 }
 
-func (c *Collection) AddEncryptedIndex(
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection. If neither
@@ -871,10 +863,10 @@ func (c *Collection) AddEncryptedIndex(
 	defer C.free(unsafe.Pointer(fieldName))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexAdd(
+	res := ConvertAndFreeCResult(C.NewEncryptedIndex(
 		callHandle,
 		name,
 		fieldName,
@@ -922,10 +914,10 @@ func (c *Collection) DeleteEncryptedIndex(
 	defer C.free(unsafe.Pointer(cFieldName))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
+	res := ConvertAndFreeCResult(C.DeleteEncryptedIndex(
 		callHandle,
 		name,
 		cFieldName,
@@ -945,7 +937,7 @@ func (c *Collection) DeleteEncryptedIndex(
 }
 
 func (c *Collection) ListEncryptedIndexes(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection. If neither
@@ -963,10 +955,10 @@ func (c *Collection) ListEncryptedIndexes(
 	name := C.CString(c.def.Name)
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(name))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, name, cIdentity))
+	res := ConvertAndFreeCResult(C.ListEncryptedIndexes(callHandle, name, cIdentity))
 
 	if res.Status != 0 {
 		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
@@ -986,7 +978,7 @@ func (c *Collection) ListEncryptedIndexes(
 }
 
 func (c *Collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection. If neither
@@ -1009,7 +1001,7 @@ func (c *Collection) Truncate(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
+	defer C.FreeIdentity(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -1019,7 +1011,7 @@ func (c *Collection) Truncate(
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(
-		C.CollectionTruncate(
+		C.TruncateCollection(
 			callHandle,
 			copts,
 			cIdentity,

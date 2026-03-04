@@ -85,7 +85,7 @@ func (a *DeleteIndex) Execute() {
 
 		collection := collections[a.CollectionID]
 
-		opts := options.CollectionDeleteIndex()
+		opts := options.DeleteCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

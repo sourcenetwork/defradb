@@ -22,8 +22,8 @@ func TestP2PCollectionAddGetSingle(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -52,10 +52,10 @@ func TestP2PCollectionAddGetMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				// Note: If a test is failing here in the error trace, you likely need to change the
-				// order of these schema types declared below (some renaming can cause this).
-				Schema: `
+				// order of these collection types declared below (some renaming can cause this).
+				SDL: `
 					type Users {
 						name: String
 					}

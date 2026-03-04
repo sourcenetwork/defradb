@@ -22,7 +22,7 @@ import (
 func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"User":[
 						{
@@ -89,8 +89,8 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: schemas,
+			&action.AddCollection{
+				SDL: userCollection,
 			},
 			&action.AddDoc{
 				NodeID: immutable.Some(0),
@@ -105,11 +105,11 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
 				}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				NodeID:          immutable.Some(0),
 				ExpectedContent: expectedExportData,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
@@ -144,8 +144,8 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @relation(name: "author_book")
@@ -158,7 +158,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					}
 				`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Author":[
 						{
@@ -210,8 +210,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @relation(name: "author_book")
@@ -224,7 +224,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					}
 				`,
 			},
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Book":[
 						{
@@ -301,8 +301,8 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						book: Book @primary @relation(name: "author_book")
@@ -342,12 +342,12 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			/*
 				This fails due to the linked ticket.
 				https://github.com/sourcenetwork/defradb/issues/1704
-				testUtils.BackupExport{
+				testUtils.ExportBackup{
 					NodeID:          immutable.Some(0),
 					ExpectedContent: expectedExportData,
 				},
 			*/
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},

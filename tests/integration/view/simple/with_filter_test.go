@@ -20,8 +20,8 @@ import (
 func TestView_SimpleWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -74,8 +74,8 @@ func TestView_SimpleWithFilter(t *testing.T) {
 func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int

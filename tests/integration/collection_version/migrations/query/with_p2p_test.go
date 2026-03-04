@@ -22,13 +22,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -75,7 +75,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				// Node 0 should yield results as they were defined, as the newer schema version is
+				// Node 0 should yield results as they were defined, as the newer collection version is
 				// unknown to this node.
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -92,7 +92,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				},
 			},
 			&action.Request{
-				// Node 1 should yield results migrated to the new schema version.
+				// Node 1 should yield results migrated to the new collection version.
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -104,7 +104,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							// John has been migrated up to the newer schema version on node 1
+							// John has been migrated up to the newer collection version on node 1
 							"verified": true,
 						},
 					},
@@ -116,13 +116,13 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -196,7 +196,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				// Node 0 should yield results as they were defined, as the newer schema version is
+				// Node 0 should yield results as they were defined, as the newer collection version is
 				// unknown to this node.
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -213,7 +213,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 				},
 			},
 			&action.Request{
-				// Node 1 should yield results migrated to the new schema version.
+				// Node 1 should yield results migrated to the new collection version.
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -225,7 +225,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 					"Users": []map[string]any{
 						{
 							"name": "Fred",
-							// John has been migrated up to the newer schema version on node 1
+							// John has been migrated up to the newer collection version on node 1
 							"verified": true,
 						},
 					},
@@ -237,13 +237,13 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -309,7 +309,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				},
 			},
 			&action.Request{
-				// Node 1 should yield results migrated down to the old schema version.
+				// Node 1 should yield results migrated down to the old collection version.
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -321,7 +321,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							// John has been migrated down to the older schema version on node 1
+							// John has been migrated down to the older collection version on node 1
 							// clearing the verified field
 							"verified": nil,
 						},
@@ -334,13 +334,13 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSchemaHistoryGap(t *testing.T) {
+func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSchemaHistoryGap(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -366,7 +366,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 			},
 			testUtils.ConfigureMigration{
 				// Register a migration from version 2 to version 3 on both nodes.
-				// There is no migration from version 1 to 2, thus node 1 has no knowledge of schema version 2.
+				// There is no migration from version 1 to 2, thus node 1 has no knowledge of collection version 2.
 				LensConfig: client.LensConfig{
 					SourceCollectionVersionID:      "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
 					DestinationCollectionVersionID: "bafyreiabghlustwur2y3pdxmoyq35rxcxg7bbgx6hxe2vezqow3q27g6za",
@@ -396,7 +396,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				// Node 1 should also yield the synced doc, even though there was a gap in the schema version history
+				// Node 1 should also yield the synced doc, even though there was a gap in the collection version history
 				Request: `query {
 					Users {
 						name

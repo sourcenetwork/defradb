@@ -32,7 +32,7 @@ import (
 const hardDeleteChunkSize int = 10000
 
 func (c *collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	// Check for a transaction that was attached to the context first, and failing
 	// that, check for a transaction that is attached to the collection.
@@ -48,7 +48,7 @@ func (c *collection) Truncate(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionTruncatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeTruncateCollectionPerm); err != nil {
 		return err
 	}
 

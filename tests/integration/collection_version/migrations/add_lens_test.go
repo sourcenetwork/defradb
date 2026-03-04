@@ -142,8 +142,8 @@ func TestAddLens_WithPatchCollection_TransformsDocuments(t *testing.T) {
 					},
 				},
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

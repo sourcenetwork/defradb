@@ -20,7 +20,7 @@ import (
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"User":[
 						{"age":30,"name":"John"},
@@ -87,7 +87,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
+			testUtils.ImportBackup{
 				ImportContent: `{
 					"Book":[
 						{

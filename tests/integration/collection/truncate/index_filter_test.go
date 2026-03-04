@@ -17,11 +17,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index
 					}
@@ -52,11 +52,11 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}
@@ -87,11 +87,11 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
+func TestTruncateCollectionIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @index(unique: true)
 					}

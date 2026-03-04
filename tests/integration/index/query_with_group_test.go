@@ -20,8 +20,8 @@ import (
 func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String 
 						rating: Float @index

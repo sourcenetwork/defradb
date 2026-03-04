@@ -89,6 +89,13 @@ type TestCase struct {
 	// The test will be skipped if the current active set of multipliers
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
+
+	// FlakeRetries specifies the number of times a flaky test should be retried
+	// if it fails. If a test succeeds on any attempt, it is considered passed.
+	// A value of 0 (default) means no retries - the test runs once as normal.
+	// A value of N means the test will be attempted up to N+1 times total
+	// (1 initial + N retries).
+	FlakeRetries uint
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -104,7 +111,7 @@ type KMS struct {
 // setup is complete so that it may split actions across database code-versions.
 //
 // If a SetupComplete action is not provided the change detector will split before
-// the first item that is neither a SchemaUpdate, AddDoc or UpdateDoc action.
+// the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
 // ConfigureNode allows the explicit configuration of new Defra nodes.
@@ -200,7 +207,7 @@ type SetActiveCollectionVersion struct {
 // This is a type alias for backward compatibility.
 type DocIndex = action.DocIndex
 
-// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
+// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be referenced without worrying
 // about the specific document id.
 func NewDocIndex(collectionIndex int, index int) DocIndex {
 	return DocIndex{
@@ -341,12 +348,12 @@ type UpdateWithFilter struct {
 	TransactionID immutable.Option[int]
 }
 
-// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
+// NewEncryptedIndex will attempt to make a new encrypted index on the given collection
 // using the collection api.
-type AddEncryptedIndex struct {
-	// NodeID may hold the ID (index) of a node to add the encrypted index to.
+type NewEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to make the new encrypted index on.
 	//
-	// If a value is not provided the index will be added to all nodes.
+	// If a value is not provided the index will be made on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -354,13 +361,13 @@ type AddEncryptedIndex struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection to which this index should be added.
+	// The collection on which this index should be made.
 	CollectionID int
 
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The type of the index to add.
+	// The type of new index to make.
 	Type string
 
 	// Any error expected from the action. Optional.
@@ -521,8 +528,8 @@ type AddPredefinedDocs struct {
 	Docs predefined.DocsList
 }
 
-// TransactionCommit represents a commit request for a transaction of the given id.
-type TransactionCommit struct {
+// CommitTransaction represents a commit request for a transaction of the given id.
+type CommitTransaction struct {
 	// Used to identify the transaction to commit.
 	TransactionID int
 
@@ -580,8 +587,8 @@ type ClientIntrospectionRequest struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupExport struct {
+// ExportBackup will attempt to export data from the datastore using the db api.
+type ExportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup export will be done for all the nodes.
@@ -601,8 +608,8 @@ type BackupExport struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupImport struct {
+// ImportBackup will attempt to import data into the datastore using the db API.
+type ImportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup import will be done for all the nodes.

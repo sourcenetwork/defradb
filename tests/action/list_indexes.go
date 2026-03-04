@@ -94,7 +94,7 @@ func (a *ListIndexes) Execute() {
 
 		collection := collections[a.CollectionID]
 
-		opts := options.CollectionListIndexes()
+		opts := options.ListCollectionIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

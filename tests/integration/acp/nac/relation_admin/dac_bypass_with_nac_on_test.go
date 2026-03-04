@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
+func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
@@ -38,9 +38,9 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -58,7 +58,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -94,7 +94,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanDACBypass(t *testing.T) {
+func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
@@ -112,9 +112,9 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanDACBypass(t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -132,7 +132,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanDACBypass(t
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -168,7 +168,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanDACBypass(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
+func TestNAC_AdminRelation_OwnThePrivateDocument_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
@@ -186,9 +186,9 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -214,7 +214,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -251,7 +251,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanDACBypass(t *testing.T) {
+func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
@@ -269,9 +269,9 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanDACBypass(t
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -297,7 +297,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanDACBypass(t
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -352,9 +352,9 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -380,7 +380,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -433,9 +433,9 @@ func TestNAC_AdminRelation_PublicDocument_MaterializedView_CanAccessPublicDocume
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			// Temporarily disable to allow a non-node-owner to own some documents, the re-enable later
 			// to test the NAC enabled case.
@@ -461,7 +461,7 @@ func TestNAC_AdminRelation_PublicDocument_MaterializedView_CanAccessPublicDocume
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -514,9 +514,9 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -570,7 +570,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
 	}
@@ -596,9 +596,9 @@ func TestNAC_AdminRelation_DACByPassRevokation_MaterializedView_CanNotDACBypass(
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
 			},
-			&action.AddSchema{
+			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+				SDL:      `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -652,7 +652,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_MaterializedView_CanNotDACBypass(
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeViewRefreshPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeRefreshViewPerm),
 			},
 		},
 	}

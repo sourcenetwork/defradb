@@ -86,7 +86,7 @@ func (db *DB) GetCollectionByName(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +113,7 @@ func (db *DB) GetCollections(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +143,7 @@ func (db *DB) ListIndexes(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +172,7 @@ func (db *DB) ListAllEncryptedIndexes(
 
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListAllPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListAllEncryptedIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -188,15 +188,15 @@ func (db *DB) ListAllEncryptedIndexes(
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
-// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// AddCollection takes the provided GQL SDL and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
-// All schema types provided must not exist prior to calling this, and they may not reference existing
-// types previously defined.
-func (db *DB) AddSchema(
+// All collection types provided must not exist prior to calling this, and they may not
+// reference existing types previously defined.
+func (db *DB) AddCollection(
 	ctx context.Context,
-	schemaString string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
@@ -206,7 +206,7 @@ func (db *DB) AddSchema(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -215,7 +215,7 @@ func (db *DB) AddSchema(
 		return nil, err
 	}
 
-	cols, err := db.addSchema(ctx, schemaString)
+	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (db *DB) AddSchema(
 	return cols, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -236,7 +236,7 @@ func (db *DB) AddSchema(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// The collections (including the schema version ID) will only be updated if any changes have actually
+// The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
 
@@ -254,7 +254,7 @@ func (db *DB) PatchCollection(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -290,7 +290,7 @@ func (db *DB) SetActiveCollectionVersion(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -328,7 +328,7 @@ func (db *DB) SetMigration(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeMigrationSetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSetMigrationPerm); err != nil {
 		return "", err
 	}
 
@@ -369,7 +369,7 @@ func (db *DB) AddLens(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeAddLensPerm); err != nil {
 		return "", err
 	}
 
@@ -410,7 +410,7 @@ func (db *DB) ListLenses(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListLensPerm); err != nil {
 		return nil, err
 	}
 
@@ -445,7 +445,7 @@ func (db *DB) AddView(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeAddViewPerm); err != nil {
 		return nil, err
 	}
 
@@ -483,7 +483,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewRefreshPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeRefreshViewPerm); err != nil {
 		return err
 	}
 

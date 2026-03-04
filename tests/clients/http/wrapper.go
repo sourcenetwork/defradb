@@ -187,12 +187,12 @@ func (w *Wrapper) BasicExport(
 	return w.client.BasicExport(ctx, filepath, opts...)
 }
 
-func (w *Wrapper) AddSchema(
+func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddSchema(ctx, schema, opts...)
+	return w.client.AddCollection(ctx, sdl, opts...)
 }
 
 func (w *Wrapper) AddDACPolicy(

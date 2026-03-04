@@ -20,8 +20,8 @@ import (
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -57,8 +57,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -94,8 +94,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -131,8 +131,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -214,8 +214,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization
@@ -302,8 +302,8 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 				  type Program {
 					name: String
 					certificationBodyOrg: Organization

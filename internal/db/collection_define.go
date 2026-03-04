@@ -78,9 +78,9 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
-		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.AddIndexes))
-		for _, addIndex := range def.AddIndexes {
-			desc, err := processAddIndexRequest(ctx, def.Definition, addIndex)
+		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.NewIndexes))
+		for _, newIndex := range def.NewIndexes {
+			desc, err := processNewIndexRequest(ctx, def.Definition, newIndex)
 			if err != nil {
 				return nil, err
 			}
@@ -347,7 +347,7 @@ existingVersionLoop:
 					return err
 				}
 				for _, indexReq := range indexReqs {
-					if _, err := colObj.addIndex(ctx, indexReq); err != nil {
+					if _, err := colObj.newIndex(ctx, indexReq); err != nil {
 						return err
 					}
 				}
@@ -387,7 +387,7 @@ existingVersionLoop:
 		}
 	}
 
-	return db.loadSchema(ctx)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 const (
@@ -405,11 +405,11 @@ func substituteCollectionPatch(
 	patch jsonpatch.Patch,
 	collectionsByName map[string]client.CollectionVersion,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesBySchema := make(map[string]map[string]int, len(collectionsByName))
-	for schemaName, schema := range collectionsByName {
-		fieldIndexesByName := make(map[string]int, len(schema.Fields))
-		fieldIndexesBySchema[schemaName] = fieldIndexesByName
-		for i, field := range schema.Fields {
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
+	for collectionName, collection := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(collection.Fields))
+		fieldIndexesByCollection[collectionName] = fieldIndexesByName
+		for i, field := range collection.Fields {
 			fieldIndexesByName[field.Name] = i
 		}
 	}
@@ -454,7 +454,7 @@ func substituteCollectionPatch(
 
 					desc := collectionsByName[splitPath[collectionNamePathIndex]]
 					var index string
-					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
@@ -463,7 +463,7 @@ func substituteCollectionPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
@@ -520,13 +520,13 @@ func substituteCollectionPatch(
 	return patch, nil
 }
 
-// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
+// isFieldOrInner returns true if the given path points to a CollectionFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
 	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a SchemaFieldDescription.
+// isField returns true if the given path points to a CollectionFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
@@ -541,13 +541,13 @@ func containsLetter(s string) bool {
 	return false
 }
 
-// SetActiveCollectionVersion activates all collection versions with the given schema version, and deactivates all
-// those without it (if they share the same schema root).
+// SetActiveCollectionVersion activates all collection versions with the given collection version, and deactivates all
+// those without it (if they share the same collection root).
 //
-// This will affect all operations interacting with the schema where a schema version is not explicitly
+// This will affect all operations interacting with the collection where a collection version is not explicitly
 // provided.  This includes GQL queries and Collection operations.
 //
-// It will return an error if the provided schema version ID does not exist.
+// It will return an error if the provided collection version ID does not exist.
 func (db *DB) setActiveCollectionVersion(
 	ctx context.Context,
 	versionID string,
@@ -610,8 +610,8 @@ func (db *DB) setActiveCollectionVersion(
 		}
 	}
 
-	// Load the schema into the clients (e.g. GQL)
-	return db.loadSchema(ctx)
+	// Load the collection definitions into the clients (e.g. GQL)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
@@ -876,7 +876,7 @@ func finalizeRelations(
 
 			if isOneToOne && field.IsPrimary {
 				newIndex, err := ensureOneToOneUniqueIndex(
-					newCollections[i].AddIndexes,
+					newCollections[i].NewIndexes,
 					nil,
 					newCol.Definition.Name,
 					field.Name,
@@ -885,7 +885,7 @@ func finalizeRelations(
 					return err
 				}
 				if newIndex != nil {
-					newCollections[i].AddIndexes = append(newCollections[i].AddIndexes, *newIndex)
+					newCollections[i].NewIndexes = append(newCollections[i].NewIndexes, *newIndex)
 				}
 			}
 		}
@@ -913,11 +913,11 @@ func isOneToOneRelation(
 
 // findIndexWithFirstField checks if an index exists where the given field is the first field.
 func findIndexWithFirstField(
-	addIndexes []client.IndexAddRequest,
+	newIndexes []client.NewIndexRequest,
 	existingIndexes []client.IndexDescription,
 	fieldName string,
 ) (isUnique bool, found bool) {
-	for _, index := range addIndexes {
+	for _, index := range newIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
 			return index.Unique, true
 		}
@@ -934,18 +934,18 @@ func findIndexWithFirstField(
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
 // If no user-defined index exists, it adds one automatically.
 func ensureOneToOneUniqueIndex(
-	addIndexes []client.IndexAddRequest,
+	newIndexes []client.NewIndexRequest,
 	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
-) (newIndex *client.IndexAddRequest, err error) {
+) (newIndex *client.NewIndexRequest, err error) {
 	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
 	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
-	isUnique, hasIndex := findIndexWithFirstField(addIndexes, existingIndexes, idFieldName)
+	isUnique, hasIndex := findIndexWithFirstField(newIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
-		isUnique, hasIndex = findIndexWithFirstField(addIndexes, existingIndexes, relationFieldName)
+		isUnique, hasIndex = findIndexWithFirstField(newIndexes, existingIndexes, relationFieldName)
 	}
 
 	if hasIndex {
@@ -956,7 +956,7 @@ func ensureOneToOneUniqueIndex(
 	}
 
 	// No user-defined index exists, add one automatically
-	return &client.IndexAddRequest{
+	return &client.NewIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
 	}, nil
@@ -964,12 +964,12 @@ func ensureOneToOneUniqueIndex(
 
 // getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
-// standard schema creation flow that calls finalizeRelations.
-// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be added.
+// standard collection creation flow that calls finalizeRelations.
+// Returns a map of collectionName -> []NewIndexRequest for indexes that need to be added.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
-) (map[string][]client.IndexAddRequest, error) {
+) (map[string][]client.NewIndexRequest, error) {
 	allColsByName := make(map[string]client.CollectionVersion)
 	maps.Copy(allColsByName, existingColsByName)
 
@@ -977,7 +977,7 @@ func getOneToOneIndexRequestsForPatch(
 		allColsByName[col.Name] = col
 	}
 
-	result := make(map[string][]client.IndexAddRequest)
+	result := make(map[string][]client.NewIndexRequest)
 
 	for _, col := range newColsByID {
 		existingCol := existingColsByName[col.Name]

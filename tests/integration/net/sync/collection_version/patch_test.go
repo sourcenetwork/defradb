@@ -26,10 +26,10 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				// Create Users on node 0 only, node 1 has no knowledge of it
 				NodeID: immutable.Some(0),
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -112,9 +112,9 @@ func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
+			&action.AddCollection{
 				// Create Users on both nodes, as the active version
-				Schema: `
+				SDL: `
 					type Users {
 						name: String
 					}

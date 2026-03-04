@@ -164,7 +164,7 @@ func (p *P2P) ListP2PCollections(
 			return nil, err
 		}
 		if len(storeCol) == 0 {
-			return nil, client.NewErrCollectionNotFoundForSchema(key.CollectionID)
+			return nil, client.NewErrCollectionNotFoundForRoot(key.CollectionID)
 		}
 		collectionNames = append(collectionNames, storeCol[0].Name())
 	}

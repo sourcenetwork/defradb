@@ -35,8 +35,8 @@ var bookAuthorGQLSchema = (`
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
-			&action.AddSchema{
-				Schema: bookAuthorGQLSchema,
+			&action.AddCollection{
+				SDL: bookAuthorGQLSchema,
 			},
 		},
 		test.Actions...,

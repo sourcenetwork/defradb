@@ -115,7 +115,7 @@ nodeLoop:
 			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			reqOption.SetVariables(a.Variables.Value())
+			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
@@ -146,4 +146,47 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// resolveVariables resolves any DocIndex values in the variables map to their
+// corresponding document ID strings.
+func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+	resolved := make(map[string]any, len(vars))
+	for k, v := range vars {
+		if index, ok := v.(DocIndex); ok {
+			s.DocIDsLock.RLock()
+			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			s.DocIDsLock.RUnlock()
+			resolved[k] = docID.String()
+		} else {
+			resolved[k] = v
+		}
+	}
+	return resolved
+}
+
+// getTransaction returns the transaction for this request, creating one if needed.
+func (a *Request) getTransaction(db client.TxnStore) client.Txn {
+	if !a.TransactionID.HasValue() {
+		return nil
+	}
+
+	transactionID := a.TransactionID.Value()
+
+	if transactionID >= len(a.s.Txns) {
+		// Extend the txn slice so this txn can fit and be accessed by TransactionId
+		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
+	}
+
+	if a.s.Txns[transactionID] == nil {
+		txn, err := db.NewTxn(false)
+		if assertError(a.s.T, err, a.ExpectedError) {
+			txn.Discard()
+			return nil
+		}
+
+		a.s.Txns[transactionID] = txn
+	}
+
+	return a.s.Txns[transactionID]
 }

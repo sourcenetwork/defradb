@@ -20,8 +20,8 @@ import (
 func TestMutationUpdate_WithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						data: Blob
@@ -64,8 +64,8 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Blob
 					}

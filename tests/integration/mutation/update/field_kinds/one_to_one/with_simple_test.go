@@ -373,3 +373,51 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 
 	executeTestCase(t, test)
 }
+
+func TestMutationUpdateOneToOne_WithGQLRequest_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			&action.Request{
+				Request: `
+					mutation($docID: [ID!], $bookID: ID) {
+						update_Author(docID: $docID, input: {
+							_publishedID: $bookID
+						}) {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Variables: immutable.Some(map[string]any{
+					"docID":  testUtils.NewDocIndex(1, 0),
+					"bookID": testUtils.NewDocIndex(0, 0),
+				}),
+				Results: map[string]any{
+					"update_Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -20,8 +20,8 @@ import (
 func TestView_OneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -95,8 +95,8 @@ func TestView_OneToMany(t *testing.T) {
 func TestView_OneToManyWithMixedSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -167,8 +167,8 @@ func TestView_OneToManyWithMixedSDL(t *testing.T) {
 func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -218,8 +218,8 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -275,8 +275,8 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -340,8 +340,8 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]
@@ -399,8 +399,8 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						books: [Book]

@@ -295,8 +295,8 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `type Users {
+			&action.AddCollection{
+				SDL: `type Users {
 					name: String
 					custom: JSON
 				}`,

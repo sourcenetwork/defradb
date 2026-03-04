@@ -53,15 +53,13 @@ func SetupCollections(
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
-	schema, err := ConstructSchema(fixture)
+	sdl, err := ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
 
-	// b.Logf("Loading schema: \n%s", schema)
-
-	if _, err := db.AddSchema(ctx, schema); err != nil {
-		return nil, errors.Wrap("couldn't load schema", err)
+	if _, err := db.AddCollection(ctx, sdl); err != nil {
+		return nil, errors.Wrap("couldn't load SDL", err)
 	}
 
 	// loop to get collections
@@ -77,22 +75,22 @@ func SetupCollections(
 	return collections, nil
 }
 
-func ConstructSchema(fixture fixtures.Generator) (string, error) {
+func ConstructSDL(fixture fixtures.Generator) (string, error) {
 	numTypes := len(fixture.Types())
-	var schema string
+	var sdl string
 
-	// loop to get the schemas
+	// loop to get the collection definitions
 	for i := 0; i < numTypes; i++ {
 		gql, err := fixture.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
 			return "", errors.Wrap("failed generating GQL", err)
 		}
 
-		schema += gql
-		schema += "\n\n"
+		sdl += gql
+		sdl += "\n\n"
 	}
 
-	return schema, nil
+	return sdl, nil
 }
 
 func SetupDBAndCollections(
@@ -170,7 +168,7 @@ func BackfillBenchmarkDB(
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Add(ctx, doc); err != nil &&
+							if err := cols[j].AddDocument(ctx, doc); err != nil &&
 								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,

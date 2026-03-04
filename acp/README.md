@@ -103,10 +103,10 @@ All mandatory permissions are:
 - Specified in the `dpi.go` file within the variable `dpiRequiredPermissions`.
 
 ### DPI Resource Examples:
-- Check out tests here: [tests/integration/acp/schema/add_dpi](/tests/integration/acp/schema/add_dpi)
+- Check out tests here: [tests/integration/acp/dac/link_collection](/tests/integration/acp/dac/link_collection)
 - The tests linked are broken into `accept_*_test.go` and `reject_*_test.go` files.
-- Accepted tests document the valid DPIs (as the schema is accepted).
-- Rejected tests document invalid DPIs (as the schema is rejected).
+- Accepted tests document the valid DPIs (as the collection is accepted).
+- Rejected tests document invalid DPIs (as the collection is rejected).
 - There are also some Partially-DPI tests that are both accepted and rejected depending on the resource.
 
 ### Required Permission's Expression:
@@ -189,9 +189,9 @@ Result:
 }
 ```
 
-### Add schema, linking to a resource within the policy we added:
+### Add collection, linking to a resource within the policy we added:
 
-We have in `examples/schema/permissioned/users.graphql`:
+We have in `examples/collection/permissioned/users.graphql`:
 ```graphql
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",
@@ -204,7 +204,7 @@ type Users @policy(
 
 CLI Command:
 ```sh
-defradb client schema add -f examples/schema/permissioned/users.graphql
+defradb client collection add -f examples/collection/permissioned/users.graphql
 ```
 
 Result:
@@ -244,14 +244,14 @@ Result:
 
 CLI Command:
 ```sh
-defradb client collection add --name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document add --collection-name Users '[{ "name": "SecretShahzad" }, { "name": "SecretLone" }]' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 ### Add public documents (without identity)
 
 CLI Command:
 ```sh
-defradb client collection add --name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
+defradb client document add --collection-name Users '[{ "name": "PublicShahzad" }, { "name": "PublicLone" }]'
 ```
 
 ### Query documents without an identity (shows only public):
@@ -296,7 +296,7 @@ Result:
 ### Access the private document (including field names):
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -310,7 +310,7 @@ Result:
 ### Accessing the private document without an identity:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a"
 ```
 
 Error:
@@ -321,7 +321,7 @@ Error:
 ### Accessing the private document with wrong identity:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5
 ```
 
 Error:
@@ -332,7 +332,7 @@ Error:
 ### Update private document:
 CLI Command:
 ```sh
-defradb client collection update --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document update --collection-name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --updater '{ "name": "SecretUpdatedShahzad" }' --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -348,7 +348,7 @@ Result:
 #### Check if it actually got updated:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -364,7 +364,7 @@ Result:
 ### Delete private document:
 CLI Command:
 ```sh
-defradb client collection delete --name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document delete --collection-name Users --docID "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -380,7 +380,7 @@ Result:
 #### Check if it actually got deleted:
 CLI Command:
 ```sh
-defradb client collection get --name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client document get --collection-name Users "bae-a5830219-b8e7-5791-9836-2e494816fc0a" --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Error:
@@ -492,9 +492,9 @@ Result:
 }
 ```
 
-Add schema, linking to the users resource and our policyID:
+Add collection, linking to the users resource and our policyID:
 ```sh
-defradb client schema add '
+defradb client collection add '
 type Users @policy(
     id: "ec11b7e29a4e195f95787e2ec9b65af134718d16a2c9cd655b5e04562d1cabf9",
     resource: "users"
@@ -549,7 +549,7 @@ Result:
 
 Add a private document:
 ```sh
-defradb client collection add --name Users '[{ "name": "SecretShahzadLone" }]' \
+defradb client document add --collection-name Users '[{ "name": "SecretShahzadLone" }]' \
 --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
@@ -621,7 +621,7 @@ Result:
 
 But, they still can not perform an update as they were only granted a read permission (through `reader` relation):
 ```sh
-defradb client collection update --name Users --docID "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c" \
+defradb client document update --collection-name Users --docID "bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c" \
 --identity 4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5 '{ "name": "SecretUpdatedShahzad" }'
 ```
 
@@ -820,10 +820,10 @@ defradb client acp node status
 ```
 
 ### Bypass DAC Checks
-You can bypass DAC checks for performance if you use owner identity or any identity that has the `dac-bypass`
+You can bypass DAC checks for performance if you use owner identity or any identity that has the `bypass-dac`
 permission.
 
-Note: When NAC is not enabled, `dac-bypass` permission is not automatically granted like other permissions,
+Note: When NAC is not enabled, `bypass-dac` permission is not automatically granted like other permissions,
 so DAC checks won't be bypassed if conditions that enable DAC are satisfied. We do plan to give users the
 ability to be able to disable DAC in the future (which would bypass DAC).
 

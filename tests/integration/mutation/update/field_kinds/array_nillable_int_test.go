@@ -22,8 +22,8 @@ import (
 func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						favouriteIntegers: [Int]

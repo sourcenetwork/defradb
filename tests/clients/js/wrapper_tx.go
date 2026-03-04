@@ -95,9 +95,9 @@ func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pu
 	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddSchemaOptions]) ([]client.CollectionVersion, error) {
+func (txn *Transaction) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.AddSchema(ctx, sdl, opts...)
+	return txn.Wrapper.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(

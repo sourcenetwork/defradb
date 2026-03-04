@@ -15,12 +15,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -52,8 +49,10 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Add(
+func (c *Collection) NewIndex(
 	ctx context.Context,
+	indexDesc client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
 ) error {
@@ -391,10 +390,14 @@ func (c *Collection) AddIndex(
 func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
+	if indexName == "" {
+		return client.ErrIndexNameRequired
 	}
 
 	opt := utils.NewOptions(opts...)
@@ -412,7 +415,7 @@ func (c *Collection) DeleteIndex(
 
 func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
@@ -434,10 +437,10 @@ func (c *Collection) ListIndexes(
 	return indexes, nil
 }
 
-func (c *Collection) AddEncryptedIndex(
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
@@ -463,7 +466,7 @@ func (c *Collection) AddEncryptedIndex(
 }
 
 func (c *Collection) ListEncryptedIndexes(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
@@ -508,7 +511,7 @@ func (c *Collection) DeleteEncryptedIndex(
 }
 
 func (c *Collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())

@@ -60,7 +60,7 @@ func (fieldSet fields) array() []any {
 }
 
 // DefaultFields contains the list of fields every
-// defra schema-object should have.
+// defra collection should have.
 var DefaultFields = concat(
 	fields{
 		keyField,

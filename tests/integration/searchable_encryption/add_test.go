@@ -18,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexNew_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -60,11 +60,11 @@ func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexNew_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
@@ -79,7 +79,7 @@ func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T)
 						"age":	21
 					}`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			&action.Request{
@@ -105,18 +105,18 @@ func TestEncryptedIndexAdd_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
+func TestEncryptedIndexNew_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName:     "verified",
 				ExpectedError: db.NewErrEncryptedIndexOnNonExistentField("verified").Error(),
 			},
@@ -126,18 +126,18 @@ func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAdd_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
+func TestEncryptedIndexNew_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName:     "age",
 				ExpectedError: db.NewErrEncryptedIndexAlreadyExists("age").Error(),
 			},

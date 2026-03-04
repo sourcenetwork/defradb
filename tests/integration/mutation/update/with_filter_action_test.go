@@ -32,7 +32,7 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 				CollectionID:  0,
 				Filter:        invalidFilterType{Number: 1},
 				Updater:       `{"name": "Eric"}`,
-				ExpectedError: "key not found",
+				ExpectedError: "collection not found",
 			},
 		},
 	}

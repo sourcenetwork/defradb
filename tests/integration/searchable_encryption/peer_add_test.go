@@ -21,7 +21,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
+func TestEncryptedIndexNewPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -29,8 +29,8 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -55,7 +55,7 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
+func TestEncryptedIndexNewPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -63,15 +63,15 @@ func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			&action.Request{

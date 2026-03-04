@@ -22,8 +22,8 @@ import (
 func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -78,8 +78,8 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}
@@ -143,8 +143,8 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 					}

@@ -48,8 +48,8 @@ func getSetupEmployeeCompanyActions() []any {
 			Policy:   employeeCompanyPolicy,
 		},
 
-		&action.AddSchema{
-			Schema: `
+		&action.AddCollection{
+			SDL: `
 					type Employee @policy(
 						id: "{{.Policy0}}",
 						resource: "employees"

@@ -46,13 +46,13 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			case patchFile != "":
 				data, err := os.ReadFile(patchFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("patch-file", err)
 				}
 				patch = string(data)
 			case len(args) > 0 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				patch = string(data)
 			case len(args) >= 1:
@@ -66,7 +66,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			case lensFile != "":
 				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("lens-file", err)
 				}
 				lensCfgJson = string(data)
 			case len(args) == 2:

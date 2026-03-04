@@ -36,8 +36,8 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 			SupportedClientTypes:   test.SupportedClientTypes,
 			Actions: append(
 				[]any{
-					&action.AddSchema{
-						Schema: userCollectionGQLSchema,
+					&action.AddCollection{
+						SDL: userCollectionGQLSchema,
 					},
 				},
 				test.Actions...,

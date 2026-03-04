@@ -24,7 +24,7 @@ import (
 func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			updateUserCollectionSchema(),
+			addUserCollection(),
 			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -93,7 +93,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			updateUserCollectionSchema(),
+			addUserCollection(),
 			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -132,7 +132,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			updateUserCollectionSchema(),
+			addUserCollection(),
 			&action.AddDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -197,8 +197,8 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         points: Int @crdt(type: pcounter)
                     }
@@ -243,8 +243,8 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         points: Int @crdt(type: pcounter)
                     }
@@ -286,7 +286,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			updateUserCollectionSchema(),
+			addUserCollection(),
 			&action.AddDoc{
 				Doc:            "[" + islam33Doc + ", " + john21Doc + "]",
 				IsDocEncrypted: true,
@@ -339,7 +339,7 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			updateUserCollectionSchema(),
+			addUserCollection(),
 			&action.AddDoc{
 				Doc: `{
 						"name": "John",

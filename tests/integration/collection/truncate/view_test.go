@@ -20,14 +20,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionViewAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -100,14 +100,14 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testing.T) {
+func TestTruncateCollectionViewAdd_TruncatingSourceDoesNotTruncateView(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

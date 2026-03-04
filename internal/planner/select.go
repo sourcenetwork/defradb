@@ -534,6 +534,15 @@ func (p *Planner) SelectFromSource(
 	fromCollection bool,
 	collection client.Collection,
 ) (planNode, error) {
+	return p.SelectTopNodeFromSource(selectReq, source, fromCollection, collection)
+}
+
+func (p *Planner) SelectTopNodeFromSource(
+	selectReq *mapper.Select,
+	source planNode,
+	fromCollection bool,
+	collection client.Collection,
+) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:    p,
 		source:     source,
@@ -632,6 +641,10 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	if selectReq.IsEncrypted {
 		return p.SelectEncrypted(selectReq)
 	}
+	return p.SelectTopNode(selectReq)
+}
+
+func (p *Planner) SelectTopNode(selectReq *mapper.Select) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,

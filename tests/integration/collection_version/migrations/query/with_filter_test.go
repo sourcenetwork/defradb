@@ -22,11 +22,11 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
+func TestCollectionMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -106,16 +106,16 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApplyMigration(t *testing.T) {
+func TestCollectionMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApplyMigration(t *testing.T) {
 	const (
-		schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
-		schemaV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
+		colVersionV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
+		colVersionV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
 	)
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -159,8 +159,8 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      schemaV3,
-					DestinationCollectionVersionID: schemaV4,
+					SourceCollectionVersionID:      colVersionV3,
+					DestinationCollectionVersionID: colVersionV4,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -208,11 +208,11 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigration2(t *testing.T) {
+func TestCollectionMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigration2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int

@@ -24,8 +24,8 @@ func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users @branchable {
 						name: String @index
 					}

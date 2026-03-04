@@ -344,8 +344,8 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -497,8 +497,8 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]

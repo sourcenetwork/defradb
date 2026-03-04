@@ -159,8 +159,8 @@ type PeerInfo struct {
 type Replicator struct {
 	// The peer info for the replicator instance.
 	Info client.PeerInfo
-	// The map of schema roots that the replicator will receive updates for.
-	Schemas map[string]struct{}
+	// The map of collection roots that the replicator will receive updates for.
+	Collections map[string]struct{}
 	// Docs will receive Updates if new collections have been added to the replicator
 	// and those collections have documents to be replicated.
 	Docs <-chan Update

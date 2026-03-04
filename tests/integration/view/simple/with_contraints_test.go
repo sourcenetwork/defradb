@@ -25,8 +25,8 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 			testUtils.CachelessViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						pointsListInt: [Int!]
@@ -99,8 +99,8 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						pointsListInt: [Int!]

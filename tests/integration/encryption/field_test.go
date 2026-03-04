@@ -28,8 +28,8 @@ func TestDocEncryptionField_IfFieldDoesNotExistInGQLSchema_ReturnError(t *testin
 			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
@@ -52,8 +52,8 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinFieldInGQLSchema_ReturnErro
 			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
@@ -82,8 +82,8 @@ func TestDocEncryptionField_IfFieldDoesNotExist_ReturnError(t *testing.T) {
 			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int
@@ -107,8 +107,8 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinField_ReturnError(t *testin
 			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
                     type Users {
                         name: String
                         age: Int

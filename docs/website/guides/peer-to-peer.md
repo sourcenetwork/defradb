@@ -20,9 +20,9 @@ Libp2p is modular, meaning it can be customized and integrated into different P2
 
 The high-level distinction between a document is as follows:
 
-* A document is a single record that contains multiple fields. These documents are bound by schema. For example, each row in an SQL table has multiple individual columns. These rows are analogous to documents with multiple individual fields.
+* A document is a single record that contains multiple fields. These documents are bound by a collection. For example, each row in an SQL table has multiple individual columns. These rows are analogous to documents with multiple individual fields.
 
-* A collection refers to a collection of documents under a single schema. For example, a table from an SQL database comprising of rows and columns is analogous to collections.
+* A collection refers to a grouping of documents that share the same type definition. For example, a table from an SQL database comprising of rows and columns is analogous to collections.
 
 ## Need for P2P Networking in DefraDB
 

@@ -18,13 +18,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaUpdatesReplaceField(t *testing.T) {
+func TestCollectionVersionUpdatesReplaceField(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						email: String

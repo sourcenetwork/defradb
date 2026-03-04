@@ -92,7 +92,7 @@ func (db *DB) addView(
 		return nil, err
 	}
 
-	err = db.loadSchema(ctx)
+	err = db.loadCollectionDefinitions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	// of collision.
 	identifier := col.Name + "__-" + fieldName.Value()
 	if _, ok := typesHit[identifier]; ok {
-		// If this identifier is already in the set, the schema must be circular and we should return
+		// If this identifier is already in the set, the collection type must be circular and we should return
 		return nil, nil
 	}
 	typesHit[identifier] = struct{}{}
@@ -325,7 +325,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 			}
 
 			if innerSelect != nil {
-				// innerSelect may be nil if a circular relationship is defined in the schema and we have already
+				// innerSelect may be nil if a circular relationship is defined in the collection type and we have already
 				// added this field
 				childRequests = append(childRequests, innerSelect)
 			}

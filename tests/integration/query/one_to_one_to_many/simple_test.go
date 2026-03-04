@@ -20,8 +20,8 @@ import (
 func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable
@@ -94,8 +94,8 @@ func TestQueryOneToOneToMany(t *testing.T) {
 func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable @primary
@@ -170,8 +170,8 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable @primary
@@ -244,8 +244,8 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Indicator {
 						name: String
 						observable: Observable

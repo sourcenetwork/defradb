@@ -72,7 +72,7 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Add(
+func (c *Collection) NewIndex(
 	ctx context.Context,
 	doc *client.Document,
 	opts ...options.Enumerable[options.CollectionAddOptions],
@@ -340,7 +340,7 @@ func (c *Collection) AddIndex(
 	indexDesc client.IndexAddRequest,
 	opts ...options.Enumerable[options.CollectionAddIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "add"}
+	args := []string{"client", "index", "new"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
@@ -386,7 +386,7 @@ func (c *Collection) AddIndex(
 func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
 	args := []string{"client", "index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
@@ -402,7 +402,7 @@ func (c *Collection) DeleteIndex(
 
 func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionListIndexesOptions],
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -422,13 +422,13 @@ func (c *Collection) ListIndexes(
 	return indexes, nil
 }
 
-// AddEncryptedIndex implements client.Collection.
-func (c *Collection) AddEncryptedIndex(
+// NewEncryptedIndex implements client.Collection.
+func (c *Collection) NewEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (index client.EncryptedIndexDescription, err error) {
-	args := []string{"client", "encrypted-index", "add"}
+	args := []string{"client", "encrypted-index", "new"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", indexDesc.FieldName)
 
@@ -448,7 +448,7 @@ func (c *Collection) AddEncryptedIndex(
 
 // ListEncryptedIndexes implements client.Collection.
 func (c *Collection) ListEncryptedIndexes(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -486,7 +486,7 @@ func (c *Collection) DeleteEncryptedIndex(
 }
 
 func (c *Collection) Truncate(
-	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	args := []string{"client", "collection", "truncate"}
 	args = append(args, "--name", c.Version().Name)

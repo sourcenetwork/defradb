@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -102,7 +101,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	if len(cols) == 0 {
-		return nil, corekv.ErrNotFound
+		return nil, client.ErrCollectionNotFound
 	}
 
 	// cols will always have length == 1 here
@@ -112,7 +111,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // getCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
 //
-// Inactive collections are not returned by default unless a specific schema version ID
+// Inactive collections are not returned by default unless a specific collection version ID
 // is provided.
 //
 // txnIsEphemeral indicates whether or not the txn should be attached to the collection
@@ -129,7 +128,7 @@ func (db *DB) getCollections(
 	switch {
 	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
 		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
-		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
@@ -218,98 +217,37 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// docIDResult wraps the result of an attempt at a DocID retrieval operation.
-type docIDResult struct {
-	ID  client.DocID
-	Err error
+// addCollection takes the provided SDL, and applies it to the database,
+// adding the necessary collections, request types, etc.
+func (db *DB) addCollection(
+	ctx context.Context,
+	sdl string,
+) ([]client.CollectionVersion, error) {
+	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := db.addCollections(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.loadCollectionDefinitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (c *collection) getAllDocIDsChan(
-	ctx context.Context,
-) (<-chan docIDResult, error) {
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
+func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
+	definitions, err := description.GetActiveCollections(ctx)
 	if err != nil {
-		return nil, err
-	}
-	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionShortID: shortID,
-	}
-	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefix,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	resCh := make(chan docIDResult)
-	go func() {
-		closeIterator := func() {
-			if err := iter.Close(); err != nil {
-				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
-			}
-		}
-		defer func() {
-			closeIterator()
-			close(resCh)
-		}()
-		for {
-			// check for Done on context first
-			select {
-			case <-ctx.Done():
-				// we've been cancelled! ;)
-				return
-			default:
-				// noop, just continue on the with the for loop
-			}
-
-			hasNext, err := iter.Next()
-			if err != nil {
-				closeIterator()
-				resCh <- docIDResult{
-					Err: err,
-				}
-				return
-			}
-			if !hasNext {
-				break
-			}
-
-			splitString := strings.Split(string(iter.Key()), "/")
-			rawDocID := splitString[len(splitString)-1]
-
-			docID, err := client.NewDocIDFromString(rawDocID)
-			if err != nil {
-				closeIterator()
-				resCh <- docIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			canRead, err := c.checkAccessOfDocWithACP(
-				ctx,
-				acpTypes.DocumentReadPerm,
-				docID.String(),
-			)
-
-			if err != nil {
-				closeIterator()
-				resCh <- docIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			if canRead {
-				resCh <- docIDResult{
-					ID: docID,
-				}
-			}
-		}
-	}()
-
-	return resCh, nil
+	return db.parser.SetSchema(ctx, definitions)
 }
 
 // Version returns the client.CollectionVersion.
