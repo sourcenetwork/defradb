@@ -191,7 +191,6 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 				preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
 				selectFieldsToDelete = append(selectFieldsToDelete, i)
 			}
-			// Render relations (SkipResolve=false) stay only on the outer select
 		case *mapper.Field:
 			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
 		}
@@ -223,22 +222,6 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	return p.SelectFromSource(&parsed.Select, update, true, update.collection)
 }
 
-/* Update TypeJoin conditions
-
-NO MUTATION																					TypeJoin Inclusion
-1) No type join interaction 	(filter: NO 	| select: NO  	| RelationMutation: NO) => 	BEFORE: NO  | AFTER: NO
-2) filter without mutation 		(filter: YES 	| select: NO 	| RelationMutation: NO) => 	BEFORE: YES  | AFTER: NO
-3) Select without mutation 		(filter: NO 	| select: YES 	| RelationMutation: NO) => 	BEFORE: NO  | AFTER: YES
-4) filter & select without mut	(filter: YES	| select: YES	| RelationMutation: NO) => 	BEFORE: YES  | AFTER: NO
-
-MUTATION
-1) No type join interaction 	(filter: NO 	| select: NO 	| RelationMutation: YES) => BEFORE: NO  | AFTER: NO
-2) filter with mutation 		(filter: YES 	| select: NO 	| RelationMutation: YES) => BEFORE: YES | AFTER: NO
-3) Select with mutation 		(filter: NO 	| select: YES 	| RelationMutation: YES) => BEFORE: NO  | AFTER: YES
-4) filter & select without mut	(filter: YES	| select: YES	| RelationMutation: YES) => BEFORE: YES | AFTER: YES
-
-*/
-
 func deleteIndexes[T any](s []T, idx []int) []T {
 	if len(idx) == 0 {
 		return s
@@ -249,7 +232,7 @@ func deleteIndexes[T any](s []T, idx []int) []T {
 	out := s[:0]
 	j := 0
 
-	for i := 0; i < len(s); i++ {
+	for i := range s {
 		if j < len(idx) && i == idx[j] {
 			j++
 			continue

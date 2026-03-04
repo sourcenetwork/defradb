@@ -142,12 +142,10 @@ func (p *parallelNode) Next() (bool, error) {
 	for i, plan := range p.children {
 		var next bool
 		var err error
-		// isMerge := false
 		switch n := plan.(type) {
 		case *dagScanNode:
 			next, err = p.nextAppend(i, n)
 		default: // anything else is a merge
-			// isMerge = true
 			next, err = p.nextMerge(i, n)
 		}
 		if err != nil {
@@ -253,7 +251,7 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 		//
 		// This is necessary since the `*typeIndexJoin` join will read
 		// from this source multiple times per iteration, so we need
-		// to make sure that we're chaching the necessary state. Eg during
+		// to make sure that we're caching the necessary state. Eg during
 		// a mutation multiple reads shouldn't trigger multiple mutations.
 		switch n.origSource.(type) {
 		case *updateNode:
