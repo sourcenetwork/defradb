@@ -133,7 +133,9 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+		)
 	}
 
 	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
@@ -166,11 +168,15 @@ func updateConnectedNodes(
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+			)
 		}
 
 		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)

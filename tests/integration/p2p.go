@@ -229,7 +229,9 @@ func syncDocs(s *state.State, action SyncDocs) {
 		for i, docInd := range action.DocIDs {
 			nodeID := action.SourceNodes[i]
 			docID := s.DocIDs[action.CollectionID][docInd].String()
-			node.P2P.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID
+			node.P2P.ExpectedDAGHeads[docID] = append(
+				node.P2P.ExpectedDAGHeads[docID], s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID,
+			)
 		}
 		s.DocIDsLock.RUnlock()
 	}

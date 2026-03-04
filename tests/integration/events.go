@@ -47,7 +47,9 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 
 	// all previous documents should be merged on the subscriber node
 	for key, val := range s.Nodes[cfg.SourceNodeID].P2P.ActualDAGHeads {
-		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = val.CID
+		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = append(
+			s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key], val.CID,
+		)
 	}
 
 	// update node connections and replicators
@@ -212,23 +214,35 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue // node is closed
 		}
 
-		expect := node.P2P.ExpectedDAGHeads
-
-		// remove any heads that are already merged
-		// up to the expected head
-		for key, val := range node.P2P.ActualDAGHeads {
-			if head, ok := expect[key]; ok && head.String() == val.CID.String() {
-				delete(expect, key)
+		// Build a set of all pending CIDs per doc key.
+		// Multiple concurrent updates to the same document will each
+		// have appended a CID, and we must wait for all of them.
+		pending := make(map[string]map[cid.Cid]struct{})
+		for key, cids := range node.P2P.ExpectedDAGHeads {
+			cidSet := make(map[cid.Cid]struct{}, len(cids))
+			for _, c := range cids {
+				cidSet[c] = struct{}{}
+			}
+			// remove any CIDs that are already merged
+			if actual, ok := node.P2P.ActualDAGHeads[key]; ok {
+				delete(cidSet, actual.CID)
+			}
+			if len(cidSet) > 0 {
+				pending[key] = cidSet
 			}
 		}
 
+		// Clear consumed expectations so that subsequent WaitForSync
+		// calls don't re-wait for already-consumed CIDs.
+		node.P2P.ExpectedDAGHeads = make(map[string][]cid.Cid)
+
 		// wait for all expected heads to be merged
 		//
-		// the order of merges does not matter as we only
-		// expect the latest head to eventually be merged
+		// the order of merges does not matter as we
+		// expect all pending CIDs to eventually be merged
 		//
 		// unexpected merge events are ignored
-		for len(expect) > 0 {
+		for len(pending) > 0 {
 			var evt event.MergeComplete
 			select {
 			case msg, ok := <-node.Event.Merge.Message():
@@ -241,11 +255,14 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
-			head, ok := expect[getMergeEventKey(evt.Merge)]
-			if ok && head.String() == evt.Merge.Cid.String() {
-				delete(expect, getMergeEventKey(evt.Merge))
+			key := getMergeEventKey(evt.Merge)
+			if cidSet, ok := pending[key]; ok {
+				delete(cidSet, evt.Merge.Cid)
+				if len(cidSet) == 0 {
+					delete(pending, key)
+				}
 			}
-			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
+			node.P2P.ActualDAGHeads[key] = state.DocHeadState{
 				CID: evt.Merge.Cid,
 			}
 		}
@@ -331,7 +348,9 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+		)
 	}
 
 	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
@@ -364,11 +383,15 @@ func updateConnectedNodes(
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+			)
 		}
 
 		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)

@@ -117,11 +117,13 @@ type P2PState struct {
 
 	// ExpectedDAGHeads contains all DAG heads that are expected to exist on a node.
 	//
-	// The map key is the doc id. The map value is the DAG head.
+	// The map key is the doc id. The map value is a slice of expected DAG heads.
+	// Multiple concurrent updates to the same document will each append a CID,
+	// and WaitForSync will wait for all of them to be merged.
 	//
 	// This tracks composite commits for documents, and collection commits for
 	// branchable collections
-	ExpectedDAGHeads map[string]cid.Cid
+	ExpectedDAGHeads map[string][]cid.Cid
 }
 
 // DocHeadState contains the state of a document head.
@@ -139,7 +141,7 @@ func NewP2PState() *P2PState {
 		PeerCollections:  make(map[int]struct{}),
 		PeerDocuments:    make(map[ColDocIndex]struct{}),
 		ActualDAGHeads:   make(map[string]DocHeadState),
-		ExpectedDAGHeads: make(map[string]cid.Cid),
+		ExpectedDAGHeads: make(map[string][]cid.Cid),
 	}
 }
 
