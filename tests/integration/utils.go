@@ -1193,12 +1193,13 @@ func deleteDoc(
 		}
 		nodeID := nodeIDs[index]
 
+		var collections []client.Collection
 		if hadTxn {
-			actionPackage.GetCanonicallyOrderedCollections(s, immutable.Some(txn))
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			actionPackage.GetCanonicallyOrderedCollections(s, immutable.None[client.Txn]())
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
-		collection := node.Collections[action.CollectionID]
+		collection := collections[action.CollectionID]
 
 		opts := options.DeleteDocument()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1438,12 +1439,13 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 		nodeID := nodeIDs[index]
 
+		var collections []client.Collection
 		if hadTxn {
-			actionPackage.GetCanonicallyOrderedCollections(s, immutable.Some(txn))
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			actionPackage.GetCanonicallyOrderedCollections(s, immutable.None[client.Txn]())
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
-		collection := node.Collections[action.CollectionID]
+		collection := collections[action.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)

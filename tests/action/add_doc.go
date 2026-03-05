@@ -130,12 +130,13 @@ func (a *AddDoc) Execute() {
 
 		nodeID := nodeIDs[index]
 
+		var collections []client.Collection
 		if hadTxn {
-			GetCanonicallyOrderedCollections(a.s, immutable.Some(txn))
+			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.Some(txn))
 		} else {
-			GetCanonicallyOrderedCollections(a.s, immutable.None[client.Txn]())
+			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.None[client.Txn]())
 		}
-		collection := node.Collections[a.CollectionID]
+		collection := collections[a.CollectionID]
 
 		err := withRetryOnNode(
 			node,
