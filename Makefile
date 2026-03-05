@@ -403,7 +403,9 @@ validate\:circleci:
 .PHONY: lint
 lint:
 	golangci-lint config verify --config=tools/configs/golangci.yaml
+	golangci-lint config verify --config=tools/configs/golangci-tests.yaml
 	golangci-lint run --config=tools/configs/golangci.yaml
+	golangci-lint run --config=tools/configs/golangci-tests.yaml ./tests/...
 	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix
