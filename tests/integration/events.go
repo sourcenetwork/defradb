@@ -214,34 +214,38 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue // node is closed
 		}
 
-		// Build a set of all pending CIDs per doc key.
-		// Multiple concurrent updates to the same document will each
-		// have appended a CID, and we must wait for all of them.
-		pending := make(map[string]map[cid.Cid]struct{})
+		// Build the set of doc keys with pending merges.
+		// We only need to wait for the latest expected CID per key,
+		// because a later CID's DAG always includes all earlier CIDs.
+		// When the latest CID is merged, all its ancestors are merged too.
+		pending := make(map[string]cid.Cid)
 		for key, cids := range node.P2P.ExpectedDAGHeads {
-			cidSet := make(map[cid.Cid]struct{}, len(cids))
-			for _, c := range cids {
-				cidSet[c] = struct{}{}
+			if len(cids) == 0 {
+				continue
 			}
-			// remove any CIDs that are already merged
-			if actual, ok := node.P2P.ActualDAGHeads[key]; ok {
-				delete(cidSet, actual.CID)
+			// The last CID in the slice is the latest update.
+			// Earlier CIDs are ancestors that will be included
+			// when the latest CID's DAG is merged.
+			latestCID := cids[len(cids)-1]
+			// skip if already merged
+			if actual, ok := node.P2P.ActualDAGHeads[key]; ok && actual.CID == latestCID {
+				continue
 			}
-			if len(cidSet) > 0 {
-				pending[key] = cidSet
-			}
+			pending[key] = latestCID
 		}
 
 		// Clear consumed expectations so that subsequent WaitForSync
 		// calls don't re-wait for already-consumed CIDs.
 		node.P2P.ExpectedDAGHeads = make(map[string][]cid.Cid)
 
-		// wait for all expected heads to be merged
+		// Wait for the latest expected CID per key to be merged.
 		//
-		// the order of merges does not matter as we
-		// expect all pending CIDs to eventually be merged
+		// We only need to wait for the latest CID because later CIDs in
+		// the DAG always include all earlier CIDs. When the latest CID
+		// is merged, the document is at least at the expected state.
 		//
-		// unexpected merge events are ignored
+		// Merge events for earlier CIDs are consumed but don't satisfy
+		// the wait — only the latest CID (or a later unexpected one) does.
 		for len(pending) > 0 {
 			var evt event.MergeComplete
 			select {
@@ -256,11 +260,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			}
 
 			key := getMergeEventKey(evt.Merge)
-			if cidSet, ok := pending[key]; ok {
-				delete(cidSet, evt.Merge.Cid)
-				if len(cidSet) == 0 {
+			if expectedCID, ok := pending[key]; ok {
+				if evt.Merge.Cid == expectedCID {
+					// The latest expected CID has been merged.
 					delete(pending, key)
 				}
+				// If a different (earlier) CID was merged, keep waiting
+				// for the latest one.
 			}
 			node.P2P.ActualDAGHeads[key] = state.DocHeadState{
 				CID: evt.Merge.Cid,
