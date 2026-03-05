@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package peer_test
 
@@ -23,6 +24,102 @@ import (
 func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+						score: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21,
+					"score": 0
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 2,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Jane"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"age": 45
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"score": 100
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						age
+						score
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Jane",
+							"age":   int64(45),
+							"score": int64(100),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_WithLWWConcurrentSameField_ConvergesToSameValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
@@ -43,6 +140,14 @@ func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testi
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
 			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
@@ -55,31 +160,41 @@ func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testi
 					state.NewColDocIndex(0, 0),
 				},
 			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 2,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"name": "Alice"
+					"age": 30
 				}`,
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
-					"age": 42
+					"age": 45
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"age": 60
 				}`,
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
 				Request: `query {
 					Users {
-						name
 						age
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Alice",
-							"age":  int64(42),
+							"age": int64(60),
 						},
 					},
 				},
