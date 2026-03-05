@@ -11,28 +11,22 @@ Licensed Work:              DefraDB v0.20.0
                             The Licensed Work is (c) 2025 D2 Foundation.
 
 
-Additional Use Grant:       You may make use of the Licensed Work, provided you 
-                            comply with any of the following conditions:
-                            
-                            (1) You do not offer the Licensed Work as a Managed 
-                            Service. 
+Additional Use Grant:       You may use the Licensed Work in a production 
+                            environment in applications you own and operate, 
+                            provided such use is not in connection with the 
+                            operation or provision of a Managed Service.
 
-                            (2) A non-profit project in both a production and
-                            pre-production state.
-
-                            (3) A for-profit project in a pre-production state.
-
-                            A “Service” is a commercial offering, product, hosted, 
-                            or managed service, that allows third parties (other 
-                            than your own employees and contractors acting on your 
-                            behalf) to access and/or directly use the Licensed Work 
-                            or a substantial set of the features or functionality of 
-                            the Licensed Work to third parties as a 
-                            software-as-a-service, platform-as-a-service, 
-                            infrastructure-as-a-service or other similar services.
-
-                            For additional guidance, see 
-                            https://docs.source.network/defradb/BSL-License
+                            “Managed Services” means providing access to or 
+                            use of the functionality of the Licensed Work as 
+                            part of a community-hosted, cloud-based, or 
+                            network-accessible service which is offered to 
+                            third parties, or assisting any third party with 
+                            the foregoing. This includes any scenario where 
+                            you operate or install the Licensed Work on 
+                            behalf of, or for the benefit of, third parties 
+                            to enable them to access the Licensed Work or its 
+                            functionality on their internal or external 
+                            network.
 
 Change Date:                2029-10-31
 
