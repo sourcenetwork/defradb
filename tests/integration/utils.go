@@ -1502,15 +1502,9 @@ func newEncryptedIndex(
 		var collections []client.Collection
 		var err error
 		if hadTxn {
-			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
 		collection := collections[action.CollectionID]
 
@@ -1567,6 +1561,11 @@ func listEncryptedIndexes(
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			hadTxn = true
+			txn, _ = s.GetTransaction(node, action.TransactionID)
+		}
+
 		var collections []client.Collection
 		if hadTxn {
 			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
