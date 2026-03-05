@@ -1567,20 +1567,15 @@ func listEncryptedIndexes(
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		hadTxn := action.TransactionID.HasValue()
+		var collections []client.Collection
 		if hadTxn {
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = s.Client.NewTxn(false)
-		}
-
-		collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
-		if err != nil {
-			return
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
 		collection := collections[action.CollectionID]
 
-		err = withRetryOnNode(
+		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
 				actualIndexes, err := collection.ListEncryptedIndexes(s.Ctx, opts)
@@ -1667,15 +1662,9 @@ func deleteEncryptedIndex(
 		var collections []client.Collection
 		var err error
 		if hadTxn {
-			collections, err = txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			collections, err = node.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
 		collection := collections[action.CollectionID]
 
