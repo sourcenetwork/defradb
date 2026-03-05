@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -34,7 +35,7 @@ const eventTimeout = 1 * time.Second
 func waitForUpdateEvents(
 	s *state.State,
 	nodeID immutable.Option[int],
-	collectionIndex int,
+	collection client.Collection,
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
 ) {
@@ -50,7 +51,7 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		col := collection
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}

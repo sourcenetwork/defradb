@@ -162,27 +162,28 @@ func (a *AddDoc) Execute() {
 			},
 		)
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+
+		a.s.DocIDsLock.Lock()
+		if a.CollectionID >= len(a.s.DocIDs) {
+			// Expand the slice if required, so that the document can be accessed by collection index
+			a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
+		}
+		a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
+		a.s.DocIDsLock.Unlock()
+
+		docIDMap := make(map[string]struct{})
+		for _, docID := range docIDs {
+			docIDMap[docID.String()] = struct{}{}
+		}
+
+		// If there was an explicit transaction, then we will not be waiting for update events.
+		if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
+			waitForUpdateEvents(a.s, a.NodeID, collection, docIDMap, a.Identity)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
-	a.s.DocIDsLock.Lock()
-	if a.CollectionID >= len(a.s.DocIDs) {
-		// Expand the slice if required, so that the document can be accessed by collection index
-		a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
-	}
-	a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
-	a.s.DocIDsLock.Unlock()
-
-	docIDMap := make(map[string]struct{})
-	for _, docID := range docIDs {
-		docIDMap[docID.String()] = struct{}{}
-	}
-
-	// If there was an explicit transaction, then we will not be waiting for update events.
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
-	}
 }
 
 func addDocViaColSave(
