@@ -38,12 +38,17 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 }
 
 // RefreshCollections refreshes all the collections of the given names, preserving order.
-//
+// It will run inside the transaction passed, if one is provided
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
 func RefreshCollections(
 	s *state.State,
+	txn immutable.Option[client.Txn],
 ) {
+	var clientTxn client.Txn
+	if txn.HasValue() {
+		clientTxn = txn.Value().(client.Txn)
+	}
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -59,7 +64,13 @@ func RefreshCollections(
 			opts.SetIdentity(identOption.Value())
 		}
 
-		allCollections, err := node.GetCollections(s.Ctx, opts)
+		var allCollections []client.Collection
+		var err error
+		if clientTxn != nil {
+			allCollections, err = clientTxn.GetCollections(s.Ctx, opts)
+		} else {
+			allCollections, err = node.GetCollections(s.Ctx, opts)
+		}
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {

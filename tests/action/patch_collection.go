@@ -93,5 +93,5 @@ func (a *PatchCollection) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	RefreshCollections(a.s)
+	RefreshCollections(a.s, immutable.None[client.Txn]())
 }

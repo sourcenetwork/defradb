@@ -166,14 +166,7 @@ func (c *collection) NewIndex(
 	desc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -376,14 +369,8 @@ func (c *collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -453,14 +440,7 @@ func (c *collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	opt := utils.NewOptions(opts...)
 
@@ -477,14 +457,7 @@ func (c *collection) NewEncryptedIndex(
 	addRequest client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -565,14 +538,7 @@ func (c *collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

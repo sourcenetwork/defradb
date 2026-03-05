@@ -33,14 +33,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	// Check for a transaction that was attached to the context first, and failing
-	// that, check for a transaction that is attached to the collection.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn && c.txn.HasValue() {
-		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
-		ctx = datastore.CtxSetTxn(ctx, txn)
-	}
+	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

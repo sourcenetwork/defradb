@@ -1193,18 +1193,12 @@ func deleteDoc(
 		}
 		nodeID := nodeIDs[index]
 
-		// If we have a transaction, we will use it to get collections. Otherwise we will
-		// use the cached collections from the state.
-		var collection client.Collection
 		if hadTxn {
-			collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-			collection = collections[action.CollectionID]
+			actionPackage.RefreshCollections(s, immutable.Some(txn))
 		} else {
-			collection = s.Nodes[nodeID].Collections[action.CollectionID]
+			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
 		}
+		collection := node.Collections[action.CollectionID]
 
 		opts := options.DeleteDocument()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1266,18 +1260,13 @@ func updateDoc(
 		}
 
 		nodeID := nodeIDs[index]
-		// If we have a transaction, we will use it to get collections. Otherwise we will
-		// use the cached collections from the state.
-		var collection client.Collection
 		if hadTxn {
-			collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-			collection = collections[action.CollectionID]
+			actionPackage.RefreshCollections(s, immutable.Some(txn))
 		} else {
-			collection = s.Nodes[nodeID].Collections[action.CollectionID]
+			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
 		}
+		collection := node.Collections[action.CollectionID]
+
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1449,18 +1438,19 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 		nodeID := nodeIDs[index]
 
-		collections, err := txn.GetCollections(s.Ctx, options.GetCollections())
-		if err != nil {
-			return
+		if hadTxn {
+			actionPackage.RefreshCollections(s, immutable.Some(txn))
+		} else {
+			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
 		}
-		collection := collections[action.CollectionID]
+		collection := node.Collections[action.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err = withRetryOnNode(
+		err := withRetryOnNode(
 			node,
 			func() error {
 				var err error
@@ -1837,7 +1827,7 @@ func commitTransaction(
 		s.Txns[action.TransactionID].Discard()
 	}
 
-	actionPackage.RefreshCollections(s)
+	actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 

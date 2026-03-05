@@ -130,19 +130,14 @@ func (a *AddDoc) Execute() {
 
 		nodeID := nodeIDs[index]
 
-		var collections []client.Collection
-		var err error
 		if hadTxn {
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
+			RefreshCollections(a.s, immutable.Some(txn))
 		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			RefreshCollections(a.s, immutable.None[client.Txn]())
 		}
-		if err != nil {
-			return
-		}
-		collection := collections[a.CollectionID]
+		collection := node.Collections[a.CollectionID]
 
-		err = withRetryOnNode(
+		err := withRetryOnNode(
 			node,
 			func() error {
 				var err error

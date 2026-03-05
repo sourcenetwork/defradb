@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -76,7 +77,7 @@ func (a *SyncCollectionVersions) Execute() {
 		return
 	}
 
-	RefreshCollections(a.s)
+	RefreshCollections(a.s, immutable.None[client.Txn]())
 
 	defer txn.Discard()
 	txn.Commit()

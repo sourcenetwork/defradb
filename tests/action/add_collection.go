@@ -102,5 +102,5 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	RefreshCollections(a.s)
+	RefreshCollections(a.s, immutable.None[client.Txn]())
 }
