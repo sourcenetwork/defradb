@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -30,11 +31,14 @@ type upsertNode struct {
 	updateInput   map[string]any
 	isInitialized bool
 	source        planNode
+	origScanNode  *scanNode
+	valuesNode    *valuesNode
 }
 
 // Next only returns once.
 func (n *upsertNode) Next() (bool, error) {
 	if !n.isInitialized {
+		var updater bool
 		next, err := n.source.Next()
 		if err != nil {
 			return false, err
@@ -68,6 +72,14 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			coreDoc, err := core.DocFromClient(doc, n.documentMapping)
+			if err != nil {
+				return false, err
+			}
+
+			n.valuesNode.docs.AddDoc(coreDoc)
+
+			updater = true
 		} else {
 			doc, err := client.NewDocFromMap(n.p.ctx, n.addInput, n.collection.Version())
 			if err != nil {
@@ -86,6 +98,18 @@ func (n *upsertNode) Next() (bool, error) {
 
 			n.source.Prefixes(prefixes)
 		}
+
+		if updater {
+			// we have cached the document result set from the original Select
+			// in the valuesNode, now we can replace the original scanNode with
+			// our valuesNode, and avoid any additional fetches/kv ops.
+			// This is cheaper than building two seperate plans.
+			err := n.p.walkAndReplacePlan(n.source, n.origScanNode, n.valuesNode)
+			if err != nil {
+				return false, err
+			}
+		}
+
 		err = n.source.Init()
 		if err != nil {
 			return false, err
@@ -128,7 +152,13 @@ func (n *upsertNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *upsertNode) Init() error {
-	return n.source.Init()
+	err := n.source.Init()
+	if err != nil {
+		return err
+	}
+
+	n.origScanNode = getNode[*scanNode](n.source)
+	return nil
 }
 
 func (n *upsertNode) Start() error {
@@ -200,6 +230,7 @@ func (p *Planner) UpsertDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 	upsert.source = resultsNode
+	upsert.valuesNode = p.newContainerValuesNode(nil)
 
 	return upsert, nil
 }

@@ -1,0 +1,23 @@
+DefraDB Test Suite Licensing
+
+Copyright (c) 2026
+Democratized Data Foundation
+
+The contents of this directory constitute the DefraDB test suite.
+
+The DefraDB test suite is dual-licensed. You may use the software
+in this directory under the terms of either of the following licenses:
+
+1. GNU Affero General Public License version 3 (AGPLv3)
+   See ../licenses/AGPLv3.txt
+
+OR
+
+2. Business Source License 1.1 (BSL)
+   See ../licenses/BSL-tests.txt
+
+If you do not agree to the terms of either license, you may not use
+this software.
+
+Note that the rest of the DefraDB repository is licensed separately
+under the Business Source License described in ../licenses/BSL.txt.
