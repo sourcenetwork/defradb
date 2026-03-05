@@ -18,9 +18,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 // eventTimeout is the amount of time to wait
@@ -135,7 +136,8 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
 		)
 	}
 
@@ -170,13 +172,15 @@ func updateConnectedNodes(
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
-				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
 			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
-				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)], evt.Cid,
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
 			)
 		}
 

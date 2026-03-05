@@ -231,7 +231,8 @@ func syncDocs(s *state.State, action SyncDocs) {
 			nodeID := action.SourceNodes[i]
 			docID := s.DocIDs[action.CollectionID][docInd].String()
 			node.P2P.ExpectedDAGHeads[docID] = append(
-				node.P2P.ExpectedDAGHeads[docID], s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID,
+				node.P2P.ExpectedDAGHeads[docID],
+				state.ExpectedHead{CID: s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID, SourceNodeID: nodeID},
 			)
 		}
 		s.DocIDsLock.RUnlock()
