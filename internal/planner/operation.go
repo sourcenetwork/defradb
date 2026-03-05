@@ -125,7 +125,6 @@ func (n *operationNode) Next() (bool, error) {
 // Operation creates a new operationNode using the given Selects.
 func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error) {
 	children := make(map[int]planNode)
-
 	for _, s := range operation.Selects {
 		if _, isAgg := request.Aggregates[s.Name]; isAgg {
 			// If this Select is an aggregate, then it must be a top-level

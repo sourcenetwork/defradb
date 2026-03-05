@@ -11,9 +11,14 @@
 package planner
 
 import (
+	"sort"
+
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -33,8 +38,6 @@ type updateNode struct {
 	// input map of fields and values
 	input map[string]any
 
-	isUpdating bool
-
 	results planNode
 
 	execInfo updateExecInfo
@@ -52,50 +55,6 @@ type updateExecInfo struct {
 func (n *updateNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if n.isUpdating {
-		for {
-			next, err := n.results.Next()
-			if err != nil {
-				return false, err
-			}
-			if !next {
-				break
-			}
-
-			n.currentValue = n.results.Value()
-
-			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
-			if err != nil {
-				return false, err
-			}
-			getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
-			doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
-			if err != nil {
-				return false, err
-			}
-			for k, v := range n.input {
-				if err := doc.Set(n.p.ctx, k, v); err != nil {
-					return false, err
-				}
-			}
-			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
-			err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
-			if err != nil {
-				return false, err
-			}
-
-			n.execInfo.updates++
-		}
-		n.isUpdating = false
-
-		// Re-init the results node, so that they can be properly yielded with the updated
-		// values, as well as any formatting (e.g. aggregates, groupings, etc)
-		err := n.results.Init()
-		if err != nil {
-			return false, err
-		}
-	}
-
 	next, err := n.results.Next()
 	if err != nil {
 		return false, err
@@ -105,6 +64,35 @@ func (n *updateNode) Next() (bool, error) {
 	}
 
 	n.currentValue = n.results.Value()
+
+	docID, err := client.NewDocIDFromString(n.currentValue.GetID())
+	if err != nil {
+		return false, err
+	}
+	getOpts := options.WithIdentity(options.GetDocument(), n.p.identity)
+	doc, err := n.collection.GetDocument(n.p.ctx, docID, getOpts)
+	if err != nil {
+		return false, err
+	}
+	for k, v := range n.input {
+		if err := doc.Set(n.p.ctx, k, v); err != nil {
+			return false, err
+		}
+	}
+	updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
+	err = n.collection.UpdateDocument(n.p.ctx, doc, updateOpts)
+	if err != nil {
+		return false, err
+	}
+
+	n.execInfo.updates++
+
+	coreDoc, err := core.DocFromClient(doc, n.documentMapping)
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue = coreDoc
 	return true, nil
 }
 
@@ -112,7 +100,9 @@ func (n *updateNode) Kind() string { return "updateNode" }
 
 func (n *updateNode) Prefixes(prefixes []keys.Walkable) { n.results.Prefixes(prefixes) }
 
-func (n *updateNode) Init() error { return n.results.Init() }
+func (n *updateNode) Init() error {
+	return n.results.Init()
+}
 
 func (n *updateNode) Start() error {
 	return n.results.Start()
@@ -163,12 +153,11 @@ func (n *updateNode) Explain(explainType request.ExplainType) (map[string]any, e
 
 func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
-		p:          p,
-		filter:     parsed.Filter,
-		docIDs:     parsed.DocIDs.Value(),
-		input:      parsed.UpdateInput,
-		isUpdating: true,
-		docMapper:  docMapper{parsed.DocumentMapping},
+		p:         p,
+		filter:    parsed.Filter,
+		docIDs:    parsed.DocIDs.Value(),
+		input:     parsed.UpdateInput,
+		docMapper: docMapper{parsed.DocumentMapping},
 	}
 
 	// get collection
@@ -182,12 +171,74 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 	update.collection = col
 
-	// create the results Select node
-	resultsNode, err := p.Select(&parsed.Select)
+	// shallow and deep copy on the fields since we're going to mutate
+	preUpdateSelect := parsed.Select
+	preUpdateSelect.Fields = make([]mapper.Requestable, 0)
+
+	selectFieldsToDelete := make([]int, 0)
+
+	// Split fields between inner (pre-update filter/scan) and outer (post-update render) selects.
+	// The inner select only needs base fields and filter-related relations (SkipResolve).
+	// Render-only relations go only to the outer select to avoid unnecessary type joins.
+	for i, field := range parsed.Select.Fields {
+		if _, exists := request.ReservedFields[field.GetName()]; exists {
+			continue
+		}
+		switch f := field.(type) {
+		case *mapper.Select:
+			if f.SkipResolve {
+				// Filter-only relation: include in inner select, remove from outer
+				preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
+				selectFieldsToDelete = append(selectFieldsToDelete, i)
+			}
+		case *mapper.Field:
+			preUpdateSelect.Fields = append(preUpdateSelect.Fields, field)
+		}
+	}
+
+	// removed unnecessary fields we get from the pre update select
+	parsed.Select.Fields = deleteIndexes(parsed.Select.Fields, selectFieldsToDelete)
+
+	selectNode, err := p.Select(&preUpdateSelect)
 	if err != nil {
 		return nil, err
 	}
-	update.results = resultsNode
 
-	return update, nil
+	// Wire the inner selectTopNode's plan before it gets wrapped in the
+	// outer plan tree. This is needed because expandTypeJoin only expands
+	// the child side and won't reach this nested selectTopNode when a
+	// relation sub-select creates a type join on the outer select.
+	if top, ok := selectNode.(*selectTopNode); ok {
+		top.planNode = top.selectNode
+	}
+
+	update.results = selectNode
+
+	// The outer select only renders the post-update results. The inner select already
+	// handles pre-update filtering (by filter and/or docIDs), so we clear both on the
+	// outer select to prevent re-evaluation against potentially changed values.
+	parsed.Select.Filter = nil
+	parsed.Select.DocIDs = immutable.None[[]string]()
+	return p.SelectFromSource(&parsed.Select, update, true, update.collection)
+}
+
+func deleteIndexes[T any](s []T, idx []int) []T {
+	if len(idx) == 0 {
+		return s
+	}
+
+	sort.Ints(idx)
+
+	out := s[:0]
+	j := 0
+
+	for i := range s {
+		if j < len(idx) && i == idx[j] {
+			j++
+			continue
+		}
+		out = append(out, s[i])
+	}
+
+	return out
 }
