@@ -131,9 +131,9 @@ func (a *AddDoc) Execute() {
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
-			RefreshCollections(a.s, immutable.Some(txn))
+			GetCanonicallyOrderedCollections(a.s, immutable.Some(txn))
 		} else {
-			RefreshCollections(a.s, immutable.None[client.Txn]())
+			GetCanonicallyOrderedCollections(a.s, immutable.None[client.Txn]())
 		}
 		collection := node.Collections[a.CollectionID]
 

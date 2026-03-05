@@ -47,7 +47,7 @@ func RefreshCollections(
 ) {
 	var clientTxn client.Txn
 	if txn.HasValue() {
-		clientTxn = txn.Value().(client.Txn)
+		clientTxn = txn.Value()
 	}
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
@@ -94,6 +94,64 @@ func RefreshCollections(
 			}
 		}
 	}
+
+}
+
+func GetCanonicallyOrderedCollections(
+	s *state.State,
+	txn immutable.Option[client.Txn],
+) []client.Collection {
+	var clientTxn client.Txn
+	if txn.HasValue() {
+		clientTxn = txn.Value()
+	}
+	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
+		// doesn't fail due to lack of authorization(s) if NAC is enabled.
+		nodeIdentity := NodeIdentity(nodeID)
+
+		newCollections := make([]client.Collection, len(s.CollectionNames))
+
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		opts := options.GetCollections()
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		var allCollections []client.Collection
+		var err error
+		if clientTxn != nil {
+			allCollections, err = clientTxn.GetCollections(s.Ctx, opts)
+		} else {
+			allCollections, err = node.GetCollections(s.Ctx, opts)
+		}
+		require.Nil(s.T, err)
+
+		for i, collectionName := range s.CollectionNames {
+			for _, collection := range allCollections {
+				if collection.Name() == collectionName {
+					if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
+						// If the root is not found here this is likely the first refreshCollections
+						// call of the test, we map it by root in case the collection is renamed -
+						// we still wish to preserve the original index so test maintainers can reference
+						// them in a convenient manner.
+						s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
+					}
+					break
+				}
+			}
+		}
+
+		for _, collection := range allCollections {
+			if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+				newCollections[index] = collection
+			}
+		}
+	}
+
+	return newCollections
 
 }
 

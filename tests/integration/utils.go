@@ -1194,9 +1194,9 @@ func deleteDoc(
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
-			actionPackage.RefreshCollections(s, immutable.Some(txn))
+			actionPackage.GetCanonicallyOrderedCollections(s, immutable.Some(txn))
 		} else {
-			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
+			actionPackage.GetCanonicallyOrderedCollections(s, immutable.None[client.Txn]())
 		}
 		collection := node.Collections[action.CollectionID]
 
@@ -1439,9 +1439,9 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
-			actionPackage.RefreshCollections(s, immutable.Some(txn))
+			actionPackage.GetCanonicallyOrderedCollections(s, immutable.Some(txn))
 		} else {
-			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
+			actionPackage.GetCanonicallyOrderedCollections(s, immutable.None[client.Txn]())
 		}
 		collection := node.Collections[action.CollectionID]
 
