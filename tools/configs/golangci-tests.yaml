@@ -23,14 +23,14 @@ linters:
       # Default: ""
       template: |-
         Copyright {{ ANY-YEAR }} Democratized Data Foundation
-        
+
         This file is part of the DefraDB test suite.
-         
+
         The DefraDB test suite is licensed under either:
-        
+
           (1) {{ AGPLv3 }}
           (2) {{ BSL }}
-        
+
         See tests/LICENSE for details.
 
 run:
