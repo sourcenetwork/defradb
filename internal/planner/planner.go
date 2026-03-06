@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/cursor"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -296,28 +295,27 @@ func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
 
 	isBackward := plan.cursor.last.HasValue() || plan.cursor.beforeCursor.HasValue()
 
-	finalReversed := reversed != isBackward
-
-	var payload *cursor.CursorPayload
-	if isBackward && plan.cursor.beforePayload != nil {
-		payload = plan.cursor.beforePayload
+	if !isBackward {
+		// Forward pagination: seek to cursor position and iterate forward.
+		payload := plan.cursor.afterPayload
+		if payload != nil {
+			if scan := getNode[*scanNode](plan.selectNode); scan != nil {
+				scan.cursorPayload = payload
+				scan.reversedIteration = reversed
+			}
+			if len(payload.Keys) > 0 {
+				plan.cursor.indexSeekActive = true
+			}
+		}
+	} else if plan.cursor.beforePayload == nil {
+		// last-only (no before cursor): scan from the beginning, cursorNode
+		// drains all items and takes the last N.
+		_ = reversed
 	} else {
-		payload = plan.cursor.afterPayload
-	}
-
-	if payload != nil {
-		if scan := getNode[*scanNode](plan.selectNode); scan != nil {
-			scan.cursorPayload = payload
-			scan.reversedIteration = finalReversed
-		}
-		if len(payload.Keys) > 0 {
-			plan.cursor.indexSeekActive = true
-		}
-	} else if isBackward {
-		// last-only (no before cursor): still need reversed iteration but no seek payload
-		if scan := getNode[*scanNode](plan.selectNode); scan != nil {
-			scan.reversedIteration = finalReversed
-		}
+		// last+before: scan from the beginning, cursorNode drains items
+		// up to the before cursor position, then takes the last N.
+		// The beforePayload is used by nextBackward() to stop draining.
+		_ = reversed
 	}
 	return nil
 }
