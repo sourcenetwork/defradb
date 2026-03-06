@@ -19,6 +19,8 @@ const (
 	errCursorMustContainQuery   string = "_cursor block must contain exactly one collection query"
 	errMultipleQueriesInCursor  string = "_cursor block cannot contain multiple collection queries"
 	errFirstMustBeNonNegative   string = "first must be non-negative"
+	errLastMustBeNonNegative    string = "last must be non-negative"
+	errForwardBackwardConflict  string = "forward parameters (first/after) cannot be combined with backward parameters (last/before)"
 	errInvalidCursor            string = "invalid cursor"
 )
 
@@ -31,6 +33,8 @@ var (
 	ErrCursorMustContainQuery  = errors.New(errCursorMustContainQuery)
 	ErrMultipleQueriesInCursor = errors.New(errMultipleQueriesInCursor)
 	ErrFirstMustBeNonNegative  = errors.New(errFirstMustBeNonNegative)
+	ErrLastMustBeNonNegative   = errors.New(errLastMustBeNonNegative)
+	ErrForwardBackwardConflict = errors.New(errForwardBackwardConflict)
 	ErrInvalidCursor           = errors.New(errInvalidCursor)
 )
 

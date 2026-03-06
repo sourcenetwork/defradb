@@ -37,6 +37,8 @@ const (
 	DepthClause   = "depth"
 	FirstClause   = "first"
 	AfterClause   = "after"
+	LastClause    = "last"
+	BeforeClause  = "before"
 
 	DocIDArgName  = "docID"
 	CidArgName    = "cid"

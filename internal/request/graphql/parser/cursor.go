@@ -96,6 +96,17 @@ func parseCursorSelect(
 					if v, ok := value.(string); ok {
 						cursor.After = immutable.Some(v)
 					}
+				case request.LastClause:
+					if v, ok := value.(int32); ok {
+						if v < 0 {
+							return nil, request.ErrLastMustBeNonNegative
+						}
+						cursor.Last = immutable.Some(uint64(v))
+					}
+				case request.BeforeClause:
+					if v, ok := value.(string); ok {
+						cursor.Before = immutable.Some(v)
+					}
 				}
 			}
 		}

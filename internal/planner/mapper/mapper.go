@@ -98,6 +98,8 @@ func ToOperation(
 			s.IsCursor = true
 			s.Targetable.CursorFirst = t.First
 			s.Targetable.CursorAfter = t.After
+			s.Targetable.CursorLast = t.Last
+			s.Targetable.CursorBefore = t.Before
 			s.CursorPageInfo = t.PageInfoSelect
 			operation.Selects = append(operation.Selects, s)
 			operation.CursorSelects = append(operation.CursorSelects, s)

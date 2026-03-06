@@ -27,6 +27,8 @@ type CursorSelect struct {
 
 	Firstable
 	Afterable
+	Lastable
+	Beforeable
 
 	// PageInfoSelect captures which _pageInfo fields were selected (nil if not selected).
 	PageInfoSelect *PageInfoSelect
@@ -43,6 +45,16 @@ func (c *CursorSelect) Validate() []error {
 
 	if c.After.HasValue() && c.After.Value() == "" {
 		result = append(result, ErrInvalidCursor)
+	}
+
+	if c.Before.HasValue() && c.Before.Value() == "" {
+		result = append(result, ErrInvalidCursor)
+	}
+
+	hasForward := c.First.HasValue() || c.After.HasValue()
+	hasBackward := c.Last.HasValue() || c.Before.HasValue()
+	if hasForward && hasBackward {
+		result = append(result, ErrForwardBackwardConflict)
 	}
 
 	result = append(result, c.Select.Validate()...)
