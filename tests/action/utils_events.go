@@ -35,7 +35,8 @@ const eventTimeout = 1 * time.Second
 func waitForUpdateEvents(
 	s *state.State,
 	nodeID immutable.Option[int],
-	collection client.Collection,
+	collections []client.Collection,
+	collectionIndex int,
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
 ) {
@@ -51,7 +52,7 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := collection
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -99,7 +100,7 @@ func waitForUpdateEvents(
 			// we only need to update the network state if the nodes
 			// are configured for networking
 			if s.IsNetworkEnabled {
-				updateNetworkState(s, i, evt, ident)
+				updateNetworkState(s, i, evt, ident, collections)
 			}
 		}
 	}
@@ -107,10 +108,11 @@ func waitForUpdateEvents(
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {
+func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity],
+	collections []client.Collection) {
 	// find the correct collection index for this update
 	collectionID := -1
-	for i, c := range s.Nodes[nodeID].Collections {
+	for i, c := range collections {
 		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}

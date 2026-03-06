@@ -97,7 +97,7 @@ func (a *AddDoc) Execute() {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*AddDoc, client.TxnStore, int, client.Collection, client.Txn) ([]client.DocID, error)
+	var mutation func(*AddDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = addDocViaColSave
@@ -124,9 +124,6 @@ func (a *AddDoc) Execute() {
 			if err != nil {
 				return
 			}
-		} else {
-			// Otherwise we will make a new one from the client
-			txn, _ = a.s.Client.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
@@ -139,6 +136,11 @@ func (a *AddDoc) Execute() {
 		}
 		collection := collections[a.CollectionID]
 
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
+
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -148,16 +150,8 @@ func (a *AddDoc) Execute() {
 					node,
 					nodeID,
 					collection,
-					txn,
+					txnOption,
 				)
-				// If there was not an explicit transaction, here we will try to commit it.
-				if !hadTxn && err == nil {
-					err = txn.Commit()
-				}
-				// (It should not error, but we defensively discard it if it does.)
-				if !hadTxn && err != nil {
-					txn.Discard()
-				}
 				return err
 			},
 		)
@@ -178,7 +172,7 @@ func (a *AddDoc) Execute() {
 
 		// If there was an explicit transaction, then we will not be waiting for update events.
 		if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-			waitForUpdateEvents(a.s, a.NodeID, collection, docIDMap, a.Identity)
+			waitForUpdateEvents(a.s, a.NodeID, collections, a.CollectionID, docIDMap, a.Identity)
 		}
 	}
 
@@ -191,9 +185,12 @@ func addDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	ctx := db.InitContext(a.s.Ctx, txn)
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
@@ -217,9 +214,12 @@ func addDocViaColAdd(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	ctx := db.InitContext(a.s.Ctx, txn)
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
@@ -253,8 +253,13 @@ func addDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
+
 	var input string
 
 	paramName := request.Input
@@ -284,8 +289,6 @@ func addDocViaGQL(
 
 	key := fmt.Sprintf("add_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
-
-	ctx := db.InitContext(a.s.Ctx, txn)
 
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)

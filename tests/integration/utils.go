@@ -1188,9 +1188,6 @@ func deleteDoc(
 		if hadTxn {
 			doNotWaitForUpdate = true
 			txn, _ = s.GetTransaction(node, action.TransactionID)
-		} else {
-			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = s.Client.NewTxn(false)
 		}
 		nodeID := nodeIDs[index]
 
@@ -1233,7 +1230,7 @@ func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
-	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, client.Txn) error
+	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) error
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1256,19 +1253,21 @@ func updateDoc(
 		if hadTxn {
 			doNotWaitForUpdate = true
 			txn, _ = s.GetTransaction(node, action.TransactionID)
-		} else {
-			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = s.Client.NewTxn(false)
 		}
 
 		nodeID := nodeIDs[index]
+		var collections []client.Collection
 		if hadTxn {
-			actionPackage.RefreshCollections(s, immutable.Some(txn))
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
-			actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 		}
-		collection := node.Collections[action.CollectionID]
+		collection := collections[action.CollectionID]
 
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1278,16 +1277,8 @@ func updateDoc(
 					node,
 					nodeID,
 					collection,
-					txn,
+					txnOption,
 				)
-				// If there was not an explicit transaction, here we will try to commit it.
-				if !hadTxn && err == nil {
-					err = txn.Commit()
-				}
-				// (It should not error, but we defensively discard it if it does.)
-				if !hadTxn && err != nil {
-					txn.Discard()
-				}
 				return err
 			},
 		)
@@ -1313,9 +1304,12 @@ func updateDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) error {
-	ctx := db.InitContext(s.Ctx, txn)
+	ctx := s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(s.Ctx, txn.Value())
+	}
 
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
@@ -1348,9 +1342,12 @@ func updateDocViaColUpdate(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) error {
-	ctx := db.InitContext(s.Ctx, txn)
+	ctx := s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(s.Ctx, txn.Value())
+	}
 
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
@@ -1383,9 +1380,12 @@ func updateDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
-	txn client.Txn,
+	txn immutable.Option[client.Txn],
 ) error {
-	ctx := db.InitContext(s.Ctx, txn)
+	ctx := s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(s.Ctx, txn.Value())
+	}
 
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
