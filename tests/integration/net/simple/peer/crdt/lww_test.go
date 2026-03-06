@@ -18,76 +18,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
+func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testing.T) {
 	test := testUtils.TestCase{
-		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
-		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			&action.AddCollection{
-				SDL: `
-					type Users {
-						name: String
-						points: Int @crdt(type: pncounter)
-					}
-				`,
-			},
-			&action.AddDoc{
-				// Create Shahzad on all nodes
-				Doc: `{
-					"name": "Shahzad",
-					"points": 10
-				}`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.AddDocumentSubscription{
-				NodeID: 1,
-				DocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
-			},
-			testUtils.UpdateDoc{
-				NodeID: immutable.Some(0),
-				DocID:  0,
-				Doc: `{
-					"points": 10
-				}`,
-			},
-			testUtils.WaitForSync{},
-			&action.Request{
-				Request: `query {
-					Users {
-						points
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"points": int64(20),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
-	test := testUtils.TestCase{
-		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
-		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -96,14 +31,16 @@ func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T
 				SDL: `
 					type Users {
 						name: String
-						points: Int @crdt(type: pncounter)
+						age: Int
+						score: Int
 					}
 				`,
 			},
 			&action.AddDoc{
 				Doc: `{
 					"name": "John",
-					"points": 100
+					"age": 21,
+					"score": 0
 				}`,
 			},
 			testUtils.ConnectPeers{
@@ -139,33 +76,36 @@ func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"points": 10
+					"name": "Jane"
 				}`,
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
-					"points": -30
+					"age": 45
 				}`,
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(2),
 				Doc: `{
-					"points": 50
+					"score": 100
 				}`,
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
 				Request: `query {
 					Users {
-						points
+						name
+						age
+						score
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							// 100 + 10 + (-30) + 50 = 130
-							"points": int64(130),
+							"name":  "Jane",
+							"age":   int64(45),
+							"score": int64(100),
 						},
 					},
 				},
@@ -176,32 +116,37 @@ func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
+func TestP2PUpdate_WithLWWConcurrentSameField_ConvergesToSameValue(t *testing.T) {
 	test := testUtils.TestCase{
-		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
-		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						Name: String
-						Age: Int @crdt(type: pncounter)
+						name: String
+						age: Int
 					}
 				`,
 			},
 			&action.AddDoc{
-				// Create John on all nodes
 				Doc: `{
-					"Name": "John",
-					"Age": 0
+					"name": "John",
+					"age": 21
 				}`,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
 			},
 			testUtils.AddDocumentSubscription{
 				NodeID: 0,
@@ -215,29 +160,41 @@ func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 2,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"Age": 45
+					"age": 30
 				}`,
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
-					"Age": 45
+					"age": 45
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"age": 60
 				}`,
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
 				Request: `query {
 					Users {
-						Age
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(90),
+							"age": int64(60),
 						},
 					},
 				},
