@@ -118,11 +118,26 @@ type P2PState struct {
 
 	// ExpectedDAGHeads contains all DAG heads that are expected to exist on a node.
 	//
-	// The map key is the doc id. The map value is the DAG head.
+	// The map key is the doc id. The map value is a slice of expected DAG heads,
+	// each tagged with the source node that produced it.
+	//
+	// Source-aware tracking is needed because CIDs from different source nodes
+	// are concurrent branches — neither subsumes the other — and each needs
+	// its own merge event. CIDs from the same source form a linear chain
+	// where only the latest CID's merge event fires (DAG subsumption).
 	//
 	// This tracks composite commits for documents, and collection commits for
 	// branchable collections
-	ExpectedDAGHeads map[string]cid.Cid
+	ExpectedDAGHeads map[string][]ExpectedHead
+}
+
+// ExpectedHead is an expected DAG head CID tagged with the source node that produced it.
+// This allows waitForMergeEvents to distinguish concurrent heads from different nodes
+// (which each need a separate merge event) from linear chains from the same node
+// (where only the latest CID fires a merge event due to DAG subsumption).
+type ExpectedHead struct {
+	CID          cid.Cid
+	SourceNodeID int
 }
 
 // DocHeadState contains the state of a document head.
@@ -140,7 +155,7 @@ func NewP2PState() *P2PState {
 		PeerCollections:  make(map[int]struct{}),
 		PeerDocuments:    make(map[ColDocIndex]struct{}),
 		ActualDAGHeads:   make(map[string]DocHeadState),
-		ExpectedDAGHeads: make(map[string]cid.Cid),
+		ExpectedDAGHeads: make(map[string][]ExpectedHead),
 	}
 }
 
