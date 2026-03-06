@@ -28,12 +28,24 @@ type cursorNode struct {
 	p    *Planner
 	plan planNode
 
-	// Cursor parameters (from mapper.Select)
+	// Forward cursor parameters (from mapper.Select)
 	first       immutable.Option[uint64]
 	afterCursor immutable.Option[string]
 
-	// Pre-decoded cursor payload
+	// Pre-decoded forward cursor payload
 	afterPayload *cursor.CursorPayload
+
+	// Backward cursor parameters (from mapper.Select)
+	last         immutable.Option[uint64]
+	beforeCursor immutable.Option[string]
+
+	// Pre-decoded backward cursor payload
+	beforePayload *cursor.CursorPayload
+
+	// Backward re-reversal buffer: backward iteration yields results in reverse order,
+	// so we buffer them and reverse before yielding to maintain forward result order.
+	backwardBuffer []core.Doc
+	bufferIndex    int
 
 	// Internal state machine
 	pastCursor      bool   // true once cursor position has been passed
@@ -76,11 +88,23 @@ func (p *Planner) Cursor(parsed *mapper.Select) (*cursorNode, error) {
 		afterPayload = &payload
 	}
 
+	var beforePayload *cursor.CursorPayload
+	if parsed.CursorBefore.HasValue() {
+		payload, err := cursor.Decode(parsed.CursorBefore.Value())
+		if err != nil {
+			return nil, err
+		}
+		beforePayload = &payload
+	}
+
 	return &cursorNode{
 		p:              p,
 		first:          parsed.CursorFirst,
 		afterCursor:    parsed.CursorAfter,
 		afterPayload:   afterPayload,
+		last:           parsed.CursorLast,
+		beforeCursor:   parsed.CursorBefore,
+		beforePayload:  beforePayload,
 		pageInfoSelect: parsed.CursorPageInfo,
 		docMapper:      docMapper{parsed.DocumentMapping},
 	}, nil
@@ -99,17 +123,28 @@ func (n *cursorNode) Init() error {
 	n.lastDocID = ""
 	n.firstDoc = core.Doc{}
 	n.lastDoc = core.Doc{}
+	n.backwardBuffer = nil
+	n.bufferIndex = 0
 	return n.plan.Init()
 }
 
 func (n *cursorNode) Start() error                      { return n.plan.Start() }
 func (n *cursorNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 func (n *cursorNode) Close() error                      { return n.plan.Close() }
-func (n *cursorNode) Value() core.Doc                   { return n.plan.Value() }
+func (n *cursorNode) Value() core.Doc {
+	if n.backwardBuffer != nil {
+		return n.backwardBuffer[n.bufferIndex]
+	}
+	return n.plan.Value()
+}
 func (n *cursorNode) Source() planNode                  { return n.plan }
 
 func (n *cursorNode) Next() (bool, error) {
 	n.execInfo.iterations++
+
+	if n.last.HasValue() || n.beforeCursor.HasValue() {
+		return n.nextBackward()
+	}
 
 	if !n.afterCursor.HasValue() || n.indexSeekActive {
 		n.pastCursor = true
@@ -157,6 +192,62 @@ func (n *cursorNode) Next() (bool, error) {
 		n.lastDoc = doc.Clone()
 		return true, nil
 	}
+}
+
+// nextBackward implements backward pagination by draining the reversed scan into a buffer,
+// applying the `last` limit, then yielding results by iterating backward through the buffer
+// to restore forward order.
+func (n *cursorNode) nextBackward() (bool, error) {
+	if n.backwardBuffer != nil {
+		n.bufferIndex--
+		if n.bufferIndex < 0 {
+			return false, nil
+		}
+		n.collected++
+		return true, nil
+	}
+
+	var buf []core.Doc
+	for {
+		hasNext, err := n.plan.Next()
+		if err != nil {
+			return false, err
+		}
+		if !hasNext {
+			break
+		}
+		doc := n.plan.Value()
+		buf = append(buf, doc.Clone())
+	}
+
+	if n.last.HasValue() && len(buf) > int(n.last.Value()) {
+		n.hasPreviousPage = true
+		buf = buf[len(buf)-int(n.last.Value()):]
+	}
+
+	if n.beforeCursor.HasValue() {
+		n.hasNextPage = true
+	}
+
+	// buf is in reversed scan order; we iterate backward through it
+	// to yield results in forward order without an O(n) reverse.
+	if len(buf) > 0 {
+		last := len(buf) - 1
+		n.firstDocID = buf[last].GetID()
+		n.firstDoc = buf[last].Clone()
+		n.lastDocID = buf[0].GetID()
+		n.lastDoc = buf[0].Clone()
+	}
+
+	n.backwardBuffer = buf
+	n.bufferIndex = len(buf) - 1
+
+	if len(buf) == 0 {
+		return false, nil
+	}
+
+	n.collected = 1
+	return true, nil
 }
 
 // buildEnrichedPayload creates a CursorPayload with DocID and index key values from order fields.
@@ -236,13 +327,27 @@ func (n *cursorNode) simpleExplain() (map[string]any, error) {
 	} else {
 		m["after"] = nil
 	}
+	if n.last.HasValue() {
+		m["last"] = n.last.Value()
+	} else {
+		m["last"] = nil
+	}
+	if n.beforeCursor.HasValue() {
+		m["before"] = n.beforeCursor.Value()
+	} else {
+		m["before"] = nil
+	}
 
-	if n.afterPayload != nil {
+	payload := n.afterPayload
+	if payload == nil {
+		payload = n.beforePayload
+	}
+	if payload != nil {
 		cursorInfo := map[string]any{
-			"docID": n.afterPayload.DocID,
+			"docID": payload.DocID,
 		}
-		if len(n.afterPayload.Keys) > 0 {
-			cursorInfo["keys"] = n.afterPayload.Keys
+		if len(payload.Keys) > 0 {
+			cursorInfo["keys"] = payload.Keys
 		}
 		m["cursorValue"] = cursorInfo
 	} else {

@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/cursor"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -292,13 +293,30 @@ func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
 	if selectReq := plan.selectNode.selectReq; selectReq != nil && selectReq.OrderBy != nil {
 		plan.cursor.orderFields = selectReq.OrderBy.Conditions
 	}
-	if plan.cursor.afterPayload != nil {
+
+	isBackward := plan.cursor.last.HasValue() || plan.cursor.beforeCursor.HasValue()
+
+	finalReversed := reversed != isBackward
+
+	var payload *cursor.CursorPayload
+	if isBackward && plan.cursor.beforePayload != nil {
+		payload = plan.cursor.beforePayload
+	} else {
+		payload = plan.cursor.afterPayload
+	}
+
+	if payload != nil {
 		if scan := getNode[*scanNode](plan.selectNode); scan != nil {
-			scan.cursorPayload = plan.cursor.afterPayload
-			scan.reversedIteration = reversed
+			scan.cursorPayload = payload
+			scan.reversedIteration = finalReversed
 		}
-		if plan.cursor.afterPayload != nil && len(plan.cursor.afterPayload.Keys) > 0 {
+		if len(payload.Keys) > 0 {
 			plan.cursor.indexSeekActive = true
+		}
+	} else if isBackward {
+		// last-only (no before cursor): still need reversed iteration but no seek payload
+		if scan := getNode[*scanNode](plan.selectNode); scan != nil {
+			scan.reversedIteration = finalReversed
 		}
 	}
 	return nil
