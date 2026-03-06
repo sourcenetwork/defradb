@@ -12,6 +12,7 @@
 package action
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -41,6 +42,7 @@ func waitForUpdateEvents(
 	ident immutable.Option[state.Identity],
 	txn immutable.Option[client.Txn],
 ) {
+	fmt.Println("Entering waitForUpdateEvents")
 	for i := 0; i < len(s.Nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
@@ -117,6 +119,7 @@ func waitForUpdateEvents(
 // nodes should receive the updated document in the given update event.
 func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity],
 	collections []client.Collection) {
+	fmt.Println("Entering updateNetworkState")
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range collections {
@@ -143,6 +146,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
+		fmt.Println("Event CID: ", evt.Cid, "ID: ", id)
 		// replicator target nodes push updates to source nodes
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],

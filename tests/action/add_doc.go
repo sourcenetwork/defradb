@@ -91,6 +91,7 @@ var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	fmt.Println("Entering AddDoc Execute")
 	hadTxn := a.TransactionID.HasValue()
 
 	if a.DocMap != nil {
@@ -176,6 +177,7 @@ func (a *AddDoc) Execute() {
 
 	// If there was an explicit transaction, then we will not be waiting for update events.
 	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
+		fmt.Println("Will call waitForUpdateEvents")
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity, txnOption)
 	}
 }

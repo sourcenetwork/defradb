@@ -214,8 +214,6 @@ func waitForUpdateEvents(
 	}
 }
 
-// waitForMergeEvents waits for all expected heads to be merged to all nodes.
-//
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 //
@@ -272,7 +270,10 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		totalPending := 0
 		for _, cidSet := range pending {
 			totalPending += len(cidSet)
+			fmt.Println("CID set:", cidSet)
 		}
+
+		fmt.Println("totalPending", totalPending)
 
 		for totalPending > 0 {
 			var evt event.MergeComplete
