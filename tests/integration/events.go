@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -135,10 +136,10 @@ func waitForDeleteDocumentSubscriptionEvent(s *state.State, action DeleteDocumen
 func waitForUpdateEvents(
 	s *state.State,
 	nodeID immutable.Option[int],
-	collections []client.Collection,
 	collectionIndex int,
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
+	txn immutable.Option[client.Txn],
 ) {
 	for i := 0; i < len(s.Nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -151,6 +152,13 @@ func waitForUpdateEvents(
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
+
+		var collections []client.Collection
+		if txn.HasValue() {
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn.Value()))
+		} else {
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
+		}
 
 		col := collections[collectionIndex]
 		if col.Version().IsBranchable {

@@ -115,18 +115,23 @@ func (a *AddDoc) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
-	for index, node := range nodes {
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var txn client.Txn
-		if hadTxn {
-			var err error
-			a.DoNotWaitForEvent = true
-			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-			if err != nil {
-				return
-			}
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	if hadTxn {
+		var err error
+		a.DoNotWaitForEvent = true
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if err != nil {
+			return
 		}
+	}
 
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		txnOption = immutable.Some(txn)
+	}
+
+	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
@@ -135,11 +140,6 @@ func (a *AddDoc) Execute() {
 			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.None[client.Txn]())
 		}
 		collection := collections[a.CollectionID]
-
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
-			txnOption = immutable.Some(txn)
-		}
 
 		err := withRetryOnNode(
 			node,
@@ -176,9 +176,7 @@ func (a *AddDoc) Execute() {
 
 	// If there was an explicit transaction, then we will not be waiting for update events.
 	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-		fmt.Println("Collections: ", collections)
-		fmt.Println("Collections length: ", len(collections))
-		waitForUpdateEvents(a.s, a.NodeID, collections, a.CollectionID, docIDMap, a.Identity)
+		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity, txnOption)
 	}
 }
 

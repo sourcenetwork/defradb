@@ -1183,14 +1183,25 @@ func deleteDoc(
 	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		hadTxn := action.TransactionID.HasValue()
-		var txn client.Txn
-		if hadTxn {
-			doNotWaitForUpdate = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := action.TransactionID.HasValue()
+	if hadTxn {
+		var err error
+		doNotWaitForUpdate = true
+		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		if err != nil {
+			return
 		}
+	}
+
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		txnOption = immutable.Some(txn)
+	}
+
+	for index, node := range nodes {
+
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
@@ -1222,7 +1233,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, collections, action.CollectionID, expect, immutable.None[state.Identity]())
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity](), txnOption)
 	}
 }
 
@@ -1248,15 +1259,25 @@ func updateDoc(
 	doNotWaitForUpdate := false
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		hadTxn := action.TransactionID.HasValue()
-		var txn client.Txn
-		if hadTxn {
-			doNotWaitForUpdate = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
-		}
 
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := action.TransactionID.HasValue()
+	if hadTxn {
+		var err error
+		doNotWaitForUpdate = true
+		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		if err != nil {
+			return
+		}
+	}
+
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		txnOption = immutable.Some(txn)
+	}
+
+	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		if hadTxn {
 			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
@@ -1265,10 +1286,6 @@ func updateDoc(
 		}
 		collection := collections[action.CollectionID]
 
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
-			txnOption = immutable.Some(txn)
-		}
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1289,12 +1306,13 @@ func updateDoc(
 			waitForUpdateEvents(
 				s,
 				action.NodeID,
-				collections,
 				action.CollectionID,
 				getEventsForUpdateDoc(s, action),
 				immutable.None[state.Identity](),
+				txnOption,
 			)
 		}
+
 	}
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1429,19 +1447,25 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
 
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var txn client.Txn
-		hadTxn := action.TransactionID.HasValue()
-		if hadTxn {
-			doNotWaitForUpdate = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
-		} else {
-			// If a transaction was not provided, we will make an ephemeral one for this action.
-			txn, _ = s.Client.NewTxn(false)
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	hadTxn := action.TransactionID.HasValue()
+	if hadTxn {
+		var err error
+		doNotWaitForUpdate = true
+		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		if err != nil {
+			return
 		}
+	}
 
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		txnOption = immutable.Some(txn)
+	}
+
+	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
 		if hadTxn {
@@ -1480,10 +1504,10 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		waitForUpdateEvents(
 			s,
 			action.NodeID,
-			collections,
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
 			immutable.None[state.Identity](),
+			txnOption,
 		)
 	}
 }
