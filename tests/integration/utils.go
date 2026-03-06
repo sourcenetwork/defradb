@@ -1180,6 +1180,8 @@ func deleteDoc(
 	doNotWaitForUpdate := false
 	var expectedErrorRaised bool
 
+	var collections []client.Collection
+
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
@@ -1191,7 +1193,6 @@ func deleteDoc(
 		}
 		nodeID := nodeIDs[index]
 
-		var collections []client.Collection
 		if hadTxn {
 			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
@@ -1221,7 +1222,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity]())
+		waitForUpdateEvents(s, action.NodeID, collections, action.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
 
@@ -1242,6 +1243,7 @@ func updateDoc(
 		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
+	var collections []client.Collection
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
@@ -1256,7 +1258,6 @@ func updateDoc(
 		}
 
 		nodeID := nodeIDs[index]
-		var collections []client.Collection
 		if hadTxn {
 			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
@@ -1283,19 +1284,20 @@ func updateDoc(
 			},
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+
+		if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+			waitForUpdateEvents(
+				s,
+				action.NodeID,
+				collections,
+				action.CollectionID,
+				getEventsForUpdateDoc(s, action),
+				immutable.None[state.Identity](),
+			)
+		}
 	}
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateDoc(s, action),
-			immutable.None[state.Identity](),
-		)
-	}
 }
 
 func updateDocViaColSave(
@@ -1424,6 +1426,8 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
+	var collections []client.Collection
+
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 
@@ -1440,7 +1444,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 		nodeID := nodeIDs[index]
 
-		var collections []client.Collection
 		if hadTxn {
 			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
 		} else {
@@ -1477,6 +1480,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		waitForUpdateEvents(
 			s,
 			action.NodeID,
+			collections,
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
 			immutable.None[state.Identity](),

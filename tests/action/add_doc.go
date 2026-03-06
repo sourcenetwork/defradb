@@ -111,6 +111,7 @@ func (a *AddDoc) Execute() {
 
 	var expectedErrorRaised bool
 	var docIDs []client.DocID
+	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
@@ -128,7 +129,6 @@ func (a *AddDoc) Execute() {
 
 		nodeID := nodeIDs[index]
 
-		var collections []client.Collection
 		if hadTxn {
 			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.Some(txn))
 		} else {
@@ -165,19 +165,21 @@ func (a *AddDoc) Execute() {
 		a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
 		a.s.DocIDsLock.Unlock()
 
-		docIDMap := make(map[string]struct{})
-		for _, docID := range docIDs {
-			docIDMap[docID.String()] = struct{}{}
-		}
-
-		// If there was an explicit transaction, then we will not be waiting for update events.
-		if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-			waitForUpdateEvents(a.s, a.NodeID, collections, a.CollectionID, docIDMap, a.Identity)
-		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
+	docIDMap := make(map[string]struct{})
+	for _, docID := range docIDs {
+		docIDMap[docID.String()] = struct{}{}
+	}
+
+	// If there was an explicit transaction, then we will not be waiting for update events.
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
+		fmt.Println("Collections: ", collections)
+		fmt.Println("Collections length: ", len(collections))
+		waitForUpdateEvents(a.s, a.NodeID, collections, a.CollectionID, docIDMap, a.Identity)
+	}
 }
 
 func addDocViaColSave(

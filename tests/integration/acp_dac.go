@@ -19,7 +19,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -188,11 +190,14 @@ func addDACActorRelationship(
 	s *state.State,
 	action AddDACActorRelationship,
 ) {
+	var collections []client.Collection
 	var docID string
 	actionNodeID := action.NodeID
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
 
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
@@ -229,7 +234,7 @@ func addDACActorRelationship(
 			docID: {},
 		}
 
-		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect, action.TargetIdentity)
+		waitForUpdateEvents(s, actionNodeID, collections, action.CollectionID, expect, action.TargetIdentity)
 	}
 }
 

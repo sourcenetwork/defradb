@@ -132,6 +132,7 @@ func waitForDeleteDocumentSubscriptionEvent(s *state.State, action DeleteDocumen
 func waitForUpdateEvents(
 	s *state.State,
 	nodeID immutable.Option[int],
+	collections []client.Collection,
 	collectionIndex int,
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
@@ -148,7 +149,7 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
