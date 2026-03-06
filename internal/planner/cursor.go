@@ -194,13 +194,12 @@ func (n *cursorNode) Next() (bool, error) {
 	}
 }
 
-// nextBackward implements backward pagination by draining the reversed scan into a buffer,
-// applying the `last` limit, then yielding results by iterating backward through the buffer
-// to restore forward order.
+// nextBackward implements backward pagination by draining the child plan into a buffer,
+// applying the `last` limit, then yielding results in forward order.
 func (n *cursorNode) nextBackward() (bool, error) {
 	if n.backwardBuffer != nil {
-		n.bufferIndex--
-		if n.bufferIndex < 0 {
+		n.bufferIndex++
+		if n.bufferIndex >= len(n.backwardBuffer) {
 			return false, nil
 		}
 		n.collected++
@@ -217,6 +216,10 @@ func (n *cursorNode) nextBackward() (bool, error) {
 			break
 		}
 		doc := n.plan.Value()
+		// Stop before the cursor position (exclusive upper bound).
+		if n.beforePayload != nil && doc.GetID() == n.beforePayload.DocID {
+			break
+		}
 		buf = append(buf, doc.Clone())
 	}
 
@@ -229,18 +232,16 @@ func (n *cursorNode) nextBackward() (bool, error) {
 		n.hasNextPage = true
 	}
 
-	// buf is in reversed scan order; we iterate backward through it
-	// to yield results in forward order without an O(n) reverse.
 	if len(buf) > 0 {
 		last := len(buf) - 1
-		n.firstDocID = buf[last].GetID()
-		n.firstDoc = buf[last].Clone()
-		n.lastDocID = buf[0].GetID()
-		n.lastDoc = buf[0].Clone()
+		n.firstDocID = buf[0].GetID()
+		n.firstDoc = buf[0].Clone()
+		n.lastDocID = buf[last].GetID()
+		n.lastDoc = buf[last].Clone()
 	}
 
 	n.backwardBuffer = buf
-	n.bufferIndex = len(buf) - 1
+	n.bufferIndex = 0
 
 	if len(buf) == 0 {
 		return false, nil
