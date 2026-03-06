@@ -42,6 +42,16 @@ An optional cursor position. Results start after this cursor position.
  The cursor is exclusive - the document at the cursor position is not included.
  Omitting or passing null starts from the beginning.
 `
+	LastArgDescription string = `
+An optional value that limits the number of results returned from the end in cursor pagination.
+ This is the backward equivalent of 'first'. A value of zero returns
+ an empty result set with valid _pageInfo. Omitting returns all results before the cursor.
+`
+	BeforeArgDescription string = `
+An optional cursor position. Results end before this cursor position.
+ The cursor is exclusive - the document at the cursor position is not included.
+ Omitting or passing null starts from the end of the result set.
+`
 	commitDescription string = `
 Commit represents an individual commit to a MerkleCRDT, every mutation to a
  document will result in a new commit per modified field, and one composite

@@ -253,6 +253,10 @@ type Targetable struct {
 	CursorFirst immutable.Option[uint64]
 	// CursorAfter is the opaque cursor token to resume pagination after.
 	CursorAfter immutable.Option[string]
+	// CursorLast limits backward cursor pagination results to the last N items.
+	CursorLast immutable.Option[uint64]
+	// CursorBefore is the opaque cursor token to paginate before.
+	CursorBefore immutable.Option[string]
 
 	ShowDeleted bool
 }
@@ -265,9 +269,11 @@ func (t *Targetable) cloneTo(index int) *Targetable {
 		Limit:       t.Limit,
 		GroupBy:     t.GroupBy,
 		OrderBy:     t.OrderBy,
-		CursorFirst: t.CursorFirst,
-		CursorAfter: t.CursorAfter,
-		ShowDeleted: t.ShowDeleted,
+		CursorFirst:  t.CursorFirst,
+		CursorAfter:  t.CursorAfter,
+		CursorLast:   t.CursorLast,
+		CursorBefore: t.CursorBefore,
+		ShowDeleted:  t.ShowDeleted,
 	}
 }
 

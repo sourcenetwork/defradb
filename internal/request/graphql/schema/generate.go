@@ -1616,8 +1616,10 @@ func (g *Generator) genCursorCollectionField(
 			),
 			"order":             schemaTypes.NewArgConfig(gql.NewList(config.order), schemaTypes.OrderArgDescription),
 			request.ShowDeleted: schemaTypes.NewArgConfig(gql.Boolean, showDeletedArgDescription),
-			request.FirstClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.FirstArgDescription),
+			request.FirstClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.FirstArgDescription),
 			request.AfterClause: schemaTypes.NewArgConfig(gql.String, schemaTypes.AfterArgDescription),
+			request.LastClause:   schemaTypes.NewArgConfig(gql.Int, schemaTypes.LastArgDescription),
+			request.BeforeClause: schemaTypes.NewArgConfig(gql.String, schemaTypes.BeforeArgDescription),
 		},
 	}
 }
