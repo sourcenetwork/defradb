@@ -142,6 +142,7 @@ func waitForUpdateEvents(
 	txn immutable.Option[client.Txn],
 ) {
 	for i := 0; i < len(s.Nodes); i++ {
+		fmt.Printf("Node %d waiting for update event...\n", i)
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
 		}
@@ -181,6 +182,8 @@ func waitForUpdateEvents(
 					}
 					evt = msg.Data.(event.Update)
 
+					fmt.Printf("Node %d received update: CID=%s, IsRelay=%v\n", i, evt.Cid.String(), evt.IsRelay)
+
 					node.CompositesLock.Lock()
 					// We keep track of the list of cids for all documents in the test
 					// in case we want to use them in subsequent test actions without having
@@ -208,7 +211,7 @@ func waitForUpdateEvents(
 			// we only need to update the network state if the nodes
 			// are configured for networking
 			if s.IsNetworkEnabled {
-				updateNetworkState(s, i, evt, ident)
+				updateNetworkState(s, i, evt, ident, collections)
 			}
 		}
 	}
@@ -229,6 +232,7 @@ func waitForUpdateEvents(
 // During pending set construction, for each (key, source) pair we keep only the latest CID
 // (last appended), since earlier CIDs from the same source are ancestors subsumed by the latest.
 func waitForMergeEvents(s *state.State, action WaitForSync) {
+	fmt.Println("Entering waitForMergeEvents")
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
 		if node.Closed {
@@ -243,6 +247,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		latestPerSource := make(map[string]map[int]cid.Cid)
 		for key, heads := range node.P2P.ExpectedDAGHeads {
 			for _, head := range heads {
+
+				// Ignore heads from nodes that cannot replicate to this node
+				source := s.Nodes[head.SourceNodeID]
+				if _, ok := source.P2P.Replicators[nodeID]; !ok {
+					continue
+				}
+
 				if latestPerSource[key] == nil {
 					latestPerSource[key] = make(map[int]cid.Cid)
 				}
@@ -365,10 +376,10 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {
+func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity], collections []client.Collection) {
 	// find the correct collection index for this update
 	collectionID := -1
-	for i, c := range s.Nodes[nodeID].Collections {
+	for i, c := range collections {
 		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
@@ -386,6 +397,11 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	node := s.Nodes[nodeID]
 
+	fmt.Printf("Node %d updateNetworkState called: DocID=%s, CID=%s, IsRelay=%v\n",
+		nodeID, evt.DocID, evt.Cid.String(), evt.IsRelay)
+	fmt.Printf("Before update: ActualDAGHeads=%v\n", node.P2P.ActualDAGHeads)
+	fmt.Printf("Before update: ExpectedDAGHeads=%v\n", node.P2P.ExpectedDAGHeads)
+
 	// update the actual document head on the node that updated it
 	// as the node added the document, it is already decrypted
 	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid}
@@ -393,10 +409,16 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
+		fmt.Printf("Appending expected head: Node %d, CID %s\n", id, evt.Cid.String())
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
 			state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
 		)
+	}
+
+	fmt.Printf("After update: ActualDAGHeads=%v\n", node.P2P.ActualDAGHeads)
+	for id := range node.P2P.Replicators {
+		fmt.Printf("Node %d ExpectedDAGHeads=%v\n", id, s.Nodes[id].P2P.ExpectedDAGHeads)
 	}
 
 	updateConnectedNodes(s, nodeID, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)

@@ -1204,11 +1204,7 @@ func deleteDoc(
 
 		nodeID := nodeIDs[index]
 
-		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		opts := options.DeleteDocument()
@@ -1242,6 +1238,7 @@ func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
+	fmt.Println("Entering updateDoc")
 	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) error
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
@@ -1279,11 +1276,7 @@ func updateDoc(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		err := withRetryOnNode(
@@ -1301,21 +1294,20 @@ func updateDoc(
 			},
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-
-		if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
-			waitForUpdateEvents(
-				s,
-				action.NodeID,
-				action.CollectionID,
-				getEventsForUpdateDoc(s, action),
-				immutable.None[state.Identity](),
-				txnOption,
-			)
-		}
-
 	}
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+		waitForUpdateEvents(
+			s,
+			action.NodeID,
+			action.CollectionID,
+			getEventsForUpdateDoc(s, action),
+			immutable.None[state.Identity](),
+			txnOption,
+		)
+	}
 }
 
 func updateDocViaColSave(
@@ -1467,12 +1459,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-
-		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
@@ -1488,11 +1475,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 				return err
 			},
 		)
-
-		if !hadTxn {
-			defer txn.Discard()
-			txn.Commit()
-		}
 
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 

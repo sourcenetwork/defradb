@@ -134,12 +134,12 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
 
-		if hadTxn {
-			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.Some(txn))
-		} else {
-			collections = GetCanonicallyOrderedCollections(a.s, node, immutable.None[client.Txn]())
+		for i, col := range collections {
+			fmt.Printf("Node %d: Collection %d = %s\n", nodeID, i, col.Name())
 		}
+
 		collection := collections[a.CollectionID]
 
 		err := withRetryOnNode(

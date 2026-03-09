@@ -59,7 +59,8 @@ func waitForUpdateEvents(
 		if txn.HasValue() {
 			collections = GetCanonicallyOrderedCollections(s, node, immutable.Some(txn.Value()))
 		} else {
-			collections = GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
+			//collections = GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
+			collections = node.Collections
 		}
 		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
@@ -146,7 +147,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
-		fmt.Println("Event CID: ", evt.Cid, "ID: ", id)
+		fmt.Printf("Appending expected head: Node %d, CID %s\n", id, evt.Cid.String())
 		// replicator target nodes push updates to source nodes
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
