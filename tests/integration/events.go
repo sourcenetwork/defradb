@@ -241,15 +241,6 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				}
 				latestPerSource[key][head.SourceNodeID] = head.CID
 			}
-			// The last CID in the slice is the latest update.
-			// Earlier CIDs are ancestors that will be included
-			// when the latest CID's DAG is merged.
-			latestCID := cids[len(cids)-1]
-			// skip if already merged
-			if actual, ok := node.P2P.ActualDAGHeads[key]; ok && actual.CID == latestCID {
-				continue
-			}
-			pending[key] = latestCID
 		}
 
 		pending := make(map[string]map[cid.Cid]struct{})
