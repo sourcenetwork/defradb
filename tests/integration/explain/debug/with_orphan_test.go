@@ -74,8 +74,8 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndex(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -120,8 +120,8 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndexDESC(t *testing.T) 
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -166,8 +166,8 @@ func TestDebugExplainRequestWithOrderByRelationFieldSecondaryParent(t *testing.T
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher

@@ -156,8 +156,8 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index

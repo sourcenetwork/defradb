@@ -22,8 +22,8 @@ func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testin
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -87,8 +87,8 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher
@@ -133,12 +133,12 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 						TargetNodeName: "orphanNode",
 						ExpectedAttributes: dataMap{
 							"iterations": uint64(3),
-							// Secondary parent: orphanNode scans all Books excluding already-seen ones
-							// 2 books total, but we exclude the linked one, so 1 orphan fetched
-							// However, the scan itself iterates all 2 docs to filter
-							"docFetches":   uint64(2),
-							"fieldFetches": uint64(2),
-							"indexFetches": uint64(0),
+							// Secondary parent: orphanNode scans all parent docs (2 Books) and does
+							// point lookups on the child's (Publisher) unique FK index for each.
+							// The linked Book's lookup finds 1 Publisher doc.
+							"docFetches":   uint64(3),
+							"fieldFetches": uint64(5),
+							"indexFetches": uint64(1),
 						},
 					},
 				},

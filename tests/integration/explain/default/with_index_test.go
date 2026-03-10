@@ -22,8 +22,8 @@ func TestDefaultExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -62,8 +62,8 @@ func TestDefaultExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -103,8 +103,8 @@ func TestDefaultExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]

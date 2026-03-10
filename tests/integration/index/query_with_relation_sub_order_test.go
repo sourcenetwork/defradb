@@ -841,8 +841,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher
@@ -900,8 +900,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher
@@ -959,8 +959,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -1020,8 +1020,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -1082,8 +1082,8 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher
@@ -1140,8 +1140,8 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						rating: Int @index
@@ -1202,8 +1202,8 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -1319,8 +1319,8 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -1436,8 +1436,8 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldInc
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -1543,8 +1543,8 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAp
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]
@@ -1647,8 +1647,8 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						publisher: Publisher
@@ -1707,8 +1707,8 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						title: String
 						publisher: Publisher
