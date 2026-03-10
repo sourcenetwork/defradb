@@ -13,6 +13,8 @@ package cursor
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -135,12 +137,104 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 				},
 			},
 
-			// Backward drains all items then takes last N, so indexFetches = 3 (all items).
 			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
 			},
 		},
 	}
+	executeTestCase(t, test)
+}
+
+func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.T) {
+	req := `query($cursor: String) {
+		_cursor {
+			User(last: 2, before: $cursor, order: {age: ASC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+				hasPrev
+			}
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
+			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
+			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
+			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
+			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 50}`},
+
+			&action.Request{
+				Request: `query {
+					_cursor {
+						User(first: 5, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							endCursor
+						}
+					}
+				}`,
+				Results: dataMap{
+					"_cursor": dataMap{
+						"User": []dataMap{
+							{"name": "Alice", "age": int64(10)},
+							{"name": "Bob", "age": int64(20)},
+							{"name": "Carol", "age": int64(30)},
+							{"name": "Dave", "age": int64(40)},
+							{"name": "Eve", "age": int64(50)},
+						},
+						"_pageInfo": dataMap{
+							"endCursor": testUtils.CaptureCursor("end"),
+						},
+					},
+				},
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("end"),
+				}),
+				Request: req,
+				Results: dataMap{
+					"_cursor": dataMap{
+						"User": []dataMap{
+							{"name": "Carol", "age": int64(30)},
+							{"name": "Dave", "age": int64(40)},
+						},
+						"_pageInfo": dataMap{
+							"hasNext": true,
+							"hasPrev": true,
+						},
+					},
+				},
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("end"),
+				}),
+				Request: `query($cursor: String) @explain(type: execute) {
+					_cursor {
+						User(last: 2, before: $cursor, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+						}
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+			},
+		},
+	}
+
 	executeTestCase(t, test)
 }

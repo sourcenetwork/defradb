@@ -40,6 +40,9 @@ type Select struct {
 	// Selects.
 	Fields []Requestable
 
+	// ResponseKey is the field name that should be used when rendering this select.
+	ResponseKey string
+
 	// SkipResolve is a flag that indicates that the fields in this Select don't need to be resolved,
 	// i.e. it's value doesn't need to be fetched and provided to the user.
 	// It is used to avoid resolving related objects if they are used only in a filter and not requested in a response.
@@ -75,6 +78,7 @@ func (s *Select) cloneTo(index int) *Select {
 		Cids:            s.Cids,
 		CollectionName:  s.CollectionName,
 		Fields:          s.Fields,
+		ResponseKey:     s.ResponseKey,
 		SkipResolve:     s.SkipResolve,
 		IsEncrypted:     s.IsEncrypted,
 		IsCursor:        s.IsCursor,

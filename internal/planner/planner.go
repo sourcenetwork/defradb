@@ -293,29 +293,30 @@ func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
 		plan.cursor.orderFields = selectReq.OrderBy.Conditions
 	}
 
+	scan := getNode[*scanNode](plan.selectNode)
 	isBackward := plan.cursor.last.HasValue() || plan.cursor.beforeCursor.HasValue()
+	if scan != nil {
+		scan.reversedIteration = reversed != isBackward
+	}
+
+	payload := plan.cursor.afterPayload
+	if isBackward {
+		payload = plan.cursor.beforePayload
+	}
+
+	if scan != nil && payload != nil {
+		scan.cursorPayload = payload
+	}
 
 	if !isBackward {
-		// Forward pagination: seek to cursor position and iterate forward.
-		payload := plan.cursor.afterPayload
-		if payload != nil {
-			if scan := getNode[*scanNode](plan.selectNode); scan != nil {
-				scan.cursorPayload = payload
-				scan.reversedIteration = reversed
-			}
-			if len(payload.Keys) > 0 {
-				plan.cursor.indexSeekActive = true
-			}
+		if payload != nil && len(payload.Keys) > 0 {
+			plan.cursor.indexSeekActive = true
 		}
-	} else if plan.cursor.beforePayload == nil {
-		// last-only (no before cursor): scan from the beginning, cursorNode
-		// drains all items and takes the last N.
-		_ = reversed
-	} else {
-		// last+before: scan from the beginning, cursorNode drains items
-		// up to the before cursor position, then takes the last N.
-		// The beforePayload is used by nextBackward() to stop draining.
-		_ = reversed
+		return nil
+	}
+
+	if scan != nil && scan.index.HasValue() && len(scan.ordering) > 0 {
+		plan.cursor.indexSeekActive = true
 	}
 	return nil
 }

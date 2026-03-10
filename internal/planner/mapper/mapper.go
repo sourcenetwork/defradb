@@ -272,6 +272,7 @@ func toSelect(
 		Cids:            selectRequest.CIDs,
 		CollectionName:  collectionName,
 		Fields:          fields,
+		ResponseKey:     getRenderKey(&selectRequest.Field),
 		IsEncrypted:     selectRequest.IsEncrypted,
 	}, nil
 }
