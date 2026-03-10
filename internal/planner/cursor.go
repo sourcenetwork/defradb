@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"slices"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
@@ -20,41 +22,29 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// cursorNode implements cursor-based pagination by skipping documents
-// until the cursor position is passed, then collecting up to `first` results.
 type cursorNode struct {
 	docMapper
 
 	p    *Planner
 	plan planNode
 
-	// Forward cursor parameters (from mapper.Select)
-	first       immutable.Option[uint64]
-	afterCursor immutable.Option[string]
-
-	// Pre-decoded forward cursor payload
+	first        immutable.Option[uint64]
+	afterCursor  immutable.Option[string]
 	afterPayload *cursor.CursorPayload
 
-	// Backward cursor parameters (from mapper.Select)
-	last         immutable.Option[uint64]
-	beforeCursor immutable.Option[string]
-
-	// Pre-decoded backward cursor payload
+	last          immutable.Option[uint64]
+	beforeCursor  immutable.Option[string]
 	beforePayload *cursor.CursorPayload
 
-	// Backward re-reversal buffer: backward iteration yields results in reverse order,
-	// so we buffer them and reverse before yielding to maintain forward result order.
 	backwardBuffer []core.Doc
 	bufferIndex    int
 
-	// Internal state machine
 	pastCursor      bool   // true once cursor position has been passed
 	collected       uint64 // count of results yielded so far
 	indexSeekActive bool
 
 	orderFields []mapper.OrderCondition
 
-	// _pageInfo state (populated during iteration)
 	hasNextPage     bool
 	hasPreviousPage bool
 	firstDocID      string
@@ -71,9 +61,6 @@ type cursorExecInfo struct {
 	iterations uint64
 }
 
-// Cursor creates a new cursorNode from the parsed select if it is a cursor query.
-// The after cursor token is decoded here (once per query) rather than on the
-// hot path in Next().
 func (p *Planner) Cursor(parsed *mapper.Select) (*cursorNode, error) {
 	if !parsed.IsCursor {
 		return nil, nil
@@ -137,7 +124,7 @@ func (n *cursorNode) Value() core.Doc {
 	}
 	return n.plan.Value()
 }
-func (n *cursorNode) Source() planNode                  { return n.plan }
+func (n *cursorNode) Source() planNode { return n.plan }
 
 func (n *cursorNode) Next() (bool, error) {
 	n.execInfo.iterations++
@@ -194,8 +181,6 @@ func (n *cursorNode) Next() (bool, error) {
 	}
 }
 
-// nextBackward implements backward pagination by draining the child plan into a buffer,
-// applying the `last` limit, then yielding results in forward order.
 func (n *cursorNode) nextBackward() (bool, error) {
 	if n.backwardBuffer != nil {
 		n.bufferIndex++
@@ -206,6 +191,50 @@ func (n *cursorNode) nextBackward() (bool, error) {
 		return true, nil
 	}
 
+	if n.indexSeekActive {
+		return n.bufferBackwardPage()
+	}
+
+	return n.drainBackwardPage()
+}
+
+func (n *cursorNode) bufferBackwardPage() (bool, error) {
+	var buf []core.Doc
+	limit, hasLimit := 0, false
+	if n.last.HasValue() {
+		limit = int(n.last.Value())
+		hasLimit = true
+	}
+
+	for !hasLimit || len(buf) < limit {
+		hasNext, err := n.plan.Next()
+		if err != nil {
+			return false, err
+		}
+		if !hasNext {
+			break
+		}
+		doc := n.plan.Value()
+		buf = append(buf, doc.Clone())
+	}
+
+	if hasLimit {
+		hasMore, err := n.plan.Next()
+		if err != nil {
+			return false, err
+		}
+		n.hasPreviousPage = hasMore
+	}
+
+	if n.beforeCursor.HasValue() {
+		n.hasNextPage = true
+	}
+
+	slices.Reverse(buf)
+	return n.initBackwardBuffer(buf), nil
+}
+
+func (n *cursorNode) drainBackwardPage() (bool, error) {
 	var buf []core.Doc
 	for {
 		hasNext, err := n.plan.Next()
@@ -216,7 +245,6 @@ func (n *cursorNode) nextBackward() (bool, error) {
 			break
 		}
 		doc := n.plan.Value()
-		// Stop before the cursor position (exclusive upper bound).
 		if n.beforePayload != nil && doc.GetID() == n.beforePayload.DocID {
 			break
 		}
@@ -232,23 +260,24 @@ func (n *cursorNode) nextBackward() (bool, error) {
 		n.hasNextPage = true
 	}
 
-	if len(buf) > 0 {
-		last := len(buf) - 1
-		n.firstDocID = buf[0].GetID()
-		n.firstDoc = buf[0].Clone()
-		n.lastDocID = buf[last].GetID()
-		n.lastDoc = buf[last].Clone()
-	}
+	return n.initBackwardBuffer(buf), nil
+}
 
+func (n *cursorNode) initBackwardBuffer(buf []core.Doc) bool {
 	n.backwardBuffer = buf
 	n.bufferIndex = 0
 
 	if len(buf) == 0 {
-		return false, nil
+		return false
 	}
 
+	last := len(buf) - 1
+	n.firstDocID = buf[0].GetID()
+	n.firstDoc = buf[0].Clone()
+	n.lastDocID = buf[last].GetID()
+	n.lastDoc = buf[last].Clone()
 	n.collected = 1
-	return true, nil
+	return true
 }
 
 // buildEnrichedPayload creates a CursorPayload with DocID and index key values from order fields.

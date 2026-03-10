@@ -60,7 +60,7 @@ type scanNode struct {
 	fetcher fetcher.Fetcher
 
 	cursorPayload     *cursor.CursorPayload
-	reversedIteration bool // true when query order is opposite to index direction
+	reversedIteration bool
 
 	execInfo scanExecInfo
 }
@@ -72,7 +72,6 @@ func (n *scanNode) Kind() string {
 func (n *scanNode) Init() error {
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
 
-	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
 		n.p.identity,
@@ -83,7 +82,7 @@ func (n *scanNode) Init() error {
 		n.col,
 		n.fields,
 		n.filter,
-		n.ordering,
+		n.fetcherOrdering(),
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {
@@ -236,8 +235,28 @@ func (n *scanNode) initScan() error {
 	return nil
 }
 
-// buildCursorSeekKey constructs an IndexDataStoreKey from the cursor payload.
-// Returns nil if cursor payload is missing or has no Keys.
+func (n *scanNode) fetcherOrdering() []mapper.OrderCondition {
+	if !n.index.HasValue() || len(n.ordering) == 0 {
+		return n.ordering
+	}
+
+	ordered, reverse := fetcher.CanBeOrderedByIndex(n.ordering, n.index.Value(), n.documentMapping)
+	if !ordered || reverse == n.reversedIteration {
+		return n.ordering
+	}
+
+	ordering := make([]mapper.OrderCondition, len(n.ordering))
+	copy(ordering, n.ordering)
+	for i := range ordering {
+		if ordering[i].Direction == mapper.ASC {
+			ordering[i].Direction = mapper.DESC
+		} else {
+			ordering[i].Direction = mapper.ASC
+		}
+	}
+	return ordering
+}
+
 func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 	if n.cursorPayload == nil || len(n.cursorPayload.Keys) == 0 || !n.index.HasValue() {
 		return nil
@@ -260,12 +279,10 @@ func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 		if colField, found := n.col.Version().GetFieldByName(idxField.Name); found {
 			switch colField.Kind {
 			case client.FieldKind_NILLABLE_INT:
-				// JSON deserializes numbers as float64, convert back to int64
 				if floatVal, isFloat := val.(float64); isFloat {
 					val = int64(floatVal)
 				}
 			case client.FieldKind_NILLABLE_DATETIME:
-				// JSON deserializes DateTime as string, parse back to time.Time
 				if strVal, isString := val.(string); isString {
 					if parsed, err := time.Parse(time.RFC3339, strVal); err == nil {
 						val = parsed
@@ -297,9 +314,6 @@ func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 	}
 
 	key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, fields)
-	// For forward iteration, Offset=1 skips past the cursor position.
-	// For reverse iteration, the cursor position is the exclusive upper bound,
-	// so we use Offset=0 to get the exact cursor key (which will be excluded by the iterator).
 	if n.reversedIteration {
 		key.Offset = 0
 	} else {
