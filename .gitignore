@@ -73,6 +73,7 @@ crash.log
 
 # AGENTS
 CLAUDE.md
+AGENTS.md
 
 # GSD planning directory (local only).
 .planning/
