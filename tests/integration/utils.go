@@ -833,7 +833,6 @@ func setStartingNodes(
 			testCase,
 			nodeBuilder,
 		)
-		s.Client = st.Client
 
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
@@ -861,7 +860,6 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			testCase,
 			opts,
 		)
-		s.Client = node.Client
 
 		databaseDir = originalPath
 
@@ -1006,7 +1004,6 @@ func configureNode(
 	opts.P2P().SetAll(p2pOpts)
 
 	node, err := setupNode(s, acpIdentity.None, testCase, opts)
-	s.Client = node.Client
 	require.NoError(s.T, err)
 
 	node.P2POpts = p2pOpts
