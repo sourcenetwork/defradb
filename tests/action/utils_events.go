@@ -19,7 +19,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/event"
@@ -40,9 +39,7 @@ func waitForUpdateEvents(
 	collectionIndex int,
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
-	txn immutable.Option[client.Txn],
 ) {
-	fmt.Println("Entering waitForUpdateEvents")
 	for i := 0; i < len(s.Nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
@@ -104,7 +101,7 @@ func waitForUpdateEvents(
 			// we only need to update the network state if the nodes
 			// are configured for networking
 			if s.IsNetworkEnabled {
-				updateNetworkState(s, i, evt, ident, collections)
+				updateNetworkState(s, i, evt, ident)
 			}
 		}
 	}
@@ -112,9 +109,7 @@ func waitForUpdateEvents(
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity],
-	collections []client.Collection) {
-	fmt.Println("Entering updateNetworkState")
+func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.Nodes[nodeID].Collections {

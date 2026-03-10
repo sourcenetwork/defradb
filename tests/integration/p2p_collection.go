@@ -16,9 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -118,8 +116,7 @@ func addCollectionSubscription(
 			continue
 		}
 
-		//col := s.Nodes[action.NodeID].Collections[collectionIndex]
-		col := actionPackage.GetCanonicallyOrderedCollections(s, s.Nodes[action.NodeID], immutable.None[client.Txn]())[collectionIndex]
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
 		collectionNames = append(collectionNames, col.Name())
 	}
 

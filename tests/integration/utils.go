@@ -1229,7 +1229,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity](), txnOption)
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
 
@@ -1238,7 +1238,6 @@ func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
-	fmt.Println("Entering updateDoc")
 	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) error
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
@@ -1276,15 +1275,7 @@ func updateDoc(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		if hadTxn {
-			// If a transaction is attached, use the collections from the transaction.
-			fmt.Println("Transaction attached, using transaction collections (updateDoc)")
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		} else {
-			// If no transaction is attached, use the node's collections.
-			fmt.Println("No transaction, using node collections (updateDoc)")
-			collections, _ = node.GetCollections(s.Ctx, options.GetCollections())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		err := withRetryOnNode(
@@ -1313,7 +1304,6 @@ func updateDoc(
 			action.CollectionID,
 			getEventsForUpdateDoc(s, action),
 			immutable.None[state.Identity](),
-			txnOption,
 		)
 	}
 }
@@ -1497,7 +1487,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
 			immutable.None[state.Identity](),
-			txnOption,
 		)
 	}
 }
@@ -1516,14 +1505,15 @@ func newEncryptedIndex(
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		}
 
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		if action.FieldName == "" {
@@ -1584,12 +1574,13 @@ func listEncryptedIndexes(
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		}
 
-		var collections []client.Collection
+		txnOption := immutable.None[client.Txn]()
 		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
+			txnOption = immutable.Some(txn)
 		}
+
+		var collections []client.Collection
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		err := withRetryOnNode(
@@ -1675,14 +1666,15 @@ func deleteEncryptedIndex(
 			txn, _ = s.GetTransaction(node, action.TransactionID)
 		}
 
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		if hadTxn {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[action.CollectionID]
 
 		if action.FieldName == "" {

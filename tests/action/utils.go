@@ -45,6 +45,7 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 func RefreshCollections(
 	s *state.State,
 ) {
+
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -83,6 +84,10 @@ func RefreshCollections(
 	}
 }
 
+// GetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
+// If one is not provided, it will default to running the GetCollections function on the node itself.
+// Importantly, this will use the same ordering as would be found in the node.Collections slice that
+// is refreshed by the RefreshCollections function.
 func GetCanonicallyOrderedCollections(
 	s *state.State,
 	node *state.NodeState,

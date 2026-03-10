@@ -621,8 +621,6 @@ func (c *collection) save(
 		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
-		fmt.Println("Sending update:", updateEvent.DocID, updateEvent.Cid)
-
 		c.db.sendUpdate(updateEvent)
 	})
 

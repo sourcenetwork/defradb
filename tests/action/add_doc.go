@@ -91,7 +91,6 @@ var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
-	fmt.Println("Entering AddDoc Execute")
 	hadTxn := a.TransactionID.HasValue()
 
 	if a.DocMap != nil {
@@ -134,12 +133,7 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		if hadTxn {
-			collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
-		} else {
-			collections, _ = node.GetCollections(a.s.Ctx, options.GetCollections())
-		}
-
+		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		err := withRetryOnNode(
@@ -156,7 +150,6 @@ func (a *AddDoc) Execute() {
 				return err
 			},
 		)
-		fmt.Println("DocIDs: ", docIDs)
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 
 	}
@@ -169,7 +162,6 @@ func (a *AddDoc) Execute() {
 		a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
 	}
 	a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
-	fmt.Println("DocIDs after append (addDoc):", a.s.DocIDs)
 	a.s.DocIDsLock.Unlock()
 
 	docIDMap := make(map[string]struct{})
@@ -179,7 +171,7 @@ func (a *AddDoc) Execute() {
 
 	// If there was an explicit transaction, then we will not be waiting for update events.
 	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity, txnOption)
+		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
 
@@ -259,7 +251,6 @@ func addDocViaGQL(
 	collection client.Collection,
 	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	fmt.Println("Entering addDocViaGQL")
 	ctx := a.s.Ctx
 	if txn.HasValue() {
 		ctx = db.InitContext(a.s.Ctx, txn.Value())

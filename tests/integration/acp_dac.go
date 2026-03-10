@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -230,7 +229,7 @@ func addDACActorRelationship(
 			docID: {},
 		}
 
-		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect, action.TargetIdentity, immutable.None[client.Txn]())
+		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect, action.TargetIdentity)
 	}
 }
 
