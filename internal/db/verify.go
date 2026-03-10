@@ -37,7 +37,7 @@ func (db *DB) VerifySignature(
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeVerifySignaturePerm); err != nil {
 		return err
 	}
 

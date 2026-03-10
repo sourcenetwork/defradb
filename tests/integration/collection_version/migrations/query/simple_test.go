@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package query
 
@@ -22,11 +23,11 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaMigrationQuery(t *testing.T) {
+func TestCollectionMigrationQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -83,11 +84,11 @@ func TestSchemaMigrationQuery(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
+func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -163,13 +164,13 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Users may want to register migrations before the schema is locally updated. This may be particularly useful
+// Users may want to register migrations before the collection is locally updated. This may be particularly useful
 // for downgrading documents recieved via P2P.
-func TestSchemaMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
+func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -226,11 +227,11 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
+func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -256,7 +257,7 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 				`,
 			},
 			testUtils.ConfigureMigration{
-				// Register a migration from schema version 1 to schema version 2 **only** -
+				// Register a migration from collection version 1 to collection version 2 **only** -
 				// there should be no migration from version 2 to version 3.
 				LensConfig: client.LensConfig{
 					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
@@ -298,11 +299,11 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
+func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -328,7 +329,7 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 				`,
 			},
 			testUtils.ConfigureMigration{
-				// Register a migration from schema version 2 to schema version 3 **only** -
+				// Register a migration from collection version 2 to collection version 3 **only** -
 				// there should be no migration from version 1 to version 2.
 				LensConfig: client.LensConfig{
 					SourceCollectionVersionID:      "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
@@ -370,13 +371,13 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
+func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -459,11 +460,11 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *testing.T) {
+func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -546,11 +547,11 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrder(t *testing.T) {
+func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -638,13 +639,13 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 // from functioning.
 //
 // It is important to allow these orphans to be persisted as they may later become linked to the
-// schema version history chain as either new migrations are added or the local schema is updated
+// collection version history chain as either new migrations are added or the local collection is updated
 // bridging the gap.
-func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
+func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -664,8 +665,8 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      "not a schema version",
-					DestinationCollectionVersionID: "also not a schema version",
+					SourceCollectionVersionID:      "not a collection version",
+					DestinationCollectionVersionID: "also not a collection version",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -701,11 +702,11 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
+func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -763,11 +764,11 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
+func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						mobile: [Int!]
 					}
@@ -825,11 +826,11 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
+func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -887,11 +888,11 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -964,11 +965,11 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int
@@ -1027,11 +1028,11 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						age: Int

@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -111,7 +112,7 @@ nodeLoop:
 			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			reqOption.SetVariables(a.Variables.Value())
+			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
@@ -136,6 +137,23 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// resolveVariables resolves any DocIndex values in the variables map to their
+// corresponding document ID strings.
+func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+	resolved := make(map[string]any, len(vars))
+	for k, v := range vars {
+		if index, ok := v.(DocIndex); ok {
+			s.DocIDsLock.RLock()
+			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			s.DocIDsLock.RUnlock()
+			resolved[k] = docID.String()
+		} else {
+			resolved[k] = v
+		}
+	}
+	return resolved
 }
 
 // getTransaction returns the transaction for this request, creating one if needed.

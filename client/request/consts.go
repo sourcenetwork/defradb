@@ -110,7 +110,7 @@ var (
 	//
 	// Users cannot define types using these names.
 	//
-	// For example, collections and schemas may not be defined using these names.
+	// For example, collections may not be defined using these names.
 	ReservedTypeNames = map[string]struct{}{
 		SelfTypeName: {},
 	}

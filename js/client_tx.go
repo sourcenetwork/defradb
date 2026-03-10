@@ -38,7 +38,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"id":                         txn.ID(),
 		"commit":                     goji.Async(wrapper.commit),
 		"discard":                    goji.Async(wrapper.discard),
-		"addSchema":                  goji.Async(wrapper.addSchema),
+		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),
@@ -74,8 +74,8 @@ func (t *transaction) discard(this js.Value, args []js.Value) (js.Value, error) 
 	return js.Undefined(), nil
 }
 
-func (t *transaction) addSchema(this js.Value, args []js.Value) (js.Value, error) {
-	schema, err := stringArg(args, 0, "schema")
+func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, error) {
+	sdl, err := stringArg(args, 0, "sdl")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -83,9 +83,9 @@ func (t *transaction) addSchema(this js.Value, args []js.Value) (js.Value, error
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddSchema()
+	opt := options.AddCollection()
 	setOptIdentity(opt, args, 1)
-	cols, err := t.txn.AddSchema(ctx, schema, opt)
+	cols, err := t.txn.AddCollection(ctx, sdl, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

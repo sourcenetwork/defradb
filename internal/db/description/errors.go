@@ -13,14 +13,14 @@ package description
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errFailedToCloseSchemaQuery     string = "failed to close schema prefix query"
-	errFailedToCloseCollectionQuery string = "failed to close collection prefix query"
+	errFailedToCloseCollectionVersionQuery string = "failed to close collection version prefix query"
+	errFailedToCloseCollectionQuery        string = "failed to close collection prefix query"
 )
 
-// NewErrFailedToCloseSchemaQuery returns a new error indicating that the query
-// to add a schema failed to close.
-func NewErrFailedToCloseSchemaQuery(inner error) error {
-	return errors.Wrap(errFailedToCloseSchemaQuery, inner)
+// NewErrFailedToCloseCollectionVersionQuery returns a new error indicating that the query
+// to get a collection version failed to close.
+func NewErrFailedToCloseCollectionVersionQuery(inner error) error {
+	return errors.Wrap(errFailedToCloseCollectionVersionQuery, inner)
 }
 
 // NewErrFailedToCreateCollectionQuery returns a new error indicating that the query

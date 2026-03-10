@@ -92,7 +92,7 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 
 	ccipPost := openapi3.NewOperation()
 	ccipPost.Description = "CCIP POST endpoint"
-	ccipPost.OperationID = "ccip_post"
+	ccipPost.OperationID = "post_ccip"
 	ccipPost.Tags = []string{"ccip"}
 	ccipPost.RequestBody = &openapi3.RequestBodyRef{
 		Value: ccipRequest,
@@ -110,7 +110,7 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 
 	ccipGet := openapi3.NewOperation()
 	ccipGet.Description = "CCIP GET endpoint"
-	ccipGet.OperationID = "ccip_get"
+	ccipGet.OperationID = "get_ccip"
 	ccipGet.Tags = []string{"ccip"}
 	ccipGet.AddParameter(dataPathParam)
 	ccipGet.AddParameter(senderPathParam)

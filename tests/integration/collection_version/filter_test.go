@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package collection_version
 
@@ -17,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestFilterForSimpleSchema(t *testing.T) {
+func TestFilterForSimpleCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -129,7 +130,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-var testFilterForSimpleSchemaArgProps = map[string]any{
+var testFilterForSimpleCollectionArgProps = map[string]any{
 	"name": struct{}{},
 	"type": map[string]any{
 		"name":        struct{}{},
@@ -147,14 +148,14 @@ var defaultUserArgsWithoutFilter = trimFields(
 		offsetArg,
 		buildOrderArg("Users"),
 	},
-	testFilterForSimpleSchemaArgProps,
+	testFilterForSimpleCollectionArgProps,
 )
 
-func TestFilterForOneToOneSchema(t *testing.T) {
+func TestFilterForOneToOneCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Book {
 						name: String
 						author: Author
@@ -282,7 +283,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-var testFilterForOneToOneSchemaArgProps = map[string]any{
+var testFilterForOneToOneCollectionArgProps = map[string]any{
 	"name": struct{}{},
 	"type": map[string]any{
 		"name":        struct{}{},
@@ -300,14 +301,14 @@ var defaultBookArgsWithoutFilter = trimFields(
 		offsetArg,
 		buildOrderArg("Book"),
 	},
-	testFilterForOneToOneSchemaArgProps,
+	testFilterForOneToOneCollectionArgProps,
 )
 
-func TestSchemaFilterInputs_WithJSONField_Succeeds(t *testing.T) {
+func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						custom: JSON
 					}

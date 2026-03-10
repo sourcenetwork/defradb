@@ -618,7 +618,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 		}
 
 		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
+			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
 		}
 	}
 

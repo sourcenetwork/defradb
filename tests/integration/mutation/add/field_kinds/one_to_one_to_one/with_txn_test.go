@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package one_to_one_to_one
 
@@ -139,14 +140,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 					},
 				},
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
 			// The second commit fails with a transaction conflict due to SSI semantics:
 			// - Txn0 writes index key for Website publisher, reads index key for Online publisher (via query)
 			// - Txn1 writes index key for Online publisher, reads index key for Website publisher (via query)
 			// - This creates an anti-dependency cycle that SSI detects as a conflict
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
@@ -292,10 +293,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 			// Commit the transactions before querying the end result
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.TransactionCommit{
+			testUtils.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

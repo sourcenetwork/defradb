@@ -989,7 +989,7 @@ func getTopLevelInfo(
 
 		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 
-		// Map all fields from schema into the map as they are fetched automatically
+		// Map all fields from collection into the map as they are fetched automatically
 		for _, f := range collection.Version().Fields {
 			if f.RelationName.HasValue() && f.Kind.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
@@ -1246,7 +1246,7 @@ func resolveSecondaryRelationIDs(
 	store client.TxnStore,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.CollectionVersion,
+	colDef client.CollectionVersion,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -1258,7 +1258,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := schema.GetFieldByName(existingField.Name)
+		fieldDesc, descFound := colDef.GetFieldByName(existingField.Name)
 		if !descFound {
 			continue
 		}

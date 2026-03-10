@@ -297,7 +297,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 		storedCollectionIDs = make(map[string]struct{})
 	}
 
-	// Update the list of schemas for this replicator prior to persisting.
+	// Update the list of collections for this replicator prior to persisting.
 	storedRep.CollectionIDs = []string{}
 	for id := range storedCollectionIDs {
 		storedRep.CollectionIDs = append(storedRep.CollectionIDs, id)

@@ -54,10 +54,6 @@ const (
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 )
 
-var (
-	errNotFound string = corekv.ErrNotFound.Error()
-)
-
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
@@ -92,7 +88,6 @@ var (
 	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
-	ErrNotFound                              = errors.New(errNotFound)
 	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
 	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
 	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
@@ -100,6 +95,7 @@ var (
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
+	ErrIndexNameRequired                     = errors.New("index name is required")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -179,10 +175,10 @@ func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) er
 	)
 }
 
-func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
+func NewErrCollectionNotFoundForRoot(collectionRoot string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaRoot", schemaRoot),
+		errors.NewKV("CollectionRoot", collectionRoot),
 	)
 }
 
@@ -267,10 +263,6 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
-}
-
-func NewErrNotFound(kv errors.KV) error {
-	return errors.New(errNotFound, kv)
 }
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {

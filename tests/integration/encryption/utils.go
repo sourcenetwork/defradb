@@ -1,12 +1,13 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package encryption
 
@@ -17,7 +18,7 @@ import (
 
 // we explicitly set LWW CRDT type because we want to test encryption with this specific CRDT type
 // and we don't want to rely on the default behavior
-const userCollectionGQLSchema = (`
+const userCollection = (`
 	type Users {
 		name: String
 		age: Int @crdt(type: lww)
@@ -38,9 +39,9 @@ const (
 	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
 )
 
-func updateUserCollectionSchema() *action.AddSchema {
-	return &action.AddSchema{
-		Schema: userCollectionGQLSchema,
+func addUserCollection() *action.AddCollection {
+	return &action.AddCollection{
+		SDL: userCollection,
 	}
 }
 

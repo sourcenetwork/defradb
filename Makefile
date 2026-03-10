@@ -123,9 +123,9 @@ start:
 client\:dump:
 	./build/defradb client dump
 
-.PHONY: client\:add-schema
-client\:add-schema:
-	./build/defradb client schema add -f examples/schema/bookauthpub.graphql
+.PHONY: client\:collection-add
+client\:collection-add:
+	./build/defradb client collection add -f examples/collection/bookauthpub.graphql
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
@@ -403,7 +403,9 @@ validate\:circleci:
 .PHONY: lint
 lint:
 	golangci-lint config verify --config=tools/configs/golangci.yaml
+	golangci-lint config verify --config=tools/configs/golangci-tests.yaml
 	golangci-lint run --config=tools/configs/golangci.yaml
+	golangci-lint run --config=tools/configs/golangci-tests.yaml ./tests/...
 	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix

@@ -115,7 +115,7 @@ func convertBetweenMaps(srcMap *core.DocumentMapping, dstMap *core.DocumentMappi
 	for underlyingName, srcIndexes := range srcMap.IndexesByName {
 		for _, srcIndex := range srcIndexes {
 			if srcIndex >= len(src.Fields) {
-				// Several system fields are not included in schema only types, and there is a mismatch somewhere
+				// Several system fields are not included in embedded-only types, and there is a mismatch somewhere
 				// that means we have to handle them here with a continue
 				continue
 			}

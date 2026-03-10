@@ -253,7 +253,7 @@ func prepareScanNodeFilterForTypeJoin(
 ) {
 	subType.ShowDeleted = parent.selectReq.ShowDeleted
 
-	scan, ok := source.(*scanNode)
+	scan, ok := walkAndFindPlanType[*scanNode](source)
 	if !ok || scan.filter == nil {
 		return
 	}
@@ -269,6 +269,7 @@ func prepareScanNodeFilterForTypeJoin(
 	} else {
 		var parentFilter *mapper.Filter
 		scan.filter, parentFilter = filter.SplitByFields(scan.filter, subType.Field)
+
 		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = parentFilter

@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -421,8 +422,8 @@ func performAction(
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
-	case AddEncryptedIndex:
-		addEncryptedIndex(s, action)
+	case NewEncryptedIndex:
+		newEncryptedIndex(s, action)
 
 	case ListEncryptedIndexes:
 		listEncryptedIndexes(s, action)
@@ -433,13 +434,13 @@ func performAction(
 	case DeleteEncryptedIndex:
 		deleteEncryptedIndex(s, action)
 
-	case BackupExport:
-		backupExport(s, action)
+	case ExportBackup:
+		exportBackup(s, action)
 
-	case BackupImport:
-		backupImport(s, action)
+	case ImportBackup:
+		importBackup(s, action)
 
-	case TransactionCommit:
+	case CommitTransaction:
 		commitTransaction(s, action)
 
 	case IntrospectionRequest:
@@ -584,20 +585,20 @@ func benchmarkAction(
 // referenced across multiple nodes by a consistent, predictable index - allowing a single
 // action to target the same collection across multiple nodes.
 //
-// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
 func getCollectionNames(testCase TestCase) []string {
 	nextIndex := 0
 	collectionIndexByName := map[string]int{}
 
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case *action.AddSchema:
+		case *action.AddCollection:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 
 		case *action.AddView:
 			if action.ExpectedError != "" {
@@ -605,7 +606,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.SDL, nextIndex)
+			nextIndex = getCollectionNamesFromSDL(collectionIndexByName, action.SDL, nextIndex)
 		}
 	}
 
@@ -617,9 +618,9 @@ func getCollectionNames(testCase TestCase) []string {
 	return collectionNames
 }
 
-func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
-	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
-	splitByType := strings.Split(schema, "type ")
+func getCollectionNamesFromSDL(result map[string]int, sdl string, nextIndex int) int {
+	// WARNING: This will not work with collection definitions ending in `type`, e.g. `user_type`
+	splitByType := strings.Split(sdl, "type ")
 	// Skip the first, as that precede `type ` if `type ` is present,
 	// else there are no types.
 	for i := 1; i < len(splitByType); i++ {
@@ -751,7 +752,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 // will be split.
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
-// they will be split at the first non SchemaUpdate/AddDoc/UpdateDoc action.
+// they will be split at the first non AddCollection/AddDoc/UpdateDoc action.
 func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
@@ -771,7 +772,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, *action.AddDoc, UpdateDoc, Restart:
+		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1156,7 +1157,7 @@ func deleteDoc(
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
-		opts := options.CollectionDelete()
+		opts := options.DeleteDocument()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1164,7 +1165,7 @@ func deleteDoc(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.Delete(s.Ctx, docID, opts)
+				_, err := collection.DeleteDocument(s.Ctx, docID, opts)
 				return err
 			},
 		)
@@ -1245,11 +1246,11 @@ func updateDocViaColSave(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1258,11 +1259,11 @@ func updateDocViaColSave(
 		return err
 	}
 
-	saveOpts := options.CollectionSave()
+	saveOpts := options.SaveDocument()
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Save(s.Ctx, doc, saveOpts)
+	return collection.SaveDocument(s.Ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1277,11 +1278,11 @@ func updateDocViaColUpdate(
 	s.DocIDsLock.RUnlock()
 
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.CollectionGet()
+	getOpts := options.GetDocument()
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
+	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1290,11 +1291,11 @@ func updateDocViaColUpdate(
 		return err
 	}
 
-	updateOpts := options.CollectionUpdate()
+	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Update(s.Ctx, doc, updateOpts)
+	return collection.UpdateDocument(s.Ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1345,7 +1346,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
-		opts := options.CollectionUpdateWithFilter()
+		opts := options.UpdateDocumentsWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1354,7 +1355,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(s.Ctx, action.Filter, action.Updater, opts)
+				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, action.Filter, action.Updater, opts)
 				return err
 			},
 		)
@@ -1374,9 +1375,9 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	}
 }
 
-func addEncryptedIndex(
+func newEncryptedIndex(
 	s *state.State,
-	action AddEncryptedIndex,
+	action NewEncryptedIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
@@ -1391,7 +1392,7 @@ func addEncryptedIndex(
 			Type:      client.EncryptedIndexType(action.Type),
 		}
 
-		opts := options.AddEncryptedIndex()
+		opts := options.NewEncryptedIndex()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1400,7 +1401,7 @@ func addEncryptedIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.AddEncryptedIndex(s.Ctx, indexDesc, opts)
+				_, err := collection.NewEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)
@@ -1426,7 +1427,7 @@ func listEncryptedIndexes(
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
 
-		opts := options.CollectionListEncryptedIndexes()
+		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1533,10 +1534,10 @@ func deleteEncryptedIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
-// backupExport generates a backup using the db api.
-func backupExport(
+// exportBackup generates a backup using the db api.
+func exportBackup(
 	s *state.State,
-	action BackupExport,
+	action ExportBackup,
 ) {
 	if action.Config.Filepath == "" {
 		action.Config.Filepath = s.T.TempDir() + testJSONFile
@@ -1565,10 +1566,10 @@ func backupExport(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
-// backupImport imports data from a backup using the db api.
-func backupImport(
+// importBackup imports data from a backup using the db api.
+func importBackup(
 	s *state.State,
-	action BackupImport,
+	action ImportBackup,
 ) {
 	if action.Filepath == "" {
 		action.Filepath = s.T.TempDir() + testJSONFile
@@ -1653,7 +1654,7 @@ func getTransaction(
 // an error is returned on commit.
 func commitTransaction(
 	s *state.State,
-	action TransactionCommit,
+	action CommitTransaction,
 ) {
 	err := s.Txns[action.TransactionID].Commit()
 	if err != nil {
@@ -1967,9 +1968,9 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case BackupImport:
+		case ImportBackup:
 			hasBackupAction = true
-		case BackupExport:
+		case ExportBackup:
 			hasBackupAction = true
 		}
 	}
@@ -1979,13 +1980,13 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions
-// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
+// contain a collection definition with vector embedding generation and skipVectoEmbeeddingTest is true.
 func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
-		case *action.AddSchema:
-			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+		case *action.AddCollection:
+			hasVectorEmbedding = strings.Contains(a.SDL, "@embedding")
 		}
 	}
 	if !runVectorEmbeddingTests && hasVectorEmbedding {

@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package truncate
 
@@ -20,14 +21,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
+func TestTruncateCollectionViewAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -100,14 +101,14 @@ func TestCollectionTruncateViewAdd_RemovesDocument(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestCollectionTruncateViewAdd_TruncatingSourceDoesNotTruncateView(t *testing.T) {
+func TestTruncateCollectionViewAdd_TruncatingSourceDoesNotTruncateView(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

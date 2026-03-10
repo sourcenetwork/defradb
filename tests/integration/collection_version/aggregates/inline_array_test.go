@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package aggregates
 
@@ -17,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -141,11 +142,11 @@ func TestSchemaAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						FavouriteFloats: [Float!]
 					}
@@ -263,11 +264,11 @@ func TestSchemaAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersAverage(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
@@ -477,11 +478,11 @@ var aggregateVersionArg = map[string]any{
 	},
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Boolean]
 					}
@@ -603,11 +604,11 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Boolean!]
 					}
@@ -729,11 +730,11 @@ func TestSchemaAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Int]
 					}
@@ -879,11 +880,11 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Int!]
 					}
@@ -1029,11 +1030,11 @@ func TestSchemaAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Float]
 					}
@@ -1179,11 +1180,11 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [Float!]
 					}
@@ -1329,11 +1330,11 @@ func TestSchemaAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [String]
 					}
@@ -1479,11 +1480,11 @@ func TestSchemaAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
+func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Favourites: [String!]
 					}

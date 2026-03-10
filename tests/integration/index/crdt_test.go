@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package index
 
@@ -19,18 +20,18 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
+func TestIndexNew_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -42,18 +43,18 @@ func TestIndexAdd_WithPNCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
+func TestIndexNew_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
@@ -65,11 +66,11 @@ func TestIndexAdd_WithPCounterField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexNew_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter) @index
@@ -83,11 +84,11 @@ func TestIndexAdd_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
+func TestIndexNew_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pcounter) @index
@@ -101,18 +102,18 @@ func TestIndexAdd_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
+func TestIndexNew_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						score: Float @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "score_index",
 				FieldName:     "score",
@@ -124,18 +125,18 @@ func TestIndexAdd_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
+func TestIndexNew_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID: 0,
 				IndexName:    "age_index",
 				FieldName:    "age",
@@ -168,18 +169,18 @@ func TestIndexAdd_WithLWWField_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
+func TestIndexNew_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "composite_index",
 				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "points"}},
@@ -191,18 +192,18 @@ func TestIndexAdd_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexNew_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						points: Int @crdt(type: pncounter)
 					}
 				`,
 			},
-			&action.AddIndex{
+			&action.NewIndex{
 				CollectionID:  0,
 				IndexName:     "unique_points_index",
 				FieldName:     "points",
@@ -215,11 +216,11 @@ func TestIndexAdd_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexAdd_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
+func TestIndexNew_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "points"}]) {
 						name: String
 						points: Int @crdt(type: pncounter)

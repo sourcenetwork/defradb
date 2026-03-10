@@ -14,8 +14,8 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result TransactionCommit(uintptr_t txnPtr);
-extern void TransactionDiscard(uintptr_t txnPtr);
+extern Result CommitTransaction(uintptr_t txnPtr);
+extern void DiscardTransaction(uintptr_t txnPtr);
 */
 import "C"
 
@@ -53,7 +53,7 @@ func (txn *Transaction) StartTS() time.Time {
 }
 
 func (txn *Transaction) Commit() error {
-	res := ConvertAndFreeCResult(C.TransactionCommit(C.uintptr_t(txn.handle)))
+	res := ConvertAndFreeCResult(C.CommitTransaction(C.uintptr_t(txn.handle)))
 	txnHandleMap.Delete(txn.ID())
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -62,7 +62,7 @@ func (txn *Transaction) Commit() error {
 }
 
 func (txn *Transaction) Discard() {
-	C.TransactionDiscard(C.uintptr_t(txn.handle))
+	C.DiscardTransaction(C.uintptr_t(txn.handle))
 	txnHandleMap.Delete(txn.ID())
 }
 
@@ -113,12 +113,12 @@ func (txn *Transaction) VerifySignature(
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(
+func (txn *Transaction) AddCollection(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
+	return txn.CWrapper.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(

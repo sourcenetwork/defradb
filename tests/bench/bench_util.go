@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package bench
 
@@ -53,15 +54,13 @@ func SetupCollections(
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
-	schema, err := ConstructSchema(fixture)
+	sdl, err := ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
 
-	// b.Logf("Loading schema: \n%s", schema)
-
-	if _, err := db.AddSchema(ctx, schema); err != nil {
-		return nil, errors.Wrap("couldn't load schema", err)
+	if _, err := db.AddCollection(ctx, sdl); err != nil {
+		return nil, errors.Wrap("couldn't load SDL", err)
 	}
 
 	// loop to get collections
@@ -77,22 +76,22 @@ func SetupCollections(
 	return collections, nil
 }
 
-func ConstructSchema(fixture fixtures.Generator) (string, error) {
+func ConstructSDL(fixture fixtures.Generator) (string, error) {
 	numTypes := len(fixture.Types())
-	var schema string
+	var sdl string
 
-	// loop to get the schemas
+	// loop to get the collection definitions
 	for i := 0; i < numTypes; i++ {
 		gql, err := fixture.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
 			return "", errors.Wrap("failed generating GQL", err)
 		}
 
-		schema += gql
-		schema += "\n\n"
+		sdl += gql
+		sdl += "\n\n"
 	}
 
-	return schema, nil
+	return sdl, nil
 }
 
 func SetupDBAndCollections(
@@ -170,7 +169,7 @@ func BackfillBenchmarkDB(
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Add(ctx, doc); err != nil &&
+							if err := cols[j].AddDocument(ctx, doc); err != nil &&
 								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,

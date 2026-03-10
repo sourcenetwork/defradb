@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package fixtures
 
@@ -46,17 +47,17 @@ func OptionFieldDirective(typeName, field, directive string) Option {
 type Generator struct {
 	ctx context.Context
 
-	schema string
-	types  []any
+	collectionName string
+	types          []any
 	// map of type name to field name to list of directives
 	directives map[string]map[string][]string
 }
 
-func ForSchema(ctx context.Context, schemaName string, options ...Option) Generator {
+func ForCollection(ctx context.Context, collectionName string, options ...Option) Generator {
 	g := Generator{
-		ctx:    ctx,
-		schema: schemaName,
-		types:  registeredFixtures[schemaName],
+		ctx:            ctx,
+		collectionName: collectionName,
+		types:          registeredFixtures[collectionName],
 	}
 
 	for _, o := range options {

@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package query
 
@@ -23,13 +24,13 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *testing.T) {
+func TestCollectionMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *testing.T) {
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -85,14 +86,14 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t *testing.T) {
+func TestCollectionMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t *testing.T) {
 	collectionVersionID1 := "bafyreiabmrtgxy5dgotuc53gfaamuqhlzugyeetzbuv7s3x6ufmlr5ylga"
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
@@ -110,7 +111,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID2,
 			},
-			// Create John using the new schema version
+			// Create John using the new collection version
 			&action.AddDoc{
 				Doc: `{
 					"name": "John",
@@ -134,7 +135,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 					},
 				},
 			},
-			// Set the schema version back to the original
+			// Set the collection version back to the original
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID1,
 			},
@@ -161,7 +162,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_ClearsMigrations(t *testing.T) {
+func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_ClearsMigrations(t *testing.T) {
 	collectionVersionID1 := "bafyreiabmrtgxy5dgotuc53gfaamuqhlzugyeetzbuv7s3x6ufmlr5ylga"
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
@@ -169,15 +170,15 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_C
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						verified: Boolean
 					}
 				`,
 			},
-			// Create John using the original schema version
+			// Create John using the original collection version
 			&action.AddDoc{
 				Doc: `{
 					"name": "John",
@@ -209,7 +210,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_C
 					},
 				},
 			},
-			// Set the schema version back to the original
+			// Set the collection version back to the original
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID1,
 			},

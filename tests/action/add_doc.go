@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -165,7 +166,7 @@ func addDocViaColSave(
 	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
+		err := collection.SaveDocument(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -194,13 +195,13 @@ func addDocViaColAdd(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.AddMany(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
+		err := collection.AddManyDocuments(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Add(ctx, docs[0], makeDocAddOptions(a.s, a, nodeIndex)...)
+		err := collection.AddDocument(ctx, docs[0], makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -328,28 +329,28 @@ func makeDocSaveOptions(
 	s *state.State,
 	action *AddDoc,
 	nodeIndex int,
-) []options.Enumerable[options.CollectionSaveOptions] {
-	opts := options.CollectionSave().
+) []options.Enumerable[options.SaveDocumentOptions] {
+	opts := options.SaveDocument().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Enumerable[options.CollectionSaveOptions]{opts}
+	return []options.Enumerable[options.SaveDocumentOptions]{opts}
 }
 
 func makeDocAddOptions(
 	s *state.State,
 	action *AddDoc,
 	nodeIndex int,
-) []options.Enumerable[options.CollectionAddOptions] {
-	opts := options.CollectionAdd().
+) []options.Enumerable[options.AddDocumentOptions] {
+	opts := options.AddDocument().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Enumerable[options.CollectionAddOptions]{opts}
+	return []options.Enumerable[options.AddDocumentOptions]{opts}
 }

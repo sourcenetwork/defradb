@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// definitionState holds collection and schema descriptions in easily accessible
+// definitionState holds collection descriptions in easily accessible
 // sets.
 //
 // It is read only and will not and should not be mutated.
@@ -118,7 +118,7 @@ func (s *definitionState) getCollection(
 	return client.CollectionVersion{}, false
 }
 
-// definitionValidator aliases the signature that all schema and collection
+// definitionValidator aliases the signature that all collection
 // validation functions should follow.
 type definitionValidator = func(
 	ctx context.Context,
@@ -517,11 +517,11 @@ func validateEncryptedIndexesNotModified(
 
 		if len(oldCol.EncryptedIndexes) != len(newCol.EncryptedIndexes) {
 			errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
-		}
-
-		for i := range oldCol.EncryptedIndexes {
-			if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
-				errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+		} else {
+			for i := range oldCol.EncryptedIndexes {
+				if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
+					errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+				}
 			}
 		}
 	}

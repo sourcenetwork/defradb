@@ -15,16 +15,16 @@ import (
 )
 
 var (
-	ErrSelfTargetForReplicator = errors.New("can't target ourselves as a replicator")
-	ErrReplicatorNotFound      = errors.New("replicator not found")
-	ErrReplicatorCollections   = errors.New("failed to get collections for replicator")
-	ErrContextDone             = errors.New("context done")
-	errPublishingToDocIDTopic  = errors.New("can't publish log for document")
-	errPublishingToSchemaTopic = errors.New("can't publish log for collection")
-	ErrTimeoutDocSync          = errors.New("timeout while syncing doc")
-	ErrTimeoutCollectionSync   = errors.New("timeout while syncing branchable collection")
-	ErrCollectionNotBranchable = errors.New("collection is not branchable")
-	ErrNoHeadsForBranchableCol = errors.New("no heads found for branchable collection")
+	ErrSelfTargetForReplicator     = errors.New("can't target ourselves as a replicator")
+	ErrReplicatorNotFound          = errors.New("replicator not found")
+	ErrReplicatorCollections       = errors.New("failed to get collections for replicator")
+	ErrContextDone                 = errors.New("context done")
+	errPublishingToDocIDTopic      = errors.New("can't publish log for document")
+	errPublishingToCollectionTopic = errors.New("can't publish log for collection")
+	ErrTimeoutDocSync              = errors.New("timeout while syncing doc")
+	ErrTimeoutCollectionSync       = errors.New("timeout while syncing branchable collection")
+	ErrCollectionNotBranchable     = errors.New("collection is not branchable")
+	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
@@ -39,9 +39,9 @@ func NewErrPublishingToDocIDTopic(inner error, cid, docID string) error {
 	)
 }
 
-func NewErrPublishingToSchemaTopic(inner error, cid, colID string) error {
+func NewErrPublishingToCollectionTopic(inner error, cid, colID string) error {
 	return errors.WithStack(
-		errors.Join(inner, errPublishingToSchemaTopic),
+		errors.Join(inner, errPublishingToCollectionTopic),
 		errors.NewKV("CID", cid),
 		errors.NewKV("CollectionID", colID),
 	)

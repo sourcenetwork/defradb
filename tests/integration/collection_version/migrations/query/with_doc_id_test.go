@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package query
 
@@ -22,11 +23,11 @@ import (
 )
 
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
-func TestSchemaMigrationQueryByDocID(t *testing.T) {
+func TestCollectionMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -101,11 +102,11 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 //
 // At the time of writing, the lens pool size is hardcoded to 5, so we should test with 6
 // documents/queries, if the size changes so should this test.
-func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
+func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}

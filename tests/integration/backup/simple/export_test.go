@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package backup
 
@@ -25,7 +26,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				ExpectedContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
 			},
 		},
@@ -41,7 +42,7 @@ func TestBackupExport_Empty_NoError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				ExpectedContent: `{"User":[{"_docID":"bae-a0fb15ab-5c89-507f-8533-1d9034625de5","_docIDNew":"bae-a0fb15ab-5c89-507f-8533-1d9034625de5"}]}`,
 			},
 		},
@@ -57,7 +58,7 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				Config: client.BackupConfig{
 					Filepath: t.TempDir() + "/some/test.json",
 				},
@@ -76,11 +77,11 @@ func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				Config: client.BackupConfig{
 					Collections: []string{"Invalid"},
 				},
-				ExpectedError: "failed to get collection: key not found. Name: Invalid",
+				ExpectedError: "failed to get collection: collection not found. Name: Invalid",
 			},
 		},
 	}
@@ -95,7 +96,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.BackupExport{
+			testUtils.ExportBackup{
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},

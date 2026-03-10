@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package planner
 
@@ -111,7 +112,7 @@ func buildParser(
 	ctx context.Context,
 	fixture fixtures.Generator,
 ) (core.Parser, error) {
-	schema, err := benchutils.ConstructSchema(fixture)
+	sdl, err := benchutils.ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +122,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionVersions, err := parser.ParseSDL(ctx, schema)
+	collectionVersions, err := parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}

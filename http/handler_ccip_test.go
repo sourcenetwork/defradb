@@ -203,7 +203,7 @@ func setupDatabase(t *testing.T) DB {
 	cdb, err := db.NewDB(ctx, store, adminInfo)
 	require.NoError(t, err)
 
-	_, err = cdb.AddSchema(ctx, `type User {
+	_, err = cdb.AddCollection(ctx, `type User {
 		name: String
 	}`)
 	require.NoError(t, err)
@@ -214,13 +214,13 @@ func setupDatabase(t *testing.T) DB {
 	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Add(ctx, doc)
+	err = col.AddDocument(ctx, doc)
 	require.NoError(t, err)
 
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Add(ctx, doc2)
+	err = col.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	return cdb

@@ -475,30 +475,30 @@ func (b *ListIndexesOptionsBuilder) SetIdentity(id identity.Identity) *ListIndex
 	return b
 }
 
-// AddSchemaOptions contains options for AddSchema operation.
-type AddSchemaOptions struct {
+// AddCollectionOptions contains options for AddCollection operation.
+type AddCollectionOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *AddSchemaOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *AddCollectionOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// AddSchemaOptionsBuilder is a builder for AddSchemaOptions.
-type AddSchemaOptionsBuilder struct {
-	enumerableBuilder[AddSchemaOptions]
+// AddCollectionOptionsBuilder is a builder for AddCollectionOptions.
+type AddCollectionOptionsBuilder struct {
+	enumerableBuilder[AddCollectionOptions]
 }
 
-// AddSchema creates a new AddSchemaOptionsBuilder instance.
-func AddSchema() *AddSchemaOptionsBuilder {
-	return &AddSchemaOptionsBuilder{}
+// AddCollection creates a new AddCollectionOptionsBuilder instance.
+func AddCollection() *AddCollectionOptionsBuilder {
+	return &AddCollectionOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *AddSchemaOptionsBuilder) SetIdentity(id identity.Identity) *AddSchemaOptionsBuilder {
-	b.append(func(opts *AddSchemaOptions) {
+func (b *AddCollectionOptionsBuilder) SetIdentity(id identity.Identity) *AddCollectionOptionsBuilder {
+	b.append(func(opts *AddCollectionOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

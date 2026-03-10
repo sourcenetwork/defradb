@@ -1,12 +1,13 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package collection_version
 
@@ -22,8 +23,8 @@ import (
 func TestColVersionSimpleAddsColGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 				ExpectedResults: []client.CollectionVersion{
@@ -61,17 +62,17 @@ func TestColVersionSimpleAddsColGivenEmptyType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenDuplicateCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
 			testUtils.SetupComplete{},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 				ExpectedError: "collection already exists",
@@ -82,11 +83,11 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 					type Users {}
 				`,
@@ -98,11 +99,11 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDLMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 					type Users {}
 					type Users {}
@@ -115,16 +116,16 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleAddsSchemaGivenNewTypes(t *testing.T) {
+func TestCollectionVersionSimpleAddsCollectionGivenNewTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Books {}
 				`,
 			},
@@ -148,11 +149,11 @@ func TestSchemaSimpleAddsSchemaGivenNewTypes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleAddsSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
+func TestCollectionVersionSimpleAddsCollectionWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {}
 				`,
 			},
@@ -184,11 +185,11 @@ func TestSchemaSimpleAddsSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: NotAType
 					}
@@ -201,11 +202,11 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: NotAType
 						age: NotAType
@@ -219,11 +220,11 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleAddsSchemaGivenTypeWithStringField(t *testing.T) {
+func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -265,11 +266,11 @@ func TestSchemaSimpleAddsSchemaGivenTypeWithStringField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenNonNullField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						email: String!
 					}
@@ -282,11 +283,11 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
+func TestCollectionVersionSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Dogs {
 						name: String
 						user: Users
@@ -303,11 +304,11 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleAddsSchemaGivenTypeWithBlobField(t *testing.T) {
+func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Blob
 					}
@@ -349,11 +350,11 @@ func TestSchemaSimpleAddsSchemaGivenTypeWithBlobField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithJSONField_AddsSchemaGivenType(t *testing.T) {
+func TestCollectionVersionSimple_WithJSONField_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: JSON
 					}
@@ -395,11 +396,11 @@ func TestSchemaSimple_WithJSONField_AddsSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloat32Field_AddsSchemaGivenType(t *testing.T) {
+func TestCollectionVersionSimple_WithFloat32Field_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Float32
 					}
@@ -441,11 +442,11 @@ func TestSchemaSimple_WithFloat32Field_AddsSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloat64Field_AddsSchemaGivenType(t *testing.T) {
+func TestCollectionVersionSimple_WithFloat64Field_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Float64
 					}
@@ -487,11 +488,11 @@ func TestSchemaSimple_WithFloat64Field_AddsSchemaGivenType(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimple_WithFloatField_AddsSchemaGivenType(t *testing.T) {
+func TestCollectionVersionSimple_WithFloatField_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						data: Float
 					}
@@ -537,11 +538,11 @@ func TestSchemaSimple_WithFloatField_AddsSchemaGivenType(t *testing.T) {
 //
 // It also documents a bug with graphql-go introspection.
 // TODO: https://github.com/sourcenetwork/defradb/issues/3429
-func TestSchemaSimple_WithAllTypes_AddsSchemaGivenTypes(t *testing.T) {
+func TestCollectionVersionSimple_WithAllTypes_AddsCollectionGivenTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						tBool: Boolean
 						tNBoolA: [Boolean]
