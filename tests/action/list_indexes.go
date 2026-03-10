@@ -69,6 +69,11 @@ func (a *ListIndexes) Execute() {
 		}
 	}
 
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		txnOption = immutable.Some(txn)
+	}
+
 	if len(a.s.Nodes) == 0 {
 		return
 	}
@@ -79,20 +84,8 @@ func (a *ListIndexes) Execute() {
 	for index, nodeID := range nodeIDs {
 
 		node := a.s.Nodes[index]
-		var collections []client.Collection
-		var err error
-		if hadTxn {
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		}
 
+		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
