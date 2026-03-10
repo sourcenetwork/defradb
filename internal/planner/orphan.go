@@ -14,6 +14,8 @@ import (
 	"errors"
 	"maps"
 
+	"github.com/sourcenetwork/immutable/enumerable"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -48,9 +50,9 @@ type joinExpandState struct {
 type orphanWiringRequest struct {
 	join      *invertibleTypeJoin
 	direction mapper.SortDirection
-	// useExclusion is true when the parent side does NOT store the FK,
-	// requiring orphan identification by exclusion from join results.
-	useExclusion bool
+	// usePointLookup is true when the parent side does NOT store the FK,
+	// requiring orphan identification via point lookups on the child's FK index.
+	usePointLookup bool
 }
 
 // orphanExecInfo contains execution information for the orphanNode.
@@ -68,20 +70,22 @@ type orphanExecInfo struct {
 // It operates in two modes based on whether source is set:
 //
 // Standalone mode (source == nil): Used inside a sequenceNode for FK IS NULL path.
-// Fetches all orphans on the first Next() call via subQueryFetcher, then yields
+// Fetches all orphans on the first Next() call via scanNode clone, then yields
 // them sequentially.
 //
-// Wrapper mode (source != nil): Wraps a source planNode for exclusion path.
-// Buffers source docs (for ASC) or yields them first (for DESC), collects their
-// IDs, then fetches orphans by exclusion.
+// Wrapper mode (source != nil): Wraps a source planNode for secondary-side orphans.
+// Two distinct phases concatenated via enumerable.Concat:
+//
+//	ASC: orphans (via point lookup) → source docs (from ordered join)
+//	DESC: source docs (from ordered join) → orphans (via point lookup)
 type orphanNode struct {
 	docMapper
 
 	// join provides access to the join internals for orphan fetching
 	join *invertibleTypeJoin
 
-	// Optional source for wrapper mode (exclusion path).
-	// When set, the node wraps source and buffers docs for exclusion.
+	// Optional source for wrapper mode.
+	// When set, the node wraps source and interleaves orphans.
 	// When nil, the node fetches orphans independently (FK IS NULL path).
 	source         planNode
 	orderDirection mapper.SortDirection
@@ -93,20 +97,22 @@ type orphanNode struct {
 	subQueryFilter           *mapper.Filter
 	subQueryRelIDFieldName   string
 	subQueryRelIDFieldMapIdx int
-	subQueryExcludeIDs       []string
 	isSubQuery               bool
-	isSubQueryExclusion      bool
 
 	// standalone iteration state (source == nil)
 	docs    []core.Doc
 	current int
 	fetched bool
 
-	// wrapper iteration state (source != nil)
-	docsToYield     []core.Doc
-	yieldedDocIDs   []string
-	sourceExhausted bool
-	orphansFetched  bool
+	// wrapper iteration state (source != nil) — phases is the concatenation of
+	// orphan and source enumerables, ordered by ASC/DESC.
+	phases enumerable.Enumerable[core.Doc]
+
+	// Streaming point-lookup state — lazily iterates parents and yields one orphan per Next().
+	parentClone        *scanNode
+	childFKFieldName   string
+	childFKFieldMapIdx int
+	pointLookupDone    bool
 
 	execInfo orphanExecInfo
 }
@@ -134,25 +140,14 @@ func (n *orphanNode) setSubQueryContext(filter *mapper.Filter, relIDFieldName st
 	n.subQueryRelIDFieldName = relIDFieldName
 	n.subQueryRelIDFieldMapIdx = relIDFieldMapIdx
 	n.isSubQuery = true
-	n.isSubQueryExclusion = false
 }
 
-// setSubQueryExclusionContext configures the orphanNode for subquery exclusion use.
-// Called with the collected source doc IDs as exclusion set.
-func (n *orphanNode) setSubQueryExclusionContext(filter *mapper.Filter, excludeIDs []string) {
-	n.subQueryFilter = filter
-	n.subQueryExcludeIDs = excludeIDs
-	n.isSubQueryExclusion = true
-	n.isSubQuery = false
-}
-
-// setSubQueryFilter configures the orphanNode (in wrapper mode) for subquery exclusion use.
+// setSubQueryFilter configures the orphanNode (in wrapper mode) for nested join use.
 // Called by retrievePrimaryDocs before each Init() cycle with the parent filter
-// constrained to the current target doc. The node collects source doc IDs
-// and passes them as the exclusion set when fetching orphans.
+// constrained to the current target doc. The orphan phase uses this filter to scope
+// the parent iteration to the relevant subset.
 func (n *orphanNode) setSubQueryFilter(filter *mapper.Filter) {
 	n.subQueryFilter = filter
-	n.isSubQueryExclusion = true
 }
 
 func (n *orphanNode) Kind() string {
@@ -163,10 +158,12 @@ func (n *orphanNode) Init() error {
 	n.docs = nil
 	n.current = 0
 	n.fetched = false
-	n.docsToYield = nil
-	n.yieldedDocIDs = nil
-	n.sourceExhausted = false
-	n.orphansFetched = false
+	n.phases = nil
+	n.pointLookupDone = false
+	if n.parentClone != nil {
+		_ = n.parentClone.Close()
+		n.parentClone = nil
+	}
 	if n.source != nil {
 		return n.source.Init()
 	}
@@ -191,10 +188,14 @@ func (n *orphanNode) Source() planNode {
 }
 
 func (n *orphanNode) Close() error {
-	if n.source != nil {
-		return n.source.Close()
+	var cloneErr error
+	if n.parentClone != nil {
+		cloneErr = n.parentClone.Close()
 	}
-	return nil
+	if n.source != nil {
+		return errors.Join(n.source.Close(), cloneErr)
+	}
+	return cloneErr
 }
 
 func (n *orphanNode) Next() (bool, error) {
@@ -224,27 +225,28 @@ func (n *orphanNode) nextStandalone() (bool, error) {
 	return true, nil
 }
 
-// nextWrapped dispatches to ASC or DESC wrapper iteration.
+// nextWrapped delegates to the concatenated phases enumerable.
 func (n *orphanNode) nextWrapped() (bool, error) {
-	if len(n.docsToYield) > 0 {
-		n.docsToYield = n.docsToYield[1:]
-		if len(n.docsToYield) > 0 {
-			return true, nil
+	if n.phases == nil {
+		orphanEnum := &orphanEnumerable{node: n}
+		sourceEnum := &sourceEnumerable{source: n.source}
+
+		if n.orderDirection == mapper.ASC {
+			n.phases = enumerable.Concat(orphanEnum, sourceEnum)
+		} else {
+			n.phases = enumerable.Concat(sourceEnum, orphanEnum)
 		}
 	}
-
-	if n.orderDirection == mapper.ASC {
-		return n.nextASC()
-	}
-	return n.nextDESC()
+	return n.phases.Next()
 }
 
 func (n *orphanNode) Value() core.Doc {
 	if n.source != nil {
-		if len(n.docsToYield) == 0 {
+		if n.phases == nil {
 			return core.Doc{}
 		}
-		return n.docsToYield[0]
+		doc, _ := n.phases.Value()
+		return doc
 	}
 	if n.current > 0 && n.current <= len(n.docs) {
 		return n.docs[n.current-1]
@@ -252,96 +254,48 @@ func (n *orphanNode) Value() core.Doc {
 	return core.Doc{}
 }
 
-// nextASC buffers all source docs, then fetches orphans by exclusion,
-// then yields orphans followed by buffered docs.
-//
-// On the first call, it drains the entire source into a local buffer while
-// collecting doc IDs for exclusion. Then it fetches orphans and populates
-// docsToYield with orphans first (ASC: nulls before non-nulls), followed
-// by the buffered source docs. Subsequent calls yield from docsToYield.
-func (n *orphanNode) nextASC() (bool, error) {
-	if n.orphansFetched {
-		return false, nil
-	}
-	n.orphansFetched = true
+// orphanEnumerable wraps the point-lookup orphan iterator as an Enumerable[core.Doc].
+type orphanEnumerable struct {
+	node    *orphanNode
+	current core.Doc
+}
 
-	var sourceDocs []core.Doc
-	for {
-		hasNext, err := n.source.Next()
-		if err != nil {
-			return false, err
-		}
-		if !hasNext {
-			break
-		}
-		doc := n.source.Value()
-		sourceDocs = append(sourceDocs, doc)
-		n.yieldedDocIDs = append(n.yieldedDocIDs, doc.GetID())
-	}
-
-	n.prepareOrphanContext()
-	orphans, err := n.fetchOrphans()
+func (e *orphanEnumerable) Next() (bool, error) {
+	doc, found, err := e.node.nextOrphanByPointLookup()
 	if err != nil {
 		return false, err
 	}
-
-	n.docsToYield = append(orphans, sourceDocs...)
-	return len(n.docsToYield) > 0, nil
+	if !found {
+		return false, nil
+	}
+	e.current = doc
+	return true, nil
 }
 
-// nextDESC yields source docs first, then fetches and yields orphans.
-func (n *orphanNode) nextDESC() (bool, error) {
-	if !n.sourceExhausted {
-		hasNext, err := n.source.Next()
-		if err != nil {
-			return false, err
-		}
-		if hasNext {
-			doc := n.source.Value()
-			n.docsToYield = append(n.docsToYield, doc)
-			n.yieldedDocIDs = append(n.yieldedDocIDs, doc.GetID())
-			return true, nil
-		}
-		n.sourceExhausted = true
-	}
-
-	if !n.orphansFetched {
-		n.orphansFetched = true
-		n.prepareOrphanContext()
-		orphans, err := n.fetchOrphans()
-		if err != nil {
-			return false, err
-		}
-		if len(orphans) > 0 {
-			n.docsToYield = append(n.docsToYield, orphans...)
-			return true, nil
-		}
-	}
-
-	return false, nil
+func (e *orphanEnumerable) Value() (core.Doc, error) {
+	return e.current, nil
 }
 
-// prepareOrphanContext sets the exclusion context before fetching orphans in wrapper mode.
-// For subquery exclusion, it passes the parent filter and collected source doc IDs.
-// For top-level, the node already has the context it needs from join state.
-func (n *orphanNode) prepareOrphanContext() {
-	if n.isSubQueryExclusion {
-		n.setSubQueryExclusionContext(n.subQueryFilter, n.yieldedDocIDs)
-	}
+func (e *orphanEnumerable) Reset() {}
+
+// sourceEnumerable wraps a planNode as an Enumerable[core.Doc].
+type sourceEnumerable struct {
+	source planNode
 }
+
+func (e *sourceEnumerable) Next() (bool, error) {
+	return e.source.Next()
+}
+
+func (e *sourceEnumerable) Value() (core.Doc, error) {
+	return e.source.Value(), nil
+}
+
+func (e *sourceEnumerable) Reset() {}
 
 // fetchOrphans fetches and returns parent documents that have no related children.
-//
-// Two strategies are used depending on which side of the relation the parent is on:
-//
-// Primary parent (stores the FK, e.g. Book._publisherID): Uses a "FK IS NULL" filter
-// to directly identify orphans via the datastore. This is efficient and precise.
-//
-// Secondary parent (no FK stored, e.g. Publisher with Book._publisherID pointing to it):
-// The parent has no FK field to check, so orphans are identified by exclusion — fetch all
-// parent docs matching the filter, then exclude those already encountered by the join.
-// This is necessary because the join scans the child's index and only finds parents that
-// have at least one child; parents with zero children never appear in the join results.
+// Used only in standalone mode (FK IS NULL path for primary-side parents) and
+// subquery mode (nested joins with primary ordering).
 func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 	n.fetched = true
 
@@ -356,12 +310,8 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 
 	var orphanFilter *mapper.Filter
 	var relationIDFieldName string
-	var excludeIDs []string
 
-	if n.isSubQueryExclusion {
-		orphanFilter = n.subQueryFilter
-		excludeIDs = n.subQueryExcludeIDs
-	} else if n.isSubQuery {
+	if n.isSubQuery {
 		orphanFilter = addNullFilterOnField(n.subQueryFilter, n.subQueryRelIDFieldMapIdx)
 		relationIDFieldName = n.subQueryRelIDFieldName
 	} else if n.join.parentSide.isPrimary() {
@@ -372,11 +322,8 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 		orphanFilter = addNullFilterOnField(n.join.subFilter, relIDFieldMapIndex)
 		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
 	} else {
-		orphanFilter = n.join.subFilter
-		excludeIDs = make([]string, 0, len(n.join.state.encounteredDocIDs))
-		for id := range n.join.state.encounteredDocIDs {
-			excludeIDs = append(excludeIDs, id)
-		}
+		// Secondary parent — should use point-lookup wrapper mode, not standalone.
+		return nil, nil
 	}
 
 	result := selectIndex(selectIndexOptions{
@@ -395,11 +342,6 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 		return nil, err
 	}
 
-	excludeSet := make(map[string]struct{}, len(excludeIDs))
-	for _, id := range excludeIDs {
-		excludeSet[id] = struct{}{}
-	}
-
 	var docs []core.Doc
 	for {
 		hasNext, err := scan.Next()
@@ -410,18 +352,128 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 			break
 		}
 
-		doc := scan.Value()
-
-		if _, excluded := excludeSet[doc.GetID()]; excluded {
-			continue
-		}
-
-		docs = append(docs, doc)
+		docs = append(docs, scan.Value())
 	}
 
 	n.execInfo.fetches.Add(scan.execInfo.fetches)
 
 	return docs, nil
+}
+
+// initPointLookupState initializes the parent iterator clone and child lookup info
+// for streaming orphan detection via point lookups. Called once on first need.
+func (n *orphanNode) initPointLookupState() error {
+	if !n.join.childSide.relFieldDef.HasValue() || !n.join.childSide.relIDFieldMapIndex.HasValue() {
+		n.pointLookupDone = true
+		return nil
+	}
+
+	childRelFieldName := n.join.childSide.relFieldDef.Value().Name
+	n.childFKFieldName = request.ToFieldID(childRelFieldName)
+	n.childFKFieldMapIdx = n.join.childSide.relIDFieldMapIndex.Value()
+
+	parentScan := getNode[*scanNode](n.join.parentSide.plan)
+	if parentScan == nil {
+		n.pointLookupDone = true
+		return nil
+	}
+
+	// Use subQueryFilter when set (nested join scoped to one target doc),
+	// otherwise use the top-level subFilter.
+	parentFilter := n.join.subFilter
+	if n.subQueryFilter != nil {
+		parentFilter = n.subQueryFilter
+	}
+
+	// Select the best index for the parent filter.
+	parentResult := selectIndex(selectIndexOptions{
+		collection: n.join.parentSide.col,
+		filter:     parentFilter,
+		docMapping: n.documentMapping,
+	})
+
+	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index)
+	if err := n.parentClone.Init(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// nextOrphanByPointLookup returns the next orphan parent by iterating parents one at a time
+// and checking each via a point lookup on the child's unique FK index.
+// Returns (doc, true, nil) for an orphan, (empty, false, nil) when exhausted.
+func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
+	if n.pointLookupDone {
+		return core.Doc{}, false, nil
+	}
+
+	if n.parentClone == nil {
+		if err := n.initPointLookupState(); err != nil {
+			return core.Doc{}, false, err
+		}
+		if n.pointLookupDone {
+			return core.Doc{}, false, nil
+		}
+	}
+
+	childScan := getNode[*scanNode](n.join.childSide.plan)
+	if childScan == nil {
+		n.pointLookupDone = true
+		return core.Doc{}, false, nil
+	}
+
+	for {
+		hasNext, err := n.parentClone.Next()
+		if err != nil {
+			return core.Doc{}, false, err
+		}
+		if !hasNext {
+			n.pointLookupDone = true
+			n.execInfo.fetches.Add(n.parentClone.execInfo.fetches)
+			_ = n.parentClone.Close()
+			n.parentClone = nil
+			return core.Doc{}, false, nil
+		}
+
+		doc := n.parentClone.Value()
+
+		// Build a lookup filter for the child's FK field = parent doc ID.
+		lookupFilter := addFilterOnField(nil, n.childFKFieldMapIdx, doc.GetID())
+		lookupFilter.ExternalConditions = map[string]any{
+			n.childFKFieldName: map[string]any{
+				"_eq": doc.GetID(),
+			},
+		}
+
+		// Select the best index for the child lookup filter.
+		childResult := selectIndex(selectIndexOptions{
+			collection:          n.join.childSide.col,
+			filter:              lookupFilter,
+			relationIDFieldName: n.childFKFieldName,
+			docMapping:          childScan.documentMapping,
+		})
+
+		lookupClone := childScan.cloneWithFilter(lookupFilter, childResult.index)
+		initErr := lookupClone.Init()
+		if initErr != nil {
+			return core.Doc{}, false, initErr
+		}
+
+		hasChild, nextErr := lookupClone.Next()
+		n.execInfo.fetches.Add(lookupClone.execInfo.fetches)
+		closeErr := lookupClone.Close()
+		if nextErr != nil {
+			return core.Doc{}, false, errors.Join(nextErr, closeErr)
+		}
+		if closeErr != nil {
+			return core.Doc{}, false, closeErr
+		}
+
+		if !hasChild {
+			return doc, true, nil
+		}
+	}
 }
 
 // addFilterOnField returns a new filter with a condition that checks if the field equals the given value.

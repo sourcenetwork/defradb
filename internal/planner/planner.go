@@ -259,8 +259,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	if p.joinExpand.pendingOrphanWiring != nil {
 		req := p.joinExpand.pendingOrphanWiring
 		p.joinExpand.pendingOrphanWiring = nil
-		if req.useExclusion {
-			wireSubQueryOrphanExclusionPipeline(plan, req.join, req.direction)
+		if req.usePointLookup {
+			wireSubQueryOrphanPointLookupPipeline(plan, req.join, req.direction)
 		} else {
 			wireSubQueryOrphanPipeline(plan, req.join, req.direction)
 		}
@@ -326,15 +326,15 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 						plan.joinPlan = newSequenceNode(node, orphan)
 					}
 				} else {
-					// Secondary parent: orphans identified by exclusion after join runs.
+					// Secondary parent: orphans identified via point lookups on child's FK index.
 					// Wrap join with orphanNode that handles ordering internally.
 					plan.joinPlan = newOrphanNodeWithSource(join, node, orderDir.Value())
 				}
 			} else if parentPlan != nil {
 				p.joinExpand.pendingOrphanWiring = &orphanWiringRequest{
-					join:         join,
-					direction:    orderDir.Value(),
-					useExclusion: !join.parentSide.isPrimary(),
+					join:           join,
+					direction:      orderDir.Value(),
+					usePointLookup: !join.parentSide.isPrimary(),
 				}
 			}
 		}
@@ -376,12 +376,11 @@ func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, d
 	}
 }
 
-// wireSubQueryOrphanExclusionPipeline inserts an orphanNode (in wrapper mode)
-// into the selectTopNode for nested join orphan handling via exclusion.
-// It buffers source docs, collects their IDs, and fetches orphans by exclusion
-// after the source is exhausted.
+// wireSubQueryOrphanPointLookupPipeline inserts an orphanNode (in wrapper mode)
+// into the selectTopNode for nested join orphan handling via point lookups.
+// It iterates parents and checks each via point lookup on the child's FK index.
 // Called after the full plan chain (order, limit) is built.
-func wireSubQueryOrphanExclusionPipeline(
+func wireSubQueryOrphanPointLookupPipeline(
 	plan *selectTopNode,
 	join *invertibleTypeJoin,
 	direction mapper.SortDirection,

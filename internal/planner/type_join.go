@@ -246,6 +246,23 @@ func (p *Planner) makeTypeJoinMany(
 	return &typeJoinMany{invertibleTypeJoin: invertibleTypeJoin}, nil
 }
 
+// getFieldsToSplitForTypeJoin returns the fields whose filter conditions should be moved
+// from the scan (pre-join) filter to the parent (post-join) filter. This always includes
+// the relation field itself. It also includes the secondary FK field (e.g. _publisherID
+// on Book where Publisher has @primary) because secondary FK fields are not stored in the
+// datastore — they are populated by the join.
+func getFieldsToSplitForTypeJoin(parent *selectNode, subType *mapper.Select) []mapper.Field {
+	fields := []mapper.Field{subType.Field}
+	fkFieldName := request.ToFieldID(subType.Field.Name)
+	if fkFieldDesc, ok := parent.collection.Version().GetFieldByName(fkFieldName); ok && !fkFieldDesc.IsPrimary {
+		fkFieldIndex := parent.documentMapping.FirstIndexOfName(fkFieldName)
+		if fkFieldIndex >= 0 {
+			fields = append(fields, mapper.Field{Index: fkFieldIndex, Name: fkFieldName})
+		}
+	}
+	return fields
+}
+
 func prepareScanNodeFilterForTypeJoin(
 	parent *selectNode,
 	source planNode,
@@ -267,9 +284,9 @@ func prepareScanNodeFilterForTypeJoin(
 		}
 		scan.filter = nil
 	} else {
+		fieldsToSplit := getFieldsToSplitForTypeJoin(parent, subType)
 		var parentFilter *mapper.Filter
-		scan.filter, parentFilter = filter.SplitByFields(scan.filter, subType.Field)
-
+		scan.filter, parentFilter = filter.SplitByFields(scan.filter, fieldsToSplit...)
 		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = parentFilter
