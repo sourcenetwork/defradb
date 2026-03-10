@@ -13,6 +13,7 @@ package db
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -238,6 +239,7 @@ func (c *collection) add(
 	doc *client.Document,
 	opt *options.AddDocumentOptions,
 ) error {
+
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
 		return err
@@ -284,6 +286,12 @@ func (c *collection) add(
 	ctx = setContextDocEncryption(ctx, opt)
 
 	// write data to DB via MerkleClock/CRDT
+	fmt.Printf("Collection VersionID: %s\n", c.Version().VersionID)
+	fmt.Printf("Identity in context: %+v\n", iIdentity.FromContext(ctx))
+	for k, f := range doc.Fields() {
+		val, _ := doc.GetValueWithField(f)
+		fmt.Printf("Field %s: CRDTType=%v, value=%v\n", k, val.Type(), val)
+	}
 	err = c.save(ctx, doc, true)
 	if err != nil {
 		return err
@@ -495,6 +503,7 @@ func (c *collection) save(
 	doc *client.Document,
 	isAdd bool,
 ) error {
+	fmt.Printf("ctx identity: %+v, nodeIdentity: %+v\n", iIdentity.FromContext(ctx), c.db.nodeIdentity)
 	if err := c.validateEncryptedFields(ctx); err != nil {
 		return err
 	}
@@ -612,6 +621,8 @@ func (c *collection) save(
 		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
+		fmt.Println("Sending update:", updateEvent.DocID, updateEvent.Cid)
+
 		c.db.sendUpdate(updateEvent)
 	})
 

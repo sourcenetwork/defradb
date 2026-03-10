@@ -44,34 +44,20 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 // result-index will be nil.
 func RefreshCollections(
 	s *state.State,
-	txn immutable.Option[client.Txn],
 ) {
-	var clientTxn client.Txn
-	if txn.HasValue() {
-		clientTxn = txn.Value()
-	}
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
-
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-
 		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-
-		var allCollections []client.Collection
-		var err error
-		if clientTxn != nil {
-			allCollections, err = clientTxn.GetCollections(s.Ctx, opts)
-		} else {
-			allCollections, err = node.GetCollections(s.Ctx, opts)
-		}
+		allCollections, err := node.GetCollections(s.Ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -95,7 +81,6 @@ func RefreshCollections(
 			}
 		}
 	}
-
 }
 
 func GetCanonicallyOrderedCollections(

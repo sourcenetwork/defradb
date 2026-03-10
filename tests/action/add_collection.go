@@ -70,8 +70,6 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	var txnOption immutable.Option[client.Txn]
-
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -88,10 +86,8 @@ func (a *AddCollection) Execute() {
 		var err error
 		var results []client.CollectionVersion
 		if hadTxn {
-			txnOption = immutable.Some(txn)
 			results, err = txn.AddCollection(a.s.Ctx, sdl, opts)
 		} else {
-			txnOption = immutable.None[client.Txn]()
 			results, err = node.AddCollection(a.s.Ctx, sdl, opts)
 		}
 		for _, result := range results {
@@ -107,5 +103,5 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	RefreshCollections(a.s, txnOption)
+	RefreshCollections(a.s)
 }

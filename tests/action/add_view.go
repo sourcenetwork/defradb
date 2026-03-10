@@ -74,8 +74,6 @@ func (a *AddView) Execute() {
 		}
 	}
 
-	var txnOption immutable.Option[client.Txn]
-
 	sdl := a.SDL
 
 	switch {
@@ -148,11 +146,5 @@ func (a *AddView) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	} else {
-		txnOption = immutable.None[client.Txn]()
-	}
-
-	RefreshCollections(a.s, txnOption)
+	RefreshCollections(a.s)
 }

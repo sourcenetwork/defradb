@@ -55,13 +55,7 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		var collections []client.Collection
-		if txn.HasValue() {
-			collections = GetCanonicallyOrderedCollections(s, node, immutable.Some(txn.Value()))
-		} else {
-			//collections = GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-			collections = node.Collections
-		}
+		collections := node.Collections
 		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
@@ -123,11 +117,12 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	fmt.Println("Entering updateNetworkState")
 	// find the correct collection index for this update
 	collectionID := -1
-	for i, c := range collections {
+	for i, c := range s.Nodes[nodeID].Collections {
 		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
+	fmt.Printf("CollectionID: %d\n", collectionID)
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()

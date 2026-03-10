@@ -20,9 +20,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -203,7 +201,7 @@ func syncDocs(s *state.State, action SyncDocs) {
 		s.DocIDsLock.RUnlock()
 	}
 
-	collections := actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
+	collections, _ := node.GetCollections(s.Ctx, options.GetCollections())
 	collectionName := collections[action.CollectionID].Name()
 
 	syncOpts := options.SyncDocuments()

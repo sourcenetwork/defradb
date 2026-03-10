@@ -39,7 +39,6 @@ import (
 )
 
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
-	fmt.Println("entering DB Merge")
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
 		log.ErrorContextE(
@@ -80,9 +79,6 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 }
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
-
-	fmt.Println("entering db.executeMerge")
-
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -136,7 +132,6 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	fmt.Println("dagMerge", dagMerge)
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{
 		Merge: dagMerge,

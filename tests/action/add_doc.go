@@ -134,10 +134,10 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
-
-		for i, col := range collections {
-			fmt.Printf("Node %d: Collection %d = %s\n", nodeID, i, col.Name())
+		if hadTxn {
+			collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		} else {
+			collections, _ = node.GetCollections(a.s.Ctx, options.GetCollections())
 		}
 
 		collection := collections[a.CollectionID]
@@ -156,19 +156,21 @@ func (a *AddDoc) Execute() {
 				return err
 			},
 		)
+		fmt.Println("DocIDs: ", docIDs)
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
-
-		a.s.DocIDsLock.Lock()
-		if a.CollectionID >= len(a.s.DocIDs) {
-			// Expand the slice if required, so that the document can be accessed by collection index
-			a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
-		}
-		a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
-		a.s.DocIDsLock.Unlock()
 
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+
+	a.s.DocIDsLock.Lock()
+	if a.CollectionID >= len(a.s.DocIDs) {
+		// Expand the slice if required, so that the document can be accessed by collection index
+		a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
+	}
+	a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
+	fmt.Println("DocIDs after append (addDoc):", a.s.DocIDs)
+	a.s.DocIDsLock.Unlock()
 
 	docIDMap := make(map[string]struct{})
 	for _, docID := range docIDs {
@@ -177,7 +179,6 @@ func (a *AddDoc) Execute() {
 
 	// If there was an explicit transaction, then we will not be waiting for update events.
 	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
-		fmt.Println("Will call waitForUpdateEvents")
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity, txnOption)
 	}
 }
@@ -205,6 +206,7 @@ func addDocViaColSave(
 		if err != nil {
 			return nil, err
 		}
+
 		docIDs[i] = doc.ID()
 	}
 
@@ -257,6 +259,7 @@ func addDocViaGQL(
 	collection client.Collection,
 	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
+	fmt.Println("Entering addDocViaGQL")
 	ctx := a.s.Ctx
 	if txn.HasValue() {
 		ctx = db.InitContext(a.s.Ctx, txn.Value())

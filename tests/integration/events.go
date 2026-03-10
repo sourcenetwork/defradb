@@ -24,7 +24,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -154,12 +153,7 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		var collections []client.Collection
-		if txn.HasValue() {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.Some(txn.Value()))
-		} else {
-			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]())
-		}
+		collections := node.Collections
 
 		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
@@ -379,7 +373,7 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity], collections []client.Collection) {
 	// find the correct collection index for this update
 	collectionID := -1
-	for i, c := range collections {
+	for i, c := range s.Nodes[nodeID].Collections {
 		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}

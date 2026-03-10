@@ -68,8 +68,6 @@ func (a *PatchCollection) Execute() {
 		}
 	}
 
-	var txnOption immutable.Option[client.Txn]
-
 	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
 	// This will need to change if patches want to replace more than just lens IDs.
 	patch := replace(a.s, 0, a.Patch)
@@ -96,11 +94,5 @@ func (a *PatchCollection) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	} else {
-		txnOption = immutable.None[client.Txn]()
-	}
-
-	RefreshCollections(a.s, txnOption)
+	RefreshCollections(a.s)
 }

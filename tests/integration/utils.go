@@ -1276,7 +1276,15 @@ func updateDoc(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
+		if hadTxn {
+			// If a transaction is attached, use the collections from the transaction.
+			fmt.Println("Transaction attached, using transaction collections (updateDoc)")
+			collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
+		} else {
+			// If no transaction is attached, use the node's collections.
+			fmt.Println("No transaction, using node collections (updateDoc)")
+			collections, _ = node.GetCollections(s.Ctx, options.GetCollections())
+		}
 		collection := collections[action.CollectionID]
 
 		err := withRetryOnNode(
@@ -1828,7 +1836,7 @@ func commitTransaction(
 		s.Txns[action.TransactionID].Discard()
 	}
 
-	actionPackage.RefreshCollections(s, immutable.None[client.Txn]())
+	actionPackage.RefreshCollections(s)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
