@@ -25,90 +25,62 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// joinExpandState holds transient state used only during plan expansion for
-// join optimization and orphan wiring. These fields are set at the start of
-// plan expansion and consumed during the recursive expandPlan walk.
+// joinExpandState is transient state for plan expansion, consumed during expandPlan.
 type joinExpandState struct {
-	// exhaustive is set when the @exhaustive directive is present on the query.
-	// When true, orphan parent documents will be included when ordering by relation
-	// fields with indexes. When false (default), orphans are excluded for performance.
+	// When @exhaustive is set, orphan parents are included in relation-ordered results.
 	exhaustive bool
 
-	// inNestedJoin tracks whether we're expanding a join that is nested inside another join.
-	// When true, orphanNode should not be added because nested joins are iterated via
-	// retrievePrimaryDocs which handles orphans correctly with parent context.
+	// Nested joins handle orphans via retrievePrimaryDocs, so we skip orphanNode wiring.
 	inNestedJoin bool
 
-	// pendingOrphanWiring is set during expandTypeIndexJoinPlan to defer orphan node
-	// wiring until after the full plan chain (order, limit) is built.
+	// Deferred until after order/limit nodes are wired in expandSelectTopNodePlan.
 	pendingOrphanWiring *orphanWiringRequest
 }
 
-// orphanWiringRequest stores information needed to wire orphan nodes into a selectTopNode.
-// This is set during expandTypeIndexJoinPlan and processed at the end of expandSelectTopNodePlan,
-// after the full plan chain (order, limit) is built.
+// orphanWiringRequest captures what's needed to wire orphan nodes after the plan chain is built.
 type orphanWiringRequest struct {
 	join      *invertibleTypeJoin
 	direction mapper.SortDirection
-	// usePointLookup is true when the parent side does NOT store the FK,
-	// requiring orphan identification via point lookups on the child's FK index.
+	// True when the parent doesn't store the FK (secondary side), so we need
+	// point lookups on the child's FK index to identify orphans.
 	usePointLookup bool
 }
 
-// orphanExecInfo contains execution information for the orphanNode.
 type orphanExecInfo struct {
-	// Total number of times orphanNode.Next was executed.
 	iterations uint64
-
-	// Information about fetches performed when fetching orphan documents.
-	fetches fetcher.ExecInfo
+	fetches    fetcher.ExecInfo
 }
 
-// orphanNode fetches orphan parent documents (parents without children) and yields
-// them one at a time.
+// orphanNode yields parent documents that have no related children.
 //
-// It operates in two modes based on whether source is set:
-//
-// Standalone mode (source == nil): Used inside a sequenceNode for FK IS NULL path.
-// Fetches all orphans on the first Next() call via scanNode clone, then yields
-// them sequentially.
-//
-// Wrapper mode (source != nil): Wraps a source planNode for secondary-side orphans.
-// Two distinct phases concatenated via enumerable.Concat:
-//
-//	ASC: orphans (via point lookup) → source docs (from ordered join)
-//	DESC: source docs (from ordered join) → orphans (via point lookup)
+// Two modes:
+//   - Standalone (source == nil): inside a sequenceNode, fetches orphans via FK IS NULL.
+//   - Wrapper (source != nil): wraps an ordered join, concatenating orphans and source
+//     results. ASC puts orphans first, DESC puts them last.
 type orphanNode struct {
 	docMapper
 
-	// join provides access to the join internals for orphan fetching
 	join *invertibleTypeJoin
 
-	// Optional source for wrapper mode.
-	// When set, the node wraps source and interleaves orphans.
-	// When nil, the node fetches orphans independently (FK IS NULL path).
+	// nil in standalone mode; set in wrapper mode to the underlying ordered join.
 	source         planNode
 	orderDirection mapper.SortDirection
 
-	// Subquery context fields. These are set by retrievePrimaryDocs before each
-	// Init()/Next() cycle when the orphanNode is part of a nested join (not top-level).
-	// In nested joins, retrievePrimaryDocs iterates over secondary-side docs and calls
-	// the primary-side plan once per doc with a constrained filter.
+	// Set by retrievePrimaryDocs for nested join context (per-iteration filter scope).
 	subQueryFilter           *mapper.Filter
 	subQueryRelIDFieldName   string
 	subQueryRelIDFieldMapIdx int
 	isSubQuery               bool
 
-	// standalone iteration state (source == nil)
+	// Standalone state
 	docs    []core.Doc
 	current int
 	fetched bool
 
-	// wrapper iteration state (source != nil) — phases is the concatenation of
-	// orphan and source enumerables, ordered by ASC/DESC.
+	// Wrapper state — concatenated orphan + source enumerables.
 	phases enumerable.Enumerable[core.Doc]
 
-	// Streaming point-lookup state — lazily iterates parents and yields one orphan per Next().
+	// Point-lookup state for streaming orphan detection (wrapper mode).
 	parentClone        *scanNode
 	childFKFieldName   string
 	childFKFieldMapIdx int
