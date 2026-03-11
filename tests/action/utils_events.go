@@ -12,7 +12,6 @@
 package action
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -117,7 +116,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			collectionID = i
 		}
 	}
-	fmt.Printf("CollectionID: %d\n", collectionID)
+
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()
@@ -137,7 +136,6 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
-		fmt.Printf("Appending expected head: Node %d, CID %s\n", id, evt.Cid.String())
 		// replicator target nodes push updates to source nodes
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],

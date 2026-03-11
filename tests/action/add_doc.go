@@ -292,7 +292,12 @@ func addDocViaGQL(
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(ctx, req, reqOption)
+	var result *client.RequestResult
+	if txn.HasValue() {
+		result = txn.Value().ExecRequest(ctx, req, reqOption)
+	} else {
+		result = node.ExecRequest(ctx, req, reqOption)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
