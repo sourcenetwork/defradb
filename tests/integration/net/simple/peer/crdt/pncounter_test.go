@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package peer_test
 
@@ -72,6 +73,99 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"points": int64(20),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						points: Int @crdt(type: pncounter)
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"points": 100
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 2,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"points": -30
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"points": 50
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+					Users {
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// 100 + 10 + (-30) + 50 = 130
+							"points": int64(130),
 						},
 					},
 				},
