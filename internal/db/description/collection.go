@@ -339,27 +339,6 @@ func GetActiveCollections(
 	return cols, iter.Close()
 }
 
-// HasCollectionByName returns true if there is a collection of the given name,
-// else returns false.
-func HasCollectionByName(
-	ctx context.Context,
-	name string,
-) (bool, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsActiveCollectionsPopulated {
-		_, ok := cache.ActiveCollectionsByName[name]
-		return ok, nil
-	}
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	nameKey := keys.NewCollectionNameKey(name)
-	has, err := txn.Systemstore().Has(ctx, nameKey.Bytes())
-	if err != nil {
-		return false, NewErrCheckCollectionExists(err, name)
-	}
-	return has, nil
-}
-
 func GetCollectionVersionIDs(
 	ctx context.Context,
 	collectionID string,
