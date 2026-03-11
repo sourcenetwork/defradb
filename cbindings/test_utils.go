@@ -171,7 +171,12 @@ func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t 
 // attached to it, and if so, attaches it to the context
 func setCtxTxnFromCollection(ctx context.Context, c *Collection) context.Context {
 	if c.txn.HasValue() {
-		return datastore.CtxSetTxn(ctx, c.txn.Value().(datastore.Txn))
+		txn, ok := c.txn.Value().(datastore.Txn)
+		if !ok {
+			// This should not happen, but we defensively panic to be safe
+			panic("txn is not a datastore.Txn")
+		}
+		return datastore.CtxSetTxn(ctx, txn)
 	}
 	return ctx
 }

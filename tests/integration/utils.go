@@ -1166,9 +1166,6 @@ func deleteDoc(
 	s *state.State,
 	a DeleteDoc,
 ) {
-
-	// We start by setting the docID from the DocIDs list. But this will be overriden
-	// later if a transaction is attached to the action.
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[a.CollectionID][a.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1197,7 +1194,6 @@ func deleteDoc(
 	}
 
 	for index, node := range nodes {
-
 		nodeID := nodeIDs[index]
 
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
@@ -1471,7 +1467,6 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		)
 
 		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
-
 	}
 
 	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)

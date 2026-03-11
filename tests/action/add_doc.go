@@ -97,7 +97,13 @@ func (a *AddDoc) Execute() {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*AddDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) ([]client.DocID, error)
+	var mutation func(
+		*AddDoc,
+		client.TxnStore,
+		int,
+		client.Collection,
+		immutable.Option[client.Txn],
+	) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = addDocViaColSave
@@ -151,7 +157,6 @@ func (a *AddDoc) Execute() {
 			},
 		)
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
-
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

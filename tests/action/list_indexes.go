@@ -82,7 +82,6 @@ func (a *ListIndexes) Execute() {
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, nodeID := range nodeIDs {
-
 		node := a.s.Nodes[index]
 
 		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)

@@ -45,7 +45,6 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 func RefreshCollections(
 	s *state.State,
 ) {
-
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]

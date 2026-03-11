@@ -238,7 +238,6 @@ func (c *collection) add(
 	doc *client.Document,
 	opt *options.AddDocumentOptions,
 ) error {
-
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
 		return err
