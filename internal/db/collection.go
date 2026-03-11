@@ -236,8 +236,9 @@ func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
 	return db.parser.SetSchema(ctx, definitions)
 }
 
-// getTxnAndSetCtxForCollection is a helper function that checks if a transaction is attached to the context or the collection,
-// and if so, attaches it to the context. It also returns a boolean indicating if a transaction was found.
+// getTxnAndSetCtxForCollection is a helper function that checks if a transaction is attached to the context
+// or the collection, and if so, attaches it to the context. It also returns a boolean indicating if a
+// transaction was found.
 func getTxnAndSetCtxForCollection(ctx context.Context, c *collection) (context.Context, datastore.Txn, bool) {
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if !hadTxn && c.txn.HasValue() {

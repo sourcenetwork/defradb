@@ -15,7 +15,6 @@ package js
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -99,7 +98,6 @@ func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pu
 
 func (txn *Transaction) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	fmt.Println("Entering AddCollection (tests/clients/js/wrapper_tx.go)")
 	return txn.Wrapper.AddCollection(ctx, sdl, opts...)
 }
 

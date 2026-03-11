@@ -37,7 +37,7 @@ func InitContext(ctx context.Context, txn client.Txn) context.Context {
 	// This allows us to pass transactions between libraries.
 	// For example: db.SetMigration -> lens.Transform -> corekv.Set
 	if v, ok := txn.(*Txn); ok {
-		ctx = corekv.SetCtxTxn(ctx, v.BasicTxn.Txn())
+		ctx = corekv.SetCtxTxn(ctx, v.Txn())
 	}
 	if txn != nil {
 		ctx = clock.WithTime(ctx, txn.StartTS())

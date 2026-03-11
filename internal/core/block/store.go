@@ -155,7 +155,7 @@ func determineBlockEncryption(
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := blockstore.NewIPLDStore(txn.Encstore()).Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			prevBlockEncBytes, err := blockstore.NewIPLDStore(txn.Encstore()).Get(ctx, prevBlock.Encryption.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}

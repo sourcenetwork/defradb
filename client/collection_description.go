@@ -217,7 +217,7 @@ func (col CollectionVersion) GetFieldByRelation(
 ) (CollectionFieldDescription, bool) {
 	for _, field := range col.Fields {
 		if field.RelationName.Value() == relationName &&
-			!(col.Name == otherCollectionName && otherFieldName == field.Name) &&
+			(col.Name != otherCollectionName || otherFieldName != field.Name) &&
 			field.Kind != FieldKind_DocID {
 			return field, true
 		}

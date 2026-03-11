@@ -470,7 +470,6 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	request, opts, err := extractGraphQLRequest(req)

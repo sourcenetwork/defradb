@@ -31,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -614,11 +613,7 @@ func (w *Wrapper) GetCollections(
 
 	var txnOpt immutable.Option[client.Txn]
 	if hadTxn {
-		if clientTxn, ok := txn.(client.Txn); ok {
-			txnOpt = immutable.Some(clientTxn)
-		} else {
-			return nil, errors.New("unsupported txn type in context")
-		}
+		txnOpt = immutable.Some(txn)
 	} else {
 		txnOpt = immutable.None[client.Txn]()
 	}

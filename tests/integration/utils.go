@@ -42,7 +42,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
-	actionPackage "github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -1067,7 +1066,7 @@ func refreshDocuments(
 
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
-				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
+				result := s.Nodes[firstNodesID].ExecRequest(s.Ctx, `query ($docID: [ID!]) {
 					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
 						cid
 					}
@@ -1165,13 +1164,13 @@ func substituteRelations(
 // given documents slice.
 func deleteDoc(
 	s *state.State,
-	action DeleteDoc,
+	a DeleteDoc,
 ) {
 
 	// We start by setting the docID from the DocIDs list. But this will be overriden
 	// later if a transaction is attached to the action.
 	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
+	docID := s.DocIDs[a.CollectionID][a.DocID]
 	s.DocIDsLock.RUnlock()
 
 	doNotWaitForUpdate := false
@@ -1179,14 +1178,14 @@ func deleteDoc(
 
 	var collections []client.Collection
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
-	hadTxn := action.TransactionID.HasValue()
+	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		var err error
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 		if err != nil {
 			return
 		}
@@ -1201,11 +1200,11 @@ func deleteDoc(
 
 		nodeID := nodeIDs[index]
 
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocument()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1216,24 +1215,24 @@ func deleteDoc(
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !doNotWaitForUpdate {
+	if a.ExpectedError == "" && !doNotWaitForUpdate {
 		expect := map[string]struct{}{
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity]())
+		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
 
 // updateDoc updates a document using the chosen [state.ActiveMutationType].
 func updateDoc(
 	s *state.State,
-	action UpdateDoc,
+	a UpdateDoc,
 ) {
 	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) error
 	switch state.ActiveMutationType {
@@ -1251,15 +1250,15 @@ func updateDoc(
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
-	hadTxn := action.TransactionID.HasValue()
+	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		var err error
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 		if err != nil {
 			return
 		}
@@ -1272,15 +1271,15 @@ func updateDoc(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		err := withRetryOnNode(
 			node,
 			func() error {
 				err := mutation(
 					s,
-					action,
+					a,
 					node,
 					nodeID,
 					collection,
@@ -1289,17 +1288,17 @@ func updateDoc(
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateDoc(s, action),
+			a.NodeID,
+			a.CollectionID,
+			getEventsForUpdateDoc(s, a),
 			immutable.None[state.Identity](),
 		)
 	}
@@ -1426,22 +1425,22 @@ func updateDocViaGQL(
 }
 
 // updateWithFilter updates the set of matched documents.
-func updateWithFilter(s *state.State, action UpdateWithFilter) {
+func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var res *client.UpdateResult
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
 	var collections []client.Collection
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
-	hadTxn := action.TransactionID.HasValue()
+	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		var err error
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 		if err != nil {
 			return
 		}
@@ -1454,11 +1453,11 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1466,23 +1465,23 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, action.Filter, action.Updater, opts)
+				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, a.Filter, a.Updater, opts)
 				return err
 			},
 		)
 
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateWithFilter(s, action, res),
+			a.NodeID,
+			a.CollectionID,
+			getEventsForUpdateWithFilter(s, a, res),
 			immutable.None[state.Identity](),
 		)
 	}
@@ -1490,16 +1489,16 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 func newEncryptedIndex(
 	s *state.State,
-	action NewEncryptedIndex,
+	a NewEncryptedIndex,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var hadTxn bool
 		var txn client.Txn
-		if action.TransactionID.HasValue() {
+		if a.TransactionID.HasValue() {
 			hadTxn = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1510,20 +1509,20 @@ func newEncryptedIndex(
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
-		if action.FieldName == "" {
+		if a.FieldName == "" {
 			s.T.Fatalf("fieldName is required for encrypted index")
 		}
 
 		indexDesc := client.EncryptedIndexDescription{
-			FieldName: action.FieldName,
-			Type:      client.EncryptedIndexType(action.Type),
+			FieldName: a.FieldName,
+			Type:      client.EncryptedIndexType(a.Type),
 		}
 
 		opts := options.NewEncryptedIndex()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1535,17 +1534,17 @@ func newEncryptedIndex(
 				return err
 			},
 		)
-		if AssertError(s.T, err, action.ExpectedError) {
+		if AssertError(s.T, err, a.ExpectedError) {
 			return
 		}
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 func listEncryptedIndexes(
 	s *state.State,
-	action ListEncryptedIndexes,
+	a ListEncryptedIndexes,
 ) {
 	if len(s.Nodes) == 0 {
 		return
@@ -1553,22 +1552,22 @@ func listEncryptedIndexes(
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, _ := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, nodeID := range nodeIDs {
 		node := s.Nodes[index]
 
 		opts := options.ListCollectionEncryptedIndexes()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
-		hadTxn := action.TransactionID.HasValue()
+		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
 			hadTxn = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1576,9 +1575,8 @@ func listEncryptedIndexes(
 			txnOption = immutable.Some(txn)
 		}
 
-		var collections []client.Collection
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		var collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
@@ -1588,22 +1586,22 @@ func listEncryptedIndexes(
 					return err
 				}
 
-				require.ElementsMatch(s.T, action.ExpectedIndexes, actualIndexes,
+				require.ElementsMatch(s.T, a.ExpectedIndexes, actualIndexes,
 					"Unexpected encrypted indexes")
 
 				return nil
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, action.ExpectedError)
+			AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func listAllEncryptedIndexes(
 	s *state.State,
-	action ListAllEncryptedIndexes,
+	a ListAllEncryptedIndexes,
 ) {
 	if len(s.Nodes) == 0 {
 		return
@@ -1611,10 +1609,10 @@ func listAllEncryptedIndexes(
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, _ := getNodesWithIDs(a.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
 		opts := options.ListAllEncryptedIndexes()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1627,7 +1625,7 @@ func listAllEncryptedIndexes(
 					return err
 				}
 
-				for collectionName, expectedIndexes := range action.ExpectedIndexes {
+				for collectionName, expectedIndexes := range a.ExpectedIndexes {
 					actualIndexes, exists := allActualIndexes[collectionName]
 					require.True(s.T, exists, "Collection %s should exist in actual indexes", collectionName)
 					require.ElementsMatch(s.T, expectedIndexes, actualIndexes,
@@ -1643,24 +1641,24 @@ func listAllEncryptedIndexes(
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, action.ExpectedError)
+			AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func deleteEncryptedIndex(
 	s *state.State,
-	action DeleteEncryptedIndex,
+	a DeleteEncryptedIndex,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var hadTxn bool
 		var txn client.Txn
-		if action.TransactionID.HasValue() {
+		if a.TransactionID.HasValue() {
 			hadTxn = true
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1671,15 +1669,15 @@ func deleteEncryptedIndex(
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		collections = actionPackage.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[action.CollectionID]
+		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
-		if action.FieldName == "" {
+		if a.FieldName == "" {
 			s.T.Fatalf("fieldName is required for deleting encrypted index")
 		}
 
 		opts := options.DeleteEncryptedIndex()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1687,15 +1685,15 @@ func deleteEncryptedIndex(
 		err = withRetryOnNode(
 			node,
 			func() error {
-				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName, opts)
+				return collection.DeleteEncryptedIndex(s.Ctx, a.FieldName, opts)
 			},
 		)
-		if AssertError(s.T, err, action.ExpectedError) {
+		if AssertError(s.T, err, a.ExpectedError) {
 			return
 		}
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 // exportBackup generates a backup using the db api.
@@ -1818,18 +1816,18 @@ func getTransaction(
 // an error is returned on commit.
 func commitTransaction(
 	s *state.State,
-	action CommitTransaction,
+	a CommitTransaction,
 ) {
-	err := s.Txns[action.TransactionID].Commit()
+	err := s.Txns[a.TransactionID].Commit()
 	if err != nil {
-		s.Txns[action.TransactionID].Discard()
+		s.Txns[a.TransactionID].Discard()
 	}
 
-	actionPackage.RefreshCollections(s)
+	action.RefreshCollections(s)
 
-	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected

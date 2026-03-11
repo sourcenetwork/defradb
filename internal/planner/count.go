@@ -97,7 +97,7 @@ func (n *countNode) simpleExplain() (map[string]any, error) {
 		}
 
 		// Add the main field name.
-		simpleExplainMap[fieldNameLabel] = source.Field.Name
+		simpleExplainMap[fieldNameLabel] = source.Name
 
 		sourceExplanations[i] = simpleExplainMap
 	}

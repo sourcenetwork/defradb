@@ -137,7 +137,7 @@ func (c *collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -177,7 +177,7 @@ func (c *collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -316,7 +316,7 @@ func (c *collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -406,7 +406,7 @@ func (c *collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -662,7 +662,7 @@ func (c *collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -710,7 +710,7 @@ func (c *collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

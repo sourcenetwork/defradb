@@ -338,7 +338,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	}
 
 	for _, l := range block.Links {
-		err := vf.seekNext(l.Link.Cid, false)
+		err := vf.seekNext(l.Cid, false)
 		if err != nil {
 			return err
 		}

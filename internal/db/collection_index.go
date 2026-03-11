@@ -166,7 +166,7 @@ func (c *collection) NewIndex(
 	desc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -369,7 +369,7 @@ func (c *collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -457,7 +457,7 @@ func (c *collection) NewEncryptedIndex(
 	addRequest client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -538,7 +538,7 @@ func (c *collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

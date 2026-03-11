@@ -31,7 +31,7 @@ func (c *collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

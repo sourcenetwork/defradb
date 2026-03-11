@@ -165,29 +165,3 @@ func resolveVariables(s *state.State, vars map[string]any) map[string]any {
 	}
 	return resolved
 }
-
-// getTransaction returns the transaction for this request, creating one if needed.
-func (a *Request) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	if a.s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
-		}
-
-		a.s.Txns[transactionID] = txn
-	}
-
-	return a.s.Txns[transactionID]
-}

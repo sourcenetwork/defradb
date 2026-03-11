@@ -485,7 +485,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
+			} else if n.collection == nil || !n.collection.Version().Query.HasValue() {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)

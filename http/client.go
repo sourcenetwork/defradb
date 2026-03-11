@@ -24,7 +24,6 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
@@ -409,11 +408,7 @@ func (c *Client) GetCollections(
 
 	var txnOpt immutable.Option[client.Txn]
 	if hadTxn {
-		if clientTxn, ok := txn.(client.Txn); ok {
-			txnOpt = immutable.Some(clientTxn)
-		} else {
-			return nil, errors.New("unsupported txn type in context")
-		}
+		txnOpt = immutable.Some(txn)
 	} else {
 		txnOpt = immutable.None[client.Txn]()
 	}

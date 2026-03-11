@@ -437,7 +437,11 @@ func (w *CWrapper) AddCollection(
 		txn = gotTxn
 	} else {
 		clientTxn, _ := w.NewTxn(false)
-		txn = clientTxn.(datastore.Txn)
+		var ok bool
+		txn, ok = clientTxn.(datastore.Txn)
+		if !ok {
+			return nil, errors.New("failed to cast clientTxn to datastore.Txn")
+		}
 	}
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -460,7 +464,7 @@ func (w *CWrapper) AddCollection(
 
 	if !hadTxn {
 		defer txn.Discard()
-		txn.Commit()
+		_ = txn.Commit()
 	}
 
 	return collectionVersions, nil
@@ -894,9 +898,9 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 	if hadTxn {
-		ctx = datastore.CtxSetTxn(ctx, txn)
+		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	}
 
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
@@ -921,11 +925,7 @@ func (w *CWrapper) GetCollections(
 
 	var txnOpt immutable.Option[client.Txn]
 	if hadTxn {
-		if clientTxn, ok := txn.(client.Txn); ok {
-			txnOpt = immutable.Some(clientTxn)
-		} else {
-			return nil, errors.New("unsupported txn type in context")
-		}
+		txnOpt = immutable.Some(txn)
 	} else {
 		txnOpt = immutable.None[client.Txn]()
 	}

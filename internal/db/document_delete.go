@@ -33,7 +33,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	ctx, txn, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

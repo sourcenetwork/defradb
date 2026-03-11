@@ -35,7 +35,6 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	opt := utils.NewOptions(opts...)

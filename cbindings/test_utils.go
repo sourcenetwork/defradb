@@ -156,7 +156,12 @@ func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t 
 	id := txn.ID()
 
 	if storedHandle, ok := txnHandleMap.Load(id); ok {
-		return C.uintptr_t(storedHandle.(cgo.Handle))
+		handle, ok := storedHandle.(cgo.Handle)
+		if !ok {
+			// This should not happen, but we defensively panic to be safe
+			panic("txnHandleMap stored value is not a cgo.Handle")
+		}
+		return C.uintptr_t(handle)
 	}
 
 	return C.uintptr_t(nodeHandle)

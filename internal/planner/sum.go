@@ -197,7 +197,7 @@ func (n *sumNode) simpleExplain() (map[string]any, error) {
 		}
 
 		// Add the main field name.
-		simpleExplainMap[fieldNameLabel] = source.Field.Name
+		simpleExplainMap[fieldNameLabel] = source.Name
 
 		// Add the child field name if it exists.
 		if source.ChildTarget.HasValue {

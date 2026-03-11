@@ -217,8 +217,8 @@ func join(
 func generateKey(doc core.Doc, keyFields []mapper.Field) string {
 	keyBuilder := strings.Builder{}
 	for _, keyField := range keyFields {
-		_, _ = keyBuilder.WriteString(fmt.Sprint(keyField.Index))
-		_, _ = keyBuilder.WriteString(fmt.Sprintf("_%v_", doc.Fields[keyField.Index]))
+		_, _ = fmt.Fprint(&keyBuilder, keyField.Index)
+		_, _ = fmt.Fprintf(&keyBuilder, "_%v_", doc.Fields[keyField.Index])
 	}
 	return keyBuilder.String()
 }

@@ -30,7 +30,7 @@ func (db *DB) ExecRequest(
 	ctx context.Context,
 	request string, opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -78,8 +78,7 @@ func (db *DB) GetCollectionByName(
 	name string,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -106,7 +105,7 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -117,8 +116,8 @@ func (db *DB) GetCollections(
 		return nil, err
 	}
 
-	var err error = nil
-	ctx, txn, err = ensureContextTxn(ctx, db, false)
+	var err error
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
@@ -135,8 +134,7 @@ func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -164,8 +162,7 @@ func (db *DB) ListAllEncryptedIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -198,8 +195,7 @@ func (db *DB) AddCollection(
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -246,8 +242,7 @@ func (db *DB) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -282,8 +277,7 @@ func (db *DB) SetActiveCollectionVersion(
 	collectionVersionID string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -319,8 +313,7 @@ func (db *DB) SetMigration(
 	cfg client.LensConfig,
 	opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -360,8 +353,7 @@ func (db *DB) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -401,8 +393,7 @@ func (db *DB) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -437,8 +428,7 @@ func (db *DB) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -475,8 +465,7 @@ func (db *DB) AddView(
 }
 
 func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

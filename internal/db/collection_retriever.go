@@ -46,8 +46,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
 ) (client.Collection, error) {
-	// If there is an explicit transaction, then we note that, so that we don't commit/discard it here.
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
 
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
@@ -85,9 +84,9 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		if !ok {
 			return nil, errors.New("unsupported txn type in context")
 		}
-		cols, err = clientTxn.GetCollections(ctx, opt)
+		cols, _ = clientTxn.GetCollections(ctx, opt)
 	} else {
-		cols, err = r.db.GetCollections(ctx, opt)
+		cols, _ = r.db.GetCollections(ctx, opt)
 	}
 
 	if len(cols) == 0 {
