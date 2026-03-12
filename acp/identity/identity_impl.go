@@ -233,7 +233,8 @@ func cloneFullIdentity(orig *fullIdentity) *fullIdentity {
 }
 
 // CloneIdentity creates a deep copy of the given identity.
-// This exists so as to allow parallel test actions to avoid race conditions
+// This exists so as to allow parallel test actions to avoid race conditions.
+// Specifically, the GetCanonicallyOrderedCollections function requires this functionality
 func CloneIdentity(orig Identity) Identity {
 	if f, ok := orig.(*fullIdentity); ok {
 		return cloneFullIdentity(f)

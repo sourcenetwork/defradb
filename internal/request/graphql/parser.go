@@ -40,7 +40,6 @@ type parser struct {
 }
 
 func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
-
 	schemaManager, err := schema.NewSchemaManager(isSearchableEncryptionEnabled)
 	if err != nil {
 		return nil, err
