@@ -407,7 +407,7 @@ linters:
 
       - linters:
           - goheader
-        path: (net|connor|encoding)
+        path: (net|connor|encoding|tests)
 
       - linters:
           - forcetypeassert
