@@ -290,7 +290,7 @@ func (obj jsonObject) MarshalJSON() ([]byte, error) {
 }
 
 func (obj jsonObject) Unwrap() any {
-	result := make(map[string]any, len(obj.val))
+	result := make(map[string]any, len(obj.jsonBase.val))
 	for k, v := range obj.val {
 		result[k] = v.Unwrap()
 	}

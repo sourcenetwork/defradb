@@ -117,7 +117,7 @@ func (s *Select) validateGroupBy() []error {
 func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 	var docIDFilter DocIDsFilter
 	// We only redefine the docID if it hasn't been defined by the user.
-	if !s.DocIDs.HasValue() {
+	if !s.DocIDsFilter.DocIDs.HasValue() {
 		docIDFilter = DocIDsFilter{
 			DocIDs: immutable.Some([]string{docID}),
 		}

@@ -149,7 +149,7 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 	// We grant "read" access even if the identity does not explicitly have the "read" permission,
 	// as long as they have any of the permissions that imply read access.
 	if permission == acpTypes.DocumentReadPerm {
-		var canRead = false
+		var canRead bool = false
 		var withPermission string
 		var err error
 

@@ -751,10 +751,10 @@ func TestSecp256r1_DID_Comprehensive(t *testing.T) {
 		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		require.NoError(t, err)
 
-		compressedBytes := elliptic.MarshalCompressed(elliptic.P256(), privKey.X, privKey.Y)
+		compressedBytes := elliptic.MarshalCompressed(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
 		compressedKey := &ecdsa.PublicKey{
 			Curve: elliptic.P256(),
-			X:     privKey.X,
+			X:     privKey.PublicKey.X,
 			Y:     nil,
 		}
 
@@ -955,6 +955,6 @@ func TestGenerateSecp256r1(t *testing.T) {
 	require.NotNil(t, key)
 	assert.Equal(t, elliptic.P256(), key.Curve)
 	assert.NotNil(t, key.D)
-	assert.NotNil(t, key.X)
-	assert.NotNil(t, key.Y)
+	assert.NotNil(t, key.PublicKey.X)
+	assert.NotNil(t, key.PublicKey.Y)
 }

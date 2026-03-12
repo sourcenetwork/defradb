@@ -48,7 +48,7 @@ func (e *defraError) Error() string {
 		_, _ = builder.WriteString(" ")
 		_, _ = builder.WriteString(kv.key)
 		_, _ = builder.WriteString(": ")
-		_, _ = fmt.Fprint(&builder, kv.value)
+		_, _ = builder.WriteString(fmt.Sprint(kv.value))
 		if i < len(e.kvs)-1 {
 			_, _ = builder.WriteString(",")
 		}
