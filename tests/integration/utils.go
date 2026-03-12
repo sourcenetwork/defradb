@@ -1101,14 +1101,11 @@ func setActiveCollectionVersion(
 ) {
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
-	hadTxn := false
-	if action.TransactionID.HasValue() {
+	var err error
+	hadTxn := action.TransactionID.HasValue()
+	if hadTxn {
 		hadTxn = true
-		var err error
 		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
-		if err != nil {
-			return
-		}
 	}
 
 	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
@@ -1124,7 +1121,6 @@ func setActiveCollectionVersion(
 			opts.SetIdentity(identOption.Value())
 		}
 		// If we have a transaction, we will use it here. Otherwise we use the node.
-		var err error
 		if hadTxn {
 			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		} else {
@@ -1178,14 +1174,11 @@ func deleteDoc(
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
+	var err error
 	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
-		var err error
 		doNotWaitForUpdate = true
 		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1204,7 +1197,7 @@ func deleteDoc(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				_, err := collection.DeleteDocument(s.Ctx, docID, opts)
@@ -1250,14 +1243,11 @@ func updateDoc(
 
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
+	var err error
 	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
-		var err error
 		doNotWaitForUpdate = true
 		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1270,7 +1260,7 @@ func updateDoc(
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				err := mutation(
@@ -1439,13 +1429,10 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
 	hadTxn := a.TransactionID.HasValue()
+	var err error
 	if hadTxn {
-		var err error
 		doNotWaitForUpdate = true
 		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1463,7 +1450,7 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error
@@ -1495,11 +1482,11 @@ func newEncryptedIndex(
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var hadTxn bool
 		var txn client.Txn
-		if a.TransactionID.HasValue() {
-			hadTxn = true
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1509,7 +1496,6 @@ func newEncryptedIndex(
 
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
-		var err error
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
@@ -1565,10 +1551,10 @@ func listEncryptedIndexes(
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
+		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			hadTxn = true
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+			txn, err = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1579,7 +1565,7 @@ func listEncryptedIndexes(
 		var collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
 				actualIndexes, err := collection.ListEncryptedIndexes(s.Ctx, opts)
@@ -1655,11 +1641,11 @@ func deleteEncryptedIndex(
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var hadTxn bool
 		var txn client.Txn
-		if a.TransactionID.HasValue() {
-			hadTxn = true
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1669,7 +1655,6 @@ func deleteEncryptedIndex(
 
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
-		var err error
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
@@ -2227,21 +2212,16 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	for i, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
-		hadTxn := false
-		if action.TransactionID.HasValue() {
-			hadTxn = true
-			var err error
+		var err error
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
 			txn, err = s.GetTransaction(node, action.TransactionID)
-			if err != nil {
-				return
-			}
 		}
 
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
 
-		var err error
 		if hadTxn {
 			err = txn.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
 		} else {
