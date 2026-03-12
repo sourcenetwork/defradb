@@ -1105,7 +1105,7 @@ func setActiveCollectionVersion(
 	hadTxn := action.TransactionID.HasValue()
 	if hadTxn {
 		hadTxn = true
-		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		txn, _ = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
 	}
 
 	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
@@ -1178,7 +1178,7 @@ func deleteDoc(
 	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1247,7 +1247,7 @@ func updateDoc(
 	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1432,7 +1432,7 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var err error
 	if hadTxn {
 		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1486,7 +1486,7 @@ func newEncryptedIndex(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = s.GetTransaction(node, a.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1495,8 +1495,7 @@ func newEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		var collections []client.Collection
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -1554,7 +1553,7 @@ func listEncryptedIndexes(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = s.GetTransaction(node, a.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1645,7 +1644,7 @@ func deleteEncryptedIndex(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = s.GetTransaction(node, a.TransactionID)
+			txn, _ = s.GetTransaction(node, a.TransactionID)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1654,8 +1653,7 @@ func deleteEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		var collections []client.Collection
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -2215,7 +2213,7 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		var err error
 		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = s.GetTransaction(node, action.TransactionID)
+			txn, _ = s.GetTransaction(node, action.TransactionID)
 		}
 
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
