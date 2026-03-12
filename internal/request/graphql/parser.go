@@ -12,6 +12,7 @@ package graphql
 
 import (
 	"context"
+	"sync"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -36,7 +37,8 @@ type parser struct {
 	schemaManager                 *schema.SchemaManager
 	isSearchableEncryptionEnabled bool
 	// In the cases of transactions, we need to store a schema manager for each transaction
-	schemaManagerMap map[uint64]*schema.SchemaManager
+	schemaManagerMapLock sync.RWMutex
+	schemaManagerMap     map[uint64]*schema.SchemaManager
 }
 
 func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
@@ -48,6 +50,7 @@ func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
 	p := &parser{
 		schemaManager:                 schemaManager,
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
+		schemaManagerMapLock:          sync.RWMutex{},
 		schemaManagerMap:              make(map[uint64]*schema.SchemaManager),
 	}
 

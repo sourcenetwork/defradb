@@ -344,6 +344,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
+
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
 		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
