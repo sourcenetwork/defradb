@@ -48,30 +48,29 @@ var _ Action = (*Truncate)(nil)
 var _ Stateful = (*Truncate)(nil)
 
 func (a *Truncate) Execute() {
+	hadTxn := a.TransactionID.HasValue()
+
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var hadTxn bool
 		var txn client.Txn
-		if a.TransactionID.HasValue() {
-			hadTxn = true
-			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			if err != nil {
+				return
+			}
+		}
+
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
 		}
 
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		if hadTxn {
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
-		}
+		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionIndex]
 
 		opts := options.TruncateCollection()
