@@ -351,7 +351,7 @@ func resolveChildOrder(
 			if !ok {
 				continue
 			}
-			if fieldSelect.Name == orderChildField {
+			if fieldSelect.Field.Name == orderChildField {
 				return fieldSelect, nil
 			}
 		}
@@ -587,7 +587,7 @@ func resolveAggregates(
 
 				// ensure target aggregate field is included in the type join
 				hostSelect.Fields = append(hostSelect.Fields, &Field{
-					Index: hostSelect.FirstIndexOfName(target.childExternalName),
+					Index: hostSelect.DocumentMapping.FirstIndexOfName(target.childExternalName),
 					Name:  target.childExternalName,
 				})
 

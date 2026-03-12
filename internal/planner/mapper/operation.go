@@ -37,9 +37,9 @@ type Operation struct {
 // The request.Field is used as the key for the core.RenderKey and the Select
 // document mapping is added as a child field.
 func (o *Operation) addSelection(i int, f request.Field, s Select) {
-	o.Add(i, s.Name)
-	o.SetChildAt(i, s.DocumentMapping)
-	o.RenderKeys = append(o.RenderKeys, core.RenderKey{
+	o.DocumentMapping.Add(i, s.Name)
+	o.DocumentMapping.SetChildAt(i, s.DocumentMapping)
+	o.DocumentMapping.RenderKeys = append(o.DocumentMapping.RenderKeys, core.RenderKey{
 		Key:   getRenderKey(&f),
 		Index: s.Index,
 	})

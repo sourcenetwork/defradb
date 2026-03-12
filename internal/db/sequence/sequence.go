@@ -47,6 +47,7 @@ func Get(ctx context.Context, key keys.Key) (*Sequence, error) {
 
 func (seq *Sequence) Get(ctx context.Context) (uint64, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
+
 	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
 		return 0, err

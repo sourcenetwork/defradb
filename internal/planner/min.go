@@ -89,7 +89,7 @@ func (n *minNode) simpleExplain() (map[string]any, error) {
 		}
 
 		// Add the main field name.
-		simpleExplainMap[fieldNameLabel] = source.Name
+		simpleExplainMap[fieldNameLabel] = source.Field.Name
 
 		// Add the child field name if it exists.
 		if source.ChildTarget.HasValue {

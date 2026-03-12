@@ -343,8 +343,6 @@ type State struct {
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
-
-	Mu sync.Mutex
 }
 
 func (s *State) GetClientType() ClientType {

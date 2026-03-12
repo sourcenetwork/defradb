@@ -69,7 +69,7 @@ func (n *similarityNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	simpleExplainMap["vector"] = n.vector
-	simpleExplainMap["target"] = n.target.Name
+	simpleExplainMap["target"] = n.target.Field.Name
 
 	return map[string]any{
 		sourcesLabel: simpleExplainMap,

@@ -333,6 +333,7 @@ func GetActiveCollections(
 
 	// Sort the results by ID, so that the order matches that of [GetCollections].
 	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
+
 	cache.AddAllActive(cols)
 
 	return cols, iter.Close()

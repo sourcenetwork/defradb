@@ -74,7 +74,7 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		dataSources = append(
 			dataSources,
 			// If there are no child selects, then we just take the first field index of name GROUP
-			newDataSource(parsed.FirstIndexOfName(request.GroupFieldName)),
+			newDataSource(parsed.DocumentMapping.FirstIndexOfName(request.GroupFieldName)),
 		)
 	}
 

@@ -180,7 +180,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	// Split fields between inner (pre-update filter/scan) and outer (post-update render) selects.
 	// The inner select only needs base fields and filter-related relations (SkipResolve).
 	// Render-only relations go only to the outer select to avoid unnecessary type joins.
-	for i, field := range parsed.Fields {
+	for i, field := range parsed.Select.Fields {
 		if _, exists := request.ReservedFields[field.GetName()]; exists {
 			continue
 		}
@@ -197,7 +197,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 
 	// removed unnecessary fields we get from the pre update select
-	parsed.Fields = deleteIndexes(parsed.Fields, selectFieldsToDelete)
+	parsed.Select.Fields = deleteIndexes(parsed.Select.Fields, selectFieldsToDelete)
 
 	selectNode, err := p.Select(&preUpdateSelect)
 	if err != nil {
@@ -217,8 +217,8 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	// The outer select only renders the post-update results. The inner select already
 	// handles pre-update filtering (by filter and/or docIDs), so we clear both on the
 	// outer select to prevent re-evaluation against potentially changed values.
-	parsed.Filter = nil
-	parsed.DocIDs = immutable.None[[]string]()
+	parsed.Select.Filter = nil
+	parsed.Select.DocIDs = immutable.None[[]string]()
 	return p.SelectFromSource(&parsed.Select, update, true, update.collection)
 }
 

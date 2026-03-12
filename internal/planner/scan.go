@@ -101,7 +101,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 			n.tryAddFieldWithName(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddFieldWithName(request.ToFieldID(requestable.Name)) // foreign key for type joins
+			n.tryAddFieldWithName(request.ToFieldID(requestable.Field.Name)) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -124,7 +124,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 				if target.ChildTarget.HasValue {
 					n.tryAddFieldWithName(target.ChildTarget.Name)
 				} else {
-					n.tryAddFieldWithName(target.Name)
+					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
 		case *mapper.Similarity:
