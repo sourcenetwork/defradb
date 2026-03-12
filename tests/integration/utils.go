@@ -1385,7 +1385,8 @@ func updateDocViaGQL(
 	txn immutable.Option[client.Txn],
 ) error {
 	ctx := s.Ctx
-	if txn.HasValue() {
+	hadTxn := txn.HasValue()
+	if hadTxn {
 		ctx = db.InitContext(s.Ctx, txn.Value())
 	}
 
@@ -1413,7 +1414,12 @@ func updateDocViaGQL(
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(ctx, request, reqOption)
+	var result *client.RequestResult
+	if hadTxn {
+		result = txn.Value().ExecRequest(ctx, request, reqOption)
+	} else {
+		result = node.ExecRequest(ctx, request, reqOption)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
