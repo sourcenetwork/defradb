@@ -1553,9 +1553,9 @@ func listEncryptedIndexes(
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(a.NodeID, s.Nodes)
-	for index, nodeID := range nodeIDs {
-		node := s.Nodes[index]
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		opts := options.ListCollectionEncryptedIndexes()
 		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
