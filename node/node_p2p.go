@@ -46,6 +46,13 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 	if len(n.opts.P2P.PrivateKey) > 0 {
 		p2pOpts = append(p2pOpts, p2p.WithPrivateKey(n.opts.P2P.PrivateKey))
 	}
+	if n.opts.P2P.ResourceProfile != "" {
+		rm, err := buildResourceManager(n.opts.P2P.ResourceProfile)
+		if err != nil {
+			return err
+		}
+		p2pOpts = append(p2pOpts, p2p.WithResourceManager(rm))
+	}
 	p2pOpts = append(p2pOpts, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store, chunkSize)))
 
 	peer, err := p2p.NewPeer(ctx, p2pOpts...)

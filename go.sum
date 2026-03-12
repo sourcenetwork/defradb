@@ -745,6 +745,8 @@ github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk5
 github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b h1:mimo19zliBX/vSQ6PWWSL9lK8qwHozUj03+zLoEB8O0=
 github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b/go.mod h1:fvzegU4vN3H1qMT+8wDmzjAcDONcgo2/SZ/TyfdUOFs=
 github.com/alexkohler/prealloc v1.0.0/go.mod h1:VetnK3dIgFBBKmg0YnD9F9x6Icjd+9cvfHR56wJVlKE=
+github.com/alexmylonas/go-p2p v0.0.0-20260310235021-0e7341cfd30b h1:n2+rlGPMNqNx2Mh5wC4Zr4HizhhkRS5tlMv1jhAzWho=
+github.com/alexmylonas/go-p2p v0.0.0-20260310235021-0e7341cfd30b/go.mod h1:blpzi38QuKtN4Kb61OUZoJI9QSuRJ9LC1WZvhmFydwY=
 github.com/alingse/asasalint v0.0.10/go.mod h1:nCaoMhw7a9kSJObvQyVzNTPBDbNpdocqrSP7t/cW5+I=
 github.com/andybalholm/brotli v1.0.2/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/andybalholm/brotli v1.0.3/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
@@ -2391,8 +2393,6 @@ github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s
 github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
-github.com/sourcenetwork/go-p2p v0.1.9 h1:bM5FjPqBxNBQuWS4Rd7wQZqa342sD1A3M84U3Ihzee4=
-github.com/sourcenetwork/go-p2p v0.1.9/go.mod h1:blpzi38QuKtN4Kb61OUZoJI9QSuRJ9LC1WZvhmFydwY=
 github.com/sourcenetwork/goji v0.0.9 h1:ObFC1PxstjGMoiCgJ+tqUALl0+sZFu5HHU7dCfpfgYc=
 github.com/sourcenetwork/goji v0.0.9/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
 github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b h1:DS+7xsNq0Q7AjBRMBr13CFn55eMPaGaJC8p5TMbcxmo=

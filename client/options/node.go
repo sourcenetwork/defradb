@@ -113,6 +113,9 @@ type NodeP2POptions struct {
 	EnableClearBackoffOnRetry bool
 	// PrivateKey is the private key for the P2P node.
 	PrivateKey []byte
+	// ResourceProfile sets predefined resource manager limits for the P2P host.
+	// Valid values are "limited", "server", or "" (default autoscaling).
+	ResourceProfile string
 }
 
 // NodeHTTPOptions contains HTTP API server configuration values.
@@ -505,6 +508,13 @@ func (sb *NodeP2POptionsBuilder) SetEnableClearBackoffOnRetry(enable bool) *Node
 // SetPrivateKey sets the private key for the P2P node.
 func (sb *NodeP2POptionsBuilder) SetPrivateKey(key []byte) *NodeP2POptionsBuilder {
 	sb.append(func(opts *NodeP2POptions) { opts.PrivateKey = key })
+	return sb
+}
+
+// SetResourceProfile sets predefined resource manager limits for the P2P host.
+// Valid values are "limited", "server", or "" (default autoscaling).
+func (sb *NodeP2POptionsBuilder) SetResourceProfile(profile string) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.ResourceProfile = profile })
 	return sb
 }
 

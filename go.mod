@@ -466,3 +466,5 @@ require (
 )
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
+
+replace github.com/sourcenetwork/go-p2p => github.com/alexmylonas/go-p2p v0.0.0-20260310235021-0e7341cfd30b

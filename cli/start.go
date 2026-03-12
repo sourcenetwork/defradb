@@ -102,7 +102,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
 				SetEnableRelay(cfg.GetBool("net.relayEnabled")).
-				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
+				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...).
+				SetResourceProfile(cfg.GetString("net.resourceprofile"))
 			opts.HTTP().
 				SetAddress(cfg.GetString("api.address")).
 				SetAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...).
@@ -283,6 +284,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"no-p2p",
 		cfg.GetBool(config.ConfigFlags["no-p2p"]),
 		"Disable the peer-to-peer network synchronization system",
+	)
+	cmd.PersistentFlags().String(
+		"resource-profile",
+		cfg.GetString(config.ConfigFlags["resource-profile"]),
+		"Set the resource manager profile for the p2p network (supported: limited, server) (default \"\")",
 	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
