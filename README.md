@@ -502,6 +502,20 @@ defradb start --allowed-origins=http://localhost:3000
 
 The catch-all `*` is also a valid origin. 
 
+## P2P Resource Management
+
+By default, DefraDB autoscale the resource limits for p2p connections based on system availability. For deployments with specific resource constraints or performance requirements, the `--resource-profile` flag selects a predefined limit profile:
+
+```
+defradb start --resource-profile limited
+```
+
+| Profile | Use case | Description |
+|---------|----------|-------------|
+| *(unset)* | General | autoscaled defaults |
+| `limited` | Edge nodes, constrained hardware | Conservative system-wide caps on connections, streams, and memory |
+| `server` | High-throughput nodes | Per-peer connection and stream caps; system limits remain autoscaled |
+
 ## Backing up and restoring
 
 It is currently not possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the current data state in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
