@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
@@ -64,12 +63,18 @@ func (s *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Genera
 		typDefCollectionMap:           make(map[string]client.CollectionVersion),
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
+
 	return s.Generator
 }
 
 // Generate generates the query-op and mutation-op type definitions from
 // the given CollectionVersions.
 func (g *Generator) Generate(ctx context.Context, collections []client.CollectionVersion) ([]*gql.Object, error) {
+	g.typDefCollectionMap = map[string]client.CollectionVersion{}
+	for _, col := range collections {
+		g.typDefCollectionMap[col.Name] = col
+	}
+
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
@@ -500,10 +505,7 @@ func (g *Generator) buildTypes(
 					continue
 				}
 
-				otherDef, ok, err := description.GetRelatedCollection(ctx, collection, field.Kind)
-				if err != nil {
-					return nil, err
-				}
+				otherDef, ok := g.getRelatedCollection(ctx, collection, field.Kind)
 
 				var ttype gql.Type
 				if ok {
@@ -562,7 +564,6 @@ func (g *Generator) buildTypes(
 
 		g.manager.schema.TypeMap()[obj.Name()] = obj
 		g.typeDefs = append(g.typeDefs, obj)
-		g.typDefCollectionMap[obj.Name()] = collection
 	}
 
 	return objs, nil
@@ -1663,6 +1664,55 @@ func genFilterOperatorName(fieldType gql.Type) string {
 	default:
 		return fieldType.Name() + "OperatorBlock"
 	}
+}
+
+func (g *Generator) getRelatedCollection(
+	ctx context.Context,
+	host client.CollectionVersion,
+	kind client.FieldKind,
+) (client.CollectionVersion, bool) {
+	switch typedKind := kind.(type) {
+	case *client.NamedKind:
+		col, ok := g.typDefCollectionMap[typedKind.Name]
+		return col, ok
+
+	case *client.CollectionKind:
+		var col client.CollectionVersion
+		var hasValue bool
+		for _, potentialMatch := range g.typDefCollectionMap {
+			if potentialMatch.CollectionID == typedKind.CollectionID {
+				col = potentialMatch
+				hasValue = true
+				break
+			}
+		}
+
+		return col, hasValue
+
+	case *client.SelfKind:
+		if typedKind.RelativeID == "" {
+			return host, true
+		}
+
+		for _, col := range g.typDefCollectionMap {
+			if col.CollectionID == host.CollectionID {
+				continue
+			}
+
+			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
+				continue
+			}
+
+			if fmt.Sprint(col.CollectionSet.Value().RelativeID) == typedKind.RelativeID {
+				return col, true
+			}
+		}
+
+	default:
+		// no-op
+	}
+
+	return client.CollectionVersion{}, false
 }
 
 /* Example
