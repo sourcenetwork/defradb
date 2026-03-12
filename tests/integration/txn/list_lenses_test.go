@@ -49,7 +49,7 @@ func TestTxn_ListLenses_InsideTxnWithAddLens_Succeeds(t *testing.T) {
 			&action.ListLenses{
 				TransactionID: immutable.Some(1),
 				ExpectedLenses: map[string]model.Lens{
-					"{{.LensID0}}": model.Lens{
+					"{{.LensID0}}": {
 						Lenses: []model.LensModule{
 							{
 								Path: lenses.CopyModulePath,
