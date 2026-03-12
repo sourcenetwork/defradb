@@ -1131,7 +1131,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	refreshCollections(s, immutable.None[int]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]

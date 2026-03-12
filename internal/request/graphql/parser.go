@@ -109,7 +109,10 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	schema := p.schemaManager.Schema()
 	if hadTxn {
-		if gotSchemaManager, ok := p.schemaManagerMap[gotTxn.ID()]; ok {
+		p.schemaManagerMapLock.RLock()
+		gotSchemaManager, ok := p.schemaManagerMap[gotTxn.ID()]
+		p.schemaManagerMapLock.RUnlock()
+		if ok {
 			schema = gotSchemaManager.Schema()
 		} else {
 			schema = p.schemaManager.Schema()
@@ -152,7 +155,9 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 	// If we had a transaction, map its transaction ID to a schema manager unique to it
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if hadTxn {
+		p.schemaManagerMapLock.Lock()
 		p.schemaManagerMap[gotTxn.ID()] = schemaManager
+		p.schemaManagerMapLock.Unlock()
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -160,6 +165,19 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 	txn.OnSuccess(
 		func() {
 			p.schemaManager = schemaManager
+			// If the txn ID is in the schema manager map, remove it
+			p.schemaManagerMapLock.Lock()
+			delete(p.schemaManagerMap, txn.ID())
+			p.schemaManagerMapLock.Unlock()
+		},
+	)
+
+	txn.OnDiscard(
+		func() {
+			// If the txn ID is in the schema manager map, remove it
+			p.schemaManagerMapLock.Lock()
+			delete(p.schemaManagerMap, txn.ID())
+			p.schemaManagerMapLock.Unlock()
 		},
 	)
 	return err

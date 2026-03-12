@@ -66,7 +66,7 @@ var _ Stateful = (*NewIndex)(nil)
 
 func (a *NewIndex) Execute() {
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
+	for _, nodeID := range nodeIDs {
 		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
@@ -77,7 +77,6 @@ func (a *NewIndex) Execute() {
 			txn, _ = a.s.GetTransaction(node, a.TransactionID)
 		}
 
-		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
 		if hadTxn {
