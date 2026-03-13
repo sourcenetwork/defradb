@@ -51,3 +51,35 @@ func (o *Operation) addSelection(i int, f request.Field, s Select) {
 		Index: s.Index,
 	})
 }
+
+func (o *Operation) addCursorSelection(
+	i int,
+	cursorField request.Field,
+	innerField request.Field,
+	pageInfo *request.PageInfoSelect,
+	s Select,
+) {
+	wrapperMapping := core.NewDocumentMapping()
+	wrapperMapping.Add(0, s.Name)
+	wrapperMapping.SetChildAt(0, s.DocumentMapping)
+	wrapperMapping.RenderKeys = append(wrapperMapping.RenderKeys, core.RenderKey{
+		Key:   getRenderKey(&innerField),
+		Index: 0,
+	})
+
+	if pageInfo != nil {
+		pageInfoIndex := wrapperMapping.GetNextIndex()
+		wrapperMapping.Add(pageInfoIndex, request.PageInfoFieldName)
+		wrapperMapping.RenderKeys = append(wrapperMapping.RenderKeys, core.RenderKey{
+			Key:   request.PageInfoFieldName,
+			Index: pageInfoIndex,
+		})
+	}
+
+	o.DocumentMapping.Add(i, s.Name)
+	o.DocumentMapping.SetChildAt(i, wrapperMapping)
+	o.DocumentMapping.RenderKeys = append(o.DocumentMapping.RenderKeys, core.RenderKey{
+		Key:   getRenderKey(&cursorField),
+		Index: s.Index,
+	})
+}
