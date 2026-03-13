@@ -19,8 +19,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type dataMap = map[string]any
-
 func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -41,13 +39,13 @@ func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 						}
 					}
 				}`,
-				Results: dataMap{
-					"_cursor": dataMap{
-						"User": []dataMap{
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
 							{"name": "Bob", "age": int64(30)},
 							{"name": "Carol", "age": int64(35)},
 						},
-						"_pageInfo": dataMap{
+						"_pageInfo": map[string]any{
 							"hasNext": false,
 							"hasPrev": true,
 						},
@@ -123,13 +121,13 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 
 			&action.Request{
 				Request: req,
-				Results: dataMap{
-					"_cursor": dataMap{
-						"User": []dataMap{
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
 							{"name": "Bob", "age": int64(30)},
 							{"name": "Carol", "age": int64(35)},
 						},
-						"_pageInfo": dataMap{
+						"_pageInfo": map[string]any{
 							"hasNext": false,
 							"hasPrev": true,
 						},
@@ -180,16 +178,16 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 						}
 					}
 				}`,
-				Results: dataMap{
-					"_cursor": dataMap{
-						"User": []dataMap{
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
 							{"name": "Alice", "age": int64(10)},
 							{"name": "Bob", "age": int64(20)},
 							{"name": "Carol", "age": int64(30)},
 							{"name": "Dave", "age": int64(40)},
 							{"name": "Eve", "age": int64(50)},
 						},
-						"_pageInfo": dataMap{
+						"_pageInfo": map[string]any{
 							"endCursor": testUtils.CaptureCursor("end"),
 						},
 					},
@@ -201,13 +199,13 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 					"cursor": testUtils.CapturedVar("end"),
 				}),
 				Request: req,
-				Results: dataMap{
-					"_cursor": dataMap{
-						"User": []dataMap{
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
 							{"name": "Carol", "age": int64(30)},
 							{"name": "Dave", "age": int64(40)},
 						},
-						"_pageInfo": dataMap{
+						"_pageInfo": map[string]any{
 							"hasNext": true,
 							"hasPrev": true,
 						},
