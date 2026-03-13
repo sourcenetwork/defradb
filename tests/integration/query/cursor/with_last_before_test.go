@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	internalCursor "github.com/sourcenetwork/defradb/internal/cursor"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -286,4 +287,132 @@ func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
 		},
 	}
 	executeTestCase(t, test)
+}
+
+func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
+			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
+			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
+			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
+			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 50}`},
+
+			&action.Request{
+				Request: `query {
+					_cursor {
+						User(first: 5, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							endCursor
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Alice", "age": int64(10)},
+							{"name": "Bob", "age": int64(20)},
+							{"name": "Carol", "age": int64(30)},
+							{"name": "Dave", "age": int64(40)},
+							{"name": "Eve", "age": int64(50)},
+						},
+						"_pageInfo": map[string]any{
+							"endCursor": captureDocIDOnlyCursor("legacyEnd"),
+						},
+					},
+				},
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("legacyEnd"),
+				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(last: 2, before: $cursor, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Carol", "age": int64(30)},
+							{"name": "Dave", "age": int64(40)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext": true,
+							"hasPrev": true,
+						},
+					},
+				},
+			},
+		},
+	}
+	executeTestCase(t, test)
+}
+
+func captureDocIDOnlyCursor(name string) *docIDOnlyCursorCapture {
+	return &docIDOnlyCursorCapture{name: name}
+}
+
+type docIDOnlyCursorCapture struct {
+	s           testUtils.TestState
+	name        string
+	failureText string
+}
+
+var _ testUtils.TestStateMatcher = (*docIDOnlyCursorCapture)(nil)
+var _ testUtils.StatefulMatcher = (*docIDOnlyCursorCapture)(nil)
+
+func (m *docIDOnlyCursorCapture) SetTestState(s testUtils.TestState) {
+	m.s = s
+}
+
+func (m *docIDOnlyCursorCapture) ResetMatcherState() {
+	m.failureText = ""
+}
+
+func (m *docIDOnlyCursorCapture) Match(actual any) (bool, error) {
+	cursorValue, ok := actual.(string)
+	if !ok {
+		m.failureText = "expected cursor string"
+		return false, nil
+	}
+
+	payload, err := internalCursor.Decode(cursorValue)
+	if err != nil {
+		m.failureText = err.Error()
+		return false, nil
+	}
+
+	legacyCursor, err := internalCursor.Encode(internalCursor.CursorPayload{
+		DocID:     payload.DocID,
+		Direction: payload.Direction,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	m.s.SetCapturedVariable(m.name, legacyCursor)
+	return true, nil
+}
+
+func (m *docIDOnlyCursorCapture) FailureMessage(actual any) string {
+	if m.failureText == "" {
+		return "failed to capture docID-only cursor"
+	}
+	return m.failureText
+}
+
+func (m *docIDOnlyCursorCapture) NegatedFailureMessage(actual any) string {
+	return "expected cursor capture to fail"
 }
