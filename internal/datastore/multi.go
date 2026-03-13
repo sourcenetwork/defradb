@@ -125,33 +125,31 @@ func HumanReadableKey(key []byte) (string, error) {
 	switch key[0] {
 	case blockStoreKey:
 		if bytes.HasPrefix(key[1:], []byte{toMergeIndexPrefix}) {
-			cid, err := cid.Cast(key[2:])
+			_, c, err := cid.CidFromBytes(key[2:])
 			if err != nil {
 				return "", errors.WithStack(err)
 			}
-			return "blocks/to_merge/" + cid.String(), nil
+			return "blocks/to_merge/" + c.String(), nil
 		}
-		cid, err := cid.Cast(key[1:])
+		_, c, err := cid.CidFromBytes(key[1:])
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		return "blocks/" + cid.String(), nil
+		return "blocks/" + c.String(), nil
 	case dataStoreKey:
 		return "data" + string(key[1:]), nil
 	case encStoreKey:
-		cid, err := cid.Cast(key[1:])
+		_, c, err := cid.CidFromBytes(key[1:])
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		return "encryption/" + cid.String(), nil
-	case encStoreKey:
+		return "encryption/" + c.String(), nil
+	case systemStoreKey:
 		return "system" + string(key[1:]), nil
 	case headStoreKey:
 		return "heads" + string(key[1:]), nil
 	case peerStoreKey:
 		return "peers" + string(key[1:]), nil
-	case systemStoreKey:
-		return "system" + string(key[1:]), nil
 	}
 	return string(key), nil
 }
