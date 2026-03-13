@@ -118,26 +118,17 @@ func (n *operationNode) Next() (bool, error) {
 			}
 
 			if topNode, ok := child.(*selectTopNode); ok && topNode.cursor != nil {
-				childMap := child.DocumentMap()
-				renderedDocs := make([]map[string]any, 0, len(docs))
-				for _, doc := range docs {
-					if !doc.Hidden {
-						renderedDocs = append(renderedDocs, childMap.ToMap(doc))
-					}
-				}
-
-				wrapper := map[string]any{}
-				wrapper[topNode.selectNode.selectReq.ResponseKey] = renderedDocs
-
+				wrapperMap := n.documentMapping.ChildMappings[i]
+				wrapperDoc := wrapperMap.NewDoc()
+				wrapperMap.SetFirstOfName(&wrapperDoc, topNode.selectNode.selectReq.Name, docs)
 				pageInfo, err := topNode.cursor.PageInfo()
 				if err != nil {
 					return false, err
 				}
 				if len(pageInfo) > 0 {
-					wrapper["_pageInfo"] = pageInfo
+					wrapperMap.TrySetFirstOfName(&wrapperDoc, request.PageInfoFieldName, pageInfo)
 				}
-
-				n.currentValue.Fields[i] = wrapper
+				n.currentValue.Fields[i] = wrapperDoc
 			} else {
 				n.currentValue.Fields[i] = docs
 			}

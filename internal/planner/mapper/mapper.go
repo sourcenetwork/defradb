@@ -103,7 +103,7 @@ func ToOperation(
 			s.CursorPageInfo = t.PageInfoSelect
 			operation.Selects = append(operation.Selects, s)
 			operation.CursorSelects = append(operation.CursorSelects, s)
-			operation.addSelection(i, t.Field, *s)
+			operation.addCursorSelection(i, t.Field, t.Select.Field, t.PageInfoSelect, *s)
 
 		default:
 			return nil, ErrInvalidSelect
@@ -272,7 +272,6 @@ func toSelect(
 		Cids:            selectRequest.CIDs,
 		CollectionName:  collectionName,
 		Fields:          fields,
-		ResponseKey:     getRenderKey(&selectRequest.Field),
 		IsEncrypted:     selectRequest.IsEncrypted,
 	}, nil
 }
