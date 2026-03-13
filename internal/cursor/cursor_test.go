@@ -130,7 +130,6 @@ func TestEncodeDecode_SpecialCharactersInKeys(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, p, decoded)
 	assert.Equal(t, "Café 中文", decoded.Keys["unicode_name"])
-	assert.Equal(t, "🚀💫", decoded.Keys["emoji_field"])
 	assert.Equal(t, "line1\nline2\ttab", decoded.Keys["newline_val"])
 }
 
