@@ -63,8 +63,9 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
-	cursorPayload     *cursor.CursorPayload
-	reversedIteration bool
+	cursorPayload        *cursor.CursorPayload
+	reversedIteration    bool
+	cursorDrivenOrdering bool
 
 	execInfo scanExecInfo
 }
@@ -457,7 +458,7 @@ func (n *scanNode) initScan() error {
 }
 
 func (n *scanNode) fetcherOrdering() []mapper.OrderCondition {
-	if !n.index.HasValue() || len(n.ordering) == 0 {
+	if !n.cursorDrivenOrdering || !n.index.HasValue() || len(n.ordering) == 0 {
 		return n.ordering
 	}
 

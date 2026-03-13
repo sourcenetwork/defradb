@@ -309,14 +309,20 @@ func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
 	}
 
 	if !isBackward {
-		if payload != nil && len(payload.Keys) > 0 {
+		if scan != nil && payload != nil && scan.buildCursorSeekKey() != nil {
 			plan.cursor.indexSeekActive = true
 		}
 		return nil
 	}
 
-	if scan != nil && scan.index.HasValue() && len(scan.ordering) > 0 {
+	if scan != nil &&
+		scan.index.HasValue() &&
+		len(scan.ordering) > 0 &&
+		(!plan.cursor.beforeCursor.HasValue() || scan.buildCursorSeekKey() != nil) {
 		plan.cursor.indexSeekActive = true
+	}
+	if scan != nil {
+		scan.cursorDrivenOrdering = isBackward && plan.cursor.indexSeekActive
 	}
 	return nil
 }
