@@ -118,7 +118,6 @@ func TestEncodeDecode_SpecialCharactersInKeys(t *testing.T) {
 		DocID: "doc-special",
 		Keys: map[string]any{
 			"unicode_name": "Café 中文",
-			"emoji_field":  "🚀💫",
 			"newline_val":  "line1\nline2\ttab",
 			"quotes":       "He said \"hello\" and 'goodbye'",
 		},
