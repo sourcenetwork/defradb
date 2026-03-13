@@ -66,6 +66,8 @@ func TestDefaultExplainCursorQueryWithFirstOnly(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"first":       uint64(5),
 							"after":       nil,
+							"last":        nil,
+							"before":      nil,
 							"cursorValue": nil,
 						},
 					},
@@ -100,6 +102,8 @@ func TestDefaultExplainCursorQueryWithFirstAndAfterNull(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"first":       uint64(3),
 							"after":       nil,
+							"last":        nil,
+							"before":      nil,
 							"cursorValue": nil,
 						},
 					},
