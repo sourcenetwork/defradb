@@ -1131,7 +1131,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -2213,7 +2213,7 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		var err error
 		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
-			txn, _ = s.GetTransaction(node, action.TransactionID)
+			txn, err = s.GetTransaction(node, action.TransactionID)
 		}
 
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
