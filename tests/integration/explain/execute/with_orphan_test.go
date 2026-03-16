@@ -133,12 +133,11 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 						TargetNodeName: "orphanNode",
 						ExpectedAttributes: dataMap{
 							"iterations": uint64(3),
-							// Secondary parent: orphanNode scans all parent docs (2 Books) and does
-							// point lookups on the child's (Publisher) unique FK index for each.
-							// The linked Book's lookup finds 1 Publisher doc.
-							"docFetches":   uint64(3),
-							"fieldFetches": uint64(5),
-							"indexFetches": uint64(1),
+							// Secondary parent: scans all 2 parent docs and does a Has() on the
+							// child's unique FK index for each (2 indexFetches).
+							"docFetches":   uint64(2),
+							"fieldFetches": uint64(2),
+							"indexFetches": uint64(2),
 						},
 					},
 				},
