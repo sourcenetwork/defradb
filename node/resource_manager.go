@@ -48,7 +48,7 @@ var resourceProfiles = map[string]rcmgr.PartialLimitConfig{
 			Conns:           48,
 			StreamsInbound:  64,
 			StreamsOutbound: 128,
-			Streams:         196,
+			Streams:         192,
 			Memory:          16 << 20,
 			FD:              32,
 		},
@@ -58,7 +58,7 @@ var resourceProfiles = map[string]rcmgr.PartialLimitConfig{
 			Conns:           8,
 			StreamsInbound:  64,
 			StreamsOutbound: 128,
-			Streams:         196,
+			Streams:         192,
 			Memory:          64 << 20,
 		},
 	},
@@ -76,7 +76,6 @@ var resourceProfiles = map[string]rcmgr.PartialLimitConfig{
 }
 
 // buildResourceManager constructs a resource manager from the given profile name.
-// If profile is empty, nil is returned and go-p2p will use libp2p's autoscaled defaults.
 func buildResourceManager(profile string) (network.ResourceManager, error) {
 	partial, ok := resourceProfiles[profile]
 	if !ok {
