@@ -16,10 +16,13 @@ import (
 
 	"github.com/sourcenetwork/immutable/enumerable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -81,10 +84,16 @@ type orphanNode struct {
 	phases enumerable.Enumerable[core.Doc]
 
 	// Point-lookup state for streaming orphan detection (wrapper mode).
-	parentClone        *scanNode
-	childFKFieldName   string
-	childFKFieldMapIdx int
-	pointLookupDone    bool
+	// parentClone iterates parent docs one at a time; for each, we check
+	// whether a child with FK = parentDocID exists via a direct Has() call
+	// on the child's unique FK index, avoiding a full scanNode clone per doc.
+	parentClone     *scanNode
+	pointLookupDone bool
+
+	// Initialized once in initPointLookupState, reused for every parent doc.
+	childFKIndex client.IndexDescription
+	childShortID uint32
+	planner      *Planner
 
 	execInfo orphanExecInfo
 }
@@ -335,23 +344,38 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 	return docs, nil
 }
 
-// initPointLookupState initializes the parent iterator clone and child lookup info
+// initPointLookupState initializes the parent iterator clone and child index info
 // for streaming orphan detection via point lookups. Called once on first need.
+//
+// For each parent doc, we need to check if a child with FK = parentDocID exists.
+// Instead of cloning a full scanNode per doc, we find the child's unique FK index
+// once here and then do a direct datastore.Has() per doc in nextOrphanByPointLookup.
 func (n *orphanNode) initPointLookupState() error {
 	if !n.join.childSide.relFieldDef.HasValue() || !n.join.childSide.relIDFieldMapIndex.HasValue() {
 		n.pointLookupDone = true
 		return nil
 	}
 
-	childRelFieldName := n.join.childSide.relFieldDef.Value().Name
-	n.childFKFieldName = request.ToFieldID(childRelFieldName)
-	n.childFKFieldMapIdx = n.join.childSide.relIDFieldMapIndex.Value()
-
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
 	if parentScan == nil {
 		n.pointLookupDone = true
 		return nil
 	}
+	n.planner = parentScan.p
+
+	childFKFieldName := request.ToFieldID(n.join.childSide.relFieldDef.Value().Name)
+	childIdx := findIndexByFieldName(n.join.childSide.col, childFKFieldName)
+	if !childIdx.HasValue() {
+		n.pointLookupDone = true
+		return nil
+	}
+	n.childFKIndex = childIdx.Value()
+
+	shortID, err := id.GetShortCollectionID(n.planner.ctx, n.join.childSide.col.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	n.childShortID = shortID
 
 	// Use subQueryFilter when set (nested join scoped to one target doc),
 	// otherwise use the top-level subFilter.
@@ -376,7 +400,7 @@ func (n *orphanNode) initPointLookupState() error {
 }
 
 // nextOrphanByPointLookup returns the next orphan parent by iterating parents one at a time
-// and checking each via a point lookup on the child's unique FK index.
+// and checking each via a Has() call on the child's unique FK index.
 // Returns (doc, true, nil) for an orphan, (empty, false, nil) when exhausted.
 func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
 	if n.pointLookupDone {
@@ -392,11 +416,8 @@ func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
 		}
 	}
 
-	childScan := getNode[*scanNode](n.join.childSide.plan)
-	if childScan == nil {
-		n.pointLookupDone = true
-		return core.Doc{}, false, nil
-	}
+	txn := datastore.CtxMustGetTxn(n.planner.ctx)
+	ds := txn.Datastore()
 
 	for {
 		hasNext, err := n.parentClone.Next()
@@ -413,37 +434,19 @@ func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
 
 		doc := n.parentClone.Value()
 
-		// Build a lookup filter for the child's FK field = parent doc ID.
-		lookupFilter := addFilterOnField(nil, n.childFKFieldMapIdx, doc.GetID())
-		lookupFilter.ExternalConditions = map[string]any{
-			n.childFKFieldName: map[string]any{
-				"_eq": doc.GetID(),
-			},
-		}
-
-		// Select the best index for the child lookup filter.
-		childResult := selectIndex(selectIndexOptions{
-			collection:          n.join.childSide.col,
-			filter:              lookupFilter,
-			relationIDFieldName: n.childFKFieldName,
-			docMapping:          childScan.documentMapping,
+		// Check if a child with FK = parentDocID exists via a direct index lookup.
+		// The FK index on 1-to-1 relations is unique, so the key format is:
+		//   /collectionShortID/indexID/fkValue
+		// and Has() is an exact match.
+		indexKey := keys.NewIndexDataStoreKey(n.childShortID, n.childFKIndex.ID, []keys.IndexedField{
+			{Value: client.NewNormalString(doc.GetID()), Descending: n.childFKIndex.Fields[0].Descending},
 		})
 
-		lookupClone := childScan.cloneWithFilter(lookupFilter, childResult.index)
-		initErr := lookupClone.Init()
-		if initErr != nil {
-			return core.Doc{}, false, initErr
+		hasChild, err := ds.Has(n.planner.ctx, &indexKey)
+		if err != nil {
+			return core.Doc{}, false, err
 		}
-
-		hasChild, nextErr := lookupClone.Next()
-		n.execInfo.fetches.Add(lookupClone.execInfo.fetches)
-		closeErr := lookupClone.Close()
-		if nextErr != nil {
-			return core.Doc{}, false, errors.Join(nextErr, closeErr)
-		}
-		if closeErr != nil {
-			return core.Doc{}, false, closeErr
-		}
+		n.execInfo.fetches.IndexesFetched++
 
 		if !hasChild {
 			return doc, true, nil
