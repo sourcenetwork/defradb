@@ -1105,7 +1105,8 @@ func setActiveCollectionVersion(
 	hadTxn := action.TransactionID.HasValue()
 	if hadTxn {
 		hadTxn = true
-		txn, _ = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+		require.NoError(s.T, err)
 	}
 
 	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
@@ -1178,7 +1179,8 @@ func deleteDoc(
 	hadTxn := a.TransactionID.HasValue()
 	if hadTxn {
 		doNotWaitForUpdate = true
-		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		require.NoError(s.T, err)
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1224,7 +1226,6 @@ func updateDoc(
 	s *state.State,
 	a UpdateDoc,
 ) {
-	// 1️⃣ Pick mutation function based on active mutation type
 	var mutation func(
 		*state.State,
 		UpdateDoc,
@@ -1245,21 +1246,17 @@ func updateDoc(
 		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
-	// 2️⃣ Prepare nodes and node IDs for the action
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
-
-	// 3️⃣ Track errors per node
 	var err error
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		// 4️⃣ Determine if a transaction is attached to this action
 		var txnOption immutable.Option[client.Txn]
 		if a.TransactionID.HasValue() {
-			txn, err := s.GetTransaction(node, a.TransactionID) // node-local txn
+			txn, err := s.GetTransaction(node, a.TransactionID)
 			require.NoError(s.T, err)
 			txnOption = immutable.Some(txn)
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
@@ -1267,23 +1264,18 @@ func updateDoc(
 			txnOption = immutable.None[client.Txn]()
 		}
 
-		// 5️⃣ Get collections in canonical order for this node
 		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
-		// 6️⃣ Perform mutation with retry
 		err = withRetryOnNode(node, func() error {
 			return mutation(s, a, node, nodeID, collection, txnOption)
 		})
 
-		// 7️⃣ Check expected error
 		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
-	// 8️⃣ Assert that the expected error was raised at least once
 	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	// 9️⃣ Wait for update events on the original node only
 	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
@@ -1437,7 +1429,8 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var err error
 	if hadTxn {
 		doNotWaitForUpdate = true
-		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
+		require.NoError(s.T, err)
 	}
 
 	txnOption := immutable.None[client.Txn]()
@@ -1491,7 +1484,8 @@ func newEncryptedIndex(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1558,7 +1552,8 @@ func listEncryptedIndexes(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -1649,7 +1644,8 @@ func deleteEncryptedIndex(
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, _ = s.GetTransaction(node, a.TransactionID)
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
 		}
 
 		txnOption := immutable.None[client.Txn]()
@@ -2219,6 +2215,7 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
 			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
 		}
 
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
