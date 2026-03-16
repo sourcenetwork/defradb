@@ -283,15 +283,6 @@ func (e *sourceEnumerable) Reset() {}
 func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 	n.fetched = true
 
-	parentScan := getNode[*scanNode](n.join.parentSide.plan)
-	if parentScan == nil {
-		return nil, nil
-	}
-
-	if !n.join.parentSide.relFieldDef.HasValue() {
-		return nil, nil
-	}
-
 	var orphanFilter *mapper.Filter
 	var relationIDFieldName string
 
@@ -299,9 +290,6 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 		orphanFilter = addNullFilterOnField(n.subQueryFilter, n.subQueryRelIDFieldMapIdx)
 		relationIDFieldName = n.subQueryRelIDFieldName
 	} else if n.join.parentSide.isPrimary() {
-		if !n.join.parentSide.relIDFieldMapIndex.HasValue() {
-			return nil, nil
-		}
 		relIDFieldMapIndex := n.join.parentSide.relIDFieldMapIndex.Value()
 		orphanFilter = addNullFilterOnField(n.join.subFilter, relIDFieldMapIndex)
 		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
@@ -317,6 +305,7 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 		docMapping:          n.documentMapping,
 	})
 
+	parentScan := getNode[*scanNode](n.join.parentSide.plan)
 	scan := parentScan.cloneWithFilter(orphanFilter, result.index)
 	defer func() {
 		err = errors.Join(err, scan.Close())
@@ -351,16 +340,7 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 // Instead of cloning a full scanNode per doc, we find the child's unique FK index
 // once here and then do a direct datastore.Has() per doc in nextOrphanByPointLookup.
 func (n *orphanNode) initPointLookupState() error {
-	if !n.join.childSide.relFieldDef.HasValue() || !n.join.childSide.relIDFieldMapIndex.HasValue() {
-		n.pointLookupDone = true
-		return nil
-	}
-
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
-	if parentScan == nil {
-		n.pointLookupDone = true
-		return nil
-	}
 	n.planner = parentScan.p
 
 	childFKFieldName := request.ToFieldID(n.join.childSide.relFieldDef.Value().Name)
