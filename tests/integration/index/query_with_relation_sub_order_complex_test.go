@@ -85,13 +85,13 @@ func TestQueryWithOrderByRelationField_ExhaustiveASCWithLimit_ManyOrphansEarlyTe
 				},
 			},
 			// orphanNode scans only 4 of 10 Books to find 3 orphans (early termination).
-			// 1 of the 4 had a Publisher (1 indexFetch + 1 child docFetch), so docFetches=4+1=5.
+			// Each parent gets a Has() call on the child FK index (4 indexFetches).
 			// Source phase (ordered join) never entered — root/subType scanNodes show 0 fetches.
 			&action.Request{
 				Request: makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter("orphanNode").
-					WithDocFetches(5).
-					WithIndexFetches(1).
+					WithDocFetches(4).
+					WithIndexFetches(4).
 					WithLevel("root").
 					WithDocFetches(0).
 					WithIndexFetches(0).
@@ -178,15 +178,14 @@ func TestQueryWithOrderByRelationField_ExhaustiveASC_ManyBooksShowsFullPipeline(
 					},
 				},
 			},
-			// Without limit, orphanNode scans all 10 Books and does a point lookup for each.
-			// 3 lookups find a Publisher (3 indexFetches + 3 child docFetches).
-			// docFetches=13: 10 parent scans + 3 child doc fetches.
+			// Without limit, orphanNode scans all 10 Books and does a Has() for each.
+			// docFetches=10 (parent scans), indexFetches=10 (one Has() per parent).
 			// Source phase also runs: root fetches 3 linked Books, subType fetches 3 Publishers via index.
 			&action.Request{
 				Request: makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter("orphanNode").
-					WithDocFetches(13).
-					WithIndexFetches(3).
+					WithDocFetches(10).
+					WithIndexFetches(10).
 					WithLevel("root").
 					WithDocFetches(3).
 					WithIndexFetches(0).

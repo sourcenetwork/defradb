@@ -58,6 +58,7 @@ type orphanExecInfo struct {
 //
 // Two modes:
 //   - Standalone (source == nil): inside a sequenceNode, fetches orphans via FK IS NULL.
+//     Streams results from a scanNode clone one at a time.
 //   - Wrapper (source != nil): wraps an ordered join, concatenating orphans and source
 //     results. ASC puts orphans first, DESC puts them last.
 type orphanNode struct {
@@ -75,10 +76,8 @@ type orphanNode struct {
 	subQueryRelIDFieldMapIdx int
 	isSubQuery               bool
 
-	// Standalone state
-	docs    []core.Doc
-	current int
-	fetched bool
+	// Standalone state — streams from a scanNode clone with FK IS NULL filter.
+	standaloneScan *scanNode
 
 	// Wrapper state — concatenated orphan + source enumerables.
 	phases enumerable.Enumerable[core.Doc]
@@ -136,22 +135,29 @@ func (n *orphanNode) Kind() string {
 }
 
 func (n *orphanNode) Init() error {
-	n.docs = nil
-	n.current = 0
-	n.fetched = false
 	n.phases = nil
 	n.pointLookupDone = false
+
+	if n.standaloneScan != nil {
+		if err := n.standaloneScan.Close(); err != nil {
+			return err
+		}
+		n.standaloneScan = nil
+	}
 	if n.parentClone != nil {
-		err := n.parentClone.Close()
-		if err != nil {
+		if err := n.parentClone.Close(); err != nil {
 			return err
 		}
 		n.parentClone = nil
 	}
+
 	if n.source != nil {
-		return n.source.Init()
+		if err := n.source.Init(); err != nil {
+			return err
+		}
+		return n.initPointLookupState()
 	}
-	return nil
+	return n.initStandaloneScan()
 }
 
 func (n *orphanNode) Start() error {
@@ -172,14 +178,17 @@ func (n *orphanNode) Source() planNode {
 }
 
 func (n *orphanNode) Close() error {
-	var cloneErr error
+	var errs []error
+	if n.standaloneScan != nil {
+		errs = append(errs, n.standaloneScan.Close())
+	}
 	if n.parentClone != nil {
-		cloneErr = n.parentClone.Close()
+		errs = append(errs, n.parentClone.Close())
 	}
 	if n.source != nil {
-		return errors.Join(n.source.Close(), cloneErr)
+		errs = append(errs, n.source.Close())
 	}
-	return cloneErr
+	return errors.Join(errs...)
 }
 
 func (n *orphanNode) Next() (bool, error) {
@@ -191,22 +200,12 @@ func (n *orphanNode) Next() (bool, error) {
 	return n.nextStandalone()
 }
 
-// nextStandalone fetches all orphans on first call, then yields them sequentially.
+// nextStandalone yields orphans one at a time from the FK IS NULL scan clone.
 func (n *orphanNode) nextStandalone() (bool, error) {
-	if !n.fetched {
-		orphans, err := n.fetchOrphans()
-		if err != nil {
-			return false, err
-		}
-		n.docs = orphans
-	}
-
-	if n.current >= len(n.docs) {
+	if n.standaloneScan == nil {
 		return false, nil
 	}
-
-	n.current++
-	return true, nil
+	return n.standaloneScan.Next()
 }
 
 // nextWrapped delegates to the concatenated phases enumerable.
@@ -232,8 +231,8 @@ func (n *orphanNode) Value() core.Doc {
 		doc, _ := n.phases.Value()
 		return doc
 	}
-	if n.current > 0 && n.current <= len(n.docs) {
-		return n.docs[n.current-1]
+	if n.standaloneScan != nil {
+		return n.standaloneScan.Value()
 	}
 	return core.Doc{}
 }
@@ -277,12 +276,10 @@ func (e *sourceEnumerable) Value() (core.Doc, error) {
 
 func (e *sourceEnumerable) Reset() {}
 
-// fetchOrphans fetches and returns parent documents that have no related children.
-// Used only in standalone mode (FK IS NULL path for primary-side parents) and
-// subquery mode (nested joins with primary ordering).
-func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
-	n.fetched = true
-
+// initStandaloneScan creates and initializes a scanNode clone with FK IS NULL filter
+// for streaming orphan detection. Used in standalone mode (primary-side parents)
+// and subquery mode (nested joins with primary ordering).
+func (n *orphanNode) initStandaloneScan() error {
 	var orphanFilter *mapper.Filter
 	var relationIDFieldName string
 
@@ -295,7 +292,7 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
 	} else {
 		// Secondary parent — should use point-lookup wrapper mode, not standalone.
-		return nil, nil
+		return nil
 	}
 
 	result := selectIndex(selectIndexOptions{
@@ -306,31 +303,9 @@ func (n *orphanNode) fetchOrphans() (_ []core.Doc, err error) {
 	})
 
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
-	scan := parentScan.cloneWithFilter(orphanFilter, result.index)
-	defer func() {
-		err = errors.Join(err, scan.Close())
-	}()
+	n.standaloneScan = parentScan.cloneWithFilter(orphanFilter, result.index)
 
-	if err := scan.Init(); err != nil {
-		return nil, err
-	}
-
-	var docs []core.Doc
-	for {
-		hasNext, err := scan.Next()
-		if err != nil {
-			return nil, err
-		}
-		if !hasNext {
-			break
-		}
-
-		docs = append(docs, scan.Value())
-	}
-
-	n.execInfo.fetches.Add(scan.execInfo.fetches)
-
-	return docs, nil
+	return n.standaloneScan.Init()
 }
 
 // initPointLookupState initializes the parent iterator clone and child index info
@@ -383,17 +358,8 @@ func (n *orphanNode) initPointLookupState() error {
 // and checking each via a Has() call on the child's unique FK index.
 // Returns (doc, true, nil) for an orphan, (empty, false, nil) when exhausted.
 func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
-	if n.pointLookupDone {
+	if n.pointLookupDone || n.parentClone == nil {
 		return core.Doc{}, false, nil
-	}
-
-	if n.parentClone == nil {
-		if err := n.initPointLookupState(); err != nil {
-			return core.Doc{}, false, err
-		}
-		if n.pointLookupDone {
-			return core.Doc{}, false, nil
-		}
 	}
 
 	txn := datastore.CtxMustGetTxn(n.planner.ctx)
@@ -471,11 +437,18 @@ func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, e
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
+		fetches := n.execInfo.fetches
+		if n.standaloneScan != nil {
+			fetches.Add(n.standaloneScan.execInfo.fetches)
+		}
+		if n.parentClone != nil {
+			fetches.Add(n.parentClone.execInfo.fetches)
+		}
 		return map[string]any{
 			"iterations":   n.execInfo.iterations,
-			"docFetches":   n.execInfo.fetches.DocsFetched,
-			"fieldFetches": n.execInfo.fetches.FieldsFetched,
-			"indexFetches": n.execInfo.fetches.IndexesFetched,
+			"docFetches":   fetches.DocsFetched,
+			"fieldFetches": fetches.FieldsFetched,
+			"indexFetches": fetches.IndexesFetched,
 		}, nil
 
 	default:
