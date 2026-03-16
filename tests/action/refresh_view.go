@@ -12,13 +12,13 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
