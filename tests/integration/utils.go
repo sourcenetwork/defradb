@@ -1219,11 +1219,21 @@ func deleteDoc(
 }
 
 // updateDoc updates a document using the chosen [state.ActiveMutationType].
+// Handles multi-node mutations with node-local transactions, and waits for update events safely.
 func updateDoc(
 	s *state.State,
 	a UpdateDoc,
 ) {
-	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection, immutable.Option[client.Txn]) error
+	// 1️⃣ Pick mutation function based on active mutation type
+	var mutation func(
+		*state.State,
+		UpdateDoc,
+		client.TxnStore,
+		int,
+		client.Collection,
+		immutable.Option[client.Txn],
+	) error
+
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1235,50 +1245,45 @@ func updateDoc(
 		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
-	var collections []client.Collection
+	// 2️⃣ Prepare nodes and node IDs for the action
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
-
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
+	// 3️⃣ Track errors per node
 	var err error
-	hadTxn := a.TransactionID.HasValue()
-	if hadTxn {
-		doNotWaitForUpdate = true
-		txn, _ = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-	}
-
-	txnOption := immutable.None[client.Txn]()
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	}
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+
+		// 4️⃣ Determine if a transaction is attached to this action
+		var txnOption immutable.Option[client.Txn]
+		if a.TransactionID.HasValue() {
+			txn, err := s.GetTransaction(node, a.TransactionID) // node-local txn
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+			doNotWaitForUpdate = true // if using txn, we skip local update wait
+		} else {
+			txnOption = immutable.None[client.Txn]()
+		}
+
+		// 5️⃣ Get collections in canonical order for this node
+		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
-		err = withRetryOnNode(
-			node,
-			func() error {
-				err := mutation(
-					s,
-					a,
-					node,
-					nodeID,
-					collection,
-					txnOption,
-				)
-				return err
-			},
-		)
+		// 6️⃣ Perform mutation with retry
+		err = withRetryOnNode(node, func() error {
+			return mutation(s, a, node, nodeID, collection, txnOption)
+		})
+
+		// 7️⃣ Check expected error
 		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
+	// 8️⃣ Assert that the expected error was raised at least once
 	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
+	// 9️⃣ Wait for update events on the original node only
 	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,

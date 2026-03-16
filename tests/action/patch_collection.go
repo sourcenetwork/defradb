@@ -14,6 +14,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -63,9 +64,7 @@ func (a *PatchCollection) Execute() {
 		hadTxn = true
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
+		require.NoError(a.s.T, err)
 	}
 
 	// The lens IDs are consistent across nodes, so we can patch once for all nodes.

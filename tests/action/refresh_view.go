@@ -13,6 +13,7 @@ package action
 
 import (
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -59,9 +60,7 @@ func (a *RefreshViews) Execute() {
 		hadTxn = true
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
+		require.NoError(a.s.T, err)
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)

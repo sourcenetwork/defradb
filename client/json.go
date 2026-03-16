@@ -333,7 +333,7 @@ func (arr jsonArray) MarshalJSON() ([]byte, error) {
 }
 
 func (arr jsonArray) Unwrap() any {
-	result := make([]any, len(arr.val))
+	result := make([]any, len(arr.jsonBase.val))
 	for i := range arr.val {
 		result[i] = arr.val[i].Unwrap()
 	}

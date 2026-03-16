@@ -15,6 +15,7 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -82,9 +83,7 @@ func configureMigration(
 			hadTxn = true
 			var err error
 			txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
-			if err != nil {
-				return
-			}
+			require.NoError(s.T, err)
 		}
 
 		ctx := db.InitContext(s.Ctx, txn)

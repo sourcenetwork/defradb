@@ -39,7 +39,6 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 }
 
 // RefreshCollections refreshes all the collections of the given names, preserving order.
-// It will run inside the transaction passed, if one is provided
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
 func RefreshCollections(
