@@ -328,7 +328,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 				} else {
 					// Secondary parent: orphans identified via point lookups on child's FK index.
 					// Wrap join with orphanNode that handles ordering internally.
-					plan.joinPlan = newOrphanNodeWithSource(join, node, orderDir.Value())
+					plan.joinPlan = newOrphanPointLookupNode(join, node, orderDir.Value())
 				}
 			} else if parentPlan != nil {
 				p.joinExpand.pendingOrphanWiring = &orphanWiringRequest{
@@ -376,7 +376,7 @@ func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, d
 	}
 }
 
-// wireSubQueryOrphanPointLookupPipeline inserts an orphanNode (in wrapper mode)
+// wireSubQueryOrphanPointLookupPipeline inserts an orphanWrapperNode
 // into the selectTopNode for nested join orphan handling via point lookups.
 // It iterates parents and checks each via point lookup on the child's FK index.
 // Called after the full plan chain (order, limit) is built.
@@ -386,10 +386,10 @@ func wireSubQueryOrphanPointLookupPipeline(
 	direction mapper.SortDirection,
 ) {
 	if plan.limit != nil {
-		orphan := newOrphanNodeWithSource(join, plan.limit.plan, direction)
+		orphan := newOrphanPointLookupNode(join, plan.limit.plan, direction)
 		plan.limit.plan = orphan
 	} else {
-		orphan := newOrphanNodeWithSource(join, plan.planNode, direction)
+		orphan := newOrphanPointLookupNode(join, plan.planNode, direction)
 		plan.planNode = orphan
 	}
 }

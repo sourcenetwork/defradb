@@ -11,18 +11,12 @@
 package planner
 
 import (
-	"errors"
 	"maps"
 
-	"github.com/sourcenetwork/immutable/enumerable"
-
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -54,21 +48,13 @@ type orphanExecInfo struct {
 	fetches    fetcher.ExecInfo
 }
 
-// orphanNode yields parent documents that have no related children.
-//
-// Two modes:
-//   - Standalone (source == nil): inside a sequenceNode, fetches orphans via FK IS NULL.
-//     Streams results from a scanNode clone one at a time.
-//   - Wrapper (source != nil): wraps an ordered join, concatenating orphans and source
-//     results. ASC puts orphans first, DESC puts them last.
+// orphanNode yields parent documents that have no related children by scanning
+// for FK IS NULL via a scanNode clone. Used inside a sequenceNode for primary-side
+// parents where the FK field is stored directly.
 type orphanNode struct {
 	docMapper
 
 	join *invertibleTypeJoin
-
-	// nil in standalone mode; set in wrapper mode to the underlying ordered join.
-	source         planNode
-	orderDirection mapper.SortDirection
 
 	// Set by retrievePrimaryDocs for nested join context (per-iteration filter scope).
 	subQueryFilter           *mapper.Filter
@@ -76,23 +62,8 @@ type orphanNode struct {
 	subQueryRelIDFieldMapIdx int
 	isSubQuery               bool
 
-	// Standalone state — streams from a scanNode clone with FK IS NULL filter.
+	// Streams from a scanNode clone with FK IS NULL filter.
 	standaloneScan *scanNode
-
-	// Wrapper state — concatenated orphan + source enumerables.
-	phases enumerable.Enumerable[core.Doc]
-
-	// Point-lookup state for streaming orphan detection (wrapper mode).
-	// parentClone iterates parent docs one at a time; for each, we check
-	// whether a child with FK = parentDocID exists via a direct Has() call
-	// on the child's unique FK index, avoiding a full scanNode clone per doc.
-	parentClone     *scanNode
-	pointLookupDone bool
-
-	// Initialized once in initPointLookupState, reused for every parent doc.
-	childFKIndex client.IndexDescription
-	childShortID uint32
-	planner      *Planner
 
 	execInfo orphanExecInfo
 }
@@ -101,15 +72,6 @@ func newOrphanNode(join *invertibleTypeJoin) *orphanNode {
 	return &orphanNode{
 		docMapper: join.docMapper,
 		join:      join,
-	}
-}
-
-func newOrphanNodeWithSource(join *invertibleTypeJoin, source planNode, direction mapper.SortDirection) *orphanNode {
-	return &orphanNode{
-		docMapper:      join.docMapper,
-		join:           join,
-		source:         source,
-		orderDirection: direction,
 	}
 }
 
@@ -122,163 +84,54 @@ func (n *orphanNode) setSubQueryContext(filter *mapper.Filter, relIDFieldName st
 	n.isSubQuery = true
 }
 
-// setSubQueryFilter configures the orphanNode (in wrapper mode) for nested join use.
-// Called by retrievePrimaryDocs before each Init() cycle with the parent filter
-// constrained to the current target doc. The orphan phase uses this filter to scope
-// the parent iteration to the relevant subset.
-func (n *orphanNode) setSubQueryFilter(filter *mapper.Filter) {
-	n.subQueryFilter = filter
-}
-
 func (n *orphanNode) Kind() string {
 	return "orphanNode"
 }
 
 func (n *orphanNode) Init() error {
-	n.phases = nil
-	n.pointLookupDone = false
-
 	if n.standaloneScan != nil {
 		if err := n.standaloneScan.Close(); err != nil {
 			return err
 		}
 		n.standaloneScan = nil
 	}
-	if n.parentClone != nil {
-		if err := n.parentClone.Close(); err != nil {
-			return err
-		}
-		n.parentClone = nil
-	}
-
-	if n.source != nil {
-		if err := n.source.Init(); err != nil {
-			return err
-		}
-		return n.initPointLookupState()
-	}
 	return n.initStandaloneScan()
 }
 
 func (n *orphanNode) Start() error {
-	if n.source != nil {
-		return n.source.Start()
+	return nil
+}
+
+func (n *orphanNode) Prefixes(prefixes []keys.Walkable) {}
+
+func (n *orphanNode) Source() planNode {
+	return nil
+}
+
+func (n *orphanNode) Close() error {
+	if n.standaloneScan != nil {
+		return n.standaloneScan.Close()
 	}
 	return nil
 }
 
-func (n *orphanNode) Prefixes(prefixes []keys.Walkable) {
-	if n.source != nil {
-		n.source.Prefixes(prefixes)
-	}
-}
-
-func (n *orphanNode) Source() planNode {
-	return n.source
-}
-
-func (n *orphanNode) Close() error {
-	var errs []error
-	if n.standaloneScan != nil {
-		errs = append(errs, n.standaloneScan.Close())
-	}
-	if n.parentClone != nil {
-		errs = append(errs, n.parentClone.Close())
-	}
-	if n.source != nil {
-		errs = append(errs, n.source.Close())
-	}
-	return errors.Join(errs...)
-}
-
 func (n *orphanNode) Next() (bool, error) {
 	n.execInfo.iterations++
-
-	if n.source != nil {
-		return n.nextWrapped()
-	}
-	return n.nextStandalone()
-}
-
-// nextStandalone yields orphans one at a time from the FK IS NULL scan clone.
-func (n *orphanNode) nextStandalone() (bool, error) {
 	if n.standaloneScan == nil {
 		return false, nil
 	}
 	return n.standaloneScan.Next()
 }
 
-// nextWrapped delegates to the concatenated phases enumerable.
-func (n *orphanNode) nextWrapped() (bool, error) {
-	if n.phases == nil {
-		orphanEnum := &orphanEnumerable{node: n}
-		sourceEnum := &sourceEnumerable{source: n.source}
-
-		if n.orderDirection == mapper.ASC {
-			n.phases = enumerable.Concat(orphanEnum, sourceEnum)
-		} else {
-			n.phases = enumerable.Concat(sourceEnum, orphanEnum)
-		}
-	}
-	return n.phases.Next()
-}
-
 func (n *orphanNode) Value() core.Doc {
-	if n.source != nil {
-		if n.phases == nil {
-			return core.Doc{}
-		}
-		doc, _ := n.phases.Value()
-		return doc
-	}
 	if n.standaloneScan != nil {
 		return n.standaloneScan.Value()
 	}
 	return core.Doc{}
 }
 
-// orphanEnumerable wraps the point-lookup orphan iterator as an Enumerable[core.Doc].
-type orphanEnumerable struct {
-	node    *orphanNode
-	current core.Doc
-}
-
-func (e *orphanEnumerable) Next() (bool, error) {
-	doc, found, err := e.node.nextOrphanByPointLookup()
-	if err != nil {
-		return false, err
-	}
-	if !found {
-		return false, nil
-	}
-	e.current = doc
-	return true, nil
-}
-
-func (e *orphanEnumerable) Value() (core.Doc, error) {
-	return e.current, nil
-}
-
-func (e *orphanEnumerable) Reset() {}
-
-// sourceEnumerable wraps a planNode as an Enumerable[core.Doc].
-type sourceEnumerable struct {
-	source planNode
-}
-
-func (e *sourceEnumerable) Next() (bool, error) {
-	return e.source.Next()
-}
-
-func (e *sourceEnumerable) Value() (core.Doc, error) {
-	return e.source.Value(), nil
-}
-
-func (e *sourceEnumerable) Reset() {}
-
 // initStandaloneScan creates and initializes a scanNode clone with FK IS NULL filter
-// for streaming orphan detection. Used in standalone mode (primary-side parents)
-// and subquery mode (nested joins with primary ordering).
+// for streaming orphan detection.
 func (n *orphanNode) initStandaloneScan() error {
 	var orphanFilter *mapper.Filter
 	var relationIDFieldName string
@@ -291,7 +144,6 @@ func (n *orphanNode) initStandaloneScan() error {
 		orphanFilter = addNullFilterOnField(n.join.subFilter, relIDFieldMapIndex)
 		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
 	} else {
-		// Secondary parent — should use point-lookup wrapper mode, not standalone.
 		return nil
 	}
 
@@ -308,95 +160,29 @@ func (n *orphanNode) initStandaloneScan() error {
 	return n.standaloneScan.Init()
 }
 
-// initPointLookupState initializes the parent iterator clone and child index info
-// for streaming orphan detection via point lookups. Called once on first need.
-//
-// For each parent doc, we need to check if a child with FK = parentDocID exists.
-// Instead of cloning a full scanNode per doc, we find the child's unique FK index
-// once here and then do a direct datastore.Has() per doc in nextOrphanByPointLookup.
-func (n *orphanNode) initPointLookupState() error {
-	parentScan := getNode[*scanNode](n.join.parentSide.plan)
-	n.planner = parentScan.p
-
-	childFKFieldName := request.ToFieldID(n.join.childSide.relFieldDef.Value().Name)
-	childIdx := findIndexByFieldName(n.join.childSide.col, childFKFieldName)
-	if !childIdx.HasValue() {
-		n.pointLookupDone = true
-		return nil
-	}
-	n.childFKIndex = childIdx.Value()
-
-	shortID, err := id.GetShortCollectionID(n.planner.ctx, n.join.childSide.col.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-	n.childShortID = shortID
-
-	// Use subQueryFilter when set (nested join scoped to one target doc),
-	// otherwise use the top-level subFilter.
-	parentFilter := n.join.subFilter
-	if n.subQueryFilter != nil {
-		parentFilter = n.subQueryFilter
-	}
-
-	// Select the best index for the parent filter.
-	parentResult := selectIndex(selectIndexOptions{
-		collection: n.join.parentSide.col,
-		filter:     parentFilter,
-		docMapping: n.documentMapping,
-	})
-
-	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index)
-	if err := n.parentClone.Init(); err != nil {
-		return err
-	}
-
-	return nil
+func (n *orphanNode) simpleExplain() (map[string]any, error) {
+	return map[string]any{}, nil
 }
 
-// nextOrphanByPointLookup returns the next orphan parent by iterating parents one at a time
-// and checking each via a Has() call on the child's unique FK index.
-// Returns (doc, true, nil) for an orphan, (empty, false, nil) when exhausted.
-func (n *orphanNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, err error) {
-	if n.pointLookupDone || n.parentClone == nil {
-		return core.Doc{}, false, nil
-	}
+func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
 
-	txn := datastore.CtxMustGetTxn(n.planner.ctx)
-	ds := txn.Datastore()
-
-	for {
-		hasNext, err := n.parentClone.Next()
-		if err != nil {
-			return core.Doc{}, false, err
+	case request.ExecuteExplain:
+		fetches := n.execInfo.fetches
+		if n.standaloneScan != nil {
+			fetches.Add(n.standaloneScan.execInfo.fetches)
 		}
-		if !hasNext {
-			n.pointLookupDone = true
-			n.execInfo.fetches.Add(n.parentClone.execInfo.fetches)
-			_ = n.parentClone.Close()
-			n.parentClone = nil
-			return core.Doc{}, false, nil
-		}
+		return map[string]any{
+			"iterations":   n.execInfo.iterations,
+			"docFetches":   fetches.DocsFetched,
+			"fieldFetches": fetches.FieldsFetched,
+			"indexFetches": fetches.IndexesFetched,
+		}, nil
 
-		doc := n.parentClone.Value()
-
-		// Check if a child with FK = parentDocID exists via a direct index lookup.
-		// The FK index on 1-to-1 relations is unique, so the key format is:
-		//   /collectionShortID/indexID/fkValue
-		// and Has() is an exact match.
-		indexKey := keys.NewIndexDataStoreKey(n.childShortID, n.childFKIndex.ID, []keys.IndexedField{
-			{Value: client.NewNormalString(doc.GetID()), Descending: n.childFKIndex.Fields[0].Descending},
-		})
-
-		hasChild, err := ds.Has(n.planner.ctx, &indexKey)
-		if err != nil {
-			return core.Doc{}, false, err
-		}
-		n.execInfo.fetches.IndexesFetched++
-
-		if !hasChild {
-			return doc, true, nil
-		}
+	default:
+		return nil, ErrUnknownExplainRequestType
 	}
 }
 
@@ -425,33 +211,4 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 // addNullFilterOnField adds a filter condition that checks if the field is NULL.
 func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
 	return addFilterOnField(f, propIndex, nil)
-}
-
-func (n *orphanNode) simpleExplain() (map[string]any, error) {
-	return map[string]any{}, nil
-}
-
-func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	switch explainType {
-	case request.SimpleExplain:
-		return n.simpleExplain()
-
-	case request.ExecuteExplain:
-		fetches := n.execInfo.fetches
-		if n.standaloneScan != nil {
-			fetches.Add(n.standaloneScan.execInfo.fetches)
-		}
-		if n.parentClone != nil {
-			fetches.Add(n.parentClone.execInfo.fetches)
-		}
-		return map[string]any{
-			"iterations":   n.execInfo.iterations,
-			"docFetches":   fetches.DocsFetched,
-			"fieldFetches": fetches.FieldsFetched,
-			"indexFetches": fetches.IndexesFetched,
-		}, nil
-
-	default:
-		return nil, ErrUnknownExplainRequestType
-	}
 }

@@ -687,8 +687,8 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 				orphan.setSubQueryContext(parentFilter, relIDFieldName, relIDFieldMapIndex)
 			}
 		} else {
-			orphan := getNode[*orphanNode](r.primarySide.plan)
-			if orphan != nil && orphan.source != nil {
+			orphan := getNode[*orphanPointLookupNode](r.primarySide.plan)
+			if orphan != nil {
 				parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
 					r.targetSecondaryDoc.GetID())
 				orphan.setSubQueryFilter(parentFilter)
