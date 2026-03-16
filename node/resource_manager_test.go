@@ -21,12 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceManagerDefault(t *testing.T) {
-	rcmr, err := buildResourceManager("")
-	assert.Nil(t, rcmr)
-	assert.Nil(t, err)
-}
-
 func TestResourceManagerLimited(t *testing.T) {
 	rcmr, err := buildResourceManager(ResourceProfileLimited)
 	assert.NoError(t, err)

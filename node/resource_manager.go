@@ -78,9 +78,6 @@ var resourceProfiles = map[string]rcmgr.PartialLimitConfig{
 // buildResourceManager constructs a resource manager from the given profile name.
 // If profile is empty, nil is returned and go-p2p will use libp2p's autoscaled defaults.
 func buildResourceManager(profile string) (network.ResourceManager, error) {
-	if profile == "" {
-		return nil, nil
-	}
 	partial, ok := resourceProfiles[profile]
 	if !ok {
 		return nil, fmt.Errorf("unknown resource profile %q: valid values are %q, %q",
