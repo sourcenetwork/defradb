@@ -57,6 +57,7 @@ func ToOperation(
 ) (*Operation, error) {
 	operation := &Operation{
 		DocumentMapping: core.NewDocumentMapping(),
+		Exhaustive:      operationRequest.Directives.Exhaustive,
 	}
 
 	for i, s := range operationRequest.Selections {

@@ -314,7 +314,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 		if err != nil {
 			return err
 		}
-		if orderDir.HasValue() && p.joinExpand.exhaustive {
+		if orderDir.HasValue() && join.exhaustive {
 			if !p.joinExpand.inNestedJoin {
 				orphan := newOrphanNode(join)
 				if join.parentSide.isPrimary() {
@@ -892,12 +892,11 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 		return nil, ErrMissingQueryOrMutation
 	}
 
-	p.joinExpand.exhaustive = operation.Directives.Exhaustive
-
 	m, err := mapper.ToOperation(p.ctx, p.db, operation)
 	if err != nil {
 		return nil, err
 	}
+	p.joinExpand.exhaustive = m.Exhaustive
 	planNode, err := p.Operation(m)
 	if err != nil {
 		return nil, err

@@ -30,7 +30,7 @@ import (
 
 // joinExpandState is transient state for plan expansion, consumed during expandPlan.
 type joinExpandState struct {
-	// When @exhaustive is set, orphan parents are included in relation-ordered results.
+	// Cached from mapper.Operation.Exhaustive during makePlan for use during plan expansion.
 	exhaustive bool
 
 	// Nested joins handle orphans via retrievePrimaryDocs, so we skip orphanNode wiring.
