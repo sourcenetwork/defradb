@@ -133,7 +133,10 @@ func (n *orphanNode) Init() error {
 	n.phases = nil
 	n.pointLookupDone = false
 	if n.parentClone != nil {
-		_ = n.parentClone.Close()
+		err := n.parentClone.Close()
+		if err != nil {
+			return err
+		}
 		n.parentClone = nil
 	}
 	if n.source != nil {

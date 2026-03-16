@@ -41,11 +41,7 @@ func SplitByFields(filter *mapper.Filter, fields ...mapper.Field) (*mapper.Filte
 		if newSplitF == nil {
 			continue
 		}
-		if splitF == nil {
-			splitF = newSplitF
-		} else {
-			splitF.Conditions = MergeConditions(splitF.Conditions, newSplitF.Conditions)
-		}
+		splitF.Conditions = MergeConditions(splitF.Conditions, newSplitF.Conditions)
 		RemoveField(filter, field)
 	}
 
