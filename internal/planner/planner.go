@@ -255,16 +255,15 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		p.expandLimitPlan(plan, parentPlan)
 	}
 
-	// Process deferred orphan wiring now that the full plan chain is built.
-	if p.joinExpand.pendingOrphanWiring != nil {
-		req := p.joinExpand.pendingOrphanWiring
-		p.joinExpand.pendingOrphanWiring = nil
+	// Process deferred orphan wirings now that the full plan chain is built.
+	for _, req := range p.joinExpand.pendingOrphanWirings {
 		if req.usePointLookup {
 			wireSubQueryOrphanPointLookupPipeline(plan, req.join, req.direction)
 		} else {
 			wireSubQueryOrphanPipeline(plan, req.join, req.direction)
 		}
 	}
+	p.joinExpand.pendingOrphanWirings = nil
 
 	return nil
 }
@@ -331,11 +330,11 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 					plan.joinPlan = newOrphanPointLookupNode(join, node, orderDir.Value())
 				}
 			} else if parentPlan != nil {
-				p.joinExpand.pendingOrphanWiring = &orphanWiringRequest{
+				p.joinExpand.pendingOrphanWirings = append(p.joinExpand.pendingOrphanWirings, &orphanWiringRequest{
 					join:           join,
 					direction:      orderDir.Value(),
 					usePointLookup: !join.parentSide.isPrimary(),
-				}
+				})
 			}
 		}
 		return nil
@@ -458,7 +457,10 @@ func (p *Planner) tryOptimizeJoinDirection(
 	// a relation ordering to get the direction for orphan node wiring.
 	if parentPlan.order != nil && len(parentPlan.order.ordering) > 0 {
 		name, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
-		if err == nil && name != "" {
+		if err != nil {
+			return immutable.None[mapper.SortDirection](), err
+		}
+		if name != "" {
 			return immutable.Some(parentPlan.order.ordering[0].Direction), nil
 		}
 	}

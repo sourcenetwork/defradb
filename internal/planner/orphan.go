@@ -31,7 +31,7 @@ type joinExpandState struct {
 	inNestedJoin bool
 
 	// Deferred until after order/limit nodes are wired in expandSelectTopNodePlan.
-	pendingOrphanWiring *orphanWiringRequest
+	pendingOrphanWirings []*orphanWiringRequest
 }
 
 // orphanWiringRequest captures what's needed to wire orphan nodes after the plan chain is built.
