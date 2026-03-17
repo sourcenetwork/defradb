@@ -1172,22 +1172,23 @@ func deleteDoc(
 	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	var err error
-	hadTxn := a.TransactionID.HasValue()
-	if hadTxn {
-		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(s.T, err)
-	}
-
-	txnOption := immutable.None[client.Txn]()
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	}
 
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+		}
+
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
 
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
@@ -1422,22 +1423,22 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := a.TransactionID.HasValue()
-	var err error
-	if hadTxn {
-		doNotWaitForUpdate = true
-		txn, err = s.GetTransaction(s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(s.T, err)
-	}
-
-	txnOption := immutable.None[client.Txn]()
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	}
-
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		var err error
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+		}
+
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
 		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
