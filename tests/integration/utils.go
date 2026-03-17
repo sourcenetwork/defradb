@@ -1695,7 +1695,7 @@ func AssertErrors(
 ) bool {
 	if expectedError == "" {
 		require.Empty(t, errs)
-	} else {
+	} else if len(errs) > 0 {
 		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.Error()
