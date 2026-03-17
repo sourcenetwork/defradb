@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 )
 
 type Truncate struct {
@@ -54,16 +55,12 @@ func (a *Truncate) Execute() {
 	for index, node := range nodes {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
+		txnOption := immutable.None[client.Txn]()
 		if hadTxn {
 			var err error
 			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-			if err != nil {
-				return
-			}
-		}
-
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
+			require.NoError(a.s.T, err)
+		} else {
 			txnOption = immutable.Some(txn)
 		}
 

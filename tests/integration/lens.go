@@ -78,11 +78,10 @@ func configureMigration(
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
-		hadTxn := false
-		if action.TransactionID.HasValue() {
-			hadTxn = true
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
 			var err error
-			txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
+			txn, err = s.GetTransaction(node, action.TransactionID)
 			require.NoError(s.T, err)
 		}
 
