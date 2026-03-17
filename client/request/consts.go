@@ -57,7 +57,8 @@ const (
 	// which might have a different _docID originally.
 	NewDocIDFieldName = "_docIDNew"
 
-	ExplainLabel = "explain"
+	ExplainLabel    = "explain"
+	ExhaustiveLabel = "exhaustive"
 
 	CommitsName = "_commits"
 

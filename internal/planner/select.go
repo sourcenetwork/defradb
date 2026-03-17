@@ -12,8 +12,6 @@ package planner
 
 import (
 	"math"
-	"slices"
-	"strings"
 
 	cid "github.com/ipfs/go-cid"
 
@@ -339,91 +337,17 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
-		origScan.index = findIndexByFilteringField(origScan)
-		if !origScan.index.HasValue() {
-			// if we can not use index for filtering, try to use index for ordering
-			origScan.index = findIndexByOrderingField(origScan)
-		}
+		result := selectIndex(selectIndexOptions{
+			collection: origScan.col,
+			filter:     origScan.filter,
+			ordering:   origScan.ordering,
+			docMapping: origScan.documentMapping,
+		})
+		origScan.index = result.index
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 
 	return aggregates, similarity, nil
-}
-
-func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	var indexCandidates []client.IndexDescription
-
-	if scanNode.filter != nil {
-		col := scanNode.col.Version()
-		conditions := scanNode.filter.ExternalConditions
-		filter.TraverseFields(conditions, func(path []string, val any) bool {
-			for _, field := range scanNode.col.Version().Fields {
-				if field.Name != path[0] {
-					continue
-				}
-				indexes := col.GetIndexesOnField(field.Name)
-				if len(indexes) > 0 {
-					indexCandidates = append(indexCandidates, indexes...)
-					return true
-				}
-			}
-			return true
-		})
-	}
-
-	if len(indexCandidates) == 0 {
-		return immutable.None[client.IndexDescription]()
-	}
-
-	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-	// we return the first found index. We will optimize it later.
-	// https://github.com/sourcenetwork/defradb/issues/2680
-	return immutable.Some(indexCandidates[0])
-}
-
-func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if len(scanNode.ordering) > 0 {
-		col := scanNode.col.Version()
-
-		fieldNames := []string{}
-		mapping := scanNode.documentMapping
-		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
-			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
-			if !found {
-				return immutable.None[client.IndexDescription]()
-			}
-
-			fieldNames = append(fieldNames, fieldName)
-			if fieldIndex < len(mapping.ChildMappings) {
-				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
-					mapping = childMapping
-				}
-			}
-		}
-
-		indexes := col.GetIndexesOnField(fieldNames[0])
-		if len(indexes) > 0 {
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
-}
-
-func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
-	for _, field := range col.Version().Fields {
-		if field.Name != fieldName {
-			continue
-		}
-		indexes := col.Version().GetIndexesOnField(field.Name)
-		if len(indexes) > 0 {
-			// At the moment we just take the first index, but later we want to run some kind of analysis to
-			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
@@ -485,7 +409,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
+			} else if n.collection == nil || !n.collection.Version().Query.HasValue() {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
