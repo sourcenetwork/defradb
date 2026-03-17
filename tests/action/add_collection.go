@@ -12,12 +12,12 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // AddCollection is an action that will add the given GQL SDL to the Defra nodes.
@@ -79,7 +79,6 @@ func (a *AddCollection) Execute() {
 		var results []client.CollectionVersion
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			var err error
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 			results, err = txn.AddCollection(a.s.Ctx, sdl, opts)

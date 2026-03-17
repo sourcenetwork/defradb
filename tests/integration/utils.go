@@ -1117,7 +1117,6 @@ func setActiveCollectionVersion(
 		var err error
 		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
-			hadTxn = true
 			txn, err = s.GetTransaction(node, action.TransactionID)
 			require.NoError(s.T, err)
 			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)

@@ -15,13 +15,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // AddView is an action that will add a new View.

@@ -222,7 +222,6 @@ func (db *DB) AddCollection(
 
 	if !hadTxn {
 		if err := txn.Commit(); err != nil {
-			defer txn.Discard()
 			return nil, err
 		}
 	}
