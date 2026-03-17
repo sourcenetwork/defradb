@@ -57,16 +57,6 @@ var _ Stateful = (*PatchCollection)(nil)
 
 // Execute executes the patch collection action.
 func (a *PatchCollection) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(a.s.T, err)
-	}
-
 	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
 	// This will need to change if patches want to replace more than just lens IDs.
 	patch := replace(a.s, 0, a.Patch)
@@ -81,13 +71,18 @@ func (a *PatchCollection) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		// If we have a transaction, we will use it here. Otherwise we use the node.
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
 		var err error
+		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
 			err = txn.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
 		} else {
 			err = node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
 		}
+
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
