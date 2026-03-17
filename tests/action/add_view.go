@@ -122,7 +122,6 @@ func (a *AddView) Execute() {
 		var results []client.CollectionVersion
 		var err error
 		if a.TransactionID.HasValue() {
-			var err error
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 			results, err = txn.AddView(a.s.Ctx, a.Query, sdl, opts)
