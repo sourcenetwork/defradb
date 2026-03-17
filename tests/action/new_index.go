@@ -13,6 +13,7 @@ package action
 
 import (
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -70,15 +71,16 @@ func (a *NewIndex) Execute() {
 		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
+		var err error
 		var hadTxn bool
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
 			hadTxn = true
-			txn, _ = a.s.GetTransaction(node, a.TransactionID)
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
 		}
 
 		var collections []client.Collection
-		var err error
 		if hadTxn {
 			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
 			if err != nil {

@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -100,11 +101,12 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		hadTxn := false
+		hadTxn := a.TransactionID.HasValue()
 		var txn client.Txn
-		if a.TransactionID.HasValue() {
-			hadTxn = true
-			txn, _ = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		var err error
+		if hadTxn {
+			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			require.NoError(a.s.T, err)
 		}
 
 		reqOption := options.ExecRequest()

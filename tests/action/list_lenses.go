@@ -62,9 +62,7 @@ func (a *ListLenses) Execute() {
 		hadTxn = true
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
+		require.NoError(a.s.T, err)
 	}
 
 	if a.ExpectedError != "" && a.ExpectedLenses != nil {
