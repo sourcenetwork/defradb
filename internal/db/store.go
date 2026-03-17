@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -213,11 +214,18 @@ func (db *DB) AddCollection(
 
 	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
+		fmt.Println("Error adding collection", err)
+		// On error, discard the txn if we created it
+		if !hadTxn {
+			txn.Discard()
+		}
 		return nil, err
 	}
 
 	if !hadTxn {
 		if err := txn.Commit(); err != nil {
+			// If the commit fails, we need to discard the txn
+			defer txn.Discard()
 			return nil, err
 		}
 	}

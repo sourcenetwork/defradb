@@ -75,5 +75,7 @@ func (a *SyncCollectionVersions) Execute() {
 		return
 	}
 
-	RefreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }

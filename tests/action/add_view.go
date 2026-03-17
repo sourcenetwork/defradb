@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -69,9 +70,7 @@ func (a *AddView) Execute() {
 		hadTxn = true
 		var err error
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
+		require.NoError(a.s.T, err)
 	}
 
 	sdl := a.SDL
@@ -146,5 +145,7 @@ func (a *AddView) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	RefreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }

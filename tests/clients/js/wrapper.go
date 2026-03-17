@@ -168,7 +168,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...opti
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddCollection(
+func (w *Wrapper(
 	ctx context.Context,
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],

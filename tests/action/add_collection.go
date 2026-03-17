@@ -59,19 +59,19 @@ var _ Action = (*AddCollection)(nil)
 var _ Stateful = (*AddCollection)(nil)
 
 func (a *AddCollection) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := a.TransactionID.HasValue()
-	if hadTxn {
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
-	}
-
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			if err != nil {
+				return
+			}
+		}
+
 		nodeID := nodeIDs[index]
 
 		sdl := replace(a.s, nodeID, a.SDL)
@@ -103,5 +103,7 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	RefreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }

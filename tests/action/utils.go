@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -47,6 +48,12 @@ func RefreshCollections(
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+
+		// Create a txn for this refresh
+		txn, err := node.NewTxn(false)
+		require.Nil(s.T, err)
+		ctx := db.InitContext(s.Ctx, txn)
+
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
@@ -56,8 +63,10 @@ func RefreshCollections(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		allCollections, err := node.GetCollections(s.Ctx, opts)
+		allCollections, err := txn.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
+
+		txn.Discard()
 
 		for i, collectionName := range s.CollectionNames {
 			for _, collection := range allCollections {
