@@ -14,12 +14,12 @@ package action
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -105,7 +105,7 @@ nodeLoop:
 		var txn client.Txn
 		var err error
 		if hadTxn {
-			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 		}
 
