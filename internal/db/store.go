@@ -47,9 +47,7 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
 	if opt.OperationName.HasValue() {
@@ -62,11 +60,9 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
-	if !hadTxn {
-		if err := txn.Commit(); err != nil {
-			res.GQL.Errors = append(res.GQL.Errors, err)
-			return res
-		}
+	if err := txn.Commit(); err != nil {
+		res.GQL.Errors = append(res.GQL.Errors, err)
+		return res
 	}
 
 	return res
@@ -78,8 +74,6 @@ func (db *DB) GetCollectionByName(
 	name string,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -93,9 +87,8 @@ func (db *DB) GetCollectionByName(
 	if err != nil {
 		return nil, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+
+	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
 }
@@ -122,9 +115,7 @@ func (db *DB) GetCollections(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	return db.getCollections(ctx, opt, !hadTxn)
 }
@@ -134,8 +125,6 @@ func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -150,9 +139,7 @@ func (db *DB) ListIndexes(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	return db.listIndexDescriptions(ctx)
 }
@@ -162,8 +149,6 @@ func (db *DB) ListAllEncryptedIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -178,9 +163,7 @@ func (db *DB) ListAllEncryptedIndexes(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
@@ -195,8 +178,6 @@ func (db *DB) AddCollection(
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -211,19 +192,15 @@ func (db *DB) AddCollection(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
 
-	if !hadTxn {
-		if err := txn.Commit(); err != nil {
-			return nil, err
-		}
+	if err := txn.Commit(); err != nil {
+		return nil, err
 	}
 	return cols, nil
 }
@@ -281,8 +258,6 @@ func (db *DB) SetActiveCollectionVersion(
 	collectionVersionID string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -297,19 +272,14 @@ func (db *DB) SetActiveCollectionVersion(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (db *DB) SetMigration(
@@ -317,8 +287,6 @@ func (db *DB) SetMigration(
 	cfg client.LensConfig,
 	opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -333,20 +301,16 @@ func (db *DB) SetMigration(
 	if err != nil {
 		return "", err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	if !hadTxn {
-		err = txn.Commit()
-		if err != nil {
-			return "", err
-		}
+	err = txn.Commit()
+	if err != nil {
+		return "", err
 	}
 
 	return lensID, nil
@@ -357,8 +321,6 @@ func (db *DB) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -374,20 +336,16 @@ func (db *DB) AddLens(
 		return "", err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	lensID, err := db.addLens(ctx, lens)
 	if err != nil {
 		return "", err
 	}
 
-	if !hadTxn {
-		err = txn.Commit()
-		if err != nil {
-			return "", err
-		}
+	err = txn.Commit()
+	if err != nil {
+		return "", err
 	}
 
 	return lensID, nil
@@ -397,8 +355,6 @@ func (db *DB) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -414,9 +370,7 @@ func (db *DB) ListLenses(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	lenses, err := db.listLenses(ctx)
 	if err != nil {
@@ -432,8 +386,6 @@ func (db *DB) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -449,28 +401,22 @@ func (db *DB) AddView(
 	if err != nil {
 		return nil, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	defs, err := db.addView(ctx, query, sdl, opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !hadTxn {
-		err = txn.Commit()
-		if err != nil {
-			return nil, err
-		}
+	err = txn.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return defs, nil
 }
 
 func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -487,20 +433,16 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opt)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		err = txn.Commit()
-		if err != nil {
-			return err
-		}
+	err = txn.Commit()
+	if err != nil {
+		return err
 	}
 
 	return nil

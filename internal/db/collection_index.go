@@ -166,7 +166,7 @@ func (c *collection) NewIndex(
 	desc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -182,18 +182,14 @@ func (c *collection) NewIndex(
 		return client.IndexDescription{}, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	index, err := c.newIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	if !hadTxn {
-		return index.Description(), txn.Commit()
-	}
-	return index.Description(), nil
+
+	return index.Description(), txn.Commit()
 }
 
 func processNewIndexRequest(
@@ -369,7 +365,7 @@ func (c *collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -385,19 +381,15 @@ func (c *collection) DeleteIndex(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = c.deleteIndex(ctx, indexName)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
+
 }
 
 func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
@@ -457,7 +449,7 @@ func (c *collection) NewEncryptedIndex(
 	addRequest client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -474,18 +466,15 @@ func (c *collection) NewEncryptedIndex(
 		return client.EncryptedIndexDescription{}, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	index, err := c.newEncryptedIndex(ctx, addRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
-	if !hadTxn {
-		return index, txn.Commit()
-	}
-	return index, nil
+
+	return index, txn.Commit()
+
 }
 
 func (c *collection) newEncryptedIndex(
@@ -538,7 +527,7 @@ func (c *collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -555,18 +544,14 @@ func (c *collection) DeleteEncryptedIndex(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = c.deleteEncryptedIndex(ctx, fieldName)
 	if err != nil {
 		return err
 	}
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+
+	return txn.Commit()
 }
 
 func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string) error {

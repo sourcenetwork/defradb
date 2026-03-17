@@ -35,7 +35,7 @@ func (c *collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -58,11 +58,8 @@ func (c *collection) UpdateDocumentsWithFilter(
 		return nil, err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-		return res, txn.Commit()
-	}
-	return res, nil
+	defer txn.Discard()
+	return res, txn.Commit()
 }
 
 func (c *collection) updateWithFilter(

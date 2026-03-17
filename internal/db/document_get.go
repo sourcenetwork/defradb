@@ -31,7 +31,7 @@ func (c *collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -50,9 +50,9 @@ func (c *collection) GetDocument(
 	if err != nil {
 		return nil, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+
+	defer txn.Discard()
+
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
 		return nil, err
@@ -75,10 +75,7 @@ func (c *collection) GetDocument(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	if !hadTxn {
-		return doc, txn.Commit()
-	}
-	return doc, nil
+	return doc, txn.Commit()
 }
 
 func (c *collection) get(

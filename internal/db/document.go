@@ -137,7 +137,8 @@ func (c *collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -154,20 +155,14 @@ func (c *collection) AddDocument(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = c.add(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-
-	return nil
+	return txn.Commit()
 }
 
 // AddManyDocuments adds a collection of documents at once.
@@ -177,7 +172,7 @@ func (c *collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -195,9 +190,7 @@ func (c *collection) AddManyDocuments(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	for _, doc := range docs {
 		err = c.add(ctx, doc, opt)
@@ -206,10 +199,7 @@ func (c *collection) AddManyDocuments(
 		}
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
@@ -315,7 +305,7 @@ func (c *collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -333,9 +323,7 @@ func (c *collection) UpdateDocument(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
 	if err != nil {
@@ -358,10 +346,7 @@ func (c *collection) UpdateDocument(
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given ID exists.
@@ -405,7 +390,7 @@ func (c *collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -423,9 +408,7 @@ func (c *collection) SaveDocument(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	// Check if document already exists with primary DS key.
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -451,10 +434,7 @@ func (c *collection) SaveDocument(
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
@@ -661,7 +641,7 @@ func (c *collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -678,9 +658,8 @@ func (c *collection) DeleteDocument(
 	if err != nil {
 		return false, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -697,10 +676,7 @@ func (c *collection) DeleteDocument(
 		return false, err
 	}
 
-	if !hadTxn {
-		return true, txn.Commit()
-	}
-	return true, nil
+	return true, txn.Commit()
 }
 
 // ExistsDocument checks if a given document exists with supplied DocID.
@@ -726,9 +702,8 @@ func (c *collection) ExistsDocument(
 	if err != nil {
 		return false, err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -740,10 +715,7 @@ func (c *collection) ExistsDocument(
 		return false, err
 	}
 
-	if !hadTxn {
-		return exists && !isDeleted, txn.Commit()
-	}
-	return exists && !isDeleted, nil
+	return exists && !isDeleted, txn.Commit()
 }
 
 // check if a document exists with the given primary key

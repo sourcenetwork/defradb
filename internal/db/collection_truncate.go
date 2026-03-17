@@ -34,7 +34,7 @@ const hardDeleteChunkSize int = 10000
 func (c *collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -50,19 +50,14 @@ func (c *collection) Truncate(
 		return err
 	}
 
-	if !hadTxn {
-		defer txn.Discard()
-	}
+	defer txn.Discard()
 
 	err = c.truncate(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (c *collection) truncate(

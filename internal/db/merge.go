@@ -83,6 +83,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	var key keys.HeadstoreKey

@@ -51,6 +51,7 @@ func RefreshCollections(
 
 		// Create a txn for this refresh
 		txn, err := node.NewTxn(false)
+		defer txn.Discard()
 		require.Nil(s.T, err)
 		ctx := db.InitContext(s.Ctx, txn)
 
@@ -65,8 +66,6 @@ func RefreshCollections(
 		}
 		allCollections, err := txn.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
-
-		txn.Discard()
 
 		for i, collectionName := range s.CollectionNames {
 			for _, collection := range allCollections {
