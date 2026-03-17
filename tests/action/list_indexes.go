@@ -57,21 +57,6 @@ var _ Action = (*ListIndexes)(nil)
 var _ Stateful = (*ListIndexes)(nil)
 
 func (a *ListIndexes) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(a.s.T, err)
-	}
-
-	txnOption := immutable.None[client.Txn]()
-	if hadTxn {
-		txnOption = immutable.Some(txn)
-	}
-
 	if len(a.s.Nodes) == 0 {
 		return
 	}
@@ -81,6 +66,19 @@ func (a *ListIndexes) Execute() {
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, nodeID := range nodeIDs {
 		node := a.s.Nodes[index]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txnOption = immutable.Some(txn)
+		}
 
 		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionID]
