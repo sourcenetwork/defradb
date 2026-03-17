@@ -12,13 +12,13 @@
 package action
 
 import (
-	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 // PatchCollection executes a patch collection command, updating 0 to many collections and applying
