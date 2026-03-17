@@ -1099,16 +1099,6 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	var err error
-	hadTxn := action.TransactionID.HasValue()
-	if hadTxn {
-		hadTxn = true
-		txn, err = s.GetTransaction(s.Nodes[action.NodeID.Value()], action.TransactionID)
-		require.NoError(s.T, err)
-	}
-
 	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
 	versionID := replacedIDs[action.VersionID]
 
@@ -1121,18 +1111,28 @@ func setActiveCollectionVersion(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		// If we have a transaction, we will use it here. Otherwise we use the node.
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := action.TransactionID.HasValue()
 		if hadTxn {
+			hadTxn = true
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
 			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		} else {
 			err = node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		}
+
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	if !action.TransactionID.HasValue() {
+		refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	}
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]

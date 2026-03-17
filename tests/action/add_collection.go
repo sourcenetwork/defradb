@@ -13,6 +13,7 @@ package action
 
 import (
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -61,17 +62,6 @@ var _ Stateful = (*AddCollection)(nil)
 func (a *AddCollection) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var txn client.Txn
-		hadTxn := a.TransactionID.HasValue()
-		if hadTxn {
-			var err error
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
-			if err != nil {
-				return
-			}
-		}
-
 		nodeID := nodeIDs[index]
 
 		sdl := replace(a.s, nodeID, a.SDL)
@@ -83,9 +73,15 @@ func (a *AddCollection) Execute() {
 		}
 
 		// If we have a transaction, we will use it here. Otherwise we use the node.
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
 		var err error
 		var results []client.CollectionVersion
+		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
 			results, err = txn.AddCollection(a.s.Ctx, sdl, opts)
 		} else {
 			results, err = node.AddCollection(a.s.Ctx, sdl, opts)
