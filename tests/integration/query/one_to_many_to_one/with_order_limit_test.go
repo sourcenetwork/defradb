@@ -21,8 +21,8 @@ import (
 
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		// With indexes, books without publishers are excluded because the join is inverted.
+		MultiplierExcludes: []multiplier.Name{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
