@@ -61,28 +61,18 @@ func (a *DeleteIndex) Execute() {
 	for index, nodeID := range nodeIDs {
 		node := a.s.Nodes[nodeID]
 
+		nodeID := nodeIDs[index]
+		var collections []client.Collection
+
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var hadTxn bool
 		var err error
 		var txn client.Txn
 		if a.TransactionID.HasValue() {
-			hadTxn = true
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-		}
-
-		nodeID := nodeIDs[index]
-		var collections []client.Collection
-		if hadTxn {
 			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
 		} else {
 			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
 		}
 
 		collection := collections[a.CollectionID]

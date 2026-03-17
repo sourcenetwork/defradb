@@ -106,15 +106,6 @@ func (a *AddView) Execute() {
 	for i, node := range nodes {
 		nodeID := nodeIDs[i]
 
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var txn client.Txn
-		hadTxn := a.TransactionID.HasValue()
-		if hadTxn {
-			var err error
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
-			require.NoError(a.s.T, err)
-		}
-
 		opts := options.AddView()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
@@ -126,10 +117,14 @@ func (a *AddView) Execute() {
 			opts.SetTransformCID(transformCID)
 		}
 
-		// If we have a transaction, we will use it here. Otherwise we use the node.
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
 		var results []client.CollectionVersion
 		var err error
-		if hadTxn {
+		if a.TransactionID.HasValue() {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
 			results, err = txn.AddView(a.s.Ctx, a.Query, sdl, opts)
 		} else {
 			results, err = node.AddView(a.s.Ctx, a.Query, sdl, opts)

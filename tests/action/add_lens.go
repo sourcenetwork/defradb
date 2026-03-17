@@ -56,24 +56,19 @@ func (a *AddLens) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		// Check if a transaction is attached to this action. If so, we will be using it.
-		var txn client.Txn
-		hadTxn := a.TransactionID.HasValue()
-		if hadTxn {
-			var err error
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
-			require.NoError(a.s.T, err)
-		}
-
 		opts := options.AddLens()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
 		var err error
-		// If we have a transaction, we will use it here. Otherwise we use the node.
+		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
 			lensID, err = txn.AddLens(a.s.Ctx, a.Lens, opts)
 		} else {
 			lensID, err = node.AddLens(a.s.Ctx, a.Lens, opts)
