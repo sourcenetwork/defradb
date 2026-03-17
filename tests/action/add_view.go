@@ -63,16 +63,6 @@ var _ Stateful = (*AddView)(nil)
 
 // Execute executes the create view action.
 func (a *AddView) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(a.s.T, err)
-	}
-
 	sdl := a.SDL
 
 	switch {
@@ -115,6 +105,15 @@ func (a *AddView) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for i, node := range nodes {
 		nodeID := nodeIDs[i]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
 
 		opts := options.AddView()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

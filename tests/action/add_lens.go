@@ -14,6 +14,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -49,23 +50,20 @@ var _ Action = (*AddLens)(nil)
 var _ Stateful = (*AddLens)(nil)
 
 func (a *AddLens) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
-	}
-
 	var lensID string
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
 
 		opts := options.AddLens()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
