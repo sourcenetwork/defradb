@@ -1251,14 +1251,12 @@ func updateDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		var txnOption immutable.Option[client.Txn]
+		txnOption := immutable.None[client.Txn]()
 		if a.TransactionID.HasValue() {
 			txn, err := s.GetTransaction(node, a.TransactionID)
 			require.NoError(s.T, err)
 			txnOption = immutable.Some(txn)
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
-		} else {
-			txnOption = immutable.None[client.Txn]()
 		}
 
 		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
@@ -1425,14 +1423,11 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		var txn client.Txn
 		hadTxn := a.TransactionID.HasValue()
 		var err error
+		txnOption := immutable.None[client.Txn]()
 		if hadTxn {
 			doNotWaitForUpdate = true
 			txn, err = s.GetTransaction(node, a.TransactionID)
 			require.NoError(s.T, err)
-		}
-
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
 			txnOption = immutable.Some(txn)
 		}
 
@@ -1480,13 +1475,10 @@ func newEncryptedIndex(
 		var txn client.Txn
 		var err error
 		hadTxn := a.TransactionID.HasValue()
+		txnOption := immutable.None[client.Txn]()
 		if hadTxn {
 			txn, err = s.GetTransaction(node, a.TransactionID)
 			require.NoError(s.T, err)
-		}
-
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
 			txnOption = immutable.Some(txn)
 		}
 

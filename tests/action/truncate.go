@@ -58,9 +58,8 @@ func (a *Truncate) Execute() {
 		txnOption := immutable.None[client.Txn]()
 		if hadTxn {
 			var err error
-			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-		} else {
 			txnOption = immutable.Some(txn)
 		}
 
