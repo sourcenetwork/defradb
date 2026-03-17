@@ -685,8 +685,6 @@ func (c *collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
-	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

@@ -30,8 +30,6 @@ func (db *DB) ExecRequest(
 	ctx context.Context,
 	request string, opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
