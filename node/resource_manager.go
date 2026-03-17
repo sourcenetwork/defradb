@@ -66,10 +66,10 @@ var resourceProfiles = map[string]rcmgr.PartialLimitConfig{
 		PeerDefault: rcmgr.ResourceLimits{
 			ConnsInbound:    8,
 			ConnsOutbound:   8,
-			Conns:           8,
+			Conns:           16,
 			StreamsInbound:  512,
 			StreamsOutbound: 1024,
-			Streams:         1024,
+			Streams:         1536,
 			Memory:          128 << 20,
 		},
 	},
