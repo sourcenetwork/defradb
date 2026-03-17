@@ -55,15 +55,8 @@ var _ Action = (*ListLenses)(nil)
 var _ Stateful = (*ListLenses)(nil)
 
 func (a *ListLenses) Execute() {
-	// Check if a transaction is attached to this action. If so, we will be using it.
-	var txn client.Txn
-	hadTxn := false
-	if a.TransactionID.HasValue() {
-		hadTxn = true
-		var err error
-		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		require.NoError(a.s.T, err)
-	}
+	var err error
+	hadTxn := a.TransactionID.HasValue()
 
 	if a.ExpectedError != "" && a.ExpectedLenses != nil {
 		a.s.T.Fatalf("ExpectedError and ExpectedLenses cannot both be set")
@@ -72,6 +65,13 @@ func (a *ListLenses) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
 
 		opts := options.ListLenses()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

@@ -72,7 +72,7 @@ func (a *ListIndexes) Execute() {
 		var err error
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 		}
 		txnOption := immutable.None[client.Txn]()
