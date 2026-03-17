@@ -85,8 +85,10 @@ func (a *NewIndex) Execute() {
 		// If there was an error getting the collections, it might have been expected
 		// so we compare against the expected error.
 		if err != nil {
-			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
-			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			if a.ExpectedError != "" {
+				expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+				assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			}
 			return
 		}
 
