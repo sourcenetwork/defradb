@@ -72,25 +72,22 @@ func (a *NewIndex) Execute() {
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var err error
-		var hadTxn bool
 		var txn client.Txn
+		var collections []client.Collection
 		if a.TransactionID.HasValue() {
-			hadTxn = true
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-		}
-
-		var collections []client.Collection
-		if hadTxn {
 			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
 		} else {
 			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
-			if err != nil {
-				return
-			}
+		}
+
+		// If there was an error getting the collections, it might have been expected
+		// so we compare against the expected error.
+		if err != nil {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			return
 		}
 
 		collection := collections[a.CollectionID]

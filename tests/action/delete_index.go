@@ -12,6 +12,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -73,6 +75,13 @@ func (a *DeleteIndex) Execute() {
 			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
 		} else {
 			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+		}
+
+		fmt.Println("Error?: ", err)
+		if err != nil {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			return
 		}
 
 		collection := collections[a.CollectionID]
