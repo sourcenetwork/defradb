@@ -123,17 +123,12 @@ func (a *AddDoc) Execute() {
 
 	// Check if a transaction is attached to this action. If so, we will be using it.
 	var txn client.Txn
+	txnOption := immutable.None[client.Txn]()
 	if hadTxn {
 		var err error
 		a.DoNotWaitForEvent = true
 		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
-		if err != nil {
-			return
-		}
-	}
-
-	txnOption := immutable.None[client.Txn]()
-	if hadTxn {
+		require.NoError(a.s.T, err)
 		txnOption = immutable.Some(txn)
 	}
 

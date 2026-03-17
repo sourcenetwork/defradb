@@ -70,13 +70,11 @@ func (a *ListIndexes) Execute() {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		var err error
+		txnOption := immutable.None[client.Txn]()
 		hadTxn := a.TransactionID.HasValue()
 		if hadTxn {
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-		}
-		txnOption := immutable.None[client.Txn]()
-		if hadTxn {
 			txnOption = immutable.Some(txn)
 		}
 
