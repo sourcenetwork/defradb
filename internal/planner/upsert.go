@@ -108,6 +108,11 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			// The original scanNode is now orphaned (replaced by valuesNode in the plan tree).
+			// Close it to release its fetcher's iterator, otherwise it leaks.
+			if err := n.origScanNode.Close(); err != nil {
+				return false, err
+			}
 		}
 
 		err = n.source.Init()
