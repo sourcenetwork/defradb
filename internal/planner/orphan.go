@@ -84,8 +84,10 @@ func (n *orphanNode) setSubQueryContext(filter *mapper.Filter, relIDFieldName st
 	n.isSubQuery = true
 }
 
+const orphanNodeKind = "orphanNode"
+
 func (n *orphanNode) Kind() string {
-	return "orphanNode"
+	return orphanNodeKind
 }
 
 func (n *orphanNode) Init() error {

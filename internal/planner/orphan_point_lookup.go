@@ -81,7 +81,7 @@ func (n *orphanPointLookupNode) setSubQueryFilter(filter *mapper.Filter) {
 }
 
 func (n *orphanPointLookupNode) Kind() string {
-	return "orphanNode"
+	return orphanNodeKind
 }
 
 func (n *orphanPointLookupNode) Init() error {
