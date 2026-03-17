@@ -73,9 +73,8 @@ func (a *RefreshViews) Execute() {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		var err error
-		hadTxn := a.TransactionID.HasValue()
-		if hadTxn {
-			txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 			err = txn.RefreshViews(a.s.Ctx, allOpts...)
 		} else {

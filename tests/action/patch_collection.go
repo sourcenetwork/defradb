@@ -74,8 +74,7 @@ func (a *PatchCollection) Execute() {
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		var err error
-		hadTxn := a.TransactionID.HasValue()
-		if hadTxn {
+		if a.TransactionID.HasValue() {
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
 			err = txn.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
