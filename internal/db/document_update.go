@@ -53,12 +53,13 @@ func (c *collection) UpdateDocumentsWithFilter(
 		return nil, err
 	}
 
+	defer txn.Discard()
+
 	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
 
-	defer txn.Discard()
 	return res, txn.Commit()
 }
 

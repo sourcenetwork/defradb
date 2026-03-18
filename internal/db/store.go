@@ -221,8 +221,6 @@ func (db *DB) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -236,19 +234,15 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
-	if !hadTxn {
-		defer txn.Discard()
-	}
+
+	defer txn.Discard()
 
 	err = db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	if !hadTxn {
-		return txn.Commit()
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (db *DB) SetActiveCollectionVersion(
