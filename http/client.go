@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -91,6 +92,15 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 		return nil, err
 	}
 	return &Transaction{&Client{c.http}, txRes.ID}, nil
+}
+
+func (c *Client) NewBlindWriteTxn() (client.Txn, error) {
+	// TODO: implement HTTP client support for NewBlindWriteTxn
+	return nil, errors.New("NewBlindWriteTxn not yet supported via HTTP client")
+}
+
+func (c *Client) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return ctx
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {

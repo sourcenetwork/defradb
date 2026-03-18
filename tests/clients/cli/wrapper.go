@@ -15,6 +15,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http/httptest"
@@ -724,6 +725,14 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 		}
 	}()
 	return resCh
+}
+
+func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
+	return nil, errors.New("NewBlindWriteTxn not yet supported")
+}
+
+func (w *Wrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return ctx
 }
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {

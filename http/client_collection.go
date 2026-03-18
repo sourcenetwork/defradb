@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -171,6 +172,22 @@ func (c *Collection) DeleteEncryptedIndex(
 
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Collection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	// TODO: implement HTTP client support for SaveManyDocuments
+	return errors.New("SaveManyDocuments not yet supported via HTTP client")
+}
+
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context, docIDs []string, pruneHistory bool,
+) (*client.PurgeResult, error) {
+	// TODO: implement HTTP client support for PurgeByDocIDs
+	return nil, errors.New("PurgeByDocIDs not yet supported via HTTP client")
 }
 
 func (c *Collection) Truncate(
