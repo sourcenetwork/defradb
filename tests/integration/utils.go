@@ -1694,18 +1694,20 @@ func AssertErrors(
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		require.Empty(t, errs)
+		require.Empty(t, errs, "Unexpected errors found")
 	} else {
-		for _, e := range errs {
-			// This is always a string at the moment, add support for other types as and when needed
-			errorString := e.Error()
-			if !strings.Contains(errorString, expectedError) {
-				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
-				require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
-				continue
-			}
-			return true
+		require.NotEmpty(t, errs, "Expected error not found: %s", expectedError)
+	}
+
+	for _, e := range errs {
+		// This is always a string at the moment, add support for other types as and when needed
+		errorString := e.Error()
+		if !strings.Contains(errorString, expectedError) {
+			// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
+			require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+			continue
 		}
+		return true
 	}
 	return false
 }
