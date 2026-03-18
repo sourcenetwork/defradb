@@ -18,7 +18,7 @@ $ gomobile init
 To verify that the Android build is successful:
 
 ```bash
-$ gomobile bind -o dist/defradb.aar -target=android .
+$ gomobile bind -o dist/defradb.aar -target=android/arm64,android/amd64 -androidapi=21 .
 ```
 
 To verify that the iOS build is successful:
