@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -21,14 +22,32 @@ import (
 	"github.com/sourcenetwork/corekv/blockstore"
 )
 
+// mergedCacheSize is the number of merged CID entries to cache.
+const mergedCacheSize = 100_000
+
+// globalMergedCache is a global cache for CIDs that are known to be merged.
+var globalMergedCache = mustNewMergedCache(mergedCacheSize)
+
+func mustNewMergedCache(size int) *lru.Cache[string, struct{}] {
+	cache, err := lru.New[string, struct{}](size)
+	if err != nil {
+		panic(err)
+	}
+	return cache
+}
+
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
 	ipfsBlockstore.Blockstore
 	// Mark the block as merged by removing the to-merge index.
 	MarkAsMerged(ctx context.Context, k cid.Cid) error
+	// BatchMarkAsMerged marks multiple blocks as merged in a single operation.
+	BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error
 	// Check if the block has been merged. It will return false if either the CID is not found
 	// or the CID is found AND the to-merge index is also found.
 	IsMerged(ctx context.Context, k cid.Cid) (bool, error)
+	// BatchHas checks if multiple CIDs exist in the blockstore.
+	BatchHas(ctx context.Context, cids []cid.Cid) (map[string]bool, error)
 }
 
 func newBlockstore(store corekv.ReaderWriter) *bstore {
@@ -60,6 +79,10 @@ func newToMergeKey(cid []byte) []byte {
 }
 
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
+	cidStr := cid.String()
+	if _, ok := globalMergedCache.Get(cidStr); ok {
+		return true, nil
+	}
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
 		return false, err
@@ -71,11 +94,45 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return !notMerged, nil
+	merged := !notMerged
+	if merged {
+		globalMergedCache.Add(cidStr, struct{}{})
+	}
+	return merged, nil
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
-	return bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	if err != nil {
+		return err
+	}
+	globalMergedCache.Add(cid.String(), struct{}{})
+	return nil
+}
+
+// BatchMarkAsMerged marks multiple blocks as merged in a single operation.
+func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
+	for _, c := range cids {
+		err := bs.store.Delete(ctx, newToMergeKey(c.Bytes()))
+		if err != nil {
+			return err
+		}
+		globalMergedCache.Add(c.String(), struct{}{})
+	}
+	return nil
+}
+
+// BatchHas checks if multiple CIDs exist in the blockstore.
+func (bs *bstore) BatchHas(ctx context.Context, cids []cid.Cid) (map[string]bool, error) {
+	result := make(map[string]bool, len(cids))
+	for _, c := range cids {
+		has, err := bs.Has(ctx, c)
+		if err != nil {
+			return nil, err
+		}
+		result[c.String()] = has
+	}
+	return result, nil
 }
 
 type p2pBlockStore struct {
@@ -110,6 +167,29 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 			return err
 		}
 		err = bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// blindWriteBlockstore is a blockstore wrapper that skips existence checks on Put.
+type blindWriteBlockstore struct {
+	*bstore
+}
+
+var _ Blockstore = (*blindWriteBlockstore)(nil)
+
+// Put stores a block without checking if it already exists.
+func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) error {
+	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+}
+
+// PutMany stores multiple blocks without checking if they already exist.
+func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
+	for _, b := range blocks {
+		err := bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
 		if err != nil {
 			return err
 		}

@@ -66,6 +66,8 @@ const (
 	PurgeName = Name("purge")
 	// TopicPeerEventName is the name of the topic peer join/leave event.
 	TopicPeerEventName = Name("topic-peer-event")
+	// P2PNoPeersName is the name of the event fired when no peers are available for pubsub.
+	P2PNoPeersName = Name("p2p-no-peers")
 )
 
 // PubSub is an event that is published when
@@ -92,6 +94,9 @@ type Update struct {
 	// Block is the encoded contents of this composite commit, it contains the Cids of the field level commits that
 	// also formed this update.
 	Block []byte
+
+	// CAR is the pre-built CAR file for this update.
+	CAR []byte
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
@@ -182,4 +187,9 @@ type TopicPeerEvent struct {
 	Topic string
 	// EventType is the type of event: "JOINED" or "LEFT".
 	EventType string
+}
+
+// P2PNoPeers is an event that is published when no peers are available for pubsub publishing.
+type P2PNoPeers struct {
+	DroppedBatchSize int
 }

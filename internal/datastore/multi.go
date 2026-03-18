@@ -56,6 +56,21 @@ func NewMultistore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSi
 	}
 }
 
+// NewBlindWriteMultistore creates a Multistore with a blind-write blockstore.
+func NewBlindWriteMultistore(
+	rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSize immutable.Option[int],
+) *Multistore {
+	return &Multistore{
+		block:  BlindWriteBlockstoreFrom(rootstore, chunkSize),
+		data:   newDatastore(rootstore, lockSet),
+		enc:    newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey})),
+		head:   namespace.Wrap(rootstore, []byte{headStoreKey}),
+		peer:   namespace.Wrap(rootstore, []byte{peerStoreKey}),
+		root:   rootstore,
+		system: namespace.Wrap(rootstore, []byte{systemStoreKey}),
+	}
+}
+
 func (m *Multistore) Blockstore() Blockstore {
 	return m.block
 }
@@ -112,6 +127,13 @@ func blockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[in
 
 func P2PBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) Blockstore {
 	return &p2pBlockStore{
+		bstore: blockstoreFrom(rootstore, chunkSize),
+	}
+}
+
+// BlindWriteBlockstoreFrom creates a blind-write blockstore from a root store.
+func BlindWriteBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) Blockstore {
+	return &blindWriteBlockstore{
 		bstore: blockstoreFrom(rootstore, chunkSize),
 	}
 }

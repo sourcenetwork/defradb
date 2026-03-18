@@ -88,10 +88,7 @@ func NewErrEncodingBlock(err error) error {
 
 // NewErrUnmarshallingBlock returns an error indicating that the block could not be unmarshalled.
 func NewErrUnmarshallingBlock(err error) error {
-	return errors.Wrap(
-		errUnmarshallingBlock,
-		err,
-	)
+	return fmt.Errorf("%s: %w", errUnmarshallingBlock, err)
 }
 
 // NewErrGeneratingLink returns an error indicating that the link could not be generated.
