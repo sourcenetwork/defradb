@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -47,6 +48,11 @@ type DB interface {
 	PurgeDACState(ctx context.Context) error
 	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	ExportFieldMapping(ctx context.Context, collectionName string) (*client.CollectionFieldMapping, error)
+	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	ImportRawKVsWithMapping(ctx context.Context, r io.Reader, sourceMappings []*client.CollectionFieldMapping) (int, error)
+	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 	Close()
 }
 
@@ -62,6 +68,9 @@ type Node struct {
 	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
+	// ReplicationFilter is an optional filter that rejects incoming P2P documents before storage.
+	// Set this between New() and Start() to enable filtering.
+	ReplicationFilter client.ReplicationFilter
 }
 
 // DefaultNodeOptions returns default NodeOptions values.
@@ -143,6 +152,9 @@ func (n *Node) Start(ctx context.Context) error {
 	if n.peer != nil {
 		dbBuilder.SetP2P(n.peer)
 	}
+	if n.ReplicationFilter != nil {
+		dbBuilder.SetReplicationFilter(n.ReplicationFilter)
+	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
 	if err != nil {
@@ -150,6 +162,56 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 
 	return n.startAPI(ctx)
+}
+
+// CompactStorage forces full LSM compaction of the underlying Badger storage.
+func (n *Node) CompactStorage(workers int) error {
+	if rawBadgerDB == nil {
+		return nil
+	}
+	if workers <= 0 {
+		workers = 4
+	}
+	return rawBadgerDB.Flatten(workers)
+}
+
+// RunStorageGC runs Badger value log garbage collection to reclaim disk space
+// from deleted/overwritten entries.
+func (n *Node) RunStorageGC() error {
+	if rawBadgerDB == nil {
+		return nil
+	}
+	for {
+		err := rawBadgerDB.RunValueLogGC(0.1)
+		if err != nil {
+			return nil // ErrNoRewrite means nothing left to GC
+		}
+	}
+}
+
+// ExportDocKVs delegates to the underlying DB.
+func (n *Node) ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error) {
+	return n.DB.ExportDocKVs(ctx, collectionName, docIDs, w, datastoreOnly)
+}
+
+// ExportFieldMapping delegates to the underlying DB.
+func (n *Node) ExportFieldMapping(ctx context.Context, collectionName string) (*client.CollectionFieldMapping, error) {
+	return n.DB.ExportFieldMapping(ctx, collectionName)
+}
+
+// ImportRawKVs delegates to the underlying DB.
+func (n *Node) ImportRawKVs(ctx context.Context, r io.Reader) (int, error) {
+	return n.DB.ImportRawKVs(ctx, r)
+}
+
+// ImportRawKVsWithMapping delegates to the underlying DB.
+func (n *Node) ImportRawKVsWithMapping(ctx context.Context, r io.Reader, sourceMappings []*client.CollectionFieldMapping) (int, error) {
+	return n.DB.ImportRawKVsWithMapping(ctx, r, sourceMappings)
+}
+
+// RebuildCollectionIndexes delegates to the underlying DB.
+func (n *Node) RebuildCollectionIndexes(ctx context.Context, collectionName string) error {
+	return n.DB.RebuildCollectionIndexes(ctx, collectionName)
 }
 
 // Close stops the node sub-systems.

@@ -14,12 +14,16 @@ import (
 	"context"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	badgeropts "github.com/dgraph-io/badger/v4/options"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/client/options"
 )
+
+// rawBadgerDB holds a reference to the underlying Badger DB instance
+var rawBadgerDB *badgerds.DB
 
 func init() {
 	constructor := func(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, error) {
@@ -33,15 +37,37 @@ func init() {
 		badgerOpts.InMemory = opts.BadgerInMemory
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
+		badgerOpts.IndexCacheSize = 100 << 20
+		badgerOpts.ValueThreshold = 1 << 8
+		badgerOpts.Compression = badgeropts.ZSTD
+		badgerOpts.ZSTDCompressionLevel = 1
 
-		if len(opts.BadgerEncryptionKey) > 0 {
-			// Having a cache improves the performance.
-			// Otherwise, your reads would be very slow while encryption is enabled.
-			// https://dgraph.io/docs/badger/get-started/#encryption-mode
-			badgerOpts.IndexCacheSize = 100 << 20
+		if opts.BadgerMemTableSize > 0 {
+			badgerOpts.MemTableSize = opts.BadgerMemTableSize
+		}
+		if opts.BadgerBlockCacheSize > 0 {
+			badgerOpts.BlockCacheSize = opts.BadgerBlockCacheSize
+		}
+		if opts.BadgerIndexCacheSize > 0 {
+			badgerOpts.IndexCacheSize = opts.BadgerIndexCacheSize
+		}
+		if opts.BadgerNumCompactors > 0 {
+			badgerOpts.NumCompactors = opts.BadgerNumCompactors
+		}
+		if opts.BadgerNumLevelZeroTables > 0 {
+			badgerOpts.NumLevelZeroTables = opts.BadgerNumLevelZeroTables
+		}
+		if opts.BadgerNumLevelZeroTablesStall > 0 {
+			badgerOpts.NumLevelZeroTablesStall = opts.BadgerNumLevelZeroTablesStall
 		}
 
-		return badger.NewDatastore(path, badgerOpts)
+		badgerOpts.Logger = nil
+		db, err := badgerds.Open(badgerOpts)
+		if err != nil {
+			return nil, err
+		}
+		rawBadgerDB = db
+		return badger.NewDatastoreFrom(db), nil
 	}
 	purge := func(ctx context.Context, opts *options.NodeStoreOptions) error {
 		store, err := constructor(ctx, opts)
