@@ -59,6 +59,21 @@ type Collection interface {
 	// will be created.
 	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
+	// SaveManyDocuments saves multiple documents in a single transaction.
+	//
+	// For each document, if it exists with the given DocID it will be updated.
+	// Otherwise a new document will be created.
+	SaveManyDocuments(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
+
+	// PurgeByDocIDs permanently removes all documents with the given docIDs.
+	//
+	// This call will lock the collection, and no other read or write document operations on this
+	// collection will progress whilst this is executing.
+	// If pruneHistory is true, block DAG chains are fully walked and deleted (2-3x slower).
+	// If false, only head blocks referenced by headstore entries are deleted (fast but may leak
+	// old blocks for updated documents).
+	PurgeByDocIDs(ctx context.Context, docIDs []string, pruneHistory bool) (*PurgeResult, error)
+
 	// DeleteDocument will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error
@@ -178,6 +193,14 @@ type DeleteResult struct {
 	// Count contains the number of documents deleted by the delete call.
 	Count int64
 	// DocIDs contains the DocIDs of all the documents deleted by the delete call.
+	DocIDs []string
+}
+
+// PurgeResult wraps the result of a purge call.
+type PurgeResult struct {
+	// Count contains the number of documents purged by the purge call.
+	Count int64
+	// DocIDs contains the DocIDs of all the documents purged by the purge call.
 	DocIDs []string
 }
 

@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -90,6 +91,15 @@ var _ client.Txn = (*Txn)(nil)
 func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 	return &Txn{
 		BasicTxn: txn,
+		db:       db,
+	}
+}
+
+// wrapCorekvTxn wraps an existing corekv.Txn into a client.Txn.
+func wrapCorekvTxn(txn corekv.Txn, db *DB) *Txn {
+	basicTxn := datastore.NewTxnFromExisting(txn, db.lockSet, db.previousTxnID.Add(1), db.blockStoreChunkSize)
+	return &Txn{
+		BasicTxn: basicTxn,
 		db:       db,
 	}
 }

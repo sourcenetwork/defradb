@@ -244,3 +244,58 @@ func InitFieldShortIDCache(ctx context.Context) context.Context {
 func getFieldShortIDCache(ctx context.Context) fieldShortIDCache {
 	return ctx.Value(fieldShortIDCacheKey{}).(fieldShortIDCache) //nolint:forcetypeassert
 }
+
+// GetAllFieldShortIDs loads all field short IDs for the given collection short ID
+// and returns them as a map. This should be called with a read-only transaction.
+func GetAllFieldShortIDs(
+	ctx context.Context,
+	collectionShortID uint32,
+) (map[string]uint32, error) {
+	result := make(map[string]uint32)
+
+	key := keys.NewFieldIDPrefix(collectionShortID)
+	txn := datastore.CtxMustGetTxn(ctx)
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		key, err := keys.NewFieldIDFromBytes(iter.Key())
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		v, err := strconv.ParseUint(string(value), 10, 0)
+		if err != nil {
+			return nil, err
+		}
+		sID := uint32(v)
+
+		result[key.FieldID] = sID
+	}
+
+	return result, iter.Close()
+}
+
+// SetFieldShortIDsInCache directly sets field short IDs in the cache.
+func SetFieldShortIDsInCache(ctx context.Context, collectionShortID uint32, fieldIDs map[string]uint32) {
+	cache := getFieldShortIDCache(ctx)
+	for fieldID, shortID := range fieldIDs {
+		uniqueKey := strconv.Itoa(int(collectionShortID)) + ":" + fieldID
+		cache[uniqueKey] = shortID
+	}
+}

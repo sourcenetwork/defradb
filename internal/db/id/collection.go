@@ -136,3 +136,9 @@ func InitCollectionShortIDCache(ctx context.Context) context.Context {
 func getCollectionShortIDCache(ctx context.Context) collectionShortIDCache {
 	return ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache) //nolint:forcetypeassert
 }
+
+// SetCollectionShortIDInCache directly sets a collection short ID in the cache.
+func SetCollectionShortIDInCache(ctx context.Context, collectionID string, shortID uint32) {
+	cache := getCollectionShortIDCache(ctx)
+	cache[collectionID] = shortID
+}

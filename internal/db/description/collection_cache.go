@@ -221,6 +221,13 @@ func (cache *CollectionCache) AddAll(cols []client.CollectionVersion) {
 	cache.IsActiveCollectionsPopulated = true
 }
 
+// PopulateCacheFromData populates the collection cache in the given context
+// with the provided collection data.
+func PopulateCacheFromData(ctx context.Context, cols []client.CollectionVersion) {
+	cache := CollectionCacheFromContext(ctx)
+	cache.AddAll(cols)
+}
+
 func (cache *CollectionCache) AddAllActive(cols []client.CollectionVersion) {
 	cache.ActiveCollections = make([]client.CollectionVersion, 0, len(cols))
 
