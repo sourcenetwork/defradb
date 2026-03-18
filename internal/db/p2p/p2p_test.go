@@ -50,8 +50,8 @@ func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
 	// from="sender", topic="topic"
 	resp, err := p.pubSubMessageHandler("sender", "topic", msg)
 
-	// Expectation: No error returned (suppressed), resp is nil
-	assert.NoError(t, err)
+	// Expectation: context error is returned, resp is nil
+	assert.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, resp)
 }
 
@@ -76,6 +76,6 @@ func TestPubSubMessageHandler_ContextTimeout(t *testing.T) {
 
 	resp, err := p.pubSubMessageHandler("sender", "topic", msg)
 
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.Nil(t, resp)
 }

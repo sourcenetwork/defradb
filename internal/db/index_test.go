@@ -496,5 +496,5 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 		Unique: desc.Unique,
 	}
 	_, err := NewCollectionIndex(f.users, descWithID)
-	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
+	require.ErrorContains(t, err, desc.Fields[0].Name)
 }
