@@ -14,8 +14,10 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -38,6 +40,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
+const (
+	// mergeBlockBatchSize is the maximum number of blocks to process in a single transaction during merge operations.
+	mergeBlockBatchSize = 50
+)
+
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
@@ -53,11 +60,15 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		// As collection commits link to document composite commits, all events
 		// recieved for branchable collections must be processed serially else
 		// they may otherwise cause a transaction conflict.
-		db.colMergeQueue.add(evt.CollectionID)
+		if err := db.colMergeQueue.add(ctx, evt.CollectionID); err != nil {
+			return err
+		}
 		defer db.colMergeQueue.done(evt.CollectionID)
 	} else {
 		// ensure only one merge per docID
-		db.docMergeQueue.add(evt.DocID)
+		if err := db.docMergeQueue.add(ctx, evt.DocID); err != nil {
+			return err
+		}
 		defer db.docMergeQueue.done(evt.DocID)
 	}
 
@@ -75,6 +86,251 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		}
 		return nil
 	}
+	return nil
+}
+
+// MergeBatchWithTxn merges multiple events using an existing transaction from context.
+func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func(), error) {
+	if len(evts) == 0 {
+		return nil, nil
+	}
+
+	byCollection := make(map[string][]event.Merge)
+	for _, evt := range evts {
+		byCollection[evt.CollectionID] = append(byCollection[evt.CollectionID], evt)
+	}
+
+	for collectionID, colEvts := range byCollection {
+		col, err := getCollectionFromCollectionID(ctx, db, collectionID)
+		if err != nil {
+			log.ErrorContextE(
+				ctx,
+				"Failed to get collection for batch merge with txn",
+				err,
+				corelog.String("CollectionID", collectionID))
+			continue
+		}
+
+		if col.Version().IsBranchable {
+			for _, evt := range colEvts {
+				if err := db.mergeWithTxn(ctx, col, evt); err != nil {
+					log.ErrorContextE(ctx, "Failed to merge branchable event with txn", err)
+				}
+			}
+			continue
+		}
+
+		batchResult, err := db.executeMergeBatchWithTxn(ctx, col, colEvts)
+		if err != nil {
+			log.ErrorContextE(
+				ctx,
+				"Failed to execute batch merge with txn",
+				err,
+				corelog.String("CollectionID", collectionID),
+				corelog.Int("EventCount", len(colEvts)))
+			continue
+		}
+
+		if batchResult != nil && len(batchResult.DocIDs) > 0 && len(col.indexes) > 0 {
+			for _, docIDStr := range batchResult.DocIDs {
+				docID, err := client.NewDocIDFromString(docIDStr)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to parse docID for index sync", err)
+					continue
+				}
+				oldDoc := batchResult.OldDocs[docIDStr]
+
+				if oldDoc == nil {
+					if fields, ok := batchResult.MergedFields[docIDStr]; ok && len(fields) > 0 {
+						newDoc, buildErr := buildDocFromMergeFields(ctx, docIDStr, col, fields)
+						if buildErr != nil {
+							log.ErrorContextE(ctx, "Failed to build doc from merge data, falling back to read", buildErr)
+							if err := syncIndexedDoc(ctx, docID, col, oldDoc); err != nil {
+								log.ErrorContextE(ctx, "Index sync after merge failed", err,
+									corelog.String("DocID", docIDStr))
+							}
+							continue
+						}
+						if err := syncDocIndex(ctx, col, nil, newDoc); err != nil {
+							log.ErrorContextE(ctx, "Index sync from merge data failed", err,
+								corelog.String("DocID", docIDStr))
+						}
+						continue
+					}
+				}
+
+				if err := syncIndexedDoc(ctx, docID, col, oldDoc); err != nil {
+					log.ErrorContextE(ctx, "Index sync after merge failed", err,
+						corelog.String("DocID", docIDStr))
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// executeMergeBatchWithTxn merges events using an existing transaction from context.
+func (db *DB) executeMergeBatchWithTxn(
+	ctx context.Context, col *collection, evts []event.Merge,
+) (*MergeBatchResult, error) {
+	docIDs := make([]string, 0, len(evts))
+	for _, evt := range evts {
+		if evt.DocID != "" {
+			docIDs = append(docIDs, evt.DocID)
+		}
+	}
+
+	sortedDocIDs := make([]string, len(docIDs))
+	copy(sortedDocIDs, docIDs)
+	sort.Strings(sortedDocIDs)
+
+	addedDocIDs := make([]string, 0, len(sortedDocIDs))
+	for _, docID := range sortedDocIDs {
+		if err := db.docMergeQueue.add(ctx, docID); err != nil {
+			for _, added := range addedDocIDs {
+				db.docMergeQueue.done(added)
+			}
+			return nil, err
+		}
+		addedDocIDs = append(addedDocIDs, docID)
+	}
+	defer func() {
+		for _, docID := range addedDocIDs {
+			db.docMergeQueue.done(docID)
+		}
+	}()
+
+	return db.executeMergeBatchWritesOnly(ctx, col, evts)
+}
+
+// MergeBatchResult contains the result of a batch merge operation.
+type MergeBatchResult struct {
+	CollectionID string
+	DocIDs       []string
+	OldDocs      map[string]*client.Document
+	MergedFields map[string]map[string][]byte
+}
+
+// executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
+func (db *DB) executeMergeBatchWritesOnly(
+	ctx context.Context, col *collection, evts []event.Merge,
+) (*MergeBatchResult, error) {
+	allDocIDs := make(map[string]*client.Document)
+	var allMergedFields map[string]map[string][]byte
+
+	for _, dagMerge := range evts {
+		var key keys.HeadstoreKey
+		if dagMerge.DocID != "" {
+			key = keys.HeadstoreDocKey{
+				DocID:   dagMerge.DocID,
+				FieldID: core.COMPOSITE_NAMESPACE,
+			}
+		} else {
+			shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+			if err != nil {
+				return nil, err
+			}
+			key = keys.NewHeadstoreColKey(shortID)
+		}
+
+		mt, err := getHeadsAsMergeTarget(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+
+		mergeCtx := ctx
+		if len(mt.heads) == 0 {
+			mergeCtx = coreblock.ContextWithNewDocCreateMode(ctx)
+		}
+
+		mp, err := db.newMergeProcessor(mergeCtx, col)
+		if err != nil {
+			return nil, err
+		}
+
+		err = mp.loadComposites(mergeCtx, dagMerge.Cid, mt)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = mp.mergeComposites(mergeCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		for docID, oldDoc := range mp.docIDs {
+			docIDStr := docID.String()
+			allDocIDs[docIDStr] = oldDoc
+		}
+
+		for docIDStr, fields := range mp.mergedFields {
+			if allMergedFields == nil {
+				allMergedFields = make(map[string]map[string][]byte)
+			}
+			allMergedFields[docIDStr] = fields
+		}
+	}
+
+	sortedDocIDs := make([]string, 0, len(allDocIDs))
+	for docIDStr := range allDocIDs {
+		sortedDocIDs = append(sortedDocIDs, docIDStr)
+	}
+	sort.Strings(sortedDocIDs)
+
+	return &MergeBatchResult{
+		CollectionID: col.Version().CollectionID,
+		DocIDs:       sortedDocIDs,
+		OldDocs:      allDocIDs,
+		MergedFields: allMergedFields,
+	}, nil
+}
+
+// mergeWithTxn performs a single merge using an existing transaction from context.
+func (db *DB) mergeWithTxn(ctx context.Context, col *collection, evt event.Merge) error {
+	var key keys.HeadstoreKey
+	if evt.DocID != "" {
+		key = keys.HeadstoreDocKey{
+			DocID:   evt.DocID,
+			FieldID: core.COMPOSITE_NAMESPACE,
+		}
+	} else {
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+		key = keys.NewHeadstoreColKey(shortID)
+	}
+
+	mt, err := getHeadsAsMergeTarget(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	mergeCtx := ctx
+	if len(mt.heads) == 0 {
+		mergeCtx = coreblock.ContextWithNewDocCreateMode(ctx)
+	}
+
+	mp, err := db.newMergeProcessor(mergeCtx, col)
+	if err != nil {
+		return err
+	}
+
+	err = mp.loadComposites(mergeCtx, evt.Cid, mt)
+	if err != nil {
+		return err
+	}
+
+	ctx, err = mp.mergeComposites(mergeCtx)
+	if err != nil {
+		return err
+	}
+
+	if err := mp.syncIndexes(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -105,28 +361,34 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	mp, err := db.newMergeProcessor(ctx, col)
+	mergeCtx := ctx
+	if len(mt.heads) == 0 {
+		mergeCtx = coreblock.ContextWithNewDocCreateMode(ctx)
+	}
+
+	mp, err := db.newMergeProcessor(mergeCtx, col)
 	if err != nil {
 		return err
 	}
 
-	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
+	err = mp.loadComposites(mergeCtx, dagMerge.Cid, mt)
 	if err != nil {
 		return err
 	}
 
-	err = mp.mergeComposites(ctx)
+	// mergeComposites may commit and start new transactions for large DAGs,
+	// so we need to use the returned context which contains the current transaction
+	ctx, err = mp.mergeComposites(mergeCtx)
 	if err != nil {
 		return err
 	}
 
-	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
-		if err != nil {
-			return err
-		}
+	if err := mp.syncIndexes(ctx); err != nil {
+		return err
 	}
 
+	// Get the current transaction (may be different from original if batching occurred)
+	txn = datastore.CtxMustGetTxn(ctx)
 	err = txn.Commit()
 	if err != nil {
 		return err
@@ -154,18 +416,23 @@ func newMergeQueue() *mergeQueue {
 
 // add adds a key to the queue. If the key is already in the queue, it will
 // wait for the key to be removed from the queue. For every add call, done must
-// be called to remove the key from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (m *mergeQueue) add(key string) {
-	m.mutex.Lock()
-	done, ok := m.keys[key]
-	if !ok {
-		m.keys[key] = make(chan struct{})
-	}
-	m.mutex.Unlock()
-	if ok {
-		<-done
-		m.add(key)
+// be called to remove the key from the queue. Returns an error if the context
+// is cancelled while waiting.
+func (m *mergeQueue) add(ctx context.Context, key string) error {
+	for {
+		m.mutex.Lock()
+		done, ok := m.keys[key]
+		if !ok {
+			m.keys[key] = make(chan struct{})
+			m.mutex.Unlock()
+			return nil
+		}
+		m.mutex.Unlock()
+		select {
+		case <-done:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 
@@ -183,6 +450,7 @@ type mergeProcessor struct {
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
 	col        *collection
+	db         *DB
 
 	// docIDs contains all docIDs and their original values
 	// that have been merged so far by the mergeProcessor
@@ -191,6 +459,12 @@ type mergeProcessor struct {
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
+
+	// blocksProcessed tracks how many blocks have been processed in the current transaction.
+	blocksProcessed int
+
+	// mergedFields collects field values during merge for new documents.
+	mergedFields map[string]map[string][]byte
 }
 
 func (db *DB) newMergeProcessor(
@@ -209,6 +483,7 @@ func (db *DB) newMergeProcessor(
 		blockLS:    blockLS,
 		encBlockLS: encBlockLS,
 		col:        col,
+		db:         db,
 		docIDs:     make(map[client.DocID]*client.Document),
 		composites: list.New(),
 	}, nil
@@ -281,20 +556,20 @@ func (mp *mergeProcessor) loadComposites(
 	return nil
 }
 
-func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
+func (mp *mergeProcessor) mergeComposites(ctx context.Context) (context.Context, error) {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
-			return err
+			return ctx, err
 		}
-		err = mp.processBlock(ctx, block, link)
+		ctx, err = mp.processBlock(ctx, block, link)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 	}
 
-	return nil
+	return ctx, nil
 }
 
 func (mp *mergeProcessor) loadEncryptionBlock(
@@ -338,52 +613,107 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	return dagBlock, true, nil
 }
 
+// commitBatchIfNeeded checks if the current transaction has processed enough blocks and commits it.
+func (mp *mergeProcessor) commitBatchIfNeeded(ctx context.Context) (context.Context, error) {
+	if mp.blocksProcessed < mergeBlockBatchSize {
+		return ctx, nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	err := txn.Commit()
+	if err != nil {
+		return ctx, err
+	}
+
+	// Create a new transaction using a fresh context to avoid reusing the committed transaction.
+	// ensureContextTxn would otherwise see the old (committed) transaction and try to reuse it.
+	freshCtx := context.Background()
+	newCtx, newTxn, err := ensureContextTxn(freshCtx, mp.db, false)
+	if err != nil {
+		return ctx, err
+	}
+
+	mp.blockLS.SetReadStorage(blockstore.NewIPLDStore(newTxn.Blockstore()))
+	mp.encBlockLS.SetReadStorage(blockstore.NewIPLDStore(newTxn.Encstore()))
+
+	mp.blocksProcessed = 0
+
+	return newCtx, nil
+}
+
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
-) error {
+) (context.Context, error) {
 	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	if canRead {
 		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		// If the CRDT is nil, it means the field is not part
 		// of the collection definition and we can safely ignore it.
 		if crdt == nil {
-			return nil
+			return ctx, nil
 		}
 
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
-			return err
+			return ctx, err
 		}
+
+		if coreblock.IsNewDocCreateMode(ctx) && !block.Delta.IsComposite() && !block.Delta.IsCollection() {
+			docID := string(block.Delta.GetDocID())
+			fieldName := block.Delta.GetFieldName()
+			data := block.Delta.GetData()
+			if len(data) > 0 && fieldName != "" {
+				if mp.mergedFields == nil {
+					mp.mergedFields = make(map[string]map[string][]byte)
+				}
+				if mp.mergedFields[docID] == nil {
+					mp.mergedFields[docID] = make(map[string][]byte)
+				}
+				mp.mergedFields[docID][fieldName] = data
+			}
+		}
+
+		mp.blocksProcessed++
+		ctx, err = mp.commitBatchIfNeeded(ctx)
+		if err != nil {
+			return ctx, err
+		}
+	}
+
+	// For collection blocks, Links point to document composites which are processed in their own merge events.
+	if dagBlock.Delta.IsCollection() {
+		return ctx, nil
 	}
 
 	for _, link := range dagBlock.Links {
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		childBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
-			return err
+		ctx, err = mp.processBlock(ctx, childBlock, link.Link)
+		if err != nil {
+			return ctx, err
 		}
 	}
 
-	return nil
+	return ctx, nil
 }
 
 func decryptBlock(
@@ -482,8 +812,18 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 // trackMergedDocument tracks the current version of the document so we
 // can correctly sync indexes after a merge.
 func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
+	// Skip tracking for collections without indexes - no need to read old doc
+	if len(mp.col.indexes) == 0 {
+		mp.docIDs[docID] = nil
+		return nil
+	}
 	_, exists := mp.docIDs[docID]
 	if exists {
+		return nil
+	}
+	// Skip the old doc read for new documents
+	if coreblock.IsNewDocCreateMode(ctx) {
+		mp.docIDs[docID] = nil
 		return nil
 	}
 	doc, err := mp.col.GetDocument(ctx, docID)
@@ -568,6 +908,33 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 	return block, nil
 }
 
+// syncIndexes syncs indexes for all documents processed by this merge processor.
+func (mp *mergeProcessor) syncIndexes(ctx context.Context) error {
+	if len(mp.col.indexes) == 0 {
+		return nil
+	}
+
+	for docID, oldDoc := range mp.docIDs {
+		if oldDoc == nil {
+			docIDStr := docID.String()
+			if fields, ok := mp.mergedFields[docIDStr]; ok && len(fields) > 0 {
+				newDoc, err := buildDocFromMergeFields(ctx, docIDStr, mp.col, fields)
+				if err == nil {
+					if err := syncDocIndex(ctx, mp.col, nil, newDoc); err != nil {
+						return err
+					}
+					continue
+				}
+			}
+		}
+
+		if err := syncIndexedDoc(ctx, docID, mp.col, oldDoc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func syncIndexedDoc(
 	ctx context.Context,
 	docID client.DocID,
@@ -578,11 +945,53 @@ func syncIndexedDoc(
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
+	return syncDocIndex(ctx, col, oldDoc, newDoc)
+}
+
+// buildDocFromMergeFields constructs a *client.Document from field values collected during merge.
+func buildDocFromMergeFields(
+	ctx context.Context,
+	docIDStr string,
+	col *collection,
+	fields map[string][]byte,
+) (*client.Document, error) {
+	docID, err := client.NewDocIDFromString(docIDStr)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := client.NewDocWithID(ctx, docID, col.Version())
+	if err != nil {
+		return nil, err
+	}
+	for fieldName, rawBytes := range fields {
+		fd, ok := col.Version().GetFieldByName(fieldName)
+		if !ok {
+			continue
+		}
+		var val any
+		if err := cbor.Unmarshal(rawBytes, &val); err != nil {
+			continue
+		}
+		typedVal, err := core.NormalizeFieldValue(fd, val)
+		if err != nil {
+			continue
+		}
+		if err := doc.Set(ctx, fieldName, typedVal); err != nil {
+			continue
+		}
+	}
+	doc.Clean()
+	return doc, nil
+}
+
+// syncDocIndex updates the index for a document given its old and new state.
+func syncDocIndex(ctx context.Context, col *collection, oldDoc, newDoc *client.Document) error {
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)
-	} else if oldDoc == nil {
+	} else if oldDoc == nil && newDoc != nil {
 		return col.addDocToIndex(ctx, newDoc)
-	} else {
+	} else if oldDoc != nil && newDoc == nil {
 		return col.deleteIndexedDoc(ctx, oldDoc)
 	}
+	return nil
 }

@@ -41,8 +41,7 @@ func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
 
 	// Create a dummy request message
 	req := protocol.PushLogRequest{
-		DocID: "docID",
-		// Block can be empty or garbage, as context check should happen first
+		Documents: []protocol.DocumentInfo{{DocID: "docID"}},
 	}
 	msg, err := cbor.Marshal(req)
 	assert.NoError(t, err)
@@ -51,8 +50,8 @@ func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
 	// from="sender", topic="topic"
 	resp, err := p.pubSubMessageHandler("sender", "topic", msg)
 
-	// Expectation: No error returned (suppressed), resp is nil
-	assert.NoError(t, err)
+	// Expectation: context error is returned since context is canceled
+	assert.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, resp)
 }
 
@@ -70,13 +69,14 @@ func TestPubSubMessageHandler_ContextTimeout(t *testing.T) {
 	}
 
 	req := protocol.PushLogRequest{
-		DocID: "docID",
+		Documents: []protocol.DocumentInfo{{DocID: "docID"}},
 	}
 	msg, err := cbor.Marshal(req)
 	assert.NoError(t, err)
 
 	resp, err := p.pubSubMessageHandler("sender", "topic", msg)
 
-	assert.NoError(t, err)
+	// Expectation: context error is returned since context is expired
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.Nil(t, resp)
 }
