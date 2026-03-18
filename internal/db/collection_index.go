@@ -389,7 +389,6 @@ func (c *collection) DeleteIndex(
 	}
 
 	return txn.Commit()
-
 }
 
 func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
@@ -474,7 +473,6 @@ func (c *collection) NewEncryptedIndex(
 	}
 
 	return index, txn.Commit()
-
 }
 
 func (c *collection) newEncryptedIndex(
