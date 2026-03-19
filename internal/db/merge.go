@@ -578,6 +578,11 @@ func syncIndexedDoc(
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
+	// Both can be nil during concurrent P2P operations (e.g. delete + update)
+	// where the document was already deleted and no prior indexed state exists.
+	if oldDoc == nil && newDoc == nil {
+		return nil
+	}
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)
 	} else if oldDoc == nil {
