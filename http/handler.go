@@ -97,8 +97,8 @@ func NewHandler(db DB) (*Handler, error) {
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
-		r.Handle("/"+VersionV0, router)
-		r.Handle("/"+VersionV1, router)
+		r.Mount("/"+VersionV0, router)
+		r.Mount("/"+VersionV1, router)
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
