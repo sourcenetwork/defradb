@@ -2852,7 +2852,7 @@
     "servers": [
         {
             "description": "Local DefraDB instance",
-            "url": "/api/v0"
+            "url": "/api/v1"
         }
     ],
     "tags": [

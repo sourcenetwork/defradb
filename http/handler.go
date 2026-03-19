@@ -26,7 +26,7 @@ import (
 var IsDevMode bool = false
 
 // Version is the identifier for the current API version.
-var Version string = "v0"
+var Version string = "v1"
 
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
