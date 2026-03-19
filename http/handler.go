@@ -25,8 +25,12 @@ import (
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
 var IsDevMode bool = false
 
-// LatestVersion is the identifier for the current API version.
-var LatestVersion string = "v1"
+var (
+	// VersionV0 is the identifier for the v0 API version.
+	VersionV0 string = "v0"
+	// VersionV1 is the identifier for the v1 API version.
+	VersionV1 string = "v1"
+)
 
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
@@ -93,7 +97,8 @@ func NewHandler(db DB) (*Handler, error) {
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
-		r.Handle(LatestVersion, router)
+		r.Handle("/"+VersionV0, router)
+		r.Handle("/"+VersionV1, router)
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {

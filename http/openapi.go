@@ -110,17 +110,21 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
 			Title:   "DefraDB API",
-			Version: LatestVersion,
+			Version: VersionV1,
 		},
 		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
-				Description: "DefraDB latest",
+				Description: "DefraDB latest version",
 				URL:         "/api",
 			},
 			&openapi3.Server{
-				Description: "DefraDB versioned",
-				URL:         "/api/" + LatestVersion,
+				Description: "DefraDB version 0",
+				URL:         "/api/" + VersionV0,
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 1",
+				URL:         "/api/" + VersionV1,
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{

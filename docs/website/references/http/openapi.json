@@ -2851,11 +2851,15 @@
     },
     "servers": [
         {
-            "description": "DefraDB latest",
+            "description": "DefraDB latest version",
             "url": "/api"
         },
         {
-            "description": "DefraDB versioned",
+            "description": "DefraDB version 0",
+            "url": "/api/v0"
+        },
+        {
+            "description": "DefraDB version 1",
             "url": "/api/v1"
         }
     ],
