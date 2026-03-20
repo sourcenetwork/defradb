@@ -15,8 +15,6 @@
 package node
 
 import (
-	"fmt"
-
 	p2p "github.com/sourcenetwork/go-p2p"
 )
 
@@ -45,10 +43,7 @@ var resourceProfiles = map[string]p2p.ResourceLimits{
 func resourceLimitsForProfile(profile string) (p2p.ResourceLimits, error) {
 	limits, ok := resourceProfiles[profile]
 	if !ok {
-		return p2p.ResourceLimits{}, fmt.Errorf(
-			"unknown resource profile %q: valid values are %q, %q",
-			profile, ResourceProfileLimited, ResourceProfileServer,
-		)
+		return p2p.ResourceLimits{}, NewErrUnknownResourceProfile(profile)
 	}
 	return limits, nil
 }

@@ -113,8 +113,8 @@ type NodeP2POptions struct {
 	EnableClearBackoffOnRetry bool
 	// PrivateKey is the private key for the P2P node.
 	PrivateKey []byte
-	// ResourceProfile sets predefined resource manager limits for the P2P host.
-	// Valid values are "limited", "server", or "" (default autoscaling).
+	// ResourceProfile sets predefined resource limits for the P2P host.
+	// Valid values are "limited" and "server".
 	ResourceProfile string
 }
 

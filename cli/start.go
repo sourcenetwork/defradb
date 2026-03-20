@@ -288,7 +288,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().String(
 		"resource-profile",
 		cfg.GetString(config.ConfigFlags["resource-profile"]),
-		"Set the resource manager profile for the p2p network (supported: limited, server) (default \"\")",
+		"Set the resource manager profile for the p2p network (supported: limited, server)",
 	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
