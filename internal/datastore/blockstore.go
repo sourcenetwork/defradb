@@ -93,9 +93,13 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	}
 	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
 	if err != nil {
-		return err
+		return NewErrStoreBlock(err)
 	}
-	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+	err = bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+	if err != nil {
+		return NewErrStoreBlock(err)
+	}
+	return nil
 }
 
 // PutMany stores multiple blocks to the blockstore.
@@ -107,11 +111,11 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		}
 		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
 		if err != nil {
-			return err
+			return NewErrStoreBlock(err)
 		}
 		err = bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
 		if err != nil {
-			return err
+			return NewErrStoreBlock(err)
 		}
 	}
 	return nil

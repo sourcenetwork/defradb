@@ -432,12 +432,12 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 
 	nodeDescBytes, err := json.Marshal(db.nodeACP.NodeACPDesc)
 	if err != nil {
-		return err
+		return NewErrMarshalNACState(err)
 	}
 
 	err = txn.Systemstore().Set(ctx, keys.NewNodeACPKey().Bytes(), nodeDescBytes)
 	if err != nil {
-		return err
+		return NewErrStoreNACState(err)
 	}
 
 	err = txn.Commit()

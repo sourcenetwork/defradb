@@ -48,6 +48,8 @@ const (
 	errCreateHeadIterator         string = "failed to create headstore iterator"
 	errIterateHeads               string = "failed to iterate heads"
 	errParseHeadKey               string = "failed to parse headstore key"
+	errDecodeDocField             string = "failed to decode document field"
+	errCopyVersionedData          string = "failed to copy versioned data"
 )
 
 var (
@@ -195,4 +197,12 @@ func NewErrIterateHeads(inner error) error {
 
 func NewErrParseHeadKey(inner error) error {
 	return errors.Wrap(errParseHeadKey, inner)
+}
+
+func NewErrDecodeDocField(inner error, field string) error {
+	return errors.Wrap(errDecodeDocField, inner, errors.NewKV("Field", field))
+}
+
+func NewErrCopyVersionedData(inner error) error {
+	return errors.Wrap(errCopyVersionedData, inner)
 }

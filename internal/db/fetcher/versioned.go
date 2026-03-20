@@ -159,7 +159,7 @@ func (vf *VersionedFetcher) Init(
 
 		err = dst.Set(ctx, iter.Key(), value)
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrCopyVersionedData(err), iter.Close())
 		}
 	}
 	err = iter.Close()

@@ -39,7 +39,7 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 		key := keys.NewP2PDocumentKey(docID)
 		err = txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PDocument(err, docID)
 		}
 	}
 

@@ -53,6 +53,7 @@ const (
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 	errDocumentJSONParseFailed               string = "failed to parse document JSON"
+	errSetDocFieldValue                      string = "failed to set document field value"
 )
 
 // Errors returnable from this package.
@@ -265,6 +266,10 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
+}
+
+func NewErrSetDocFieldValue(inner error, field string) error {
+	return errors.Wrap(errSetDocFieldValue, inner, errors.NewKV("Field", field))
 }
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {

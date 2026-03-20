@@ -59,7 +59,7 @@ func storeArtifacts(
 		}
 
 		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
-			return err
+			return NewErrStoreSEArtifact(err, artifact.DocID, artifact.CollectionID)
 		}
 	}
 

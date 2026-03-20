@@ -16,6 +16,7 @@ import (
 
 const (
 	errInvalidStoredValue string = "invalid stored value"
+	errStoreBlock         string = "failed to store block"
 )
 
 // Errors returnable from this package.
@@ -31,4 +32,9 @@ var (
 // value in the database is invalid.
 func NewErrInvalidStoredValue(inner error) error {
 	return errors.Wrap(errInvalidStoredValue, inner)
+}
+
+// NewErrStoreBlock returns a new error indicating that a block could not be stored.
+func NewErrStoreBlock(inner error) error {
+	return errors.Wrap(errStoreBlock, inner)
 }

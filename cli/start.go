@@ -365,7 +365,7 @@ func getOrCreateEncryptionKey(kr keyring.Keyring) ([]byte, error) {
 		}
 		err = kr.Set(encryptionKeyName, encryptionKey)
 		if err != nil {
-			return nil, err
+			return nil, NewErrStoreEncryptionKey(err)
 		}
 		log.Info("generated encryption key")
 	}

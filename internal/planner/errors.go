@@ -23,6 +23,7 @@ const (
 	errMissingFieldSelection          string = "missing field selection"
 	errGetSigBlock                    string = "failed to get signature block from blockstore"
 	errDecodeSigBlock                 string = "failed to decode signature block"
+	errSetDocField                    string = "failed to set document field during update"
 )
 
 var (
@@ -107,4 +108,8 @@ func NewErrGetSigBlock(inner error, cid string) error {
 
 func NewErrDecodeSigBlock(inner error, cid string) error {
 	return errors.Wrap(errDecodeSigBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrSetDocField(inner error, field string) error {
+	return errors.Wrap(errSetDocField, inner, errors.NewKV("Field", field))
 }

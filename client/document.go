@@ -759,7 +759,7 @@ func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string
 	for k, v := range value {
 		err := doc.Set(ctx, k, v)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, k)
 		}
 	}
 	return nil
@@ -772,7 +772,7 @@ func (doc *Document) setDefaultValues(ctx context.Context) error {
 		}
 		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, field.Name)
 		}
 	}
 	return nil

@@ -58,7 +58,7 @@ func (p *P2P) AddP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PCollection(err, col.CollectionID())
 		}
 	}
 

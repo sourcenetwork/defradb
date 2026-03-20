@@ -267,7 +267,7 @@ func (c *collection) add(
 
 		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
 		if err != nil {
-			return err
+			return NewErrStoreDocMarker(err, docID.String())
 		}
 	}
 

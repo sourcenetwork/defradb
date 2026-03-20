@@ -240,7 +240,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
 		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
 		if err != nil {
-			return err
+			return NewErrStoreViewCacheItem(err)
 		}
 
 		hasValue, err = source.Next()

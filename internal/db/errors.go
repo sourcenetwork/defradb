@@ -159,6 +159,13 @@ const (
 	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
 	errGetDocStatus           string = "failed to get document status"
 	errGetShortIDForDoc       string = "failed to get short collection ID for document"
+
+	errStoreViewCacheItem string = "failed to store view cache item"
+	errStoreDocMarker     string = "failed to store document marker"
+	errSetEmbeddingField  string = "failed to set embedding field"
+	errStoreIndexKey      string = "failed to store index key"
+	errStoreNACState      string = "failed to store NAC state"
+	errMarshalNACState    string = "failed to marshal NAC state"
 )
 
 var (
@@ -983,4 +990,28 @@ func NewErrGetDocStatus(inner error, docID string) error {
 
 func NewErrGetShortIDForDoc(inner error, collectionID string) error {
 	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrStoreViewCacheItem(inner error) error {
+	return errors.Wrap(errStoreViewCacheItem, inner)
+}
+
+func NewErrStoreDocMarker(inner error, docID string) error {
+	return errors.Wrap(errStoreDocMarker, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSetEmbeddingField(inner error, fieldName string) error {
+	return errors.Wrap(errSetEmbeddingField, inner, errors.NewKV("Field", fieldName))
+}
+
+func NewErrStoreIndexKey(inner error) error {
+	return errors.Wrap(errStoreIndexKey, inner)
+}
+
+func NewErrStoreNACState(inner error) error {
+	return errors.Wrap(errStoreNACState, inner)
+}
+
+func NewErrMarshalNACState(inner error) error {
+	return errors.Wrap(errMarshalNACState, inner)
 }

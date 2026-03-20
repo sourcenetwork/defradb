@@ -364,7 +364,11 @@ func (index *collectionSimpleIndex) Save(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	return index.generateKeysAndProcess(ctx, doc, true, func(key keys.IndexDataStoreKey) error {
-		return txn.Datastore().Set(ctx, &key, []byte{})
+		err := txn.Datastore().Set(ctx, &key, []byte{})
+		if err != nil {
+			return NewErrStoreIndexKey(err)
+		}
+		return nil
 	})
 }
 

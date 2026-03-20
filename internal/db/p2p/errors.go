@@ -24,6 +24,8 @@ const (
 	errDecodeLinkedBlock  string = "failed to decode linked block during DAG sync"
 	errProcessLinkedBlock string = "failed to process linked block during DAG sync"
 	errRetrieveEncKey     string = "failed to retrieve encryption key during DAG sync"
+	errStoreP2PCollection string = "failed to store P2P collection"
+	errStoreP2PDocument   string = "failed to store P2P document"
 )
 
 var (
@@ -71,6 +73,14 @@ func NewErrNoHeadsForBranchableCol(collectionID string) error {
 		ErrNoHeadsForBranchableCol,
 		errors.NewKV("CollectionID", collectionID),
 	)
+}
+
+func NewErrStoreP2PCollection(inner error, collectionID string) error {
+	return errors.Wrap(errStoreP2PCollection, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrStoreP2PDocument(inner error, docID string) error {
+	return errors.Wrap(errStoreP2PDocument, inner, errors.NewKV("DocID", docID))
 }
 
 func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }
