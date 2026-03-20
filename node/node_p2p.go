@@ -47,11 +47,11 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 		p2pOpts = append(p2pOpts, p2p.WithPrivateKey(n.opts.P2P.PrivateKey))
 	}
 	if n.opts.P2P.ResourceProfile != "" {
-		rm, err := buildResourceManager(n.opts.P2P.ResourceProfile)
+		limits, err := resourceLimitsForProfile(n.opts.P2P.ResourceProfile)
 		if err != nil {
 			return err
 		}
-		p2pOpts = append(p2pOpts, p2p.WithResourceManager(rm))
+		p2pOpts = append(p2pOpts, p2p.WithResourceLimits(limits))
 	}
 	p2pOpts = append(p2pOpts, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store, chunkSize)))
 
