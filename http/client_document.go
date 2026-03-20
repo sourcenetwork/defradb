@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -30,6 +31,10 @@ func (c *Collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -59,6 +64,10 @@ func (c *Collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -113,6 +122,10 @@ func (c *Collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "document", doc.ID().String())
@@ -139,6 +152,10 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	getOpts := options.GetDocument()
@@ -172,6 +189,10 @@ func (c *Collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "document", docID.String())
@@ -193,6 +214,9 @@ func (c *Collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	_, err := c.GetDocument(ctx, docID)
@@ -208,6 +232,10 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -238,6 +266,10 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
@@ -268,6 +300,10 @@ func (c *Collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
+	if c.txn.HasValue() {
+		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
+	}
+
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	query := url.Values{}

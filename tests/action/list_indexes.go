@@ -48,6 +48,9 @@ type ListIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*ListIndexes)(nil)
@@ -61,8 +64,22 @@ func (a *ListIndexes) Execute() {
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+	for index, nodeID := range nodeIDs {
+		node := a.s.Nodes[index]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

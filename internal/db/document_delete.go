@@ -33,6 +33,8 @@ func (c *collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -48,6 +50,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	res, err := c.deleteWithFilter(ctx, filter, client.Deleted)

@@ -52,6 +52,8 @@ func VerifyBlockSignature(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	verifyOpt := options.WithIdentity(options.VerifySignature(), iIdentity.FromContext(ctx))
 	err = store.VerifySignature(ctx, C.GoString(cid), pubKey, verifyOpt)
 	if err != nil {
