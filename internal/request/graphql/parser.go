@@ -12,6 +12,7 @@ package graphql
 
 import (
 	"context"
+	"sync"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -35,6 +36,9 @@ var tracer = telemetry.NewTracer()
 type parser struct {
 	schemaManager                 *schema.SchemaManager
 	isSearchableEncryptionEnabled bool
+	// In the cases of transactions, we need to store a schema manager for each transaction
+	schemaManagerMapLock sync.RWMutex
+	schemaManagerMap     map[uint64]*schema.SchemaManager
 }
 
 func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
@@ -46,6 +50,8 @@ func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
 	p := &parser{
 		schemaManager:                 schemaManager,
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
+		schemaManagerMapLock:          sync.RWMutex{},
+		schemaManagerMap:              make(map[uint64]*schema.SchemaManager),
 	}
 
 	return p, nil
@@ -98,7 +104,21 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
+	// If there is a transaction, we will check to see if we have a store schema manager for it
+	// If we don't, or if we don't have a transaction at all, then we use the default schema manager
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	schema := p.schemaManager.Schema()
+	if hadTxn {
+		p.schemaManagerMapLock.RLock()
+		gotSchemaManager, ok := p.schemaManagerMap[gotTxn.ID()]
+		p.schemaManagerMapLock.RUnlock()
+		if ok {
+			schema = gotSchemaManager.Schema()
+		} else {
+			schema = p.schemaManager.Schema()
+		}
+	}
+
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))
@@ -132,11 +152,32 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 		return err
 	}
 
+	// If we had a transaction, map its transaction ID to a schema manager unique to it
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		p.schemaManagerMapLock.Lock()
+		p.schemaManagerMap[gotTxn.ID()] = schemaManager
+		p.schemaManagerMapLock.Unlock()
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	txn.OnSuccess(
 		func() {
 			p.schemaManager = schemaManager
+			// If the txn ID is in the schema manager map, remove it
+			p.schemaManagerMapLock.Lock()
+			delete(p.schemaManagerMap, txn.ID())
+			p.schemaManagerMapLock.Unlock()
+		},
+	)
+
+	txn.OnDiscard(
+		func() {
+			// If the txn ID is in the schema manager map, remove it
+			p.schemaManagerMapLock.Lock()
+			delete(p.schemaManagerMap, txn.ID())
+			p.schemaManagerMapLock.Unlock()
 		},
 	)
 	return err

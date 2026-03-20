@@ -293,6 +293,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	if err := db.initializeNodeACP(ctx, txn); err != nil {

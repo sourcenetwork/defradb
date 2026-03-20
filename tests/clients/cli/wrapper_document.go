@@ -34,6 +34,7 @@ func (c *Collection) AddDocument(
 		return err
 	}
 	args = append(args, document)
+	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -59,6 +60,7 @@ func (c *Collection) AddManyDocuments(
 		docStrings[i] = docStr
 	}
 	args = append(args, "["+strings.Join(docStrings, ",")+"]")
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -106,6 +108,7 @@ func (c *Collection) UpdateDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -158,6 +161,7 @@ func (c *Collection) DeleteDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -202,6 +206,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -231,6 +236,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -259,6 +265,7 @@ func (c *Collection) GetDocument(
 		args = append(args, "--show-deleted")
 	}
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {

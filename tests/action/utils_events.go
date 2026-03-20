@@ -51,7 +51,8 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -115,6 +116,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			collectionID = i
 		}
 	}
+
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()

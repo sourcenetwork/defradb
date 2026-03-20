@@ -15,11 +15,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // AddView is an action that will add a new View.
@@ -51,6 +53,9 @@ type AddView struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddView)(nil)
@@ -111,7 +116,18 @@ func (a *AddView) Execute() {
 			transformCID := replace(a.s, nodeID, a.TransformCID.Value())
 			opts.SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var results []client.CollectionVersion
+		var err error
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			results, err = txn.AddView(a.s.Ctx, a.Query, sdl, opts)
+		} else {
+			results, err = node.AddView(a.s.Ctx, a.Query, sdl, opts)
+		}
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
@@ -122,5 +138,7 @@ func (a *AddView) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }
