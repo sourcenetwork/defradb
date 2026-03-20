@@ -15,8 +15,11 @@ import (
 )
 
 const (
-	errInvalidStoredValue string = "invalid stored value"
-	errStoreBlock         string = "failed to store block"
+	errInvalidStoredValue    string = "invalid stored value"
+	errStoreBlock            string = "failed to store block"
+	errCheckBlockExists      string = "failed to check if block exists"
+	errCheckBlockMergeStatus string = "failed to check block merge status"
+	errMarkBlockAsMerged     string = "failed to mark block as merged"
 )
 
 // Errors returnable from this package.
@@ -37,4 +40,19 @@ func NewErrInvalidStoredValue(inner error) error {
 // NewErrStoreBlock returns a new error indicating that a block could not be stored.
 func NewErrStoreBlock(inner error) error {
 	return errors.Wrap(errStoreBlock, inner)
+}
+
+// NewErrCheckBlockExists returns a new error indicating that checking block existence failed.
+func NewErrCheckBlockExists(inner error) error {
+	return errors.Wrap(errCheckBlockExists, inner)
+}
+
+// NewErrCheckBlockMergeStatus returns a new error indicating that checking block merge status failed.
+func NewErrCheckBlockMergeStatus(inner error) error {
+	return errors.Wrap(errCheckBlockMergeStatus, inner)
+}
+
+// NewErrMarkBlockAsMerged returns a new error indicating that marking a block as merged failed.
+func NewErrMarkBlockAsMerged(inner error) error {
+	return errors.Wrap(errMarkBlockAsMerged, inner)
 }

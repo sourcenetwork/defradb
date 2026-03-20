@@ -160,12 +160,20 @@ const (
 	errGetDocStatus           string = "failed to get document status"
 	errGetShortIDForDoc       string = "failed to get short collection ID for document"
 
-	errStoreViewCacheItem string = "failed to store view cache item"
-	errStoreDocMarker     string = "failed to store document marker"
-	errSetEmbeddingField  string = "failed to set embedding field"
-	errStoreIndexKey      string = "failed to store index key"
-	errStoreNACState      string = "failed to store NAC state"
-	errMarshalNACState    string = "failed to marshal NAC state"
+	errDeleteNACState             string = "failed to delete NAC state"
+	errCommitNACTransaction       string = "failed to commit NAC transaction"
+	errParseDatastoreKey          string = "failed to parse datastore key"
+	errStoreViewCacheItem         string = "failed to store view cache item"
+	errStoreDocMarker             string = "failed to store document marker"
+	errSetEmbeddingField          string = "failed to set embedding field"
+	errStoreIndexKey              string = "failed to store index key"
+	errStoreNACState              string = "failed to store NAC state"
+	errMarshalNACState            string = "failed to marshal NAC state"
+	errCheckNACState              string = "failed to check NAC state"
+	errCheckDBInitialized         string = "failed to check if database is initialized"
+	errCheckCIDExists             string = "failed to check if CID exists in blockstore"
+	errCheckIndexKeyExists        string = "failed to check if index key exists"
+	errCheckUniqueIndexConstraint string = "failed to check unique index constraint"
 )
 
 var (
@@ -1014,4 +1022,37 @@ func NewErrStoreNACState(inner error) error {
 
 func NewErrMarshalNACState(inner error) error {
 	return errors.Wrap(errMarshalNACState, inner)
+}
+
+func NewErrCheckNACState(inner error) error {
+	return errors.Wrap(errCheckNACState, inner)
+}
+
+func NewErrCheckDBInitialized(inner error) error {
+	return errors.Wrap(errCheckDBInitialized, inner)
+}
+
+func NewErrCheckCIDExists(inner error, cidType string, cidValue string) error {
+	return errors.Wrap(errCheckCIDExists, inner,
+		errors.NewKV("Type", cidType), errors.NewKV("CID", cidValue))
+}
+
+func NewErrCheckIndexKeyExists(inner error, indexName string) error {
+	return errors.Wrap(errCheckIndexKeyExists, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrCheckUniqueIndexConstraint(inner error) error {
+	return errors.Wrap(errCheckUniqueIndexConstraint, inner)
+}
+
+func NewErrDeleteNACState(inner error) error {
+	return errors.Wrap(errDeleteNACState, inner)
+}
+
+func NewErrCommitNACTransaction(inner error) error {
+	return errors.Wrap(errCommitNACTransaction, inner)
+}
+
+func NewErrParseDatastoreKey(inner error) error {
+	return errors.Wrap(errParseDatastoreKey, inner)
 }

@@ -322,7 +322,7 @@ func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 	isNACEnabledInStartCmd := db.nodeACP.EnabledInConfig
 	wasSetupBefore, err := txn.Systemstore().Has(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrCheckNACState(err)
 	}
 
 	iden := iIdentity.FromContext(ctx)
@@ -409,12 +409,12 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 
 	err = txn.Systemstore().Delete(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrDeleteNACState(err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	// Update state, only when commit is successful.
@@ -442,7 +442,7 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	return nil

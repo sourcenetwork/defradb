@@ -353,7 +353,11 @@ func HasCollectionByName(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
-	return txn.Systemstore().Has(ctx, nameKey.Bytes())
+	has, err := txn.Systemstore().Has(ctx, nameKey.Bytes())
+	if err != nil {
+		return false, NewErrCheckCollectionExists(err, name)
+	}
+	return has, nil
 }
 
 func GetCollectionVersionIDs(

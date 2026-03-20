@@ -24,6 +24,10 @@ const (
 	errGetRegisterValue       string = "failed to get current LWW register value"
 	errDeleteRegisterVal      string = "failed to delete LWW register value"
 	errSerializeLWWValue      string = "failed to serialize LWW field value"
+	errCheckCounterExists     string = "failed to check if counter exists"
+	errGenerateCounterNonce   string = "failed to generate counter nonce"
+	errDecodeCounterValue     string = "failed to decode counter value"
+	errGetCurrentCounterValue string = "failed to get current counter value"
 	errGetCounterStatus       string = "failed to get counter status"
 	errIncrementCounter       string = "failed to increment counter"
 	errSetDocAsDeleted        string = "failed to set document as deleted"
@@ -84,6 +88,23 @@ func NewErrDeleteRegisterValue(inner error, docID string, field string) error {
 
 func NewErrSerializeLWWValue(inner error, field string) error {
 	return errors.Wrap(errSerializeLWWValue, inner, errors.NewKV("Field", field))
+}
+
+func NewErrCheckCounterExists(inner error, docID string, field string) error {
+	return errors.Wrap(errCheckCounterExists, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+}
+
+func NewErrGenerateCounterNonce(inner error) error {
+	return errors.Wrap(errGenerateCounterNonce, inner)
+}
+
+func NewErrDecodeCounterValue(inner error) error {
+	return errors.Wrap(errDecodeCounterValue, inner)
+}
+
+func NewErrGetCurrentCounterValue(inner error) error {
+	return errors.Wrap(errGetCurrentCounterValue, inner)
 }
 
 func NewErrGetCounterStatus(inner error, docID string, field string) error {

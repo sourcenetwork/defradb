@@ -24,6 +24,7 @@ const (
 	errGetSigBlock                    string = "failed to get signature block from blockstore"
 	errDecodeSigBlock                 string = "failed to decode signature block"
 	errSetDocField                    string = "failed to set document field during update"
+	errCheckOrphanPointLookup         string = "failed to check orphan point lookup"
 )
 
 var (
@@ -112,4 +113,8 @@ func NewErrDecodeSigBlock(inner error, cid string) error {
 
 func NewErrSetDocField(inner error, field string) error {
 	return errors.Wrap(errSetDocField, inner, errors.NewKV("Field", field))
+}
+
+func NewErrCheckOrphanPointLookup(inner error) error {
+	return errors.Wrap(errCheckOrphanPointLookup, inner)
 }

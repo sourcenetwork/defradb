@@ -233,12 +233,16 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	ds := txn.Datastore()
 	exists, err := ds.Has(ctx, &key)
 	if err != nil {
-		return err
+		return NewErrCheckIndexKeyExists(err, index.desc.Name)
 	}
 	if !exists {
 		return NewErrCorruptedIndex(index.desc.Name)
 	}
-	return ds.Delete(ctx, &key)
+	err = ds.Delete(ctx, &key)
+	if err != nil {
+		return NewErrCheckIndexKeyExists(err, index.desc.Name)
+	}
+	return nil
 }
 
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
@@ -460,7 +464,7 @@ func validateUniqueKeyValue(
 	if len(val) != 0 {
 		exists, err := txn.Datastore().Has(ctx, &key)
 		if err != nil {
-			return err
+			return NewErrCheckUniqueIndexConstraint(err)
 		}
 		if exists {
 			return newUniqueIndexError(doc, fieldsDescs)

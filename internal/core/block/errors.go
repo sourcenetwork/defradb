@@ -51,6 +51,11 @@ const (
 	errDecodePreviousBlock         string = "failed to decode previous block"
 	errDecodeEncryptionBlock       string = "failed to decode encryption block"
 	errEncryptBlockData            string = "failed to encrypt block data"
+	errWritingHead                 string = "failed to write head"
+	errCheckingIfIsHead            string = "failed to check if CID is head"
+	errDeletingHead                string = "failed to delete head"
+	errListingHeads                string = "failed to list heads"
+	errParsingHeadKey              string = "failed to parse head key"
 )
 
 // Errors returnable from this package.
@@ -212,4 +217,24 @@ func NewErrDecodeEncryptionBlock(inner error) error {
 
 func NewErrEncryptBlockData(inner error) error {
 	return errors.Wrap(errEncryptBlockData, inner)
+}
+
+func NewErrWritingHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errWritingHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrCheckingIfIsHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errCheckingIfIsHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrDeletingHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errDeletingHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrListingHeads(inner error) error {
+	return errors.Wrap(errListingHeads, inner)
+}
+
+func NewErrParsingHeadKey(inner error) error {
+	return errors.Wrap(errParsingHeadKey, inner)
 }

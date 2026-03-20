@@ -1163,7 +1163,7 @@ func validateVersionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "VersionID", col.VersionID))
 			continue
 		}
 
@@ -1197,7 +1197,7 @@ func validateCollectionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "CollectionID", col.CollectionID))
 			continue
 		}
 

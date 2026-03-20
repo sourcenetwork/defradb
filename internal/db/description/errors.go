@@ -22,6 +22,7 @@ const (
 	errGetActiveCollections                string = "failed to get active collections"
 	errGetCollectionVersions               string = "failed to get collection versions"
 	errDeleteCollection                    string = "failed to delete collection"
+	errCheckCollectionExists               string = "failed to check if collection exists"
 )
 
 // NewErrFailedToCloseCollectionVersionQuery returns a new error indicating that the query
@@ -69,4 +70,9 @@ func NewErrGetCollectionVersions(inner error, collectionID string) error {
 // NewErrDeleteCollection returns a new error indicating that deleting the collection failed.
 func NewErrDeleteCollection(inner error, collectionID string) error {
 	return errors.Wrap(errDeleteCollection, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+// NewErrCheckCollectionExists returns a new error indicating that checking collection existence failed.
+func NewErrCheckCollectionExists(inner error, name string) error {
+	return errors.Wrap(errCheckCollectionExists, inner, errors.NewKV("Name", name))
 }

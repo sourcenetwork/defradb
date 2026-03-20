@@ -62,20 +62,24 @@ func newToMergeKey(cid []byte) []byte {
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
-		return false, err
+		return false, NewErrCheckBlockExists(err)
 	}
 	if !hasBlock {
 		return false, nil
 	}
 	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.Bytes()))
 	if err != nil {
-		return false, err
+		return false, NewErrCheckBlockMergeStatus(err)
 	}
 	return !notMerged, nil
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
-	return bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	if err != nil {
+		return NewErrMarkBlockAsMerged(err)
+	}
+	return nil
 }
 
 type p2pBlockStore struct {
