@@ -193,7 +193,7 @@ func (p *parser) NewFilterFromString(
 		p.schemaManagerMapLock.RLock()
 		gotSchemaManager, ok := p.schemaManagerMap[gotTxn.ID()]
 		p.schemaManagerMapLock.RUnlock()
-		if ok {
+		if ok && gotSchemaManager != nil {
 			return defrap.NewFilterFromString(*gotSchemaManager.Schema(), collectionType, body)
 		}
 	}
