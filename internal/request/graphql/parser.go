@@ -183,7 +183,10 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 	return err
 }
 
-func (p *parser) NewFilterFromString(ctx context.Context, collectionType string, body string) (immutable.Option[request.Filter], error) {
+func (p *parser) NewFilterFromString(
+	ctx context.Context,
+	collectionType string,
+	body string) (immutable.Option[request.Filter], error) {
 	// If the txn ID is in the schema manager map, use that one instead of the default one
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if hadTxn {
