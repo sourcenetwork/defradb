@@ -383,7 +383,7 @@ func (index *collectionSimpleIndex) Update(
 ) error {
 	err := index.Delete(ctx, oldDoc)
 	if err != nil {
-		return err
+		return NewErrUpdateIndex(err, index.desc.Name)
 	}
 	return index.Save(ctx, newDoc)
 }
@@ -506,7 +506,11 @@ func (index *collectionUniqueIndex) Delete(
 		if err != nil {
 			return err
 		}
-		return txn.Datastore().Delete(ctx, &key)
+		err = txn.Datastore().Delete(ctx, &key)
+		if err != nil {
+			return NewErrDeleteIndexKey(err)
+		}
+		return nil
 	})
 }
 
@@ -523,7 +527,7 @@ func (index *collectionUniqueIndex) Update(
 
 	err := index.Delete(ctx, oldDoc)
 	if err != nil {
-		return err
+		return NewErrUpdateIndex(err, index.desc.Name)
 	}
 
 	return index.Save(ctx, newDoc)

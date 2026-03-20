@@ -17,6 +17,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corekv"
+
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -171,7 +172,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		// with all supported corekv store implementations.
 		err := ds.Delete(ctx, key)
 		if err != nil {
-			return err
+			return NewErrTruncateDatastoreKey(err)
 		}
 
 		// Headstore keys are implicitly protected by the lockset on the datastore, as
@@ -251,7 +252,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		// with all supported corekv store implementations.
 		err := underlyingStore.Delete(ctx, key)
 		if err != nil {
-			return err
+			return NewErrTruncateDatastoreKey(err)
 		}
 	}
 
@@ -315,12 +316,12 @@ func (c *collection) hardDeleteDocumentBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrTruncateHeadstoreKey(err)
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return err
+			return NewErrTruncateDeleteBlocks(err)
 		}
 	}
 
@@ -384,12 +385,12 @@ func (c *collection) hardDeleteCollectionBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrTruncateHeadstoreKey(err)
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return err
+			return NewErrTruncateDeleteBlocks(err)
 		}
 	}
 

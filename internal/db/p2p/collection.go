@@ -107,7 +107,7 @@ func (p *P2P) DeleteP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PCollection(err, col.CollectionID())
 		}
 	}
 

@@ -71,7 +71,7 @@ func (p *P2P) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 		key := keys.NewP2PDocumentKey(docID)
 		err = txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PDocument(err, docID)
 		}
 	}
 

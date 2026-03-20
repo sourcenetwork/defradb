@@ -167,6 +167,14 @@ const (
 	errStoreDocMarker             string = "failed to store document marker"
 	errSetEmbeddingField          string = "failed to set embedding field"
 	errStoreIndexKey              string = "failed to store index key"
+	errDeleteIndexedDoc           string = "failed to delete indexed document"
+	errDeleteIndexKey             string = "failed to delete index key"
+	errUpdateIndex                string = "failed to update index"
+	errTruncateDatastoreKey       string = "failed to delete key during truncate"
+	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
+	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errDeleteViewCacheItem        string = "failed to delete view cache item"
+	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"
 	errMarshalNACState            string = "failed to marshal NAC state"
 	errCheckNACState              string = "failed to check NAC state"
@@ -1055,4 +1063,36 @@ func NewErrCommitNACTransaction(inner error) error {
 
 func NewErrParseDatastoreKey(inner error) error {
 	return errors.Wrap(errParseDatastoreKey, inner)
+}
+
+func NewErrDeleteIndexedDoc(inner error, indexName string) error {
+	return errors.Wrap(errDeleteIndexedDoc, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrDeleteIndexKey(inner error) error {
+	return errors.Wrap(errDeleteIndexKey, inner)
+}
+
+func NewErrUpdateIndex(inner error, indexName string) error {
+	return errors.Wrap(errUpdateIndex, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrTruncateDatastoreKey(inner error) error {
+	return errors.Wrap(errTruncateDatastoreKey, inner)
+}
+
+func NewErrTruncateHeadstoreKey(inner error) error {
+	return errors.Wrap(errTruncateHeadstoreKey, inner)
+}
+
+func NewErrTruncateDeleteBlocks(inner error) error {
+	return errors.Wrap(errTruncateDeleteBlocks, inner)
+}
+
+func NewErrDeleteViewCacheItem(inner error) error {
+	return errors.Wrap(errDeleteViewCacheItem, inner)
+}
+
+func NewErrParseViewCacheKey(inner error) error {
+	return errors.Wrap(errParseViewCacheKey, inner)
 }

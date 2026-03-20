@@ -26,6 +26,8 @@ const (
 	errRetrieveEncKey          string = "failed to retrieve encryption key during DAG sync"
 	errStoreP2PCollection      string = "failed to store P2P collection"
 	errStoreP2PDocument        string = "failed to store P2P document"
+	errDeleteP2PCollection     string = "failed to delete P2P collection"
+	errDeleteP2PDocument       string = "failed to delete P2P document"
 	errCheckReplicatorExists   string = "failed to check if replicator exists"
 	errGetReplicator           string = "failed to get replicator"
 	errUnmarshalReplicator     string = "failed to unmarshal replicator"
@@ -221,4 +223,12 @@ func NewErrDeleteRetryKey(inner error, peerID string) error {
 
 func NewErrDeleteRetryDoc(inner error, peerID string) error {
 	return errors.Wrap(errDeleteRetryDoc, inner, errors.NewKV("PeerID", peerID))
+}
+
+func NewErrDeleteP2PCollection(inner error, collectionID string) error {
+	return errors.Wrap(errDeleteP2PCollection, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrDeleteP2PDocument(inner error, docID string) error {
+	return errors.Wrap(errDeleteP2PDocument, inner, errors.NewKV("DocID", docID))
 }
