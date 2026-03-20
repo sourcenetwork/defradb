@@ -20,10 +20,9 @@ import (
 
 const (
 	// ResourceProfileLimited applies conservative resource limits suitable for
-	// constrained or low-power hardware.
+	// constrained.
 	ResourceProfileLimited = "limited"
-	// ResourceProfileServer applies generous resource limits suitable for
-	// always-on server nodes.
+	// ResourceProfileServer applies a max memory of 8GiB for p2p host.
 	ResourceProfileServer = "server"
 )
 
