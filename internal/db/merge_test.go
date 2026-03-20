@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -481,6 +481,46 @@ func TestMergeQueue(t *testing.T) {
 	q.mutex.Lock()
 	require.Len(t, q.keys, 0)
 	q.mutex.Unlock()
+}
+
+// TestMergeQueue_ContextCancellation verifies that add returns context.Canceled
+// when the context is already canceled while waiting for a key that is already held.
+func TestMergeQueue_ContextCancellation(t *testing.T) {
+	q := newMergeQueue()
+
+	key := "doc-cancel"
+
+	// Hold the key so the second add must wait.
+	err := q.add(context.Background(), key)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately before calling add
+
+	err = q.add(ctx, key)
+	require.ErrorIs(t, err, context.Canceled)
+
+	q.done(key)
+}
+
+// TestMergeQueue_ContextTimeout verifies that add returns context.DeadlineExceeded
+// when the context deadline expires while waiting for a key that is already held.
+func TestMergeQueue_ContextTimeout(t *testing.T) {
+	q := newMergeQueue()
+
+	key := "doc-timeout"
+
+	// Hold the key so the second add must wait.
+	err := q.add(context.Background(), key)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	err = q.add(ctx, key)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	q.done(key)
 }
 
 // TestMerge_ThreeWayFork_NoError tests merging three concurrent branches
