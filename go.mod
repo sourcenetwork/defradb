@@ -27,6 +27,7 @@ require (
 	github.com/ipfs/go-cid v0.6.0
 	github.com/ipfs/go-datastore v0.9.1
 	github.com/ipfs/go-ipld-format v0.6.3
+	github.com/ipld/go-car/v2 v2.16.0
 	github.com/ipld/go-ipld-prime v0.22.0
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20250821084354-a425e60cd714
 	github.com/joho/godotenv v1.5.1
@@ -267,7 +268,6 @@ require (
 	github.com/ipfs/go-log/v2 v2.9.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.3.0 // indirect
 	github.com/ipfs/go-peertaskqueue v0.8.3 // indirect
-	github.com/ipld/go-car/v2 v2.16.0 // indirect
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20250821084354-a425e60cd714 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
