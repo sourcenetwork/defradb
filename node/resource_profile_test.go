@@ -30,7 +30,7 @@ func TestResourceLimitsForProfile_Limited(t *testing.T) {
 func TestResourceLimitsForProfile_Server(t *testing.T) {
 	limits, err := resourceLimitsForProfile(ResourceProfileServer)
 	require.NoError(t, err)
-	assert.Equal(t, int64(16<<30), limits.MaxMemory)
+	assert.Equal(t, int64(8<<30), limits.MaxMemory)
 }
 
 func TestResourceLimitsForProfile_Unknown(t *testing.T) {
