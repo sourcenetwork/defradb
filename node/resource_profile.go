@@ -27,7 +27,6 @@ const (
 )
 
 // resourceProfiles maps profile names to their resource limits.
-// Connection limits are derived automatically from MaxMemory.
 var resourceProfiles = map[string]p2p.ResourceLimits{
 	ResourceProfileLimited: {
 		MaxMemory:          128 << 20, // 128 MiB
