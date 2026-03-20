@@ -58,7 +58,7 @@ const (
 	// commandBufferSize is the size of the channel buffer used to handle events.
 	commandBufferSize = 100_000
 	// eventBufferSize is the size of the channel buffer used to subscribe to events.
-	eventBufferSize = 100
+	eventBufferSize = 100_000
 )
 
 // DB is the main struct for DefraDB's storage layer.
@@ -217,6 +217,18 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
+}
+
+// WrapCorekvTxn wraps an existing corekv.Txn into a client.Txn.
+func (db *DB) WrapCorekvTxn(txn corekv.Txn) client.Txn {
+	txnID := db.previousTxnID.Add(1)
+	basicTxn := datastore.NewTxnFromExisting(txn, db.lockSet, txnID, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(basicTxn, db)
+}
+
+// InitContext returns a new context with all caches initialized and linked to the given transaction.
+func (db *DB) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return InitContext(ctx, txn)
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
