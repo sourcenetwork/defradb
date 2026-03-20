@@ -52,6 +52,7 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
+	errDocumentJSONParseFailed               string = "failed to parse document JSON"
 )
 
 // Errors returnable from this package.
@@ -96,6 +97,7 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -274,4 +276,8 @@ func NewErrOperationRequiresDeveloperMode(operationName string) error {
 		errOperationRequiresDeveloperMode,
 		errors.NewKV("Operation", operationName),
 	)
+}
+
+func NewErrDocumentJSONParseFailed(inner error) error {
+	return errors.Wrap(errDocumentJSONParseFailed, inner)
 }

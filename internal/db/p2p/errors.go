@@ -14,6 +14,18 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+const (
+	errStoreBlockDAGSync  string = "failed to store block in DAG sync"
+	errGenerateBlockLink  string = "failed to generate block link"
+	errCheckBlockMerged   string = "failed to check if block is merged"
+	errVerifyBlockSig     string = "failed to verify block signature"
+	errGetEncKeysForBlock string = "failed to get encryption keys for block"
+	errLoadLinkedBlock    string = "failed to load linked block during DAG sync"
+	errDecodeLinkedBlock  string = "failed to decode linked block during DAG sync"
+	errProcessLinkedBlock string = "failed to process linked block during DAG sync"
+	errRetrieveEncKey     string = "failed to retrieve encryption key during DAG sync"
+)
+
 var (
 	ErrSelfTargetForReplicator     = errors.New("can't target ourselves as a replicator")
 	ErrReplicatorNotFound          = errors.New("replicator not found")
@@ -60,3 +72,13 @@ func NewErrNoHeadsForBranchableCol(collectionID string) error {
 		errors.NewKV("CollectionID", collectionID),
 	)
 }
+
+func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }
+func NewErrGenerateBlockLink(inner error) error  { return errors.Wrap(errGenerateBlockLink, inner) }
+func NewErrCheckBlockMerged(inner error) error   { return errors.Wrap(errCheckBlockMerged, inner) }
+func NewErrVerifyBlockSig(inner error) error     { return errors.Wrap(errVerifyBlockSig, inner) }
+func NewErrGetEncKeysForBlock(inner error) error { return errors.Wrap(errGetEncKeysForBlock, inner) }
+func NewErrLoadLinkedBlock(inner error) error    { return errors.Wrap(errLoadLinkedBlock, inner) }
+func NewErrDecodeLinkedBlock(inner error) error  { return errors.Wrap(errDecodeLinkedBlock, inner) }
+func NewErrProcessLinkedBlock(inner error) error { return errors.Wrap(errProcessLinkedBlock, inner) }
+func NewErrRetrieveEncKey(inner error) error     { return errors.Wrap(errRetrieveEncKey, inner) }

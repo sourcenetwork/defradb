@@ -737,7 +737,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, err
+		return false, false, NewErrGetDocStatus(err, primaryKey.DocID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -752,7 +752,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 ) (keys.PrimaryDataStoreKey, error) {
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
-		return keys.PrimaryDataStoreKey{}, err
+		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
 	}
 
 	return keys.PrimaryDataStoreKey{

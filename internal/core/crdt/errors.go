@@ -20,6 +20,18 @@ const (
 	errFailedToStoreValue     string = "failed to store value"
 	errNegativeValue          string = "value cannot be negative"
 	errUnsupportedCounterType string = "unsupported counter type. Valid types are int64 and float64"
+	errGetRegisterStatus      string = "failed to get LWW register status"
+	errGetRegisterValue       string = "failed to get current LWW register value"
+	errDeleteRegisterVal      string = "failed to delete LWW register value"
+	errSerializeLWWValue      string = "failed to serialize LWW field value"
+	errGetCounterStatus       string = "failed to get counter status"
+	errIncrementCounter       string = "failed to increment counter"
+	errSetDocAsDeleted        string = "failed to set document as deleted"
+	errGetDocMarker           string = "failed to get document marker"
+	errSetDocVersion          string = "failed to set document version"
+	errCreateDeleteIter       string = "failed to create iterator for document deletion"
+	errSetDeletedFlag         string = "failed to set deleted flag on field"
+	errDeleteFieldValue       string = "failed to delete field value"
 )
 
 // Errors returnable from this package.
@@ -53,4 +65,57 @@ func NewErrNegativeValue[T Incrementable](value T) error {
 
 func NewErrUnsupportedCounterType(valueType client.ScalarKind) error {
 	return errors.New(errUnsupportedCounterType, errors.NewKV("Type", valueType))
+}
+
+func NewErrGetRegisterStatus(inner error, docID string, field string) error {
+	return errors.Wrap(errGetRegisterStatus, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+}
+
+func NewErrGetRegisterValue(inner error, docID string, field string) error {
+	return errors.Wrap(errGetRegisterValue, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+}
+
+func NewErrDeleteRegisterValue(inner error, docID string, field string) error {
+	return errors.Wrap(errDeleteRegisterVal, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+}
+
+func NewErrSerializeLWWValue(inner error, field string) error {
+	return errors.Wrap(errSerializeLWWValue, inner, errors.NewKV("Field", field))
+}
+
+func NewErrGetCounterStatus(inner error, docID string, field string) error {
+	return errors.Wrap(errGetCounterStatus, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+}
+
+func NewErrIncrementCounter(inner error, docID string, field string, kind string) error {
+	return errors.Wrap(errIncrementCounter, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("Field", field), errors.NewKV("Kind", kind))
+}
+
+func NewErrSetDocAsDeleted(inner error, docID string) error {
+	return errors.Wrap(errSetDocAsDeleted, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrGetDocMarker(inner error, docID string) error {
+	return errors.Wrap(errGetDocMarker, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSetDocVersion(inner error, docID string) error {
+	return errors.Wrap(errSetDocVersion, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrCreateDeleteIter(inner error, docID string) error {
+	return errors.Wrap(errCreateDeleteIter, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSetDeletedFlag(inner error, docID string) error {
+	return errors.Wrap(errSetDeletedFlag, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrDeleteFieldValue(inner error, docID string) error {
+	return errors.Wrap(errDeleteFieldValue, inner, errors.NewKV("DocID", docID))
 }

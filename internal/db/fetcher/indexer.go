@@ -106,8 +106,11 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	f.currentDocID = immutable.None[string]()
 
 	res, err := f.indexIter.Next()
-	if err != nil || !res.foundKey {
-		return immutable.None[string](), err
+	if err != nil {
+		return immutable.None[string](), NewErrGetNextIndexEntry(err, f.indexDesc.Name)
+	}
+	if !res.foundKey {
+		return immutable.None[string](), nil
 	}
 
 	hasNilField := false

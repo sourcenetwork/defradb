@@ -21,6 +21,8 @@ const (
 	errFailedToCreateNormalValue      string = "failed to create normal value for field"
 	errFailedToGenerateSearchTag      string = "failed to generate search tag for field"
 	errMissingFieldSelection          string = "missing field selection"
+	errGetSigBlock                    string = "failed to get signature block from blockstore"
+	errDecodeSigBlock                 string = "failed to decode signature block"
 )
 
 var (
@@ -97,4 +99,12 @@ func NewErrFailedToGenerateSearchTag(fieldName string, inner error) error {
 
 func NewErrMissingFieldSelection(field string) error {
 	return errors.New(errMissingFieldSelection, errors.NewKV("Field", field))
+}
+
+func NewErrGetSigBlock(inner error, cid string) error {
+	return errors.Wrap(errGetSigBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeSigBlock(inner error, cid string) error {
+	return errors.Wrap(errDecodeSigBlock, inner, errors.NewKV("CID", cid))
 }

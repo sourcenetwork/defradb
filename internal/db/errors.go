@@ -71,6 +71,8 @@ const (
 	errDocFromMap                                string = "failed to create a new doc from map"
 	errDocAdd                                    string = "failed to add a new doc to collection"
 	errDocUpdate                                 string = "failed to update doc to collection"
+	errEmptyFilter                               string = "filter cannot be empty"
+	errUnsupportedFilterType                     string = "unsupported filter type"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
 	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
@@ -129,12 +131,41 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+
+	errCreateMergeTxn         string = "failed to create merge transaction"
+	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
+	errGetMergeTargetHeads    string = "failed to get merge target heads"
+	errLoadComposites         string = "failed to load composites for merge"
+	errMergeComposites        string = "failed to merge composites"
+	errSyncIndexedDoc         string = "failed to sync indexed document after merge"
+	errLoadBlockForMerge      string = "failed to load block for merge"
+	errDecodeBlockForMerge    string = "failed to decode block for merge"
+	errLoadParentComposite    string = "failed to load parent composite for merge"
+	errLoadMergeTargetBlock   string = "failed to load merge target block"
+	errDecodeMergeTargetBlock string = "failed to decode merge target block"
+	errGenerateMergeLink      string = "failed to generate link for merge composite"
+	errProcessBlockMerge      string = "failed to process block during merge"
+	errProcessEncryptedBlock  string = "failed to process encrypted block"
+	errInitCRDTForMerge       string = "failed to init CRDT for merge"
+	errProcessCRDTBlock       string = "failed to process CRDT block"
+	errLoadChildBlock         string = "failed to load child block for merge"
+	errDecodeChildBlock       string = "failed to decode child block for merge"
+	errProcessChildBlock      string = "failed to process child block for merge"
+	errLoadEncryptionBlock    string = "failed to load encryption block"
+	errGetHeadsForMerge       string = "failed to get heads for merge target"
+	errLoadBlockFromStore     string = "failed to get block from blockstore"
+	errDecodeBlockFromStore   string = "failed to decode block from bytes"
+	errParseDocIDMerge        string = "failed to parse doc ID during merge"
+	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
+	errGetDocStatus           string = "failed to get document status"
+	errGetShortIDForDoc       string = "failed to get short collection ID for document"
 )
 
 var (
 	ErrFailedToGetCollection                     = errors.New(errFailedToGetCollection)
 	ErrSubscriptionsNotAllowed                   = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter                             = errors.New("invalid filter")
+	ErrEmptyFilter                               = errors.New(errEmptyFilter)
+	ErrUnsupportedFilterType                     = errors.New(errUnsupportedFilterType)
 	ErrCollectionAlreadyExists                   = errors.New(errCollectionAlreadyExists)
 	ErrCollectionNameEmpty                       = errors.New("collection name can't be empty")
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
@@ -836,4 +867,120 @@ func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
+}
+
+// NewErrUnsupportedFilterType returns a new error indicating that the given filter type is not supported.
+func NewErrUnsupportedFilterType(actualType string) error {
+	return errors.New(errUnsupportedFilterType, errors.NewKV("ActualType", actualType))
+}
+
+func NewErrCreateMergeTxn(inner error, docID string, cid string) error {
+	return errors.Wrap(errCreateMergeTxn, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
+}
+
+func NewErrGetShortIDForMerge(inner error, collectionID string) error {
+	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrGetMergeTargetHeads(inner error, docID string) error {
+	return errors.Wrap(errGetMergeTargetHeads, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrLoadComposites(inner error, cid string, docID string) error {
+	return errors.Wrap(errLoadComposites, inner,
+		errors.NewKV("CID", cid), errors.NewKV("DocID", docID))
+}
+
+func NewErrMergeComposites(inner error, docID string) error {
+	return errors.Wrap(errMergeComposites, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSyncIndexedDoc(inner error, docID string) error {
+	return errors.Wrap(errSyncIndexedDoc, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrLoadBlockForMerge(inner error, cid string) error {
+	return errors.Wrap(errLoadBlockForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeBlockForMerge(inner error, cid string) error {
+	return errors.Wrap(errDecodeBlockForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadParentComposite(inner error, cid string) error {
+	return errors.Wrap(errLoadParentComposite, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadMergeTargetBlock(inner error, link string) error {
+	return errors.Wrap(errLoadMergeTargetBlock, inner, errors.NewKV("Link", link))
+}
+
+func NewErrDecodeMergeTargetBlock(inner error, link string) error {
+	return errors.Wrap(errDecodeMergeTargetBlock, inner, errors.NewKV("Link", link))
+}
+
+func NewErrGenerateMergeLink(inner error) error {
+	return errors.Wrap(errGenerateMergeLink, inner)
+}
+
+func NewErrProcessBlockMerge(inner error, cid string) error {
+	return errors.Wrap(errProcessBlockMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessEncryptedBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessEncryptedBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrInitCRDTForMerge(inner error, cid string) error {
+	return errors.Wrap(errInitCRDTForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessCRDTBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessCRDTBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadChildBlock(inner error, cid string) error {
+	return errors.Wrap(errLoadChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeChildBlock(inner error, cid string) error {
+	return errors.Wrap(errDecodeChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessChildBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadEncryptionBlock(inner error, cid string) error {
+	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrGetHeadsForMerge(inner error) error {
+	return errors.Wrap(errGetHeadsForMerge, inner)
+}
+
+func NewErrLoadBlockFromStore(inner error, cid string) error {
+	return errors.Wrap(errLoadBlockFromStore, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeBlockFromStore(inner error, cid string) error {
+	return errors.Wrap(errDecodeBlockFromStore, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrParseDocIDMerge(inner error, rawDocID string) error {
+	return errors.Wrap(errParseDocIDMerge, inner, errors.NewKV("RawDocID", rawDocID))
+}
+
+func NewErrGetShortFieldIDMerge(inner error, fieldID string, field string) error {
+	return errors.Wrap(errGetShortFieldIDMerge, inner,
+		errors.NewKV("FieldID", fieldID), errors.NewKV("Field", field))
+}
+
+func NewErrGetDocStatus(inner error, docID string) error {
+	return errors.Wrap(errGetDocStatus, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrGetShortIDForDoc(inner error, collectionID string) error {
+	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
 }
