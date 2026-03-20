@@ -115,6 +115,22 @@ func NewTxnFrom(
 	}
 }
 
+// NewTxnFromExisting wraps an existing corekv.Txn into a BasicTxn.
+func NewTxnFromExisting(
+	txn corekv.Txn,
+	lockSet *lock.LockSet,
+	id uint64,
+	chunkSize immutable.Option[int],
+) *BasicTxn {
+	multistore := NewMultistore(txn, lockSet, chunkSize)
+	return &BasicTxn{
+		Multistore: multistore,
+		txn:        txn,
+		id:         id,
+		ts:         time.Now(),
+	}
+}
+
 func (t *BasicTxn) Txn() corekv.Txn {
 	return t.txn
 }
