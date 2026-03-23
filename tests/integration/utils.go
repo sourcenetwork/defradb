@@ -764,6 +764,7 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
+	// Track the transaction IDs as they are used, in a set
 	transactionIDset := make(map[int]struct{})
 
 ActionLoop:
@@ -775,21 +776,21 @@ ActionLoop:
 			break ActionLoop
 
 		case *action.AddCollection:
-			concreteAction := testCase.Actions[i].(action.AddCollection)
+			concreteAction := testCase.Actions[i].(*action.AddCollection)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
 			continue
 
 		case *action.AddDoc:
-			concreteAction := testCase.Actions[i].(action.AddDoc)
+			concreteAction := testCase.Actions[i].(*action.AddDoc)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
 			continue
 
 		case UpdateDoc:
-			concreteAction := testCase.Actions[i].(UpdateDoc)
+			concreteAction := testCase.Actions[i].(*UpdateDoc)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
@@ -799,7 +800,8 @@ ActionLoop:
 			continue
 
 		case CommitTransaction:
-			concreteAction := testCase.Actions[i].(CommitTransaction)
+			// If transaction is commited, remove it from the set we are tracking
+			concreteAction := testCase.Actions[i].(*CommitTransaction)
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
 
@@ -809,10 +811,9 @@ ActionLoop:
 		}
 	}
 
+	// If length is not 0, there was a transaction used that was not committed
 	if len(transactionIDset) > 0 {
-		fmt.Println("This test has an open transaction")
 		t.Skipf("skipping test with open transaction(s)")
-
 	}
 
 	if changeDetector.SetupOnly {
