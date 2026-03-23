@@ -254,7 +254,7 @@ func exportByPrefix(ctx context.Context, store corekv.TxnStore, w io.Writer, pre
 	if err != nil {
 		return 0, err
 	}
-	defer iter.Close()
+	defer iter.Close() //nolint:errcheck
 
 	count := 0
 	for {

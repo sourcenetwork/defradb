@@ -142,7 +142,7 @@ func (p *P2P) filterNonCARDocument(
 			if link.Name == "" || link.Name == "_head" {
 				continue
 			}
-			childRaw, err := bstore.Get(ctx, link.Link.Cid)
+			childRaw, err := bstore.Get(ctx, link.Cid)
 			if err != nil {
 				continue
 			}

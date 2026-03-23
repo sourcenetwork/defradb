@@ -248,7 +248,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// (cid + undefined depth + docId) then we need to make sure the
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid
-	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+	currentDocID := n.commitSelect.FirstOfName(currentValue, request.DocIDArgName)
 	if n.commitSelect.Cid.HasValue() &&
 		len(n.visitedNodes) == 0 &&
 		n.commitSelect.DocID.HasValue() &&
@@ -324,15 +324,15 @@ All the dagScanNode endpoints use similar structures
 */
 
 func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
-	commit := n.commitSelect.DocumentMapping.NewDoc()
+	commit := n.commitSelect.NewDoc()
 	link, err := block.GenerateLink()
 	if err != nil {
 		return core.Doc{}, err
 	}
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
+	n.commitSelect.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
 	collectionVersionId := block.Delta.GetCollectionVersionID()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
+	n.commitSelect.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
@@ -358,13 +358,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
 	if d != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
+		n.commitSelect.SetFirstOfName(&commit, request.DeltaFieldName, d)
 	} else {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
+		n.commitSelect.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
 
 	if block.Signature != nil &&
-		n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName] != nil {
+		n.commitSelect.IndexesByName[request.SignatureFieldName] != nil {
 		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
 		if err != nil {
 			return core.Doc{}, err
@@ -372,12 +372,12 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	prio := block.Delta.GetPriority()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
+	n.commitSelect.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
+	n.commitSelect.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
 	docID := block.Delta.GetDocID()
 	if docID != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(
+		n.commitSelect.SetFirstOfName(
 			&commit,
 			request.DocIDArgName,
 			string(docID),
@@ -419,7 +419,7 @@ func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, co
 		dagScanNodes = n.headsScanNodes
 	}
 
-	mappingIndexes := n.commitSelect.DocumentMapping.IndexesByName[linksField]
+	mappingIndexes := n.commitSelect.IndexesByName[linksField]
 	for i, linksIndex := range mappingIndexes {
 		// reset linkScanNode
 		dagScanNodes[i].reset()
@@ -468,8 +468,8 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	if err != nil {
 		return err
 	}
-	sigFieldIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
-	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndexes[0]]
+	sigFieldIndexes := n.commitSelect.IndexesByName[request.SignatureFieldName]
+	sigMapping := n.commitSelect.ChildMappings[sigFieldIndexes[0]]
 
 	sigDoc := sigMapping.NewDoc()
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
@@ -477,7 +477,7 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, string(sigBlock.Header.Identity))
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
 
-	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
+	n.commitSelect.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
 
 	return nil
 }

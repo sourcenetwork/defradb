@@ -107,7 +107,7 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 				}
 			}
 			for _, dagLink := range rb.block.Links {
-				if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, dagLink.Link.Cid, collectedBlocks); err != nil {
+				if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, dagLink.Cid, collectedBlocks); err != nil {
 					return nil, err
 				}
 			}
@@ -213,7 +213,7 @@ func (p *P2P) collectDAGBlocksWithBytes(
 	}
 
 	for _, dagLink := range block.Links {
-		if err := p.collectDAGBlocksWithBytes(ctx, bstore, encStore, dagLink.Link.Cid, collected); err != nil {
+		if err := p.collectDAGBlocksWithBytes(ctx, bstore, encStore, dagLink.Cid, collected); err != nil {
 			return err
 		}
 	}
