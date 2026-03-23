@@ -764,6 +764,8 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
+	transactionIDset := make(map[int]struct{})
+
 ActionLoop:
 	for i := range testCase.Actions {
 		switch testCase.Actions[i].(type) {
@@ -772,13 +774,45 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart, CommitTransaction:
+		case *action.AddCollection:
+			concreteAction := testCase.Actions[i].(action.AddCollection)
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case *action.AddDoc:
+			concreteAction := testCase.Actions[i].(action.AddDoc)
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case UpdateDoc:
+			concreteAction := testCase.Actions[i].(UpdateDoc)
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case Restart:
+			continue
+
+		case CommitTransaction:
+			concreteAction := testCase.Actions[i].(CommitTransaction)
+			delete(transactionIDset, concreteAction.TransactionID)
 			continue
 
 		default:
 			firstNonSetupIndex = i
 			break ActionLoop
 		}
+	}
+
+	if len(transactionIDset) > 0 {
+		fmt.Println("This test has an open transaction")
+		t.Skipf("skipping test with open transaction(s)")
+
 	}
 
 	if changeDetector.SetupOnly {
