@@ -769,28 +769,25 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 
 ActionLoop:
 	for i := range testCase.Actions {
-		switch testCase.Actions[i].(type) {
+		switch concreteAction := testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
 		case *action.AddCollection:
-			concreteAction := testCase.Actions[i].(*action.AddCollection)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
 			continue
 
 		case *action.AddDoc:
-			concreteAction := testCase.Actions[i].(*action.AddDoc)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
 			continue
 
 		case UpdateDoc:
-			concreteAction := testCase.Actions[i].(UpdateDoc)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
@@ -801,7 +798,6 @@ ActionLoop:
 
 		case CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
-			concreteAction := testCase.Actions[i].(CommitTransaction)
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
 
