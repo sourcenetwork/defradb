@@ -11,8 +11,6 @@
 package request
 
 import (
-	"slices"
-
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -25,8 +23,8 @@ type CommitSelect struct {
 	Field
 	ChildSelect
 
-	CIDFilter
-	DocIDsFilter
+	DocID immutable.Option[string]
+	CID   immutable.Option[string]
 
 	Limitable
 	Offsetable
@@ -43,20 +41,27 @@ type CommitSelect struct {
 }
 
 func (c CommitSelect) ToSelect() *Select {
-	return &Select{
+	s := &Select{
 		Field: Field{
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		DocIDsFilter: c.DocIDsFilter,
-		CIDFilter:    c.CIDFilter,
-		Limitable:    c.Limitable,
-		Offsetable:   c.Offsetable,
-		Orderable:    c.Orderable,
-		Groupable:    c.Groupable,
-		Filterable:   c.Filterable,
-		ChildSelect:  c.ChildSelect,
+		CIDFilter: CIDFilter{
+			CID: c.CID,
+		},
+		Limitable:   c.Limitable,
+		Offsetable:  c.Offsetable,
+		Orderable:   c.Orderable,
+		Groupable:   c.Groupable,
+		Filterable:  c.Filterable,
+		ChildSelect: c.ChildSelect,
 	}
+	if c.DocID.HasValue() {
+		s.DocIDsFilter = DocIDsFilter{
+			DocIDs: immutable.Some([]string{c.DocID.Value()}),
+		}
+	}
+	return s
 }
 
 // ToSubscriptionSelect implements the subscriptionSelector interface in internal/db/subscriptions.go
@@ -68,10 +73,8 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 			Name:  c.Name,
 			Alias: c.Alias,
 		},
-		DocIDsFilter: c.DocIDsFilter,
-		CIDFilter: CIDFilter{
-			immutable.Some([]string{cid}),
-		},
+		DocID:       c.DocID,
+		CID:         immutable.Some(cid),
 		ChildSelect: c.ChildSelect,
 	}
 }
@@ -80,12 +83,12 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 // Returns true if the cid passes the filter, false otherwise.
 // If no CID filter is set, it always passes.
 func (c CommitSelect) CheckCIDFilter(cid string) bool {
-	return !c.CIDs.HasValue() || slices.Contains(c.CIDs.Value(), cid)
+	return !c.CID.HasValue() || c.CID.Value() == cid
 }
 
 // CheckDocIDFilter checks if the given docID passes the DocID filter.
 // Returns true if the docID passes the filter, false otherwise.
 // If no DocID filter is set, it always passes.
 func (c CommitSelect) CheckDocIDFilter(docID string) bool {
-	return !c.DocIDs.HasValue() || slices.Contains(c.DocIDs.Value(), docID)
+	return !c.DocID.HasValue() || c.DocID.Value() == docID
 }

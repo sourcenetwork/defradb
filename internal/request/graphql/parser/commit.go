@@ -39,55 +39,18 @@ func parseCommitSelect(
 
 		switch name {
 		case request.DocIDArgName:
-			var docIDs []string
-			switch v := value.(type) {
-			case []any:
-				if len(v) > 1 {
-					// todo - This limitiation is temporary and should be removed in
-					// https://github.com/sourcenetwork/defradb/issues/4302
-					return nil, ErrMultipleDocIDsNotSupported
-				}
-
-				docIDs = make([]string, len(v))
-				for i, value := range v {
-					docIDs[i] = value.(string)
-				}
-
-			case []string:
-				if len(v) > 1 {
-					// todo - This limitiation is temporary and should be removed in
-					// https://github.com/sourcenetwork/defradb/issues/4302
-					return nil, ErrMultipleDocIDsNotSupported
-				}
-
-				docIDs = v
-
-			case string:
-				docIDs = []string{v}
-
-			default:
-				continue
-			}
-
-			commit.DocIDs = immutable.Some(docIDs)
-
-		case request.CidFieldName:
-			v, ok := value.([]any)
+			v, ok := value.(string)
 			if !ok {
 				continue // value is nil
 			}
+			commit.DocID = immutable.Some(v)
 
-			if len(v) > 1 {
-				// todo - This limitiation is temporary and should be removed in
-				// https://github.com/sourcenetwork/defradb/issues/4303
-				return nil, ErrMultipleCidsNotSupported
+		case request.CidFieldName:
+			v, ok := value.(string)
+			if !ok {
+				continue // value is nil
 			}
-
-			cids := make([]string, len(v))
-			for i, value := range v {
-				cids[i] = value.(string)
-			}
-			commit.CIDs = immutable.Some(cids)
+			commit.CID = immutable.Some(v)
 
 		case request.OrderClause:
 			v, ok := value.([]any)

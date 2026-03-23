@@ -477,8 +477,11 @@ func (db *DB) Close() {
 		}
 	}
 
-	if db.p2p != nil && db.p2p.SECoordinator() != nil {
-		db.p2p.SECoordinator().Close()
+	if db.p2p != nil {
+		if db.p2p.SECoordinator() != nil {
+			db.p2p.SECoordinator().Close()
+		}
+		db.p2p.Close()
 	}
 
 	err := db.rootstore.Close()
