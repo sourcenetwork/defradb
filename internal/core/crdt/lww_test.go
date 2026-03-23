@@ -88,7 +88,7 @@ func TestLWW_NewDocCreateMode_SkipsPriorityCheck(t *testing.T) {
 	lowPrioValue := []byte("low-priority-value")
 	newDocValue := []byte("new-doc-value")
 
-	// Step 1: store a value at priority 5 (normal mode).
+	// Store a value at priority 5 (normal mode).
 	err := lww.setValue(ctx, highPrioValue, 5)
 	require.NoError(t, err)
 
@@ -97,7 +97,7 @@ func TestLWW_NewDocCreateMode_SkipsPriorityCheck(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, highPrioValue, stored, "value at priority 5 should be stored")
 
-	// Step 2: attempt to set a value at priority 1 in normal mode — should be rejected.
+	// Attempt to set a value at priority 1 in normal mode — should be rejected.
 	err = lww.setValue(ctx, lowPrioValue, 1)
 	require.NoError(t, err)
 
@@ -105,7 +105,7 @@ func TestLWW_NewDocCreateMode_SkipsPriorityCheck(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, highPrioValue, stored, "lower priority value should be rejected in normal mode")
 
-	// Step 3: set a value at priority 1 in NewDocCreateMode — priority check is skipped.
+	// Set a value at priority 1 in NewDocCreateMode — priority check is skipped.
 	newDocCtx := ContextWithNewDocCreateMode(ctx)
 	err = lww.setValue(newDocCtx, newDocValue, 1)
 	require.NoError(t, err)
