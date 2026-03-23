@@ -801,7 +801,7 @@ ActionLoop:
 
 		case CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
-			concreteAction := testCase.Actions[i].(*CommitTransaction)
+			concreteAction := testCase.Actions[i].(CommitTransaction)
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
 
