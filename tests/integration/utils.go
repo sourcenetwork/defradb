@@ -772,7 +772,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart:
+		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart, CommitTransaction:
 			continue
 
 		default:
