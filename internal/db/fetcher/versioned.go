@@ -139,7 +139,7 @@ func (vf *VersionedFetcher) Init(
 	// such as collection definitions and short-ids are available.
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrCreateVersionIterator(err)
 	}
 	dst := datastore.SystemstoreFrom(root)
 	for {

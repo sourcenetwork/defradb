@@ -25,6 +25,7 @@ const (
 	errDecodeSigBlock                 string = "failed to decode signature block"
 	errSetDocField                    string = "failed to set document field during update"
 	errCheckOrphanPointLookup         string = "failed to check orphan point lookup"
+	errRefreshView                    string = "failed to refresh view"
 )
 
 var (
@@ -117,4 +118,8 @@ func NewErrSetDocField(inner error, field string) error {
 
 func NewErrCheckOrphanPointLookup(inner error) error {
 	return errors.Wrap(errCheckOrphanPointLookup, inner)
+}
+
+func NewErrRefreshView(inner error) error {
+	return errors.Wrap(errRefreshView, inner)
 }

@@ -137,7 +137,7 @@ func (p *P2P) ListP2PCollections(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PCollections(err)
 	}
 
 	collectionNames := []string{}
@@ -181,7 +181,7 @@ func (p *P2P) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllP2PCollections(err)
 	}
 
 	collectionIDs := []string{}

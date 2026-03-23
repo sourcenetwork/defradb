@@ -135,7 +135,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
@@ -206,7 +206,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
@@ -279,7 +279,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.HeadstoreDocKey, 0, hardDeleteChunkSize)
@@ -348,7 +348,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.HeadstoreColKey, 0, hardDeleteChunkSize)

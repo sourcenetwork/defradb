@@ -99,7 +99,7 @@ func (p *P2P) ListP2PDocuments(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PDocuments(err)
 	}
 
 	docIDs := []string{}
@@ -128,7 +128,7 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrLoadP2PDocuments(err)
 	}
 	for {
 		hasNext, err := iter.Next()

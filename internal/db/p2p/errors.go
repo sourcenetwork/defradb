@@ -54,6 +54,10 @@ const (
 	errFetchRetryDocs          string = "failed to fetch retry docs for replicator"
 	errDeleteRetryKey          string = "failed to delete replicator retry key"
 	errDeleteRetryDoc          string = "failed to delete replicator retry doc"
+	errListP2PCollections      string = "failed to list P2P collections"
+	errGetAllP2PCollections    string = "failed to get all P2P collection IDs"
+	errListP2PDocuments        string = "failed to list P2P documents"
+	errLoadP2PDocuments        string = "failed to load P2P documents"
 )
 
 var (
@@ -231,4 +235,20 @@ func NewErrDeleteP2PCollection(inner error, collectionID string) error {
 
 func NewErrDeleteP2PDocument(inner error, docID string) error {
 	return errors.Wrap(errDeleteP2PDocument, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrListP2PCollections(inner error) error {
+	return errors.Wrap(errListP2PCollections, inner)
+}
+
+func NewErrGetAllP2PCollections(inner error) error {
+	return errors.Wrap(errGetAllP2PCollections, inner)
+}
+
+func NewErrListP2PDocuments(inner error) error {
+	return errors.Wrap(errListP2PDocuments, inner)
+}
+
+func NewErrLoadP2PDocuments(inner error) error {
+	return errors.Wrap(errLoadP2PDocuments, inner)
 }

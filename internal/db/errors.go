@@ -182,6 +182,12 @@ const (
 	errCheckCIDExists             string = "failed to check if CID exists in blockstore"
 	errCheckIndexKeyExists        string = "failed to check if index key exists"
 	errCheckUniqueIndexConstraint string = "failed to check unique index constraint"
+	errCheckCollectionDocs        string = "failed to check if collection has documents"
+	errCreateTruncateIterator     string = "failed to create iterator for truncate"
+	errDumpDBState                string = "failed to iterate datastore during dump"
+	errGetAllDocIDs               string = "failed to get all document IDs"
+	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
+	errCreateViewCacheIterator    string = "failed to create view cache iterator"
 )
 
 var (
@@ -880,6 +886,30 @@ func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 
 func NewErrLensCIDNotFound(cid string) error {
 	return errors.New(errLensCIDNotFound, errors.NewKV("CID", cid))
+}
+
+func NewErrCheckCollectionDocs(inner error) error {
+	return errors.Wrap(errCheckCollectionDocs, inner)
+}
+
+func NewErrCreateTruncateIterator(inner error) error {
+	return errors.Wrap(errCreateTruncateIterator, inner)
+}
+
+func NewErrDumpDBState(inner error) error {
+	return errors.Wrap(errDumpDBState, inner)
+}
+
+func NewErrGetAllDocIDs(inner error) error {
+	return errors.Wrap(errGetAllDocIDs, inner)
+}
+
+func NewErrCreateDeleteIndexIterator(inner error) error {
+	return errors.Wrap(errCreateDeleteIndexIterator, inner)
+}
+
+func NewErrCreateViewCacheIterator(inner error) error {
+	return errors.Wrap(errCreateViewCacheIterator, inner)
 }
 
 // NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one

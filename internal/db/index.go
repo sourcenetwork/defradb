@@ -264,7 +264,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateDeleteIndexIterator(err)
 	}
 
 	keysToDelete := make([]keys.IndexDataStoreKey, 0)

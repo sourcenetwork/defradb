@@ -57,7 +57,7 @@ func (c *collection) getAllDocIDsChan(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllDocIDs(err)
 	}
 
 	resCh := make(chan docIDResult)

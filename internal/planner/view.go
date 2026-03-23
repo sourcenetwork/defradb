@@ -204,7 +204,7 @@ func (n *cachedViewFetcher) Init() error {
 		Prefix: keys.NewViewCacheColPrefix(shortID),
 	})
 	if err != nil {
-		return err
+		return NewErrRefreshView(err)
 	}
 
 	n.queryResults = iter

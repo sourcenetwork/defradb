@@ -50,6 +50,7 @@ const (
 	errParseHeadKey               string = "failed to parse headstore key"
 	errDecodeDocField             string = "failed to decode document field"
 	errCopyVersionedData          string = "failed to copy versioned data"
+	errCreateVersionIterator      string = "failed to create version data iterator"
 )
 
 var (
@@ -205,4 +206,8 @@ func NewErrDecodeDocField(inner error, field string) error {
 
 func NewErrCopyVersionedData(inner error) error {
 	return errors.Wrap(errCopyVersionedData, inner)
+}
+
+func NewErrCreateVersionIterator(inner error) error {
+	return errors.Wrap(errCreateVersionIterator, inner)
 }

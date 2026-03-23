@@ -48,7 +48,7 @@ func storeArtifacts(
 	for _, artifact := range artifacts {
 		colID, err := id.GetUncachedShortCollectionID(ctx, artifact.CollectionID, ss)
 		if err != nil {
-			return err
+			return NewErrGetCollectionIDForSE(err, artifact.CollectionID)
 		}
 
 		key := keys.DatastoreSE{
@@ -81,7 +81,7 @@ func fetchDocIDs(
 
 	colID, err := id.GetUncachedShortCollectionID(ctx, collectionID, ss)
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetCollectionIDForSE(err, collectionID)
 	}
 
 	isFirstPass := true
@@ -95,7 +95,7 @@ func fetchDocIDs(
 			Prefix: key.Bytes(),
 		})
 		if err != nil {
-			return nil, err
+			return nil, NewErrCreateSEQueryIterator(err)
 		}
 
 		querySet := make(map[string]struct{})

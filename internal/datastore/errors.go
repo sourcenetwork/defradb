@@ -20,6 +20,8 @@ const (
 	errCheckBlockExists      string = "failed to check if block exists"
 	errCheckBlockMergeStatus string = "failed to check block merge status"
 	errMarkBlockAsMerged     string = "failed to mark block as merged"
+	errDeserializePrefix     string = "failed to deserialize prefix query result"
+	errFetchKeysForPrefix    string = "failed to fetch keys for prefix"
 )
 
 // Errors returnable from this package.
@@ -55,4 +57,14 @@ func NewErrCheckBlockMergeStatus(inner error) error {
 // NewErrMarkBlockAsMerged returns a new error indicating that marking a block as merged failed.
 func NewErrMarkBlockAsMerged(inner error) error {
 	return errors.Wrap(errMarkBlockAsMerged, inner)
+}
+
+// NewErrDeserializePrefix returns a new error indicating that deserializing a prefix query result failed.
+func NewErrDeserializePrefix(inner error) error {
+	return errors.Wrap(errDeserializePrefix, inner)
+}
+
+// NewErrFetchKeysForPrefix returns a new error indicating that fetching keys for a prefix failed.
+func NewErrFetchKeysForPrefix(inner error) error {
+	return errors.Wrap(errFetchKeysForPrefix, inner)
 }

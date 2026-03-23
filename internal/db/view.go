@@ -265,7 +265,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateViewCacheIterator(err)
 	}
 
 	for {

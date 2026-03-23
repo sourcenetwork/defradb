@@ -28,7 +28,7 @@ func DeserializePrefix[T any](
 ) ([][]byte, []T, error) {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: prefix})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewErrDeserializePrefix(err)
 	}
 
 	keys := make([][]byte, 0)
@@ -36,7 +36,7 @@ func DeserializePrefix[T any](
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
-			return nil, nil, errors.Join(err, iter.Close())
+			return nil, nil, NewErrDeserializePrefix(errors.Join(err, iter.Close()))
 		}
 		if !hasNext {
 			break
@@ -44,7 +44,7 @@ func DeserializePrefix[T any](
 
 		value, err := iter.Value()
 		if err != nil {
-			return nil, nil, errors.Join(err, iter.Close())
+			return nil, nil, NewErrDeserializePrefix(errors.Join(err, iter.Close()))
 		}
 
 		var element T
@@ -72,14 +72,14 @@ func FetchKeysForPrefix(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrFetchKeysForPrefix(err)
 	}
 
 	keys := make([][]byte, 0)
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
-			return nil, errors.Join(err, iter.Close())
+			return nil, NewErrFetchKeysForPrefix(errors.Join(err, iter.Close()))
 		}
 		if !hasNext {
 			break

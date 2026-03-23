@@ -417,7 +417,7 @@ func (db *DB) Close() {
 func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrDumpDBState(err)
 	}
 
 	for {
