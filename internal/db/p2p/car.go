@@ -28,13 +28,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// collectedBlock holds a CID and its raw bytes to avoid double-reading from Badger.
+// collectedBlock holds a CID and its raw bytes to avoid double-reading from the store.
 type collectedBlock struct {
 	cid      cid.Cid
 	rawBytes []byte
 }
 
-// rootBlockWithBytes holds a parsed block along with its raw bytes to avoid re-reading from Badger.
+// rootBlockWithBytes holds a parsed block along with its raw bytes to avoid re-reading from the store.
 type rootBlockWithBytes struct {
 	block    *coreblock.Block
 	rawBytes []byte
@@ -64,7 +64,9 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 		var rootCID cid.Cid
 		var err error
 		if rb.rawBytes != nil {
-			rootCID, err = coreblock.GetCIDFromBytes(rb.rawBytes)
+			var rootLink cidlink.Link
+			rootLink, err = rb.block.GenerateLink()
+			rootCID = rootLink.Cid
 		} else {
 			var rootLink cidlink.Link
 			rootLink, err = rb.block.GenerateLink()
@@ -83,18 +85,11 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 			if rb.block.Signature != nil {
 				sigCID := rb.block.Signature.Cid
 				if _, seen := collectedBlocks[sigCID.String()]; !seen {
-					if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(sigCID); ok {
+					sigBlk, sigErr := bstore.Get(txnCtx, sigCID)
+					if sigErr == nil {
 						collectedBlocks[sigCID.String()] = &collectedBlock{
 							cid:      sigCID,
-							rawBytes: cachedBytes,
-						}
-					} else {
-						sigBlk, sigErr := bstore.Get(txnCtx, sigCID)
-						if sigErr == nil {
-							collectedBlocks[sigCID.String()] = &collectedBlock{
-								cid:      sigCID,
-								rawBytes: sigBlk.RawData(),
-							}
+							rawBytes: sigBlk.RawData(),
 						}
 					}
 				}
@@ -102,18 +97,11 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 			if rb.block.Encryption != nil {
 				encCID := rb.block.Encryption.Cid
 				if _, seen := collectedBlocks[encCID.String()]; !seen {
-					if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(encCID); ok {
+					encBlk, encErr := encStore.Get(txnCtx, encCID)
+					if encErr == nil {
 						collectedBlocks[encCID.String()] = &collectedBlock{
 							cid:      encCID,
-							rawBytes: cachedBytes,
-						}
-					} else {
-						encBlk, encErr := encStore.Get(txnCtx, encCID)
-						if encErr == nil {
-							collectedBlocks[encCID.String()] = &collectedBlock{
-								cid:      encCID,
-								rawBytes: encBlk.RawData(),
-							}
+							rawBytes: encBlk.RawData(),
 						}
 					}
 				}

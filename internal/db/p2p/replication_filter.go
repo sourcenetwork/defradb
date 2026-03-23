@@ -20,6 +20,77 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
+// extractFieldsFromCARBlocks extracts field name-value pairs from decoded CAR blocks.
+// It iterates through all blocks looking for LWW and Counter deltas that contain
+// field-level data, decodes their CBOR values, and returns a map of field names to values.
+func extractFieldsFromCARBlocks(regularBlocks []coreblock.Block) map[string]any {
+	fields := make(map[string]any)
+
+	for i := range regularBlocks {
+		block := &regularBlocks[i]
+		delta := block.Delta
+
+		var fieldName string
+		var data []byte
+
+		if delta.LWWDelta != nil {
+			fieldName = delta.LWWDelta.FieldName
+			data = delta.LWWDelta.Data
+		} else if delta.CounterDelta != nil {
+			fieldName = delta.CounterDelta.FieldName
+			data = delta.CounterDelta.Data
+		}
+
+		if fieldName == "" || len(data) == 0 {
+			continue
+		}
+
+		var value any
+		if err := cbor.Unmarshal(data, &value); err != nil {
+			// If CBOR decoding fails, store raw bytes
+			value = data
+		}
+
+		fields[fieldName] = value
+	}
+
+	return fields
+}
+
+// parseCARBlocksForFilter parses the regular blocks from a CAR file into coreblock.Block
+// structs for field extraction. Only blocks that successfully decode are returned.
+func parseCARBlocksForFilter(parsed *parsedCAR) []coreblock.Block {
+	var decoded []coreblock.Block
+
+	for _, blk := range parsed.regularBlocks {
+		block, err := coreblock.GetFromBytes(blk.RawData())
+		if err != nil {
+			continue
+		}
+		decoded = append(decoded, *block)
+	}
+
+	return decoded
+}
+
+// filterCARDocument checks whether a single CAR document should be replicated.
+// It extracts field values from the parsed CAR blocks and calls the filter.
+func (p *P2P) filterCARDocument(
+	ctx context.Context,
+	collectionID string,
+	docID string,
+	parsed *parsedCAR,
+) bool {
+	if p.replicationFilter == nil {
+		return true
+	}
+
+	decoded := parseCARBlocksForFilter(parsed)
+	fields := extractFieldsFromCARBlocks(decoded)
+
+	return p.filterAllowsReplication(ctx, collectionID, docID, fields)
+}
+
 // filterAllowsReplication checks if the replication filter allows the given document.
 // Returns true if no filter is set or if the filter allows the document.
 func (p *P2P) filterAllowsReplication(

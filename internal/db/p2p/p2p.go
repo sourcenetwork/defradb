@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
@@ -95,6 +96,9 @@ type DB interface {
 	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
+	// MergeBatchWithTxn merges multiple events using an existing transaction from context.
+	// The returned callback (if non-nil) must be called after the caller commits the transaction.
+	MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func(), error)
 	// Events returns the event bus for the database.
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
@@ -670,10 +674,205 @@ func (p *P2P) processMessageBatch(ctx context.Context, req *protocol.PushLogRequ
 		return nil
 	}
 
+	var carDocs []*protocol.DocumentInfo
+	var nonCarDocs []*protocol.DocumentInfo
+
 	for i := range req.Documents {
 		doc := &req.Documents[i]
+		if len(doc.CAR) > 0 {
+			carDocs = append(carDocs, doc)
+		} else {
+			nonCarDocs = append(nonCarDocs, doc)
+		}
+	}
+
+	for _, doc := range nonCarDocs {
 		if err := p.processDocument(ctx, req, doc, isReplicator); err != nil {
-			log.ErrorE("Failed to process document", err, corelog.String("DocID", doc.DocID))
+			log.ErrorE("Failed to process non-CAR document", err, corelog.String("DocID", doc.DocID))
+		}
+	}
+
+	if len(carDocs) > 0 {
+		if err := p.processCARBatch(ctx, req, carDocs); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// parsedDocInfo holds pre-parsed CAR data for a document to avoid re-parsing on retry.
+type parsedDocInfo struct {
+	doc           *protocol.DocumentInfo
+	headCID       cid.Cid
+	regularBlocks []blocks.Block
+	encBlocks     []blocks.Block
+}
+
+// processCARBatch processes multiple CAR documents in a single transaction.
+func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest, docs []*protocol.DocumentInfo) error {
+	var allParsed []parsedDocInfo
+	for _, doc := range docs {
+		headCID, err := cid.Cast(doc.CID)
+		if err != nil {
+			log.ErrorE("Failed to parse CID", err, corelog.String("DocID", doc.DocID))
+			continue
+		}
+
+		parsed, err := parseCAR(doc.CAR)
+		if err != nil {
+			log.ErrorE("Failed to parse CAR", err, corelog.String("DocID", doc.DocID))
+			continue
+		}
+
+		// Apply replication filter before adding to batch
+		if !p.filterCARDocument(ctx, req.CollectionID, doc.DocID, parsed) {
+			continue
+		}
+
+		allParsed = append(allParsed, parsedDocInfo{
+			doc:           doc,
+			headCID:       headCID,
+			regularBlocks: parsed.regularBlocks,
+			encBlocks:     parsed.encBlocks,
+		})
+	}
+
+	if len(allParsed) == 0 {
+		return nil
+	}
+
+	bstore := p.db.Multistore().Blockstore()
+	maxRetries := p.db.MaxTxnRetries()
+	var lastErr error
+
+	for attempt := range maxRetries {
+		// Re-check IsMerged on each retry. Docs merged by concurrent
+		// transactions since the last attempt should be skipped.
+		var regularBlocks []blocks.Block
+		var encBlocks []blocks.Block
+		var mergeEvts []event.Merge
+		var validDocs []*protocol.DocumentInfo
+
+		for _, pd := range allParsed {
+			if isMerged, err := bstore.IsMerged(ctx, pd.headCID); err == nil && isMerged {
+				continue
+			}
+			regularBlocks = append(regularBlocks, pd.regularBlocks...)
+			encBlocks = append(encBlocks, pd.encBlocks...)
+			mergeEvts = append(mergeEvts, event.Merge{
+				DocID:        pd.doc.DocID,
+				ByPeer:       req.SenderID,
+				FromPeer:     req.Creator,
+				Cid:          pd.headCID,
+				CollectionID: req.CollectionID,
+			})
+			validDocs = append(validDocs, pd.doc)
+		}
+
+		if len(mergeEvts) == 0 {
+			return nil
+		}
+
+		lastErr = p.tryProcessCARBatch(ctx, req, regularBlocks, encBlocks, mergeEvts, validDocs)
+		if lastErr == nil {
+			return nil
+		}
+		if errors.Is(lastErr, corekv.ErrTxnConflict) || strings.Contains(lastErr.Error(), "transaction conflict") {
+			if attempt < maxRetries-1 {
+				backoff := time.Duration(10*(1<<attempt)) * time.Millisecond
+				log.Info("Retrying batch merge after transaction conflict",
+					corelog.Int("attempt", attempt+1),
+					corelog.Int("maxRetries", maxRetries),
+					corelog.String("backoff", backoff.String()))
+				time.Sleep(backoff)
+			}
+			continue
+		}
+		// Non-retryable error
+		return lastErr
+	}
+
+	log.ErrorE("Batch merge failed after all retries", lastErr)
+	return lastErr
+}
+
+// tryProcessCARBatch attempts a single transaction for CAR batch processing.
+func (p *P2P) tryProcessCARBatch(
+	ctx context.Context,
+	req *protocol.PushLogRequest,
+	allRegularBlocks []blocks.Block,
+	allEncBlocks []blocks.Block,
+	mergeEvts []event.Merge,
+	validDocs []*protocol.DocumentInfo,
+) error {
+	headsCtx := coreblock.InitHeadsCache(ctx)
+
+	txn := p.db.Rootstore().NewTxn(false)
+	defer txn.Discard()
+
+	txnCtx := corekv.SetCtxTxn(headsCtx, txn)
+
+	docIDs := make([]string, 0, len(mergeEvts))
+	for _, evt := range mergeEvts {
+		if evt.DocID != "" {
+			docIDs = append(docIDs, evt.DocID)
+		}
+	}
+	if len(docIDs) > 0 {
+		headstore := datastore.HeadstoreFrom(p.db.Rootstore())
+		for _, docID := range docIDs {
+			_ = coreblock.PrefetchDocHeads(txnCtx, headstore, docID)
+		}
+	}
+
+	if len(allRegularBlocks) > 0 {
+		bstore := datastore.BlindWriteBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+		if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
+			log.ErrorE("Batch CAR import failed", err)
+			return err
+		}
+	}
+
+	if len(allEncBlocks) > 0 {
+		encStore := datastore.EncstoreFrom(p.db.Rootstore())
+		if err := encStore.PutMany(txnCtx, allEncBlocks); err != nil {
+			log.ErrorE("Batch encrypted block import failed", err)
+			return err
+		}
+	}
+
+	wrappedTxn := p.db.WrapCorekvTxn(txn)
+	wrappedCtx := p.db.InitContext(txnCtx, wrappedTxn)
+
+	postCommit, err := p.db.MergeBatchWithTxn(wrappedCtx, mergeEvts)
+	if err != nil {
+		return err
+	}
+
+	if err := txn.Commit(); err != nil {
+		if strings.Contains(err.Error(), "discarded") {
+			return nil
+		}
+		return err
+	}
+
+	if postCommit != nil {
+		postCommit()
+	}
+
+	for i, doc := range validDocs {
+		updateEvt := event.Update{
+			DocID:        doc.DocID,
+			Cid:          mergeEvts[i].Cid,
+			CollectionID: req.CollectionID,
+			Block:        doc.Block,
+			CAR:          doc.CAR,
+			IsRelay:      true,
+		}
+		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+		if err := p.SendUpdate(updateEvt); err != nil {
+			log.ErrorE("Failed to send update after sync", err)
 		}
 	}
 
@@ -757,8 +956,9 @@ func (p *P2P) processDocument(
 			wrappedTxn := p.db.WrapCorekvTxn(txn)
 			wrappedCtx := p.db.InitContext(txnCtx, wrappedTxn)
 
-			if mergeErr := p.db.Merge(wrappedCtx, mergeEvt); mergeErr != nil {
-				return mergeErr
+			postCommit, err := p.db.MergeBatchWithTxn(wrappedCtx, []event.Merge{mergeEvt})
+			if err != nil {
+				return err
 			}
 
 			if err := txn.Commit(); err != nil {
@@ -766,6 +966,10 @@ func (p *P2P) processDocument(
 					return nil
 				}
 				return err
+			}
+
+			if postCommit != nil {
+				postCommit()
 			}
 
 			updateEvt := event.Update{
@@ -1027,17 +1231,44 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 	}
 
 	documents := make([]protocol.DocumentInfo, len(batch))
+
+	batchTxn := pb.p2p.db.Rootstore().NewTxn(true)
+	defer batchTxn.Discard()
+	batchCtx := corekv.SetCtxTxn(pb.ctx, batchTxn)
+
 	for i, req := range batch {
 		documents[i] = protocol.DocumentInfo{
 			DocID: req.evt.DocID,
 			CID:   req.evt.Cid.Bytes(),
 			Block: req.evt.Block,
 		}
+
+		// Reuse CAR data from the event if available
+		if len(req.evt.CAR) > 0 {
+			documents[i].CAR = req.evt.CAR
+			continue
+		}
+
+		block, err := coreblock.GetFromBytes(req.evt.Block)
+		if err != nil {
+			log.ErrorE("Failed to parse block for CAR generation", err)
+			continue
+		}
+
+		carData, err := pb.p2p.generateCARForBlocksWithBytes(batchCtx, []rootBlockWithBytes{{
+			block:    block,
+			rawBytes: req.evt.Block,
+		}})
+		if err != nil {
+			log.ErrorE("Failed to generate CAR for document", err)
+			continue
+		}
+		documents[i].CAR = carData
 	}
 
 	estimatedSize := 0
 	for _, doc := range documents {
-		estimatedSize += len(doc.DocID) + len(doc.CID) + len(doc.Block) + 50
+		estimatedSize += len(doc.DocID) + len(doc.CID) + len(doc.Block) + len(doc.CAR) + 50
 	}
 
 	if estimatedSize > maxPubsubMessageSize && len(batch) > 1 {
