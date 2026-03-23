@@ -790,7 +790,7 @@ ActionLoop:
 			continue
 
 		case UpdateDoc:
-			concreteAction := testCase.Actions[i].(*UpdateDoc)
+			concreteAction := testCase.Actions[i].(UpdateDoc)
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
