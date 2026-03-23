@@ -54,6 +54,10 @@ const (
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 )
 
+var (
+	errNotFound string = corekv.ErrNotFound.Error()
+)
+
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
@@ -96,6 +100,7 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrNotFound                              = errors.New(errNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -267,6 +272,10 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
 	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
+}
+
+func NewErrNotFound(kv errors.KV) error {
+	return errors.New(errNotFound, kv)
 }
 
 func NewErrOperationRequiresDeveloperMode(operationName string) error {

@@ -24,6 +24,9 @@ type CommitSelect struct {
 
 	// The CollectionVersionID at the time of commit.
 	CollectionVersionID immutable.Option[string]
+
+	// DocID is the document ID to filter commits by.
+	DocID immutable.Option[string]
 }
 
 func (s *CommitSelect) CloneTo(index int) Requestable {
@@ -32,6 +35,9 @@ func (s *CommitSelect) CloneTo(index int) Requestable {
 
 func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
-		Select: *s.Select.cloneTo(index),
+		Select:              *s.Select.cloneTo(index),
+		Depth:               s.Depth,
+		CollectionVersionID: s.CollectionVersionID,
+		DocID:               s.DocID,
 	}
 }

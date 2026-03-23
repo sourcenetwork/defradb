@@ -226,7 +226,7 @@ func toSelect(
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
-		Cids:            selectRequest.CIDs,
+		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
 		Fields:          fields,
 		IsEncrypted:     selectRequest.IsEncrypted,
@@ -1331,6 +1331,7 @@ func toCommitSelect(
 	return &CommitSelect{
 		Select: *underlyingSelect,
 		Depth:  selectRequest.Depth,
+		DocID:  selectRequest.DocID,
 	}, nil
 }
 
