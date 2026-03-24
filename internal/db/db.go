@@ -168,7 +168,7 @@ func newDB(
 		retryIntervals:          cfg.RetryIntervals,
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
 		lockSet:                 lockSet,
-		collectionRepository:    description.NewColCache(lockSet),
+		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
