@@ -16,6 +16,8 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -33,7 +35,10 @@ func GetUncachedShortCollectionID(
 	key := keys.NewCollectionID(collectionID)
 	valueBytes, err := systemStore.Get(ctx, key.Bytes())
 	if err != nil {
-		return 0, NewErrGetShortCollectionID(err, collectionID)
+		if errors.Is(err, corekv.ErrNotFound) {
+			err = NewErrGetShortCollectionID(client.ErrCollectionNotFound, collectionID)
+		}
+		return 0, err
 	}
 	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
 	if err != nil {
