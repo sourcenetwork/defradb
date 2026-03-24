@@ -153,7 +153,7 @@ In this document, we use the default configuration, which has the following beha
 
 - `~/.defradb/` is DefraDB's configuration and data directory
 - `client` command interacts with the locally running node
-- The GraphQL endpoint is provided at http://localhost:9181/api/graphql
+- The GraphQL endpoint is provided at <http://localhost:9181/api/graphql> and a versioned API endpoint is provided at <http://localhost:9181/api/v1/graphql>
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 

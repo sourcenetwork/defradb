@@ -52,7 +52,7 @@ func NewDefraVersion() (defraVersion, error) {
 		Release:        GitRelease,
 		Commit:         GitCommit,
 		CommitDate:     GitCommitDate,
-		VersionHTTPAPI: http.VersionV1,
+		VersionHTTPAPI: http.Version,
 		NetProtocol:    string(net.Protocol),
 	}
 	var docIDVersions []string
