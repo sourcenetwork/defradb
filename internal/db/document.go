@@ -137,6 +137,8 @@ func (c *collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -152,6 +154,7 @@ func (c *collection) AddDocument(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = c.add(ctx, doc, opt)
@@ -169,6 +172,8 @@ func (c *collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -184,6 +189,7 @@ func (c *collection) AddManyDocuments(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	for _, doc := range docs {
@@ -192,6 +198,7 @@ func (c *collection) AddManyDocuments(
 			return err
 		}
 	}
+
 	return txn.Commit()
 }
 
@@ -266,7 +273,6 @@ func (c *collection) add(
 
 	ctx = setContextDocEncryption(ctx, opt)
 
-	// write data to DB via MerkleClock/CRDT
 	err = c.save(ctx, doc, true)
 	if err != nil {
 		return err
@@ -299,6 +305,8 @@ func (c *collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -314,6 +322,7 @@ func (c *collection) UpdateDocument(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -381,6 +390,8 @@ func (c *collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -396,6 +407,7 @@ func (c *collection) SaveDocument(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	// Check if document already exists with primary DS key.
@@ -629,6 +641,8 @@ func (c *collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -644,6 +658,7 @@ func (c *collection) DeleteDocument(
 	if err != nil {
 		return false, err
 	}
+
 	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
@@ -660,6 +675,7 @@ func (c *collection) DeleteDocument(
 	if err != nil {
 		return false, err
 	}
+
 	return true, txn.Commit()
 }
 
@@ -684,6 +700,7 @@ func (c *collection) ExistsDocument(
 	if err != nil {
 		return false, err
 	}
+
 	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
@@ -695,6 +712,7 @@ func (c *collection) ExistsDocument(
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
 	}
+
 	return exists && !isDeleted, txn.Commit()
 }
 

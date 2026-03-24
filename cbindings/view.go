@@ -48,6 +48,8 @@ func AddView(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -90,6 +92,8 @@ func RefreshView(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	err = store.RefreshViews(ctx, opt)
 	if err != nil {

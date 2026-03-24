@@ -38,6 +38,8 @@ func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.cha
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opt := options.WithIdentity(options.AddDACPolicy(), iIdentity.FromContext(ctx))
 	policyResult, err := store.AddDACPolicy(ctx, C.GoString(policy), opt)
 	if err != nil {
@@ -67,6 +69,8 @@ func ACPAddDACActorRelationship(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	addOpt := options.WithIdentity(options.AddDACActorRelationship(), iIdentity.FromContext(ctx))
 	result, err := store.AddDACActorRelationship(
@@ -105,6 +109,8 @@ func ACPDeleteDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	delOpt := options.WithIdentity(options.DeleteDACActorRelationship(), iIdentity.FromContext(ctx))
 	result, err := store.DeleteDACActorRelationship(
 		ctx,
@@ -135,6 +141,8 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	disableOpt := options.WithIdentity(options.DisableNAC(), iIdentity.FromContext(ctx))
 	if err := store.DisableNAC(ctx, disableOpt); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -156,6 +164,8 @@ func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	reEnableOpt := options.WithIdentity(options.ReEnableNAC(), iIdentity.FromContext(ctx))
 	if err := store.ReEnableNAC(ctx, reEnableOpt); err != nil {
@@ -183,6 +193,8 @@ func ACPAddNACActorRelationship(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	addNACOpt := options.WithIdentity(options.AddNACActorRelationship(), iIdentity.FromContext(ctx))
 	addNACActorRelationshipResult, err := store.AddNACActorRelationship(
@@ -217,6 +229,8 @@ func ACPDeleteNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	delNACOpt := options.WithIdentity(options.DeleteNACActorRelationship(), iIdentity.FromContext(ctx))
 	deleteNACActorRelationshipResult, err := store.DeleteNACActorRelationship(
 		ctx,
@@ -244,6 +258,8 @@ func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	getNACOpt := options.WithIdentity(options.GetNACStatus(), iIdentity.FromContext(ctx))
 	status, err := store.GetNACStatus(ctx, getNACOpt)

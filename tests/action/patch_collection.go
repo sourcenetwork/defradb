@@ -12,11 +12,13 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 // PatchCollection executes a patch collection command, updating 0 to many collections and applying
@@ -45,6 +47,9 @@ type PatchCollection struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*PatchCollection)(nil)
@@ -66,12 +71,23 @@ func (a *PatchCollection) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			err = txn.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		} else {
+			err = node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		}
+
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	// If the collection was updated we need to refresh the collection definitions.
-	refreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }
