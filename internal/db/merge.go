@@ -19,6 +19,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -251,11 +252,23 @@ func (db *DB) executeMergeBatchWritesOnly(
 
 		err = mp.loadComposites(mergeCtx, dagMerge.Cid, mt)
 		if err != nil {
+			if isBlockNotFoundError(err) {
+				log.InfoContext(ctx, "Skipping merge for purged document",
+					corelog.Any("Cid", dagMerge.Cid),
+					corelog.String("DocID", dagMerge.DocID))
+				continue
+			}
 			return nil, err
 		}
 
 		_, err = mp.mergeComposites(mergeCtx)
 		if err != nil {
+			if isBlockNotFoundError(err) {
+				log.InfoContext(ctx, "Skipping merge for purged document",
+					corelog.Any("Cid", dagMerge.Cid),
+					corelog.String("DocID", dagMerge.DocID))
+				continue
+			}
 			return nil, err
 		}
 
@@ -319,11 +332,23 @@ func (db *DB) mergeWithTxn(ctx context.Context, col *collection, evt event.Merge
 
 	err = mp.loadComposites(mergeCtx, evt.Cid, mt)
 	if err != nil {
+		if isBlockNotFoundError(err) {
+			log.InfoContext(ctx, "Skipping merge for purged document",
+				corelog.Any("Cid", evt.Cid),
+				corelog.String("DocID", evt.DocID))
+			return nil
+		}
 		return err
 	}
 
 	ctx, err = mp.mergeComposites(mergeCtx)
 	if err != nil {
+		if isBlockNotFoundError(err) {
+			log.InfoContext(ctx, "Skipping merge for purged document",
+				corelog.Any("Cid", evt.Cid),
+				corelog.String("DocID", evt.DocID))
+			return nil
+		}
 		return err
 	}
 
@@ -373,6 +398,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	err = mp.loadComposites(mergeCtx, dagMerge.Cid, mt)
 	if err != nil {
+		if isBlockNotFoundError(err) {
+			log.InfoContext(ctx, "Skipping merge for purged document",
+				corelog.Any("Cid", dagMerge.Cid),
+				corelog.String("DocID", dagMerge.DocID))
+			return txn.Commit()
+		}
 		return err
 	}
 
@@ -380,6 +411,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	// so we need to use the returned context which contains the current transaction
 	ctx, err = mp.mergeComposites(mergeCtx)
 	if err != nil {
+		if isBlockNotFoundError(err) {
+			log.InfoContext(ctx, "Skipping merge for purged document",
+				corelog.Any("Cid", dagMerge.Cid),
+				corelog.String("DocID", dagMerge.DocID))
+			return txn.Commit()
+		}
 		return err
 	}
 
@@ -832,6 +869,15 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	}
 	mp.docIDs[docID] = doc
 	return nil
+}
+
+// isBlockNotFoundError returns true if the error indicates a missing block in the blockstore.
+// This can happen when the pruner deletes old document blocks while P2P peers still reference them.
+func isBlockNotFoundError(err error) bool {
+	if errors.Is(err, corekv.ErrNotFound) {
+		return true
+	}
+	return errors.Is(err, ipld.ErrNotFound{})
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
