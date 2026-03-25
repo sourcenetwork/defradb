@@ -52,7 +52,7 @@ type Parser interface {
 	Parse(context.Context, *ast.Document, *client.GQLOptions) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
-	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
+	NewFilterFromString(ctx context.Context, collectionType string, body string) (immutable.Option[request.Filter], error)
 
 	// ParseSDL parses an SDL string into a set of collection versions.
 	//
