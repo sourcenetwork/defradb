@@ -1227,12 +1227,12 @@ func TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOr
 			// Orphan publisher — passes filter, no related book
 			&action.AddDoc{
 				CollectionID: 1,
-				Doc: `{"name": "IncludedOrphan"}`,
+				Doc:          `{"name": "IncludedOrphan"}`,
 			},
 			// Orphan publisher — should be excluded by filter, no related book
 			&action.AddDoc{
 				CollectionID: 1,
-				Doc: `{"name": "ExcludedOrphan"}`,
+				Doc:          `{"name": "ExcludedOrphan"}`,
 			},
 			// @exhaustive includes orphans. ASC ordering puts orphans (no book) first.
 			// The scalar filter should exclude "ExcludedOrphan" even from the orphan scan.
