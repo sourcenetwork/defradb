@@ -1069,3 +1069,78 @@ func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testi
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans verifies
+// that scalar filter conditions on the parent (primary) side are applied to the orphan scan
+// when using @exhaustive with ordering by a relation field.
+//
+// The orphan node in retrievePrimaryDocs builds its filter from r.filter (the child's subFilter),
+// which does NOT include scalar conditions left on the parent's scan by prepareScanNodeFilterForTypeJoin.
+// If the orphan scan misses these conditions, orphan documents that should be filtered out will
+// incorrectly appear in results.
+func TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			// Linked publisher — passes filter, has a related book
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			// Orphan publisher — passes filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{"name": "IncludedOrphan"}`,
+			},
+			// Orphan publisher — should be excluded by filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{"name": "ExcludedOrphan"}`,
+			},
+			// @exhaustive includes orphans. ASC ordering puts orphans (no book) first.
+			// The scalar filter should exclude "ExcludedOrphan" even from the orphan scan.
+			&action.Request{
+				Request: `query @exhaustive {
+					Publisher(
+						filter: {name: {_neq: "ExcludedOrphan"}},
+						order: {book: {rating: ASC}}
+					) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{"name": "IncludedOrphan"},
+						{"name": "LinkedPublisher"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+
