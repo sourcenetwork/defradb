@@ -496,17 +496,6 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
 			node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
-			// When the join is inverted and the child side (now first) is secondary (does not
-			// store the FK), the parent scan's filter will be overwritten by
-			// retrievePrimaryDocs during execution. Move any remaining parent scan filter
-			// conditions (scalar fields) to the selectNode so they are evaluated post-join.
-			if !node.childSide.isPrimary() {
-				parentScan := getNode[*scanNode](node.parentSide.plan)
-				if parentScan.filter != nil {
-					parentPlan.selectNode.filter = filter.Merge(parentPlan.selectNode.filter, parentScan.filter)
-					parentScan.filter = nil
-				}
-			}
 			// If there's a sub-filter on the child side, remove the related field condition from
 			// the parent filter. This prevents re-evaluation at the parent level which would fail
 			// when the sub-filter modifies the child docs (e.g., filtering by model="Galaxy" when
