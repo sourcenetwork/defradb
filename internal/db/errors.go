@@ -97,7 +97,7 @@ const (
 	errP2PColHasPolicy                     string = "p2p collection specified has a policy on it"
 	errReplicatorColHasPolicy              string = "replicator collection specified has a policy on it"
 	errNoTransactionInContext              string = "no transaction in context"
-	errReplicatorExists                    string = "replicator already exists for %s with peerID %s"
+	errReplicatorExists                    string = "replicator already exists"
 	errReplicatorDocID                     string = "failed to get docID for replicator"
 	errCanNotEncryptBuiltinField           string = "can not encrypt build-in field"
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"

@@ -52,13 +52,13 @@ var (
 
 	// Sentinels used only for errors.Is matching in httpStatusFromError.
 	// These mirror the message strings from internal/db and acp packages.
-	errDocumentAlreadyExists              = errors.New("a document with the given ID already exists")
-	errIndexWithNameAlreadyExists         = errors.New("index with name already exists")
-	errIndexWithNameDoesNotExists         = errors.New("index with name doesn't exists")
-	errEncryptedIndexAlreadyExists        = errors.New("encrypted index already exists on this field")
-	errEncryptedIndexDoesNotExist         = errors.New("encrypted index does not exist on this field")
-	errReplicatorExists                   = errors.New("replicator already exists for %s with peerID %s")
-	errResourceIsMissingRequiredPermisson = errors.New("resource is missing required permission on policy")
+	errDocumentAlreadyExists               = errors.New("a document with the given ID already exists")
+	errIndexWithNameAlreadyExists          = errors.New("index with name already exists")
+	errIndexWithNameDoesNotExists          = errors.New("index with name doesn't exists")
+	errEncryptedIndexAlreadyExists         = errors.New("encrypted index already exists on this field")
+	errEncryptedIndexDoesNotExist          = errors.New("encrypted index does not exist on this field")
+	errReplicatorExists                    = errors.New("replicator already exists")
+	errResourceIsMissingRequiredPermission = errors.New("resource is missing required permission on policy")
 )
 
 type errorResponse struct {
@@ -121,7 +121,7 @@ func httpStatusFromError(err error) int {
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
 		errors.Is(err, client.ErrOperationRequiresDeveloperMode) ||
 		errors.Is(err, client.ErrCanNotDoThisNACOpWithNACIsDisabled) ||
-		errors.Is(err, errResourceIsMissingRequiredPermisson) {
+		errors.Is(err, errResourceIsMissingRequiredPermission) {
 		return http.StatusForbidden
 	}
 
