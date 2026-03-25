@@ -1186,13 +1186,8 @@ func TestQueryWithIndex_WithScalarAndRelationFilterAtTopLevel_ShouldApplyBothAsA
 }
 
 // TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans verifies
-// that scalar filter conditions on the parent (primary) side are applied to the orphan scan
-// when using @exhaustive with ordering by a relation field.
-//
-// The orphan node in retrievePrimaryDocs builds its filter from r.filter (the child's subFilter),
-// which does NOT include scalar conditions left on the parent's scan by prepareScanNodeFilterForTypeJoin.
-// If the orphan scan misses these conditions, orphan documents that should be filtered out will
-// incorrectly appear in results.
+// that @exhaustive with relation ordering still respects scalar filters on the primary type,
+// including for orphan documents (documents without a related record).
 func TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
