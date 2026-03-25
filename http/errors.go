@@ -13,9 +13,15 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
+	"github.com/sourcenetwork/corekv"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 )
 
 const (
@@ -43,6 +49,16 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
+
+	// Sentinels used only for errors.Is matching in httpStatusFromError.
+	// These mirror the message strings from internal/db and acp packages.
+	errDocumentAlreadyExists              = errors.New("a document with the given ID already exists")
+	errIndexWithNameAlreadyExists         = errors.New("index with name already exists")
+	errIndexWithNameDoesNotExists         = errors.New("index with name doesn't exists")
+	errEncryptedIndexAlreadyExists        = errors.New("encrypted index already exists on this field")
+	errEncryptedIndexDoesNotExist         = errors.New("encrypted index does not exist on this field")
+	errReplicatorExists                   = errors.New("replicator already exists for %s with peerID %s")
+	errResourceIsMissingRequiredPermisson = errors.New("resource is missing required permission on policy")
 )
 
 type errorResponse struct {
@@ -92,4 +108,69 @@ func NewErrCollectionNotFound(collectionName string) error {
 		errCollectionNotFound,
 		errors.NewKV("CollectionName", collectionName),
 	)
+}
+
+// httpStatusFromError maps known error types to appropriate HTTP status codes.
+func httpStatusFromError(err error) int {
+	// 401 Unauthorized
+	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
+		return http.StatusUnauthorized
+	}
+
+	// 403 Forbidden
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
+		errors.Is(err, client.ErrOperationRequiresDeveloperMode) ||
+		errors.Is(err, client.ErrCanNotDoThisNACOpWithNACIsDisabled) ||
+		errors.Is(err, errResourceIsMissingRequiredPermisson) {
+		return http.StatusForbidden
+	}
+
+	// 404 Not Found
+	if errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, db.ErrDocIDNotFound) ||
+		errors.Is(err, errIndexWithNameDoesNotExists) ||
+		errors.Is(err, errEncryptedIndexDoesNotExist) ||
+		errors.Is(err, db.ErrCollectionRootNotFound) ||
+		errors.Is(err, db.ErrLensCIDNotFound) ||
+		errors.Is(err, p2p.ErrReplicatorNotFound) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
+		return http.StatusNotFound
+	}
+
+	// 409 Conflict
+	if errors.Is(err, db.ErrCollectionAlreadyExists) ||
+		errors.Is(err, errDocumentAlreadyExists) ||
+		errors.Is(err, errIndexWithNameAlreadyExists) ||
+		errors.Is(err, errEncryptedIndexAlreadyExists) ||
+		errors.Is(err, errReplicatorExists) ||
+		errors.Is(err, db.ErrMultipleActiveCollectionVersions) ||
+		errors.Is(err, corekv.ErrTxnConflict) {
+		return http.StatusConflict
+	}
+
+	// 422 Unprocessable Entity
+	if errors.Is(err, db.ErrCanNotHavePolicyWithoutACP) ||
+		errors.Is(err, db.ErrMaterializedViewAndACPNotSupported) ||
+		errors.Is(err, db.ErrColNotMaterialized) ||
+		errors.Is(err, db.ErrColMutatingIsBranchable) ||
+		errors.Is(err, db.ErrP2PColHasPolicy) ||
+		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
+		errors.Is(err, db.ErrCollectionNameMutated) ||
+		errors.Is(err, db.ErrCannotDeleteOldVersion) ||
+		errors.Is(err, db.ErrCannotDeleteCollectionWithDocs) ||
+		errors.Is(err, db.ErrMigrationBetweenNonAdjacentVersions) ||
+		errors.Is(err, db.ErrNACIsAlreadyDisabled) ||
+		errors.Is(err, db.ErrNACIsAlreadyEnabled) ||
+		errors.Is(err, client.ErrACPOperationButACPNotAvailable) {
+		return http.StatusUnprocessableEntity
+	}
+
+	// 503 Service Unavailable
+	if errors.Is(err, ErrP2PDisabled) {
+		return http.StatusServiceUnavailable
+	}
+
+	// 400 Bad Request (default)
+	return http.StatusBadRequest
 }

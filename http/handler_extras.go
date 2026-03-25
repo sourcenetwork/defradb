@@ -23,14 +23,14 @@ import (
 type extrasHandler struct{}
 
 func (h *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
-	// Send either 200 or 400 response based on whether the server is in dev mode
+	// Send either 200 or 403 response based on whether the server is in dev mode
 	if IsDevMode {
 		rw.WriteHeader(http.StatusOK)
 
 		db := mustGetContextClientDB(req)
 		db.Events().Publish(event.NewMessage(event.PurgeName, nil))
 	} else {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("Purge")})
+		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("Purge")})
 	}
 }
 

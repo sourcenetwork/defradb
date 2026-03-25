@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -93,12 +92,10 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
 			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-				rw.WriteHeader(http.StatusUnauthorized)
-				_, _ = fmt.Fprintln(rw, err.Error())
+				responseJSON(rw, http.StatusUnauthorized, errorResponse{err})
 				return
 			}
-			rw.WriteHeader(http.StatusNotFound)
-			_, _ = fmt.Fprintln(rw, err.Error())
+			responseJSON(rw, http.StatusNotFound, errorResponse{err})
 			return
 		}
 
