@@ -682,16 +682,12 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 				relFieldName, _ := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
 				relIDFieldName := request.ToFieldID(relFieldName)
 				relIDFieldMapIndex := r.primaryScan.documentMapping.FirstIndexOfName(relIDFieldName)
-				parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-					r.targetSecondaryDoc.GetID())
-				orphan.setSubQueryContext(parentFilter, relIDFieldName, relIDFieldMapIndex)
+				orphan.setSubQueryContext(r.filter, relIDFieldName, relIDFieldMapIndex)
 			}
 		} else {
 			orphan := getNode[*orphanPointLookupNode](r.primarySide.plan)
 			if orphan != nil {
-				parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-					r.targetSecondaryDoc.GetID())
-				orphan.setSubQueryFilter(parentFilter)
+				orphan.setSubQueryFilter(r.filter)
 			}
 		}
 	}
