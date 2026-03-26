@@ -21,7 +21,14 @@ import (
 	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/internal/bledriver"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+
+	proximity "berty.tech/weshnet/v2/pkg/proximitytransport"
+	libp2p "github.com/libp2p/go-libp2p"
+	"go.uber.org/zap"
+
+	_ "berty.tech/weshnet/v2/pkg/ble-driver"
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
@@ -30,9 +37,20 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 	}
 
 	var p2pOpts []p2p.NodeOpt
-	if len(n.opts.P2P.ListenAddresses) > 0 {
-		p2pOpts = append(p2pOpts, p2p.WithListenAddresses(n.opts.P2P.ListenAddresses...))
+
+	listenAddresses := n.opts.P2P.ListenAddresses
+
+	// If the BLE driver is enabled, add the BLE transport
+	if bledriver.IsEnabled() {
+		logger, _ := zap.NewProduction()
+		listenAddresses = append(listenAddresses, "/ble/Qmeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+		p2pOpts = append(p2pOpts, p2p.WithExtraLibP2POpts(
+			libp2p.Transport(proximity.NewTransport(ctx, logger, bledriver.Driver)),
+		))
 	}
+
+	p2pOpts = append(p2pOpts, p2p.WithListenAddresses(listenAddresses...))
+
 	if len(n.opts.P2P.BootstrapPeers) > 0 {
 		p2pOpts = append(p2pOpts, p2p.WithBootstrapPeers(n.opts.P2P.BootstrapPeers...))
 	}
@@ -53,5 +71,13 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 		return err
 	}
 	n.peer = peer
+
+	proximity.TransportMapMutex.RLock()
+	transport, ok := proximity.TransportMap["ble"]
+	proximity.TransportMapMutex.RUnlock()
+	if ok {
+		bledriver.SetTransport(transport)
+	}
+
 	return nil
 }
