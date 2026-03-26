@@ -77,6 +77,8 @@ func NewIndex(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	ident := iIdentity.FromContext(ctx)
 	col, err := store.GetCollectionByName(ctx, collectionName,
 		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
@@ -104,6 +106,8 @@ func ListIndexes(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	ident := iIdentity.FromContext(ctx)
 	collectionName := C.GoString(options.name)
@@ -149,6 +153,8 @@ func DeleteIndex(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	ident := iIdentity.FromContext(ctx)
 	col, err := store.GetCollectionByName(ctx, collectionName,

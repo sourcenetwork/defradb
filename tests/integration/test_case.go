@@ -192,6 +192,9 @@ type SetActiveCollectionVersion struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // DocIndex represents a relation field value, it allows relation fields to be set without worrying
@@ -248,6 +251,9 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateDoc will attempt to update the given document using the set [state.MutationType].
@@ -293,6 +299,9 @@ type UpdateDoc struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateWithFilter will update the set of documents that match the given filter.
@@ -335,6 +344,9 @@ type UpdateWithFilter struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // NewEncryptedIndex will attempt to make a new encrypted index on the given collection
@@ -364,6 +376,9 @@ type NewEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListEncryptedIndexes will attempt to list encrypted index from the given collection
@@ -390,6 +405,9 @@ type ListEncryptedIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
@@ -438,6 +456,9 @@ type DeleteEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -649,6 +670,9 @@ type VerifyBlockSignature struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // SyncDocs will synchronize documents from the network via P2P.

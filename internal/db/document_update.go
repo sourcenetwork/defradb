@@ -35,6 +35,8 @@ func (c *collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -50,12 +52,14 @@ func (c *collection) UpdateDocumentsWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
+
 	return res, txn.Commit()
 }
 
@@ -164,7 +168,7 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		f, err = c.db.parser.NewFilterFromString(ctx, c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}

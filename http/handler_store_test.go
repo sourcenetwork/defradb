@@ -35,7 +35,7 @@ func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/graphql", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -69,7 +69,7 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/graphql", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -116,7 +116,7 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	encodedQuery := url.QueryEscape(query)
 	encodedOperationName := url.QueryEscape(operationName)
 
-	endpointURL := "http://localhost:9181/api/v0/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName
+	endpointURL := "http://localhost:9181/api/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName
 
 	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
 	rec := httptest.NewRecorder()
@@ -162,7 +162,7 @@ func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
 	encodedOperationName := url.QueryEscape(operationName)
 	encodedVariables := url.QueryEscape(variables)
 
-	endpointURL := "http://localhost:9181/api/v0/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName + "&variables=" + encodedVariables
+	endpointURL := "http://localhost:9181/api/graphql?query=" + encodedQuery + "&operationName=" + encodedOperationName + "&variables=" + encodedVariables
 
 	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
 	rec := httptest.NewRecorder()

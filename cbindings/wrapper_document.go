@@ -44,6 +44,8 @@ func (c *Collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	addOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
 	if addOpts.EncryptDoc {
@@ -77,8 +79,9 @@ func (c *Collection) AddDocument(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.AddDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cJSON,
 		C.int(isEncrypted),
 		encryptedFields,
@@ -91,6 +94,7 @@ func (c *Collection) AddDocument(
 	}
 
 	doc.Clean()
+
 	return nil
 }
 
@@ -140,8 +144,9 @@ func (c *Collection) AddManyDocuments(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.AddDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cJSON,
 		C.int(isEncrypted),
 		encryptedFields,
@@ -163,6 +168,8 @@ func (c *Collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
 	document, err := doc.ToJSONPatch()
@@ -189,8 +196,9 @@ func (c *Collection) UpdateDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.UpdateDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filter,
 		updater,
@@ -202,6 +210,7 @@ func (c *Collection) UpdateDocument(
 		return errors.New(res.Error)
 	}
 	doc.Clean()
+
 	return nil
 }
 
@@ -234,6 +243,8 @@ func (c *Collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
 
@@ -254,8 +265,9 @@ func (c *Collection) DeleteDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		filter,
 		copts,
@@ -265,6 +277,7 @@ func (c *Collection) DeleteDocument(
 	if res.Status != 0 {
 		return false, errors.New(res.Error)
 	}
+
 	return true, nil
 }
 
@@ -273,6 +286,8 @@ func (c *Collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
@@ -292,8 +307,9 @@ func (c *Collection) ExistsDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.GetDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		cShowDeleted,
 		copts,
@@ -303,6 +319,7 @@ func (c *Collection) ExistsDocument(
 	if res.Status != 0 {
 		return false, errors.New(res.Error)
 	}
+
 	return true, nil
 }
 
@@ -312,6 +329,8 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -337,8 +356,9 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.UpdateDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filterStr,
 		cUpdater,
@@ -363,6 +383,8 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -387,8 +409,9 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docID,
 		filterStr,
 		copts,
@@ -412,6 +435,8 @@ func (c *Collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
 	if opt.ShowDeleted {
@@ -435,8 +460,9 @@ func (c *Collection) GetDocument(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.GetDocument(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		docIDStr,
 		cShowDeleted,
 		copts,

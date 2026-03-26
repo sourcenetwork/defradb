@@ -151,7 +151,9 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -205,8 +207,6 @@ func waitForUpdateEvents(
 	}
 }
 
-// waitForMergeEvents waits for all expected heads to be merged to all nodes.
-//
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 //

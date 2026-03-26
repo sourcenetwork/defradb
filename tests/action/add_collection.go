@@ -12,11 +12,12 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // AddCollection is an action that will add the given GQL SDL to the Defra nodes.
@@ -50,6 +51,9 @@ type AddCollection struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddCollection)(nil)
@@ -67,8 +71,20 @@ func (a *AddCollection) Execute() {
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		results, err := node.AddCollection(a.s.Ctx, sdl, opts)
 
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		var results []client.CollectionVersion
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			results, err = txn.AddCollection(a.s.Ctx, sdl, opts)
+		} else {
+			results, err = node.AddCollection(a.s.Ctx, sdl, opts)
+		}
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
 		}
@@ -82,6 +98,7 @@ func (a *AddCollection) Execute() {
 		}
 	}
 
-	// If the collection was updated we need to refresh the collection definitions.
-	refreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }

@@ -216,3 +216,28 @@ func keyTypeToJWK(keyType crypto.KeyType) jwa.SignatureAlgorithm {
 	}
 	return jwa.ES256K
 }
+
+// cloneFullIdentity creates a deep copy of the given fullIdentity.
+func cloneFullIdentity(orig *fullIdentity) *fullIdentity {
+	if orig == nil {
+		return nil
+	}
+	return &fullIdentity{
+		identity: identity{
+			did:       orig.did,
+			publicKey: orig.publicKey,
+		},
+		bearerToken: orig.bearerToken,
+		privateKey:  orig.privateKey,
+	}
+}
+
+// CloneIdentity creates a deep copy of the given identity.
+// This exists so as to allow parallel test actions to avoid race conditions.
+// Specifically, the GetCanonicallyOrderedCollections function requires this functionality
+func CloneIdentity(orig Identity) Identity {
+	if f, ok := orig.(*fullIdentity); ok {
+		return cloneFullIdentity(f)
+	}
+	return orig
+}

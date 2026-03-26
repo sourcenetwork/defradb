@@ -146,11 +146,37 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 	return ch
 }
 
-func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
-	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
-		if h, ok := txnHandleMap.Load(txn); ok {
-			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
-		}
+// getNodeOrTxnHandle is a helper function that gets a node or transaction handle from a context
+func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn {
+		return C.uintptr_t(nodeHandle)
 	}
-	return C.uintptr_t(h)
+
+	id := txn.ID()
+
+	if storedHandle, ok := txnHandleMap.Load(id); ok {
+		handle, ok := storedHandle.(cgo.Handle)
+		if !ok {
+			// This should not happen, but we defensively panic to be safe
+			panic("txnHandleMap stored value is not a cgo.Handle")
+		}
+		return C.uintptr_t(handle)
+	}
+
+	return C.uintptr_t(nodeHandle)
+}
+
+// setCtxTxnFromCollection is a helper function that checks if a collection has a transaction
+// attached to it, and if so, attaches it to the context
+func setCtxTxnFromCollection(ctx context.Context, c *Collection) context.Context {
+	if c.txn.HasValue() {
+		txn, ok := c.txn.Value().(datastore.Txn)
+		if !ok {
+			// This should not happen, but we defensively panic to be safe
+			panic("txn is not a datastore.Txn")
+		}
+		return datastore.CtxSetTxn(ctx, txn)
+	}
+	return ctx
 }
