@@ -294,12 +294,8 @@ func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// todo: The following test should be enabled once any bugs inside UpdateWithFilter are resolved
-// see: https://github.com/sourcenetwork/defradb/issues/4614
-
 // This test runs UpdateWithFilter inside of a transaction, and illustrates that it can work on
 // the documents created inside that transaction.
-/*
 func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -350,4 +346,3 @@ func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/

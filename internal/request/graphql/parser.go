@@ -183,6 +183,19 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 	return err
 }
 
-func (p *parser) NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error) {
+func (p *parser) NewFilterFromString(
+	ctx context.Context,
+	collectionType string,
+	body string) (immutable.Option[request.Filter], error) {
+	// If there was a transaction, try to use the schema manager for that transaction
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		p.schemaManagerMapLock.RLock()
+		gotSchemaManager, ok := p.schemaManagerMap[txn.ID()]
+		p.schemaManagerMapLock.RUnlock()
+		if ok {
+			return defrap.NewFilterFromString(*gotSchemaManager.Schema(), collectionType, body)
+		}
+	}
 	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
 }
