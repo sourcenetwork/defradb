@@ -64,7 +64,7 @@ CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=arm64 \
 CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android${API_LEVEL}-clang" \
-go build -tags "cshared android" -buildmode=c-shared \
+go build -tags "cshared android jni" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/arm64-v8a/libdefradb.so" ./cbindings
 
@@ -74,7 +74,7 @@ CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=amd64 \
 CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/x86_64-linux-android${API_LEVEL}-clang" \
-go build -tags "cshared android" -buildmode=c-shared \
+go build -tags "cshared android jni" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/x86_64/libdefradb.so" ./cbindings
 

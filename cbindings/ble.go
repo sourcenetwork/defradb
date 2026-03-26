@@ -1,3 +1,15 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+//go:build jni
+
 package cbindings
 
 /*
@@ -13,7 +25,6 @@ extern void CallCloseConnWithPeer(const char* remotePID);
 import "C"
 
 import (
-	"fmt"
 	"unsafe"
 
 	proximity "berty.tech/weshnet/v2/pkg/proximitytransport"
@@ -24,16 +35,12 @@ import (
 func BLEHandleFoundPeer(remotePID *C.char) C.int {
 	t := bledriver.GetTransport()
 	if t == nil {
-		fmt.Println("BLE_LOG: BLEHandleFoundPeer: transport is nil")
 		return 0
 	}
 	pid := C.GoString(remotePID)
-	fmt.Println("BLE_LOG: BLEHandleFoundPeer: calling HandleFoundPeer for", pid)
 	if t.HandleFoundPeer(pid) {
-		fmt.Println("BLE_LOG: BLEHandleFoundPeer: returned true")
 		return 1
 	}
-	fmt.Println("BLE_LOG: BLEHandleFoundPeer: returned false")
 	return 0
 }
 
