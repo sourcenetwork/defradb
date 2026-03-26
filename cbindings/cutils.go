@@ -27,6 +27,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
 
@@ -153,6 +154,7 @@ func getNodeFromPointer(nodePtr C.uintptr_t) (n *node.Node, err error) {
 	return n, nil
 }
 
+// getIdentityFromPointer will return an identity from a pointer if it is a valid identity handle.
 func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, err error) {
 	if identityPtr == 0 {
 		return nil, nil
@@ -166,6 +168,23 @@ func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, e
 		return v, nil
 	default:
 		return nil, NewErrInvalidCGOHandle(uintptr(identityPtr))
+	}
+}
+
+// attachTxnFromPointer will return a new context with a transaction attached to it if the
+// pointer was a valid transaction handle. If it was not, it will return the original context.
+func attachTxnFromPointer(nodePtr C.uintptr_t, ctx context.Context) context.Context {
+	v, err := recoverHandleValue(nodePtr)
+	if err != nil {
+		return ctx
+	}
+	switch v := v.(type) {
+	case *node.Node:
+		return ctx
+	case client.Txn:
+		return datastore.CtxSetFromClientTxn(ctx, v)
+	default:
+		return ctx
 	}
 }
 

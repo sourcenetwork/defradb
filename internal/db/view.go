@@ -140,7 +140,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 }
 
 func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions) ([]client.CollectionVersion, error) {
-	cols, err := db.getCollections(ctx, opts)
+	cols, err := db.getCollections(ctx, opts, true)
 	if err != nil {
 		return nil, err
 	}

@@ -36,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -43,6 +44,7 @@ var _ client.Collection = (*Collection)(nil)
 type Collection struct {
 	def client.CollectionVersion
 	w   *CWrapper
+	txn immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -60,12 +62,13 @@ func (c *Collection) VersionID() string {
 func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
-
 func (c *Collection) NewIndex(
 	ctx context.Context,
 	indexDesc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")
@@ -100,8 +103,9 @@ func (c *Collection) NewIndex(
 		cUnique = 1
 	}
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cIndexDescName,
 		fields,
 		cUnique,
@@ -117,6 +121,7 @@ func (c *Collection) NewIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
+
 	return retRes, nil
 }
 
@@ -125,6 +130,8 @@ func (c *Collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
 	cVersion := C.CString("")
@@ -143,8 +150,9 @@ func (c *Collection) DeleteIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteIndex(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		cIndexName,
 		copts,
 		cIdentity,
@@ -153,6 +161,7 @@ func (c *Collection) DeleteIndex(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
 	return nil
 }
 
@@ -160,6 +169,8 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.IndexDescription, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -176,7 +187,8 @@ func (c *Collection) ListIndexes(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.ListIndexes(C.uintptr_t(c.w.handle), copts, cIdentity))
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ListIndexes(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)
@@ -186,6 +198,7 @@ func (c *Collection) ListIndexes(
 	if err != nil {
 		return []client.IndexDescription{}, err
 	}
+
 	return retRes, nil
 }
 
@@ -194,6 +207,8 @@ func (c *Collection) NewEncryptedIndex(
 	req client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
 	defer C.free(unsafe.Pointer(name))
@@ -202,8 +217,9 @@ func (c *Collection) NewEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewEncryptedIndex(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		name,
 		fieldName,
 		cIdentity,
@@ -217,6 +233,7 @@ func (c *Collection) NewEncryptedIndex(
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
+
 	return retRes, nil
 }
 
@@ -225,6 +242,8 @@ func (c *Collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	name := C.CString(c.def.Name)
 	cFieldName := C.CString(fieldName)
 	defer C.free(unsafe.Pointer(name))
@@ -233,8 +252,9 @@ func (c *Collection) DeleteEncryptedIndex(
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteEncryptedIndex(
-		C.uintptr_t(c.w.handle),
+		callHandle,
 		name,
 		cFieldName,
 		cIdentity,
@@ -243,18 +263,22 @@ func (c *Collection) DeleteEncryptedIndex(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
 	return nil
 }
 
 func (c *Collection) ListEncryptedIndexes(
 	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	name := C.CString(c.def.Name)
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(name))
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.ListEncryptedIndexes(C.uintptr_t(c.w.handle), name, cIdentity))
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ListEncryptedIndexes(callHandle, name, cIdentity))
 
 	if res.Status != 0 {
 		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
@@ -264,12 +288,15 @@ func (c *Collection) ListEncryptedIndexes(
 	if err != nil {
 		return []client.EncryptedIndexDescription{}, err
 	}
+
 	return retRes, nil
 }
 
 func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -286,9 +313,10 @@ func (c *Collection) Truncate(
 	copts.name = cName
 	copts.getInactive = 0
 
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(
 		C.TruncateCollection(
-			C.uintptr_t(c.w.handle),
+			callHandle,
 			copts,
 			cIdentity,
 		),

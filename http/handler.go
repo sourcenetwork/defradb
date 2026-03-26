@@ -25,8 +25,15 @@ import (
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
 var IsDevMode bool = false
 
-// Version is the identifier for the current API version.
-var Version string = "v0"
+const (
+	// VersionV0 is the identifier for the v0 API version.
+	//
+	// This is left in for backwards compatibility as we
+	// transition to v1 and should be removed in v2.
+	VersionV0 string = "v0"
+	// Version is the identifier for the v1 API version.
+	Version string = "v1"
+)
 
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
@@ -87,12 +94,16 @@ func NewHandler(db DB) (*Handler, error) {
 	}
 	txs := &sync.Map{}
 	mux := chi.NewMux()
-	mux.Route("/api/"+Version, func(r chi.Router) {
+	mux.Route("/api", func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
+		// This is left in for backwards compatibility as we
+		// transition to v1 and should be removed in v2.
+		r.Mount("/"+VersionV0, router)
+		r.Mount("/"+Version, router)
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {

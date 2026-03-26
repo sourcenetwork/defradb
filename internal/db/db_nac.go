@@ -399,6 +399,7 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.nodeACP.NodeACP.ResetState(ctx)
@@ -426,6 +427,7 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	nodeDescBytes, err := json.Marshal(db.nodeACP.NodeACPDesc)

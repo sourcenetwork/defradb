@@ -45,6 +45,8 @@ func NewEncryptedIndex(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
 	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)
 	if err != nil {
@@ -70,6 +72,8 @@ func ListEncryptedIndexes(nodePtr C.uintptr_t, collectionName *C.char, identityP
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	colName := C.GoString(collectionName)
 	switch {
@@ -117,6 +121,8 @@ func DeleteEncryptedIndex(
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
 	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)

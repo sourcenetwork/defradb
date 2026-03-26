@@ -83,6 +83,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -429,6 +430,21 @@ func (w *CWrapper) AddCollection(
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
+	// Attach transaction to context if one was passed in
+	var txn datastore.Txn
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		txn = gotTxn
+	} else {
+		clientTxn, _ := w.NewTxn(false)
+		var ok bool
+		txn, ok = clientTxn.(datastore.Txn)
+		if !ok {
+			return nil, errors.New("failed to cast clientTxn to datastore.Txn")
+		}
+	}
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 	cSDL := C.CString(sdl)
@@ -445,6 +461,12 @@ func (w *CWrapper) AddCollection(
 	if err != nil {
 		return nil, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		_ = txn.Commit()
+	}
+
 	return collectionVersions, nil
 }
 
@@ -669,6 +691,7 @@ func (w *CWrapper) PatchCollection(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
 	return nil
 }
 
@@ -875,6 +898,11 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+	if hadTxn {
+		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	}
+
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
@@ -895,9 +923,16 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		txnOpt = immutable.Some(txn)
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
-		cols[i] = &Collection{def: def, w: w}
+		cols[i] = &Collection{def: def, w: w, txn: txnOpt}
 	}
 	return cols, nil
 }
@@ -1004,6 +1039,7 @@ func (w *CWrapper) ExecRequest(
 	if err := json.Unmarshal([]byte(res.Value), &retval.GQL); err != nil {
 		retval.GQL.Errors = append(retval.GQL.Errors, err)
 	}
+
 	return retval
 }
 
@@ -1023,10 +1059,9 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
-
+	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
+	retTxn := &Transaction{w, dsTxn, handle}
+	txnHandleMap.Store(retTxn.tx.ID(), handle)
 	return retTxn, nil
 }
 
@@ -1046,9 +1081,9 @@ func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
+	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
+	retTxn := &Transaction{w, dsTxn, handle}
+	txnHandleMap.Store(retTxn.tx.ID(), handle)
 
 	return retTxn, nil
 }
@@ -1122,7 +1157,8 @@ func (w *CWrapper) VerifySignature(
 	defer C.free(unsafe.Pointer(cBlockCid))
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.VerifyBlockSignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, cIdentity))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.VerifyBlockSignature(callHandle, cKeyType, cPubKey, cBlockCid, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

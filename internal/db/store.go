@@ -20,6 +20,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -43,6 +44,7 @@ func (db *DB) ExecRequest(
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
+
 	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
@@ -83,6 +85,7 @@ func (db *DB) GetCollectionByName(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
@@ -93,6 +96,8 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -102,13 +107,15 @@ func (db *DB) GetCollections(
 		return nil, err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	var err error
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.getCollections(ctx, opt)
+	return db.getCollections(ctx, opt, !hadTxn)
 }
 
 // ListIndexes gets all the indexes in the database.
@@ -129,6 +136,7 @@ func (db *DB) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listIndexDescriptions(ctx)
@@ -152,6 +160,7 @@ func (db *DB) ListAllEncryptedIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listAllEncryptedIndexDescriptions(ctx)
@@ -180,6 +189,7 @@ func (db *DB) AddCollection(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	cols, err := db.addCollection(ctx, sdl)
@@ -224,6 +234,7 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.patchCollection(ctx, patchString, migration)
@@ -252,6 +263,7 @@ func (db *DB) SetActiveCollectionVersion(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
@@ -315,6 +327,7 @@ func (db *DB) AddLens(
 	if err != nil {
 		return "", err
 	}
+
 	defer txn.Discard()
 
 	lensID, err := db.addLens(ctx, lens)
@@ -348,9 +361,15 @@ func (db *DB) ListLenses(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.listLenses(ctx)
+	lenses, err := db.listLenses(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lenses, nil
 }
 
 func (db *DB) AddView(
@@ -405,6 +424,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opt)
