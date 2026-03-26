@@ -40,7 +40,7 @@ var _ client.Txn = (*Transaction)(nil)
 
 type Transaction struct {
 	*CWrapper
-	tx     client.Txn
+	tx     datastore.Txn
 	handle cgo.Handle
 }
 
@@ -110,6 +110,7 @@ func (txn *Transaction) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
@@ -118,6 +119,7 @@ func (txn *Transaction) AddCollection(
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddCollection(ctx, sdl, opts...)
 }
 
@@ -127,6 +129,7 @@ func (txn *Transaction) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
@@ -135,6 +138,7 @@ func (txn *Transaction) SetActiveCollectionVersion(
 	version string,
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
@@ -144,18 +148,21 @@ func (txn *Transaction) AddView(
 	sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
 func (txn *Transaction) RefreshViews(
 	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 
 func (txn *Transaction) SetMigration(
 	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.SetMigration(ctx, config, opts...)
 }
 
@@ -164,6 +171,7 @@ func (txn *Transaction) AddLens(
 	lens model.Lens,
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.AddLens(ctx, lens, opts...)
 }
 
@@ -171,6 +179,7 @@ func (txn *Transaction) ListLenses(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListLenses(ctx, opts...)
 }
 
@@ -179,6 +188,7 @@ func (txn *Transaction) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
 
@@ -186,6 +196,7 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }
 
@@ -193,6 +204,7 @@ func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListIndexes(ctx, opts...)
 }
 
@@ -201,10 +213,12 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
 
 func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.BasicImport(ctx, filepath)
 }
 
@@ -213,57 +227,58 @@ func (txn *Transaction) BasicExport(
 	filepath string,
 	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.BasicExport(ctx, filepath, opts...)
 }
 
 func (txn *Transaction) Blockstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Blockstore() //nolint:forcetypeassert
+	return txn.tx.Blockstore()
 }
 
 func (txn *Transaction) Datastore() datastore.Keyedstore {
-	return txn.tx.(datastore.Txn).Datastore() //nolint:forcetypeassert
+	return txn.tx.Datastore()
 }
 
 func (txn *Transaction) Encstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Encstore() //nolint:forcetypeassert
+	return txn.tx.Encstore()
 }
 
 func (txn *Transaction) Headstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Headstore() //nolint:forcetypeassert
+	return txn.tx.Headstore()
 }
 
 func (txn *Transaction) Peerstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Peerstore() //nolint:forcetypeassert
+	return txn.tx.Peerstore()
 }
 
 func (txn *Transaction) Rootstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Rootstore() //nolint:forcetypeassert
+	return txn.tx.Rootstore()
 }
 
 func (txn *Transaction) Systemstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Systemstore() //nolint:forcetypeassert
+	return txn.tx.Systemstore()
 }
 
 func (txn *Transaction) OnSuccess(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccess(fn) //nolint:forcetypeassert
+	txn.tx.OnSuccess(fn)
 }
 
 func (txn *Transaction) OnError(fn func()) {
-	txn.tx.(datastore.Txn).OnError(fn) //nolint:forcetypeassert
+	txn.tx.OnError(fn)
 }
 
 func (txn *Transaction) OnDiscard(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscard(fn) //nolint:forcetypeassert
+	txn.tx.OnDiscard(fn)
 }
 
 func (txn *Transaction) OnSuccessAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccessAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnSuccessAsync(fn)
 }
 
 func (txn *Transaction) OnErrorAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnErrorAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnErrorAsync(fn)
 }
 
 func (txn *Transaction) OnDiscardAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscardAsync(fn) //nolint:forcetypeassert
+	txn.tx.OnDiscardAsync(fn)
 }

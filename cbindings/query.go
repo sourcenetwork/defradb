@@ -137,6 +137,8 @@ func ExecuteQuery(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	ctx, cancelFunc := context.WithCancel(ctx)
 
 	res := store.ExecRequest(ctx, C.GoString(query), opt)

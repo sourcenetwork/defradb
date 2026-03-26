@@ -1069,3 +1069,209 @@ func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testi
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndex_WithScalarAndRelationFilterAtTopLevel_ShouldApplyBothAsAnd(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String @index
+						published: [Book]
+					}
+
+					type Book {
+						title: String
+						rating: Float
+						author: Author
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Cornelia Funke"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Painted House",
+					"rating": 4.9,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "A Time to Kill",
+					"rating": 4.0,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Theif Lord",
+					"rating": 4.8,
+					"author": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Inkheart",
+					"rating": 4.4,
+					"author": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			// Implicit AND: scalar + relation conditions at top level
+			&action.Request{
+				Request: `query {
+					Book(filter: {rating: {_gt: 4.5}, author: {name: {_eq: "John Grisham"}}}) {
+						title
+						rating
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"title":  "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			// Explicit _and: same conditions, should produce identical results
+			&action.Request{
+				Request: `query {
+					Book(filter: {_and: [{rating: {_gt: 4.5}}, {author: {name: {_eq: "John Grisham"}}}]}) {
+						title
+						rating
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"title":  "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithMultipleScalarsAndRelationFilter_ShouldApplyAllAsAnd(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String @index
+						published: [Book]
+					}
+
+					type Book {
+						title: String
+						rating: Float
+						genre: String
+						author: Author
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Cornelia Funke"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Painted House",
+					"rating": 4.9,
+					"genre":  "drama",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "A Time to Kill",
+					"rating": 4.0,
+					"genre":  "thriller",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "The Firm",
+					"rating": 4.5,
+					"genre":  "thriller",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Theif Lord",
+					"rating": 4.8,
+					"genre":  "fantasy",
+					"author": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Book(filter: {genre: {_eq: "thriller"}, rating: {_gt: 4.0}, author: {name: {_eq: "John Grisham"}}}) {
+						title
+						rating
+						genre
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"title":  "The Firm",
+							"rating": 4.5,
+							"genre":  "thriller",
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

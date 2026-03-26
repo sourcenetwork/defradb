@@ -53,6 +53,8 @@ func SetLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.c
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	setOpt := options.WithIdentity(options.SetMigration(), acpIdentity.FromContext(ctx))
 	lensID, err := store.SetMigration(ctx, migrationCfg, setOpt)
 	if err != nil {
@@ -80,6 +82,8 @@ func AddLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	addOpt := options.WithIdentity(options.AddLens(), acpIdentity.FromContext(ctx))
 	lensID, err := store.AddLens(ctx, lensCfg, addOpt)

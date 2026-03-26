@@ -24,7 +24,7 @@ import (
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
 	test := testUtils.TestCase{
 		// LevelDB does not support concurrent transactions
-		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
@@ -186,7 +186,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
 	test := testUtils.TestCase{
 		// LevelDB does not support concurrent transactions
-		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,

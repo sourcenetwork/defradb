@@ -14,12 +14,13 @@ package tests
 import (
 	"os"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 const (
@@ -65,7 +66,6 @@ func configureMigration(
 	action ConfigureMigration,
 ) {
 	var lensID string
-
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -76,10 +76,22 @@ func configureMigration(
 			migrationOpts.SetIdentity(identOption.Value())
 		}
 
-		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			var err error
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
+		}
+
 		ctx := db.InitContext(s.Ctx, txn)
 		var err error
-		lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		if hadTxn {
+			lensID, err = txn.SetMigration(ctx, action.LensConfig, migrationOpts)
+		} else {
+			lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		}
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

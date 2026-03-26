@@ -82,17 +82,28 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	hadTxn := a.TransactionID.HasValue()
+
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*AddDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(
+		*AddDoc,
+		client.TxnStore,
+		int,
+		client.Collection,
+		immutable.Option[client.Txn],
+	) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = addDocViaColSave
@@ -106,11 +117,26 @@ func (a *AddDoc) Execute() {
 
 	var expectedErrorRaised bool
 	var docIDs []client.DocID
+	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		var err error
+		a.DoNotWaitForEvent = true
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		require.NoError(a.s.T, err)
+		txnOption = immutable.Some(txn)
+	}
+
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collection := collections[a.CollectionID]
+
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -120,6 +146,7 @@ func (a *AddDoc) Execute() {
 					node,
 					nodeID,
 					collection,
+					txnOption,
 				)
 				return err
 			},
@@ -142,7 +169,8 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
+	// If there was an explicit transaction, then we will not be waiting for update events.
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -152,26 +180,28 @@ func addDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
 		return nil, err
 	}
+
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
 		err := collection.SaveDocument(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
+
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -180,13 +210,12 @@ func addDocViaColAdd(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
@@ -211,6 +240,7 @@ func addDocViaColAdd(
 	for i, doc := range docs {
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -219,7 +249,13 @@ func addDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
+
 	var input string
 
 	paramName := request.Input
@@ -250,20 +286,18 @@ func addDocViaGQL(
 	key := fmt.Sprintf("add_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
-
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
 	if identOption.HasValue() {
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(ctx, req, reqOption)
+	var result *client.RequestResult
+	if txn.HasValue() {
+		result = txn.Value().ExecRequest(ctx, req, reqOption)
+	} else {
+		result = node.ExecRequest(ctx, req, reqOption)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}

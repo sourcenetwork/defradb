@@ -44,6 +44,7 @@ func NodeIdentity(indexSelector int) immutable.Option[state.Identity] {
 func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex int) acpIdentity.Identity {
 	identHolder := state.GetIdentityHolder(s, identity)
 	ident := identHolder.Identity
+	ident = acpIdentity.CloneIdentity(ident)
 
 	if fullIdent, ok := ident.(acpIdentity.FullIdentity); ok {
 		audience := state.GetNodeAudience(s, nodeIndex)
