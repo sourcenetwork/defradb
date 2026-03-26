@@ -114,6 +114,8 @@ func ConfigureTelemetry(ctx context.Context, version string) error {
 			warnOnce.Do(func() {
 				log.ErrorE("OpenTelemetry export failed, ensure your OTLP collector is running and reachable", err)
 			})
+		} else {
+			log.ErrorE("OpenTelemetry error", err)
 		}
 	}))
 	return nil
