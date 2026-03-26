@@ -31,6 +31,7 @@ import (
 
 func init() {
 	bledriver.Driver = &JNIDriver{}
+	bledriver.Enable()
 }
 
 type JNIDriver struct{}

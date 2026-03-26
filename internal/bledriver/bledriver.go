@@ -26,6 +26,7 @@ var Driver proximity.ProximityDriver = &NoopDriver{}
 var (
 	transport   proximity.ProximityTransport
 	transportMu sync.RWMutex
+	bleEnabled  bool
 )
 
 func SetTransport(t proximity.ProximityTransport) {
@@ -40,10 +41,13 @@ func GetTransport() proximity.ProximityTransport {
 	return transport
 }
 
+func Enable() {
+	bleEnabled = true
+}
+
 // This will return true if a real driver has been injected, false otherwise
 func IsEnabled() bool {
-	_, ok := Driver.(*NoopDriver)
-	return !ok
+	return bleEnabled
 }
 
 type NoopDriver struct{}
