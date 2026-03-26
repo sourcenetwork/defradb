@@ -100,7 +100,7 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 
 	testFixturePath := getFullFixturePath(fixtureName)
 
-	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli",
+	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
 		"diff",
 		string(sdlResult),
 		testFixturePath)
