@@ -642,7 +642,7 @@
     },
     "info": {
         "title": "DefraDB API",
-        "version": "0"
+        "version": "1"
     },
     "openapi": "3.0.3",
     "paths": {
@@ -2851,8 +2851,16 @@
     },
     "servers": [
         {
-            "description": "Local DefraDB instance",
+            "description": "DefraDB latest version",
+            "url": "/api"
+        },
+        {
+            "description": "DefraDB version 0",
             "url": "/api/v0"
+        },
+        {
+            "description": "DefraDB version 1",
+            "url": "/api/v1"
         }
     ],
     "tags": [
