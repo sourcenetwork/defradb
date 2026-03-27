@@ -93,6 +93,42 @@ func TestTruncateCollectionAdd_RemovesSignedDocument(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestTruncateCollectionAdd_RemovesEncryptedDocument(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID:   0,
+				IsDocEncrypted: true,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.Truncate{
+				CollectionIndex: 0,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestTruncateCollectionAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
