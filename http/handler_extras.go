@@ -47,7 +47,7 @@ func (h *extrasHandler) bindRoutes(router *Router) {
 	purge.OperationID = "purge"
 	purge.Responses = openapi3.NewResponses()
 	purge.Responses.Set("200", successResponse)
-	purge.Responses.Set("400", errorResponse)
+	purge.Responses.Set("403", errorResponse)
 
 	router.AddRoute("/purge", http.MethodPost, purge, h.Purge)
 }

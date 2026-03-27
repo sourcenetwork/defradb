@@ -49,16 +49,7 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
-
-	// Sentinels used only for errors.Is matching in httpStatusFromError.
-	// These mirror the message strings from internal/db and acp packages.
-	errDocumentAlreadyExists               = errors.New("a document with the given ID already exists")
-	errIndexWithNameAlreadyExists          = errors.New("index with name already exists")
-	errIndexWithNameDoesNotExists          = errors.New("index with name doesn't exists")
-	errEncryptedIndexAlreadyExists         = errors.New("encrypted index already exists on this field")
-	errEncryptedIndexDoesNotExist          = errors.New("encrypted index does not exist on this field")
-	errReplicatorExists                    = errors.New("replicator already exists")
-	errResourceIsMissingRequiredPermission = errors.New("resource is missing required permission on policy")
+	ErrTransactionNotFound          = errors.New("transaction not found")
 )
 
 type errorResponse struct {
@@ -118,18 +109,19 @@ func httpStatusFromError(err error) int {
 	}
 
 	// 403 Forbidden
-	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
-		errors.Is(err, client.ErrOperationRequiresDeveloperMode) ||
+	if errors.Is(err, client.ErrOperationRequiresDeveloperMode) ||
 		errors.Is(err, client.ErrCanNotDoThisNACOpWithNACIsDisabled) ||
-		errors.Is(err, errResourceIsMissingRequiredPermission) {
+		errors.Is(err, db.ErrMissingPermission) ||
+		errors.Is(err, acp.ErrResourceIsMissingRequiredPermission) {
 		return http.StatusForbidden
 	}
 
 	// 404 Not Found
-	if errors.Is(err, client.ErrCollectionNotFound) ||
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
+		errors.Is(err, client.ErrCollectionNotFound) ||
 		errors.Is(err, db.ErrDocIDNotFound) ||
-		errors.Is(err, errIndexWithNameDoesNotExists) ||
-		errors.Is(err, errEncryptedIndexDoesNotExist) ||
+		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
+		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||
 		errors.Is(err, db.ErrCollectionRootNotFound) ||
 		errors.Is(err, db.ErrLensCIDNotFound) ||
 		errors.Is(err, p2p.ErrReplicatorNotFound) ||
@@ -140,10 +132,10 @@ func httpStatusFromError(err error) int {
 
 	// 409 Conflict
 	if errors.Is(err, db.ErrCollectionAlreadyExists) ||
-		errors.Is(err, errDocumentAlreadyExists) ||
-		errors.Is(err, errIndexWithNameAlreadyExists) ||
-		errors.Is(err, errEncryptedIndexAlreadyExists) ||
-		errors.Is(err, errReplicatorExists) ||
+		errors.Is(err, db.ErrDocumentAlreadyExists) ||
+		errors.Is(err, db.ErrIndexWithNameAlreadyExists) ||
+		errors.Is(err, db.ErrEncryptedIndexAlreadyExists) ||
+		errors.Is(err, db.ErrReplicatorExists) ||
 		errors.Is(err, db.ErrMultipleActiveCollectionVersions) ||
 		errors.Is(err, corekv.ErrTxnConflict) {
 		return http.StatusConflict

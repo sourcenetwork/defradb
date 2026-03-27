@@ -298,7 +298,7 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 		lenses, err = txn.ListLenses(ctx, opts)
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 

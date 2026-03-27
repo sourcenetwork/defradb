@@ -193,6 +193,12 @@ var (
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
 	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
+	ErrDocumentAlreadyExists                     = errors.New(errDocumentAlreadyExists)
+	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
+	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
+	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
+	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
+	ErrReplicatorExists                          = errors.New(errReplicatorExists)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

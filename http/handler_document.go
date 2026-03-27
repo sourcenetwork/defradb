@@ -99,7 +99,7 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusForbidden, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
@@ -166,7 +166,7 @@ func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Reques
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusForbidden, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
