@@ -76,7 +76,6 @@ func TestTruncateCollectionAdd_RemovesSignedDocument(t *testing.T) {
 			},
 			&action.Truncate{
 				CollectionIndex: 0,
-				ExpectedError:   "failed to unmarshal block",
 			},
 			&action.Request{
 				Request: `query {
@@ -85,11 +84,7 @@ func TestTruncateCollectionAdd_RemovesSignedDocument(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},
