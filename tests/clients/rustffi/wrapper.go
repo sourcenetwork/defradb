@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -2530,11 +2529,6 @@ func normalizeExplainTypes(v any) any {
 				result[i] = item.(map[string]any)
 			}
 			return result
-		}
-		return val
-	case int64:
-		if val >= math.MinInt32 && val <= math.MaxInt32 {
-			return int32(val)
 		}
 		return val
 	default:
