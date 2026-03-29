@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	internalIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/rustffi"
@@ -101,7 +102,7 @@ func setupRustFFIClient(
 	// Use identity context for NAC-gated operations (GetNACStatus requires NacStatus permission).
 	var identityCtx context.Context
 	if identity.HasValue() {
-		identityCtx = acpIdentity.WithContext(s.Ctx, identity)
+		identityCtx = internalIdentity.WithContext(s.Ctx, identity)
 	} else {
 		identityCtx = s.Ctx
 	}
@@ -133,7 +134,7 @@ func setupRustFFIClient(
 			if nacStatus.Status == "disabled temporarily" {
 				rustStatus2, rustErr2 := wrapper.GetNACStatus(identityCtx)
 				if rustErr2 != nil || rustStatus2.Status != "disabled temporarily" {
-					ctx := acpIdentity.WithContext(s.Ctx, identity)
+					ctx := internalIdentity.WithContext(s.Ctx, identity)
 					if err := wrapper.DisableNAC(ctx); err != nil {
 						wrapper.Close()
 						return nil, fmt.Errorf("failed to mirror NAC disabled state: %w", err)
