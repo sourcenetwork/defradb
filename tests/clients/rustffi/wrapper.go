@@ -1603,7 +1603,9 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	// Allow GossipSub mesh formation after connecting.
 	// Without this delay, simultaneous updates from multiple peers may not
 	// propagate because the mesh hasn't stabilized yet.
-	time.Sleep(100 * time.Millisecond)
+	// GossipSub heartbeat interval is typically 1s; we need enough time for
+	// at least one heartbeat cycle to graft the mesh links.
+	time.Sleep(1 * time.Second)
 
 	return nil
 }
@@ -1621,6 +1623,12 @@ func (w *Wrapper) AddReplicator(ctx context.Context, addresses []string, opts ..
 			return err
 		}
 	}
+
+	// Allow GossipSub mesh formation after adding replicator.
+	// P2PSetReplicator implicitly connects to the target peer; the mesh
+	// needs time to stabilize before updates can propagate reliably.
+	time.Sleep(1 * time.Second)
+
 	return nil
 }
 
