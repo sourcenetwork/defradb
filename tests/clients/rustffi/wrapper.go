@@ -594,8 +594,7 @@ func (w *Wrapper) ExecRequest(
 		varsJSON = string(varsBytes)
 	}
 
-	identityDID := ""
-	// identity now comes from options, not context
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	operationName := ""
 	if opt.OperationName.HasValue() {
@@ -764,8 +763,8 @@ func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID st
 }
 
 func (w *Wrapper) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	responseJSON, err := w.node.AddSchema(identityDID, sdl)
 	if err != nil {
@@ -781,8 +780,8 @@ func (w *Wrapper) AddCollection(ctx context.Context, sdl string, opts ...options
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	responseJSON, err := w.node.GetCollectionByName(identityDID, name)
 	if err != nil {
@@ -805,9 +804,7 @@ func (w *Wrapper) GetCollections(
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	opt := utils.NewOptions(opts...)
-
-	identityDID := ""
-	// identity now comes from options, not context
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	// If VersionID is specified, use the dedicated FFI function which returns
 	// "key not found" for missing versions (matches Go behavior).
@@ -898,8 +895,8 @@ func (w *Wrapper) GetCollections(
 }
 
 func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.SetActiveCollectionVersion(identityDID, versionID)
 }
@@ -910,8 +907,8 @@ func (w *Wrapper) PatchCollection(
 	migration immutable.Option[lensmodel.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	// Parse all operations to classify into collection-level removes vs modifications.
 	// Go's patchCollection operates on a global dict of all versions atomically.
@@ -1163,8 +1160,8 @@ func (w *Wrapper) resolveToVersionID(identityDID string, nameOrID string) string
 }
 
 func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	result, err := w.node.GetAllIndexes(identityDID)
 	if err != nil {
@@ -1287,8 +1284,8 @@ func (w *Wrapper) AddNACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	added, err := w.node.AddNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -1302,8 +1299,8 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	deleted, err := w.node.DeleteNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
@@ -1312,20 +1309,20 @@ func (w *Wrapper) DeleteNACActorRelationship(
 }
 
 func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.ReEnableNAC(requestorDID)
 }
 
 func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.DisableNAC(requestorDID)
 }
 
 func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...options.Enumerable[options.GetNACStatusOptions]) (client.NACStatusResult, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	status, err := w.node.GetNACStatus(identityDID)
 	if err != nil {
@@ -1348,8 +1345,8 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Enumerable[options.VerifySignatureOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.BlockVerifySignature(string(pubKey.Type()), pubKey.String(), blockCid, identityDID)
 }
 
@@ -1369,8 +1366,7 @@ func (w *Wrapper) AddView(
 		transformStr = opt.TransformCID.Value()
 	}
 
-	identityDID := ""
-	// identity now comes from options, not context
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	responseJSON, err := w.node.AddView(identityDID, gqlQuery, sdl, transformStr)
 	if err != nil {
@@ -1403,8 +1399,8 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig, op
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal config: %w", err)
 	}
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	// If the context carries a transaction, use the transaction-aware function
 	// so the migration is part of that transaction and only visible after commit.
@@ -1426,8 +1422,8 @@ func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens, opts ...opti
 }
 
 func (w *Wrapper) ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]lensmodel.Lens, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	raw, err := w.node.LensList(identityDID)
 	if err != nil {
@@ -1489,8 +1485,8 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	ffiIndexes, err := w.node.ListAllEncryptedIndexes(identityDID)
 	if err != nil {
@@ -1516,8 +1512,8 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 // ============================================================================
 
 func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	addrs, err := w.node.P2PPeerInfo(identityDID)
 	if err != nil {
@@ -1536,8 +1532,8 @@ func (w *Wrapper) ActivePeers(ctx context.Context, opts ...options.Enumerable[op
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	for _, addr := range addresses {
 		if err := w.node.P2PConnect(identityDID, addr); err != nil {
@@ -1551,10 +1547,8 @@ func (w *Wrapper) AddReplicator(ctx context.Context, addresses []string, opts ..
 	if len(addresses) == 0 {
 		return fmt.Errorf("at least one address is required")
 	}
-	identityDID := ""
-	// identity now comes from options, not context
-
 	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	collections := opt.CollectionNames
 
 	for _, addr := range addresses {
@@ -1574,8 +1568,8 @@ func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, opts ...optio
 }
 
 func (w *Wrapper) ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]client.Replicator, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	replicators, err := w.node.P2PGetAllReplicators(identityDID)
 	if err != nil {
@@ -1595,62 +1589,62 @@ func (w *Wrapper) ListReplicators(ctx context.Context, opts ...options.Enumerabl
 }
 
 func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.AddP2PCollectionsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PAddCollections(identityDID, collectionNames)
 }
 
 func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.DeleteP2PCollectionsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PRemoveCollections(identityDID, collectionNames)
 }
 
 func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumerable[options.ListP2PCollectionsOptions]) ([]string, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PGetAllCollections(identityDID)
 }
 
 func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.AddP2PDocumentsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PAddDocuments(identityDID, docIDs)
 }
 
 func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.DeleteP2PDocumentsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PRemoveDocuments(identityDID, docIDs)
 }
 
 func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerable[options.ListP2PDocumentsOptions]) ([]string, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return w.node.P2PGetAllDocuments(identityDID)
 }
 
 func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.P2PSyncDocuments(identityDID, collectionName, docIDs)
 }
 
 func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Enumerable[options.SyncCollectionVersionsOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.P2PSyncCollectionVersions(identityDID, versionIDs)
 }
 
 func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	return w.node.P2PSyncBranchableCollection(identityDID, collectionID)
 }
 
@@ -1705,8 +1699,7 @@ func (t *TxnWrapper) ExecRequest(
 		varsJSON = string(varsBytes)
 	}
 
-	identityDID := ""
-	// identity now comes from options, not context
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	operationName := ""
 	if opt.OperationName.HasValue() {
@@ -1756,9 +1749,7 @@ func (t *TxnWrapper) GetCollections(
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	opt := utils.NewOptions(opts...)
-
-	identityDID := ""
-	// identity now comes from options, not context
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	responseJSON, err := t.wrapper.node.GetCollectionsInTxn(t.txn.id, identityDID)
 	if err != nil {
@@ -2558,8 +2549,8 @@ func (c *CollectionWrapper) NewIndex(
 		}
 	}
 
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	index, err := c.wrapper.node.CreateIndex(identityDID, c.version.Name, req.Name, fields, req.Unique)
 	if err != nil {
@@ -2583,15 +2574,15 @@ func (c *CollectionWrapper) NewIndex(
 }
 
 func (c *CollectionWrapper) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return c.wrapper.node.DropIndex(identityDID, c.version.Name, indexName)
 }
 
 func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	indexes, err := c.wrapper.node.GetIndexes(identityDID, c.version.Name)
 	if err != nil {
@@ -2622,8 +2613,8 @@ func (c *CollectionWrapper) NewEncryptedIndex(
 	desc client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	ffiIdx, err := c.wrapper.node.CreateEncryptedIndex(identityDID, c.version.Name, desc.FieldName)
 	if err != nil {
@@ -2637,15 +2628,15 @@ func (c *CollectionWrapper) NewEncryptedIndex(
 }
 
 func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return c.wrapper.node.DeleteEncryptedIndex(identityDID, c.version.Name, fieldName)
 }
 
 func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	ffiIndexes, err := c.wrapper.node.ListEncryptedIndexes(identityDID, c.version.Name)
 	if err != nil {
@@ -2663,8 +2654,8 @@ func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context, opts ...op
 }
 
 func (c *CollectionWrapper) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	return c.wrapper.node.TruncateCollection(identityDID, c.version.Name)
 }
