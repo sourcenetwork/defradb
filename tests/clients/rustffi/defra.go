@@ -65,7 +65,8 @@ func mapFFIError(ffiOp string, rawErr string) error {
 	case strings.Contains(rawErr, "document not found or not authorized"):
 		return client.ErrDocumentNotFoundOrNotAuthorized
 
-	case strings.Contains(rawErr, "collection not found"):
+	case strings.Contains(rawErr, "collection not found"),
+		strings.Contains(rawErr, "not found - add schema before subscribing"):
 		return client.ErrCollectionNotFound
 
 	default:

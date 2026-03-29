@@ -1244,7 +1244,7 @@ func (w *Wrapper) AddDACActorRelationship(
 
 	// Emit update event when relationship is newly added (matches Go behavior)
 	if added {
-		w.publishRelationshipEvent(ctx, collectionName, docID)
+		w.publishRelationshipEvent(ctx, requestorDID, collectionName, docID)
 	}
 
 	return client.AddActorRelationshipResult{ExistedAlready: !added}, nil
@@ -1268,7 +1268,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 	// Emit update event when relationship is deleted (matches Go behavior)
 	if deleted {
-		w.publishRelationshipEvent(ctx, collectionName, docID)
+		w.publishRelationshipEvent(ctx, requestorDID, collectionName, docID)
 	}
 
 	return client.DeleteActorRelationshipResult{RecordFound: deleted}, nil
@@ -1277,14 +1277,21 @@ func (w *Wrapper) DeleteDACActorRelationship(
 // publishRelationshipEvent emits an update event after a DAC relationship change.
 // This matches Go DefraDB behavior where relationship add/delete triggers an update event
 // so the test framework's waitForUpdateEvents can synchronize.
-func (w *Wrapper) publishRelationshipEvent(ctx context.Context, collectionName string, docID string) {
-	col, err := w.GetCollectionByName(ctx, collectionName)
+// The requestorDID is needed to authenticate the collection lookup when NAC is enabled.
+func (w *Wrapper) publishRelationshipEvent(ctx context.Context, requestorDID string, collectionName string, docID string) {
+	responseJSON, err := w.node.GetCollectionByName(requestorDID, collectionName)
 	if err != nil {
 		return
 	}
-	cw, ok := col.(*CollectionWrapper)
-	if !ok {
+
+	var version client.CollectionVersion
+	if err := json.Unmarshal([]byte(responseJSON), &version); err != nil {
 		return
+	}
+
+	cw := &CollectionWrapper{
+		wrapper: w,
+		version: version,
 	}
 
 	compositeCid := cw.getLatestCompositeCID(ctx, docID)
@@ -1562,6 +1569,12 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 			return err
 		}
 	}
+
+	// Allow GossipSub mesh formation after connecting.
+	// Without this delay, simultaneous updates from multiple peers may not
+	// propagate because the mesh hasn't stabilized yet.
+	time.Sleep(100 * time.Millisecond)
+
 	return nil
 }
 
@@ -1648,6 +1661,9 @@ func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumer
 		for _, v := range versions {
 			cidToName[v.CollectionID] = v.Name
 		}
+		// Sort collection IDs lexicographically to match Go's datastore key ordering,
+		// then map to names in that order.
+		sort.Strings(collectionIDs)
 		names := make([]string, 0, len(collectionIDs))
 		for _, cid := range collectionIDs {
 			if name, ok := cidToName[cid]; ok {
@@ -1656,7 +1672,6 @@ func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumer
 				names = append(names, cid)
 			}
 		}
-		sort.Strings(names)
 		return names, nil
 	}
 
