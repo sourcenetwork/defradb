@@ -1201,8 +1201,8 @@ func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[op
 // ============================================================================
 
 func (w *Wrapper) AddDACPolicy(ctx context.Context, policy string, opts ...options.Enumerable[options.AddDACPolicyOptions]) (client.AddPolicyResult, error) {
-	identityDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 
 	policyID, err := w.node.AddDACPolicy(identityDID, policy)
 	if err != nil {
@@ -1220,8 +1220,8 @@ func (w *Wrapper) AddDACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	added, err := w.node.AddDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.AddActorRelationshipResult{},
@@ -1244,8 +1244,8 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	targetActor string,
 	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	requestorDID := ""
-	// identity now comes from options, not context
+	opt := utils.NewOptions(opts...)
+	requestorDID := identityDIDFromOption(opt.GetIdentity())
 	deleted, err := w.node.DeleteDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{},
