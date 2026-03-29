@@ -2483,24 +2483,33 @@ func convertDateTimeStrings(v any) any {
 }
 
 // normalizeExplainTypes fixes type mismatches in explain results returned by the Rust FFI.
-// Go's native query planner produces typed slices ([]string, []map[string]any) and int32 for
-// GraphQL Int values, while JSON decoding produces []interface{} and int64. This normalizes:
-//   - []interface{} of strings -> []string (fixes prefixes, docID fields)
-//   - []interface{} of maps -> []map[string]any (fixes childSelects, sources, operationNode)
-//   - int64 values in int32 range -> int32 (GraphQL Int is 32-bit per spec)
+// Go's native query planner produces typed slices ([]string) for string arrays, while JSON
+// decoding produces []interface{}. For map arrays, we intentionally leave them as []any so
+// that areResultsEqual can recurse element-by-element and handle nested numeric type
+// differences (int32 vs int64, uint64 vs int64) via ObjectsAreEqualValues.
+//
+// We also rename Rust-specific explain keys to match Go's naming (e.g. "create" -> "add").
 func normalizeExplainTypes(v any) any {
 	switch val := v.(type) {
 	case map[string]any:
+		// Rename Rust-specific keys to match Go's explain naming.
+		if createVal, ok := val["create"]; ok {
+			if _, hasAdd := val["add"]; !hasAdd {
+				val["add"] = createVal
+				delete(val, "create")
+			}
+		}
 		for k, child := range val {
 			val[k] = normalizeExplainTypes(child)
 		}
 		return val
 	case []any:
-		// First recurse into each element to normalize nested types.
+		// Recurse into each element to normalize nested types.
 		for i, item := range val {
 			val[i] = normalizeExplainTypes(item)
 		}
-		// Check if all elements are strings - if so, convert to []string.
+		// Convert []any of strings to []string (Go planner produces typed []string
+		// for prefixes, docID fields).
 		allStrings := len(val) > 0
 		for _, item := range val {
 			if _, ok := item.(string); !ok {
@@ -2515,21 +2524,12 @@ func normalizeExplainTypes(v any) any {
 			}
 			return result
 		}
-		// Check if all elements are map[string]any - if so, convert to []map[string]any.
-		allMaps := len(val) > 0
-		for _, item := range val {
-			if _, ok := item.(map[string]any); !ok {
-				allMaps = false
-				break
-			}
-		}
-		if allMaps {
-			result := make([]map[string]any, len(val))
-			for i, item := range val {
-				result[i] = item.(map[string]any)
-			}
-			return result
-		}
+		// Do NOT convert []any of maps to []map[string]any. The test framework's
+		// areResultsEqual handles []map[string]any (expected) vs []any (actual) by
+		// recursing element-by-element, which allows nested numeric type differences
+		// (int32 vs int64, uint64 vs int64) to be resolved via ObjectsAreEqualValues.
+		// Converting to []map[string]any would prevent this recursion because
+		// areResultArraysEqual expects actual.([]any) to succeed.
 		return val
 	default:
 		return val
