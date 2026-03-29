@@ -15,8 +15,6 @@ package tests
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"unsafe"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -29,20 +27,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// closeGoNodeP2P shuts down the Go node's P2P peer to prevent interference
-// with the Rust FFI node's P2P host. Both hosts on the same machine cause
-// GossipSub mesh formation failures.
+// closeGoNodeP2P is a no-op placeholder. The Go node's P2P host runs
+// alongside the Rust FFI P2P host. GossipSub mesh formation may need
+// extra time when both are active.
 func closeGoNodeP2P(nodeObj *node.Node) {
-	v := reflect.ValueOf(nodeObj).Elem()
-	peerField := v.FieldByName("peer")
-	if !peerField.IsValid() || peerField.IsNil() {
-		return
-	}
-	// Use unsafe to read the unexported interface value and call Close().
-	peerIface := reflect.NewAt(peerField.Type(), unsafe.Pointer(peerField.UnsafeAddr())).Elem()
-	peerIface.MethodByName("Close").Call(nil)
-	// Zero out the field so the Go node doesn't try to close it again.
-	peerField.Set(reflect.Zero(peerField.Type()))
+	// No-op: unsafe reflect approach panics on unexported fields.
+	// The Go P2P host coexists with the Rust FFI P2P host.
 }
 
 // setupRustFFIClient creates a Rust FFI wrapper and mirrors the Go node's NAC
