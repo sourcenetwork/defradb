@@ -433,12 +433,18 @@ docs:
 
 .PHONY: docs\:cli
 docs\:cli:
-	rm -f docs/website/references/cli/*.md
-	go run cmd/genclidocs/main.go -o docs/website/references/cli
+	rm -rf build/docs/references/cli
+	mkdir -p build/docs/references/cli
+	go run cmd/genclidocs/main.go -o build/docs/references/cli
 
 .PHONY: docs\:http
 docs\:http:
-	go run cmd/genopenapi/main.go | python -m json.tool > docs/website/references/http/openapi.json
+	mkdir -p build/docs/references/http
+	@if command -v python >/dev/null 2>&1; then \
+		go run cmd/genopenapi/main.go | python -m json.tool > build/docs/references/http/openapi.json; \
+	else \
+		go run cmd/genopenapi/main.go | python3 -m json.tool > build/docs/references/http/openapi.json; \
+	fi
 
 .PHONY: docs\:manpages
 docs\:manpages:
