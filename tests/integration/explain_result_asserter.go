@@ -432,6 +432,8 @@ func toUint64(val any) uint64 {
 	switch v := val.(type) {
 	case uint64:
 		return v
+	case int64:
+		return uint64(v)
 	case json.Number:
 		n, _ := v.Int64()
 		return uint64(n)
