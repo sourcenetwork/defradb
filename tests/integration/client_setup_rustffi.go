@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	internalIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -99,14 +100,16 @@ func setupRustFFIClient(
 	}
 
 	// Mirror the Go node's NAC state onto the Rust FFI node.
-	// Use identity context for NAC-gated operations (GetNACStatus requires NacStatus permission).
+	// Pass identity via options (not just context) because Go's GetNACStatus
+	// uses opt.Identity for the NAC permission check, not the context identity.
 	var identityCtx context.Context
 	if identity.HasValue() {
 		identityCtx = internalIdentity.WithContext(s.Ctx, identity)
 	} else {
 		identityCtx = s.Ctx
 	}
-	nacStatus, nacErr := nodeObj.DB.GetNACStatus(identityCtx)
+	getNACOpt := options.WithIdentity(options.GetNACStatus(), identity)
+	nacStatus, nacErr := nodeObj.DB.GetNACStatus(identityCtx, getNACOpt)
 	if nacErr == nil && identity.HasValue() {
 		ownerDID := identity.Value().DID()
 		if ownerDID != "" && (nacStatus.Status == "enabled" || nacStatus.Status == "disabled temporarily") {

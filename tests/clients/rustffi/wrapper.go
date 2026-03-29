@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -647,6 +648,9 @@ func (w *Wrapper) ExecRequest(
 	if gqlResult.Data != nil {
 		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
 		gqlResult.Data = decodeBase64Deltas(gqlResult.Data)
+		if isExplainResult(gqlResult.Data) {
+			gqlResult.Data = normalizeExplainTypes(gqlResult.Data)
+		}
 	}
 
 	// Rust's merge handler emits update events via the event bus, which the
@@ -1619,7 +1623,38 @@ func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumer
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
-	return w.node.P2PGetAllCollections(identityDID)
+	collectionIDs, err := w.node.P2PGetAllCollections(identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Rust returns schema root CIDs; Go expects collection names.
+	// Resolve CIDs back to names using the collections list.
+	if len(collectionIDs) > 0 {
+		collectionsJSON, err := w.node.GetCollections(identityDID)
+		if err != nil {
+			return collectionIDs, nil // fall back to raw IDs on error
+		}
+		var versions []client.CollectionVersion
+		if err := json.Unmarshal([]byte(collectionsJSON), &versions); err != nil {
+			return collectionIDs, nil
+		}
+		cidToName := make(map[string]string, len(versions))
+		for _, v := range versions {
+			cidToName[v.CollectionID] = v.Name
+		}
+		names := make([]string, 0, len(collectionIDs))
+		for _, cid := range collectionIDs {
+			if name, ok := cidToName[cid]; ok {
+				names = append(names, name)
+			} else {
+				names = append(names, cid)
+			}
+		}
+		return names, nil
+	}
+
+	return collectionIDs, nil
 }
 
 func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.AddP2PDocumentsOptions]) error {
@@ -1743,6 +1778,9 @@ func (t *TxnWrapper) ExecRequest(
 
 	if gqlResult.Data != nil {
 		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+		if isExplainResult(gqlResult.Data) {
+			gqlResult.Data = normalizeExplainTypes(gqlResult.Data)
+		}
 	}
 
 	return &client.RequestResult{GQL: gqlResult}
@@ -2443,6 +2481,75 @@ func convertDateTimeStrings(v any) any {
 	default:
 		return val
 	}
+}
+
+// normalizeExplainTypes fixes type mismatches in explain results returned by the Rust FFI.
+// Go's native query planner produces typed slices ([]string, []map[string]any) and int32 for
+// GraphQL Int values, while JSON decoding produces []interface{} and int64. This normalizes:
+//   - []interface{} of strings -> []string (fixes prefixes, docID fields)
+//   - []interface{} of maps -> []map[string]any (fixes childSelects, sources, operationNode)
+//   - int64 values in int32 range -> int32 (GraphQL Int is 32-bit per spec)
+func normalizeExplainTypes(v any) any {
+	switch val := v.(type) {
+	case map[string]any:
+		for k, child := range val {
+			val[k] = normalizeExplainTypes(child)
+		}
+		return val
+	case []any:
+		// First recurse into each element to normalize nested types.
+		for i, item := range val {
+			val[i] = normalizeExplainTypes(item)
+		}
+		// Check if all elements are strings - if so, convert to []string.
+		allStrings := len(val) > 0
+		for _, item := range val {
+			if _, ok := item.(string); !ok {
+				allStrings = false
+				break
+			}
+		}
+		if allStrings {
+			result := make([]string, len(val))
+			for i, item := range val {
+				result[i] = item.(string)
+			}
+			return result
+		}
+		// Check if all elements are map[string]any - if so, convert to []map[string]any.
+		allMaps := len(val) > 0
+		for _, item := range val {
+			if _, ok := item.(map[string]any); !ok {
+				allMaps = false
+				break
+			}
+		}
+		if allMaps {
+			result := make([]map[string]any, len(val))
+			for i, item := range val {
+				result[i] = item.(map[string]any)
+			}
+			return result
+		}
+		return val
+	case int64:
+		if val >= math.MinInt32 && val <= math.MaxInt32 {
+			return int32(val)
+		}
+		return val
+	default:
+		return val
+	}
+}
+
+// isExplainResult returns true if the GQL result data contains an explain response.
+func isExplainResult(data any) bool {
+	m, ok := data.(map[string]any)
+	if !ok {
+		return false
+	}
+	_, hasExplain := m["explain"]
+	return hasExplain
 }
 
 // decodeBase64Deltas walks a GQL result tree and converts any "delta" field
