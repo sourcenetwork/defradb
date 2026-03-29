@@ -29,9 +29,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/immutable"
 	lensmodel "github.com/sourcenetwork/lens/host-go/config/model"
@@ -102,6 +104,15 @@ func valueToGQLInput(v any) string {
 		b, _ := json.Marshal(val)
 		return string(b)
 	}
+}
+
+// identityDIDFromOption extracts the DID string from an identity option.
+// Returns empty string if no identity is set.
+func identityDIDFromOption(ident immutable.Option[identity.Identity]) string {
+	if ident.HasValue() {
+		return ident.Value().DID()
+	}
+	return ""
 }
 
 // Verify interface compliance at compile time
@@ -482,7 +493,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	// If the context carries a transaction (set by db.InitContext), delegate
 	// to the transaction-scoped ExecRequest so the Rust FFI executes within
@@ -493,14 +504,11 @@ func (w *Wrapper) ExecRequest(
 		}
 	}
 
-	gqlOpts := &client.GQLOptions{}
-	for _, opt := range opts {
-		opt(gqlOpts)
-	}
+	opt := utils.NewOptions(opts...)
 
 	varsJSON := ""
-	if gqlOpts.Variables != nil {
-		varsBytes, err := json.Marshal(gqlOpts.Variables)
+	if opt.Variables != nil {
+		varsBytes, err := json.Marshal(opt.Variables)
 		if err != nil {
 			return &client.RequestResult{
 				GQL: client.GQLResult{
@@ -512,11 +520,13 @@ func (w *Wrapper) ExecRequest(
 	}
 
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
-	execResult, err := w.node.ExecRequestFull(identityDID, request, gqlOpts.OperationName, varsJSON)
+	operationName := ""
+	if opt.OperationName.HasValue() {
+		operationName = opt.OperationName.Value()
+	}
+	execResult, err := w.node.ExecRequestFull(identityDID, request, operationName, varsJSON)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -678,11 +688,9 @@ func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID st
 	}
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+func (w *Wrapper) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	responseJSON, err := w.node.AddSchema(identityDID, sdl)
 	if err != nil {
@@ -697,11 +705,9 @@ func (w *Wrapper) AddSchema(ctx context.Context, sdl string) ([]client.Collectio
 	return versions, nil
 }
 
-func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
+func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	responseJSON, err := w.node.GetCollectionByName(identityDID, name)
 	if err != nil {
@@ -721,17 +727,17 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	opt := utils.NewOptions(opts...)
+
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	// If VersionID is specified, use the dedicated FFI function which returns
 	// "key not found" for missing versions (matches Go behavior).
-	if options.VersionID.HasValue() {
-		versionJSON, err := w.node.GetCollectionByVersionID(identityDID, options.VersionID.Value())
+	if opt.VersionID.HasValue() {
+		versionJSON, err := w.node.GetCollectionByVersionID(identityDID, opt.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -768,20 +774,20 @@ func (w *Wrapper) GetCollections(
 	}
 
 	// Apply filters
-	includeInactive := options.IncludeInactive.HasValue() && options.IncludeInactive.Value()
+	includeInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
 		if !includeInactive && !v.IsActive {
 			continue
 		}
-		if options.Name.HasValue() && v.Name != options.Name.Value() {
+		if opt.CollectionName.HasValue() && v.Name != opt.CollectionName.Value() {
 			continue
 		}
-		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
+		if opt.CollectionID.HasValue() && v.CollectionID != opt.CollectionID.Value() {
 			continue
 		}
-		if options.CollectionSetID.HasValue() {
-			if !v.CollectionSet.HasValue() || v.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+		if opt.CollectionSetID.HasValue() {
+			if !v.CollectionSet.HasValue() || v.CollectionSet.Value().CollectionSetID != opt.CollectionSetID.Value() {
 				continue
 			}
 		}
@@ -791,8 +797,8 @@ func (w *Wrapper) GetCollections(
 	// When filtering by CollectionID, Go returns the root version (whose VersionID == CollectionID)
 	// first, then remaining versions in KV order. Rust returns all versions in KV key order.
 	// Reorder to match Go's GetCollectionVersionIDs behavior.
-	if options.CollectionID.HasValue() {
-		rootID := options.CollectionID.Value()
+	if opt.CollectionID.HasValue() {
+		rootID := opt.CollectionID.Value()
 		var root []client.CollectionVersion
 		var rest []client.CollectionVersion
 		for _, v := range filtered {
@@ -816,11 +822,9 @@ func (w *Wrapper) GetCollections(
 	return collections, nil
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.SetActiveCollectionVersion(identityDID, versionID)
 }
@@ -829,11 +833,10 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[lensmodel.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	// Parse all operations to classify into collection-level removes vs modifications.
 	// Go's patchCollection operates on a global dict of all versions atomically.
@@ -1084,11 +1087,9 @@ func (w *Wrapper) resolveToVersionID(identityDID string, nameOrID string) string
 	return nameOrID
 }
 
-func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	result, err := w.node.GetAllIndexes(identityDID)
 	if err != nil {
@@ -1124,11 +1125,9 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 // client.Store interface - ACP methods
 // ============================================================================
 
-func (w *Wrapper) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+func (w *Wrapper) AddDACPolicy(ctx context.Context, policy string, opts ...options.Enumerable[options.AddDACPolicyOptions]) (client.AddPolicyResult, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	policyID, err := w.node.AddDACPolicy(identityDID, policy)
 	if err != nil {
@@ -1144,11 +1143,10 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	added, err := w.node.AddDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.AddActorRelationshipResult{},
@@ -1169,11 +1167,10 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	deleted, err := w.node.DeleteDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{},
@@ -1213,11 +1210,10 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	added, err := w.node.AddNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -1229,11 +1225,10 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	deleted, err := w.node.DeleteNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
@@ -1241,27 +1236,21 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	return client.DeleteActorRelationshipResult{RecordFound: deleted}, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.ReEnableNAC(requestorDID)
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	requestorDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		requestorDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.DisableNAC(requestorDID)
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...options.Enumerable[options.GetNACStatusOptions]) (client.NACStatusResult, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	status, err := w.node.GetNACStatus(identityDID)
 	if err != nil {
@@ -1283,11 +1272,9 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return immutable.Some(identity.PublicRawIdentity{DID: did}), nil
 }
 
-func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Enumerable[options.VerifySignatureOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.BlockVerifySignature(string(pubKey.Type()), pubKey.String(), blockCid, identityDID)
 }
 
@@ -1299,17 +1286,16 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	opt := utils.NewOptions(opts...)
 	transformStr := ""
-	if transformCID.HasValue() {
-		transformStr = transformCID.Value()
+	if opt.TransformCID.HasValue() {
+		transformStr = opt.TransformCID.Value()
 	}
 
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	responseJSON, err := w.node.AddView(identityDID, gqlQuery, sdl, transformStr)
 	if err != nil {
@@ -1324,10 +1310,11 @@ func (w *Wrapper) AddView(
 	return versions, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+	opt := utils.NewOptions(opts...)
 	optsJSON := ""
-	if opts.Name.HasValue() || opts.VersionID.HasValue() {
-		data, err := json.Marshal(opts)
+	if opt.CollectionName.HasValue() || opt.VersionID.HasValue() {
+		data, err := json.Marshal(opt)
 		if err != nil {
 			return fmt.Errorf("failed to marshal options: %w", err)
 		}
@@ -1336,15 +1323,13 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 	return w.node.RefreshViews(optsJSON)
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
 	configJSON, err := json.Marshal(config)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal config: %w", err)
 	}
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	// If the context carries a transaction, use the transaction-aware function
 	// so the migration is part of that transaction and only visible after commit.
@@ -1357,7 +1342,7 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	return w.node.SetMigration(identityDID, string(configJSON))
 }
 
-func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, error) {
+func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens, opts ...options.Enumerable[options.AddLensOptions]) (string, error) {
 	lensJSON, err := json.Marshal(lens)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal lens: %w", err)
@@ -1365,11 +1350,9 @@ func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, err
 	return w.node.LensAdd(string(lensJSON))
 }
 
-func (w *Wrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, error) {
+func (w *Wrapper) ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]lensmodel.Lens, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	raw, err := w.node.LensList(identityDID)
 	if err != nil {
@@ -1404,7 +1387,14 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return w.node.BasicImportDB(filepath)
 }
 
-func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error {
+	opt := utils.NewOptions(opts...)
+	config := &client.BackupConfig{
+		Filepath:    filepath,
+		Format:      opt.Format,
+		Pretty:      opt.Pretty,
+		Collections: opt.Collections,
+	}
 	configJSON, err := json.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal backup config: %w", err)
@@ -1422,11 +1412,10 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	ffiIndexes, err := w.node.ListAllEncryptedIndexes(identityDID)
 	if err != nil {
@@ -1451,11 +1440,9 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 // client.P2P interface
 // ============================================================================
 
-func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	addrs, err := w.node.P2PPeerInfo(identityDID)
 	if err != nil {
@@ -1469,15 +1456,13 @@ func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
 	return addrs, nil
 }
 
-func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
 	return w.node.P2PActivePeers()
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	for _, addr := range addresses {
 		if err := w.node.P2PConnect(identityDID, addr); err != nil {
@@ -1487,14 +1472,15 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return nil
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *Wrapper) AddReplicator(ctx context.Context, addresses []string, opts ...options.Enumerable[options.AddReplicatorOptions]) error {
 	if len(addresses) == 0 {
 		return fmt.Errorf("at least one address is required")
 	}
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
+
+	opt := utils.NewOptions(opts...)
+	collections := opt.CollectionNames
 
 	for _, addr := range addresses {
 		if err := w.node.P2PSetReplicator(identityDID, addr, collections); err != nil {
@@ -1504,20 +1490,17 @@ func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collect
 	return nil
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, peerID string, collections ...string) error {
-	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, opts ...options.Enumerable[options.DeleteReplicatorOptions]) error {
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	collections := opt.CollectionNames
 
-	return w.node.P2PDeleteReplicator(identityDID, peerID, collections)
+	return w.node.P2PDeleteReplicator(identityDID, id, collections)
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *Wrapper) ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]client.Replicator, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	replicators, err := w.node.P2PGetAllReplicators(identityDID)
 	if err != nil {
@@ -1536,81 +1519,63 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return result, nil
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.AddP2PCollectionsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PAddCollections(identityDID, collectionNames)
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.DeleteP2PCollectionsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PRemoveCollections(identityDID, collectionNames)
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumerable[options.ListP2PCollectionsOptions]) ([]string, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PGetAllCollections(identityDID)
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.AddP2PDocumentsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PAddDocuments(identityDID, docIDs)
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.DeleteP2PDocumentsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PRemoveDocuments(identityDID, docIDs)
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerable[options.ListP2PDocumentsOptions]) ([]string, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return w.node.P2PGetAllDocuments(identityDID)
 }
 
-func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.P2PSyncDocuments(identityDID, collectionName, docIDs)
 }
 
-func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Enumerable[options.SyncCollectionVersionsOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.P2PSyncCollectionVersions(identityDID, versionIDs)
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 	return w.node.P2PSyncBranchableCollection(identityDID, collectionID)
 }
 
@@ -1648,16 +1613,13 @@ func (t *TxnWrapper) Discard() {
 func (t *TxnWrapper) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
-	gqlOpts := &client.GQLOptions{}
-	for _, opt := range opts {
-		opt(gqlOpts)
-	}
+	opt := utils.NewOptions(opts...)
 
 	varsJSON := ""
-	if gqlOpts.Variables != nil {
-		varsBytes, err := json.Marshal(gqlOpts.Variables)
+	if opt.Variables != nil {
+		varsBytes, err := json.Marshal(opt.Variables)
 		if err != nil {
 			return &client.RequestResult{
 				GQL: client.GQLResult{
@@ -1669,11 +1631,13 @@ func (t *TxnWrapper) ExecRequest(
 	}
 
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
-	responseJSON, err := t.txn.ExecRequest(identityDID, request, gqlOpts.OperationName, varsJSON)
+	operationName := ""
+	if opt.OperationName.HasValue() {
+		operationName = opt.OperationName.Value()
+	}
+	responseJSON, err := t.txn.ExecRequest(identityDID, request, operationName, varsJSON)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -1704,22 +1668,22 @@ func (t *TxnWrapper) ExecRequest(
 }
 
 // Stub out other Store methods on transaction - most delegate to wrapper
-func (t *TxnWrapper) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	return t.wrapper.AddSchema(ctx, sdl)
+func (t *TxnWrapper) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
+	return t.wrapper.AddCollection(ctx, sdl, opts...)
 }
 
-func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	return t.wrapper.GetCollectionByName(ctx, name)
+func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {
+	return t.wrapper.GetCollectionByName(ctx, name, opts...)
 }
 
 func (t *TxnWrapper) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	opt := utils.NewOptions(opts...)
+
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	responseJSON, err := t.wrapper.node.GetCollectionsInTxn(t.txn.id, identityDID)
 	if err != nil {
@@ -1732,16 +1696,16 @@ func (t *TxnWrapper) GetCollections(
 	}
 
 	// Apply filters
-	includeInactive := options.IncludeInactive.HasValue() && options.IncludeInactive.Value()
+	includeInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
 		if !includeInactive && !v.IsActive {
 			continue
 		}
-		if options.Name.HasValue() && v.Name != options.Name.Value() {
+		if opt.CollectionName.HasValue() && v.Name != opt.CollectionName.Value() {
 			continue
 		}
-		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
+		if opt.CollectionID.HasValue() && v.CollectionID != opt.CollectionID.Value() {
 			continue
 		}
 		filtered = append(filtered, v)
@@ -1758,66 +1722,72 @@ func (t *TxnWrapper) GetCollections(
 	return collections, nil
 }
 
-func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
-	return t.wrapper.SetActiveCollectionVersion(ctx, versionID)
+func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
+	return t.wrapper.SetActiveCollectionVersion(ctx, versionID, opts...)
 }
 
 func (t *TxnWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[lensmodel.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	return t.wrapper.PatchCollection(ctx, patch, migration)
+	return t.wrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (t *TxnWrapper) GetAllIndexes(
+func (t *TxnWrapper) ListIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return t.wrapper.GetAllIndexes(ctx)
+	return t.wrapper.ListIndexes(ctx, opts...)
 }
 
-func (t *TxnWrapper) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	return t.wrapper.AddDACPolicy(ctx, policy)
+func (t *TxnWrapper) AddDACPolicy(ctx context.Context, policy string, opts ...options.Enumerable[options.AddDACPolicyOptions]) (client.AddPolicyResult, error) {
+	return t.wrapper.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (t *TxnWrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName, docID, relation, targetActor string,
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	return t.wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return t.wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (t *TxnWrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName, docID, relation, targetActor string,
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	return t.wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return t.wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (t *TxnWrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation, targetActor string,
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	return t.wrapper.AddNACActorRelationship(ctx, relation, targetActor)
+	return t.wrapper.AddNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
 func (t *TxnWrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation, targetActor string,
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	return t.wrapper.DeleteNACActorRelationship(ctx, relation, targetActor)
+	return t.wrapper.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
-func (t *TxnWrapper) ReEnableNAC(ctx context.Context) error {
-	return t.wrapper.ReEnableNAC(ctx)
+func (t *TxnWrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
+	return t.wrapper.ReEnableNAC(ctx, opts...)
 }
 
-func (t *TxnWrapper) DisableNAC(ctx context.Context) error {
-	return t.wrapper.DisableNAC(ctx)
+func (t *TxnWrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
+	return t.wrapper.DisableNAC(ctx, opts...)
 }
 
-func (t *TxnWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	return t.wrapper.GetNACStatus(ctx)
+func (t *TxnWrapper) GetNACStatus(ctx context.Context, opts ...options.Enumerable[options.GetNACStatusOptions]) (client.NACStatusResult, error) {
+	return t.wrapper.GetNACStatus(ctx, opts...)
 }
 
 func (t *TxnWrapper) GetNodeIdentity(
@@ -1826,40 +1796,40 @@ func (t *TxnWrapper) GetNodeIdentity(
 	return t.wrapper.GetNodeIdentity(ctx)
 }
 
-func (t *TxnWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	return t.wrapper.VerifySignature(ctx, blockCid, pubKey)
+func (t *TxnWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Enumerable[options.VerifySignatureOptions]) error {
+	return t.wrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
 func (t *TxnWrapper) AddView(
 	ctx context.Context,
 	gqlQuery, sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	return t.wrapper.AddView(ctx, gqlQuery, sdl, transformCID)
+	return t.wrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (t *TxnWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
-	return t.wrapper.RefreshViews(ctx, opts)
+func (t *TxnWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+	return t.wrapper.RefreshViews(ctx, opts...)
 }
 
-func (t *TxnWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	return t.wrapper.SetMigration(ctx, config)
+func (t *TxnWrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
+	return t.wrapper.SetMigration(ctx, config, opts...)
 }
 
-func (t *TxnWrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, error) {
-	return t.wrapper.AddLens(ctx, lens)
+func (t *TxnWrapper) AddLens(ctx context.Context, lens lensmodel.Lens, opts ...options.Enumerable[options.AddLensOptions]) (string, error) {
+	return t.wrapper.AddLens(ctx, lens, opts...)
 }
 
-func (t *TxnWrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, error) {
-	return t.wrapper.ListLenses(ctx)
+func (t *TxnWrapper) ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]lensmodel.Lens, error) {
+	return t.wrapper.ListLenses(ctx, opts...)
 }
 
 func (t *TxnWrapper) BasicImport(ctx context.Context, filepath string) error {
 	return t.wrapper.BasicImport(ctx, filepath)
 }
 
-func (t *TxnWrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return t.wrapper.BasicExport(ctx, config)
+func (t *TxnWrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error {
+	return t.wrapper.BasicExport(ctx, filepath, opts...)
 }
 
 func (t *TxnWrapper) PrintDump(ctx context.Context) error {
@@ -1868,55 +1838,56 @@ func (t *TxnWrapper) PrintDump(ctx context.Context) error {
 
 func (t *TxnWrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return t.wrapper.ListAllEncryptedIndexes(ctx)
+	return t.wrapper.ListAllEncryptedIndexes(ctx, opts...)
 }
 
 // P2P methods - not available in transactions
-func (t *TxnWrapper) PeerInfo(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	return nil, fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) ActivePeers(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
 	return nil, fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) Connect(ctx context.Context, addresses []string) error {
+func (t *TxnWrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (t *TxnWrapper) AddReplicator(ctx context.Context, addresses []string, opts ...options.Enumerable[options.AddReplicatorOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (t *TxnWrapper) DeleteReplicator(ctx context.Context, id string, opts ...options.Enumerable[options.DeleteReplicatorOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (t *TxnWrapper) ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]client.Replicator, error) {
 	return nil, fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (t *TxnWrapper) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.AddP2PCollectionsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (t *TxnWrapper) DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Enumerable[options.DeleteP2PCollectionsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumerable[options.ListP2PCollectionsOptions]) ([]string, error) {
 	return nil, fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (t *TxnWrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.AddP2PDocumentsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (t *TxnWrapper) DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Enumerable[options.DeleteP2PDocumentsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerable[options.ListP2PDocumentsOptions]) ([]string, error) {
 	return nil, fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (t *TxnWrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
-func (t *TxnWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (t *TxnWrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Enumerable[options.SyncCollectionVersionsOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
 
-func (t *TxnWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (t *TxnWrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
 
@@ -2047,7 +2018,7 @@ func (c *CollectionWrapper) Version() client.CollectionVersion {
 	return c.version
 }
 
-func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error {
 	// Use GraphQL mutation to create document
 	docJSON, err := doc.ToJSONPatch()
 	if err != nil {
@@ -2055,18 +2026,17 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 	}
 
 	// Extract encryption options
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
+	opt := utils.NewOptions(opts...)
 
 	// Convert JSON to GraphQL input format (unquoted keys)
 	gqlInput := jsonToGraphQLInput(string(docJSON))
 	params := fmt.Sprintf("input: %s", gqlInput)
-	if createDocOpts.EncryptDoc {
+	if opt.EncryptDoc {
 		params += ", encrypt: true"
 	}
-	if len(createDocOpts.EncryptedFields) > 0 {
-		quoted := make([]string, len(createDocOpts.EncryptedFields))
-		for i, f := range createDocOpts.EncryptedFields {
+	if len(opt.EncryptedFields) > 0 {
+		quoted := make([]string, len(opt.EncryptedFields))
+		for i, f := range opt.EncryptedFields {
 			quoted[i] = `"` + f + `"`
 		}
 		params += ", encryptFields: [" + strings.Join(quoted, ", ") + "]"
@@ -2098,20 +2068,20 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 	return nil
 }
 
-func (c *CollectionWrapper) CreateMany(
+func (c *CollectionWrapper) AddManyDocuments(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
 	for _, doc := range docs {
-		if err := c.Create(ctx, doc, opts...); err != nil {
+		if err := c.AddDocument(ctx, doc, opts...); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *CollectionWrapper) Update(ctx context.Context, doc *client.Document) error {
+func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error {
 	docJSON, err := doc.ToJSONPatch()
 	if err != nil {
 		return fmt.Errorf("failed to convert document to JSON: %w", err)
@@ -2129,24 +2099,32 @@ func (c *CollectionWrapper) Update(ctx context.Context, doc *client.Document) er
 	return nil
 }
 
-func (c *CollectionWrapper) Save(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+func (c *CollectionWrapper) SaveDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error {
 	// Check if doc exists in the database by querying for it
-	exists, err := c.Exists(ctx, doc.ID())
+	exists, err := c.ExistsDocument(ctx, doc.ID())
 	if err != nil {
 		// If error checking existence, check if deleted before creating
 		if c.isDocumentDeleted(ctx, doc.ID()) {
 			return fmt.Errorf("a document with the given ID has been deleted")
 		}
-		return c.Create(ctx, doc, opts...)
+		opt := utils.NewOptions(opts...)
+		addOpt := options.AddDocument().
+			SetEncryptDoc(opt.EncryptDoc).
+			SetEncryptedFields(opt.EncryptedFields)
+		return c.AddDocument(ctx, doc, addOpt)
 	}
 	if !exists {
 		// Document doesn't exist - check if it was deleted
 		if c.isDocumentDeleted(ctx, doc.ID()) {
 			return fmt.Errorf("a document with the given ID has been deleted")
 		}
-		return c.Create(ctx, doc, opts...)
+		opt := utils.NewOptions(opts...)
+		addOpt := options.AddDocument().
+			SetEncryptDoc(opt.EncryptDoc).
+			SetEncryptedFields(opt.EncryptedFields)
+		return c.AddDocument(ctx, doc, addOpt)
 	}
-	return c.Update(ctx, doc)
+	return c.UpdateDocument(ctx, doc)
 }
 
 // getLatestCompositeCID queries _commits to get the latest composite CID for a document.
@@ -2194,7 +2172,7 @@ func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.
 	return false
 }
 
-func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error) {
 	mutation := fmt.Sprintf(`mutation { delete_%s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
 	result := c.wrapper.ExecRequest(ctx, mutation)
 	if len(result.GQL.Errors) > 0 {
@@ -2215,7 +2193,7 @@ func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (boo
 	return true, nil
 }
 
-func (c *CollectionWrapper) Exists(ctx context.Context, docID client.DocID) (bool, error) {
+func (c *CollectionWrapper) ExistsDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error) {
 	query := fmt.Sprintf(`{ %s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
 	result := c.wrapper.ExecRequest(ctx, query)
 	if len(result.GQL.Errors) > 0 {
@@ -2229,10 +2207,11 @@ func (c *CollectionWrapper) Exists(ctx context.Context, docID client.DocID) (boo
 	return false, nil
 }
 
-func (c *CollectionWrapper) UpdateWithFilter(
+func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	// Validate filter (mirrors Go's collection_update.go makeSelectionPlan validation)
 	var gqlFilter string
@@ -2369,7 +2348,7 @@ func convertDateTimeStrings(v any) any {
 	}
 }
 
-func (c *CollectionWrapper) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
+func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error) {
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal filter: %w", err)
@@ -2399,7 +2378,7 @@ func (c *CollectionWrapper) DeleteWithFilter(ctx context.Context, filter any) (*
 	return deleteResult, nil
 }
 
-func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+func (c *CollectionWrapper) GetDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.GetDocumentOptions]) (*client.Document, error) {
 	// Query the document by ID - must request ALL fields so SetWithJSON can properly
 	// track which fields are dirty (modified) vs unchanged
 	var fieldNames []string
@@ -2491,39 +2470,10 @@ func (c *CollectionWrapper) checkIfDocumentDeleted(ctx context.Context, docID cl
 	return fmt.Errorf("document not found: %s", docID.String())
 }
 
-func (c *CollectionWrapper) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
-	ch := make(chan client.DocIDResult)
-	go func() {
-		defer close(ch)
-		query := fmt.Sprintf(`{ %s { _docID } }`, c.version.Name)
-		result := c.wrapper.ExecRequest(ctx, query)
-		if len(result.GQL.Errors) > 0 {
-			ch <- client.DocIDResult{Err: result.GQL.Errors[0]}
-			return
-		}
-		if data, ok := result.GQL.Data.(map[string]any); ok {
-			if docs, ok := data[c.version.Name].([]any); ok {
-				for _, d := range docs {
-					if doc, ok := d.(map[string]any); ok {
-						if id, ok := doc["_docID"].(string); ok {
-							docID, err := client.NewDocIDFromString(id)
-							if err != nil {
-								ch <- client.DocIDResult{Err: err}
-								continue
-							}
-							ch <- client.DocIDResult{ID: docID}
-						}
-					}
-				}
-			}
-		}
-	}()
-	return ch, nil
-}
-
-func (c *CollectionWrapper) CreateIndex(
+func (c *CollectionWrapper) NewIndex(
 	ctx context.Context,
-	req client.IndexCreateRequest,
+	req client.NewIndexRequest,
+	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
 	fields := make([]IndexField, len(req.Fields))
 	for i, f := range req.Fields {
@@ -2534,9 +2484,7 @@ func (c *CollectionWrapper) CreateIndex(
 	}
 
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	index, err := c.wrapper.node.CreateIndex(identityDID, c.version.Name, req.Name, fields, req.Unique)
 	if err != nil {
@@ -2559,20 +2507,16 @@ func (c *CollectionWrapper) CreateIndex(
 	}, nil
 }
 
-func (c *CollectionWrapper) DropIndex(ctx context.Context, indexName string) error {
+func (c *CollectionWrapper) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return c.wrapper.node.DropIndex(identityDID, c.version.Name, indexName)
 }
 
-func (c *CollectionWrapper) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	indexes, err := c.wrapper.node.GetIndexes(identityDID, c.version.Name)
 	if err != nil {
@@ -2598,14 +2542,13 @@ func (c *CollectionWrapper) GetIndexes(ctx context.Context) ([]client.IndexDescr
 	return result, nil
 }
 
-func (c *CollectionWrapper) CreateEncryptedIndex(
+func (c *CollectionWrapper) NewEncryptedIndex(
 	ctx context.Context,
 	desc client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	ffiIdx, err := c.wrapper.node.CreateEncryptedIndex(identityDID, c.version.Name, desc.FieldName)
 	if err != nil {
@@ -2618,20 +2561,16 @@ func (c *CollectionWrapper) CreateEncryptedIndex(
 	}, nil
 }
 
-func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return c.wrapper.node.DeleteEncryptedIndex(identityDID, c.version.Name, fieldName)
 }
 
-func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	ffiIndexes, err := c.wrapper.node.ListEncryptedIndexes(identityDID, c.version.Name)
 	if err != nil {
@@ -2648,11 +2587,9 @@ func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context) ([]client.
 	return result, nil
 }
 
-func (c *CollectionWrapper) Truncate(ctx context.Context) error {
+func (c *CollectionWrapper) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
 	identityDID := ""
-	if id := identity.FromContext(ctx); id.HasValue() {
-		identityDID = id.Value().DID()
-	}
+	// identity now comes from options, not context
 
 	return c.wrapper.node.TruncateCollection(identityDID, c.version.Name)
 }
