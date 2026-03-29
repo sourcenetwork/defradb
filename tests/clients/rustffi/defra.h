@@ -548,7 +548,7 @@ struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
  Add a NAC actor relationship.
 
  The requestor must be an admin. The relation can be "admin" or a
- specific permission name (e.g., "document-read").
+ specific permission name (e.g., "read-document").
 
  Returns JSON with success status:
  ```json
