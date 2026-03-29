@@ -322,7 +322,10 @@ func (n *Node) ExecRequestFull(identityDID string, query string, operationName s
 		defer C.free(unsafe.Pointer(cVars))
 	}
 
-	result := C.exec_request(n.ptr, cIdentityDID, cQuery, cOpName, cVars)
+	cBatchSessionID := C.CString("")
+	defer C.free(unsafe.Pointer(cBatchSessionID))
+
+	result := C.exec_request(n.ptr, cIdentityDID, cQuery, cOpName, cVars, cBatchSessionID)
 
 	switch result.status {
 	case 0: // Success - query/mutation result
@@ -532,7 +535,10 @@ func (t *Transaction) ExecRequest(identityDID string, query string, operationNam
 		defer C.free(unsafe.Pointer(cVars))
 	}
 
-	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cIdentityDID, cQuery, cOpName, cVars)
+	cBatchSessionID := C.CString("")
+	defer C.free(unsafe.Pointer(cBatchSessionID))
+
+	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cIdentityDID, cQuery, cOpName, cVars, cBatchSessionID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1020,7 +1026,7 @@ func (n *Node) DropIndex(identityDID string, collectionName string, indexName st
 	cIndexName := C.CString(indexName)
 	defer C.free(unsafe.Pointer(cIndexName))
 
-	result := C.drop_index(n.ptr, cIdentityDID, cCollName, cIndexName)
+	result := C.delete_index(n.ptr, cIdentityDID, cCollName, cIndexName)
 
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
@@ -1073,7 +1079,7 @@ func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexDescription,
 		defer C.free(unsafe.Pointer(cIdentityDID))
 	}
 
-	result := C.get_all_indexes(n.ptr, cIdentityDID)
+	result := C.list_all_indexes(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
@@ -1116,7 +1122,7 @@ func (n *Node) CreateEncryptedIndex(identityDID string, collectionName string, f
 	cFieldName := C.CString(fieldName)
 	defer C.free(unsafe.Pointer(cFieldName))
 
-	result := C.create_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
+	result := C.add_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
 
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
@@ -1860,7 +1866,7 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_create_replicator(n.ptr, cIdentityDID, cPeerAddr, cCollections)
+	result := C.p2p_add_replicator(n.ptr, cIdentityDID, cPeerAddr, cCollections)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
@@ -2000,7 +2006,7 @@ func (n *Node) P2PAddCollections(identityDID string, collections []string) error
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_create_collections(n.ptr, cIdentityDID, cCollections)
+	result := C.p2p_add_collections(n.ptr, cIdentityDID, cCollections)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
@@ -2089,7 +2095,7 @@ func (n *Node) P2PAddDocuments(identityDID string, docIDs []string) error {
 	cDocIDs := C.CString(string(docIDsJSON))
 	defer C.free(unsafe.Pointer(cDocIDs))
 
-	result := C.p2p_create_documents(n.ptr, cIdentityDID, cDocIDs)
+	result := C.p2p_add_documents(n.ptr, cIdentityDID, cDocIDs)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
