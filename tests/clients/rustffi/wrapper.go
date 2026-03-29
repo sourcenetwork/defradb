@@ -1399,6 +1399,7 @@ func (w *Wrapper) AddView(
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
 	optsJSON := ""
 	if opt.CollectionName.HasValue() || opt.VersionID.HasValue() {
 		data, err := json.Marshal(opt)
@@ -1407,7 +1408,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 		}
 		optsJSON = string(data)
 	}
-	return w.node.RefreshViews(optsJSON)
+	return w.node.RefreshViews(identityDID, optsJSON)
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
@@ -1434,7 +1435,9 @@ func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens, opts ...opti
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal lens: %w", err)
 	}
-	return w.node.LensAdd(string(lensJSON))
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	return w.node.LensAdd(identityDID, string(lensJSON))
 }
 
 func (w *Wrapper) ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]lensmodel.Lens, error) {
@@ -1544,7 +1547,9 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[optio
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
-	return w.node.P2PActivePeers()
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	return w.node.P2PActivePeers(identityDID)
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {

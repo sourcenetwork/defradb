@@ -923,7 +923,7 @@ struct FfiResult add_view(uintptr_t node_ptr,
 
  `options` must be null or a valid null-terminated UTF-8 string.
  */
-struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
+struct FfiResult refresh_views(uintptr_t node_ptr, const char *identity_did, const char *options);
 
 /*
  Run explicit downsample history GC.
@@ -1249,7 +1249,7 @@ struct FfiResult list_all_indexes(uintptr_t node_ptr, const char *identity_did);
 
  `lens_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult lens_add(uintptr_t node_ptr, const char *lens_json);
+struct FfiResult lens_add(uintptr_t node_ptr, const char *identity_did, const char *lens_json);
 
 /*
  List all lens transforms.
@@ -1417,8 +1417,13 @@ struct FfiResult p2p_notify_network_change(uintptr_t node_ptr, const char *ident
 
 /*
  Get connected peers.
+
+ # Safety
+
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null.
+ `node_ptr` must reference a live node handle created by this library.
  */
-struct FfiResult p2p_active_peers(uintptr_t node_ptr);
+struct FfiResult p2p_active_peers(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Connect to a peer address.

@@ -877,14 +877,20 @@ func (n *Node) AddView(identityDID string, gqlQuery string, sdl string, transfor
 // RefreshViews refreshes the caches of all views matching the given options.
 // Pass empty string for options to refresh all views.
 // Note: Not yet implemented - see issue #178.
-func (n *Node) RefreshViews(options string) error {
+func (n *Node) RefreshViews(identityDID string, options string) error {
 	var cOptions *C.char
 	if options != "" {
 		cOptions = C.CString(options)
 		defer C.free(unsafe.Pointer(cOptions))
 	}
 
-	result := C.refresh_views(n.ptr, cOptions)
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.refresh_views(n.ptr, cIdentityDID, cOptions)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -951,11 +957,17 @@ func (n *Node) SetMigrationInTxn(txnID string, identityDID string, config string
 
 // LensAdd adds a lens transform to the database.
 // The lensJSON parameter should be a JSON string matching Go's model.Lens format.
-func (n *Node) LensAdd(lensJSON string) (string, error) {
+func (n *Node) LensAdd(identityDID string, lensJSON string) (string, error) {
 	cLens := C.CString(lensJSON)
 	defer C.free(unsafe.Pointer(cLens))
 
-	result := C.lens_add(n.ptr, cLens)
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.lens_add(n.ptr, cIdentityDID, cLens)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1837,8 +1849,14 @@ func (n *Node) P2PPeerInfo(identityDID string) ([]string, error) {
 }
 
 // P2PActivePeers returns the list of connected peer IDs.
-func (n *Node) P2PActivePeers() ([]string, error) {
-	result := C.p2p_active_peers(n.ptr)
+func (n *Node) P2PActivePeers(identityDID string) ([]string, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.p2p_active_peers(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
