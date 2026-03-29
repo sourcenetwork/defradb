@@ -132,7 +132,12 @@ func setupNode(
 	}
 
 	if s.IsNetworkEnabled {
-		opts.SetDisableP2P(false)
+		// When using Rust FFI, all P2P operations go through the Rust FFI wrapper.
+		// Enabling Go's P2P host alongside the Rust one causes GossipSub mesh
+		// formation interference and "timeout waiting for merge complete" failures.
+		if s.ClientType != state.RustFFIClientType {
+			opts.SetDisableP2P(false)
+		}
 	}
 
 	opts.SetEnableDevelopment(true)
@@ -172,7 +177,14 @@ func setupNode(
 	if identOption.HasValue() {
 		peerInfoOpts.SetIdentity(identOption.Value())
 	}
-	addresses, err = nodeObj.DB.PeerInfo(s.Ctx, peerInfoOpts)
+	// For Rust FFI, the Go node has P2P disabled so we query peer info from the
+	// client wrapper (which owns the Rust P2P host). For all other client types,
+	// query the Go node directly.
+	if s.ClientType == state.RustFFIClientType {
+		addresses, err = c.PeerInfo(s.Ctx, peerInfoOpts)
+	} else {
+		addresses, err = nodeObj.DB.PeerInfo(s.Ctx, peerInfoOpts)
+	}
 	require.NoError(s.T, err)
 
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but

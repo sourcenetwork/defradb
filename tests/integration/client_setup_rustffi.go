@@ -27,14 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// closeGoNodeP2P is a no-op placeholder. The Go node's P2P host runs
-// alongside the Rust FFI P2P host. GossipSub mesh formation may need
-// extra time when both are active.
-func closeGoNodeP2P(nodeObj *node.Node) {
-	// No-op: unsafe reflect approach panics on unexported fields.
-	// The Go P2P host coexists with the Rust FFI P2P host.
-}
-
 // setupRustFFIClient creates a Rust FFI wrapper and mirrors the Go node's NAC
 // state onto it. This ensures the Rust FFI node has the same access control
 // configuration as the Go node, matching Go's initializeNodeACP() flow.
@@ -76,12 +68,6 @@ func setupRustFFIClient(
 	}
 
 	if s.IsNetworkEnabled {
-		// Shut down the Go node's P2P host before creating the Rust FFI P2P host.
-		// The Go node started with P2P enabled (SetDisableP2P(false) in db_setup.go),
-		// but when using Rust FFI, all P2P operations go through the Rust FFI wrapper.
-		// Having both hosts active causes GossipSub mesh formation interference.
-		closeGoNodeP2P(nodeObj)
-
 		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
 		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity, rustDBPath, shConfig)
 	} else {
