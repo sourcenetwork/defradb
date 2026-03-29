@@ -67,7 +67,7 @@ func mapFFIError(ffiOp string, rawErr string) error {
 
 	case strings.Contains(rawErr, "collection not found"),
 		isCollectionNotFoundError(rawErr):
-		return client.ErrCollectionNotFound
+		return fmt.Errorf("%s: %w", rawErr, client.ErrCollectionNotFound)
 
 	default:
 		return fmt.Errorf("ffi: %s failed: %s", ffiOp, rawErr)
@@ -1585,6 +1585,24 @@ func (n *Node) GetNodeIdentity() (string, error) {
 	}
 
 	return response.DID, nil
+}
+
+// SetDefaultIdentity sets the node's default signing identity DID.
+// The DID must already be registered via RegisterIdentityWithRust.
+func (n *Node) SetDefaultIdentity(did string) error {
+	cDid := C.CString(did)
+	defer C.free(unsafe.Pointer(cDid))
+
+	result := C.node_set_default_identity(n.ptr, cDid)
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return mapFFIError("node_set_default_identity", err)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+	return nil
 }
 
 // ============================================================================

@@ -190,6 +190,21 @@ func NewWrapper(
 		return nil, fmt.Errorf("failed to create FFI node: %w", err)
 	}
 
+	// Register and set the node's default identity so GetNodeIdentity works.
+	if nodeIdentity != nil {
+		if err := RegisterIdentityWithRust(nodeIdentity); err != nil {
+			_ = node.Close()
+			return nil, fmt.Errorf("failed to register node identity: %w", err)
+		}
+		did := nodeIdentity.DID()
+		if did != "" {
+			if err := node.SetDefaultIdentity(did); err != nil {
+				_ = node.Close()
+				return nil, fmt.Errorf("failed to set default identity: %w", err)
+			}
+		}
+	}
+
 	eb := newEventBus()
 	stopCh := make(chan struct{})
 
@@ -300,6 +315,21 @@ func NewWrapperWithP2P(
 	node, err := NewNodeWithP2P(opts, listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create FFI node with P2P: %w", err)
+	}
+
+	// Register and set the node's default identity so GetNodeIdentity works.
+	if nodeIdentity != nil {
+		if err := RegisterIdentityWithRust(nodeIdentity); err != nil {
+			_ = node.Close()
+			return nil, fmt.Errorf("failed to register node identity: %w", err)
+		}
+		did := nodeIdentity.DID()
+		if did != "" {
+			if err := node.SetDefaultIdentity(did); err != nil {
+				_ = node.Close()
+				return nil, fmt.Errorf("failed to set default identity: %w", err)
+			}
+		}
 	}
 
 	eb := newEventBus()
