@@ -88,7 +88,9 @@ func (a *SyncBranchableCollection) Execute() {
 			for _, docID := range docIDs {
 				docIDStr := docID.String()
 				if head, ok := peerNode.P2P.ActualDAGHeads[docIDStr]; ok {
-					nodeState.P2P.ExpectedDAGHeads[docIDStr] = head.CID
+					nodeState.P2P.ExpectedDAGHeads[docIDStr] = []state.ExpectedHead{
+						{CID: head.CID, SourceNodeID: peerID},
+					}
 				}
 			}
 		}
