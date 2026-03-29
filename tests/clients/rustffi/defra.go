@@ -31,14 +31,53 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"unsafe"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 var (
 	// initOnce ensures Init is only called once
 	initOnce sync.Once
 )
+
+// mapFFIError maps raw FFI error strings to proper Go error types.
+//
+// FFI errors are flat strings like "not authorized to perform operation. Permission: xyz".
+// Go tests use errors.Is() against sentinel errors like client.ErrNotAuthorizedToPerformOperation.
+// This function wraps known error patterns with the correct Go sentinel so errors.Is() matches.
+//
+// Call as: mapFFIError("op_name", rawErrString)
+// Instead of: mapFFIError("op_name", rawErrString)
+func mapFFIError(ffiOp string, rawErr string) error {
+	switch {
+	case strings.Contains(rawErr, "not authorized to perform operation"):
+		// Wrap with sentinel so errors.Is() works, preserve the full message
+		return fmt.Errorf("%w. %s",
+			client.ErrNotAuthorizedToPerformOperation,
+			extractPermissionSuffix(rawErr))
+
+	case strings.Contains(rawErr, "operation requires ACP, but ACP not available"):
+		return client.ErrACPOperationButACPNotAvailable
+
+	case strings.Contains(rawErr, "document not found or not authorized"):
+		return client.ErrDocumentNotFoundOrNotAuthorized
+
+	default:
+		return fmt.Errorf("ffi: %s failed: %s", ffiOp, rawErr)
+	}
+}
+
+// extractPermissionSuffix extracts "Permission: xyz" from an FFI error string.
+func extractPermissionSuffix(rawErr string) string {
+	idx := strings.Index(rawErr, "Permission:")
+	if idx >= 0 {
+		return strings.TrimSpace(rawErr[idx:])
+	}
+	return ""
+}
 
 // Init initializes the FFI library.
 // Must be called before any other FFI functions.
@@ -161,7 +200,7 @@ func NewNode(opts NodeOptions) (*Node, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: new_node failed: %s", err)
+		return nil, mapFFIError("new_node", err)
 	}
 
 	return &Node{ptr: result.node_ptr}, nil
@@ -175,7 +214,7 @@ func (n *Node) Close() error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: node_close failed: %s", err)
+		return mapFFIError("node_close", err)
 	}
 
 	return nil
@@ -198,7 +237,7 @@ func (n *Node) AddSchema(identityDID string, sdl string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: add_schema failed: %s", err)
+		return "", mapFFIError("add_schema", err)
 	}
 
 	value := C.GoString(result.value)
@@ -219,7 +258,7 @@ func (n *Node) GetCollections(identityDID string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: get_collections failed: %s", err)
+		return "", mapFFIError("get_collections", err)
 	}
 
 	value := C.GoString(result.value)
@@ -245,7 +284,7 @@ func (n *Node) GetCollectionsInTxn(txnID string, identityDID string) (string, er
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: get_collections_in_txn failed: %s", err)
+		return "", mapFFIError("get_collections_in_txn", err)
 	}
 
 	value := C.GoString(result.value)
@@ -336,7 +375,7 @@ func (n *Node) ExecRequestFull(identityDID string, query string, operationName s
 	case 1: // Error
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: exec_request failed: %s", err)
+		return nil, mapFFIError("exec_request", err)
 
 	case 2: // Subscription
 		subID := C.GoString(result.value)
@@ -377,7 +416,7 @@ func PollGraphQLSubscription(subscriptionID string) (*GraphQLSubscriptionResult,
 	case 1: // Error
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: poll_graphql_subscription failed: %s", err)
+		return nil, mapFFIError("poll_graphql_subscription", err)
 
 	case 2: // No result available
 		return &GraphQLSubscriptionResult{HasResult: false}, nil
@@ -400,7 +439,7 @@ func CloseGraphQLSubscription(subscriptionID string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: close_graphql_subscription failed: %s", err)
+		return mapFFIError("close_graphql_subscription", err)
 	}
 
 	return nil
@@ -460,7 +499,7 @@ func (n *Node) BeginTxn(readonly bool) (*Transaction, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: begin_txn failed: %s", err)
+		return nil, mapFFIError("begin_txn", err)
 	}
 
 	txnID := C.GoString(result.txn_id)
@@ -485,7 +524,7 @@ func (t *Transaction) Commit() error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: commit_txn failed: %s", err)
+		return mapFFIError("commit_txn", err)
 	}
 
 	return nil
@@ -502,7 +541,7 @@ func (t *Transaction) Rollback() error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: rollback_txn failed: %s", err)
+		return mapFFIError("rollback_txn", err)
 	}
 
 	return nil
@@ -543,7 +582,7 @@ func (t *Transaction) ExecRequest(identityDID string, query string, operationNam
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: exec_request_in_txn failed: %s", err)
+		return "", mapFFIError("exec_request_in_txn", err)
 	}
 
 	value := C.GoString(result.value)
@@ -592,7 +631,7 @@ func (n *Node) GetCollectionByName(identityDID string, name string) (string, err
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: get_collection_by_name failed: %s", err)
+		return "", mapFFIError("get_collection_by_name", err)
 	}
 
 	value := C.GoString(result.value)
@@ -616,7 +655,7 @@ func (n *Node) HasCollection(identityDID string, name string) (bool, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return false, fmt.Errorf("ffi: has_collection failed: %s", err)
+		return false, mapFFIError("has_collection", err)
 	}
 
 	value := C.GoString(result.value)
@@ -640,7 +679,7 @@ func (n *Node) DeleteCollection(identityDID string, name string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: delete_collection failed: %s", err)
+		return mapFFIError("delete_collection", err)
 	}
 
 	C.defra_free_string(result.value)
@@ -669,7 +708,7 @@ func (n *Node) DeleteCollectionVersions(identityDID string, versionIDs []string)
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: delete_collection_versions failed: %s", errStr)
+		return mapFFIError("delete_collection_versions", errStr)
 	}
 
 	C.defra_free_string(result.value)
@@ -692,7 +731,7 @@ func (n *Node) TruncateCollection(identityDID string, name string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: truncate_collection failed: %s", err)
+		return mapFFIError("truncate_collection", err)
 	}
 
 	C.defra_free_string(result.value)
@@ -716,7 +755,7 @@ func (n *Node) FindCollectionByID(identityDID string, collectionID string) (stri
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: find_collection_by_id failed: %s", err)
+		return "", mapFFIError("find_collection_by_id", err)
 	}
 
 	value := C.GoString(result.value)
@@ -740,7 +779,7 @@ func (n *Node) SetActiveCollectionVersion(identityDID string, versionID string) 
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: set_active_collection_version failed: %s", err)
+		return mapFFIError("set_active_collection_version", err)
 	}
 
 	C.defra_free_string(result.value)
@@ -767,7 +806,7 @@ func (n *Node) PatchCollection(identityDID string, collectionName string, patch 
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: patch_collection failed: %s", err)
+		return "", mapFFIError("patch_collection", err)
 	}
 
 	value := C.GoString(result.value)
@@ -792,7 +831,7 @@ func (n *Node) GetCollectionByVersionID(identityDID string, versionID string) (s
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: get_collection_by_version_id failed: %s", err)
+		return "", mapFFIError("get_collection_by_version_id", err)
 	}
 
 	value := C.GoString(result.value)
@@ -827,7 +866,7 @@ func (n *Node) AddView(identityDID string, gqlQuery string, sdl string, transfor
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: add_view failed: %s", err)
+		return "", mapFFIError("add_view", err)
 	}
 
 	value := C.GoString(result.value)
@@ -850,7 +889,7 @@ func (n *Node) RefreshViews(options string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: refresh_views failed: %s", err)
+		return mapFFIError("refresh_views", err)
 	}
 
 	C.defra_free_string(result.value)
@@ -874,7 +913,7 @@ func (n *Node) SetMigration(identityDID string, config string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: set_migration failed: %s", err)
+		return "", mapFFIError("set_migration", err)
 	}
 
 	value := C.GoString(result.value)
@@ -902,7 +941,7 @@ func (n *Node) SetMigrationInTxn(txnID string, identityDID string, config string
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: set_migration_in_txn failed: %s", err)
+		return "", mapFFIError("set_migration_in_txn", err)
 	}
 
 	value := C.GoString(result.value)
@@ -921,7 +960,7 @@ func (n *Node) LensAdd(lensJSON string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: lens_add failed: %s", err)
+		return "", mapFFIError("lens_add", err)
 	}
 
 	value := C.GoString(result.value)
@@ -942,7 +981,7 @@ func (n *Node) LensList(identityDID string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: lens_list failed: %s", err)
+		return "", mapFFIError("lens_list", err)
 	}
 
 	value := C.GoString(result.value)
@@ -998,7 +1037,7 @@ func (n *Node) CreateIndex(identityDID string, collectionName string, indexName 
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: create_index failed: %s", errMsg)
+		return nil, mapFFIError("create_index", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1031,7 +1070,7 @@ func (n *Node) DropIndex(identityDID string, collectionName string, indexName st
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: drop_index failed: %s", errMsg)
+		return mapFFIError("drop_index", errMsg)
 	}
 
 	if result.value != nil {
@@ -1057,7 +1096,7 @@ func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexDes
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: get_indexes failed: %s", errMsg)
+		return nil, mapFFIError("get_indexes", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1084,7 +1123,7 @@ func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexDescription,
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: get_all_indexes failed: %s", errMsg)
+		return nil, mapFFIError("get_all_indexes", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1127,7 +1166,7 @@ func (n *Node) CreateEncryptedIndex(identityDID string, collectionName string, f
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: create_encrypted_index failed: %s", errMsg)
+		return nil, mapFFIError("create_encrypted_index", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1160,7 +1199,7 @@ func (n *Node) DeleteEncryptedIndex(identityDID string, collectionName string, f
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: delete_encrypted_index failed: %s", errMsg)
+		return mapFFIError("delete_encrypted_index", errMsg)
 	}
 
 	if result.value != nil {
@@ -1186,7 +1225,7 @@ func (n *Node) ListEncryptedIndexes(identityDID string, collectionName string) (
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: list_encrypted_indexes failed: %s", errMsg)
+		return nil, mapFFIError("list_encrypted_indexes", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1213,7 +1252,7 @@ func (n *Node) ListAllEncryptedIndexes(identityDID string) (map[string][]Encrypt
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: list_all_encrypted_indexes failed: %s", errMsg)
+		return nil, mapFFIError("list_all_encrypted_indexes", errMsg)
 	}
 
 	value := C.GoString(result.value)
@@ -1252,7 +1291,7 @@ func (n *Node) GetNACStatus(identityDID string) (*NACStatus, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: get_nac_status failed: %s", err)
+		return nil, mapFFIError("get_nac_status", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1276,7 +1315,7 @@ func (n *Node) EnableNAC(ownerDID string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: enable_nac failed: %s", err)
+		return mapFFIError("enable_nac", err)
 	}
 
 	return nil
@@ -1293,7 +1332,7 @@ func (n *Node) DisableNAC(requestorDID string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: disable_nac failed: %s", err)
+		return mapFFIError("disable_nac", err)
 	}
 
 	return nil
@@ -1310,7 +1349,7 @@ func (n *Node) ReEnableNAC(requestorDID string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: re_enable_nac failed: %s", err)
+		return mapFFIError("re_enable_nac", err)
 	}
 
 	return nil
@@ -1333,7 +1372,7 @@ func (n *Node) AddNACActorRelationship(requestorDID, relation, targetDID string)
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return false, fmt.Errorf("ffi: add_nac_actor_relationship failed: %s", err)
+		return false, mapFFIError("add_nac_actor_relationship", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1366,7 +1405,7 @@ func (n *Node) DeleteNACActorRelationship(requestorDID, relation, targetDID stri
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return false, fmt.Errorf("ffi: delete_nac_actor_relationship failed: %s", err)
+		return false, mapFFIError("delete_nac_actor_relationship", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1399,7 +1438,7 @@ func (n *Node) AddDACPolicy(identityDID, policy string) (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: add_dac_policy failed: %s", err)
+		return "", mapFFIError("add_dac_policy", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1439,7 +1478,7 @@ func (n *Node) AddDACActorRelationship(requestorDID, targetDID, collectionID, do
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return false, fmt.Errorf("ffi: add_dac_actor_relationship failed: %s", err)
+		return false, mapFFIError("add_dac_actor_relationship", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1478,7 +1517,7 @@ func (n *Node) DeleteDACActorRelationship(requestorDID, targetDID, collectionID,
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return false, fmt.Errorf("ffi: delete_dac_actor_relationship failed: %s", err)
+		return false, mapFFIError("delete_dac_actor_relationship", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1505,7 +1544,7 @@ func (n *Node) GetNodeIdentity() (string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: get_node_identity failed: %s", err)
+		return "", mapFFIError("get_node_identity", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1547,7 +1586,7 @@ func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid, identityDID st
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: block_verify_signature failed: %s", err)
+		return mapFFIError("block_verify_signature", err)
 	}
 
 	if result.value != nil {
@@ -1614,7 +1653,7 @@ func (n *Node) Subscribe(collectionFilter string) (*Subscription, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: create_subscription failed: %s", err)
+		return nil, mapFFIError("create_subscription", err)
 	}
 
 	return &Subscription{
@@ -1647,7 +1686,7 @@ func (s *Subscription) Poll() (*PollResult, error) {
 	case 1: // Error
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: poll_subscription failed: %s", err)
+		return nil, mapFFIError("poll_subscription", err)
 
 	case 2: // No event available
 		return &PollResult{
@@ -1674,7 +1713,7 @@ func (s *Subscription) Close() error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: close_subscription failed: %s", err)
+		return mapFFIError("close_subscription", err)
 	}
 
 	return nil
@@ -1688,7 +1727,7 @@ func (n *Node) SubscribeMergeComplete() (*Subscription, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: create_merge_complete_subscription failed: %s", err)
+		return nil, mapFFIError("create_merge_complete_subscription", err)
 	}
 
 	return &Subscription{
@@ -1764,7 +1803,7 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: new_node_with_p2p failed: %s", err)
+		return nil, mapFFIError("new_node_with_p2p", err)
 	}
 
 	return &Node{ptr: result.node_ptr}, nil
@@ -1783,7 +1822,7 @@ func (n *Node) P2PPeerInfo(identityDID string) ([]string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_peer_info failed: %s", err)
+		return nil, mapFFIError("p2p_peer_info", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1804,7 +1843,7 @@ func (n *Node) P2PActivePeers() ([]string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_active_peers failed: %s", err)
+		return nil, mapFFIError("p2p_active_peers", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1834,7 +1873,7 @@ func (n *Node) P2PConnect(identityDID string, addr string) error {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_connect failed: %s", err)
+		return mapFFIError("p2p_connect", err)
 	}
 
 	if result.value != nil {
@@ -1871,7 +1910,7 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_create_replicator failed: %s", errStr)
+		return mapFFIError("p2p_create_replicator", errStr)
 	}
 
 	if result.value != nil {
@@ -1889,7 +1928,7 @@ func (n *Node) P2PRetryReplicators() error {
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_retry_replicators failed: %s", errStr)
+		return mapFFIError("p2p_retry_replicators", errStr)
 	}
 
 	if result.value != nil {
@@ -1915,7 +1954,7 @@ func (n *Node) SetSEEncryptionKey(key []byte) error {
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: set_se_encryption_key failed: %s", errStr)
+		return mapFFIError("set_se_encryption_key", errStr)
 	}
 
 	return nil
@@ -1946,7 +1985,7 @@ func (n *Node) P2PDeleteReplicator(identityDID string, peerID string, collection
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_delete_replicator failed: %s", err)
+		return mapFFIError("p2p_delete_replicator", err)
 	}
 
 	if result.value != nil {
@@ -1976,7 +2015,7 @@ func (n *Node) P2PGetAllReplicators(identityDID string) ([]ReplicatorInfo, error
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_list_replicators failed: %s", err)
+		return nil, mapFFIError("p2p_list_replicators", err)
 	}
 
 	value := C.GoString(result.value)
@@ -2011,7 +2050,7 @@ func (n *Node) P2PAddCollections(identityDID string, collections []string) error
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_create_collections failed: %s", errStr)
+		return mapFFIError("p2p_create_collections", errStr)
 	}
 
 	if result.value != nil {
@@ -2042,7 +2081,7 @@ func (n *Node) P2PRemoveCollections(identityDID string, collections []string) er
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_delete_collections failed: %s", errStr)
+		return mapFFIError("p2p_delete_collections", errStr)
 	}
 
 	if result.value != nil {
@@ -2065,7 +2104,7 @@ func (n *Node) P2PGetAllCollections(identityDID string) ([]string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_list_collections failed: %s", err)
+		return nil, mapFFIError("p2p_list_collections", err)
 	}
 
 	value := C.GoString(result.value)
@@ -2100,7 +2139,7 @@ func (n *Node) P2PAddDocuments(identityDID string, docIDs []string) error {
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_create_documents failed: %s", errStr)
+		return mapFFIError("p2p_create_documents", errStr)
 	}
 
 	if result.value != nil {
@@ -2131,7 +2170,7 @@ func (n *Node) P2PRemoveDocuments(identityDID string, docIDs []string) error {
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_delete_documents failed: %s", errStr)
+		return mapFFIError("p2p_delete_documents", errStr)
 	}
 
 	if result.value != nil {
@@ -2154,7 +2193,7 @@ func (n *Node) P2PGetAllDocuments(identityDID string) ([]string, error) {
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_list_documents failed: %s", err)
+		return nil, mapFFIError("p2p_list_documents", err)
 	}
 
 	value := C.GoString(result.value)
@@ -2192,7 +2231,7 @@ func (n *Node) P2PSyncDocuments(identityDID string, collectionName string, docID
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_sync_documents failed: %s", errMsg)
+		return mapFFIError("p2p_sync_documents", errMsg)
 	}
 	if result.value != nil {
 		C.defra_free_string(result.value)
@@ -2217,7 +2256,7 @@ func (n *Node) P2PSyncBranchableCollection(identityDID string, collectionID stri
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_sync_branchable_collection failed: %s", errMsg)
+		return mapFFIError("p2p_sync_branchable_collection", errMsg)
 	}
 	if result.value != nil {
 		C.defra_free_string(result.value)
@@ -2247,7 +2286,7 @@ func (n *Node) P2PSyncCollectionVersions(identityDID string, versionIDs []string
 	if result.status != 0 {
 		errMsg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_sync_collection_versions failed: %s", errMsg)
+		return mapFFIError("p2p_sync_collection_versions", errMsg)
 	}
 	if result.value != nil {
 		C.defra_free_string(result.value)
@@ -2265,7 +2304,7 @@ func (n *Node) BasicExportDB(configJSON string) error {
 	if result.status != 0 {
 		msg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: basic_export failed: %s", msg)
+		return mapFFIError("basic_export", msg)
 	}
 	if result.value != nil {
 		C.defra_free_string(result.value)
@@ -2282,7 +2321,7 @@ func (n *Node) BasicImportDB(filepath string) error {
 	if result.status != 0 {
 		msg := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: basic_import failed: %s", msg)
+		return mapFFIError("basic_import", msg)
 	}
 	if result.value != nil {
 		C.defra_free_string(result.value)
