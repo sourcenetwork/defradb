@@ -179,9 +179,71 @@ func NewWrapper(
 		return nil, fmt.Errorf("failed to create FFI node: %w", err)
 	}
 
+	eb := newEventBus()
+	stopCh := make(chan struct{})
+
+	// Start event poller that bridges Rust events to Go eventBus
+	mergeSub, err := node.SubscribeMergeComplete()
+	if err != nil {
+		_ = node.Close()
+		return nil, fmt.Errorf("failed to create event subscription: %w", err)
+	}
+
+	go func() {
+		defer func() { _ = mergeSub.Close() }()
+		for {
+			select {
+			case <-stopCh:
+				return
+			default:
+			}
+
+			result, err := mergeSub.Poll()
+			if err != nil {
+				continue
+			}
+			if result.IsClosed {
+				return
+			}
+			if result.HasEvent && result.Event != nil {
+				if result.Event.Type == "update" {
+					cidObj, cidErr := gocid.Decode(result.Event.CID)
+					if cidErr != nil {
+						continue
+					}
+					eb.Publish(event.NewMessage(event.UpdateName, event.Update{
+						DocID:        result.Event.DocID,
+						Cid:          cidObj,
+						CollectionID: result.Event.CollectionID,
+						IsRelay:      result.Event.IsRelay,
+					}))
+					continue
+				}
+				if result.Event.Type == "merge_complete" {
+					cidObj, cidErr := gocid.Decode(result.Event.CID)
+					if cidErr != nil {
+						continue
+					}
+					mc := event.MergeComplete{
+						Merge: event.Merge{
+							DocID:        result.Event.DocID,
+							Cid:          cidObj,
+							CollectionID: result.Event.CollectionID,
+							ByPeer:       result.Event.ByPeer,
+						},
+					}
+					eb.Publish(event.NewMessage(event.MergeCompleteName, mc))
+					continue
+				}
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
+
 	return &Wrapper{
-		node:   node,
-		events: newEventBus(),
+		node:            node,
+		events:          eb,
+		stopMergePoller: stopCh,
 	}, nil
 }
 
@@ -256,6 +318,19 @@ func NewWrapperWithP2P(
 				return
 			}
 			if result.HasEvent && result.Event != nil {
+				if result.Event.Type == "update" {
+					cidObj, cidErr := gocid.Decode(result.Event.CID)
+					if cidErr != nil {
+						continue
+					}
+					eb.Publish(event.NewMessage(event.UpdateName, event.Update{
+						DocID:        result.Event.DocID,
+						Cid:          cidObj,
+						CollectionID: result.Event.CollectionID,
+						IsRelay:      result.Event.IsRelay,
+					}))
+					continue
+				}
 				if result.Event.Type == "merge_complete" {
 					cidObj, cidErr := gocid.Decode(result.Event.CID)
 					if cidErr != nil {
