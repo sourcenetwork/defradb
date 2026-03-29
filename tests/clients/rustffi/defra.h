@@ -42,6 +42,35 @@ typedef struct FfiResult {
 } FfiResult;
 
 /*
+ Host callback used for non-exportable signing keys.
+
+ The host app keeps the private key and signs the payload on demand. This is
+ intended for device-bound keys such as Secure Enclave-backed P-256 keys.
+
+ Contract:
+ - `signer_handle` is an opaque host-managed context value.
+ - `did` is the registered signing DID for this key.
+ - `key_type` is the registered Defra key type, for example `secp256r1`.
+ - `payload_ptr` / `payload_len` describe the exact message bytes to sign.
+ - The callback must write the signature bytes into `out_signature_ptr`,
+   set `out_signature_len`, and return `0` on success.
+
+ Signature format:
+ - For ECDSA keys (`secp256r1`, `secp256k1`), Defra expects an ASN.1 DER /
+   X9.62 ECDSA signature, not raw `r || s`.
+ - For Secure Enclave P-256 keys on Apple platforms, use
+   `SecKeyCreateSignature(..., .ecdsaSignatureMessageX962SHA256, ...)`.
+ */
+typedef int (*DefraRemoteSignCallback)(uintptr_t signer_handle,
+                                       const char *did,
+                                       const char *key_type,
+                                       const uint8_t *payload_ptr,
+                                       uintptr_t payload_len,
+                                       uint8_t *out_signature_ptr,
+                                       uintptr_t out_signature_capacity,
+                                       uintptr_t *out_signature_len);
+
+/*
  FFI result for node creation, containing a node handle.
 
  Matches Go's NewNodeResult struct.
@@ -76,6 +105,11 @@ typedef struct NodeInitOptions {
    */
   int in_memory;
   /*
+   Storage backend name: "redb" (default), "fjall", "rocksdb", "memory".
+   Null uses "redb" for persistent or "memory" for in-memory.
+   */
+  const char *datastore_backend;
+  /*
    Enable block signing (1=true, 0=false).
    When enabled, the node uses a signing key for block signatures.
    If signing_private_key is provided, that key is used.
@@ -83,7 +117,7 @@ typedef struct NodeInitOptions {
    */
   int enable_signing;
   /*
-   Optional: signing key type string (e.g. "secp256k1", "ed25519").
+   Optional: signing key type string (e.g. "secp256k1", "secp256r1", "ed25519").
    Null to auto-generate secp256k1.
    */
   const char *signing_key_type;
@@ -116,6 +150,62 @@ typedef struct NodeInitOptions {
    Length of sourcehub_signer_key. 0 if null.
    */
   uintptr_t sourcehub_signer_key_len;
+  /*
+   Optional P2P transport backend for `new_node_with_p2p`: "libp2p" (default) or "iroh".
+   */
+  const char *p2p_transport;
+  /*
+   Optional iroh relay URL.
+   */
+  const char *iroh_relay_url;
+  /*
+   Optional iroh relay mode string: "default", "disabled", or "custom".
+   */
+  const char *iroh_relay_mode;
+  /*
+   Optional JSON array of relay URLs for custom relay mode.
+   */
+  const char *iroh_relay_urls_json;
+  /*
+   Optional iroh bind address (e.g. "127.0.0.1").
+   */
+  const char *iroh_bind_addr;
+  /*
+   Optional iroh bind UDP port. 0 means OS-assigned/unspecified.
+   */
+  uint16_t iroh_bind_port;
+  /*
+   Enable iroh discovery (1=true, 0=false). Default true.
+   */
+  int iroh_discovery;
+  /*
+   Optional custom DNS origin domain for iroh discovery.
+   */
+  const char *iroh_discovery_origin_domain;
+  /*
+   Optional custom pkarr relay URL for iroh discovery publishing.
+   */
+  const char *iroh_pkarr_relay_url;
+  /*
+   Optional path to persist the iroh secret key.
+   */
+  const char *iroh_key_path;
+  /*
+   Maximum concurrent DAG fetch tasks. 0 means use default.
+   */
+  uintptr_t max_concurrent_dag_fetches;
+  /*
+   Maximum concurrent push tasks. 0 means use default.
+   */
+  uintptr_t max_concurrent_push_tasks;
+  /*
+   Per-peer rate limit burst capacity. 0 means use default (500).
+   */
+  uint32_t rate_limit_burst;
+  /*
+   Per-peer rate limit refill rate (tokens/sec). 0 means use default (50).
+   */
+  double rate_limit_rate;
 } NodeInitOptions;
 
 /*
@@ -215,100 +305,6 @@ void defra_init(void);
  Returns a null-terminated string that must be freed with `defra_free_string`.
  */
 char *defra_version(void);
-
-/*
- Get the current NAC status.
-
- Returns a JSON object with NAC status information:
- ```json
- {
-   "status": "enabled" | "disabled temporarily" | "not configured",
-   "configured_enabled": true | false,
-   "dev_mode": true | false,
-   "owner": "did:key:..." | null
- }
- ```
-
- This function is NAC-gated with the `NacStatus` permission.
-
- # Safety
-
- Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
- */
-struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
-
-/*
- Temporarily disable NAC.
-
- The requestor_did must be an admin. Returns success on completion.
-
- # Safety
-
- `requestor_did` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult disable_nac(uintptr_t node_ptr, const char *requestor_did);
-
-/*
- Re-enable NAC after temporary disable.
-
- The requestor_did must be an admin. Returns success on completion.
-
- # Safety
-
- `requestor_did` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult re_enable_nac(uintptr_t node_ptr, const char *requestor_did);
-
-/*
- Enable NAC with the given owner identity.
-
- This initializes NAC and sets the owner. Can only be called when NAC
- is not already enabled.
-
- # Safety
-
- `owner_did` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
-
-/*
- Add a NAC actor relationship.
-
- The requestor must be an admin. The relation can be "admin" or a
- specific permission name (e.g., "document-read").
-
- Returns JSON with success status:
- ```json
- { "added": true }  // or false if already exists
- ```
-
- # Safety
-
- All string parameters must be valid null-terminated UTF-8 strings.
- */
-struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
-                                            const char *requestor_did,
-                                            const char *relation,
-                                            const char *target_did);
-
-/*
- Delete a NAC actor relationship.
-
- The requestor must be an admin. The owner cannot be removed.
-
- Returns JSON with success status:
- ```json
- { "deleted": true }  // or false if didn't exist
- ```
-
- # Safety
-
- All string parameters must be valid null-terminated UTF-8 strings.
- */
-struct FfiResult delete_nac_actor_relationship(uintptr_t node_ptr,
-                                               const char *requestor_did,
-                                               const char *relation,
-                                               const char *target_did);
 
 /*
  Add a DAC policy.
@@ -426,10 +422,61 @@ struct FfiResult RegisterIdentity(const char *did,
                                   const char *key_type);
 
 /*
+ Register an identity whose private key stays outside DefraDB.
+
+ The host provides the DID, public key, key type, and a signing callback.
+ This supports device-bound keys (for example Secure Enclave P-256 keys) and
+ remote identity providers such as Orbis without exporting private key bytes.
+
+ Swift can import this symbol directly from the generated Apple package.
+ The callback is required and uses a plain C function-pointer ABI.
+ */
+struct FfiResult register_remote_identity(const char *did,
+                                          const char *public_key_hex,
+                                          const char *key_type,
+                                          uintptr_t signer_handle,
+                                          DefraRemoteSignCallback callback);
+
+/*
+ Register an identity whose public key is already available as raw bytes.
+
+ This is intended for Swift and Objective-C callers that already have the
+ device public key as `Data` or `UnsafePointer<UInt8>`. The callback contract
+ matches [`register_remote_identity`].
+
+ Public key format:
+ - `secp256r1` / `secp256k1`: uncompressed SEC1 / X9.63 bytes
+ - `ed25519`: raw 32-byte public key
+ */
+struct FfiResult register_remote_identity_bytes(const char *did,
+                                                const uint8_t *public_key_ptr,
+                                                uintptr_t public_key_len,
+                                                const char *key_type,
+                                                uintptr_t signer_handle,
+                                                DefraRemoteSignCallback callback);
+
+/*
+ Bind a host-provided bearer token to a logical DID for delegated ACP access.
+
+ This is intentionally a passthrough: the token may be signed by a device-
+ bound key that has been authorized to act on behalf of the logical DID.
+ */
+struct FfiResult bind_identity_bearer_token(const char *did, const char *bearer_token);
+
+/*
+ Set or clear the node's default signing identity.
+
+ When `did` is empty or null the default identity is cleared. Otherwise the
+ DID must already be registered via `RegisterIdentity` or
+ `register_remote_identity` / `register_remote_identity_bytes`.
+ */
+struct FfiResult node_set_default_identity(uintptr_t node_ptr, const char *did);
+
+/*
  Create a new identity (Ed25519 keypair).
 
  Generates a fresh Ed25519 keypair and returns the DID and private key.
- This is stateless — no node is required.
+ This is stateless -- no node is required.
 
  Returns a JSON object:
  ```json
@@ -441,6 +488,100 @@ struct FfiResult RegisterIdentity(const char *did,
  ```
  */
 struct FfiResult create_identity(void);
+
+/*
+ Get the current NAC status.
+
+ Returns a JSON object with NAC status information:
+ ```json
+ {
+   "status": "enabled" | "disabled temporarily" | "not configured",
+   "configured_enabled": true | false,
+   "dev_mode": true | false,
+   "owner": "did:key:..." | null
+ }
+ ```
+
+ This function is NAC-gated with the `NacStatus` permission.
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
+ */
+struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Temporarily disable NAC.
+
+ The requestor_did must be an admin. Returns success on completion.
+
+ # Safety
+
+ `requestor_did` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult disable_nac(uintptr_t node_ptr, const char *requestor_did);
+
+/*
+ Re-enable NAC after temporary disable.
+
+ The requestor_did must be an admin. Returns success on completion.
+
+ # Safety
+
+ `requestor_did` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult re_enable_nac(uintptr_t node_ptr, const char *requestor_did);
+
+/*
+ Enable NAC with the given owner identity.
+
+ This initializes NAC and sets the owner. Can only be called when NAC
+ is not already enabled.
+
+ # Safety
+
+ `owner_did` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
+
+/*
+ Add a NAC actor relationship.
+
+ The requestor must be an admin. The relation can be "admin" or a
+ specific permission name (e.g., "document-read").
+
+ Returns JSON with success status:
+ ```json
+ { "added": true }  // or false if already exists
+ ```
+
+ # Safety
+
+ All string parameters must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
+                                            const char *requestor_did,
+                                            const char *relation,
+                                            const char *target_did);
+
+/*
+ Delete a NAC actor relationship.
+
+ The requestor must be an admin. The owner cannot be removed.
+
+ Returns JSON with success status:
+ ```json
+ { "deleted": true }  // or false if didn't exist
+ ```
+
+ # Safety
+
+ All string parameters must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult delete_nac_actor_relationship(uintptr_t node_ptr,
+                                               const char *requestor_did,
+                                               const char *relation,
+                                               const char *target_did);
 
 /*
  Export the database to a JSON file.
@@ -483,6 +624,40 @@ struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
 struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
+ Start (or reset) batch CID collection.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - Optional DID string (null to use node identity)
+ * `session_id` - Optional unique session ID for concurrent batches.
+   If null, falls back to the node's public key hex (single-session mode).
+
+ # Safety
+
+ String pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult batch_start(uintptr_t node_ptr, const char *identity_did, const char *session_id);
+
+/*
+ Sign all collected batch CIDs and return the batch signature as JSON.
+
+ Returns JSON with fields: sig_type, identity, value (hex), merkle_root (hex), cid_count.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - Optional DID string (null to use node identity)
+ * `session_id` - Optional unique session ID (must match the one passed to `batch_start`).
+   If null, falls back to the node's public key hex.
+
+ # Safety
+
+ String pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult batch_sign(uintptr_t node_ptr, const char *identity_did, const char *session_id);
+
+/*
  Verify the signature of a block.
 
  Loads a block from the blockstore by CID, checks that it has a signature,
@@ -506,241 +681,6 @@ struct FfiResult block_verify_signature(uintptr_t node_ptr,
                                         const char *public_key,
                                         const char *block_cid,
                                         const char *identity_did);
-
-/*
- Get a collection by name.
-
- Returns a JSON object containing the collection's schema (CollectionVersion)
- if found, or an error if the collection doesn't exist.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name
-
- # Returns
-
- - Status 0: Success (value contains JSON CollectionVersion)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult get_collection_by_name(uintptr_t node_ptr,
-                                        const char *identity_did,
-                                        const char *name);
-
-/*
- Check if a collection exists by name.
-
- Returns a JSON boolean: `true` if the collection exists, `false` otherwise.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to check
-
- # Returns
-
- - Status 0: Success (value contains "true" or "false")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult has_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
-
-/*
- Delete a collection by name.
-
- Deletes the collection and all its documents.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to delete
-
- # Returns
-
- - Status 0: Success (value is empty)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
-
-/*
- Find a collection by its collection ID (schema version ID).
-
- This is useful for P2P sync where we receive blocks with schema_version_id
- and need to find the corresponding collection.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `collection_id` - The collection ID (schema version ID)
-
- # Returns
-
- - Status 0: Success (value contains JSON CollectionVersion or "null" if not found)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `collection_id` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult find_collection_by_id(uintptr_t node_ptr,
-                                       const char *identity_did,
-                                       const char *collection_id);
-
-/*
- Set the active collection version.
-
- This activates the collection with the given version ID and deactivates
- any other versions of the same collection.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `version_id` - The version ID of the collection to activate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `version_id` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult set_active_collection_version(uintptr_t node_ptr,
-                                               const char *identity_did,
-                                               const char *version_id);
-
-/*
- Patch a collection's schema using JSON patch operations.
-
- This applies the given JSON patch to the collection's schema,
- validates the result, and updates the collection.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `collection_name` - The name of the collection to patch
- * `patch` - A JSON patch string (RFC 6902 format)
-
- # Returns
-
- - Status 0: Success (value contains the updated CollectionVersion as JSON)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `collection_name` and `patch` must be valid null-terminated UTF-8 strings.
- */
-struct FfiResult patch_collection(uintptr_t node_ptr,
-                                  const char *identity_did,
-                                  const char *collection_name,
-                                  const char *patch);
-
-/*
- Get a collection by its version ID.
-
- This searches all collections for one matching the given version ID.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `version_id` - The version ID to search for
-
- # Returns
-
- - Status 0: Success (value contains JSON CollectionVersion or "null" if not found)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `version_id` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
-                                              const char *identity_did,
-                                              const char *version_id);
-
-/*
- Truncate a collection: delete all documents while preserving the schema.
-
- This removes all document data, CRDT heads, blocks, and index entries
- for the collection. The collection schema remains intact.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to truncate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult truncate_collection(uintptr_t node_ptr,
-                                     const char *identity_did,
-                                     const char *name);
-
-/*
- Add a view to the database.
-
- Creates a new Defra View from a GQL query and SDL schema.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `gql_query` - The GraphQL query defining the view
- * `sdl` - The SDL schema for the view output type
- * `transform` - Optional Lens transform configuration (JSON, null for none)
-
- # Returns
-
- - Status 0: Success (value contains JSON array of CollectionVersions)
- - Status 1: Error (error field contains message)
-
- # Safety
-
- All string pointers must be valid null-terminated UTF-8 strings or null.
- */
-struct FfiResult add_view(uintptr_t node_ptr,
-                          const char *identity_did,
-                          const char *gql_query,
-                          const char *sdl,
-                          const char *transform);
-
-/*
- Refresh view caches.
-
- Refreshes the caches of all materialized views matching the given options.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `options` - JSON string with optional "Names" field (null for all views)
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `options` must be null or a valid null-terminated UTF-8 string.
- */
-struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 
 /*
  Set migration for collection versions.
@@ -819,21 +759,293 @@ struct FfiResult delete_collection_versions(uintptr_t node_ptr,
                                             const char *version_ids_json);
 
 /*
- Create document(s) in a collection.
+ Delete multiple documents by their docIDs.
 
- This function automatically detects whether the input is a single document
- (JSON object) or multiple documents (JSON array) and handles both cases.
+ Takes a collection name and a JSON array of docID strings,
+ deletes each document, and returns the count of deleted documents.
 
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `collection_name` - Name of the collection
- * `json_data` - JSON string containing either a single object or an array of objects
+ * `identity_did` - Optional identity DID (nullable)
+ * `collection_name` - The collection to delete from
+ * `doc_ids_json` - JSON array of docID strings: `["bae-...", "bae-..."]`
 
  # Returns
 
- - Status 0: Success (value contains JSON with created document IDs)
+ - Status 0: Success (value is `{"deleted": N}`)
  - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `collection_name` and `doc_ids_json` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult delete_documents(uintptr_t node_ptr,
+                                  const char *identity_did,
+                                  const char *collection_name,
+                                  const char *doc_ids_json);
+
+/*
+ Get a collection by name.
+
+ Returns a JSON object containing the collection's schema (CollectionVersion)
+ if found, or an error if the collection doesn't exist.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name
+
+ # Returns
+
+ - Status 0: Success (value contains JSON CollectionVersion)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult get_collection_by_name(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *name);
+
+/*
+ Check if a collection exists by name.
+
+ Returns a JSON boolean: `true` if the collection exists, `false` otherwise.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to check
+
+ # Returns
+
+ - Status 0: Success (value contains "true" or "false")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult has_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
+
+/*
+ Find a collection by its collection ID (schema version ID).
+
+ This is useful for P2P sync where we receive blocks with schema_version_id
+ and need to find the corresponding collection.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `collection_id` - The collection ID (schema version ID)
+
+ # Returns
+
+ - Status 0: Success (value contains JSON CollectionVersion or "null" if not found)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `collection_id` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult find_collection_by_id(uintptr_t node_ptr,
+                                       const char *identity_did,
+                                       const char *collection_id);
+
+/*
+ Get a collection by its version ID.
+
+ This searches all collections for one matching the given version ID.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `version_id` - The version ID to search for
+
+ # Returns
+
+ - Status 0: Success (value contains JSON CollectionVersion or "null" if not found)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `version_id` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
+                                              const char *identity_did,
+                                              const char *version_id);
+
+/*
+ Add a view to the database.
+
+ Creates a new Defra View from a GQL query and SDL schema.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `gql_query` - The GraphQL query defining the view
+ * `sdl` - The SDL schema for the view output type
+ * `transform` - Optional Lens transform configuration (JSON, null for none)
+
+ # Returns
+
+ - Status 0: Success (value contains JSON array of CollectionVersions)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings or null.
+ */
+struct FfiResult add_view(uintptr_t node_ptr,
+                          const char *identity_did,
+                          const char *gql_query,
+                          const char *sdl,
+                          const char *transform);
+
+/*
+ Refresh view caches.
+
+ Refreshes the caches of all materialized views matching the given options.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `options` - JSON string with optional "Names" field (null for all views)
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `options` must be null or a valid null-terminated UTF-8 string.
+ */
+struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
+
+/*
+ Run explicit downsample history GC.
+
+ Applies retention policies to all downsample views matching the given options.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `options` - JSON string with optional "Names" field (null for all downsample views)
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `options` must be null or a valid null-terminated UTF-8 string.
+ */
+struct FfiResult gc_downsample_histories(uintptr_t node_ptr, const char *options);
+
+/*
+ Delete a collection by name.
+
+ Deletes the collection and all its documents.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to delete
+
+ # Returns
+
+ - Status 0: Success (value is empty)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
+
+/*
+ Set the active collection version.
+
+ This activates the collection with the given version ID and deactivates
+ any other versions of the same collection.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `version_id` - The version ID of the collection to activate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `version_id` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult set_active_collection_version(uintptr_t node_ptr,
+                                               const char *identity_did,
+                                               const char *version_id);
+
+/*
+ Patch a collection's schema using JSON patch operations.
+
+ This applies the given JSON patch to the collection's schema,
+ validates the result, and updates the collection.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `collection_name` - The name of the collection to patch
+ * `patch` - A JSON patch string (RFC 6902 format)
+
+ # Returns
+
+ - Status 0: Success (value contains the updated CollectionVersion as JSON)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `collection_name` and `patch` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult patch_collection(uintptr_t node_ptr,
+                                  const char *identity_did,
+                                  const char *collection_name,
+                                  const char *patch);
+
+/*
+ Truncate a collection: delete all documents while preserving the schema.
+
+ This removes all document data, CRDT heads, blocks, and index entries
+ for the collection. The collection schema remains intact.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *name);
+
+/*
+ Create document(s) in a collection.
+
+ This function automatically detects whether the input is a single document
+ (JSON object) or multiple documents (JSON array) and handles both cases.
 
  # Safety
 
@@ -842,23 +1054,11 @@ struct FfiResult delete_collection_versions(uintptr_t node_ptr,
 struct FfiResult collection_create(uintptr_t node_ptr,
                                    const char *identity_did,
                                    const char *collection_name,
-                                   const char *json_data);
+                                   const char *json_data,
+                                   const char *batch_session_id);
 
 /*
  Check if a JSON string represents an array.
-
- This is a simple utility function that can be used by Go to determine
- whether to call single-document or multi-document APIs without
- re-parsing the entire JSON.
-
- # Arguments
-
- * `json_data` - JSON string to check
-
- # Returns
-
- - Status 0: Success (value is "true" if array, "false" if not)
- - Status 1: Error (error field contains message if invalid JSON)
 
  # Safety
 
@@ -872,15 +1072,6 @@ struct FfiResult is_json_array(const char *json_data);
  Supports Go's duration format: "300ms", "1.5h", "2h45m30s", etc.
  Valid units: ns, us (or µs), ms, s, m, h
 
- # Arguments
-
- * `duration_str` - Duration string in Go format
-
- # Returns
-
- - Status 0: Success (value contains nanoseconds as string)
- - Status 1: Error (error field contains message)
-
  # Safety
 
  `duration_str` must be a valid null-terminated UTF-8 string.
@@ -893,15 +1084,6 @@ struct FfiResult parse_duration(const char *duration_str);
  This function handles both JSON arrays (e.g., `["a", "b", "c"]`) and
  comma-separated strings (e.g., `"a,b,c"`) for backwards compatibility.
 
- # Arguments
-
- * `input` - JSON array string or comma-separated string
-
- # Returns
-
- - Status 0: Success (value contains JSON array of strings)
- - Status 1: Error (error field contains message)
-
  # Safety
 
  `input` must be a valid null-terminated UTF-8 string.
@@ -909,16 +1091,16 @@ struct FfiResult parse_duration(const char *duration_str);
 struct FfiResult parse_string_array(const char *input);
 
 /*
- Create a new encrypted index on a collection field.
+ Add a new encrypted index on a collection field.
 
  # Safety
 
  All string pointers must be valid null-terminated UTF-8 strings.
  */
-struct FfiResult create_encrypted_index(uintptr_t node_ptr,
-                                        const char *identity_did,
-                                        const char *collection_name,
-                                        const char *field_name);
+struct FfiResult add_encrypted_index(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *collection_name,
+                                     const char *field_name);
 
 /*
  Delete an encrypted index from a collection.
@@ -988,13 +1170,13 @@ struct FfiResult create_index(uintptr_t node_ptr,
                               const char *index_json);
 
 /*
- Drop an index from a collection.
+ Delete an index from a collection.
 
  # Arguments
 
  * `node_ptr` - Handle to the node
  * `collection_name` - Name of the collection
- * `index_name` - Name of the index to drop
+ * `index_name` - Name of the index to delete
 
  # Returns
 
@@ -1004,10 +1186,10 @@ struct FfiResult create_index(uintptr_t node_ptr,
 
  All string pointers must be valid null-terminated UTF-8 strings.
  */
-struct FfiResult drop_index(uintptr_t node_ptr,
-                            const char *identity_did,
-                            const char *collection_name,
-                            const char *index_name);
+struct FfiResult delete_index(uintptr_t node_ptr,
+                              const char *identity_did,
+                              const char *collection_name,
+                              const char *index_name);
 
 /*
  Get all indexes for a collection.
@@ -1040,18 +1222,11 @@ struct FfiResult get_indexes(uintptr_t node_ptr,
 
  JSON object mapping collection names to their index arrays.
 
- ```json
- {
-     "User": [{ "Name": "idx_email", ... }],
-     "Post": [{ "Name": "idx_title", ... }]
- }
- ```
-
  # Safety
 
  Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
  */
-struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
+struct FfiResult list_all_indexes(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add a lens transform to the database.
@@ -1088,107 +1263,175 @@ struct FfiResult lens_add(uintptr_t node_ptr, const char *lens_json);
 struct FfiResult lens_list(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Create a new DefraDB node.
+ Initialize the runtime for mobile embedding.
+ */
+struct FfiResult defra_mobile_init(void);
 
- This creates an in-memory database instance with a query runner.
- The returned handle must be passed to `node_close` when done.
+/*
+ Open a node from a single JSON config blob.
+ */
+struct NewNodeResult defra_mobile_open_node(const char *config_json);
 
- # Safety
+/*
+ Close a node opened via the mobile wrapper.
+ */
+struct FfiResult defra_mobile_close_node(uintptr_t node_ptr);
 
- The returned `node_ptr` must be freed by calling `node_close`.
+/*
+ Idempotently ensure an SDL schema exists on a node.
+ */
+struct FfiResult defra_mobile_ensure_schema(uintptr_t node_ptr, const char *schema_sdl);
+
+/*
+ Execute a GraphQL request from a single JSON payload.
+ */
+struct FfiResult defra_mobile_execute(uintptr_t node_ptr, const char *request_json);
+
+/*
+ Return local peer info for the configured mobile transport.
+ */
+struct FfiResult defra_mobile_peer_info(uintptr_t node_ptr);
+
+/*
+ Connect the node to a peer address.
+ */
+struct FfiResult defra_mobile_connect(uintptr_t node_ptr, const char *addr);
+
+/*
+ Notify the embedded iroh transport that network conditions may have changed.
+ */
+struct FfiResult defra_mobile_notify_network_change(uintptr_t node_ptr);
+
+/*
+ Sync branchable collections, schema versions, or specific documents.
+ */
+struct FfiResult defra_mobile_sync_collection(uintptr_t node_ptr, const char *request_json);
+
+/*
+ Create a new DefraDB node without P2P.
  */
 struct NewNodeResult new_node(struct NodeInitOptions options);
 
 /*
  Close a DefraDB node and release resources.
-
- # Safety
-
- The `node_ptr` must be a valid handle returned by `new_node`.
- After this call, the handle is no longer valid.
- All subscriptions associated with this node will be closed.
  */
 struct FfiResult node_close(uintptr_t node_ptr);
 
 /*
- Create a new DefraDB node with P2P enabled.
-
- This creates an in-memory database instance with P2P networking.
- The node will listen on the specified address for peer connections.
-
- # Arguments
-
- * `options` - Node initialization options
- * `listen_addr` - P2P multiaddr to listen on (e.g., "/ip4/127.0.0.1/tcp/9171")
+ Add P2P-enabled collections to the node.
 
  # Safety
 
- * `listen_addr` must be a valid null-terminated UTF-8 string
- * The returned `node_ptr` must be freed by calling `node_close`
+ `identity_did` and `collections_json` must be valid null-terminated UTF-8 strings when
+ non-null. `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_add_collections(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *collections_json);
+
+/*
+ Remove P2P-enabled collections from the node.
+
+ # Safety
+
+ `identity_did` and `collections_json` must be valid null-terminated UTF-8 strings when
+ non-null. `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_delete_collections(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collections_json);
+
+/*
+ List P2P-enabled collections for the node.
+
+ # Safety
+
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null. `node_ptr` must
+ reference a live node handle created by this library.
+ */
+struct FfiResult p2p_list_collections(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Add tracked P2P documents to the node.
+
+ # Safety
+
+ `identity_did` and `doc_ids_json` must be valid null-terminated UTF-8 strings when non-null.
+ `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_add_documents(uintptr_t node_ptr,
+                                   const char *identity_did,
+                                   const char *doc_ids_json);
+
+/*
+ Remove tracked P2P documents from the node.
+
+ # Safety
+
+ `identity_did` and `doc_ids_json` must be valid null-terminated UTF-8 strings when non-null.
+ `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_delete_documents(uintptr_t node_ptr,
+                                      const char *identity_did,
+                                      const char *doc_ids_json);
+
+/*
+ List tracked P2P documents for the node.
+
+ # Safety
+
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null. `node_ptr` must
+ reference a live node handle created by this library.
+ */
+struct FfiResult p2p_list_documents(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Create a new DefraDB node with P2P enabled.
+
+ # Safety
+
+ Any non-null C string pointers inside `options` and `listen_addr` must be valid
+ null-terminated UTF-8 strings for the duration of the call.
  */
 struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options, const char *listen_addr);
 
 /*
- Get P2P peer info (local peer ID and listening addresses).
-
- Returns a JSON array of full multiaddrs with peer ID embedded:
- `["/ip4/127.0.0.1/tcp/9171/p2p/12D3KooW..."]`
+ Get local P2P peer info.
 
  # Safety
 
- The caller must free the returned string with `defra_free_string`.
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null. `node_ptr` must
+ reference a live node handle created by this library.
  */
 struct FfiResult p2p_peer_info(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Get list of connected peers with full multiaddrs.
-
- Returns a JSON array of multiaddr strings (Go-compatible format).
+ Notify the active P2P transport that the network may have changed.
 
  # Safety
 
- The caller must free the returned string with `defra_free_string`.
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null.
+ `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_notify_network_change(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Get connected peers.
  */
 struct FfiResult p2p_active_peers(uintptr_t node_ptr);
 
 /*
- Connect to a peer at the given multiaddr.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `addr` - Full multiaddr including peer ID (e.g., "/ip4/127.0.0.1/tcp/9171/p2p/12D3KooW...")
+ Connect to a peer address.
 
  # Safety
 
- `addr` must be a valid null-terminated UTF-8 string.
+ `identity_did` and `addr` must be valid null-terminated UTF-8 strings when non-null.
+ `node_ptr` must reference a live node handle created by this library.
  */
 struct FfiResult p2p_connect(uintptr_t node_ptr, const char *identity_did, const char *addr);
 
 /*
- Set (add/update) a replicator for collections.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `peer_addr` - Full multiaddr of the peer including peer ID
- * `collections_json` - JSON array of collection names
-
- # Safety
-
- All string pointers must be valid null-terminated UTF-8 strings.
- */
-struct FfiResult p2p_create_replicator(uintptr_t node_ptr,
-                                       const char *identity_did,
-                                       const char *peer_addr,
-                                       const char *collections_json);
-
-/*
  Retry pushing existing documents to all registered replicators.
-
- For each registered replicator, re-pushes all existing documents.
- `push_existing_docs` internally waits up to 5s for the peer connection
- to be established, so this can be called immediately after dialing.
 
  # Safety
 
@@ -1197,12 +1440,19 @@ struct FfiResult p2p_create_replicator(uintptr_t node_ptr,
 struct FfiResult p2p_retry_replicators(uintptr_t node_ptr);
 
 /*
+ Set (add/update) a replicator for collections.
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult p2p_add_replicator(uintptr_t node_ptr,
+                                    const char *identity_did,
+                                    const char *peer_addr,
+                                    const char *collections_json);
+
+/*
  Delete a replicator.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `peer_id_str` - Peer ID string (e.g., "12D3KooW...")
 
  # Safety
 
@@ -1216,16 +1466,7 @@ struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
 /*
  Get all replicators.
 
- Returns a JSON array of replicator info objects:
- ```json
- [
-   {
-     "ID": "12D3KooW...",
-     "Addresses": ["/ip4/127.0.0.1/tcp/9171/p2p/12D3KooW..."],
-     "CollectionIDs": ["users", "posts"]
-   }
- ]
- ```
+ Returns a JSON array of replicator info objects.
 
  # Safety
 
@@ -1234,104 +1475,7 @@ struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
 struct FfiResult p2p_list_replicators(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Add collections to P2P replication.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `collections_json` - JSON array of collection names
-
- # Safety
-
- `collections_json` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult p2p_create_collections(uintptr_t node_ptr,
-                                        const char *identity_did,
-                                        const char *collections_json);
-
-/*
- Remove collections from P2P replication.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `collections_json` - JSON array of collection names
-
- # Safety
-
- `collections_json` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult p2p_delete_collections(uintptr_t node_ptr,
-                                        const char *identity_did,
-                                        const char *collections_json);
-
-/*
- Get all P2P collections.
-
- Returns a JSON array of collection names.
-
- # Safety
-
- The caller must free the returned string with `defra_free_string`.
- */
-struct FfiResult p2p_list_collections(uintptr_t node_ptr, const char *identity_did);
-
-/*
- Add documents to P2P replication by subscribing to their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
-
- # Safety
-
- `doc_ids_json` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult p2p_create_documents(uintptr_t node_ptr,
-                                      const char *identity_did,
-                                      const char *doc_ids_json);
-
-/*
- Remove documents from P2P replication by unsubscribing from their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
-
- # Safety
-
- `doc_ids_json` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult p2p_delete_documents(uintptr_t node_ptr,
-                                      const char *identity_did,
-                                      const char *doc_ids_json);
-
-/*
- Get all P2P documents.
-
- Returns a JSON array of document IDs.
-
- # Safety
-
- The caller must free the returned string with `defra_free_string`.
- */
-struct FfiResult p2p_list_documents(uintptr_t node_ptr, const char *identity_did);
-
-/*
  Sync specific documents from peers.
-
- This implements the DocSync pull-based protocol: sends requests to connected peers
- asking for the heads of specific documents, then fetches the missing DAG blocks
- via Bitswap and merges them.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `identity_did` - Identity DID for NAC permission check
- * `collection_name` - Name of the collection containing the documents
- * `doc_ids_json` - JSON array of document IDs to sync
 
  # Safety
 
@@ -1345,9 +1489,6 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
 /*
  Sync a branchable collection from connected peers.
 
- Looks up the collection, verifies it is branchable, then sends a
- BranchableSyncRequest to each connected peer via the two-stream protocol.
-
  # Safety
 
  `identity_did` and `collection_id` must be valid null-terminated UTF-8 strings.
@@ -1357,23 +1498,19 @@ struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
                                                 const char *collection_id);
 
 /*
- Sync collection versions (schema definitions) from connected peers via Bitswap.
-
- This fetches collection definition blocks by their CIDs (version IDs), recursively
- fetches previous versions and field definition blocks, then saves them to the
- database as inactive collection versions.
-
- Unlike DocSync and BranchableSync (which use PubSub request/reply), this uses
- Bitswap directly to fetch blocks by CID.
+ Sync collection versions (schema definitions) from connected peers.
 
  # Safety
 
  `identity_did` and `version_ids_json` must be valid null-terminated UTF-8 strings.
- `version_ids_json` should be a JSON array of CID strings: `["bafyrei...", "bafyrei..."]`
  */
 struct FfiResult p2p_sync_collection_versions(uintptr_t node_ptr,
                                               const char *identity_did,
                                               const char *version_ids_json);
+
+struct FfiResult defra_profiling_start(const char *output_path);
+
+struct FfiResult defra_profiling_stop(void);
 
 /*
  Execute a GraphQL query or mutation.
@@ -1393,6 +1530,8 @@ struct FfiResult p2p_sync_collection_versions(uintptr_t node_ptr,
  * `request_query` - GraphQL query string (required)
  * `operation_name` - Optional operation name for multi-operation documents (null if not used)
  * `variables` - Optional JSON string of variables (null if not used)
+ * `batch_session_id` - Optional batch session ID for CID collection (null if not in batch mode).
+   When provided, CIDs created during this request are collected under this session.
 
  # Safety
 
@@ -1402,7 +1541,8 @@ struct FfiResult exec_request(uintptr_t node_ptr,
                               const char *identity_did,
                               const char *request_query,
                               const char *operation_name,
-                              const char *variables);
+                              const char *variables,
+                              const char *batch_session_id);
 
 /*
  Add a schema to the database.
@@ -1555,6 +1695,34 @@ struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle)
 struct CloseSubscriptionResult close_graphql_subscription(const char *subscription_id);
 
 /*
+ Execute a GraphQL query or mutation within a transaction.
+
+ The operation will be part of the specified transaction and will not
+ be visible to other transactions until committed.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `txn_id` - Transaction ID from `begin_txn`
+ * `identity_did` - Optional DID of the caller for ACP permission checks (null for anonymous)
+ * `request_query` - GraphQL query string (required)
+ * `operation_name` - Optional operation name (null if not used)
+ * `variables` - Optional JSON string of variables (null if not used)
+ * `batch_session_id` - Optional batch session ID for CID collection (null if not in batch mode)
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult exec_request_in_txn(uintptr_t node_ptr,
+                                     const char *txn_id,
+                                     const char *identity_did,
+                                     const char *request_query,
+                                     const char *operation_name,
+                                     const char *variables,
+                                     const char *batch_session_id);
+
+/*
  Begin a new transaction.
 
  Returns a transaction ID that can be used with `exec_request_in_txn`,
@@ -1604,32 +1772,6 @@ struct FfiResult commit_txn(uintptr_t node_ptr, const char *txn_id);
  `txn_id` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult rollback_txn(uintptr_t node_ptr, const char *txn_id);
-
-/*
- Execute a GraphQL query or mutation within a transaction.
-
- The operation will be part of the specified transaction and will not
- be visible to other transactions until committed.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `txn_id` - Transaction ID from `begin_txn`
- * `identity_did` - Optional DID of the caller for ACP permission checks (null for anonymous)
- * `request_query` - GraphQL query string (required)
- * `operation_name` - Optional operation name (null if not used)
- * `variables` - Optional JSON string of variables (null if not used)
-
- # Safety
-
- All string pointers must be either null or valid null-terminated UTF-8 strings.
- */
-struct FfiResult exec_request_in_txn(uintptr_t node_ptr,
-                                     const char *txn_id,
-                                     const char *identity_did,
-                                     const char *request_query,
-                                     const char *operation_name,
-                                     const char *variables);
 
 /*
  Free a string allocated by FFI functions.

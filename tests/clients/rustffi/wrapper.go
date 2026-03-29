@@ -18,6 +18,7 @@ package rustffi
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -113,6 +114,15 @@ func identityDIDFromOption(ident immutable.Option[identity.Identity]) string {
 		return ident.Value().DID()
 	}
 	return ""
+}
+
+// execRequestWithIdentity builds ExecRequest options forwarding the given identity.
+func execRequestWithIdentity(ident immutable.Option[identity.Identity]) options.Enumerable[options.ExecRequestOptions] {
+	b := options.ExecRequest()
+	if ident.HasValue() {
+		b.SetIdentity(ident.Value())
+	}
+	return b
 }
 
 // Verify interface compliance at compile time
@@ -636,15 +646,13 @@ func (w *Wrapper) ExecRequest(
 	// assertions can compare them with MustParseTime/CurrentTimestamp values.
 	if gqlResult.Data != nil {
 		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+		gqlResult.Data = decodeBase64Deltas(gqlResult.Data)
 	}
 
-	// After successful mutation, emit update events so the test framework's
-	// waitForUpdateEvents can synchronize. Without this, GQL mutations via
-	// ExecRequest don't produce events (unlike CollectionWrapper.Create/Update/Delete
-	// which manually publish them).
-	if strings.HasPrefix(strings.TrimSpace(request), "mutation") && gqlResult.Data != nil {
-		w.emitMutationEvents(ctx, gqlResult.Data)
-	}
+	// Rust's merge handler emits update events via the event bus, which the
+	// bridge goroutine forwards to Go's event bus. No need to emit manually
+	// here — doing so would produce duplicate events that desynchronize the
+	// test framework's waitForUpdateEvents channel.
 
 	return &client.RequestResult{GQL: gqlResult}
 }
@@ -745,9 +753,10 @@ func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID st
 				continue
 			}
 
-			// Post-process: convert DateTime strings to time.Time objects
+			// Post-process: convert DateTime strings and base64 deltas
 			if gqlResult.Data != nil {
 				gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+				gqlResult.Data = decodeBase64Deltas(gqlResult.Data)
 			}
 
 			select {
@@ -811,10 +820,14 @@ func (w *Wrapper) GetCollections(
 	if opt.VersionID.HasValue() {
 		versionJSON, err := w.node.GetCollectionByVersionID(identityDID, opt.VersionID.Value())
 		if err != nil {
+			errStr := err.Error()
+			if strings.Contains(errStr, "key not found") {
+				return nil, fmt.Errorf("collection not found")
+			}
 			return nil, err
 		}
 		if versionJSON == nullStr || versionJSON == "" {
-			return nil, fmt.Errorf("key not found")
+			return nil, fmt.Errorf("collection not found")
 		}
 		var version client.CollectionVersion
 		if err := json.Unmarshal([]byte(versionJSON), &version); err != nil {
@@ -2108,7 +2121,7 @@ func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Documen
 		params += ", encryptFields: [" + strings.Join(quoted, ", ") + "]"
 	}
 	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
-	result := c.wrapper.ExecRequest(ctx, mutation)
+	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -2148,6 +2161,7 @@ func (c *CollectionWrapper) AddManyDocuments(
 }
 
 func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error {
+	opt := utils.NewOptions(opts...)
 	docJSON, err := doc.ToJSONPatch()
 	if err != nil {
 		return fmt.Errorf("failed to convert document to JSON: %w", err)
@@ -2157,7 +2171,7 @@ func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Docu
 	gqlInput := jsonToGraphQLInput(string(docJSON))
 	mutation := fmt.Sprintf(`mutation { update_%s(docID: "%s", input: %s) { _docID } }`,
 		c.version.Name, doc.ID().String(), gqlInput)
-	result := c.wrapper.ExecRequest(ctx, mutation)
+	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -2166,17 +2180,25 @@ func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Docu
 }
 
 func (c *CollectionWrapper) SaveDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error {
-	// Check if doc exists in the database by querying for it
-	exists, err := c.ExistsDocument(ctx, doc.ID())
+	opt := utils.NewOptions(opts...)
+	// Check if doc exists in the database by querying for it.
+	// Pass identity so ACP-protected documents are visible to the owner.
+	existsOpt := options.ExistsDocument()
+	if opt.GetIdentity().HasValue() {
+		existsOpt.SetIdentity(opt.GetIdentity().Value())
+	}
+	exists, err := c.ExistsDocument(ctx, doc.ID(), existsOpt)
 	if err != nil {
 		// If error checking existence, check if deleted before creating
 		if c.isDocumentDeleted(ctx, doc.ID()) {
 			return fmt.Errorf("a document with the given ID has been deleted")
 		}
-		opt := utils.NewOptions(opts...)
 		addOpt := options.AddDocument().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
+		if opt.GetIdentity().HasValue() {
+			addOpt.SetIdentity(opt.GetIdentity().Value())
+		}
 		return c.AddDocument(ctx, doc, addOpt)
 	}
 	if !exists {
@@ -2184,13 +2206,19 @@ func (c *CollectionWrapper) SaveDocument(ctx context.Context, doc *client.Docume
 		if c.isDocumentDeleted(ctx, doc.ID()) {
 			return fmt.Errorf("a document with the given ID has been deleted")
 		}
-		opt := utils.NewOptions(opts...)
 		addOpt := options.AddDocument().
 			SetEncryptDoc(opt.EncryptDoc).
 			SetEncryptedFields(opt.EncryptedFields)
+		if opt.GetIdentity().HasValue() {
+			addOpt.SetIdentity(opt.GetIdentity().Value())
+		}
 		return c.AddDocument(ctx, doc, addOpt)
 	}
-	return c.UpdateDocument(ctx, doc)
+	updateOpt := options.UpdateDocument()
+	if opt.GetIdentity().HasValue() {
+		updateOpt.SetIdentity(opt.GetIdentity().Value())
+	}
+	return c.UpdateDocument(ctx, doc, updateOpt)
 }
 
 // getLatestCompositeCID queries _commits to get the latest composite CID for a document.
@@ -2239,8 +2267,9 @@ func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.
 }
 
 func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error) {
+	opt := utils.NewOptions(opts...)
 	mutation := fmt.Sprintf(`mutation { delete_%s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
-	result := c.wrapper.ExecRequest(ctx, mutation)
+	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return false, result.GQL.Errors[0]
 	}
@@ -2260,8 +2289,9 @@ func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.Doc
 }
 
 func (c *CollectionWrapper) ExistsDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error) {
+	opt := utils.NewOptions(opts...)
 	query := fmt.Sprintf(`{ %s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
-	result := c.wrapper.ExecRequest(ctx, query)
+	result := c.wrapper.ExecRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return false, result.GQL.Errors[0]
 	}
@@ -2327,10 +2357,11 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 		return nil, fmt.Errorf("the updater of a document is of invalid type")
 	}
 
+	opt := utils.NewOptions(opts...)
 	gqlUpdater := jsonToGraphQLInput(updater)
 	mutation := fmt.Sprintf(`mutation { update_%s(filter: %s, input: %s) { _docID } }`,
 		c.version.Name, gqlFilter, gqlUpdater)
-	result := c.wrapper.ExecRequest(ctx, mutation)
+	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -2414,7 +2445,38 @@ func convertDateTimeStrings(v any) any {
 	}
 }
 
+// decodeBase64Deltas walks a GQL result tree and converts any "delta" field
+// whose value is a base64 string into a []byte. Rust's JSON serialization
+// encodes byte slices as base64, while Go's native client returns raw []byte.
+// The test framework's assertions compare against []byte, so this translation
+// is necessary for parity.
+func decodeBase64Deltas(v any) any {
+	switch val := v.(type) {
+	case map[string]any:
+		for k, child := range val {
+			if k == "delta" {
+				if s, ok := child.(string); ok {
+					if decoded, err := base64.StdEncoding.DecodeString(s); err == nil {
+						val[k] = decoded
+					}
+				}
+			} else {
+				val[k] = decodeBase64Deltas(child)
+			}
+		}
+		return val
+	case []any:
+		for i, child := range val {
+			val[i] = decodeBase64Deltas(child)
+		}
+		return val
+	default:
+		return val
+	}
+}
+
 func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error) {
+	opt := utils.NewOptions(opts...)
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal filter: %w", err)
@@ -2423,7 +2485,7 @@ func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filte
 	// Convert JSON to GraphQL input format (unquoted keys)
 	gqlFilter := jsonToGraphQLInput(string(filterJSON))
 	mutation := fmt.Sprintf(`mutation { delete_%s(filter: %s) { _docID } }`, c.version.Name, gqlFilter)
-	result := c.wrapper.ExecRequest(ctx, mutation)
+	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -2445,6 +2507,7 @@ func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filte
 }
 
 func (c *CollectionWrapper) GetDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.GetDocumentOptions]) (*client.Document, error) {
+	opt := utils.NewOptions(opts...)
 	// Query the document by ID - must request ALL fields so SetWithJSON can properly
 	// track which fields are dirty (modified) vs unchanged
 	var fieldNames []string
@@ -2458,7 +2521,7 @@ func (c *CollectionWrapper) GetDocument(ctx context.Context, docID client.DocID,
 	}
 
 	query := fmt.Sprintf(`{ %s(docID: "%s") { %s } }`, c.version.Name, docID.String(), strings.Join(fieldNames, " "))
-	result := c.wrapper.ExecRequest(ctx, query)
+	result := c.wrapper.ExecRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
