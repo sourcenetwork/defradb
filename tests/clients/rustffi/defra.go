@@ -66,12 +66,23 @@ func mapFFIError(ffiOp string, rawErr string) error {
 		return client.ErrDocumentNotFoundOrNotAuthorized
 
 	case strings.Contains(rawErr, "collection not found"),
-		strings.Contains(rawErr, "not found - add schema before subscribing"):
+		isCollectionNotFoundError(rawErr):
 		return client.ErrCollectionNotFound
 
 	default:
 		return fmt.Errorf("ffi: %s failed: %s", ffiOp, rawErr)
 	}
+}
+
+// isCollectionNotFoundError checks for Rust FFI error patterns like
+// "collection 'X' not found" or "collection 'X' not found - add schema..."
+// where the collection name is embedded between "collection '" and "' not found".
+func isCollectionNotFoundError(rawErr string) bool {
+	idx := strings.Index(rawErr, "collection '")
+	if idx < 0 {
+		return false
+	}
+	return strings.Contains(rawErr[idx:], "' not found")
 }
 
 // extractPermissionSuffix extracts "Permission: xyz" from an FFI error string.
