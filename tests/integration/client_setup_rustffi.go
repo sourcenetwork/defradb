@@ -15,6 +15,8 @@ package tests
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -26,6 +28,22 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients/rustffi"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// closeGoNodeP2P shuts down the Go node's P2P peer to prevent interference
+// with the Rust FFI node's P2P host. Both hosts on the same machine cause
+// GossipSub mesh formation failures.
+func closeGoNodeP2P(nodeObj *node.Node) {
+	v := reflect.ValueOf(nodeObj).Elem()
+	peerField := v.FieldByName("peer")
+	if !peerField.IsValid() || peerField.IsNil() {
+		return
+	}
+	// Use unsafe to read the unexported interface value and call Close().
+	peerIface := reflect.NewAt(peerField.Type(), unsafe.Pointer(peerField.UnsafeAddr())).Elem()
+	peerIface.MethodByName("Close").Call(nil)
+	// Zero out the field so the Go node doesn't try to close it again.
+	peerField.Set(reflect.Zero(peerField.Type()))
+}
 
 // setupRustFFIClient creates a Rust FFI wrapper and mirrors the Go node's NAC
 // state onto it. This ensures the Rust FFI node has the same access control
@@ -68,6 +86,12 @@ func setupRustFFIClient(
 	}
 
 	if s.IsNetworkEnabled {
+		// Shut down the Go node's P2P host before creating the Rust FFI P2P host.
+		// The Go node started with P2P enabled (SetDisableP2P(false) in db_setup.go),
+		// but when using Rust FFI, all P2P operations go through the Rust FFI wrapper.
+		// Having both hosts active causes GossipSub mesh formation interference.
+		closeGoNodeP2P(nodeObj)
+
 		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
 		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity, rustDBPath, shConfig)
 	} else {

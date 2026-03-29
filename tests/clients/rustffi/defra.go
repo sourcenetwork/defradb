@@ -65,6 +65,9 @@ func mapFFIError(ffiOp string, rawErr string) error {
 	case strings.Contains(rawErr, "document not found or not authorized"):
 		return client.ErrDocumentNotFoundOrNotAuthorized
 
+	case strings.Contains(rawErr, "collection not found"):
+		return client.ErrCollectionNotFound
+
 	default:
 		return fmt.Errorf("ffi: %s failed: %s", ffiOp, rawErr)
 	}

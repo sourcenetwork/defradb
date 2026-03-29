@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1655,6 +1656,7 @@ func (w *Wrapper) ListP2PCollections(ctx context.Context, opts ...options.Enumer
 				names = append(names, cid)
 			}
 		}
+		sort.Strings(names)
 		return names, nil
 	}
 
