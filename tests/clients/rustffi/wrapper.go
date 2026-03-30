@@ -137,6 +137,7 @@ type Wrapper struct {
 	stopMergePoller chan struct{}
 	stopSEForwarder chan struct{}
 	goNodeCloser    func() // Called during Close() to release Go node resources (e.g. badger lock)
+	nodeIdentityRaw *identity.PublicRawIdentity // Cached node identity (with PublicKey) for GetNodeIdentity
 }
 
 // SourceHubConfig holds SourceHub connection info for Rust FFI nodes.
@@ -266,11 +267,16 @@ func NewWrapper(
 		}
 	}()
 
-	return &Wrapper{
+	w := &Wrapper{
 		node:            node,
 		events:          eb,
 		stopMergePoller: stopCh,
-	}, nil
+	}
+	if nodeIdentity != nil {
+		raw := nodeIdentity.ToPublicRawIdentity()
+		w.nodeIdentityRaw = &raw
+	}
+	return w, nil
 }
 
 // NewWrapperWithP2P creates a new Rust FFI client wrapper with P2P enabled.
@@ -411,11 +417,16 @@ func NewWrapperWithP2P(
 		}
 	}()
 
-	return &Wrapper{
+	w := &Wrapper{
 		node:            node,
 		events:          eb,
 		stopMergePoller: stopCh,
-	}, nil
+	}
+	if nodeIdentity != nil {
+		raw := nodeIdentity.ToPublicRawIdentity()
+		w.nodeIdentityRaw = &raw
+	}
+	return w, nil
 }
 
 // EnableNACForInit enables NAC on the underlying Rust FFI node with the given
@@ -1394,6 +1405,11 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	}
 	if did == "" {
 		return immutable.None[identity.PublicRawIdentity](), nil
+	}
+	// Return the cached identity which includes the PublicKey (hex-encoded).
+	// The Rust FFI only returns the DID, but the test framework expects both.
+	if w.nodeIdentityRaw != nil && w.nodeIdentityRaw.DID == did {
+		return immutable.Some(*w.nodeIdentityRaw), nil
 	}
 	return immutable.Some(identity.PublicRawIdentity{DID: did}), nil
 }
