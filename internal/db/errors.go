@@ -936,8 +936,8 @@ func NewErrGetShortIDForMerge(inner error, collectionID string) error {
 	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
 }
 
-func NewErrGetMergeTargetHeads(inner error, docID string) error {
-	return errors.Wrap(errGetMergeTargetHeads, inner, errors.NewKV("DocID", docID))
+func NewErrGetMergeTargetHeads(inner error, docID string, key string) error {
+	return errors.Wrap(errGetMergeTargetHeads, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
 }
 
 func NewErrLoadComposites(inner error, cid string, docID string) error {
@@ -1009,8 +1009,8 @@ func NewErrLoadEncryptionBlock(inner error, cid string) error {
 	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
 }
 
-func NewErrGetHeadsForMerge(inner error) error {
-	return errors.Wrap(errGetHeadsForMerge, inner)
+func NewErrGetHeadsForMerge(inner error, key string) error {
+	return errors.Wrap(errGetHeadsForMerge, inner, errors.NewKV("Key", key))
 }
 
 func NewErrLoadBlockFromStore(inner error, cid string) error {

@@ -151,8 +151,8 @@ func NewErrGetDocHeads(inner error, docID string) error {
 	return errors.Wrap(errGetDocHeads, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrMarshalBlock(inner error) error {
-	return errors.Wrap(errMarshalBlock, inner)
+func NewErrMarshalBlock(inner error, docID string, cid string) error {
+	return errors.Wrap(errMarshalBlock, inner, errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
 func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }

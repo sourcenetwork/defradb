@@ -224,7 +224,7 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 	for _, head := range heads {
 		rawblock, err := head.block.Marshal()
 		if err != nil {
-			return NewErrMarshalBlock(err)
+			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
@@ -816,7 +816,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 
 		rawblock, err := head.block.Marshal()
 		if err != nil {
-			return NewErrMarshalBlock(err)
+			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
@@ -886,13 +886,13 @@ func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) e
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
-			return errors.Join(NewErrDeleteRetryDoc(err, peerID), iter.Close())
+			return errors.Join(NewErrIterateReplicatorDocs(err), iter.Close())
 		}
 		if !hasNext {
 			break
 		}
 
-		err = p.db.Multistore().Peerstore().Delete(ctx, keys.NewReplicatorRetryDocIDKey(peerID, string(iter.Key())).Bytes())
+		err = p.db.Multistore().Peerstore().Delete(ctx, iter.Key())
 		if err != nil {
 			return errors.Join(NewErrDeleteRetryDoc(err, peerID), iter.Close())
 		}

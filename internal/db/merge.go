@@ -103,7 +103,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	mt, err := getHeadsAsMergeTarget(ctx, key)
 	if err != nil {
-		return NewErrGetMergeTargetHeads(err, dagMerge.DocID)
+		return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
 	}
 
 	mp, err := db.newMergeProcessor(ctx, col)
@@ -528,7 +528,7 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 	cids, err := getHeads(ctx, key)
 
 	if err != nil {
-		return mergeTarget{}, NewErrGetHeadsForMerge(err)
+		return mergeTarget{}, NewErrGetHeadsForMerge(err, string(key.Bytes()))
 	}
 
 	mt := newMergeTarget()
