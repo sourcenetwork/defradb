@@ -286,9 +286,11 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 		result, err := p.processDocSyncItem(docID)
 		if err != nil {
 			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
-			continue // Skip failed items
+			continue
 		}
-		results = append(results, result)
+		if len(result.Heads) > 0 {
+			results = append(results, result)
+		}
 	}
 
 	reply := &docSyncReply{
@@ -314,7 +316,9 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	if len(cids) == 0 {
-		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
+		// This node doesn't have this document — normal in a broadcast sync where
+		// all subscribed nodes receive the request regardless of whether they own the doc.
+		return docSyncItem{}, nil
 	}
 
 	result := docSyncItem{
