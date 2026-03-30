@@ -1605,8 +1605,9 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	// propagate because the mesh hasn't stabilized yet.
 	// GossipSub requires multiple heartbeat cycles (1s each) to graft mesh
 	// links, especially in 3+ node topologies where transitive discovery
-	// adds latency.
-	time.Sleep(2 * time.Second)
+	// adds latency. Three seconds covers three heartbeat cycles which is
+	// sufficient for full mesh stabilization in CRDT convergence tests.
+	time.Sleep(3 * time.Second)
 
 	return nil
 }
@@ -1628,7 +1629,7 @@ func (w *Wrapper) AddReplicator(ctx context.Context, addresses []string, opts ..
 	// Allow GossipSub mesh formation after adding replicator.
 	// P2PSetReplicator implicitly connects to the target peer; the mesh
 	// requires multiple heartbeat cycles to stabilize.
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	return nil
 }
