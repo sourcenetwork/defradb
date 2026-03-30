@@ -432,8 +432,6 @@ func (p *P2P) handleReplicatorRetries(ctx context.Context) {
 }
 
 func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string) error {
-	log.InfoContext(ctx, "Handling replicator failure", corelog.Any("PeerID", peerID))
-
 	// This method can be called concurrently for the same peerID which can cause some
 	// transaction conflicts. Since this is not a performance critical operation, it's
 	// safe to use a mutex to prevent unnecessary conflicts.
@@ -511,13 +509,7 @@ func updateReplicatorStatus(
 	if err != nil {
 		return NewErrUnmarshalReplicator(err, peerID)
 	}
-	newStatus := client.ReplicatorStatusActive
-	if !active {
-		newStatus = client.ReplicatorStatusInactive
-	}
-	if rep.Status != newStatus {
-		log.InfoContext(ctx, "Replicator status changed", corelog.Any("PeerID", peerID), corelog.Any("NewStatus", newStatus))
-	}
+	oldStatus := rep.Status
 	switch active {
 	case true:
 		if rep.Status == client.ReplicatorStatusInactive {
@@ -536,6 +528,15 @@ func updateReplicatorStatus(
 	}
 	if err := peerstore.Set(ctx, key.Bytes(), b); err != nil {
 		return NewErrStoreReplicator(err, peerID)
+	}
+	if oldStatus != rep.Status {
+		log.InfoContext(
+			ctx,
+			"Replicator status changed",
+			corelog.Any("PeerID", peerID),
+			corelog.Any("OldStatus", oldStatus),
+			corelog.Any("NewStatus", rep.Status),
+		)
 	}
 	return nil
 }

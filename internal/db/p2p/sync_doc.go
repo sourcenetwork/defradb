@@ -174,7 +174,7 @@ func (p *P2P) handleDocSyncResponse(
 ) string {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err, corelog.String("PeerID", resp.From))
-		return ""
+		return resp.From
 	}
 
 	var reply docSyncReply
