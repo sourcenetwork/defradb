@@ -49,7 +49,7 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	log.InfoContext(ctx, "Adding replicator", corelog.Any("Addresses", addresses))
+	log.InfoContext(ctx, "Adding replicator", corelog.Any("Addresses", addresses), corelog.Any("CollectionNames", collectionNames))
 
 	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
@@ -155,7 +155,11 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 		}
 	}
 
-	log.InfoContext(ctx, "Replicator added")
+	peerIDs := make([]string, 0, len(replicatorMap))
+	for id := range replicatorMap {
+		peerIDs = append(peerIDs, id)
+	}
+	log.InfoContext(ctx, "Replicator added", corelog.Any("PeerIDs", peerIDs))
 
 	txn.OnSuccessAsync(func() {
 		for id, addresses := range replicatorMap {
