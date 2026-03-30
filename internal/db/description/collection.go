@@ -35,23 +35,23 @@ func SaveCollection(
 
 	err := id.SetShortCollectionID(ctx, desc.CollectionID)
 	if err != nil {
-		return err
+		return NewErrSaveCollection(err, desc.CollectionID)
 	}
 
 	err = id.SetShortFieldIDs(ctx, desc)
 	if err != nil {
-		return err
+		return NewErrSaveCollection(err, desc.CollectionID)
 	}
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
-		return err
+		return NewErrSaveCollection(err, desc.CollectionID)
 	}
 
 	key := keys.NewCollectionKey(desc.VersionID)
 	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
 	if err != nil {
-		return err
+		return NewErrSaveCollection(err, desc.CollectionID)
 	}
 
 	if !desc.IsActive {
@@ -59,14 +59,14 @@ func SaveCollection(
 		idBytes, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 		if err != nil {
 			if !errors.Is(err, corekv.ErrNotFound) {
-				return err
+				return NewErrSaveCollection(err, desc.CollectionID)
 			}
 		}
 
 		if string(idBytes) == desc.VersionID {
 			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
 			if err != nil {
-				return err
+				return NewErrSaveCollection(err, desc.CollectionID)
 			}
 		}
 	}
@@ -75,7 +75,7 @@ func SaveCollection(
 		nameKey := keys.NewCollectionNameKey(desc.Name)
 		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
 		if err != nil {
-			return err
+			return NewErrSaveCollection(err, desc.CollectionID)
 		}
 	}
 
@@ -85,7 +85,7 @@ func SaveCollection(
 		collectionVersionKey := keys.NewCollectionVersionKey(desc.CollectionID, desc.VersionID)
 		err = txn.Systemstore().Set(ctx, collectionVersionKey.Bytes(), []byte{})
 		if err != nil {
-			return err
+			return NewErrSaveCollection(err, desc.CollectionID)
 		}
 	}
 
@@ -111,14 +111,14 @@ func GetCollectionByID(
 	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
-			err = client.ErrCollectionNotFound
+			return client.CollectionVersion{}, client.NewErrCollectionNotFoundForCollectionVersion(id)
 		}
-		return client.CollectionVersion{}, err
+		return client.CollectionVersion{}, NewErrGetCollectionByID(err, id)
 	}
 
 	err = json.Unmarshal(buf, &col)
 	if err != nil {
-		return client.CollectionVersion{}, err
+		return client.CollectionVersion{}, NewErrGetCollectionByID(err, id)
 	}
 
 	cache.Add(col)
@@ -145,9 +145,9 @@ func GetCollectionByName(
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
-			err = client.ErrCollectionNotFound
+			return client.CollectionVersion{}, client.NewErrCollectionNotFoundForName(name)
 		}
-		return client.CollectionVersion{}, err
+		return client.CollectionVersion{}, NewErrGetCollectionByName(err, name)
 	}
 
 	col, err = GetCollectionByID(ctx, string(idBuf))
@@ -241,7 +241,7 @@ func GetCollections(
 		Prefix: []byte(keys.COLLECTION_ID),
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetCollections(err)
 	}
 
 	cols := make([]client.CollectionVersion, 0)
@@ -251,7 +251,7 @@ func GetCollections(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetCollections(err)
 		}
 
 		if !hasValue {
@@ -263,7 +263,7 @@ func GetCollections(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetCollections(err)
 		}
 
 		var col client.CollectionVersion
@@ -272,7 +272,7 @@ func GetCollections(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetCollections(err)
 		}
 
 		cols = append(cols, col)
@@ -298,7 +298,7 @@ func GetActiveCollections(
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetActiveCollections(err)
 	}
 
 	cols := make([]client.CollectionVersion, 0)
@@ -308,7 +308,7 @@ func GetActiveCollections(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetActiveCollections(err)
 		}
 
 		if !hasValue {
@@ -320,7 +320,7 @@ func GetActiveCollections(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetActiveCollections(err)
 		}
 
 		col, err := GetCollectionByID(ctx, string(value))
@@ -353,7 +353,11 @@ func HasCollectionByName(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
-	return txn.Systemstore().Has(ctx, nameKey.Bytes())
+	has, err := txn.Systemstore().Has(ctx, nameKey.Bytes())
+	if err != nil {
+		return false, NewErrCheckCollectionExists(err, name)
+	}
+	return has, nil
 }
 
 func GetCollectionVersionIDs(
@@ -383,7 +387,7 @@ func GetCollectionVersionIDs(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetCollectionVersions(err, collectionID)
 	}
 
 	for {
@@ -392,7 +396,7 @@ func GetCollectionVersionIDs(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, NewErrGetCollectionVersions(err, collectionID)
 		}
 
 		if !hasValue {
@@ -475,12 +479,12 @@ func DeleteCollection(
 	txn := datastore.CtxMustGetTxn(ctx)
 	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
 	if err != nil {
-		return err
+		return NewErrDeleteCollection(err, version.CollectionID)
 	}
 
 	versions, err := GetCollectionsByCollectionID(ctx, version.CollectionID)
 	if err != nil {
-		return err
+		return NewErrDeleteCollection(err, version.CollectionID)
 	}
 
 	cache := CollectionCacheFromContext(ctx)
@@ -489,14 +493,14 @@ func DeleteCollection(
 	key := keys.NewCollectionKey(version.VersionID)
 	err = txn.Systemstore().Delete(ctx, key.Bytes())
 	if err != nil {
-		return err
+		return NewErrDeleteCollection(err, version.CollectionID)
 	}
 
 	if version.IsActive {
 		nameKey := keys.NewCollectionNameKey(version.Name)
 		err = txn.Systemstore().Delete(ctx, nameKey.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteCollection(err, version.CollectionID)
 		}
 	}
 
@@ -505,7 +509,7 @@ func DeleteCollection(
 		collectionVersionKey := keys.NewCollectionVersionKey(version.CollectionID, version.VersionID)
 		err = txn.Systemstore().Delete(ctx, collectionVersionKey.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteCollection(err, version.CollectionID)
 		}
 	}
 
@@ -513,7 +517,7 @@ func DeleteCollection(
 	// before deleting the collection short id.
 	err = id.DeleteShortFieldIDs(ctx, lockSet, version, versions)
 	if err != nil {
-		return err
+		return NewErrDeleteCollection(err, version.CollectionID)
 	}
 
 	if len(versions) == 1 {
@@ -524,7 +528,7 @@ func DeleteCollection(
 		// Only delete the collection short ID if this was the last local version
 		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
 		if err != nil {
-			return err
+			return NewErrDeleteCollection(err, version.CollectionID)
 		}
 	}
 

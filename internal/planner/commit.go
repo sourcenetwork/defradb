@@ -472,12 +472,12 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 
 	sigIPLDBlock, err := txn.Blockstore().Get(n.planner.ctx, link.Cid)
 	if err != nil {
-		return err
+		return NewErrGetSigBlock(err, link.Cid.String())
 	}
 
 	sigBlock, err := coreblock.GetSignatureBlockFromBytes(sigIPLDBlock.RawData())
 	if err != nil {
-		return err
+		return NewErrDecodeSigBlock(err, link.Cid.String())
 	}
 	sigFieldIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
 	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndexes[0]]

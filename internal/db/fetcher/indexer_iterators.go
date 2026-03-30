@@ -121,7 +121,7 @@ func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.Keyeds
 
 	resultIter, err := store.Iterator(ctx, iterOpts)
 	if err != nil {
-		return err
+		return NewErrCreateIndexIterator(err, iter.indexDesc.Name)
 	}
 	iter.resultIter = resultIter
 	return nil
@@ -146,8 +146,11 @@ func (iter *indexMatchIterator) Next() (indexIterResult, error) {
 // nextRawResult fetches the next raw result from the iterator without any filtering.
 func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 	hasValue, err := iter.resultIter.Next()
-	if err != nil || !hasValue {
-		return indexIterResult{}, err
+	if err != nil {
+		return indexIterResult{}, NewErrIterateIndex(err, iter.indexDesc.Name)
+	}
+	if !hasValue {
+		return indexIterResult{}, nil
 	}
 
 	key, err := keys.DecodeIndexDataStoreKey(
@@ -156,12 +159,12 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 		iter.indexedFields,
 	)
 	if err != nil {
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
 	}
 
 	value, err := iter.resultIter.Value()
 	if err != nil {
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrGetIndexValue(err, iter.indexDesc.Name)
 	}
 
 	iter.execInfo.IndexesFetched++
@@ -219,7 +222,7 @@ func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return indexIterResult{key: iter.indexKey}, nil
 		}
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrGetIndexEntry(err, iter.indexKey.ToString())
 	}
 	iter.store = nil
 	iter.execInfo.IndexesFetched++

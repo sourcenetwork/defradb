@@ -78,7 +78,7 @@ func newDocumentFetcher(
 
 	iter, err := txn.Datastore().Iterator(ctx, iterOptions)
 	if err != nil {
-		return nil, err
+		return nil, NewErrCreateDocIterator(err)
 	}
 
 	return &documentFetcher{
@@ -109,20 +109,23 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 
 	for {
 		hasValue, err := f.iter.Next()
-		if err != nil || !hasValue {
-			return immutable.None[string](), err
+		if err != nil {
+			return immutable.None[string](), NewErrIterateDocuments(err)
+		}
+		if !hasValue {
+			return immutable.None[string](), nil
 		}
 
 		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
 		if err != nil {
-			return immutable.None[string](), err
+			return immutable.None[string](), NewErrParseDocumentKey(err)
 		}
 
 		var value []byte
 		if !f.keysOnly {
 			value, err = f.iter.Value()
 			if err != nil {
-				return immutable.None[string](), err
+				return immutable.None[string](), NewErrGetDocumentValue(err)
 			}
 		}
 
@@ -156,7 +159,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	for {
 		hasValue, err := f.iter.Next()
 		if err != nil {
-			return immutable.None[EncodedDocument](), err
+			return immutable.None[EncodedDocument](), NewErrIterateDocFields(err)
 		}
 		if !hasValue {
 			break
@@ -164,14 +167,14 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 
 		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
 		if err != nil {
-			return immutable.None[EncodedDocument](), err
+			return immutable.None[EncodedDocument](), NewErrParseFieldKey(err)
 		}
 
 		var value []byte
 		if !f.keysOnly {
 			value, err = f.iter.Value()
 			if err != nil {
-				return immutable.None[EncodedDocument](), err
+				return immutable.None[EncodedDocument](), NewErrGetFieldValue(err)
 			}
 		}
 

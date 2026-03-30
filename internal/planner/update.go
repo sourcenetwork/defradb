@@ -76,7 +76,7 @@ func (n *updateNode) Next() (bool, error) {
 	}
 	for k, v := range n.input {
 		if err := doc.Set(n.p.ctx, k, v); err != nil {
-			return false, err
+			return false, NewErrSetDocField(err, k)
 		}
 	}
 	updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)

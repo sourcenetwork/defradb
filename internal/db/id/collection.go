@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -32,11 +33,11 @@ func GetUncachedShortCollectionID(
 	key := keys.NewCollectionID(collectionID)
 	valueBytes, err := systemStore.Get(ctx, key.Bytes())
 	if err != nil {
-		return 0, err
+		return 0, NewErrGetShortCollectionID(err, collectionID)
 	}
 	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
 	if err != nil {
-		return 0, err
+		return 0, NewErrParseShortCollectionID(err, collectionID)
 	}
 	return uint32(v), nil
 }
@@ -79,7 +80,7 @@ func SetShortCollectionID(
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
 	if err != nil {
-		return err
+		return NewErrCheckShortCollectionID(err, collectionID)
 	}
 	if hasShortID {
 		return nil
@@ -87,18 +88,18 @@ func SetShortCollectionID(
 
 	colSeq, err := sequence.Get(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
-		return err
+		return NewErrGetCollectionIDSequence(err, collectionID)
 	}
 
 	sID, err := colSeq.Next(ctx)
 	if err != nil {
-		return err
+		return NewErrNextCollectionIDSeq(err, collectionID)
 	}
 	shortID := uint32(sID)
 
 	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
 	if err != nil {
-		return err
+		return NewErrStoreShortCollectionID(err, collectionID)
 	}
 
 	cache[collectionID] = shortID
@@ -116,7 +117,11 @@ func DeleteShortCollectionID(
 	txn := datastore.CtxMustGetTxn(ctx)
 	key := keys.NewCollectionID(collectionID)
 
-	return txn.Systemstore().Delete(ctx, key.Bytes())
+	err := txn.Systemstore().Delete(ctx, key.Bytes())
+	if err != nil {
+		return NewErrDeleteShortCollectionID(err, collectionID)
+	}
+	return nil
 }
 
 type collectionShortIDCacheKey struct{}

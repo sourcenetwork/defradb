@@ -17,6 +17,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corekv"
+
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -134,7 +135,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
@@ -171,7 +172,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		// with all supported corekv store implementations.
 		err := ds.Delete(ctx, key)
 		if err != nil {
-			return err
+			return NewErrTruncateDatastoreKey(err, key.ToString())
 		}
 
 		// Headstore keys are implicitly protected by the lockset on the datastore, as
@@ -205,7 +206,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
@@ -251,7 +252,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		// with all supported corekv store implementations.
 		err := underlyingStore.Delete(ctx, key)
 		if err != nil {
-			return err
+			return NewErrTruncateDatastoreKey(err, string(key))
 		}
 	}
 
@@ -278,7 +279,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.HeadstoreDocKey, 0, hardDeleteChunkSize)
@@ -315,12 +316,12 @@ func (c *collection) hardDeleteDocumentBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return err
+			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 		}
 	}
 
@@ -347,7 +348,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateTruncateIterator(err)
 	}
 
 	keysToDelete := make([]keys.HeadstoreColKey, 0, hardDeleteChunkSize)
@@ -384,12 +385,12 @@ func (c *collection) hardDeleteCollectionBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return err
+			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 		}
 	}
 

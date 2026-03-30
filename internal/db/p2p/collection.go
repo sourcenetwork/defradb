@@ -58,7 +58,7 @@ func (p *P2P) AddP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -107,7 +107,7 @@ func (p *P2P) DeleteP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -137,7 +137,7 @@ func (p *P2P) ListP2PCollections(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PCollections(err)
 	}
 
 	collectionNames := []string{}
@@ -181,7 +181,7 @@ func (p *P2P) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllP2PCollections(err)
 	}
 
 	collectionIDs := []string{}

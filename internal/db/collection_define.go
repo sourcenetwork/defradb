@@ -731,12 +731,12 @@ func collectionHasDocuments(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return false, errors.Join(err, iter.Close())
+		return false, NewErrCheckCollectionDocs(errors.Join(err, iter.Close()))
 	}
 
 	hasValue, err := iter.Next()
 	if err != nil {
-		return false, errors.Join(err, iter.Close())
+		return false, NewErrCheckCollectionDocs(errors.Join(err, iter.Close()))
 	}
 
 	return hasValue, iter.Close()

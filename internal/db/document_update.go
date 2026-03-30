@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/valyala/fastjson"
 
@@ -165,7 +166,7 @@ func (c *collection) makeSelectionPlan(
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
-			return nil, ErrInvalidFilter
+			return nil, ErrEmptyFilter
 		}
 
 		f, err = c.db.parser.NewFilterFromString(ctx, c.Name(), fval)
@@ -177,7 +178,7 @@ func (c *collection) makeSelectionPlan(
 	case map[string]any:
 		f = immutable.Some(request.Filter{Conditions: fval})
 	default:
-		return nil, ErrInvalidFilter
+		return nil, NewErrUnsupportedFilterType(fmt.Sprintf("%T", filter))
 	}
 
 	slct, err := c.makeSelectLocal(f)

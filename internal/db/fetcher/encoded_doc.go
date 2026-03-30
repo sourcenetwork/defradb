@@ -129,7 +129,7 @@ func Decode(ctx context.Context,
 	for desc, val := range properties {
 		err = doc.Set(ctx, desc.Name, val)
 		if err != nil {
-			return nil, err
+			return nil, NewErrDecodeDocField(err, desc.Name)
 		}
 	}
 
