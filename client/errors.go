@@ -52,6 +52,8 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
+	errDocumentJSONParseFailed               string = "failed to parse document JSON"
+	errSetDocFieldValue                      string = "failed to set document field value"
 )
 
 // Errors returnable from this package.
@@ -96,6 +98,7 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -265,6 +268,10 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
 }
 
+func NewErrSetDocFieldValue(inner error, field string) error {
+	return errors.Wrap(errSetDocFieldValue, inner, errors.NewKV("Field", field))
+}
+
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
 	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
 }
@@ -274,4 +281,8 @@ func NewErrOperationRequiresDeveloperMode(operationName string) error {
 		errOperationRequiresDeveloperMode,
 		errors.NewKV("Operation", operationName),
 	)
+}
+
+func NewErrDocumentJSONParseFailed(inner error) error {
+	return errors.Wrap(errDocumentJSONParseFailed, inner)
 }

@@ -13,7 +13,7 @@ package mapper
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errInvalidFieldToGroupBy string = "invalid field value to groupBy"
+	errInvalidFieldToGroupBy string = "cannot group by array or object field"
 	errTypeNotFound          string = "type not found"
 	errFieldOrAliasNotFound  string = "field or alias not found"
 )

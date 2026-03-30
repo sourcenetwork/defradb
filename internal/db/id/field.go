@@ -47,7 +47,7 @@ func GetShortFieldID(
 	txn := datastore.CtxMustGetTxn(ctx)
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
 	if err != nil {
-		return 0, err
+		return 0, NewErrGetShortFieldIDs(err, collectionShortID, fieldID)
 	}
 
 	for {
@@ -71,7 +71,7 @@ func GetShortFieldID(
 
 		v, err := strconv.ParseUint(string(value), 10, 0)
 		if err != nil {
-			return 0, err
+			return 0, NewErrParseShortFieldID(err, collectionShortID)
 		}
 		sID := uint32(v)
 
@@ -105,7 +105,7 @@ func SetShortFieldID(
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
 	if err != nil {
-		return err
+		return NewErrCheckShortFieldID(err, collectionShortID, fieldID)
 	}
 	if hasShortID {
 		return nil
@@ -113,17 +113,17 @@ func SetShortFieldID(
 
 	fieldSeq, err := sequence.Get(ctx, keys.NewFieldIDSequenceKey(collectionShortID))
 	if err != nil {
-		return err
+		return NewErrGetFieldIDSequence(err, collectionShortID)
 	}
 
 	sID, err := fieldSeq.Next(ctx)
 	if err != nil {
-		return err
+		return NewErrNextFieldIDSeq(err, collectionShortID)
 	}
 
 	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(sID))))
 	if err != nil {
-		return err
+		return NewErrStoreShortFieldID(err, collectionShortID, fieldID)
 	}
 
 	cache[uniqueKey] = uint32(sID)
@@ -143,7 +143,11 @@ func DeleteShortFieldID(
 	txn := datastore.CtxMustGetTxn(ctx)
 	key := keys.NewFieldID(collectionShortID, fieldID)
 
-	return txn.Systemstore().Delete(ctx, key.Bytes())
+	err := txn.Systemstore().Delete(ctx, key.Bytes())
+	if err != nil {
+		return NewErrDeleteShortFieldID(err, collectionShortID, fieldID)
+	}
+	return nil
 }
 
 // SetShortFieldID sets and stores the short field ids, if they do not already exist.

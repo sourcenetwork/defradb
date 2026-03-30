@@ -310,7 +310,7 @@ func (db *DB) initialize(ctx context.Context) error {
 
 	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
 	if err != nil {
-		return err
+		return NewErrCheckDBInitialized(err)
 	}
 	// if we're loading an existing database, just load the collection definitions
 	// and migrations and finish initialization
@@ -417,7 +417,7 @@ func (db *DB) Close() {
 func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrDumpDBState(err)
 	}
 
 	for {
@@ -437,7 +437,7 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 
 		key, err := datastore.HumanReadableKey(iter.Key())
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrParseDatastoreKey(err), iter.Close())
 		}
 
 		log.InfoContext(ctx, "", corelog.Any(key, value))

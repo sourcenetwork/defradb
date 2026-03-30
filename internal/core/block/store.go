@@ -73,14 +73,14 @@ func AddDelta(
 	}
 	encBlock, encLink, err := determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
 	}
 
 	dagBlock := block
 	if encBlock != nil {
 		dagBlock, err = encryptBlock(ctx, block, encBlock)
 		if err != nil {
-			return cidlink.Link{}, nil, err
+			return cidlink.Link{}, nil, NewErrEncryptBlock(err)
 		}
 		dagBlock.Encryption = &encLink
 	}
@@ -88,24 +88,24 @@ func AddDelta(
 	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
 		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
 		if err != nil {
-			return cidlink.Link{}, nil, err
+			return cidlink.Link{}, nil, NewErrSignBlock(err)
 		}
 	}
 
 	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
 
 	// merge the delta and update the state
 	err = ProcessBlock(ctx, crdtData, block, link)
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
 
 	b, err := dagBlock.Marshal()
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return cidlink.Link{}, nil, NewErrMarshalBlock(err)
 	}
 
 	return link, b, err
@@ -130,7 +130,7 @@ func determineBlockEncryption(
 		if encryptor != nil {
 			encKey, err := encryptor.GetOrGenerateEncryptionKey(docID, fieldName)
 			if err != nil {
-				return nil, cidlink.Link{}, err
+				return nil, cidlink.Link{}, NewErrGetEncryptionKey(err)
 			}
 			if len(encKey) > 0 {
 				encBlock.Key = encKey
@@ -138,7 +138,7 @@ func determineBlockEncryption(
 
 			link, err := putBlock(ctx, txn.Encstore(), encBlock)
 			if err != nil {
-				return nil, cidlink.Link{}, err
+				return nil, cidlink.Link{}, NewErrStoreEncryptionBlock(err)
 			}
 			return encBlock, link, nil
 		}
@@ -152,7 +152,7 @@ func determineBlockEncryption(
 		}
 		prevBlock, err := GetFromBytes(prevBlockBytes)
 		if err != nil {
-			return nil, cidlink.Link{}, err
+			return nil, cidlink.Link{}, NewErrDecodePreviousBlock(err)
 		}
 		if prevBlock.Encryption != nil {
 			prevBlockEncBytes, err := blockstore.NewIPLDStore(txn.Encstore()).Get(ctx, prevBlock.Encryption.Cid.KeyString())
@@ -161,7 +161,7 @@ func determineBlockEncryption(
 			}
 			prevEncBlock, err := GetEncryptionBlockFromBytes(prevBlockEncBytes)
 			if err != nil {
-				return nil, cidlink.Link{}, err
+				return nil, cidlink.Link{}, NewErrDecodeEncryptionBlock(err)
 			}
 			return &Encryption{
 				DocID:     prevEncBlock.DocID,
@@ -187,7 +187,7 @@ func encryptBlock(
 	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
 	bytes, err := encryptor.Encrypt(clonedCRDT.GetData(), encBlock.Key)
 	if err != nil {
-		return nil, err
+		return nil, NewErrEncryptBlockData(err)
 	}
 	clonedCRDT.SetData(bytes)
 	return &Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil

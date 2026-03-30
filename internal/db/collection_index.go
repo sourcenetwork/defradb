@@ -112,7 +112,7 @@ func (c *collection) deleteIndexedDoc(
 	for _, index := range c.indexes {
 		err := index.Delete(ctx, doc)
 		if err != nil {
-			return err
+			return NewErrDeleteIndexedDoc(err, index.Description().Name)
 		}
 	}
 	return nil

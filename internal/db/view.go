@@ -240,7 +240,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
 		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
 		if err != nil {
-			return err
+			return NewErrStoreViewCacheItem(err)
 		}
 
 		hasValue, err = source.Next()
@@ -265,7 +265,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateViewCacheIterator(err)
 	}
 
 	for {
@@ -279,12 +279,12 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 
 		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrParseViewCacheKey(err), iter.Close())
 		}
 
 		err = txn.Datastore().Delete(ctx, key)
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrDeleteViewCacheItem(err), iter.Close())
 		}
 	}
 

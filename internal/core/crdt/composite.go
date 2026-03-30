@@ -130,7 +130,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	if dagDelta.Status.IsDeleted() {
 		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
-			return err
+			return NewErrSetDocAsDeleted(err, m.key.DocID)
 		}
 		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
 	}
@@ -142,7 +142,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
-		return err
+		return NewErrGetDocMarker(err, m.key.DocID)
 	}
 
 	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
@@ -151,7 +151,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 
 	err = m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
 	if err != nil {
-		return err
+		return NewErrSetDocVersion(err, m.key.DocID)
 	}
 
 	if !hasObjectMarker {
@@ -167,7 +167,7 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		Prefix: key,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateDeleteIter(err, m.key.DocID)
 	}
 
 	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
@@ -210,11 +210,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	for _, item := range kvArray {
 		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
-			return err
+			return NewErrSetDeletedFlag(err, m.key.DocID, string(item.key.Bytes()))
 		}
 		err = m.store.Delete(ctx, item.key)
 		if err != nil {
-			return err
+			return NewErrDeleteFieldValue(err, m.key.DocID, string(item.key.Bytes()))
 		}
 	}
 
