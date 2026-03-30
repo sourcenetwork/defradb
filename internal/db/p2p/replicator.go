@@ -219,7 +219,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, peerID string) error {
 	heads, err := p.getHeads(ctx, docID)
 	if err != nil {
-		return NewErrGetDocHeads(err, docID)
+		return err
 	}
 	for _, head := range heads {
 		rawblock, err := head.block.Marshal()
@@ -391,7 +391,7 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
 	replicators, err := p.ListReplicators(ctx)
 	if err != nil {
-		return NewErrListReplicators(err)
+		return err
 	}
 
 	for _, rep := range replicators {
@@ -804,7 +804,7 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 	heads, err := p.getHeads(ctx, docID)
 	if err != nil {
-		return NewErrGetDocHeads(err, docID)
+		return err
 	}
 
 	for _, head := range heads {

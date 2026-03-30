@@ -240,7 +240,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	}
 	err = ds.Delete(ctx, &key)
 	if err != nil {
-		return NewErrCheckIndexKeyExists(err, index.desc.Name)
+		return NewErrDeleteIndexKey(err)
 	}
 	return nil
 }
@@ -385,7 +385,10 @@ func (index *collectionSimpleIndex) Update(
 	if err != nil {
 		return NewErrUpdateIndex(err, index.desc.Name)
 	}
-	return index.Save(ctx, newDoc)
+	if err := index.Save(ctx, newDoc); err != nil {
+		return NewErrUpdateIndex(err, index.desc.Name)
+	}
+	return nil
 }
 
 func (index *collectionSimpleIndex) Delete(
@@ -530,7 +533,10 @@ func (index *collectionUniqueIndex) Update(
 		return NewErrUpdateIndex(err, index.desc.Name)
 	}
 
-	return index.Save(ctx, newDoc)
+	if err := index.Save(ctx, newDoc); err != nil {
+		return NewErrUpdateIndex(err, index.desc.Name)
+	}
+	return nil
 }
 
 func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {

@@ -133,10 +133,10 @@ func NewErrCreateDeleteIter(inner error, docID string) error {
 	return errors.Wrap(errCreateDeleteIter, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrSetDeletedFlag(inner error, docID string) error {
-	return errors.Wrap(errSetDeletedFlag, inner, errors.NewKV("DocID", docID))
+func NewErrSetDeletedFlag(inner error, docID string, key string) error {
+	return errors.Wrap(errSetDeletedFlag, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
 }
 
-func NewErrDeleteFieldValue(inner error, docID string) error {
-	return errors.Wrap(errDeleteFieldValue, inner, errors.NewKV("DocID", docID))
+func NewErrDeleteFieldValue(inner error, docID string, key string) error {
+	return errors.Wrap(errDeleteFieldValue, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
 }

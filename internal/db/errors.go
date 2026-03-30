@@ -1107,16 +1107,16 @@ func NewErrUpdateIndex(inner error, indexName string) error {
 	return errors.Wrap(errUpdateIndex, inner, errors.NewKV("IndexName", indexName))
 }
 
-func NewErrTruncateDatastoreKey(inner error) error {
-	return errors.Wrap(errTruncateDatastoreKey, inner)
+func NewErrTruncateDatastoreKey(inner error, key string) error {
+	return errors.Wrap(errTruncateDatastoreKey, inner, errors.NewKV("Key", key))
 }
 
-func NewErrTruncateHeadstoreKey(inner error) error {
-	return errors.Wrap(errTruncateHeadstoreKey, inner)
+func NewErrTruncateHeadstoreKey(inner error, key string) error {
+	return errors.Wrap(errTruncateHeadstoreKey, inner, errors.NewKV("Key", key))
 }
 
-func NewErrTruncateDeleteBlocks(inner error) error {
-	return errors.Wrap(errTruncateDeleteBlocks, inner)
+func NewErrTruncateDeleteBlocks(inner error, cid string) error {
+	return errors.Wrap(errTruncateDeleteBlocks, inner, errors.NewKV("CID", cid))
 }
 
 func NewErrDeleteViewCacheItem(inner error) error {

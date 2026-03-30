@@ -72,7 +72,7 @@ func (seq *Sequence) Update(ctx context.Context) error {
 func (seq *Sequence) Next(ctx context.Context) (uint64, error) {
 	_, err := seq.Get(ctx)
 	if err != nil {
-		return 0, NewErrGetSequenceValue(err, string(seq.key.Bytes()))
+		return 0, err
 	}
 
 	seq.val++

@@ -210,11 +210,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	for _, item := range kvArray {
 		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
-			return NewErrSetDeletedFlag(err, m.key.DocID)
+			return NewErrSetDeletedFlag(err, m.key.DocID, string(item.key.Bytes()))
 		}
 		err = m.store.Delete(ctx, item.key)
 		if err != nil {
-			return NewErrDeleteFieldValue(err, m.key.DocID)
+			return NewErrDeleteFieldValue(err, m.key.DocID, string(item.key.Bytes()))
 		}
 	}
 

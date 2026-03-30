@@ -172,7 +172,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		// with all supported corekv store implementations.
 		err := ds.Delete(ctx, key)
 		if err != nil {
-			return NewErrTruncateDatastoreKey(err)
+			return NewErrTruncateDatastoreKey(err, key.ToString())
 		}
 
 		// Headstore keys are implicitly protected by the lockset on the datastore, as
@@ -252,7 +252,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		// with all supported corekv store implementations.
 		err := underlyingStore.Delete(ctx, key)
 		if err != nil {
-			return NewErrTruncateDatastoreKey(err)
+			return NewErrTruncateDatastoreKey(err, string(key))
 		}
 	}
 
@@ -316,12 +316,12 @@ func (c *collection) hardDeleteDocumentBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return NewErrTruncateHeadstoreKey(err)
+			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return NewErrTruncateDeleteBlocks(err)
+			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 		}
 	}
 
@@ -385,12 +385,12 @@ func (c *collection) hardDeleteCollectionBlocks(
 		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key.Bytes())
 		if err != nil {
-			return NewErrTruncateHeadstoreKey(err)
+			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 		}
 
 		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
-			return NewErrTruncateDeleteBlocks(err)
+			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 		}
 	}
 

@@ -307,7 +307,11 @@ func (mp *mergeProcessor) loadEncryptionBlock(
 		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
 	}
 
-	return coreblock.GetEncryptionBlockFromNode(nd)
+	enc, err := coreblock.GetEncryptionBlockFromNode(nd)
+	if err != nil {
+		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
+	}
+	return enc, nil
 }
 
 // processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
@@ -531,7 +535,7 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 	for _, cid := range cids {
 		block, err := loadBlockFromBlockStore(ctx, cid)
 		if err != nil {
-			return mergeTarget{}, NewErrLoadBlockFromStore(err, cid.String())
+			return mergeTarget{}, err
 		}
 
 		mt.heads[cid] = block
