@@ -22,6 +22,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/p2p"
 
@@ -34,6 +35,8 @@ import (
 )
 
 func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	log.InfoContext(ctx, "Starting collection version sync", corelog.Int("VersionIDCount", len(versionIDs)))
+
 	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	for _, versionID := range versionIDs {
@@ -43,6 +46,7 @@ func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) 
 		}
 	}
 
+	log.InfoContext(ctx, "Collection version sync completed")
 	return nil
 }
 

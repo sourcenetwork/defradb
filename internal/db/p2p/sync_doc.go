@@ -59,6 +59,8 @@ type docSyncItem struct {
 // This function call will block until there is a response for all of the docIDs listed.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+	log.InfoContext(ctx, "Starting document sync", corelog.Any("CollectionName", collectionName), corelog.Int("DocIDCount", len(docIDs)))
+
 	cols, err := p.db.GetCollections(
 		ctx,
 		options.WithIdentity(
@@ -75,7 +77,12 @@ func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 
 	collectionID := cols[0].Version().CollectionID
 	_, err = p.syncDocuments(ctx, collectionID, docIDs)
-	return err
+	if err != nil {
+		return err
+	}
+
+	log.InfoContext(ctx, "Document sync completed", corelog.Any("CollectionName", collectionName))
+	return nil
 }
 
 // syncDocuments requests document synchronization from the network.
@@ -164,7 +171,7 @@ func (p *P2P) handleDocSyncResponse(
 	results map[string][]cid.Cid,
 ) string {
 	if resp.Err != nil {
-		log.ErrorE("Received error response from peer", resp.Err)
+		log.ErrorE("Received error response from peer", resp.Err, corelog.String("PeerID", resp.From))
 		return ""
 	}
 

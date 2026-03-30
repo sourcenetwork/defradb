@@ -56,6 +56,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "NAC state purged")
 	return nil
 }
 
@@ -90,6 +91,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[option
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACEnabled
+	log.InfoContext(ctx, "Re-enabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 
@@ -122,6 +124,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Enumerable[options
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACDisabledTemporarily
+	log.InfoContext(ctx, "Disabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 

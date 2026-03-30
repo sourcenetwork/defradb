@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -41,11 +40,6 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to execute merge",
-			err,
-			corelog.Any("Event", evt))
 		return err
 	}
 
