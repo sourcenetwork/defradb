@@ -36,7 +36,7 @@ type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	if !IsDevMode {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
+		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
 		return
 	}
 
@@ -49,7 +49,7 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := db.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -57,7 +57,7 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	if !IsDevMode {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
+		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 
 	err := db.BasicExport(ctx, config.Filepath, opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -106,7 +106,7 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 		err = txn.PatchCollection(ctx, message.Patch, message.Migration, opt)
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -163,7 +163,7 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -197,7 +197,7 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -232,7 +232,7 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -270,7 +270,7 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 		lensID, err = txn.AddLens(ctx, addLensReq.Lens, opts)
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -298,7 +298,7 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 		lenses, err = txn.ListLenses(ctx, opts)
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -340,7 +340,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		cols, err = txn.GetCollections(ctx, opt)
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	colDesc := make([]client.CollectionVersion, len(cols))
@@ -385,7 +385,7 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -406,7 +406,7 @@ func (h *storeHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 		indexes, err = txn.ListIndexes(req.Context())
 	}
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -430,7 +430,7 @@ func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http
 	}
 
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -441,7 +441,7 @@ func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -633,7 +633,7 @@ func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 
 	identity, err := db.GetNodeIdentity(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, identity)

@@ -99,7 +99,7 @@ const (
 	errP2PColHasPolicy                     string = "p2p collection specified has a policy on it"
 	errReplicatorColHasPolicy              string = "replicator collection specified has a policy on it"
 	errNoTransactionInContext              string = "no transaction in context"
-	errReplicatorExists                    string = "replicator already exists for %s with peerID %s"
+	errReplicatorExists                    string = "replicator already exists"
 	errReplicatorDocID                     string = "failed to get docID for replicator"
 	errCanNotEncryptBuiltinField           string = "can not encrypt build-in field"
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
@@ -253,6 +253,12 @@ var (
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
 	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
+	ErrDocumentAlreadyExists                     = errors.New(errDocumentAlreadyExists)
+	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
+	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
+	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
+	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
+	ErrReplicatorExists                          = errors.New(errReplicatorExists)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

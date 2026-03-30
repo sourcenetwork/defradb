@@ -62,14 +62,14 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.Load(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
 	err = dsTxn.Commit()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	txs.Delete(txID)
@@ -86,7 +86,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
@@ -143,6 +143,8 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCommit.Responses = openapi3.NewResponses()
 	txnCommit.Responses.Set("200", successResponse)
 	txnCommit.Responses.Set("400", errorResponse)
+	txnCommit.Responses.Set("404", errorResponse)
+	txnCommit.Responses.Set("409", errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
 	txnDiscard.OperationID = "discard_transaction"
@@ -152,6 +154,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnDiscard.Responses = openapi3.NewResponses()
 	txnDiscard.Responses.Set("200", successResponse)
 	txnDiscard.Responses.Set("400", errorResponse)
+	txnDiscard.Responses.Set("404", errorResponse)
 
 	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
 	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)

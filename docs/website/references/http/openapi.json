@@ -1029,6 +1029,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1074,6 +1077,9 @@
                         "description": "GraphQL response"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1453,6 +1459,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1490,6 +1499,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1536,6 +1548,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1571,6 +1586,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1660,6 +1678,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1698,6 +1719,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1787,6 +1811,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1824,6 +1851,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -2602,7 +2632,7 @@
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
-                    "400": {
+                    "403": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -2709,6 +2739,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -2736,6 +2769,12 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "409": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
