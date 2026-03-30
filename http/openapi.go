@@ -11,6 +11,8 @@
 package http
 
 import (
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 
@@ -110,13 +112,21 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
 			Title:   "DefraDB API",
-			Version: "0",
+			Version: strings.TrimPrefix(Version, "v"),
 		},
 		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
-				Description: "Local DefraDB instance",
-				URL:         "/api/v0",
+				Description: "DefraDB latest version",
+				URL:         "/api",
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 0",
+				URL:         "/api/" + VersionV0,
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 1",
+				URL:         "/api/" + Version,
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{

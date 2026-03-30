@@ -764,21 +764,52 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
+	// Track the transaction IDs as they are used, in a set
+	transactionIDset := make(map[int]struct{})
+
 ActionLoop:
 	for i := range testCase.Actions {
-		switch testCase.Actions[i].(type) {
+		switch concreteAction := testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart, CommitTransaction:
+		case *action.AddCollection:
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case *action.AddDoc:
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case UpdateDoc:
+			if concreteAction.TransactionID.HasValue() {
+				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
+			}
+			continue
+
+		case Restart:
+			continue
+
+		case CommitTransaction:
+			// If transaction is commited, remove it from the set we are tracking
+			delete(transactionIDset, concreteAction.TransactionID)
 			continue
 
 		default:
 			firstNonSetupIndex = i
 			break ActionLoop
 		}
+	}
+
+	// If length is not 0, there was a transaction used that was not committed
+	if len(transactionIDset) > 0 {
+		t.Skipf("skipping test with open transaction(s)")
 	}
 
 	if changeDetector.SetupOnly {

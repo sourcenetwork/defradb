@@ -169,7 +169,7 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrEmptyFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		f, err = c.db.parser.NewFilterFromString(ctx, c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}

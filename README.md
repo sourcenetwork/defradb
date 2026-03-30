@@ -153,7 +153,7 @@ In this document, we use the default configuration, which has the following beha
 
 - `~/.defradb/` is DefraDB's configuration and data directory
 - `client` command interacts with the locally running node
-- The GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
+- The GraphQL endpoint is provided at <http://localhost:9181/api/graphql> and a versioned API endpoint is provided at <http://localhost:9181/api/v1/graphql>
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
@@ -465,7 +465,7 @@ As we add or update documents in the Article collection on *nodeA*, they will be
 
 ## Securing the HTTP API with TLS
 
-By default, DefraDB will expose its HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
+By default, DefraDB will expose its HTTP API at `http://localhost:9181/api`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
 
 To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
 being the public key and `server.crt` being the private key, just do:

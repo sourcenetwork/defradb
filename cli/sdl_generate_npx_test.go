@@ -434,7 +434,7 @@ func getTestFixturePath(name string) string {
 func assertGraphQLSchemasMatch(t *testing.T, actualPath, expectedPath string) {
 	t.Helper()
 
-	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli",
+	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
 		"diff",
 		actualPath,
 		expectedPath)

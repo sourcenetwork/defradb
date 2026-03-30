@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package txn_testing
 
@@ -294,12 +295,8 @@ func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// todo: The following test should be enabled once any bugs inside UpdateWithFilter are resolved
-// see: https://github.com/sourcenetwork/defradb/issues/4614
-
 // This test runs UpdateWithFilter inside of a transaction, and illustrates that it can work on
 // the documents created inside that transaction.
-/*
 func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -350,4 +347,3 @@ func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
