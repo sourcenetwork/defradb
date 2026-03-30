@@ -41,12 +41,11 @@ func setupRustFFIClient(
 	var wrapper *rustffi.Wrapper
 	var err error
 
-	// Get the node identity for this node index - this is the same identity
-	// used for signing in the Go node (set via db.WithNodeIdentity)
-	var nodeIdentity acpIdentity.Identity
-	if enableSigning {
-		nodeIdentity = state.GetIdentity(s, NodeIdentity(nodeIndex))
-	}
+	// Get the node identity for this node index. Go always configures a node
+	// identity (used for GetNodeIdentity, P2P peer ID, and optionally signing).
+	// The Rust FFI node needs this regardless of enableSigning so that
+	// GetNodeIdentity returns the correct DID.
+	nodeIdentity := state.GetIdentity(s, NodeIdentity(nodeIndex))
 
 	// For file-based storage, use a subdirectory so Rust's redb doesn't collide
 	// with Go's badger store at the same path.
