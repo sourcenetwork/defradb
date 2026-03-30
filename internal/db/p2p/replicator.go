@@ -49,7 +49,9 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	log.InfoContext(ctx, "Adding replicator", corelog.Any("Addresses", addresses), corelog.Any("CollectionNames", collectionNames))
+	log.InfoContext(ctx, "Adding replicator",
+		corelog.Any("Addresses", addresses),
+		corelog.Any("CollectionNames", collectionNames))
 
 	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)

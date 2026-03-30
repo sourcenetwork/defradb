@@ -219,7 +219,8 @@ func (coordinator *Coordinator) handleReplicationFailure(
 	docID, collectionID, peerID string,
 	fieldNames []string,
 ) error {
-	log.InfoContext(ctx, "SE replication failed, scheduling retry", corelog.String("DocID", docID), 
+	log.InfoContext(ctx, "SE replication failed, scheduling retry",
+		corelog.String("DocID", docID),
 		corelog.String("CollectionID", collectionID))
 
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)

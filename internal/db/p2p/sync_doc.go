@@ -59,7 +59,9 @@ type docSyncItem struct {
 // This function call will block until there is a response for all of the docIDs listed.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
-	log.InfoContext(ctx, "Starting document sync", corelog.Any("CollectionName", collectionName), corelog.Int("DocIDCount", len(docIDs)))
+	log.InfoContext(ctx, "Starting document sync",
+		corelog.Any("CollectionName", collectionName),
+		corelog.Int("DocIDCount", len(docIDs)))
 
 	cols, err := p.db.GetCollections(
 		ctx,
