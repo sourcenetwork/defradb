@@ -2561,10 +2561,10 @@ func convertDateTimeStrings(v any) any {
 }
 
 // normalizeExplainTypes fixes type mismatches in explain results returned by the Rust FFI.
-// Go's native query planner produces typed slices ([]string) for string arrays, while JSON
-// decoding produces []interface{}. For map arrays, we intentionally leave them as []any so
-// that areResultsEqual can recurse element-by-element and handle nested numeric type
-// differences (int32 vs int64, uint64 vs int64) via ObjectsAreEqualValues.
+// Go's native query planner produces uint64 for execution metrics and typed slices
+// ([]string, []map[string]any) for arrays. JSON decoding via convertDateTimeStrings
+// produces int64 for numbers and []interface{} for arrays. This function converts
+// int64 -> uint64 and []any of maps -> []map[string]any to match Go's native types.
 //
 // We also rename Rust-specific explain keys to match Go's naming (e.g. "create" -> "add").
 func normalizeExplainTypes(v any) any {
@@ -2602,12 +2602,18 @@ func normalizeExplainTypes(v any) any {
 			}
 			return result
 		}
-		// Do NOT convert []any of maps to []map[string]any. The test framework's
-		// areResultsEqual handles []map[string]any (expected) vs []any (actual) by
-		// recursing element-by-element, which allows nested numeric type differences
-		// (int32 vs int64, uint64 vs int64) to be resolved via ObjectsAreEqualValues.
-		// Converting to []map[string]any would prevent this recursion because
-		// areResultArraysEqual expects actual.([]any) to succeed.
+		// Keep []any as-is (don't convert to []map[string]any). The test
+		// framework's areResultArraysEqual handles []map[string]any (expected)
+		// vs []any (actual) by type-asserting actual.([]any) at the call site,
+		// then recursing element-by-element through areResultsEqual.
+		return val
+	case int64:
+		// Go's explain metrics are uint64. JSON decoding via convertDateTimeStrings
+		// produces int64 from json.Number. Convert non-negative int64 to uint64
+		// to match Go's native explain output.
+		if val >= 0 {
+			return uint64(val)
+		}
 		return val
 	default:
 		return val
