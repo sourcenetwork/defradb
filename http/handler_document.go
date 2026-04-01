@@ -43,12 +43,13 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	addOpt := options.WithIdentity(
-		options.AddDocument().
-			SetEncryptDoc(encConf.IsDocEncrypted).
-			SetEncryptedFields(encConf.EncryptedFields),
-		identity.FromContext(ctx),
-	)
+	addBuilder := options.AddDocument().
+		SetEncryptDoc(encConf.IsDocEncrypted).
+		SetEncryptedFields(encConf.EncryptedFields)
+	if enable, ok := signingFromRequest(req); ok {
+		addBuilder.SetEnableSigning(enable)
+	}
+	addOpt := options.WithIdentity(addBuilder, identity.FromContext(ctx))
 
 	switch {
 	case client.IsJSONArray(data):
@@ -113,7 +114,11 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+	updateBuilder := options.UpdateDocument()
+	if enable, ok := signingFromRequest(req); ok {
+		updateBuilder.SetEnableSigning(enable)
+	}
+	updateOpt := options.WithIdentity(updateBuilder, identity.FromContext(ctx))
 
 	err = col.UpdateDocument(ctx, doc, updateOpt)
 	if err != nil {
@@ -133,7 +138,11 @@ func (h *collectionHandler) DeleteDocument(rw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+	deleteBuilder := options.DeleteDocument()
+	if enable, ok := signingFromRequest(req); ok {
+		deleteBuilder.SetEnableSigning(enable)
+	}
+	deleteOpt := options.WithIdentity(deleteBuilder, identity.FromContext(ctx))
 
 	_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 	if err != nil {

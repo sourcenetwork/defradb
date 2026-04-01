@@ -568,6 +568,8 @@ func (b *SetActiveCollectionVersionOptionsBuilder) SetIdentity(
 type ExecRequestOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 	// OperationName is the name of the operation to exec.
 	OperationName immutable.Option[string]
 	// Variables is a map of names to variable values.
@@ -593,6 +595,14 @@ func ExecRequest() *ExecRequestOptionsBuilder {
 func (b *ExecRequestOptionsBuilder) SetIdentity(id identity.Identity) *ExecRequestOptionsBuilder {
 	b.append(func(opts *ExecRequestOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *ExecRequestOptionsBuilder) SetEnableSigning(enable bool) *ExecRequestOptionsBuilder {
+	b.append(func(opts *ExecRequestOptions) {
+		opts.EnableSigning = immutable.Some(enable)
 	})
 	return b
 }

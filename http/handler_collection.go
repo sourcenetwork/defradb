@@ -24,8 +24,18 @@ import (
 
 const docEncryptParam = "encrypt"
 const docEncryptFieldsParam = "encryptFields"
+const signingParam = "signing"
 
 type collectionHandler struct{}
+
+// signingFromRequest returns (value, exists) for the "signing" query param.
+func signingFromRequest(req *http.Request) (bool, bool) {
+	val := req.URL.Query().Get(signingParam)
+	if val == "" {
+		return false, false
+	}
+	return val == "true", true
+}
 
 type DeleteCollectionRequest struct {
 	Filter any `json:"filter"`
@@ -46,7 +56,11 @@ func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, re
 		return
 	}
 
-	deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+	deleteBuilder := options.DeleteDocumentsWithFilter()
+	if enable, ok := signingFromRequest(req); ok {
+		deleteBuilder.SetEnableSigning(enable)
+	}
+	deleteOpt := options.WithIdentity(deleteBuilder, identity.FromContext(ctx))
 
 	result, err := col.DeleteDocumentsWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
@@ -66,7 +80,11 @@ func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, re
 		return
 	}
 
-	updateOpt := options.WithIdentity(options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+	updateBuilder := options.UpdateDocumentsWithFilter()
+	if enable, ok := signingFromRequest(req); ok {
+		updateBuilder.SetEnableSigning(enable)
+	}
+	updateOpt := options.WithIdentity(updateBuilder, identity.FromContext(ctx))
 
 	result, err := col.UpdateDocumentsWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {

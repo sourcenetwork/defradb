@@ -36,6 +36,7 @@ func (db *DB) ExecRequest(
 	if opt.Identity.HasValue() {
 		ctx = identity.WithContext(ctx, opt.Identity)
 	}
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

@@ -42,13 +42,24 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 					return NewErrParsingArgument("docID", err)
 				}
 
-				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+				deleteBuilder := options.DeleteDocument()
+				if cmd.Flags().Changed("signing") {
+					deleteBuilder.SetEnableSigning(true)
+				} else if cmd.Flags().Changed("no-signing") {
+					deleteBuilder.SetEnableSigning(false)
+				}
+				deleteOpt := options.WithIdentity(deleteBuilder, identity.FromContext(ctx))
 
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
-				deleteWithFilterOpt := options.WithIdentity(
-					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+				deleteWithFilterBuilder := options.DeleteDocumentsWithFilter()
+				if cmd.Flags().Changed("signing") {
+					deleteWithFilterBuilder.SetEnableSigning(true)
+				} else if cmd.Flags().Changed("no-signing") {
+					deleteWithFilterBuilder.SetEnableSigning(false)
+				}
+				deleteWithFilterOpt := options.WithIdentity(deleteWithFilterBuilder, identity.FromContext(ctx))
 
 				res, err := col.DeleteDocumentsWithFilter(ctx, filter, deleteWithFilterOpt)
 				if err != nil {
@@ -73,5 +84,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().Bool("signing", false, "Enable signing for this operation")
+	cmd.Flags().Bool("no-signing", false, "Disable signing for this operation")
 	return cmd
 }

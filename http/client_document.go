@@ -18,6 +18,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -103,8 +105,19 @@ func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.AddDocumentOpt
 	if len(opt.EncryptedFields) > 0 {
 		q.Set(docEncryptFieldsParam, strings.Join(opt.EncryptedFields, ","))
 	}
+	setSigningQueryParam(q, opt.EnableSigning)
 	if len(q) > 0 {
 		req.URL.RawQuery = q.Encode()
+	}
+}
+
+func setSigningQueryParam(q url.Values, enableSigning immutable.Option[bool]) {
+	if enableSigning.HasValue() {
+		if enableSigning.Value() {
+			q.Set(signingParam, "true")
+		} else {
+			q.Set(signingParam, "false")
+		}
 	}
 }
 
@@ -125,6 +138,10 @@ func (c *Collection) UpdateDocument(
 	if err != nil {
 		return err
 	}
+
+	q := req.URL.Query()
+	setSigningQueryParam(q, opt.EnableSigning)
+	req.URL.RawQuery = q.Encode()
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -151,6 +168,9 @@ func (c *Collection) SaveDocument(
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
+		if opt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
@@ -160,6 +180,9 @@ func (c *Collection) SaveDocument(
 
 		if opt.GetIdentity().HasValue() {
 			addOpts.SetIdentity(opt.GetIdentity().Value())
+		}
+		if opt.EnableSigning.HasValue() {
+			addOpts.SetEnableSigning(opt.EnableSigning.Value())
 		}
 
 		return c.AddDocument(ctx, doc, addOpts)
@@ -180,6 +203,10 @@ func (c *Collection) DeleteDocument(
 	if err != nil {
 		return false, err
 	}
+
+	q := req.URL.Query()
+	setSigningQueryParam(q, opt.EnableSigning)
+	req.URL.RawQuery = q.Encode()
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -226,6 +253,10 @@ func (c *Collection) UpdateDocumentsWithFilter(
 		return nil, err
 	}
 
+	q := req.URL.Query()
+	setSigningQueryParam(q, opt.EnableSigning)
+	req.URL.RawQuery = q.Encode()
+
 	var result client.UpdateResult
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
@@ -255,6 +286,10 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
+	q := req.URL.Query()
+	setSigningQueryParam(q, opt.EnableSigning)
+	req.URL.RawQuery = q.Encode()
 
 	var result client.DeleteResult
 	if err := c.http.requestJson(req, &result); err != nil {

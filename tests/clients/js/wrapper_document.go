@@ -47,6 +47,7 @@ func (c *Collection) AddDocument(
 type addOptionsJS struct {
 	EncryptDoc      bool     `json:"encryptDoc"`
 	EncryptedFields []string `json:"encryptedFields"`
+	EnableSigning   *bool    `json:"enableSigning,omitempty"`
 }
 
 func makeDocAddOptions(opts []options.Enumerable[options.AddDocumentOptions]) js.Value {
@@ -54,6 +55,10 @@ func makeDocAddOptions(opts []options.Enumerable[options.AddDocumentOptions]) js
 	addOpts := utils.NewOptions(opts...)
 	jsOpts.EncryptDoc = addOpts.EncryptDoc
 	jsOpts.EncryptedFields = addOpts.EncryptedFields
+	if addOpts.EnableSigning.HasValue() {
+		v := addOpts.EnableSigning.Value()
+		jsOpts.EnableSigning = &v
+	}
 
 	optsVal, err := goji.MarshalJS(jsOpts)
 	if err != nil {
@@ -118,6 +123,9 @@ func (c *Collection) SaveDocument(
 		addOpts := options.AddDocument().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
+		if saveOpts.EnableSigning.HasValue() {
+			addOpts.SetEnableSigning(saveOpts.EnableSigning.Value())
+		}
 		return c.AddDocument(ctx, doc, addOpts)
 	}
 	return err

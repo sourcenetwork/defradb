@@ -47,8 +47,13 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 					return NewErrParsingArgument("filter", err)
 				}
 
-				updateWithFilterOpt := options.WithIdentity(
-					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+				updateWithFilterBuilder := options.UpdateDocumentsWithFilter()
+				if cmd.Flags().Changed("signing") {
+					updateWithFilterBuilder.SetEnableSigning(true)
+				} else if cmd.Flags().Changed("no-signing") {
+					updateWithFilterBuilder.SetEnableSigning(false)
+				}
+				updateWithFilterOpt := options.WithIdentity(updateWithFilterBuilder, identity.FromContext(ctx))
 
 				res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
@@ -74,7 +79,13 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 					return NewErrParsingArgument("updater", err)
 				}
 
-				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+				updateBuilder := options.UpdateDocument()
+				if cmd.Flags().Changed("signing") {
+					updateBuilder.SetEnableSigning(true)
+				} else if cmd.Flags().Changed("no-signing") {
+					updateBuilder.SetEnableSigning(false)
+				}
+				updateOpt := options.WithIdentity(updateBuilder, identity.FromContext(ctx))
 
 				return col.UpdateDocument(ctx, doc, updateOpt)
 			default:
@@ -99,5 +110,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	cmd.Flags().Bool("signing", false, "Enable signing for this operation")
+	cmd.Flags().Bool("no-signing", false, "Disable signing for this operation")
 	return cmd
 }

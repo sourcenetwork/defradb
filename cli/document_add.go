@@ -75,12 +75,15 @@ Options:
 
 			ctx := cmd.Context()
 
-			addOpt := options.WithIdentity(
-				options.AddDocument().
-					SetEncryptDoc(shouldEncryptDoc).
-					SetEncryptedFields(encryptedFields),
-				identity.FromContext(ctx),
-			)
+			addBuilder := options.AddDocument().
+				SetEncryptDoc(shouldEncryptDoc).
+				SetEncryptedFields(encryptedFields)
+			if cmd.Flags().Changed("signing") {
+				addBuilder.SetEnableSigning(true)
+			} else if cmd.Flags().Changed("no-signing") {
+				addBuilder.SetEnableSigning(false)
+			}
+			addOpt := options.WithIdentity(addBuilder, identity.FromContext(ctx))
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
@@ -119,5 +122,7 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	cmd.Flags().Bool("signing", false, "Enable signing for this operation")
+	cmd.Flags().Bool("no-signing", false, "Disable signing for this operation")
 	return cmd
 }

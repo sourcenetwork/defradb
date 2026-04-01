@@ -43,6 +43,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -168,7 +169,11 @@ func (c *collection) applyDelete(
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
-	if !c.db.signingDisabled {
+	enableSigning := !c.db.signingDisabled
+	if override := coreblock.SigningOverrideFromContext(ctx); override.HasValue() {
+		enableSigning = override.Value()
+	}
+	if enableSigning {
 		ctx = coreblock.ContextWithEnabledSigning(ctx)
 	}
 
