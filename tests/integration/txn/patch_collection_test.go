@@ -14,16 +14,21 @@ package txn_testing
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 // This test runs PatchCollection inside of a transaction, and illustrates that commiting the transaction
 // results in the patch being applied.
 func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		// The secondary-index multiplier adds @index directives which shifts field indices,
+		// causing the hardcoded "Fields/2" path to target the wrong field.
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -63,6 +68,9 @@ func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 // results in the patch not yet being applied.
 func TestTxn_PatchCollection_WithoutCommit_PatchNotApplied(t *testing.T) {
 	test := testUtils.TestCase{
+		// The secondary-index multiplier adds @index directives which shifts field indices,
+		// causing the hardcoded "Fields/2" path to target the wrong field.
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
