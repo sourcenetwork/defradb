@@ -180,7 +180,7 @@ func (p *P2P) handleDocSyncResponse(
 	var reply docSyncReply
 	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
 		log.ErrorE("Failed to unmarshal doc sync reply", err)
-		return ""
+		return resp.From
 	}
 
 	for _, item := range reply.Results {
