@@ -459,11 +459,17 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 		}
 
 		if decodedBlock.Encryption != nil {
-			toDelete[decodedBlock.Encryption.Cid] = struct{}{}
+			err = blockstore.DeleteBlock(ctx, decodedBlock.Encryption.Cid)
+			if err != nil {
+				return err
+			}
 		}
 
 		if decodedBlock.Signature != nil {
-			toDelete[decodedBlock.Signature.Cid] = struct{}{}
+			err = blockstore.DeleteBlock(ctx, decodedBlock.Signature.Cid)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
