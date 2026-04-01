@@ -235,6 +235,9 @@ type DeleteDoc struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
+
 	// The collection in which this document should be deleted.
 	CollectionID int
 
@@ -269,6 +272,9 @@ type UpdateDoc struct {
 	//
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
+
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 
 	// The collection in which this document exists.
 	CollectionID int

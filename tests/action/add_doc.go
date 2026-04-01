@@ -48,6 +48,9 @@ type AddDoc struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
+
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
 
@@ -337,6 +340,9 @@ func makeDocSaveOptions(
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
+	}
 	return []options.Enumerable[options.SaveDocumentOptions]{opts}
 }
 
@@ -351,6 +357,9 @@ func makeDocAddOptions(
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return []options.Enumerable[options.AddDocumentOptions]{opts}
 }
