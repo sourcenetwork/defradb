@@ -223,7 +223,7 @@ func (n *orphanPointLookupNode) initPointLookupState() error {
 		docMapping: n.documentMapping,
 	})
 
-	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index)
+	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index, nil)
 	if err := n.parentClone.Init(); err != nil {
 		return err
 	}

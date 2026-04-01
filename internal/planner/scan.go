@@ -180,6 +180,7 @@ func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 func (n *scanNode) cloneWithFilter(
 	filter *mapper.Filter,
 	index immutable.Option[client.IndexDescription],
+	ordering []mapper.OrderCondition,
 ) *scanNode {
 	clone := &scanNode{
 		p:         n.p,
@@ -189,6 +190,7 @@ func (n *scanNode) cloneWithFilter(
 		docMapper: n.docMapper,
 		filter:    filter,
 		index:     index,
+		ordering:  ordering,
 	}
 	clone.initFetcher(immutable.Option[[]string]{})
 	return clone
