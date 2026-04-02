@@ -96,7 +96,7 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 
 func (c *Client) NewBlindWriteTxn() (client.Txn, error) {
 	// TODO: implement HTTP client support for NewBlindWriteTxn
-	return nil, errors.New("NewBlindWriteTxn not yet supported via HTTP client")
+	return nil, errors.New("newBlindWriteTxn not yet supported via HTTP client")
 }
 
 func (c *Client) InitContext(ctx context.Context, txn client.Txn) context.Context {

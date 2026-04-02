@@ -728,7 +728,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 }
 
 func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
-	return nil, errors.New("NewBlindWriteTxn not yet supported")
+	return nil, errors.New("newBlindWriteTxn not yet supported")
 }
 
 func (w *Wrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {

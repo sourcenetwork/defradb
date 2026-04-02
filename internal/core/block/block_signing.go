@@ -17,7 +17,8 @@ import (
 	"sort"
 	"sync"
 
-	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/acp/identity"

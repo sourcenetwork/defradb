@@ -1,3 +1,13 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package db
 
 import (
@@ -57,7 +67,9 @@ func (db *DB) ExportFieldMapping(ctx context.Context, collectionName string) (*c
 // in length-prefixed binary format: [key_len u32 BE][key][value_len u32 BE][value].
 // If datastoreOnly is true, headstore and blockstore keys are skipped.
 // Returns the number of KV pairs written.
-func (db *DB) ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error) {
+func (db *DB) ExportDocKVs(
+	ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool,
+) (int, error) {
 	// Read-only txn; initializes context caches for short ID lookups.
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -135,7 +147,8 @@ func exportOneDoc(
 	}
 
 	// Version metadata: /colID/v/docID/v
-	n, err := exportExactKey(ctx, rootstore, w, prependNamespace('d', valueKey.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID).Bytes()))
+	versionKey := valueKey.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+	n, err := exportExactKey(ctx, rootstore, w, prependNamespace('d', versionKey.Bytes()))
 	if err != nil {
 		return count, err
 	}

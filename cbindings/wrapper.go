@@ -1008,7 +1008,7 @@ func (w *CWrapper) ExecRequest(
 }
 
 func (w *CWrapper) NewBlindWriteTxn() (client.Txn, error) {
-	return nil, errors.New("NewBlindWriteTxn not yet supported")
+	return nil, errors.New("newBlindWriteTxn not yet supported")
 }
 
 func (w *CWrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {

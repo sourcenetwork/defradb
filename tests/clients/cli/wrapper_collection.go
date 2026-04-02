@@ -212,7 +212,7 @@ func (c *Collection) SaveManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	return errors.New("SaveManyDocuments not yet supported")
+	return errors.New("saveManyDocuments not yet supported")
 }
 
 func (c *Collection) PurgeByDocIDs(
@@ -220,7 +220,7 @@ func (c *Collection) PurgeByDocIDs(
 	docIDs []string,
 	pruneHistory bool,
 ) (*client.PurgeResult, error) {
-	return nil, errors.New("PurgeByDocIDs not yet supported")
+	return nil, errors.New("purgeByDocIDs not yet supported")
 }
 
 func (c *Collection) Truncate(

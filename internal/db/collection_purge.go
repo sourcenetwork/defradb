@@ -31,12 +31,15 @@ import (
 const purgeBatchChunkSize = 10
 
 // PurgeByDocIDs permanently removes all documents with the given docIDs.
-func (c *collection) PurgeByDocIDs(ctx context.Context, docIDs []string, pruneHistory bool) (*client.PurgeResult, error) {
+func (c *collection) PurgeByDocIDs(
+	ctx context.Context, docIDs []string, pruneHistory bool,
+) (*client.PurgeResult, error) {
 	if len(docIDs) == 0 {
 		return &client.PurgeResult{Count: 0}, nil
 	}
 
-	if err := c.db.checkNodeAccess(ctx, immutable.None[acpIdentity.Identity](), acpTypes.NodeTruncateCollectionPerm); err != nil {
+	noIdent := immutable.None[acpIdentity.Identity]()
+	if err := c.db.checkNodeAccess(ctx, noIdent, acpTypes.NodeTruncateCollectionPerm); err != nil {
 		return nil, err
 	}
 
