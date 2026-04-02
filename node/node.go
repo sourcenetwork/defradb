@@ -190,7 +190,9 @@ func (n *Node) RunStorageGC() error {
 }
 
 // ExportDocKVs delegates to the underlying DB.
-func (n *Node) ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error) {
+func (n *Node) ExportDocKVs(
+	ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool,
+) (int, error) {
 	return n.DB.ExportDocKVs(ctx, collectionName, docIDs, w, datastoreOnly)
 }
 
@@ -205,7 +207,9 @@ func (n *Node) ImportRawKVs(ctx context.Context, r io.Reader) (int, error) {
 }
 
 // ImportRawKVsWithMapping delegates to the underlying DB.
-func (n *Node) ImportRawKVsWithMapping(ctx context.Context, r io.Reader, sourceMappings []*client.CollectionFieldMapping) (int, error) {
+func (n *Node) ImportRawKVsWithMapping(
+	ctx context.Context, r io.Reader, sourceMappings []*client.CollectionFieldMapping,
+) (int, error) {
 	return n.DB.ImportRawKVsWithMapping(ctx, r, sourceMappings)
 }
 

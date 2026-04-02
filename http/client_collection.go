@@ -180,14 +180,14 @@ func (c *Collection) SaveManyDocuments(
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
 	// TODO: implement HTTP client support for SaveManyDocuments
-	return errors.New("SaveManyDocuments not yet supported via HTTP client")
+	return errors.New("saveManyDocuments not yet supported via HTTP client")
 }
 
 func (c *Collection) PurgeByDocIDs(
 	ctx context.Context, docIDs []string, pruneHistory bool,
 ) (*client.PurgeResult, error) {
 	// TODO: implement HTTP client support for PurgeByDocIDs
-	return nil, errors.New("PurgeByDocIDs not yet supported via HTTP client")
+	return nil, errors.New("purgeByDocIDs not yet supported via HTTP client")
 }
 
 func (c *Collection) Truncate(

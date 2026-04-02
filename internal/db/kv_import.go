@@ -1,3 +1,13 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package db
 
 import (
@@ -225,7 +235,9 @@ func (db *DB) ImportRawKVsWithMapping(
 
 // buildRemapTable constructs the short ID remap table by looking up the host's
 // short IDs for the same collection/field CIDs referenced in the source mappings.
-func (db *DB) buildRemapTable(ctx context.Context, sourceMappings []*client.CollectionFieldMapping) (*kvRemapTable, error) {
+func (db *DB) buildRemapTable(
+	ctx context.Context, sourceMappings []*client.CollectionFieldMapping,
+) (*kvRemapTable, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
