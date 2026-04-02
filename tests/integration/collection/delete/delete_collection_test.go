@@ -1,0 +1,339 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
+package delete
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+)
+
+func TestDeleteCollection_Simple_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name: "Users",
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_Simple_QueriesNoLongerWork(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name: "Users",
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "Users" on type "Query".`,
+			},
+			&action.Request{
+				Request: `mutation {
+					add_Users(input:{}) {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "add_Users" on type "Mutation".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_WithDocuments_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.DeleteCollection{
+				Name:          "Users",
+				ExpectedError: "cannot delete a collection that has documents",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_WithSoftDeletedDocuments_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        0,
+			},
+			&action.DeleteCollection{
+				Name:          "Users",
+				ExpectedError: "cannot delete a collection that has documents",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_NonExistentCollection_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.DeleteCollection{
+				Name:          "NonExistent",
+				ExpectedError: "collection not found",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_MultipleCollections_DeleteOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Books {
+						title: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name: "Users",
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Books {
+						title
+					}
+				}`,
+				Results: map[string]any{
+					"Books": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "Users" on type "Query".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_WithTransaction_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				TransactionID: immutable.Some(1),
+				Name:          "Users",
+			},
+			&action.CommitTransaction{
+				TransactionID: 1,
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_WithTransactionWithoutCommit_CollectionStillExists(t *testing.T) {
+	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions
+		// todo: https://github.com/sourcenetwork/defradb/issues/4442
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			testUtils.BadgerFileType,
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				TransactionID: immutable.Some(1),
+				Name:          "Users",
+			},
+			// Without committing, the collection data should still exist. Verify via
+			// GetCollections which reads from a separate transaction.
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_DeleteBothCollections_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Books {
+						title: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name: "Users",
+			},
+			&action.DeleteCollection{
+				Name: "Books",
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name:          "Users",
+				ExpectedError: "no type found for given name",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Name:          "Books",
+				ExpectedError: "no type found for given name",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -142,6 +142,35 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
+	name := req.URL.Query().Get("name")
+	if name == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrCollectionNameRequired})
+		return
+	}
+
+	opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(ctx))
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var err error
+	if !hadTxn {
+		err = db.DeleteCollection(ctx, name, opt)
+	} else {
+		err = txn.DeleteCollection(ctx, name, opt)
+	}
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
@@ -801,6 +830,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
+	deleteCollection := openapi3.NewOperation()
+	deleteCollection.OperationID = "delete_collection"
+	deleteCollection.Description = "Delete the active version of a collection by name"
+	deleteCollection.Tags = []string{"collection"}
+	deleteCollection.AddParameter(openapi3.NewQueryParameter("name").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema()))
+	deleteCollection.Responses = openapi3.NewResponses()
+	deleteCollection.Responses.Set("200", successResponse)
+	deleteCollection.Responses.Set("400", errorResponse)
+
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
 		collectionSchema,
@@ -983,6 +1023,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/import", http.MethodPost, importBackup, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, describeCollection, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
+	router.AddRoute("/collections", http.MethodDelete, deleteCollection, h.DeleteCollection)
 	router.AddRoute("/collections/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/encrypted-indexes", http.MethodGet, listEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)

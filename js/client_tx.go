@@ -40,6 +40,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"discard":                    goji.Async(wrapper.discard),
 		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
+		"deleteCollection":           goji.Async(wrapper.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),
 		"refreshViews":               goji.Async(wrapper.refreshViews),
@@ -108,6 +109,21 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 	opt := options.PatchCollection()
 	setOptIdentity(opt, args, 2)
 	err = t.txn.PatchCollection(ctx, patch, migration, opt)
+	return js.Undefined(), err
+}
+
+func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	name, err := stringArg(args, 0, "name")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	opt := options.DeleteCollection()
+	setOptIdentity(opt, args, 1)
+	err = t.txn.DeleteCollection(ctx, name, opt)
 	return js.Undefined(), err
 }
 

@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -243,6 +244,45 @@ func (db *DB) PatchCollection(
 	}
 
 	return txn.Commit()
+}
+
+func (db *DB) DeleteCollection(
+	ctx context.Context,
+	name string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
+		return err
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+
+	defer txn.Discard()
+
+	err = db.deleteCollection(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
+func (db *DB) deleteCollection(ctx context.Context, name string) error {
+	col, err := db.getCollectionByName(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	patch := fmt.Sprintf(`[{"op": "remove", "path": "/%s"}]`, col.Version().VersionID)
+	return db.patchCollection(ctx, patch, immutable.None[model.Lens]())
 }
 
 func (db *DB) SetActiveCollectionVersion(

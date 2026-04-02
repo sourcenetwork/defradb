@@ -331,6 +331,17 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	name string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	_, err := execute(ctx, w.value, "deleteCollection", name)
+	return err
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,

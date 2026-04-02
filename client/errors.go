@@ -98,6 +98,7 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
 	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrCollectionNameRequired                = errors.New("collection name is required")
 	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 )
 

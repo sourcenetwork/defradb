@@ -533,6 +533,35 @@ func (b *PatchCollectionOptionsBuilder) SetIdentity(id identity.Identity) *Patch
 	return b
 }
 
+// DeleteCollectionOptions contains options for DeleteCollection operation.
+type DeleteCollectionOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *DeleteCollectionOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// DeleteCollectionOptionsBuilder is a builder for DeleteCollectionOptions.
+type DeleteCollectionOptionsBuilder struct {
+	enumerableBuilder[DeleteCollectionOptions]
+}
+
+// DeleteCollection creates a new DeleteCollectionOptionsBuilder instance.
+func DeleteCollection() *DeleteCollectionOptionsBuilder {
+	return &DeleteCollectionOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *DeleteCollectionOptionsBuilder) SetIdentity(id identity.Identity) *DeleteCollectionOptionsBuilder {
+	b.append(func(opts *DeleteCollectionOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // SetActiveCollectionVersionOptions contains options for SetActiveCollectionVersion operation.
 type SetActiveCollectionVersionOptions struct {
 	// Identity is the identity of the actor performing the operation.

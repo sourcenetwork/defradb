@@ -73,6 +73,21 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 	return js.Undefined(), err
 }
 
+func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	name, err := stringArg(args, 0, "name")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	opt := options.DeleteCollection()
+	setOptIdentity(opt, args, 1)
+	err = c.node.DB.DeleteCollection(ctx, name, opt)
+	return js.Undefined(), err
+}
+
 func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
 	version, err := stringArg(args, 0, "version")
 	if err != nil {

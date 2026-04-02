@@ -167,6 +167,27 @@ func (c *Client) PatchCollection(
 	return err
 }
 
+func (c *Client) DeleteCollection(
+	ctx context.Context,
+	name string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("collections")
+	q := methodURL.Query()
+	q.Set("name", name)
+	methodURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,

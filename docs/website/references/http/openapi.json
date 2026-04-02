@@ -1053,6 +1053,34 @@
             }
         },
         "/collections": {
+            "delete": {
+                "description": "Delete the active version of a collection by name",
+                "operationId": "delete_collection",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "describe_collection",

@@ -205,6 +205,18 @@ type Store interface {
 		opts ...options.Enumerable[options.PatchCollectionOptions],
 	) error
 
+	// DeleteCollection deletes the active version of the collection with the given name.
+	//
+	// Only the latest (head) version is deleted per call. If the collection has multiple versions,
+	// earlier versions must be deleted separately after each head is removed.
+	//
+	// It will error if the collection contains any documents - they must be deleted first.
+	DeleteCollection(
+		ctx context.Context,
+		name string,
+		opts ...options.Enumerable[options.DeleteCollectionOptions],
+	) error
+
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
 	// those share the same CollectionID as the activated CollectionVersion.
 	//

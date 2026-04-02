@@ -1,26 +1,41 @@
-## defradb client collection
+## defradb client collection delete
 
-Interact with a collection.
+Delete the active collection version
 
 ### Synopsis
 
-Add, describe, patch, set-active, delete, and truncate collections.
+Delete the active version of a collection by name.
+
+Only the latest (head) version is deleted per call. If the collection has multiple
+versions, earlier versions must be deleted separately after each head is removed.
+
+The collection must not contain any documents. Delete all documents first before
+deleting the collection.
+
+```
+defradb client collection delete --name <name> [flags]
+```
+
+### Examples
+
+```
+delete a collection by name:  
+  defradb client collection delete --name Users
+```
 
 ### Options
 
 ```
-      --collection-id string   Collection ID
-      --get-inactive           Get inactive collections as well as active
-  -h, --help                   help for collection
-  -i, --identity string        Hex formatted private key used to authenticate with ACP
-      --name string            Collection name
-      --tx uint                Transaction ID
-      --version-id string      Collection version ID
+  -h, --help          help for delete
+  -n, --name string   Collection name to delete
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
+      --get-inactive                Get inactive collections as well as active
+  -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -35,16 +50,12 @@ Add, describe, patch, set-active, delete, and truncate collections.
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client collection add](defradb_client_collection_add.md)	 - Add new collection
-* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete the active collection version
-* [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
-* [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
-* [defradb client collection set-active](defradb_client_collection_set-active.md)	 - Set the active collection version
-* [defradb client collection truncate](defradb_client_collection_truncate.md)	 - Truncate the given collection
+* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 
