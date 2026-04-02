@@ -36,7 +36,7 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 	ctx := req.Context()
 	q := req.URL.Query()
 	encConf := encryption.DocEncConfig{}
-	if q.Get(docEncryptParam) == "true" {
+	if q.Get(docEncryptParam) == trueStr {
 		encConf.IsDocEncrypted = true
 	}
 	if q.Get(docEncryptFieldsParam) != "" {

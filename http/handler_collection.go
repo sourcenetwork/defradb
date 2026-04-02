@@ -25,6 +25,7 @@ import (
 const docEncryptParam = "encrypt"
 const docEncryptFieldsParam = "encryptFields"
 const signingParam = "signing"
+const trueStr = "true"
 
 type collectionHandler struct{}
 
@@ -34,7 +35,7 @@ func signingFromRequest(req *http.Request) (bool, bool) {
 	if val == "" {
 		return false, false
 	}
-	return val == "true", true
+	return val == trueStr, true
 }
 
 type DeleteCollectionRequest struct {
