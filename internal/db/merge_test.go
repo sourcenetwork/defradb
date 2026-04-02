@@ -469,7 +469,7 @@ func TestMergeQueue(t *testing.T) {
 	testDocID := "test"
 
 	require.NoError(t, q.add(context.Background(), testDocID))
-	go q.add(context.Background(), testDocID) //nolint:all
+	go q.add(context.Background(), testDocID)
 	// give time for the goroutine to block
 	time.Sleep(10 * time.Millisecond)
 	require.Len(t, q.keys, 1)
