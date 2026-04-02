@@ -93,20 +93,22 @@ query @explain {
 // Response
 {
     "explain": {
-        "select TopNode": {
-            "selectNode": {
-                "filter": null,
-                "scanNode": {
-                    "filter":null,
-                    "collectionID": "3",
-                    "collectionName": "Author",
-                    "spans": [{
-                        "start": "/3",
-                        "end": "/4"
-                    }]
+        "operationNode": [
+            {
+                "selectTopNode": {
+                    "selectNode": {
+                        "docID":  null,
+                        "filter": null,
+                        "scanNode": {
+                            "filter":         null,
+                            "collectionID":   "bafyreid73sgz...",
+                            "collectionName": "Author",
+                            "prefixes": ["/3"]
+                        }
+                    }
                 }
             }
-        }
+        ]
     }
 }
 ```
@@ -139,17 +141,22 @@ query @explain(type: execute) {
         "executionSuccess": true,
         "sizeOfResult":     1,
         "planExecutions":   2,
-        "selectTopNode": {
-            "selectNode": {
-                "iterations":    2,
-                "filterMatches": 1,
-                "scanNode": {
-                    "iterations":    2,
-                    "docFetches":    2,
-                    "filterMatches": 1
+        "operationNode": [
+            {
+                "selectTopNode": {
+                    "selectNode": {
+                        "iterations":    3,
+                        "filterMatches": 2,
+                        "scanNode": {
+                            "iterations":   3,
+                            "docFetches":   2,
+                            "fieldFetches": 4,
+                            "indexFetches": 0
+                        }
+                    }
                 }
             }
-        }
+        ]
     }
 }
 ```

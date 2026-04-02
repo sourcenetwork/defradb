@@ -57,7 +57,7 @@ In passive replication, updates are broadcasted on a per-document level over the
 One major difference between active and passive networks is that an active network can focus on both collections and individual documents, while a passive network is only focused on individual documents. Active networks operate over a direct, point-to-point connection and allow you to select an entire collection to replicate to another node. For example, if you have a collection of books and specify a target node for active replication, the entire collection will be replicated to that node, including any updates to individual books. However, it is also possible to replicate granularly by selecting specific books within the collection for replication. Passive networks, on the other hand, are only concerned with replicating individual documents.
 
 ```bash
-$ defradb client rpc addreplicator "Books" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_node_to_replicate_to>
+$ defradb client p2p replicator add -c Books /ip4/127.0.0.1/tcp/9172/p2p/<peerID_of_node_to_replicate_to>
 ```
 
 ## Concrete Features of P2P in DefraDB
@@ -69,8 +69,8 @@ The Defra Command Line Interface (CLI) allows you to modify the behavior of the 
 ```bash
 $ defradb start
 ...
-2023-03-20T07:18:17.276-0400, INFO, defra.cli, Starting P2P node, {"P2P address": "/ip4/0.0.0.0/tcp/9171"}
-2023-03-20T07:18:17.281-0400, INFO, defra.node, Created LibP2P host, {"PeerId": "12D3KooWEFCQ1iGMobsmNTPXb758kJkFc7XieQyGKpsuMxeDktz4", "Address": ["/ip4/0.0.0.0/tcp/9171"]}
+2023-03-20T07:18:17.276-0400, INFO, defra.cli, Starting P2P node, {"P2P address": "/ip4/127.0.0.1/tcp/9171"}
+2023-03-20T07:18:17.281-0400, INFO, defra.node, Created LibP2P host, {"PeerId": "12D3KooWEFCQ1iGMobsmNTPXb758kJkFc7XieQyGKpsuMxeDktz4", "Address": ["/ip4/127.0.0.1/tcp/9171"]}
 ```
 
 This host has a Peer ID, which is a function of a secret private key generated when the node is started for the first time. The Peer ID is important to know as it may be relevant for different parts of the peer-to-peer networking system. The libp2p networking stack can be enabled or disabled.
@@ -110,7 +110,7 @@ When a node is started, it specifies a list of peers that it wants to stay conne
 To use the active replication feature in DefraDB, you can submit an add replicator Remote Procedure Call (RPC) command through the client API. You will need to specify the multi-address and Peer ID of the peer that you want to include in the replicator set, as well as the name of the collection that you want to replicate to that peer. These steps handle the process of defining which peers you want to connect to, enabling or disabling the underlying subsystems, and sending additional RPC commands to add any necessary replicators.
 
 ```bash
-$ defradb client rpc addreplicator "Books" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_node_to_replicate_to>
+$ defradb client p2p replicator add -c Books /ip4/127.0.0.1/tcp/9172/p2p/<peerID_of_node_to_replicate_to>
 ```
 
 ## Benefits of the P2P System
@@ -137,8 +137,6 @@ PubSub based query system - This that allows users to query and receive updates 
 
 Graph Sync - This is a protocol developed by Protocol Labs, which has the potential to resolve issues with the Bitswap algorithm and DHT. These two approaches show promise in improving the scalability of the P2P system.
 
-There are currently some limitations with the peer-to-peer system being used. One issue is that replicators, which are added to a node, do not persist through updates or restarts. This means that the user must re-add the replicators every time the node is restarted. However, this issue will be resolved in the next version of the system.
-
-Currently, when a replicator is added to a node, it doesn't persist between node updates or node restarts. This means that every time there is a restart, the user must re-add these replicators. This is a minor oversight that the Source team plans to fix in a future release. In the meantime, they are also wWorking on a new protocol called Head Exchange to address issues with syncing the Merkel DAG when updates have been missed or concurrent, diverged updates have been made. The Head Exchange protocol aims to efficiently establish the most recent update seen by each node, determine if there are any divergent updates, and figure out the most efficient way to synchronize the nodes with the least amount of communication.
+Replicators are persisted and will automatically reconnect on node restart. The team is also working on a new protocol called Head Exchange to address issues with syncing the Merkle DAG when updates have been missed or concurrent, diverged updates have been made. The Head Exchange protocol aims to efficiently establish the most recent update seen by each node, determine if there are any divergent updates, and figure out the most efficient way to synchronize the nodes with the least amount of communication.
 
 One issue with peer-to-peer local-first development is that it can be difficult for nodes to connect with each other when they are running on devices within the same home Wi-Fi network. This is due to a NAT firewall, which is a router that operates to protect private networks. A NAT firewall only allows internet traffic to pass through if it was requested by a device on the private network. It protects the identity of a network by not exposing internal IP addresses to the internet. This can make it difficult for other nodes to connect directly to a node running behind a NAT firewall.

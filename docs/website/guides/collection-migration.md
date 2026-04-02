@@ -71,7 +71,7 @@ In this example we will define a collection with an `emailAddress` field.  We wi
 
 **Step One**, define the `Users` collection:
 
-```graphql
+```bash
 defradb client collection add '
     type Users {
         emailAddress: String
@@ -79,19 +79,25 @@ defradb client collection add '
 '
 ```
 
-**Step Two**, patch the `Users` collection, adding the new field, here we pass in `--set-active=true` to automatically apply the change to the `Users` collection:
+**Step Two**, patch the `Users` collection, adding the new field, and then set the new version as active:
 
-```graphql
+```bash
 defradb client collection patch '
     [
     	{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
     ]
-' --set-active=true
+'
+```
+
+Then activate the new collection version:
+
+```bash
+defradb client collection set-active <new collection version ID>
 ```
 
 **Step Three**, fetch the collection version IDs so that we can later tell Defra which collection versions we wish to migrate to/from:
 
-```graphql
+```bash
 defradb client collection describe --name="Users"
 ```
 
@@ -110,7 +116,7 @@ defradb client collection describe --name="Users"
 
 Here is what our migration would look like if we were to write it in Rust:
 
-```graphql
+```rust
 #[link(wasm_import_module = "lens")]
 extern "C" {
     fn next() -> *mut u8;
@@ -229,7 +235,7 @@ We should then compile it to wasm, and copy the resultant `.wasm` file to a loca
 
 **Step Five**, now that we have updated the collection, and defined our migration, we need to tell Defra to use it, by providing it the source and destination collection version IDs from our earlier `defradb client collection describe`​ call, and a configuration file defining the parameters we wish to pass it:
 
-```graphql
+```bash
 defradb client lens set <The source collection version ID> <The destination collection version ID> '
     {
         "lenses": [
@@ -252,7 +258,7 @@ As we have defined an inverse migration, we can give this migration to other nod
 
 We can also change our active collection version on this node back to the original to see the inverse in action:
 
-```graphql
+```bash
 defradb client collection set-active <Original collection version ID>
 ```
 

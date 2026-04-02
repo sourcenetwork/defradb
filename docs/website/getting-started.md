@@ -30,7 +30,7 @@ We recommend experimenting with queries using a native GraphQL client. Altair is
 
 Start a node by executing `defradb start`. Keep the node running while going through the following examples.
 
-Verify the local connection to the node works by executing `defradb client ping` in another terminal.
+Verify the node is running by executing `curl localhost:9181/api/v0/health` in another terminal.
 
 ## Configuration
 
@@ -81,11 +81,13 @@ Expected response:
 
 ```json
 {
-  "data": [
-    {
-      "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
-    }
-  ]
+  "data": {
+    "add_User": [
+      {
+        "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab"
+      }
+    ]
+  }
 }
 ```
 
@@ -115,7 +117,7 @@ You can further filter results with the `filter` argument.
 ```shell
 defradb client query '
   query {
-    User(filter: {points: {_ge: 50}}) {
+    User(filter: {points: {_geq: 50}}) {
       _docID
       age
       name
@@ -125,7 +127,7 @@ defradb client query '
 '
 ```
 
-This returns only user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
+This returns only user documents which have a value for the `points` field *Greater Than or Equal to* (`_geq`) 50.
 
 ## Obtain document commits
 
@@ -142,7 +144,7 @@ defradb client query '
       height
       links {
         cid
-        name
+        fieldName
       }
     }
   }
@@ -162,19 +164,19 @@ It returns a structure similar to the following, which contains the update paylo
         "links": [
           {
             "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
-            "name": "age"
+            "fieldName": "age"
           },
           {
             "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
-            "name": "name"
+            "fieldName": "name"
           },
           {
             "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
-            "name": "points"
+            "fieldName": "points"
           },
           {
             "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
-            "name": "verified"
+            "fieldName": "verified"
           }
         ]
       }
@@ -194,7 +196,7 @@ defradb client query '
       height
       links {
         cid
-        name
+        fieldName
       }
     }
   }
@@ -239,7 +241,7 @@ Obtain the Peer ID from its console output. In this example, we use `12D3KooWNXm
 For *nodeB*, we provide the following configuration:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/127.0.0.1/tcp/9172 --peers /ip4/127.0.0.1/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
 ```
 
 About the flags:
@@ -247,23 +249,22 @@ About the flags:
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
 - `--p2paddr` is the multiaddress for the p2p networking to listen on
-- `--tcpaddr` is the multiaddress for the gRPC server to listen on
 - `--peers` is a comma-separated list of peer multiaddresses
 
 This starts two nodes and connects them via pubsub networking.
 
 ### Collection subscription example
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by specifying its name. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collection updates on *nodeB* by using the `p2p collection add` command:
 
 ```shell
-defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
+defradb client p2p collection add --url localhost:9182 User
 ```
 
-Multiple collection IDs can be added at once.
+Multiple collection names can be added at once.
 
 ```shell
-defradb client rpc p2pcollection add --url localhost:9182 <collection1ID> <collection2ID> <collection3ID>
+defradb client p2p collection add --url localhost:9182 User Article
 ```
 
 ### Replicator example
@@ -290,10 +291,10 @@ defradb client collection add '
 Start (or continue running from above) *nodeB*, that will be receiving updates:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/127.0.0.1/tcp/9172
 ```
 
-Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
+Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `client p2p` command.
 
 In another terminal, add the same collection to *nodeB*:
 
@@ -309,9 +310,7 @@ defradb client collection add --url localhost:9182 '
 Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
 
 ```shell
-defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9172/p2p/
-defradb client rpc replicator set -c "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
-
+defradb client p2p replicator add -c Article /ip4/127.0.0.1/tcp/9172/p2p/<peerID_of_nodeB>
 ```
 
 As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
@@ -322,32 +321,19 @@ As we add or update documents in the "Article" collection on *nodeA*, they will 
 By default, DefraDB will expose its HTTP API at `http://localhost:9181/api`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
 
 To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
-being the public key and `server.crt` being the private key, just do:
+being the private key and `server.crt` being the certificate (public key), just do:
 ```shell
-defradb start --tls
+defradb start --pubkeypath ~/.defradb/certs/server.crt --privkeypath ~/.defradb/certs/server.key
 ```
 
 The keys can be generated with your generator of choice or with `make tls-certs`.
 
 Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
 
-If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be explicitly defined in addition to the `--tls` flag or `tls` set to `true` in the config.
-
-Then to start the server with TLS, using your generated keys in custom path:
+Then to start the server with TLS, using your generated keys in a custom path:
 ```shell
-defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
-
+defradb start --pubkeypath ~/path-to-cert.crt --privkeypath ~/path-to-privkey.key
 ```
-
-DefraDB also comes with automatic HTTPS for deployments on the public web. To enable HTTPS,
- deploy DefraDB to a server with both port 80 and port 443 open. With your domain's DNS A record
- pointed to the IP of your server, you can run the database using the following command:
-```shell
-sudo defradb start --tls --url=your-domain.net --email=email@example.com
-```
-Note: `sudo` is needed above for the redirection server (to bind port 80).
-
-A valid email address is necessary for the creation of the certificate, and is important to get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
 
 ## Conclusion

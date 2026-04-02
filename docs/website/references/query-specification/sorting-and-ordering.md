@@ -54,9 +54,9 @@ Sorting multiple fields simultaneously is primarily driven by the first indicate
 
 Assuming there are more than two sort fields, in that case, the same behavior applies, except the primary, secondary pair shifts by one element. Hence, the 2nd field is the primary, and the 3rd is the secondary, until we reach the end of the sort fields.
 
-In case of a single sort field and objects with same value, the documents identifier (DocKey) is used as the secondary sort field by default. This is applicable regardless of the number of sort fields. As long as the DocKey is not already included in sort fields, it acts as the final tie-breaking secondary field.
+In case of a single sort field and objects with same value, the document identifier (`_docID`) is used as the secondary sort field by default. This is applicable regardless of the number of sort fields. As long as `_docID` is not already included in sort fields, it acts as the final tie-breaking secondary field.
 
-If the DocKey is included in the sort fields, any field included afterwards will never be evaluated. This is because all DocKeys are unique. If the sort fields are `published_at`, `id`, and `birthday`, the `birthday` sort field will never be evaluated and should be removed from the list.
+If `_docID` is included in the sort fields, any field included afterwards will never be evaluated. This is because all document IDs are unique. If the sort fields are `published_at`, `_docID`, and `birthday`, the `birthday` sort field will never be evaluated and should be removed from the list.
 
 > Sorting on sub-objects from the root object is only allowed if the sub-object is not an array. If it is an array, the sort must be applied to the object field directly instead of through the root object.
 
@@ -124,7 +124,7 @@ If you have the following objects in the database:
 ```
 
 ```graphql
-Books(filter: {_id: [1]}) {
+Book(docID: ["bae-example-id"]) {
     title 
     genre
     description

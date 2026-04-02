@@ -119,12 +119,9 @@ defradb client p2p info --url <api_address>
 If the command is successful, you should see output similar to the text below.
 
 ```json
-{
-  "ID": "12D3KooWQr7voGBQPTVQrsk76k7sYWRwsAdHRbRjXW39akYomLP3",
-  "Addrs": [
-    "/ip4/0.0.0.0/tcp/9171"
-  ]
-}
+[
+  "/ip4/0.0.0.0/tcp/9171/p2p/12D3KooWQr7voGBQPTVQrsk76k7sYWRwsAdHRbRjXW39akYomLP3"
+]
 ```
 
 > The address here is the node's p2p bind address. The public p2p address can be found in the [deployment info](#deployment-info).
@@ -132,14 +129,9 @@ If the command is successful, you should see output similar to the text below.
 Setup the replicator from your local node to the Akash node by running the command below.
 
 ```bash
-defradb client p2p replicator set --collection User '{
-    "ID": "12D3KooWQr7voGBQPTVQrsk76k7sYWRwsAdHRbRjXW39akYomLP3", 
-    "Addrs": [
-        "/dns/<p2p_address_host>/<p2p_address_port>"
-    ]
-}'
+defradb client p2p replicator add -c User /dns/<p2p_address_host>/tcp/<p2p_address_port>/p2p/12D3KooWQr7voGBQPTVQrsk76k7sYWRwsAdHRbRjXW39akYomLP3
 ```
 
-> The p2p host and port can be found in the [deployment info](#deployment-info). For example: if your p2p address is http://provider.bdl.computer:32582/ the host would be provider.bdl.computer and the port would be 32582.
+> The p2p host and port can be found in the [deployment info](#deployment-info). For example: if your p2p address is http://provider.bdl.computer:32582/ the host would be provider.bdl.computer and the port would be 32582. Replace the peer ID with the one from the `p2p info` output.
 
 The local node should now be replicating all User documents to the Akash node.

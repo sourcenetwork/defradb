@@ -16,12 +16,12 @@ The Web2 stack has traditional databases, like Postgres or MySQL, that usually h
 A powerful feature of a time-traveling query is that very little work is required from the developer to turn a traditional non-time-traveling query into a time-traveling query. Each update a document goes through gets a version identifier known as a Content Identifier (CID). CIDs are a function of the data model and are used to build out the time travel queries. These CIDs can be used to refer to a version that contains some piece of data. Instead of using some sort of human-invented notion of semantic version labels like Version 1, or Version 3.1 alpha, it uses the hash of the data as the actual identifier. The user can take the entire state of a document and create a single constant-sized CID. Each update in the document produces a new version number for the document, including a new version number for its individual fields. The developer then only needs to submit a new time-traveling query using the doc key of the document that it wants to query backward through its state, just like in a regular query, only here the developer needs to add the 32-bit hexadecimal version identifier that is expressed as it’s CID in an additional argument and the query will fetch the specific update that was made in the document.
 
 ```graphql
-# Here we fetch a User of the given dockey, in the state that it was at
+# Here we fetch a User of the given docID, in the state that it was at
 # at the commit matching the given CID.
 query {
   User (
     cid: "bafybeieqnthjlvr64aodivtvtwgqelpjjvkmceyz4aqerkk5h23kjoivmu",
-    dockey: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"
+    docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"
   ) {
     name
     age

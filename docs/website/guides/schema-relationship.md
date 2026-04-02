@@ -97,7 +97,7 @@ query {
         name
         username
         age
-        Address {
+        address {
             streetNumber
             streetName
             country
@@ -113,7 +113,7 @@ query {
         streetNumber
         streetName
         country
-        User {
+        user {
             name
             username
             age
@@ -125,11 +125,11 @@ query {
 
 ```graphql
 query {
-    User (filter: {Address: {country: "Canada"}}) {
+    User (filter: {address: {country: "Canada"}}) {
         name
         username
         age
-        Address {
+        address {
             streetNumber
             streetName
             country
@@ -195,7 +195,7 @@ mutation {
 
 ```graphql
 mutation {
-  	update_Author(id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4", input: {name: "Saadi Shirazi"}) {
+  	update_Author(docID: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4", input: {name: "Saadi Shirazi"}) {
       	_docID
     }
 }
@@ -260,7 +260,7 @@ query {
     Book {
         name
         genre
-        Author {
+        author {
           name
           dateOfBirth
         }
@@ -275,7 +275,7 @@ query {
     {
       "name": "Gulistan",
       "genre": "Poetry",
-      "Author": {
+      "author": {
         "name": "Saadi Shirazi",
         "dateOfBirth":  "1210-07-23T03:46:56.647Z",
       }
@@ -283,7 +283,7 @@ query {
     {
       "name": "Bustan",
       "genre": "Poetry",
-      "Author": {
+      "author": {
         "name": "Saadi Shirazi",
         "dateOfBirth":  "1210-07-23T03:46:56.647Z",
       }

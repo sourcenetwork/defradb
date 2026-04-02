@@ -18,7 +18,7 @@ type Author {
 }
 
 type Address {
-    number: Integer
+    number: Int
     streetName: String
     city: String
     postal: String
@@ -30,9 +30,7 @@ The types of both objects are included and DefraDB infers the relationship. As a
 - Both objects which can be queried separately.
 - Each object provides field level access to its related object. 
 
-The notable distinction of "one-to-one" relationships is that only the DocKey of the corresponding object is stored.
-
-On the other hand, if you simply embed the Address within the Author type without the internal relational system, you can include the `@embed` directive, which will embed it within. Objects embedded inside another using the `@embed` directive do not expose a query endpoint, so they can *only* be accessed through their parent object. Additionally they are not assigned a DocKey.
+The notable distinction of "one-to-one" relationships is that only the document ID of the corresponding object is stored.
 
 #### One-to-Many
 A "one-to-many" relationship allows us to relate several objects of one type, to a single instance of another. 
@@ -53,7 +51,7 @@ type Book {
 }
 ```
 
-In this case, the books object is defined within the Author object to be an array of books, indicating that *one* Author type has a relationship to *many* Book types. Internally, much like the one-to-one model, only the DocKeys are stored. However, the DocKey is only stored on one side of the relationship (the child type). In this example, only the Book type keeps a reference to its associated Author DocKey.
+In this case, the books object is defined within the Author object to be an array of books, indicating that *one* Author type has a relationship to *many* Book types. Internally, much like the one-to-one model, only the document IDs are stored. However, the document ID is only stored on one side of the relationship (the child type). In this example, only the Book type keeps a reference to its associated Author document ID.
 
 #### Many-to-Many
 
@@ -66,7 +64,7 @@ It is possible to define a collection of different relationship models. Addition
 type Author {
     name: String
     address: Address
-    books: [Book] @relation("authored_books") @index
+    books: [Book] @relation(name: "authored_books") @index
 }
 ```
 

@@ -138,7 +138,7 @@ Let's query for all books with a rating greater than or equal to 4.
 
 ```graphql
 {
-	Books(filter: { rating: { _gte: 4 } }) {
+	Books(filter: { rating: { _geq: 4 } }) {
 		title
 		genre
 		description
@@ -146,7 +146,7 @@ Let's query for all books with a rating greater than or equal to 4.
 }
 ```
 
-**NOTE:** In the above example, the expression contains a new scalar type object `{ _gte: 4 }`.  While previously, where we had a simple string value. If a scalar type field has a filter with an object value, then that object's first and only key must be a comparison operator like `_gte`. If the filter is given a simple scalar value like “John Grisham”, “Thriller”, or FALSE, then the default operator that should be used is `_eq` (EQUAL). The following table displays a list of available operators:
+**NOTE:** In the above example, the expression contains a new scalar type object `{ _geq: 4 }`. If a scalar type field has a filter with an object value, then that object's first and only key must be a comparison operator like `_geq`. All filters require an explicit operator block (e.g., `{_eq: “value”}`). The following table displays a list of available operators:
 
 
 | Operator | Description |
@@ -154,13 +154,15 @@ Let's query for all books with a rating greater than or equal to 4.
 | `_eq`    | Equal to        |
 | `_neq`   | Not Equal to        |
 | `_gt`    | Greater Than        |
-| `_gte`   | Greater Than or Equal to        |
+| `_geq`   | Greater Than or Equal to        |
 | `_lt`    | Less Than        |
-| `_lte`   | Less Than or Equal to        |
+| `_leq`   | Less Than or Equal to        |
 | `_in`    | In the List        |
 | `_nin`   | Not in the List        |
 | `_like`  | Like Sub-String         |
-|`_nlike`  | Unlike Sub-String       |
+| `_nlike`  | Not Like Sub-String       |
+| `_ilike`  | Case-Insensitive Like Sub-String       |
+| `_nilike`  | Case-Insensitive Not Like Sub-String       |
 ###### Table 1. Supported operators.
 
 The table below displays the operators that can be used for every value type:
@@ -168,12 +170,33 @@ The table below displays the operators that can be used for every value type:
 
 | Scalar Type | Operators |
 | -------- | -------- |
-| String     | `_eq, _neq, _like, _in, _nin`     |
-| Integer     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
-| Floating Point     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
+| String     | `_eq, _neq, _like, _nlike, _ilike, _nilike, _in, _nin`     |
+| Int     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
+| Float     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
 | Boolean     | `_eq, _neq, _in, _nin`     |
-| DateTime     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
+| DateTime     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
 ###### Table 2. Operators supported by Scalar types.
+
+### Array Operators
+
+For fields that are list types (e.g., `[Int]`, `[String]`), the following operators are available to filter based on the elements of the array:
+
+| Operator | Description |
+| -------- | --------    |
+| `_any`   | Matches if **any** element in the array satisfies the nested condition |
+| `_all`   | Matches if **all** elements in the array satisfy the nested condition  |
+| `_none`  | Matches if **no** element in the array satisfies the nested condition  |
+
+For example, to find books where any tag equals "classic":
+
+```graphql
+{
+    Books(filter: { tags: { _any: { _eq: "classic" } } }) {
+        title
+        tags
+    }
+}
+```
 
 There are 3 types of conditional keywords, i.e, `_and`, `_or`, and `_not`. Conditional keywords like `_and` and `_or` are used when we need to apply filters on multiple fields simultaneously.  The `_not` conditional keyword only accepts an object.
 
@@ -186,8 +209,8 @@ The code snippet below queries all books that are a part of the Thriller genre, 
             _or: [ 
                 {genre: {_eq: "Thriller"}}, 
                 { _and: [
-                    {rating: { _gte: 4 }},
-                    {rating: { _lte: 5 }},
+                    {rating: { _geq: 4 }},
+                    {rating: { _leq: 5 }},
                 ]},
             ]
         }
@@ -201,9 +224,9 @@ The code snippet below queries all books that are a part of the Thriller genre, 
 An important thing to note about the above query is the `_and` conditional. Even though AND is assumed, if we have two filters on the same field, we MUST specify the `_and` operator. This is because JSON objects cannot contain duplicate fields.
 
 >**Invalid**:
-`filter: { rating: { _gte: 4 }, rating { _lte: 5 } }`
+`filter: { rating: { _geq: 4 }, rating { _leq: 5 } }`
 >**Valid**:
-`filter: { _and: [ {rating: {_gte: 4}}, {rating: {_lte: 5}} ]}`
+`filter: { _and: [ {rating: {_geq: 4}}, {rating: {_leq: 5}} ]}`
 
 The `_not` conditional accepts an object instead of an array.
 

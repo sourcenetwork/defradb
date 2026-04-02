@@ -560,7 +560,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncCollectionVersions.Responses.Set("500", errorResponse)
 
 	syncBranchableCollectionRequestSchema := openapi3.NewObjectSchema().
-		WithProperty("collectionName", openapi3.NewStringSchema()).
+		WithProperty("collectionID", openapi3.NewStringSchema()).
 		WithProperty("timeout", openapi3.NewStringSchema())
 
 	syncBranchableCollectionRequest := openapi3.NewRequestBody().

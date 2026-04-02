@@ -8,7 +8,7 @@ If the structure of a returned query is not ideal for a given application, you c
 
 ```graphql
 {
-    topTenBooks: Books(sort: {rating: DESC}, limit: 10) {
+    topTenBooks: Books(order: {rating: DESC}, limit: 10) {
         title
         genre
         description
@@ -20,13 +20,13 @@ In the above example, the books result is renamed to `topTenBooks`, which can be
 
 ```graphql
 {
-    topTenBooks: Books(sort: {rating: DESC}, limit: 10) {
+    topTenBooks: Books(order: {rating: DESC}, limit: 10) {
         title
         genre
         description
     }
     
-    bottomTenBooks: Books(sort: {rating: ASC}, limit: 10) {
+    bottomTenBooks: Books(order: {rating: ASC}, limit: 10) {
         title
         genre
         description

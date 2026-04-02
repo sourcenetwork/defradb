@@ -18,7 +18,7 @@ Insert is used to create new documents from scratch. This involves many necessar
 type Book { ... }
 
 mutation {
-    add_Book(input: createBookInput) [Book]
+    add_Book(input: [BookMutationInputArg!]) [Book]
 }
 ```
 
@@ -65,11 +65,11 @@ Update filters use the same format and types from the Query system. Hence, it ea
 The structure of the generated update mutation for a `Book` type is given below:
 ```graphql
 mutation {
-    update_Book(dockey: ID, filter: BookFilterArg, input: updateBookInput) [Book]
+    update_Book(docID: [ID!], filter: BookFilterArg, input: BookMutationInputArg) [Book]
 }
 ```
 
-See the structure and syntax of the filter query above. You can also see an additional field `id`, thawhich will supersede the `filter`; this makes it easy to update a single document by a given ID.
+See the structure and syntax of the filter query above. You can also see an additional field `docID`, which will supersede the `filter`; this makes it easy to update a single document or set of documents by their IDs.
 
 The input object type is the same for both `update_TYPE` and `add_TYPE` mutations.
 
@@ -77,7 +77,7 @@ Here's an example.
 ```json
 {
     name: "John",
-    rating: nil
+    rating: null
 }
 ```
 
@@ -88,7 +88,7 @@ Once we create our update, and select which document(s) to update, we can query 
 A basic example is provided below:
 ```graphql
 mutation {
-    update_Book(dockey: '123', input: {name: "John"}) {
+    update_Book(docID: ["123"], input: {name: "John"}) {
         _docID
         name
     }
@@ -102,7 +102,7 @@ Beyond updating by an ID or IDs, we can use a query filter to select which field
 
 ```graphql
 mutation {
-    update_Book(filter: {rating: {_le: 1.0}}, input: {rating: 1.5}) {
+    update_Book(filter: {rating: {_leq: 1.0}}, input: {rating: 1.5}) {
         _docID
         rating
         name
@@ -117,21 +117,21 @@ For additional filter details, see the above `Query Block` section.
 
 ## Delete
 
-Deleting mutations allow developers and users to remove objects from collections. You can delete using specific Document Keys, a list of doc keys, or a filter statement.
+Deleting mutations allow developers and users to remove objects from collections. You can delete using specific document IDs, or a filter statement.
 
 The document selection interface is identical to the `Update` system. Much like the update system, we can return the fields of the deleted documents.
 
 The structure of the generated delete mutation for a `Book` type is given below:
 ```graphql
 mutation {
-    delete_Book(dockey: ID, ids: [ID], filter: BookFilterArg) [Book]
+    delete_Book(docID: [ID!], filter: BookFilterArg) [Book]
 }
 ```
 
-Here, we can delete a document with ID '123':
+Here, we can delete a document with ID "123":
 ```graphql
 mutation {
-    delete_User(dockey: '123') {
+    delete_User(docID: ["123"]) {
         _docID
         name
     }
@@ -140,7 +140,7 @@ mutation {
 
 This will delete the specific document, and return the `_docID` and `name` for the deleted document.
 
-DefraDB currently uses a Hard Delete system, which means that when a document is deleted, it is completely removed from the database.
+DefraDB uses a soft delete system. When a document is deleted, it is logically marked as deleted rather than physically removed from the database. Deleted documents can be retrieved using the `showDeleted` query argument.
 
 Similar to the Update system, you can use a filter to select which documents to delete, as shown below:
 
@@ -154,3 +154,33 @@ mutation {
 ```
 
 Here, we are deleting all the matching documents (documents with a rating greater than 3).
+
+## Upsert
+
+Upsert mutations combine update and insert behavior into a single operation. If a document matching the provided filter is found, it will be updated with the `update` input. If no matching document is found, a new document will be created using the `add` input. The filter must match at most one document.
+
+The structure of the generated upsert mutation for a `Book` type is given below:
+```graphql
+mutation {
+    upsert_Book(filter: BookFilterArg!, add: BookMutationInputArg!, update: BookMutationInputArg!) [Book]
+}
+```
+
+Here is an example that upserts a book by title:
+```graphql
+mutation {
+    upsert_Book(
+        filter: {title: {_eq: "Painted House"}},
+        add: {title: "Painted House", rating: 4.9},
+        update: {rating: 4.9}
+    ) {
+        _docID
+        title
+        rating
+    }
+}
+```
+
+If a book with the title "Painted House" exists, its rating will be updated to 4.9. Otherwise, a new book will be created with the provided `add` input.
+
+It is highly recommended to add an index on the fields used in the upsert filter for best performance.

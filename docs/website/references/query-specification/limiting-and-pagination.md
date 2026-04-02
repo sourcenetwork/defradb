@@ -9,7 +9,7 @@ After filtering and sorting a query, we can then limit and skip elements from th
 Let us get the top 10 rated books:
 ```graphql
 {
-    Books(sort: {rating: DESC}, limit: 10) {
+    Books(order: {rating: DESC}, limit: 10) {
         title
         genre
         description
@@ -22,7 +22,7 @@ The `limit` function accepts the maximum number of items to return from the resu
 Let's get the *next* top 10 rated books after the previous query:
 ```graphql
 {
-    Books(sort: {rating: DESC}, limit:10, offset: 10) {
+    Books(order: {rating: DESC}, limit:10, offset: 10) {
         title
         genre
         description

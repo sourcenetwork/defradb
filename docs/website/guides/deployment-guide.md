@@ -18,7 +18,7 @@ For Bare Metal deployments, there are two methods available:
 
 Ensure Git, Go and make are installed for all your development environments.
 
-1. **Unix (Mac and Linux)** - The main thing required is the [Go language toolchain](https://go.dev/dl/), which is supported up to Go 1.20 in DefraDB due to the current dependencies.
+1. **Unix (Mac and Linux)** - The main thing required is the [Go language toolchain](https://go.dev/dl/). DefraDB currently requires Go 1.25.5 or later as specified in `go.mod`.
 2. **Windows** - Install the [MinGW toolchain](https://www.mingw-w64.org/) specific to GCC and add the [Make toolchain](https://www.gnu.org/software/make/).
 
 Follow these steps to build from source:
@@ -113,7 +113,7 @@ As a P2P database, DefraDB requires two ports for node communication, they inclu
 
  
 
-The P2P networking functionality can't be disabled entirely, but you can use the `defradb start --no-p2p`​ command through the config files and CLI to deactivate it.
+The P2P networking functionality can be fully disabled using the `defradb start --no-p2p` command, which skips the entire P2P stack initialization.
 
  
 

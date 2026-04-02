@@ -25,8 +25,7 @@ The priority order of arguments is as follows:
 
 1. filter -> groupBy: Filtered Data
 1. groupBy -> aggregate: Subgroups
-1. aggregate -> having: Subgroups
-1. having -> order: Filtered Data
+1. aggregate -> order: Subgroups
 1. order -> limit: Ordered Data
 
 Each step has a specific purpose as described here.
@@ -34,7 +33,6 @@ Each step has a specific purpose as described here.
 1. `filter` argument breaks down the target collection (based on provided parameters and fields) into the output result set.
 1. `groupBy` argument divides the result set further into subgroups across potentially several dimensions.
 1. `aggregate` phase processes a subgroup's given fields.
-1.  `having` argument filters the data based on the grouped fields or aggregate results.
 1. `order` argument structures the result set based on the ordering (ascending or descending) of one or more field values.
 1. `limit` argument and its associated arguments restrict the number of the finalized, filtered, ordered result set.
 

@@ -16,15 +16,25 @@ A decentralized system lets you access information or a file from multiple locat
 
 IPFS addresses a file by its content instead of its location. A content identifier is the cryptographic hash of the content at that address. It is unique to the content it came in from and permits you to verify if you got what you had requested for.
 
-For IPFS to work well, active participation of people is necessary. If you are sharing files using IPFS, you need to have copies of the shared files available on multiple computers, which are powered on and running IPFS. In a nutshell, many people provide access to each others files and participate in making them available when requested. Note that if you have downloaded a file using IPFS, by default your computer will share it further with others participants to share further.
+For IPFS to work well, active participation of people is necessary. If you are sharing files using IPFS, you need to have copies of the shared files available on multiple computers, which are powered on and running IPFS. In a nutshell, many people provide access to each others files and participate in making them available when requested. Note that if you have downloaded a file using IPFS, by default your computer will share it further with other participants.
 
 ## How Does it Work?
 
 As discussed earlier, IPFS is a p2p (peer-to-peer) storage network. The IPFS ecosystem works with the following fundamental principles.
 
 1. Unique identification via content addressing
-2. Content linking via directed acrylic graphs (DAGs)
+2. Content linking via directed acyclic graphs (DAGs)
 3. Content discovery via distributed hash tables (DHTs)
+
+## How DefraDB Uses IPFS Technologies
+
+DefraDB does not run a full IPFS node or participate in the public IPFS network. Instead, it uses libraries from the IPFS ecosystem to implement core data storage concepts:
+
+- **Content Identifiers (CIDs):** DefraDB uses `go-cid` to generate content-addressed identifiers for document blocks, ensuring data integrity and deduplication.
+- **Block Storage:** DefraDB uses `boxo/blockstore` and `go-block-format` for its underlying block-based storage layer.
+- **IPLD Data Modeling:** DefraDB uses `go-ipld-format` to model document data as IPLD (InterPlanetary Linked Data) nodes, enabling content-linked data structures.
+
+Peer-to-peer data syncing in DefraDB is scoped to explicitly configured replicator peers and is governed by access control policies (ACP). DefraDB nodes do not share data with the broader IPFS network.
 
 ## Suggested Reading
 

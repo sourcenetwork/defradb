@@ -8,7 +8,7 @@ Interact with the node access control system of a DefraDB node
 Note:
 - Clean state means, if the access control was never configured, or the entire state was purged.
 - The check the node acp status use the 'client acp node status' command
-- To start node acp for the first time, use the start command with '--acp-enable true'.
+- To start node acp for the first time, use the start command with '--node-acp-enable'.
 - Specifying an identity is a MUST, when starting first time (from a clean state), this identity
 will become the node owner identity.
 - To temporarily disable node acp, use the 'client acp node disable' command.

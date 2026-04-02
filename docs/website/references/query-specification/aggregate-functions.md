@@ -5,19 +5,16 @@ sidebar_position: 115
 
 # Aggregate Functions
 
-The most common use case of grouping queries is to compute some aggregate function over the sub-group. Like the special `GROUP` field, aggregate functions are defined and returned using special fields. These fields prefix the target field name with the name of the aggregate function you wish to apply. If we had the field `rating`, we could access the average value of all sub-group ratings by including the special field `AVG { rating }` in our return object. The available aggregate functions and their associated scalars can be found above in `Table 3`.
+The most common use case of grouping queries is to compute some aggregate function over the sub-group. Like the special `GROUP` field, aggregate functions are defined and returned using special fields. When used within a `groupBy` query, these fields take a `GROUP` argument specifying the target field. For example, to access the average value of all sub-group ratings, include `AVG(GROUP: {field: rating})` in your return object. The available aggregate functions are: `COUNT`, `SUM`, `AVG`, `MAX`, and `MIN`.
 
-The special aggregate function fields' format is the function name and the field name as its sub-elements. Specifically: `_$function { $field }`, where `$function` is the list of functions from `Table 3`, and `$field` is the field name to which the function will be applied to. E.g., applying the `max` function to the `rating` field becomes `MAX { rating }`.
+The aggregate function syntax uses the function name with a named argument specifying the field. Within a `groupBy` query: `AVG(GROUP: {field: $field})`, where `$field` is the field name to which the function will be applied. For top-level (non-grouped) aggregates, the syntax is `AVG($Collection: {field: $field})`.
 
 Let us augment the previous grouped books by genre example and include an aggregate function on the sub-groups ratings.
 ```graphql
 {
     Books(filter: {author: {name: {_like: "John%"}}}, groupBy: [genre]) {
         genre
-        AVG {
-            rating
-            points
-        }
+        AVG(GROUP: {field: rating})
         GROUP {
             title
             rating
@@ -33,12 +30,12 @@ We can also use simpler queries, without any `groupBy` clause, and still use agg
 Let's simply count all the objects returned by a given filter.
 ```graphql
 {
-    COUNT(Books: {filter: {rating: {_gt: 3.5}}})
+    COUNT(Books: {})
 }
 ```
-This returns an array of objects that includes the respective books title, along with the repeated `COUNT` field, which is the total number of objects that match the filter.
+This returns the total number of Book objects. When using `COUNT` at the top level, it applies to the entire collection.
 
-> Note, the special aggregate field `COUNT` has no subfields selected, so instead of applying the `count` function to a field, it applies to the entire object. This is only possible with the `count` function; all the other aggregate functions must specify their target field using the correct field name selection.
+> Note, the special aggregate field `COUNT` does not require a target field, so instead of applying the `count` function to a field, it applies to the entire object. This is only possible with the `count` function; all the other aggregate functions must specify their target field using the `field` argument.
 
 We can further simplify the above count query by including only the `COUNT` field. If we ***only*** return the `COUNT` field, then a single object is returned, instead of an array of objects.
 
