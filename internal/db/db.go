@@ -36,6 +36,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -58,7 +60,7 @@ const (
 	// commandBufferSize is the size of the channel buffer used to handle events.
 	commandBufferSize = 100_000
 	// eventBufferSize is the size of the channel buffer used to subscribe to events.
-	eventBufferSize = 100
+	eventBufferSize = 100_000
 )
 
 // DB is the main struct for DefraDB's storage layer.
@@ -194,7 +196,7 @@ func newDB(
 	db.lensNode = node
 
 	if cfg.P2P.HasValue() {
-		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db), cfg.ReplicationFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -227,6 +229,80 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
+}
+
+// NewBlindWriteTxn creates a new transaction with a blind-write blockstore.
+func (db *DB) NewBlindWriteTxn() (client.Txn, error) {
+	txnId := db.previousTxnID.Add(1)
+	txn := datastore.NewBlindWriteTxnFrom(db.rootstore, db.lockSet, txnId, false, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(txn, db), nil
+}
+
+// InitContext returns a new context with all caches initialized and linked to the given transaction.
+func (db *DB) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return InitContext(ctx, txn)
+}
+
+// prePopulateCaches ensures all collection/field caches are fully populated.
+func (db *DB) prePopulateCaches(targetCtx context.Context) error {
+	cache := description.CollectionCacheFromContext(targetCtx)
+	if cache.IsFullyPopulated {
+		return nil
+	}
+
+	var readCtx context.Context
+	var discardFn func()
+
+	if existingTxn, ok := datastore.CtxTryGetClientTxn(targetCtx); ok {
+		readCtx = context.Background()
+		readCtx = description.InitCollectionCache(readCtx)
+		readCtx = id.InitCollectionShortIDCache(readCtx)
+		readCtx = id.InitFieldShortIDCache(readCtx)
+		readCtx = datastore.CtxSetFromClientTxn(readCtx, existingTxn)
+		discardFn = func() {}
+	} else {
+		readTxn, err := db.NewTxn(true)
+		if err != nil {
+			return err
+		}
+		discardFn = readTxn.Discard
+		readCtx = context.Background()
+		readCtx = description.InitCollectionCache(readCtx)
+		readCtx = id.InitCollectionShortIDCache(readCtx)
+		readCtx = id.InitFieldShortIDCache(readCtx)
+		readCtx = datastore.CtxSetFromClientTxn(readCtx, readTxn)
+	}
+	defer discardFn()
+
+	cols, err := description.GetCollections(readCtx)
+	if err != nil {
+		return err
+	}
+
+	description.PopulateCacheFromData(targetCtx, cols)
+
+	for _, col := range cols {
+		collectionShortID, err := id.GetShortCollectionID(readCtx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		id.SetCollectionShortIDInCache(targetCtx, col.CollectionID, collectionShortID)
+
+		fieldIDs, err := id.GetAllFieldShortIDs(readCtx, collectionShortID)
+		if err != nil {
+			return err
+		}
+
+		id.SetFieldShortIDsInCache(targetCtx, collectionShortID, fieldIDs)
+	}
+
+	return nil
+}
+
+// WrapCorekvTxn wraps an existing corekv.Txn into a client.Txn.
+func (db *DB) WrapCorekvTxn(txn corekv.Txn) client.Txn {
+	return wrapCorekvTxn(txn, db)
 }
 
 // publishDocUpdateEvent publishes an update event for a document.
@@ -401,8 +477,11 @@ func (db *DB) Close() {
 		}
 	}
 
-	if db.p2p != nil && db.p2p.SECoordinator() != nil {
-		db.p2p.SECoordinator().Close()
+	if db.p2p != nil {
+		if db.p2p.SECoordinator() != nil {
+			db.p2p.SECoordinator().Close()
+		}
+		db.p2p.Close()
 	}
 
 	err := db.rootstore.Close()

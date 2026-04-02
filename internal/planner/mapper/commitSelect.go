@@ -22,6 +22,9 @@ type CommitSelect struct {
 	// The maximum depth to yield results for.
 	Depth immutable.Option[uint64]
 
+	// DocID is the optional document ID to filter commits by.
+	DocID immutable.Option[string]
+
 	// The CollectionVersionID at the time of commit.
 	CollectionVersionID immutable.Option[string]
 }
@@ -33,5 +36,7 @@ func (s *CommitSelect) CloneTo(index int) Requestable {
 func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
 		Select: *s.Select.cloneTo(index),
+		Depth:  s.Depth,
+		DocID:  s.DocID,
 	}
 }

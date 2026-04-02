@@ -25,6 +25,8 @@ var (
 	ErrTimeoutCollectionSync       = errors.New("timeout while syncing branchable collection")
 	ErrCollectionNotBranchable     = errors.New("collection is not branchable")
 	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
+	ErrEmptyCARRoots               = errors.New("car file has no roots")
+	ErrCARRootBlockNotFound        = errors.New("car root block not found in archive")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

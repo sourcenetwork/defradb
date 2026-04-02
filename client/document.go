@@ -585,6 +585,12 @@ func getNillableArray[T any](
 		}
 
 		array = arr
+	case []T:
+		arr := make([]immutable.Option[T], len(val))
+		for i, item := range val {
+			arr[i] = immutable.Some(item)
+		}
+		array = arr
 	case []immutable.Option[T]:
 		array = val
 	}

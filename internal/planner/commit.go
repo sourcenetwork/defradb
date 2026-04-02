@@ -97,17 +97,14 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if !n.prefix.HasValue() {
-		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-			// todo - for now we just take the first docID and ignore the rest, an error
-			// should be thrown in the parser anyway if the user provides more than one.
-			// https://github.com/sourcenetwork/defradb/issues/4302
-			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocIDs.Value()[0])
+		if n.commitSelect.DocID.HasValue() {
+			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
 
 	// only need the head fetcher for non cid specific queries
-	if !n.commitSelect.Cids.HasValue() && len(n.queuedCids) == 0 {
+	if !n.commitSelect.Cid.HasValue() && len(n.queuedCids) == 0 {
 		n.fetcherStarted = true
 		return n.fetcher.Start(n.planner.ctx, n.prefix)
 	}
@@ -144,7 +141,7 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *dagScanNode) Close() error {
-	if !n.commitSelect.Cids.HasValue() {
+	if !n.commitSelect.Cid.HasValue() {
 		return n.fetcher.Close()
 	}
 	return nil
@@ -156,8 +153,8 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the cid attribute to the explanation if it exists.
-	if n.commitSelect.Cids.HasValue() {
-		simpleExplainMap["cid"] = n.commitSelect.Cids.Value()
+	if n.commitSelect.Cid.HasValue() {
+		simpleExplainMap["cid"] = n.commitSelect.Cid.Value()
 	} else {
 		simpleExplainMap["cid"] = nil
 	}
@@ -201,18 +198,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else if n.commitSelect.Cids.HasValue() && len(n.visitedNodes) == 0 {
-		if len(n.commitSelect.Cids.Value()) == 0 {
-			return false, nil
-		}
-
-		cid, err := cid.Parse(n.commitSelect.Cids.Value()[0])
+	} else if n.commitSelect.Cid.HasValue() && len(n.visitedNodes) == 0 {
+		cid, err := cid.Parse(n.commitSelect.Cid.Value())
 		if err != nil {
 			return false, err
 		}
 
 		currentCid = &cid
-	} else if !n.commitSelect.Cids.HasValue() && n.fetcherStarted {
+	} else if !n.commitSelect.Cid.HasValue() && n.fetcherStarted {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -255,15 +248,11 @@ func (n *dagScanNode) Next() (bool, error) {
 	// (cid + undefined depth + docId) then we need to make sure the
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid
-	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
-	if n.commitSelect.Cids.HasValue() &&
+	currentDocID := n.commitSelect.FirstOfName(currentValue, request.DocIDArgName)
+	if n.commitSelect.Cid.HasValue() &&
 		len(n.visitedNodes) == 0 &&
-		n.commitSelect.DocIDs.HasValue() &&
-		len(n.commitSelect.DocIDs.Value()) > 0 &&
-		// todo - for now we just take the first docID and ignore the rest, an error
-		// should be thrown in the parser anyway if the user provides more than one.
-		// https://github.com/sourcenetwork/defradb/issues/4302
-		currentDocID != n.commitSelect.DocIDs.Value()[0] {
+		n.commitSelect.DocID.HasValue() &&
+		currentDocID != n.commitSelect.DocID.Value() {
 		return false, ErrIncorrectOrMissingCID
 	}
 
@@ -282,7 +271,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// doc ID, max depth
 	// just doc ID + CID, 0 depth
 	// doc ID + CID + depth, use depth
-	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cids.HasValue()) ||
+	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cid.HasValue()) ||
 		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
@@ -335,15 +324,15 @@ All the dagScanNode endpoints use similar structures
 */
 
 func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
-	commit := n.commitSelect.DocumentMapping.NewDoc()
+	commit := n.commitSelect.NewDoc()
 	link, err := block.GenerateLink()
 	if err != nil {
 		return core.Doc{}, err
 	}
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
+	n.commitSelect.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
 	collectionVersionId := block.Delta.GetCollectionVersionID()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
+	n.commitSelect.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
@@ -369,13 +358,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
 	if d != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
+		n.commitSelect.SetFirstOfName(&commit, request.DeltaFieldName, d)
 	} else {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
+		n.commitSelect.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
 
 	if block.Signature != nil &&
-		n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName] != nil {
+		n.commitSelect.IndexesByName[request.SignatureFieldName] != nil {
 		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
 		if err != nil {
 			return core.Doc{}, err
@@ -383,12 +372,12 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	prio := block.Delta.GetPriority()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
+	n.commitSelect.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
+	n.commitSelect.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
 	docID := block.Delta.GetDocID()
 	if docID != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(
+		n.commitSelect.SetFirstOfName(
 			&commit,
 			request.DocIDArgName,
 			string(docID),
@@ -430,7 +419,7 @@ func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, co
 		dagScanNodes = n.headsScanNodes
 	}
 
-	mappingIndexes := n.commitSelect.DocumentMapping.IndexesByName[linksField]
+	mappingIndexes := n.commitSelect.IndexesByName[linksField]
 	for i, linksIndex := range mappingIndexes {
 		// reset linkScanNode
 		dagScanNodes[i].reset()
@@ -479,8 +468,8 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	if err != nil {
 		return err
 	}
-	sigFieldIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
-	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndexes[0]]
+	sigFieldIndexes := n.commitSelect.IndexesByName[request.SignatureFieldName]
+	sigMapping := n.commitSelect.ChildMappings[sigFieldIndexes[0]]
 
 	sigDoc := sigMapping.NewDoc()
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
@@ -488,7 +477,7 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, string(sigBlock.Header.Identity))
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
 
-	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
+	n.commitSelect.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
 
 	return nil
 }

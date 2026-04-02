@@ -54,6 +54,10 @@ const (
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 )
 
+var (
+	errNotFound string = corekv.ErrNotFound.Error()
+)
+
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
@@ -88,6 +92,7 @@ var (
 	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
+	ErrNotFound                              = errors.New(errNotFound)
 	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
 	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
 	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
@@ -267,6 +272,10 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
 	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
+}
+
+func NewErrNotFound(kv errors.KV) error {
+	return errors.New(errNotFound, kv)
 }
 
 func NewErrOperationRequiresDeveloperMode(operationName string) error {

@@ -1131,6 +1131,22 @@ func (_c *Collection_SaveDocument_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// SaveManyDocuments provides a mock function.
+func (_mock *Collection) SaveManyDocuments(ctx context.Context, docs []*client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error {
+	ret := _mock.Called(ctx, docs, opts)
+	return ret.Error(0)
+}
+
+// PurgeByDocIDs provides a mock function.
+func (_mock *Collection) PurgeByDocIDs(ctx context.Context, docIDs []string, pruneHistory bool) (*client.PurgeResult, error) {
+	ret := _mock.Called(ctx, docIDs, pruneHistory)
+	var r0 *client.PurgeResult
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*client.PurgeResult)
+	}
+	return r0, ret.Error(1)
+}
+
 // Truncate provides a mock function for the type Collection
 func (_mock *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
 	var tmpRet mock.Arguments

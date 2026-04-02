@@ -43,7 +43,7 @@ var (
 )
 
 func init() {
-	BlockSchema, BlockSchemaPrototype = mustSetSchema(
+	BlockSchema, BlockSchemaPrototype, _ = mustSetSchema(
 		"Block",
 		&Block{},
 		&DAGLink{},
@@ -57,12 +57,12 @@ func init() {
 		&crdt.FieldDefinitionDelta{},
 	)
 
-	EncryptionSchema, EncryptionSchemaPrototype = mustSetSchema(
+	EncryptionSchema, EncryptionSchemaPrototype, _ = mustSetSchema(
 		"Encryption",
 		&Encryption{},
 	)
 
-	SignatureSchema, SignatureSchemaPrototype = mustSetSchema(
+	SignatureSchema, SignatureSchemaPrototype, _ = mustSetSchema(
 		"Signature",
 		&Signature{},
 		&SignatureHeader{},
@@ -74,7 +74,9 @@ type schemaDefinition interface {
 	IPLDSchemaBytes() []byte
 }
 
-func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype) {
+func mustSetSchema(
+	schemaName string, schemas ...schemaDefinition,
+) (schema.Type, ipld.NodePrototype, schema.TypedPrototype) {
 	schemaBytes := make([][]byte, 0, len(schemas))
 	for _, s := range schemas {
 		schemaBytes = append(schemaBytes, s.IPLDSchemaBytes())
@@ -91,7 +93,7 @@ func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type,
 	// If [Block] and [schemaType] do not match, this will panic.
 	proto := bindnode.Prototype(schemas[0], schemaType)
 
-	return schemaType, proto.Representation()
+	return schemaType, proto.Representation(), proto
 }
 
 // DAGLink represents a link to another object in a DAG.
@@ -321,6 +323,11 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 		MhType:   uint64(multicodec.Sha2_256),
 		MhLength: 32,
 	}}
+}
+
+func GetCIDFromBytes(rawBytes []byte) (cid.Cid, error) {
+	prefix := GetLinkPrototype().Prefix
+	return prefix.Sum(rawBytes)
 }
 
 // marshalNode encodes a ipld node using CBOR encoding.

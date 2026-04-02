@@ -76,7 +76,8 @@ func NewChannelBus(commandBufferSize int, eventBufferSize int) Bus {
 	return &bus
 }
 
-// Publish broadcasts the given message to the bus subscribers. Non-blocking.
+// Publish broadcasts the given message to the bus subscribers.
+// This will block if the command buffer is full.
 func (b *channelBus) Publish(msg Message) {
 	b.closeMutex.RLock()
 	defer b.closeMutex.RUnlock()

@@ -45,6 +45,12 @@ func (db *DB) ExecRequest(
 	}
 	defer txn.Discard()
 
+	if err := db.prePopulateCaches(ctx); err != nil {
+		res := &client.RequestResult{}
+		res.GQL.Errors = append(res.GQL.Errors, err)
+		return res
+	}
+
 	gqlOpts := &client.GQLOptions{}
 	if opt.OperationName.HasValue() {
 		gqlOpts.OperationName = opt.OperationName.Value()

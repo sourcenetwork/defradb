@@ -287,25 +287,17 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
 		// query, which means we need to propagate the values to the underlying VersionedFetcher
-		if n.selectReq.Cids.HasValue() {
-			prefixes := make([]keys.Walkable, len(n.selectReq.Cids.Value()))
-
-			for i, sCid := range n.selectReq.Cids.Value() {
-				c, err := cid.Decode(sCid)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				prefixes[i] = keys.HeadstoreDocKey{
-					Cid: c,
-				}
+		if n.selectReq.Cid.HasValue() {
+			c, err := cid.Decode(n.selectReq.Cid.Value())
+			if err != nil {
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
 			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
 			// as a prefix. And with this design limitation this is
 			// currently the least bad way of passing the cid in to the fetcher.
-			origScan.Prefixes(prefixes)
+			origScan.Prefixes([]keys.Walkable{keys.HeadstoreDocKey{Cid: c}})
 		} else if n.selectReq.DocIDs.HasValue() {
 			shortID, err := id.GetShortCollectionID(
 				n.planner.ctx,
@@ -344,7 +336,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// if we can not use index for filtering, try to use index for ordering
 			origScan.index = findIndexByOrderingField(origScan)
 		}
-		origScan.initFetcher(n.selectReq.Cids)
+		origScan.initFetcher(n.selectReq.Cid)
 	}
 
 	return aggregates, similarity, nil
@@ -466,8 +458,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 					Select: *f,
 				}
 
-				if selectReq.Cids.HasValue() {
-					commitSlct.Cids = selectReq.Cids
+				if selectReq.Cid.HasValue() {
+					commitSlct.Cid = selectReq.Cid
 
 					// We want all the commits, so set the maximum depth
 					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
@@ -485,7 +477,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
+			} else if n.collection == nil || !n.collection.Version().Query.HasValue() {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)

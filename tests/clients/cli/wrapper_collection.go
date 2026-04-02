@@ -14,6 +14,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -204,6 +205,22 @@ func (c *Collection) DeleteEncryptedIndex(
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
+}
+
+func (c *Collection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	return errors.New("saveManyDocuments not yet supported")
+}
+
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []string,
+	pruneHistory bool,
+) (*client.PurgeResult, error) {
+	return nil, errors.New("purgeByDocIDs not yet supported")
 }
 
 func (c *Collection) Truncate(

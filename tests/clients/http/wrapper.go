@@ -13,6 +13,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"net/http/httptest"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -369,6 +370,14 @@ func (w *Wrapper) ExecRequest(
 	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return w.client.ExecRequest(ctx, query, opts...)
+}
+
+func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
+	return nil, errors.New("newBlindWriteTxn not yet supported")
+}
+
+func (w *Wrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return ctx
 }
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {

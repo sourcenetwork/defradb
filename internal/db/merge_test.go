@@ -146,9 +146,10 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
-// This test is not something we can reproduce in with integration tests.
-// Until we introduce partial dag syncs to integration tests, this should not be removed.
-func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
+// This test verifies that when a merge references a block CID that doesn't exist
+// (e.g., due to an incomplete P2P sync or document purge), the merge is skipped
+// gracefully and the existing document data is preserved.
+func TestMerge_DualBranchWithOneIncomplete_SkipsGracefully(t *testing.T) {
 	ctx := context.Background()
 
 	db, err := newBadgerDB(ctx)
@@ -191,14 +192,15 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	compInfo3, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfoUnkown)
 	require.NoError(t, err)
 
+	// Merge with missing parent block should be skipped gracefully (no error)
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo3.link.Cid,
 		CollectionID: col.CollectionID(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreihs5kx5u6k6mc3m6st3ytam4e3mmk3sd6p4jn3hh5o63wpf4holoq")
+	require.NoError(t, err)
 
-	// Verify the document was added with the expected values
+	// Verify the document still has the expected values from the successful merge
 	doc, err := col.GetDocument(ctx, docID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
@@ -466,8 +468,8 @@ func TestMergeQueue(t *testing.T) {
 
 	testDocID := "test"
 
-	q.add(testDocID)
-	go q.add(testDocID)
+	require.NoError(t, q.add(context.Background(), testDocID))
+	go q.add(context.Background(), testDocID)
 	// give time for the goroutine to block
 	time.Sleep(10 * time.Millisecond)
 	require.Len(t, q.keys, 1)
@@ -936,4 +938,62 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 	}
 
 	require.Equal(t, expectedDocMap, docMap)
+}
+
+// TestMerge_AfterPurge_SkipsGracefully verifies that merging a delta whose
+// referenced blocks were removed by PurgeByDocIDs does not return an error.
+// This simulates the production scenario where the pruner deletes old documents
+// and P2P peers later send deltas referencing the purged blocks.
+func TestMerge_AfterPurge_SkipsGracefully(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	initialDocState := map[string]any{
+		"name": "John",
+	}
+	d, docID := newDagBuilder(ctx, col, initialDocState)
+
+	// Create and merge the initial document
+	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
+	require.NoError(t, err)
+
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
+		DocID:        docID.String(),
+		Cid:          compInfo.link.Cid,
+		CollectionID: col.CollectionID(),
+	})
+	require.NoError(t, err)
+
+	// Verify the document exists
+	doc, err := col.GetDocument(ctx, docID)
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+
+	// Purge the document (simulates pruner behavior)
+	result, err := col.PurgeByDocIDs(ctx, []string{docID.String()}, true)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), result.Count)
+
+	// Create a new version that references the purged block as parent
+	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
+	require.NoError(t, err)
+
+	// Merge should succeed (skip gracefully) instead of returning "key not found"
+	err = db.executeMerge(ctx, col.(*collection), event.Merge{
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.CollectionID(),
+	})
+	require.NoError(t, err)
 }

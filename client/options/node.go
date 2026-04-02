@@ -145,6 +145,18 @@ type NodeStoreOptions struct {
 	BadgerEncryptionKey []byte
 	// BadgerInMemory specifies whether to run Badger in-memory.
 	BadgerInMemory bool
+	// BadgerBlockCacheSize is the block cache size for Badger.
+	BadgerBlockCacheSize int64
+	// BadgerMemTableSize is the memtable size for Badger.
+	BadgerMemTableSize int64
+	// BadgerIndexCacheSize is the index cache size for Badger.
+	BadgerIndexCacheSize int64
+	// BadgerNumCompactors is the number of compaction workers for Badger.
+	BadgerNumCompactors int
+	// BadgerNumLevelZeroTables is the number of level zero tables before compaction starts.
+	BadgerNumLevelZeroTables int
+	// BadgerNumLevelZeroTablesStall is the number of level zero tables that triggers write stalls.
+	BadgerNumLevelZeroTablesStall int
 }
 
 // NodeDocumentACPOptions contains document ACP configuration values.

@@ -1007,6 +1007,14 @@ func (w *CWrapper) ExecRequest(
 	return retval
 }
 
+func (w *CWrapper) NewBlindWriteTxn() (client.Txn, error) {
+	return nil, errors.New("newBlindWriteTxn not yet supported")
+}
+
+func (w *CWrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return ctx
+}
+
 func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	var concurrent C.int = 0
 	var cReadOnly C.int = 0

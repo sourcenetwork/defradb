@@ -26,6 +26,8 @@ type DBOptions struct {
 	DocumentACP immutable.Option[dac.DocumentACP]
 	// P2P is the optional P2P host for networking.
 	P2P immutable.Option[client.Host]
+	// ReplicationFilter is an optional filter that rejects incoming P2P documents before storage.
+	ReplicationFilter client.ReplicationFilter
 }
 
 // DBOptionsBuilder is a builder for DBOptions.
@@ -47,6 +49,12 @@ func (b *DBOptionsBuilder) SetDocumentACP(d dac.DocumentACP) *DBOptionsBuilder {
 // SetP2P sets the P2P host.
 func (b *DBOptionsBuilder) SetP2P(host client.Host) *DBOptionsBuilder {
 	b.Append(func(o *DBOptions) { o.P2P = immutable.Some[client.Host](host) })
+	return b
+}
+
+// SetReplicationFilter sets the replication filter.
+func (b *DBOptionsBuilder) SetReplicationFilter(f client.ReplicationFilter) *DBOptionsBuilder {
+	b.Append(func(o *DBOptions) { o.ReplicationFilter = f })
 	return b
 }
 

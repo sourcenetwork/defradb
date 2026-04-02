@@ -46,12 +46,29 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 
+	if cache := getHeadsCache(ctx); cache != nil {
+		cache.updateOnWrite(string(hh.namespace.Bytes()), c, height)
+	}
+
 	return hh.store.Set(ctx, hh.key(c).Bytes(), buf[0:n])
 }
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 	return hh.store.Has(ctx, hh.key(c).Bytes())
+}
+
+// BatchIsHead checks multiple CIDs for head status in a single operation.
+func (hh *heads) BatchIsHead(ctx context.Context, cids []cid.Cid) (map[string]bool, error) {
+	result := make(map[string]bool, len(cids))
+	for _, c := range cids {
+		isHead, err := hh.store.Has(ctx, hh.key(c).Bytes())
+		if err != nil {
+			return nil, err
+		}
+		result[c.String()] = isHead
+	}
+	return result, nil
 }
 
 // Replace replaces a head with a new CID.
@@ -63,22 +80,40 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 		corelog.Any("CID", new),
 		corelog.Uint64("Height", height))
 
+	if cache := getHeadsCache(ctx); cache != nil {
+		cache.updateOnReplace(string(hh.namespace.Bytes()), old, new, height)
+	}
+
 	err := hh.store.Delete(ctx, hh.key(old).Bytes())
 	if err != nil {
 		return err
 	}
 
-	err = hh.Write(ctx, new, height)
-	if err != nil {
-		return err
-	}
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutUvarint(buf, height)
 
-	return nil
+	return hh.store.Set(ctx, hh.key(new).Bytes(), buf[0:n])
 }
 
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
+	namespaceKey := string(hh.namespace.Bytes())
+
+	if cache := getHeadsCache(ctx); cache != nil {
+		if entry := cache.get(namespaceKey); entry != nil {
+			return entry.heads, entry.maxHeight, nil
+		}
+	}
+
+	// No heads when creating a document
+	if IsNewDocCreateMode(ctx) {
+		if cache := getHeadsCache(ctx); cache != nil {
+			cache.set(namespaceKey, nil, 0)
+		}
+		return nil, 0, nil
+	}
+
 	iter, err := hh.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: hh.namespace.Bytes(),
 	})
@@ -122,5 +157,13 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		return bytes.Compare(ci, cj) < 0
 	})
 
-	return heads, maxHeight, iter.Close()
+	if err := iter.Close(); err != nil {
+		return nil, 0, err
+	}
+
+	if cache := getHeadsCache(ctx); cache != nil {
+		cache.set(namespaceKey, heads, maxHeight)
+	}
+
+	return heads, maxHeight, nil
 }
