@@ -216,7 +216,7 @@ Check the response for errors. If the schema addition fails, report the error an
 
 **Step 2: Create documents for each collection.**
 
-For each collection name in the `documents` object, iterate over each document and POST a `create_<CollectionName>` mutation:
+For each collection name in the `documents` object, iterate over each document and POST an `add_<CollectionName>` mutation:
 
 ```bash
 for COLLECTION in $(jq -r '.documents | keys[]' "$DEFRA_FIXTURES"); do
@@ -224,7 +224,7 @@ for COLLECTION in $(jq -r '.documents | keys[]' "$DEFRA_FIXTURES"); do
   LOADED=0
   for i in $(seq 0 $(($COUNT - 1))); do
     DOC=$(jq -c ".documents[\"$COLLECTION\"][$i]" "$DEFRA_FIXTURES")
-    MUTATION="mutation { create_${COLLECTION}(input: ${DOC}) { _docID } }"
+    MUTATION="mutation { add_${COLLECTION}(input: ${DOC}) { _docID } }"
     RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
       -H "Content-Type: application/json" \
       -d "{\"query\": \"$MUTATION\"}")
