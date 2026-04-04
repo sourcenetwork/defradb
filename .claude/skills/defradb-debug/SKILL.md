@@ -52,8 +52,11 @@ The DefraDB Makefile embeds `git rev-parse HEAD` into the binary via ldflags (`v
 
 Execute the following to determine if a rebuild is needed:
 
+Determine the project root dynamically using `git rev-parse --show-toplevel`:
+
 ```bash
-cd /home/tacos/Workspace/go/src/github.com/sourcenetwork/defradb.worktrees/jsimnz-feat-db-debug-skill
+DEFRA_ROOT=$(git rev-parse --show-toplevel)
+cd "$DEFRA_ROOT"
 
 CURRENT_HEAD=$(git rev-parse HEAD)
 
@@ -101,21 +104,23 @@ DEFRA_URL="http://127.0.0.1:9281"
 - `--no-p2p` disables peer-to-peer networking (out of scope for v1)
 - `--development` enables dev mode (allows purge and other dev operations)
 - `--rootdir` points to an isolated temp directory for this session
-- `--url="127.0.0.1:9281"` uses port 9281 to avoid conflicting with any user-running instance on the default port 9181
+- `--url="127.0.0.1:9281"` uses port 9281 to avoid conflicting with any user-running instance on the default port 9181. If port 9281 is unavailable (another debug session is running), pick a different unused port in the 9200-9299 range.
 
 ### Step 2d: PID Tracking and Cleanup
 
-Immediately after starting the instance, persist session state for cross-Bash-call access:
+Immediately after starting the instance, persist session state for cross-Bash-call access. The session file is named by port to avoid collisions between concurrent debug sessions:
 
 ```bash
+DEFRA_PORT=9281  # or whichever port was chosen
 echo "$DEFRA_PID" > "$DEFRA_TMPDIR/defradb.pid"
-echo "$DEFRA_TMPDIR" > /tmp/.defradb-debug-session
+echo "$DEFRA_TMPDIR" > "/tmp/.defradb-debug-session-${DEFRA_PORT}"
 ```
 
-Since each Bash tool call runs in a fresh shell, the PID and tmpdir variables do not persist. To access them in subsequent Bash calls, read from these files:
+Since each Bash tool call runs in a fresh shell, the PID and tmpdir variables do not persist. To access them in subsequent Bash calls, read from the port-specific session file:
 
 ```bash
-DEFRA_TMPDIR=$(cat /tmp/.defradb-debug-session 2>/dev/null)
+DEFRA_PORT=9281  # use the same port chosen during startup
+DEFRA_TMPDIR=$(cat "/tmp/.defradb-debug-session-${DEFRA_PORT}" 2>/dev/null)
 DEFRA_PID=$(cat "$DEFRA_TMPDIR/defradb.pid" 2>/dev/null)
 ```
 
@@ -128,17 +133,17 @@ trap 'kill $DEFRA_PID 2>/dev/null; rm -rf "$DEFRA_TMPDIR"' EXIT
 When the debugging session is complete (or on any error that prevents continuation), execute cleanup explicitly:
 
 ```bash
-DEFRA_TMPDIR=$(cat /tmp/.defradb-debug-session 2>/dev/null)
+DEFRA_PORT=9281  # use the same port chosen during startup
+DEFRA_TMPDIR=$(cat "/tmp/.defradb-debug-session-${DEFRA_PORT}" 2>/dev/null)
 if [ -n "$DEFRA_TMPDIR" ]; then
   DEFRA_PID=$(cat "$DEFRA_TMPDIR/defradb.pid" 2>/dev/null)
   if [ -n "$DEFRA_PID" ]; then
     kill "$DEFRA_PID" 2>/dev/null
-    # Wait briefly for clean shutdown
     sleep 1
     kill -9 "$DEFRA_PID" 2>/dev/null
   fi
   rm -rf "$DEFRA_TMPDIR"
-  rm -f /tmp/.defradb-debug-session
+  rm -f "/tmp/.defradb-debug-session-${DEFRA_PORT}"
 fi
 ```
 
@@ -158,7 +163,7 @@ for i in $(seq 1 $MAX_RETRIES); do
   fi
   if [ "$i" -eq "$MAX_RETRIES" ]; then
     echo "DefraDB failed to start within ${MAX_RETRIES}s."
-    DEFRA_TMPDIR=$(cat /tmp/.defradb-debug-session 2>/dev/null)
+    DEFRA_TMPDIR=$(cat "/tmp/.defradb-debug-session-${DEFRA_PORT}" 2>/dev/null)
     if [ -n "$DEFRA_TMPDIR" ]; then
       echo "Last 20 lines of log:"
       tail -20 "$DEFRA_TMPDIR/defradb.log"
@@ -216,26 +221,23 @@ Check the response for errors. If the schema addition fails, report the error an
 
 **Step 2: Create documents for each collection.**
 
-For each collection name in the `documents` object, iterate over each document and POST an `add_<CollectionName>` mutation:
+The `add_<CollectionName>` mutation accepts an array of documents in its `input` argument, so all documents for a collection can be loaded in a single request:
 
 ```bash
 for COLLECTION in $(jq -r '.documents | keys[]' "$DEFRA_FIXTURES"); do
-  COUNT=$(jq -r ".documents[\"$COLLECTION\"] | length" "$DEFRA_FIXTURES")
-  LOADED=0
-  for i in $(seq 0 $(($COUNT - 1))); do
-    DOC=$(jq -c ".documents[\"$COLLECTION\"][$i]" "$DEFRA_FIXTURES")
-    MUTATION="mutation { add_${COLLECTION}(input: ${DOC}) { _docID } }"
-    RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
-      -H "Content-Type: application/json" \
-      -d "{\"query\": \"$MUTATION\"}")
-    ERRORS=$(echo "$RESPONSE" | jq -r '.errors // empty')
-    if [ -n "$ERRORS" ] && [ "$ERRORS" != "null" ]; then
-      echo "Error creating document in $COLLECTION: $ERRORS"
-    else
-      LOADED=$((LOADED + 1))
-    fi
-  done
-  echo "Loaded $LOADED/$COUNT documents into $COLLECTION."
+  DOCS=$(jq -c ".documents[\"$COLLECTION\"]" "$DEFRA_FIXTURES")
+  COUNT=$(echo "$DOCS" | jq 'length')
+  MUTATION="mutation { add_${COLLECTION}(input: ${DOCS}) { _docID } }"
+  RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
+    -H "Content-Type: application/json" \
+    -d "{\"query\": $(echo "$MUTATION" | jq -Rs .)}")
+  ERRORS=$(echo "$RESPONSE" | jq -r '.errors // empty')
+  if [ -n "$ERRORS" ] && [ "$ERRORS" != "null" ]; then
+    echo "Error loading documents into $COLLECTION: $ERRORS"
+  else
+    LOADED=$(echo "$RESPONSE" | jq '.data.add_'"$COLLECTION"' | length')
+    echo "Loaded $LOADED/$COUNT documents into $COLLECTION."
+  fi
 done
 ```
 
@@ -297,7 +299,8 @@ If `DEFRA_REMOTE` is set, skip shutdown entirely. Report: "Remote instance at $D
 Otherwise, execute a clean shutdown:
 
 ```bash
-DEFRA_TMPDIR=$(cat /tmp/.defradb-debug-session 2>/dev/null)
+DEFRA_PORT=9281  # use the same port chosen during startup
+DEFRA_TMPDIR=$(cat "/tmp/.defradb-debug-session-${DEFRA_PORT}" 2>/dev/null)
 if [ -n "$DEFRA_TMPDIR" ]; then
   DEFRA_PID=$(cat "$DEFRA_TMPDIR/defradb.pid" 2>/dev/null)
   if [ -n "$DEFRA_PID" ]; then
@@ -306,7 +309,7 @@ if [ -n "$DEFRA_TMPDIR" ]; then
     kill -9 "$DEFRA_PID" 2>/dev/null
   fi
   rm -rf "$DEFRA_TMPDIR"
-  rm -f /tmp/.defradb-debug-session
+  rm -f "/tmp/.defradb-debug-session-${DEFRA_PORT}"
   echo "DefraDB instance shut down cleanly."
 else
   echo "No session file found. Instance may have already been cleaned up."
