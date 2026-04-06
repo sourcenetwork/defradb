@@ -111,7 +111,6 @@ func (i *collectionStore) Write(ctx context.Context, value client.CollectionVers
 	i.forbiddenLock.Lock()
 	// If this transaction writes a collection version that was previously forbidden, we must unforbid it
 	// within the context of this transaction.
-	// todo - make sure the unforbidding is tested!
 	delete(i.forbiddenCollectionIDs, value.CollectionID)
 	i.forbiddenLock.Unlock()
 
