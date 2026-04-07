@@ -38,20 +38,6 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
-func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
-	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
-
-	tx, err := db.NewConcurrentTxn(readOnly)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	txs.Store(tx.ID(), tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
-}
-
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
@@ -157,7 +143,6 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnDiscard.Responses.Set("404", errorResponse)
 
 	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
-	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
 	router.AddRoute("/tx/{id}", http.MethodPost, txnCommit, h.Commit)
 	router.AddRoute("/tx/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }
