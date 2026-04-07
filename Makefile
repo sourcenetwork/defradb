@@ -464,6 +464,14 @@ fix:
 .PHONY build-c-shared-linux:
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	
+.PHONY build-c-static-windows:
+build-c-static-windows:
+	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
+	
+.PHONY build-c-shared-windows:
+build-c-shared-windows:
+	@tools/scripts/build-c-shared-windows.sh $(BUILD_FLAGS)
 
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/

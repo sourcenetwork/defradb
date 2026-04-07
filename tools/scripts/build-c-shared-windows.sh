@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+BUILD_FLAGS="${1:-}"
+echo "Building Windows static library..."
+
+mkdir -p build
+
+# The cbindings package must become the main package for this to work, but
+# we also need to change it back afterwards, whether this succeeds or fails
+search="package cbindings"
+replace="package main"
+search_escaped=$(echo "$search" | sed 's/[\/&]/\\&/g')
+replace_escaped=$(echo "$replace" | sed 's/[\/&]/\\&/g')
+
+trap '
+echo "Restoring package names..."
+find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
+  -exec sed -i "s/$replace_escaped/$search_escaped/g" {} +
+' EXIT
+
+echo "Temporarily replacing '$search' with '$replace'..."
+find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
+  -exec sed -i "s/$search_escaped/$replace_escaped/g" {} +
+
+# Remove the existing DLL and header artifacts
+rm -f build/libdefradb.dll build/libdefradb.dll.a build/libdefradb.h
+
+# Build the DLL file
+GOOS=windows GOARCH=amd64 CGO_ENABLED=1 \
+  CC="clang-10 -target x86_64-w64-mingw32 -fuse-ld=lld" \
+  go build -tags cshared $BUILD_FLAGS -buildmode=c-shared \
+  -ldflags="-compressdwarf=false" \
+  -o build/libdefradb.dll ./cbindings
+  
+# Build the DLL.a file
+echo "LIBRARY libdefradb.dll" > build/libdefradb.def
+echo "EXPORTS" >> build/libdefradb.def
+x86_64-w64-mingw32-nm build/libdefradb.dll | grep " T " | awk '{print $3}' | grep -E '^[A-Z]' >> build/libdefradb.def
+x86_64-w64-mingw32-dlltool -D libdefradb.dll -d build/libdefradb.def -l build/libdefradb.dll.a
+
+# Copy over the structs header the user will need
+cp ./cbindings/defra_structs.h ./build/
+
+echo "Build complete"
+echo "DLL: build/libdefradb.dll"
+echo "Import library: build/libdefradb.dll.a"
+echo "Headers: build/libdefradb.h, build/defra_structs.h"
