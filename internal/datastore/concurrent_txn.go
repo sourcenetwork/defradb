@@ -76,8 +76,3 @@ func (t *concurrentTxn) Set(ctx context.Context, key []byte, value []byte) error
 	defer t.mu.Unlock()
 	return t.Txn.Set(ctx, key, value)
 }
-
-// Sync executes the transaction.
-func (t *concurrentTxn) Sync(ctx context.Context) error {
-	return t.Commit()
-}
