@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
@@ -46,6 +47,7 @@ func NewConcurrentTxnFrom(
 		Multistore: multistore,
 		txn:        rootConcurentTxn,
 		id:         id,
+		ts:         time.Now(),
 	}
 }
 
