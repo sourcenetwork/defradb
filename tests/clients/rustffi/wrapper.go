@@ -2362,6 +2362,17 @@ func (c *CollectionWrapper) Version() client.CollectionVersion {
 	return c.version
 }
 
+func (c *CollectionWrapper) execRequest(
+	ctx context.Context,
+	request string,
+	opts ...options.Enumerable[options.ExecRequestOptions],
+) *client.RequestResult {
+	if c.txn != nil {
+		return c.txn.ExecRequest(ctx, request, opts...)
+	}
+	return c.wrapper.ExecRequest(ctx, request, opts...)
+}
+
 func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.AddDocumentOptions]) error {
 	// Use GraphQL mutation to create document
 	docJSON, err := doc.ToJSONPatch()
@@ -2386,7 +2397,7 @@ func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Documen
 		params += ", encryptFields: [" + strings.Join(quoted, ", ") + "]"
 	}
 	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
-	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -2436,7 +2447,7 @@ func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Docu
 	gqlInput := jsonToGraphQLInput(string(docJSON))
 	mutation := fmt.Sprintf(`mutation { update_%s(docID: "%s", input: %s) { _docID } }`,
 		c.version.Name, doc.ID().String(), gqlInput)
-	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -2494,6 +2505,9 @@ func (c *CollectionWrapper) getLatestCompositeCID(ctx context.Context, docID str
 		docID,
 	)
 	result := c.wrapper.ExecRequest(ctx, query)
+	if c.txn != nil {
+		result = c.txn.ExecRequest(ctx, query)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return gocid.Undef
 	}
@@ -2515,7 +2529,7 @@ func (c *CollectionWrapper) getLatestCompositeCID(ctx context.Context, docID str
 // isDocumentDeleted checks if a document is marked as deleted using showDeleted query.
 func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.DocID) bool {
 	query := fmt.Sprintf(`{ %s(docID: "%s", showDeleted: true) { _docID _deleted } }`, c.version.Name, docID.String())
-	result := c.wrapper.ExecRequest(ctx, query)
+	result := c.execRequest(ctx, query)
 	if len(result.GQL.Errors) > 0 {
 		return false
 	}
@@ -2534,7 +2548,7 @@ func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.
 func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	mutation := fmt.Sprintf(`mutation { delete_%s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
-	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return false, result.GQL.Errors[0]
 	}
@@ -2556,7 +2570,7 @@ func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.Doc
 func (c *CollectionWrapper) ExistsDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.ExistsDocumentOptions]) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	query := fmt.Sprintf(`{ %s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
-	result := c.wrapper.ExecRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return false, result.GQL.Errors[0]
 	}
@@ -2626,7 +2640,7 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 	gqlUpdater := jsonToGraphQLInput(updater)
 	mutation := fmt.Sprintf(`mutation { update_%s(filter: %s, input: %s) { _docID } }`,
 		c.version.Name, gqlFilter, gqlUpdater)
-	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -2820,7 +2834,7 @@ func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filte
 	// Convert JSON to GraphQL input format (unquoted keys)
 	gqlFilter := jsonToGraphQLInput(string(filterJSON))
 	mutation := fmt.Sprintf(`mutation { delete_%s(filter: %s) { _docID } }`, c.version.Name, gqlFilter)
-	result := c.wrapper.ExecRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -2856,7 +2870,7 @@ func (c *CollectionWrapper) GetDocument(ctx context.Context, docID client.DocID,
 	}
 
 	query := fmt.Sprintf(`{ %s(docID: "%s") { %s } }`, c.version.Name, docID.String(), strings.Join(fieldNames, " "))
-	result := c.wrapper.ExecRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
+	result := c.execRequest(ctx, query, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
