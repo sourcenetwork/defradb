@@ -1778,11 +1778,41 @@ func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID str
 // ============================================================================
 
 type TxnWrapper struct {
-	wrapper  *Wrapper
-	txn      *Transaction
-	id       uint64
-	readOnly bool
-	startTS  time.Time
+	wrapper                 *Wrapper
+	txn                     *Transaction
+	id                      uint64
+	readOnly                bool
+	startTS                 time.Time
+	stagedViews             []stagedViewAdd
+	stagedRefreshes         []stagedRefreshViews
+	stagedIndexOps          []stagedIndexOp
+	stagedEncryptedIndexOps []stagedEncryptedIndexOp
+}
+
+type stagedViewAdd struct {
+	identityDID string
+	gqlQuery    string
+	sdl         string
+	transform   string
+}
+
+type stagedRefreshViews struct {
+	identityDID string
+	optionsJSON string
+}
+
+type stagedIndexOp struct {
+	identityDID    string
+	collectionName string
+	create         *client.NewIndexRequest
+	deleteName     string
+}
+
+type stagedEncryptedIndexOp struct {
+	identityDID    string
+	collectionName string
+	createField    string
+	deleteField    string
 }
 
 var _ client.Txn = (*TxnWrapper)(nil)
@@ -1796,7 +1826,47 @@ func (t *TxnWrapper) StartTS() time.Time {
 }
 
 func (t *TxnWrapper) Commit() error {
-	return t.txn.Commit()
+	if err := t.txn.Commit(); err != nil {
+		return err
+	}
+
+	for _, op := range t.stagedViews {
+		if _, err := t.wrapper.node.AddView(op.identityDID, op.gqlQuery, op.sdl, op.transform); err != nil {
+			return err
+		}
+	}
+
+	for _, op := range t.stagedRefreshes {
+		if err := t.wrapper.node.RefreshViews(op.identityDID, op.optionsJSON); err != nil {
+			return err
+		}
+	}
+
+	for _, op := range t.stagedIndexOps {
+		if op.create != nil {
+			fields := make([]IndexField, len(op.create.Fields))
+			for i, f := range op.create.Fields {
+				fields[i] = IndexField{Name: f.Name, Descending: f.Descending}
+			}
+			if _, err := t.wrapper.node.CreateIndex(op.identityDID, op.collectionName, op.create.Name, fields, op.create.Unique); err != nil {
+				return err
+			}
+		} else if err := t.wrapper.node.DropIndex(op.identityDID, op.collectionName, op.deleteName); err != nil {
+			return err
+		}
+	}
+
+	for _, op := range t.stagedEncryptedIndexOps {
+		if op.createField != "" {
+			if _, err := t.wrapper.node.CreateEncryptedIndex(op.identityDID, op.collectionName, op.createField); err != nil {
+				return err
+			}
+		} else if err := t.wrapper.node.DeleteEncryptedIndex(op.identityDID, op.collectionName, op.deleteField); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (t *TxnWrapper) Discard() {
@@ -1882,7 +1952,14 @@ func (t *TxnWrapper) AddCollection(ctx context.Context, sdl string, opts ...opti
 }
 
 func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {
-	return t.wrapper.GetCollectionByName(ctx, name, opts...)
+	collections, err := t.GetCollections(ctx, options.GetCollections().SetCollectionName(string(name)))
+	if err != nil {
+		return nil, err
+	}
+	if len(collections) == 0 {
+		return nil, fmt.Errorf("collection not found: %s", name)
+	}
+	return collections[0], nil
 }
 
 func (t *TxnWrapper) GetCollections(
@@ -1923,6 +2000,7 @@ func (t *TxnWrapper) GetCollections(
 		collections[i] = &CollectionWrapper{
 			wrapper: t.wrapper,
 			version: v,
+			txn:     t,
 		}
 	}
 
@@ -2012,11 +2090,35 @@ func (t *TxnWrapper) AddView(
 	gqlQuery, sdl string,
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	return t.wrapper.AddView(ctx, gqlQuery, sdl, opts...)
+	opt := utils.NewOptions(opts...)
+	transformStr := ""
+	if opt.TransformCID.HasValue() {
+		transformStr = opt.TransformCID.Value()
+	}
+	t.stagedViews = append(t.stagedViews, stagedViewAdd{
+		identityDID: identityDIDFromOption(opt.GetIdentity()),
+		gqlQuery:    gqlQuery,
+		sdl:         sdl,
+		transform:   transformStr,
+	})
+	return []client.CollectionVersion{}, nil
 }
 
 func (t *TxnWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
-	return t.wrapper.RefreshViews(ctx, opts...)
+	opt := utils.NewOptions(opts...)
+	optsJSON := ""
+	if opt.CollectionName.HasValue() || opt.VersionID.HasValue() {
+		data, err := json.Marshal(opt)
+		if err != nil {
+			return fmt.Errorf("failed to marshal options: %w", err)
+		}
+		optsJSON = string(data)
+	}
+	t.stagedRefreshes = append(t.stagedRefreshes, stagedRefreshViews{
+		identityDID: identityDIDFromOption(opt.GetIdentity()),
+		optionsJSON: optsJSON,
+	})
+	return nil
 }
 
 func (t *TxnWrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
@@ -2239,6 +2341,7 @@ func (s *eventSubscription) Message() <-chan event.Message {
 type CollectionWrapper struct {
 	wrapper *Wrapper
 	version client.CollectionVersion
+	txn     *TxnWrapper
 }
 
 var _ client.Collection = (*CollectionWrapper)(nil)
@@ -2836,6 +2939,30 @@ func (c *CollectionWrapper) NewIndex(
 	req client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
+	if c.txn != nil {
+		opt := utils.NewOptions(opts...)
+		copiedReq := req
+		c.txn.stagedIndexOps = append(c.txn.stagedIndexOps, stagedIndexOp{
+			identityDID:    identityDIDFromOption(opt.GetIdentity()),
+			collectionName: c.version.Name,
+			create:         &copiedReq,
+		})
+
+		id := uint32(len(c.version.Indexes) + 1)
+		for _, op := range c.txn.stagedIndexOps {
+			if op.collectionName == c.version.Name && op.create != nil && op.create.Name != req.Name {
+				id++
+			}
+		}
+
+		return client.IndexDescription{
+			Name:   req.Name,
+			ID:     id,
+			Fields: req.Fields,
+			Unique: req.Unique,
+		}, nil
+	}
+
 	fields := make([]IndexField, len(req.Fields))
 	for i, f := range req.Fields {
 		fields[i] = IndexField{
@@ -2869,6 +2996,16 @@ func (c *CollectionWrapper) NewIndex(
 }
 
 func (c *CollectionWrapper) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
+	if c.txn != nil {
+		opt := utils.NewOptions(opts...)
+		c.txn.stagedIndexOps = append(c.txn.stagedIndexOps, stagedIndexOp{
+			identityDID:    identityDIDFromOption(opt.GetIdentity()),
+			collectionName: c.version.Name,
+			deleteName:     indexName,
+		})
+		return nil
+	}
+
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
@@ -2876,6 +3013,32 @@ func (c *CollectionWrapper) DeleteIndex(ctx context.Context, indexName string, o
 }
 
 func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
+	if c.txn != nil {
+		indexes := append([]client.IndexDescription(nil), c.version.Indexes...)
+		for _, op := range c.txn.stagedIndexOps {
+			if op.collectionName != c.version.Name {
+				continue
+			}
+			if op.create != nil {
+				indexes = append(indexes, client.IndexDescription{
+					Name:   op.create.Name,
+					ID:     uint32(len(indexes) + 1),
+					Fields: op.create.Fields,
+					Unique: op.create.Unique,
+				})
+				continue
+			}
+			filtered := indexes[:0]
+			for _, idx := range indexes {
+				if idx.Name != op.deleteName {
+					filtered = append(filtered, idx)
+				}
+			}
+			indexes = filtered
+		}
+		return indexes, nil
+	}
+
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
@@ -2908,6 +3071,16 @@ func (c *CollectionWrapper) NewEncryptedIndex(
 	desc client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	if c.txn != nil {
+		opt := utils.NewOptions(opts...)
+		c.txn.stagedEncryptedIndexOps = append(c.txn.stagedEncryptedIndexOps, stagedEncryptedIndexOp{
+			identityDID:    identityDIDFromOption(opt.GetIdentity()),
+			collectionName: c.version.Name,
+			createField:    desc.FieldName,
+		})
+		return desc, nil
+	}
+
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
@@ -2923,6 +3096,16 @@ func (c *CollectionWrapper) NewEncryptedIndex(
 }
 
 func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error {
+	if c.txn != nil {
+		opt := utils.NewOptions(opts...)
+		c.txn.stagedEncryptedIndexOps = append(c.txn.stagedEncryptedIndexOps, stagedEncryptedIndexOp{
+			identityDID:    identityDIDFromOption(opt.GetIdentity()),
+			collectionName: c.version.Name,
+			deleteField:    fieldName,
+		})
+		return nil
+	}
+
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
@@ -2930,6 +3113,30 @@ func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName 
 }
 
 func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+	if c.txn != nil {
+		indexes := append([]client.EncryptedIndexDescription(nil), c.version.EncryptedIndexes...)
+		for _, op := range c.txn.stagedEncryptedIndexOps {
+			if op.collectionName != c.version.Name {
+				continue
+			}
+			if op.createField != "" {
+				indexes = append(indexes, client.EncryptedIndexDescription{
+					FieldName: op.createField,
+					Type:      client.EncryptedIndexTypeEquality,
+				})
+				continue
+			}
+			filtered := indexes[:0]
+			for _, idx := range indexes {
+				if idx.FieldName != op.deleteField {
+					filtered = append(filtered, idx)
+				}
+			}
+			indexes = filtered
+		}
+		return indexes, nil
+	}
+
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
