@@ -35,14 +35,16 @@ type collectionStore struct {
 	forbiddenCollectionIDs map[string]struct{}
 
 	lockSet              *lock.LockSet
+	txnFreeDatastore     corekv.Reader
 	collectionRepository *cache.TxnRepository[CollectionIndex, client.CollectionVersion]
 }
 
 var _ cache.Repository[CollectionIndex, client.CollectionVersion] = (*collectionStore)(nil)
 
-func newCollectionStore(lockSet *lock.LockSet) *collectionStore {
+func newCollectionStore(lockSet *lock.LockSet, txnFreeDatastore corekv.Reader) *collectionStore {
 	return &collectionStore{
 		lockSet:                lockSet,
+		txnFreeDatastore:       txnFreeDatastore,
 		forbiddenCollectionIDs: map[string]struct{}{},
 	}
 }
@@ -109,7 +111,6 @@ func (i *collectionStore) Write(ctx context.Context, value client.CollectionVers
 	i.forbiddenLock.Lock()
 	// If this transaction writes a collection version that was previously forbidden, we must unforbid it
 	// within the context of this transaction.
-	// todo - make sure the unforbidding is tested!
 	delete(i.forbiddenCollectionIDs, value.CollectionID)
 	i.forbiddenLock.Unlock()
 
@@ -323,6 +324,21 @@ func (i *collectionStore) Delete(ctx context.Context, key CollectionIndex) error
 		// whilst we finalize this operation, otherwise other threads/operations may try and make use of it.
 		i.lockSet.CollectionLock(txn, shortID)
 
+		hasDocs, err := i.collectionHasDocuments(ctx, version)
+		if err != nil {
+			return err
+		}
+		if hasDocs {
+			// If the collection contains any documents, we do not allow deletion of any version in the
+			// collection - they must first delete the documents locally, and then delete the collection.
+			//
+			// This is thought to be much safer than allowing document deletion along with the collection.
+			//
+			// This check *must* be performed after the write lock on the collection has been aquired otherwise
+			// there will be a race condition.
+			return NewErrCannotDeleteCollectionWithDocs(version.Name, version.VersionID)
+		}
+
 		// Only delete the collection short ID if this was the last local version
 		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
 		if err != nil {
@@ -403,4 +419,93 @@ func (i *collectionStore) Forbid(value client.CollectionVersion) {
 	i.forbiddenLock.Lock()
 	i.forbiddenCollectionIDs[value.CollectionID] = struct{}{}
 	i.forbiddenLock.Unlock()
+}
+
+// collectionHasDocuments checks that both the transaction, and the underlying transaction-free
+// root does not have any documents in the given collection.
+//
+// It is nessecary to check without a transaction, as the deletion of the last collection version
+// in a collection locally must be applied immediately to all existing transactions, and must also
+// take into consideration writes that may have been made since the *deleting* transaction was created.
+//
+// The deleting transaction must be checked, as this transaction may have written documents that have
+// not yet been committed and will not show up when iterating through the underlying transaction-free
+// store.
+func (i *collectionStore) collectionHasDocuments(
+	ctx context.Context,
+	version client.CollectionVersion,
+) (bool, error) {
+	hasDocs, err := collectionHasDocumentsTxn(ctx, version)
+	if hasDocs || err != nil {
+		return hasDocs, err
+	}
+
+	return i.collectionHasDocumentsRoot(ctx, version)
+}
+
+func collectionHasDocumentsTxn(
+	ctx context.Context,
+	version client.CollectionVersion,
+) (bool, error) {
+	type unsafestore interface {
+		Unsafe() corekv.ReaderWriter
+	}
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	// We use the unsafe store here as it is convenient and allows us to re-use the same reading
+	// code in a location where we do not require the lock system, as a write lock is guarenteed
+	// to already be held. The Keyed store iterator function has a slightly different signature.
+	return collectionHasDocumentsReader(ctx, txn.Datastore().(unsafestore).Unsafe(), version) //nolint:forcetypeassert
+}
+
+func (i *collectionStore) collectionHasDocumentsRoot(
+	ctx context.Context,
+	version client.CollectionVersion,
+) (bool, error) {
+	// corekv will pick up the previously used transaction and force its use if we do not first
+	// remove it from the context.
+	// This line can be removed as part of https://github.com/sourcenetwork/defradb/issues/4658
+	ctx = corekv.SetCtxTxn(ctx, nil)
+	return collectionHasDocumentsReader(ctx, i.txnFreeDatastore, version)
+}
+
+func collectionHasDocumentsReader(
+	ctx context.Context,
+	reader corekv.Reader,
+	version client.CollectionVersion,
+) (bool, error) {
+	if !version.IsMaterialized {
+		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
+		// state was properly disposed of (it should have been).
+		return false, nil
+	}
+
+	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	var prefixKey keys.Key
+	if version.Query.HasValue() {
+		prefixKey = keys.NewViewCacheColPrefix(shortID)
+	} else {
+		prefixKey = keys.PrimaryDataStoreKey{
+			CollectionShortID: shortID,
+		}
+	}
+
+	iter, err := reader.Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefixKey.ToDS().Bytes(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
+
+	hasValue, err := iter.Next()
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
+
+	return hasValue, iter.Close()
 }

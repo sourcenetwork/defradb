@@ -76,4 +76,10 @@ func (a *Parallel) Execute() {
 	startLock.Unlock()
 
 	finishedWG.Wait()
+
+	if len(a.s.SkipTest) > 0 {
+		// Child actions cannot skip the test from within their own routine, so we must check here
+		// to see if they want to.
+		a.s.T.Skip(a.s.SkipTest)
+	}
 }

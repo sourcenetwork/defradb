@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
@@ -627,6 +628,17 @@ func (c *collection) save(
 		txn.OnSuccess(func() {
 			c.db.sendUpdate(updateEvent)
 		})
+	}
+
+	_, stillExists, err := c.db.collectionRepository.TryGet(ctx, description.CollectionIndex{
+		Kind:  description.CollectionID,
+		Value: c.def.CollectionID,
+	})
+	if err != nil {
+		return err
+	}
+	if !stillExists {
+		return client.ErrCollectionNotFound
 	}
 
 	return nil

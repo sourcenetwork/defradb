@@ -18,8 +18,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -648,6 +650,69 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// The other client types return different errors when occasionally executing the `CreateDoc`
+			// action.
+			state.GoClientType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.Async{
+				// todo - we also need to test this with explicit transactions both async and sync
+				// https://github.com/sourcenetwork/defradb/issues/4476
+				Child: &action.PatchCollection{
+					// If the create call completes before the patch starts this will error - skip the test
+					// when this happens as it is unrecoverable and rare.  The production code in such a
+					// scenario is behaving correctly.
+					SkipTestOnError: description.ErrCannotDeleteCollectionWithDocs,
+					Patch: `
+						[
+							{
+								"op": "remove",
+								"path": "/Users"
+							}
+						]
+					`,
+				},
+			},
+			&action.AddDoc{
+				DoNotWaitForEvent: true,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+				// This error can occur if the create-doc call starts after the patch collection call (mostly)
+				// completes, it is uncommon for this to happen, but it does sometimes, especially on slower
+				// machines.  It is correct behaviour, but is not the scenario that this test is asserting.
+				IgnoreError: "collection not found",
+			},
+			&action.Await{},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+			&action.Request{
+				Request: `query {
+					_commits {
+						cid
+					}
+				}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
 				},
 			},
 		},

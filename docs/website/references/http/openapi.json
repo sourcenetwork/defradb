@@ -2679,44 +2679,6 @@
                 ]
             }
         },
-        "/tx/concurrent": {
-            "post": {
-                "description": "Create a new concurrent transaction",
-                "operationId": "new_concurrent_transaction",
-                "parameters": [
-                    {
-                        "description": "Read only transaction",
-                        "in": "query",
-                        "name": "read_only",
-                        "schema": {
-                            "default": false,
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/create_tx"
-                                }
-                            }
-                        },
-                        "description": "Transaction info"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "transaction"
-                ]
-            }
-        },
         "/tx/{id}": {
             "delete": {
                 "description": "Discard a transaction",

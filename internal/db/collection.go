@@ -127,10 +127,20 @@ func (db *DB) getCollections(
 		cols = append(cols, col)
 
 	case opts.CollectionID.HasValue():
-		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
-		if err != nil {
-			return nil, err
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
+			var err error
+			cols, err = description.GetCollectionsByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// GetActiveCollectionByCollectionID is quite a lot more efficient than GetCollectionsByCollectionID
+			// so we use it when we can.
+			col, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
+				return nil, err
+			}
+			cols = append(cols, col)
 		}
 
 	// Multi-collection self-referencing relations are the only time the collection set id option

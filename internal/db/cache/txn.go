@@ -70,8 +70,6 @@ func (l *TxnRepository[T, TV]) registerTxn(ctx context.Context) Cache[T, TV] {
 	l.cache[id] = txnCache
 	l.txnLock.Unlock()
 
-	// todo - an integration test for this is required, and make sure at least one tests discard and reuse:
-	// https://github.com/sourcenetwork/defradb/issues/4268
 	onTxnClose := func() {
 		l.txnLock.Lock()
 		_, ok := l.cache[id]
