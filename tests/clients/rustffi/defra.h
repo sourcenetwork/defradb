@@ -1572,6 +1572,20 @@ struct FfiResult exec_request(uintptr_t node_ptr,
 struct FfiResult add_schema(uintptr_t node_ptr, const char *identity_did, const char *schema_sdl);
 
 /*
+ Add a schema within a specific transaction.
+
+ The schema is only visible within the transaction until it is committed.
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
+ */
+struct FfiResult add_schema_in_txn(uintptr_t node_ptr,
+                                   const char *txn_id,
+                                   const char *identity_did,
+                                   const char *schema_sdl);
+
+/*
  Get all collections from the database.
 
  Returns a JSON array of collection descriptions.

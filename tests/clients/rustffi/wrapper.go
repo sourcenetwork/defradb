@@ -136,7 +136,7 @@ type Wrapper struct {
 	txnIDGen        uint64
 	stopMergePoller chan struct{}
 	stopSEForwarder chan struct{}
-	goNodeCloser    func() // Called during Close() to release Go node resources (e.g. badger lock)
+	goNodeCloser    func()                      // Called during Close() to release Go node resources (e.g. badger lock)
 	nodeIdentityRaw *identity.PublicRawIdentity // Cached node identity (with PublicKey) for GetNodeIdentity
 }
 
@@ -1865,7 +1865,20 @@ func (t *TxnWrapper) ExecRequest(
 
 // Stub out other Store methods on transaction - most delegate to wrapper
 func (t *TxnWrapper) AddCollection(ctx context.Context, sdl string, opts ...options.Enumerable[options.AddCollectionOptions]) ([]client.CollectionVersion, error) {
-	return t.wrapper.AddCollection(ctx, sdl, opts...)
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+
+	responseJSON, err := t.wrapper.node.AddSchemaInTxn(t.txn.id, identityDID, sdl)
+	if err != nil {
+		return nil, err
+	}
+
+	var versions []client.CollectionVersion
+	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
+		return nil, fmt.Errorf("failed to parse schema response: %w", err)
+	}
+
+	return versions, nil
 }
 
 func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {

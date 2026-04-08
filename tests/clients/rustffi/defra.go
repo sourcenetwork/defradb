@@ -260,6 +260,34 @@ func (n *Node) AddSchema(identityDID string, sdl string) (string, error) {
 	return value, nil
 }
 
+// AddSchemaInTxn adds a GraphQL SDL schema within a specific transaction.
+// Returns the JSON response containing created collection versions visible in that transaction.
+func (n *Node) AddSchemaInTxn(txnID string, identityDID string, sdl string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
+
+	result := C.add_schema_in_txn(n.ptr, cTxnID, cIdentityDID, cSDL)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", mapFFIError("add_schema_in_txn", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // GetCollections returns all collections in the database as JSON.
 func (n *Node) GetCollections(identityDID string) (string, error) {
 	var cIdentityDID *C.char
