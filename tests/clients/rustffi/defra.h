@@ -682,6 +682,13 @@ struct FfiResult block_verify_signature(uintptr_t node_ptr,
                                         const char *block_cid,
                                         const char *identity_did);
 
+struct FfiResult block_verify_signature_in_txn(uintptr_t node_ptr,
+                                               const char *txn_id,
+                                               const char *key_type,
+                                               const char *public_key,
+                                               const char *block_cid,
+                                               const char *identity_did);
+
 /*
  Set migration for collection versions.
 

@@ -2130,7 +2130,15 @@ func (t *TxnWrapper) GetNodeIdentity(
 }
 
 func (t *TxnWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Enumerable[options.VerifySignatureOptions]) error {
-	return t.wrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	return t.wrapper.node.BlockVerifySignatureInTxn(
+		t.txn.id,
+		string(pubKey.Type()),
+		pubKey.String(),
+		blockCid,
+		identityDID,
+	)
 }
 
 func (t *TxnWrapper) AddView(

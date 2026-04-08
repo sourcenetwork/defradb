@@ -53,6 +53,10 @@ var (
 // Instead of: mapFFIError("op_name", rawErrString)
 func mapFFIError(ffiOp string, rawErr string) error {
 	switch {
+	case strings.Contains(rawErr, "could not find block:"):
+		cid := strings.TrimSpace(strings.TrimPrefix(rawErr, "could not find block:"))
+		return fmt.Errorf("ipld: could not find %s", cid)
+
 	case strings.Contains(rawErr, "not authorized to perform operation"):
 		// Wrap with sentinel so errors.Is() works, preserve the full message
 		return fmt.Errorf("%w. %s",
@@ -1711,6 +1715,55 @@ func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid, identityDID st
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
 		return mapFFIError("block_verify_signature", err)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// BlockVerifySignatureInTxn verifies the signature of a block identified by CID
+// using the transaction's blockstore view so uncommitted blocks are visible.
+func (n *Node) BlockVerifySignatureInTxn(
+	txnID string,
+	keyType string,
+	publicKey string,
+	blockCid string,
+	identityDID string,
+) error {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	cKeyType := C.CString(keyType)
+	defer C.free(unsafe.Pointer(cKeyType))
+
+	cPubKey := C.CString(publicKey)
+	defer C.free(unsafe.Pointer(cPubKey))
+
+	cBlockCid := C.CString(blockCid)
+	defer C.free(unsafe.Pointer(cBlockCid))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.block_verify_signature_in_txn(
+		n.ptr,
+		cTxnID,
+		cKeyType,
+		cPubKey,
+		cBlockCid,
+		cIdentityDID,
+	)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return mapFFIError("block_verify_signature_in_txn", err)
 	}
 
 	if result.value != nil {
