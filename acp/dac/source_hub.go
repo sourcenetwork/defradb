@@ -8,10 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub ACP implementation for non-JS environments.
+// SourceHub ACP implementation for non-JS, non-mobile environments.
 // JS environments are handled by source_hub_js.go
+// Mobile (Android/iOS) environments are handled by source_hub_mobile.go
 //
-//go:build !js
+//go:build !js && !android && !ios
 
 package dac
 
