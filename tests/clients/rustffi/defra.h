@@ -1252,6 +1252,20 @@ struct FfiResult list_all_indexes(uintptr_t node_ptr, const char *identity_did);
 struct FfiResult lens_add(uintptr_t node_ptr, const char *identity_did, const char *lens_json);
 
 /*
+ Add a lens transform within a transaction.
+
+ The lens is only visible within the transaction until commit.
+
+ # Safety
+
+ Both string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult lens_add_in_txn(uintptr_t node_ptr,
+                                 const char *txn_id,
+                                 const char *identity_did,
+                                 const char *lens_json);
+
+/*
  List all lens transforms.
 
  Returns a JSON object mapping lens IDs to their configurations.
@@ -1261,6 +1275,15 @@ struct FfiResult lens_add(uintptr_t node_ptr, const char *identity_did, const ch
  The caller must free the returned string with `defra_free_string`.
  */
 struct FfiResult lens_list(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ List all lens transforms visible within a transaction.
+
+ # Safety
+
+ `txn_id` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult lens_list_in_txn(uintptr_t node_ptr, const char *txn_id, const char *identity_did);
 
 /*
  Initialize the runtime for mobile embedding.

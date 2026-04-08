@@ -2024,11 +2024,45 @@ func (t *TxnWrapper) SetMigration(ctx context.Context, config client.LensConfig,
 }
 
 func (t *TxnWrapper) AddLens(ctx context.Context, lens lensmodel.Lens, opts ...options.Enumerable[options.AddLensOptions]) (string, error) {
-	return t.wrapper.AddLens(ctx, lens, opts...)
+	lensJSON, err := json.Marshal(lens)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal lens: %w", err)
+	}
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	return t.wrapper.node.LensAddInTxn(t.txn.id, identityDID, string(lensJSON))
 }
 
 func (t *TxnWrapper) ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]lensmodel.Lens, error) {
-	return t.wrapper.ListLenses(ctx, opts...)
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+
+	raw, err := t.wrapper.node.LensListInTxn(t.txn.id, identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	var rustMap map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &rustMap); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse lens list: %w", err)
+	}
+
+	result := make(map[string]lensmodel.Lens, len(rustMap))
+	for id, moduleJSON := range rustMap {
+		var module lensmodel.LensModule
+		if err := json.Unmarshal(moduleJSON, &module); err == nil {
+			result[id] = lensmodel.Lens{Lenses: []lensmodel.LensModule{module}}
+			continue
+		}
+
+		var lensObj lensmodel.Lens
+		if err := json.Unmarshal(moduleJSON, &lensObj); err != nil {
+			return nil, fmt.Errorf("ffi: failed to parse lens %s: %w", id, err)
+		}
+		result[id] = lensObj
+	}
+
+	return result, nil
 }
 
 func (t *TxnWrapper) BasicImport(ctx context.Context, filepath string) error {

@@ -1023,6 +1023,33 @@ func (n *Node) LensAdd(identityDID string, lensJSON string) (string, error) {
 	return value, nil
 }
 
+// LensAddInTxn adds a lens transform within a transaction.
+func (n *Node) LensAddInTxn(txnID string, identityDID string, lensJSON string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	cLens := C.CString(lensJSON)
+	defer C.free(unsafe.Pointer(cLens))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.lens_add_in_txn(n.ptr, cTxnID, cIdentityDID, cLens)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", mapFFIError("lens_add_in_txn", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // LensList returns all lens transforms as a map of ID -> LensModule JSON.
 func (n *Node) LensList(identityDID string) (string, error) {
 	var cIdentityDID *C.char
@@ -1037,6 +1064,30 @@ func (n *Node) LensList(identityDID string) (string, error) {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
 		return "", mapFFIError("lens_list", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// LensListInTxn lists all lens transforms visible within a transaction.
+func (n *Node) LensListInTxn(txnID string, identityDID string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.lens_list_in_txn(n.ptr, cTxnID, cIdentityDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", mapFFIError("lens_list_in_txn", err)
 	}
 
 	value := C.GoString(result.value)
