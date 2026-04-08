@@ -956,6 +956,10 @@ func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, versionID stri
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
+	return w.setActiveCollectionVersion(identityDID, versionID)
+}
+
+func (w *Wrapper) setActiveCollectionVersion(identityDID string, versionID string) error {
 	return w.node.SetActiveCollectionVersion(identityDID, versionID)
 }
 
@@ -968,6 +972,14 @@ func (w *Wrapper) PatchCollection(
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
+	return w.patchCollection(identityDID, patch, migration)
+}
+
+func (w *Wrapper) patchCollection(
+	identityDID string,
+	patch string,
+	migration immutable.Option[lensmodel.Lens],
+) error {
 	// Parse all operations to classify into collection-level removes vs modifications.
 	// Go's patchCollection operates on a global dict of all versions atomically.
 	// The FFI wrapper must coordinate these since Rust operates per-collection.
@@ -1783,10 +1795,23 @@ type TxnWrapper struct {
 	id                      uint64
 	readOnly                bool
 	startTS                 time.Time
+	stagedPatchCollections  []stagedPatchCollection
+	stagedSetActiveVersions []stagedSetActiveVersion
 	stagedViews             []stagedViewAdd
 	stagedRefreshes         []stagedRefreshViews
 	stagedIndexOps          []stagedIndexOp
 	stagedEncryptedIndexOps []stagedEncryptedIndexOp
+}
+
+type stagedPatchCollection struct {
+	identityDID string
+	patch       string
+	migration   immutable.Option[lensmodel.Lens]
+}
+
+type stagedSetActiveVersion struct {
+	identityDID string
+	versionID   string
 }
 
 type stagedViewAdd struct {
@@ -1828,6 +1853,18 @@ func (t *TxnWrapper) StartTS() time.Time {
 func (t *TxnWrapper) Commit() error {
 	if err := t.txn.Commit(); err != nil {
 		return err
+	}
+
+	for _, op := range t.stagedPatchCollections {
+		if err := t.wrapper.patchCollection(op.identityDID, op.patch, op.migration); err != nil {
+			return err
+		}
+	}
+
+	for _, op := range t.stagedSetActiveVersions {
+		if err := t.wrapper.setActiveCollectionVersion(op.identityDID, op.versionID); err != nil {
+			return err
+		}
 	}
 
 	for _, op := range t.stagedViews {
@@ -2008,7 +2045,12 @@ func (t *TxnWrapper) GetCollections(
 }
 
 func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
-	return t.wrapper.SetActiveCollectionVersion(ctx, versionID, opts...)
+	opt := utils.NewOptions(opts...)
+	t.stagedSetActiveVersions = append(t.stagedSetActiveVersions, stagedSetActiveVersion{
+		identityDID: identityDIDFromOption(opt.GetIdentity()),
+		versionID:   versionID,
+	})
+	return nil
 }
 
 func (t *TxnWrapper) PatchCollection(
@@ -2017,7 +2059,13 @@ func (t *TxnWrapper) PatchCollection(
 	migration immutable.Option[lensmodel.Lens],
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
-	return t.wrapper.PatchCollection(ctx, patch, migration, opts...)
+	opt := utils.NewOptions(opts...)
+	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
+		identityDID: identityDIDFromOption(opt.GetIdentity()),
+		patch:       patch,
+		migration:   migration,
+	})
+	return nil
 }
 
 func (t *TxnWrapper) ListIndexes(
