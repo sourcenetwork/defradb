@@ -58,21 +58,16 @@
 
 You don't need to be an expert in all of these to contribute - many contributions don't require programming at all! But these resources may be useful depending on what you'd like to work on:
 
-<table>
-  <tr>
-    <td align="center">🔀<br><strong><a href="https://training.github.com/">Git</a></strong><br><sub>Version control basics</sub></td>
-    <td align="center">📘<br><strong><a href="https://docs.source.network/">Project Docs</a></strong><br><sub>Features & architecture</sub></td>
-    <td align="center">🐹<br><strong><a href="https://go.dev/doc/install">Go</a></strong><br><sub>Primary language</sub></td>
-    <td align="center">🦀<br><strong><a href="https://www.rust-lang.org/tools/install">Cargo/rustc</a></strong><br><sub>WASM lens modules</sub></td>
-  </tr>
-</table>
+| &nbsp; | Resource | Purpose |
+|:------:|----------|---------|
+| 🔀 | **[Git](https://training.github.com/)** | Version control basics |
+| 📘 | **[Project Docs](https://docs.source.network/)** | Features & architecture |
+| 🐹 | **[Go](https://go.dev/doc/install)** | Primary language |
+| 🦀 | **[Cargo/rustc](https://www.rust-lang.org/tools/install)** | WASM lens modules |
 
 ---
 
 ## 🚀 Getting Started
-
-<table>
-<tr><td>
 
 **✅ Required** to build and run DefraDB:
 
@@ -81,9 +76,6 @@ You don't need to be an expert in all of these to contribute - many contribution
 | **[Go](https://go.dev/doc/install)** | Check [`go.mod`](./go.mod) for the required version |
 | **[Cargo/rustc](https://www.rust-lang.org/tools/install)** | Via `rustup`, needed for WASM lens modules |
 
-</td></tr>
-<tr><td>
-
 **💡 Optional** (needed for specific features/tests):
 
 | Tool | When You Need It |
@@ -91,9 +83,6 @@ You don't need to be an expert in all of these to contribute - many contribution
 | **[SourceHub](https://github.com/sourcenetwork/sourcehub)** | Working on access control features |
 | **[Ollama](https://ollama.com/download)** | AI/vector embedding tests |
 | **[Make](https://www.gnu.org/software/make/)** | Convenient but not required - you can run `go` commands directly |
-
-</td></tr>
-</table>
 
 **Clone, build, and run:**
 
@@ -224,9 +213,6 @@ Resolves #123
 
 PR titles follow the **[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)** style: &nbsp; **`<label>: <Description>`**
 
-<table>
-<tr><td>
-
 **Available labels:**
 
 | Label | &nbsp; | Meaning | Example |
@@ -241,9 +227,6 @@ PR titles follow the **[Conventional Commits](https://www.conventionalcommits.or
 | `perf` | ⚡ | Performance | `perf: Optimize index lookups` |
 | `tools` | 🔨 | Tooling | `tools: Add benchstat script` |
 | `bot` | 🤖 | Automated (bot only) | `bot: Bump go version` |
-
-</td></tr>
-</table>
 
 **Rules:**
 
@@ -316,13 +299,11 @@ Benchmarks can be found in the [`tests/bench/`](./tests/bench/) directory.
 
 We'd love to hear from you!
 
-<table>
-  <tr>
-    <td align="center">💬<br><strong><a href="https://discord.gg/w7jYQVJ">Discord</a></strong><br><sub>Real-time chat & Q&A</sub></td>
-    <td align="center">🐦<br><strong><a href="https://twitter.com/sourcenetwrk">Twitter</a></strong><br><sub>Updates & announcements</sub></td>
-    <td align="center">💻<br><strong><a href="https://github.com/sourcenetwork/defradb/discussions">Discussions</a></strong><br><sub>Feature ideas & long-form chats</sub></td>
-  </tr>
-</table>
+| &nbsp; | Channel | Purpose |
+|:------:|---------|---------|
+| 💬 | **[Discord](https://discord.gg/w7jYQVJ)** | Real-time chat & Q&A |
+| 🐦 | **[Twitter](https://twitter.com/sourcenetwrk)** | Updates & announcements |
+| 💻 | **[Discussions](https://github.com/sourcenetwork/defradb/discussions)** | Feature ideas & long-form chats |
 
 ---
 

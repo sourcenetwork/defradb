@@ -127,111 +127,32 @@ When a PR is opened, our CI pipeline runs a comprehensive suite of checks. Here'
 
 These run on every PR targeting `develop` or `master` and **must pass** to merge:
 
-<table>
-<tr><th>Check</th><th>What It Does</th><th>Fix Locally</th></tr>
-
-<tr>
-<td>🏗️ <strong>Build Dependencies</strong><br><sub><a href="./.github/workflows/build-dependencies.yml">build-dependencies.yml</a></sub></td>
-<td>Ensures all project dependencies can be built</td>
-<td><code>make deps</code></td>
-</tr>
-
-<tr>
-<td>📊 <strong>Check Data Format Changes</strong><br><sub><a href="./.github/workflows/check-data-format-changes.yml">check-data-format-changes.yml</a></sub></td>
-<td>Detects backwards-incompatible data format changes. Must be documented in <a href="./docs/data_format_changes/README.md"><code>docs/data_format_changes/</code></a></td>
-<td><code>make test:changes</code><br><sub>See <a href="./tests/change_detector/README.md">change detector README</a></sub></td>
-</tr>
-
-<tr>
-<td>📖 <strong>Check Documentation</strong><br><sub><a href="./.github/workflows/check-documentation.yml">check-documentation.yml</a></sub></td>
-<td>Ensures CLI docs, HTTP API docs, and README TOC are up to date<br><sub>(3 sub-checks: cli, http, readme-toc)</sub></td>
-<td><code>make docs</code><br><sub>(runs <code>docs:cli</code>, <code>docs:http</code>, <code>toc</code>)</sub></td>
-</tr>
-
-<tr>
-<td>🔧 <strong>Check Mocks</strong><br><sub><a href="./.github/workflows/check-mocks.yml">check-mocks.yml</a></sub></td>
-<td>Verifies all mocks are regenerated and up to date</td>
-<td><code>make mocks</code></td>
-</tr>
-
-<tr>
-<td>📦 <strong>Check Tidy</strong><br><sub><a href="./.github/workflows/check-tidy.yml">check-tidy.yml</a></sub></td>
-<td>Ensures <code>go.mod</code> and <code>go.sum</code> are clean</td>
-<td><code>make tidy</code></td>
-</tr>
-
-<tr>
-<td>🔒 <strong>Check Vulnerabilities</strong><br><sub><a href="./.github/workflows/check-vulnerabilities.yml">check-vulnerabilities.yml</a></sub></td>
-<td>Runs <code>govulncheck</code> to scan for known security vulnerabilities</td>
-<td><code>make deps:vulncheck && govulncheck ./...</code></td>
-</tr>
-
-<tr>
-<td>🧙 <strong>Check Wizard Health</strong><br><sub><a href="./.github/workflows/check-wizard-health.yml">check-wizard-health.yml</a></sub></td>
-<td>Tests the interactive setup wizard using an automated expect script</td>
-<td><code>make build && ./tools/scripts/wizard_test.sh</code></td>
-</tr>
-
-<tr>
-<td>🧹 <strong>Lint</strong><br><sub><a href="./.github/workflows/lint.yml">lint.yml</a></sub></td>
-<td>Runs <strong>golangci-lint</strong> (<a href="./tools/configs/golangci.yaml">config</a>) and <strong>yamllint</strong> (<a href="./tools/configs/yamllint.yaml">config</a>)</td>
-<td><code>make deps:lint && make lint</code><br><sub>Auto-fix: <code>make lint:fix</code></sub></td>
-</tr>
-
-<tr>
-<td>🧹📊 <strong>Lint Then Benchmark</strong><br><sub><a href="./.github/workflows/lint-then-benchmark.yml">lint-then-benchmark.yml</a></sub></td>
-<td>Linting + conditional benchmarks<br><sub><code>SHORT</code> for PRs to develop · <code>FULL</code> with label · Skip with <code>action/no-benchmark</code></sub></td>
-<td><code>make lint</code><br><code>make test:bench-short</code></td>
-</tr>
-
-<tr>
-<td>🚀 <strong>Start Binary</strong><br><sub><a href="./.github/workflows/start-binary.yml">start-binary.yml</a></sub></td>
-<td>Builds the binary and verifies it starts</td>
-<td><code>make build && ./build/defradb start --no-keyring</code></td>
-</tr>
-
-<tr>
-<td>🧪 <strong>Test Coverage</strong><br><sub><a href="./.github/workflows/test-coverage.yml">test-coverage.yml</a></sub></td>
-<td>Comprehensive test matrix: clients (Go/HTTP/CLI), databases, mutations, ACP, lenses, views, encryption, vectors → <a href="https://codecov.io/gh/sourcenetwork/defradb">Codecov</a></td>
-<td><code>make test</code> with <a href="#-test-configuration-variables">env variables</a></td>
-</tr>
-
-<tr>
-<td>🐋 <strong>Validate Containerfile</strong><br><sub><a href="./.github/workflows/validate-containerfile.yml">validate-containerfile.yml</a></sub></td>
-<td>Builds Docker image from <a href="./tools/defradb.containerfile">containerfile</a> and verifies it runs</td>
-<td>Ensure <a href="./tools/defradb.containerfile">containerfile</a> is valid</td>
-</tr>
-
-<tr>
-<td>🏷️ <strong>Validate Title</strong><br><sub><a href="./.github/workflows/validate-title.yml">validate-title.yml</a></sub></td>
-<td>Validates PR title follows <a href="./CONTRIBUTING.md#-title-format">conventional commit style</a></td>
-<td>Fix title per <a href="./CONTRIBUTING.md#-title-format">rules</a> · <a href="./tools/scripts/validate-conventional-style.sh">script</a></td>
-</tr>
-</table>
+| Check | What It Does | Fix Locally |
+|-------|--------------|-------------|
+| 🏗️ **Build Dependencies**<br>[`build-dependencies.yml`](./.github/workflows/build-dependencies.yml) | Ensures all project dependencies can be built | `make deps` |
+| 📊 **Check Data Format Changes**<br>[`check-data-format-changes.yml`](./.github/workflows/check-data-format-changes.yml) | Detects backwards-incompatible data format changes. Must be documented in [`docs/data_format_changes/`](./docs/data_format_changes/README.md) | `make test:changes` *(see [change detector README](./tests/change_detector/README.md))* |
+| 📖 **Check Documentation**<br>[`check-documentation.yml`](./.github/workflows/check-documentation.yml) | Ensures CLI docs, HTTP API docs, and README TOC are up to date *(3 sub-checks: cli, http, readme-toc)* | `make docs` *(runs `docs:cli`, `docs:http`, `toc`)* |
+| 🔧 **Check Mocks**<br>[`check-mocks.yml`](./.github/workflows/check-mocks.yml) | Verifies all mocks are regenerated and up to date | `make mocks` |
+| 📦 **Check Tidy**<br>[`check-tidy.yml`](./.github/workflows/check-tidy.yml) | Ensures `go.mod` and `go.sum` are clean | `make tidy` |
+| 🔒 **Check Vulnerabilities**<br>[`check-vulnerabilities.yml`](./.github/workflows/check-vulnerabilities.yml) | Runs `govulncheck` to scan for known security vulnerabilities | `make deps:vulncheck && govulncheck ./...` |
+| 🧙 **Check Wizard Health**<br>[`check-wizard-health.yml`](./.github/workflows/check-wizard-health.yml) | Tests the interactive setup wizard using an automated expect script | `make build && ./tools/scripts/wizard_test.sh` |
+| 🧹 **Lint**<br>[`lint.yml`](./.github/workflows/lint.yml) | Runs **golangci-lint** ([config](./tools/configs/golangci.yaml)) and **yamllint** ([config](./tools/configs/yamllint.yaml)) | `make deps:lint && make lint` *(auto-fix: `make lint:fix`)* |
+| 🧹📊 **Lint Then Benchmark**<br>[`lint-then-benchmark.yml`](./.github/workflows/lint-then-benchmark.yml) | Linting + conditional benchmarks. *`SHORT` for PRs to develop · `FULL` with label · Skip with `action/no-benchmark`* | `make lint` then `make test:bench-short` |
+| 🚀 **Start Binary**<br>[`start-binary.yml`](./.github/workflows/start-binary.yml) | Builds the binary and verifies it starts | `make build && ./build/defradb start --no-keyring` |
+| 🧪 **Test Coverage**<br>[`test-coverage.yml`](./.github/workflows/test-coverage.yml) | Comprehensive test matrix: clients (Go/HTTP/CLI), databases, mutations, ACP, lenses, views, encryption, vectors → [Codecov](https://codecov.io/gh/sourcenetwork/defradb) | `make test` with [env variables](#-test-configuration-variables) |
+| 🐋 **Validate Containerfile**<br>[`validate-containerfile.yml`](./.github/workflows/validate-containerfile.yml) | Builds Docker image from [containerfile](./tools/defradb.containerfile) and verifies it runs | Ensure [containerfile](./tools/defradb.containerfile) is valid |
+| 🏷️ **Validate Title**<br>[`validate-title.yml`](./.github/workflows/validate-title.yml) | Validates PR title follows [conventional commit style](./CONTRIBUTING.md#-title-format) | Fix title per [rules](./CONTRIBUTING.md#-title-format) · [script](./tools/scripts/validate-conventional-style.sh) |
 
 ### 📊 Additional CI Checks (Non-Blocking)
 
 These also run on PRs but are **informational** - failures won't block merge:
 
-<table>
-<tr><th>Check</th><th>What It Does</th></tr>
-<tr>
-<td>🐢 <strong>Test Limited Resource</strong><br><sub><a href="./.github/workflows/test-limited-resource.yml">test-limited-resource.yml</a></sub></td>
-<td>Runs tests on standard (slower) runners to catch resource-constrained failures</td>
-</tr>
-<tr>
-<td>🍎 <strong>Test macOS</strong><br><sub><a href="./.github/workflows/test-macos.yml">test-macos.yml</a></sub></td>
-<td>Integration tests on macOS for cross-platform compatibility</td>
-</tr>
-<tr>
-<td>📜 <strong>Test NPX/JS Build</strong><br><sub><a href="./.github/workflows/test-npx.yml">test-npx.yml</a></sub></td>
-<td>Verifies NPX/JavaScript-dependent tests can build and run</td>
-</tr>
-<tr>
-<td>☁️ <strong>Preview AMI</strong><br><sub><a href="./.github/workflows/preview-ami-with-terraform-plan.yml">preview-ami-with-terraform-plan.yml</a></sub></td>
-<td>Triggers on AWS infra changes only - validates Terraform and posts plan as PR comment</td>
-</tr>
-</table>
+| Check | What It Does |
+|-------|--------------|
+| 🐢 **Test Limited Resource**<br>[`test-limited-resource.yml`](./.github/workflows/test-limited-resource.yml) | Runs tests on standard (slower) runners to catch resource-constrained failures |
+| 🍎 **Test macOS**<br>[`test-macos.yml`](./.github/workflows/test-macos.yml) | Integration tests on macOS for cross-platform compatibility |
+| 📜 **Test NPX/JS Build**<br>[`test-npx.yml`](./.github/workflows/test-npx.yml) | Verifies NPX/JavaScript-dependent tests can build and run |
+| ☁️ **Preview AMI**<br>[`preview-ami-with-terraform-plan.yml`](./.github/workflows/preview-ami-with-terraform-plan.yml) | Triggers on AWS infra changes only - validates Terraform and posts plan as PR comment |
 
 ### 🔧 Quick Fix Checklist
 
@@ -256,20 +177,19 @@ make test:changes  # Check for data format changes
 
 The test suite uses environment variables to control which configurations are tested:
 
-<table>
-<tr><th>Variable</th><th>Values</th><th>Description</th></tr>
-<tr><td><code>DEFRA_CLIENT_GO</code></td><td><code>true</code>/<code>false</code></td><td>Enable Go client tests</td></tr>
-<tr><td><code>DEFRA_CLIENT_HTTP</code></td><td><code>true</code>/<code>false</code></td><td>Enable HTTP client tests</td></tr>
-<tr><td><code>DEFRA_CLIENT_CLI</code></td><td><code>true</code>/<code>false</code></td><td>Enable CLI client tests</td></tr>
-<tr><td><code>DEFRA_BADGER_MEMORY</code></td><td><code>true</code>/<code>false</code></td><td>Use in-memory Badger store</td></tr>
-<tr><td><code>DEFRA_BADGER_FILE</code></td><td><code>true</code>/<code>false</code></td><td>Use file-based Badger store</td></tr>
-<tr><td><code>DEFRA_BADGER_ENCRYPTION</code></td><td><code>true</code>/<code>false</code></td><td>Enable Badger encryption</td></tr>
-<tr><td><code>DEFRA_MUTATION_TYPE</code></td><td><code>gql</code> / <code>collection-named</code> / <code>collection-save</code></td><td>Mutation type</td></tr>
-<tr><td><code>DEFRA_DOCUMENT_ACP_TYPE</code></td><td><code>local</code> / <code>source-hub</code></td><td>ACP type</td></tr>
-<tr><td><code>DEFRA_LENS_TYPE</code></td><td><code>wasm-time</code> / <code>wasm-er</code></td><td>Lens WASM runtime</td></tr>
-<tr><td><code>DEFRA_VIEW_TYPE</code></td><td><code>cacheless</code> / <code>materialized</code></td><td>View type</td></tr>
-<tr><td><code>DEFRA_VECTOR_EMBEDDING</code></td><td><code>true</code>/<code>false</code></td><td>Enable vector embedding tests</td></tr>
-</table>
+| Variable | Values | Description |
+|----------|--------|-------------|
+| `DEFRA_CLIENT_GO` | `true`/`false` | Enable Go client tests |
+| `DEFRA_CLIENT_HTTP` | `true`/`false` | Enable HTTP client tests |
+| `DEFRA_CLIENT_CLI` | `true`/`false` | Enable CLI client tests |
+| `DEFRA_BADGER_MEMORY` | `true`/`false` | Use in-memory Badger store |
+| `DEFRA_BADGER_FILE` | `true`/`false` | Use file-based Badger store |
+| `DEFRA_BADGER_ENCRYPTION` | `true`/`false` | Enable Badger encryption |
+| `DEFRA_MUTATION_TYPE` | `gql` / `collection-named` / `collection-save` | Mutation type |
+| `DEFRA_DOCUMENT_ACP_TYPE` | `local` / `source-hub` | ACP type |
+| `DEFRA_LENS_TYPE` | `wasm-time` / `wasm-er` | Lens WASM runtime |
+| `DEFRA_VIEW_TYPE` | `cacheless` / `materialized` | View type |
+| `DEFRA_VECTOR_EMBEDDING` | `true`/`false` | Enable vector embedding tests |
 
 ### 🌐 SourceHub ACP Tests
 
@@ -285,18 +205,12 @@ Use `-p 1` when running the full suite to avoid Docker resource contention.
 
 ### 📈 Benchmarks
 
-<table>
-<tr><td>
-
 **Running benchmarks:**
 
 ```shell
 make test:bench          # Full benchmark suite
 make test:bench-short    # Short benchmark suite
 ```
-
-</td></tr>
-<tr><td>
 
 **Comparing against `develop`:**
 
@@ -311,9 +225,6 @@ make test:bench | tee current.txt
 make deps:bench     # Install benchstat
 benchstat develop.txt current.txt
 ```
-
-</td></tr>
-</table>
 
 **CI benchmark labels:**
 
