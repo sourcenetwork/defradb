@@ -461,7 +461,7 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 
-.PHONY: build-c-static-windows:
+.PHONY: build-c-static-windows
 build-c-static-windows:
 	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
 	
