@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-BUILD_FLAGS="${1:-}"
+BUILD_FLAGS=("$@")
 echo "Building Windows static library..."
 
 mkdir -p build
@@ -27,7 +27,7 @@ rm -f build/libdefradb.lib build/libdefradb.h
 
 # Build the lib file
 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 \
-  go build -tags cshared $BUILD_FLAGS -buildmode=c-archive -o build/libdefradb.lib ./cbindings
+go build -tags cshared "${BUILD_FLAGS[@]}" -buildmode=c-archive -o build/libdefradb.lib ./cbindings
 
 # Copy over the structs header the user will need
 cp ./cbindings/defra_structs.h ./build/

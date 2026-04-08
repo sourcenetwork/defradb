@@ -461,11 +461,7 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 
-.PHONY build-c-shared-linux:
-build-c-shared-linux:
-	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
-	
-.PHONY build-c-static-windows:
+.PHONY: build-c-static-windows:
 build-c-static-windows:
 	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
 	
