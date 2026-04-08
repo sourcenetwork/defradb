@@ -12,13 +12,17 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 // PatchCollection executes a patch collection command, updating 0 to many collections and applying
@@ -50,6 +54,11 @@ type PatchCollection struct {
 
 	// Used to identify the transaction for this to be executed in. Optional.
 	TransactionID immutable.Option[int]
+
+	// Skip this test if the following error is returned when executing this action.
+	//
+	// This should only be used for rare, known, unrecoverable errors.
+	SkipTestOnError error
 }
 
 var _ Action = (*PatchCollection)(nil)
@@ -80,6 +89,11 @@ func (a *PatchCollection) Execute() {
 			err = txn.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
 		} else {
 			err = node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		}
+
+		if a.SkipTestOnError != nil && err != nil && errors.Is(err, a.SkipTestOnError) {
+			a.s.SkipTest = fmt.Sprintf("known error: %s", err.Error())
+			return
 		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

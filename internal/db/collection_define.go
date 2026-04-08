@@ -28,12 +28,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) addCollections(
@@ -670,19 +667,7 @@ func (db *DB) deleteCollectionVersion(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) error {
-	hasDocs, err := collectionHasDocuments(ctx, version)
-	if err != nil {
-		return err
-	}
-	if hasDocs {
-		// If the collection contains any documents, we do not allow deletion of any version in the
-		// collection - they must first delete the documents locally, and then delete the collection.
-		//
-		// This is thought to be much safer than allowing document deletion along with the collection.
-		return NewErrCannotDeleteCollectionWithDocs(version.Name, version.VersionID)
-	}
-
-	err = db.validateCollectionDoesNotHaveHigherVersion(ctx, version)
+	err := db.validateCollectionDoesNotHaveHigherVersion(ctx, version)
 	if err != nil {
 		return err
 	}
@@ -698,48 +683,6 @@ func (db *DB) deleteCollectionVersion(
 	}
 
 	return nil
-}
-
-func collectionHasDocuments(
-	ctx context.Context,
-	version client.CollectionVersion,
-) (bool, error) {
-	if !version.IsMaterialized {
-		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
-		// state was properly disposed of (it should have been).
-		return false, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
-	if err != nil {
-		return false, err
-	}
-
-	var prefixKey keys.Key
-	if version.Query.HasValue() {
-		prefixKey = keys.NewViewCacheColPrefix(shortID)
-	} else {
-		prefixKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
-		}
-	}
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefixKey.ToDS(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return false, NewErrCheckCollectionDocs(errors.Join(err, iter.Close()))
-	}
-
-	hasValue, err := iter.Next()
-	if err != nil {
-		return false, NewErrCheckCollectionDocs(errors.Join(err, iter.Close()))
-	}
-
-	return hasValue, iter.Close()
 }
 
 func (db *DB) validateCollectionDoesNotHaveHigherVersion(

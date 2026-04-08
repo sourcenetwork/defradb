@@ -168,7 +168,7 @@ func newDB(
 		retryIntervals:          cfg.RetryIntervals,
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
 		lockSet:                 lockSet,
-		collectionRepository:    description.NewColCache(lockSet),
+		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
@@ -224,16 +224,6 @@ func newDB(
 
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
-	if db.ctx.Err() != nil {
-		return nil, db.ctx.Err()
-	}
-	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
-	return wrapDatastoreTxn(txn, db), nil
-}
-
-// NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	if db.ctx.Err() != nil {
 		return nil, db.ctx.Err()
 	}

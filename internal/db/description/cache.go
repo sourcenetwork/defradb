@@ -11,6 +11,7 @@
 package description
 
 import (
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/cache"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
@@ -31,8 +32,8 @@ type CollectionIndex struct {
 
 type CollectionRepository = cache.TxnRepository[CollectionIndex, client.CollectionVersion]
 
-func NewColCache(lockSet *lock.LockSet) *CollectionRepository {
-	collectionStore := newCollectionStore(lockSet)
+func NewColCache(lockSet *lock.LockSet, txnFreeDatastore corekv.Reader) *CollectionRepository {
+	collectionStore := newCollectionStore(lockSet, txnFreeDatastore)
 
 	collectionRepository := cache.NewTxnLayer(
 		func() cache.Cache[CollectionIndex, client.CollectionVersion] {

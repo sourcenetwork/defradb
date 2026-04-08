@@ -567,20 +567,6 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, txn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	res, err := execute(context.Background(), w.value, "newConcurrentTxn", readOnly)
-	if err != nil {
-		return nil, err
-	}
-	client := res[0]
-	id := uint64(client.Get("id").Int())
-	txn, err := w.client.Transaction(id)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, txn}, nil
-}
-
 func (w *Wrapper) Close() {
 	_ = w.node.Close(context.Background())
 }
