@@ -15,12 +15,14 @@ The variable `$ARGUMENTS` contains the user's full input string. Parse it for th
 - `--fixtures <path>` -- Path to a JSON fixture file. If present, load fixtures after the instance is healthy (see Section 3).
 - `--store <memory|badger>` -- Store backend to use. Default: `memory`.
 - `--remote <url>` -- URL of an existing DefraDB instance. If present, skip build/start/shutdown and connect directly (see Section 2a).
+- `--verbose` -- Include full request/response bodies in the session report. Default: off (brief expectations and pass/fail only).
 - Everything remaining after flag extraction is the user's prompt describing what area to test and debug.
 
 Store the parsed values:
 - `DEFRA_STORE` -- the store backend (default `memory`)
 - `DEFRA_FIXTURES` -- path to fixture file, or empty
 - `DEFRA_REMOTE` -- remote URL, or empty
+- `DEFRA_VERBOSE` -- `true` if `--verbose` was provided, empty otherwise
 - `DEFRA_PROMPT` -- the user's prompt text with flags removed
 
 ## Section 1: Overview
@@ -32,8 +34,8 @@ This skill performs end-to-end black-box testing of DefraDB. The workflow is:
 3. Start a fresh instance (skip if `--remote`)
 4. Poll health check until ready
 5. Load fixtures if `--fixtures` was provided
-6. Analyze the user's prompt and execute targeted GraphQL queries
-7. Report findings
+6. Execute targeted queries with hypothesis-based correctness validation
+7. Finalize session report with bug summary and reproduction steps
 8. Shut down the instance (skip if `--remote`)
 
 ## Section 2: Instance Lifecycle
@@ -267,30 +269,207 @@ When constructing queries, escape double quotes inside the JSON body properly. F
 
 ## Section 5: Debugging Loop
 
-Analyze the user's prompt (`DEFRA_PROMPT`) to understand what area of DefraDB to test. Then execute a systematic testing workflow:
+This section replaces passive query execution with active correctness validation. Every query goes through a hypothesis-then-verify cycle. Anomalies are reproduced before reporting. All findings are batched to an end-of-session report -- no mid-session user interrupts.
 
-1. **Understand the target area.** Read the user's prompt. Identify which DefraDB features are involved (CRUD, filtering, relations, aggregations, updates, deletes, etc.).
+### Step 5a: Session Report Initialization
 
-2. **Create appropriate schemas.** Design GraphQL SDL schemas that exercise the target area. Start simple and increase complexity. POST each schema via `/api/v0/collections`.
+At the START of the debugging loop (before any queries), create the session report file. Determine the next available sequence number for today's date:
 
-3. **Generate and execute test queries.** Build a series of GraphQL operations that probe the target area:
-   - Basic CRUD (create, read, update, delete)
-   - Edge cases (empty inputs, large values, special characters)
-   - Filters and conditions
-   - Relations and joins (if applicable)
-   - Ordering, limiting, offsetting
-   - Aggregations (if applicable)
+```bash
+DATE=$(date +%Y-%m-%d)
+SEQ=1
+while [ -f "DEBUG_PROGRESS_${DATE}_$(printf '%02d' $SEQ).md" ]; do
+  SEQ=$((SEQ + 1))
+done
+REPORT_FILE="DEBUG_PROGRESS_${DATE}_$(printf '%02d' $SEQ).md"
+echo "$REPORT_FILE"
+```
 
-4. **Evaluate results.** For each query, reason about what the correct result should be based on database first principles and GraphQL semantics -- not based on what the code does. Compare actual results against expected results.
+Use the Write tool (not Bash heredoc) to create the initial report file in the working directory (repo root) with this header:
 
-5. **Report findings.** For each test:
-   - What was tested (the query)
-   - What was expected (and why)
-   - What actually happened
-   - Whether it passed or failed
-   - If failed: is it reproducible? What is the severity?
+```markdown
+# Debug Session: <DATE>
 
-Correctness validation and structured bug reports will be added in a future update.
+**Prompt:** <DEFRA_PROMPT>
+**Store:** <DEFRA_STORE>
+**Instance:** <local:9281 or remote URL>
+**Started:** <timestamp>
+
+## Chronological Log
+
+| # | Query | Expectation | Result | Status |
+|---|-------|-------------|--------|--------|
+```
+
+Remember the report filename for use in all subsequent steps. The report file accumulates findings as the session progresses so that state is preserved across Bash tool calls -- do not wait until the end to write the log entries.
+
+### Step 5b: Query Planning
+
+Analyze `DEFRA_PROMPT` to understand the target area. Identify which DefraDB features are involved (CRUD, filtering, relations, aggregations, updates, deletes, etc.). Design schemas and a sequence of queries that systematically probe the target area. Start simple and increase complexity.
+
+Per D-01: the skill is a reasoning agent, not a test harness. Think about what database operations SHOULD do based on fundamental database semantics (CRUD consistency, referential integrity, filter semantics, GraphQL spec), NOT based on what DefraDB's code does. Code-aligned expectations risk validating buggy behavior.
+
+Create the schemas via the pattern in Section 4. Insert any needed documents via the `add_<CollectionName>` mutation pattern from Section 3. Once the setup is complete, enter the hypothesis-then-verify loop below.
+
+### Step 5c: Hypothesis-Then-Verify Loop
+
+For EACH query in the sequence, follow these substeps in strict order.
+
+**1. BEFORE executing the query, formulate a hypothesis.**
+
+Write a brief one-liner prediction: `Expect: <prediction>` (e.g., `Expect: 3 docs matching filter`, `Expect: empty result`, `Expect: error because field does not exist`).
+
+Base the prediction on database first principles: what data was inserted, what the query asks for, and how a correct database should behave. Log the hypothesis BEFORE the curl command. This ordering is critical to avoid confirmation bias -- never look at the response first and then rationalize what was "expected."
+
+Per D-02: keep the expectation short. Detailed reasoning ("because I inserted 3 Users with age > 30 and the filter is age > 30") only surfaces when actual != expected, not for every query.
+
+**2. Execute the query** using the curl pattern from Section 4:
+
+```bash
+RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "<gql>"}')
+echo "$RESPONSE" | jq .
+```
+
+**3. Evaluate the response against the hypothesis.**
+
+- If the response matches the hypothesis: log as `PASS` with the one-liner in the chronological log.
+- If the response does NOT match: proceed to Step 5d (classification) and Step 5e (reproduction) before continuing.
+
+**4. Append a row to the chronological log** in the report file (via the Write tool -- read the current file, add the row, write it back):
+
+```
+| N | `<gql>` | Expect: <prediction> | <brief actual> | PASS |
+```
+
+If `DEFRA_VERBOSE` is set to `true`, also include the full request body and full response body below the log table in a fenced code block labeled `Query N`. Per D-05: verbose mode controls whether full request/response bodies appear; non-verbose mode keeps the log compact with only brief expectations and pass/fail status.
+
+### Step 5d: Error Classification
+
+When a query result does not match the hypothesis, classify the failure into exactly ONE of three categories. Per D-08 and CORR-02: strict 3-category classification with NO sub-categories.
+
+Inspect the response structure with `jq`:
+
+```bash
+ERRORS=$(echo "$RESPONSE" | jq '.errors // empty')
+```
+
+Apply the classification rules in order. Classification is based on response structure, not subjective judgment:
+
+1. **PARSE ERROR** -- The response contains an `errors` array AND the error message indicates a parsing/syntax failure (e.g., contains "Syntax Error", "Unexpected", "unknown field", schema validation failures). The query never reached execution.
+
+2. **RUNTIME ERROR** -- The response contains an `errors` array AND the error message indicates an execution-time failure (e.g., contains "failed to", transaction errors, collection not found at runtime). The query was parsed but failed during execution.
+
+3. **DATA CORRECTNESS ISSUE** -- The response has NO `errors` array (or errors is null/empty), `data` is present, but the returned data does not match the hypothesis. The query succeeded technically but produced wrong results.
+
+Pitfall: an empty result set (`{"data": {"User": []}}`) with no errors is NOT a runtime error -- it is a DATA CORRECTNESS ISSUE if the hypothesis expected non-empty data. Classification reads the response shape, not how the data "feels."
+
+### Step 5e: Anomaly Reproduction
+
+When a mismatch is detected (any of the 3 classifications above), confirm reproducibility before recording a bug. Per D-03: 1 re-run, 2 total executions.
+
+1. Log the first failure with full details (query, expected, actual, classification) in the report file.
+2. Re-execute the EXACT SAME query against the SAME instance state. Do NOT perform any intervening mutations that could change state between the first and second run.
+3. Compare the second result:
+   - If second execution ALSO fails with the same mismatch: mark as **CONFIRMED**. Record for the summary report.
+   - If second execution passes (different result): mark as **FLAKY/UNCONFIRMED**. Note in the chronological log but do NOT include in the bug summary.
+
+With memory store, behavior should be deterministic, so confirmed failures are real bugs.
+
+Per D-04 and INVK-02: Do NOT interrupt the user mid-session. Continue testing regardless of how many anomalies are found. All confirmed findings are batched into the end-of-session report produced in Step 5g.
+
+If the query under test is itself a mutation (e.g., an update or delete that changes state), the re-run operates on different state. In that case, reconstruct the precondition state first (re-insert the documents), then re-run the mutation, and note in the reproduction entry that reproduction required re-establishing state.
+
+### Step 5f: @explain Investigation
+
+Per D-09: the `@explain` GraphQL directive is a general-purpose investigation tool. When investigating anomalies or when the query plan might be relevant to understanding a failure, run an explain query against the same query body:
+
+```bash
+curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "query @explain(type: simple) { <same_query_body> }"}' | jq .
+```
+
+Three explain types are available:
+
+- `simple` -- Plan graph with node attributes (filter values, collection names, prefixes). Most useful for understanding planner decisions. Use this by default.
+- `execute` -- Plan graph with execution statistics. Useful for seeing what happened during execution.
+- `debug` -- Plan graph structure without attribute details. Quick structural overview.
+
+Include the explain output in the bug report when it adds diagnostic value (regardless of `DEFRA_VERBOSE` mode). The explain output answers "why did the query plan look like this," which is valuable context for bug investigation -- especially for data correctness issues involving filters, joins, or indexes.
+
+### Step 5g: Session Report Finalization
+
+After all queries are complete, finalize the report file by reading it, appending the summary section, and writing it back with the Write tool. The finalized file must contain both the chronological log and the structured summary report, separated by headings (per D-07).
+
+The final report structure:
+
+```markdown
+# Debug Session: <DATE>
+
+**Prompt:** ...
+**Store:** ...
+**Instance:** ...
+**Started:** ...
+**Completed:** <timestamp>
+
+## Chronological Log
+
+| # | Query | Expectation | Result | Status |
+|---|-------|-------------|--------|--------|
+| 1 | `query { ... }` | Expect: ... | ... | PASS |
+| 2 | `query { ... }` | Expect: ... | ... | FAIL |
+
+### Query 2: Detailed Failure Analysis
+
+**Expected:** <what and why, based on first principles>
+**Actual:** <what happened>
+**Reproduction:** Re-ran query -- same result. CONFIRMED.
+**Classification:** <PARSE ERROR | RUNTIME ERROR | DATA CORRECTNESS ISSUE>
+
+**Explain output:** (if relevant)
+
+<explain plan output>
+
+## Summary
+
+### Session Statistics
+
+- Queries executed: N
+- Passed: N
+- Failed: N (M confirmed, K unconfirmed)
+
+### Bugs Found: N
+
+#### Bug 1: <descriptive title>
+
+**Classification:** <PARSE ERROR | RUNTIME ERROR | DATA CORRECTNESS ISSUE>
+**Description:** <what went wrong and why it is wrong, based on first principles>
+
+**Reproduction Steps:**
+1. Add schema: `<SDL>`
+2. Create documents: <mutations>
+3. Execute: `<query>`
+4. Expected: <result>
+5. Actual: <result>
+
+**Explain output:** (if relevant)
+
+<query plan>
+
+### Observations
+
+- <things noticed that are not bugs but worth noting>
+
+### Recommendations
+
+- <suggested areas for further investigation>
+```
+
+For each confirmed bug (REPT-04): include the MINIMAL reproduction steps. This means the smallest schema, fewest documents, and simplest query that reproduces the issue. Strip away anything not needed for reproduction. The goal is that a reader can copy the steps verbatim and trigger the same bug on a fresh instance.
+
+Only bugs marked **CONFIRMED** in Step 5e appear in the Bugs Found section. Unconfirmed/flaky anomalies stay in the chronological log but are excluded from the bug summary.
 
 ## Section 6: Shutdown
 
