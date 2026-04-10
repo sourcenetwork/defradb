@@ -52,9 +52,9 @@ If `DEFRA_REMOTE` is set (the user provided `--remote <url>`):
 
 The DefraDB Makefile embeds `git rev-parse HEAD` into the binary via ldflags (`version.GitCommit`). The built binary carries its own source commit -- no marker files are needed.
 
-Execute the following to determine if a rebuild is needed:
+**Important:** a plain `go build` does NOT inject the ldflags; the resulting binary reports an empty commit and staleness detection would then rebuild every session. The skill must pass the same ldflags the Makefile uses so the binary's `version` command reports the real commit.
 
-Determine the project root dynamically using `git rev-parse --show-toplevel`:
+Execute the following to determine if a rebuild is needed. Determine the project root dynamically using `git rev-parse --show-toplevel`:
 
 ```bash
 DEFRA_ROOT=$(git rev-parse --show-toplevel)
@@ -70,7 +70,16 @@ fi
 
 if [ "$CURRENT_HEAD" != "$BUILT_COMMIT" ]; then
   echo "Build is stale (HEAD=$CURRENT_HEAD, built=$BUILT_COMMIT). Rebuilding..."
-  CGO_ENABLED=1 go build -o build/defradb cmd/defradb/main.go
+  VERSION_GOINFO=$(go version)
+  VERSION_GITCOMMIT=$(git rev-parse HEAD)
+  VERSION_GITCOMMITDATE=$(git show -s --date=short --format=%cd HEAD)
+  VERSION_GITRELEASE="dev-$(git symbolic-ref -q --short HEAD 2>/dev/null || echo HEAD)"
+  CGO_ENABLED=1 go build -trimpath -ldflags "\
+    -X 'github.com/sourcenetwork/defradb/version.GoInfo=${VERSION_GOINFO}' \
+    -X 'github.com/sourcenetwork/defradb/version.GitRelease=${VERSION_GITRELEASE}' \
+    -X 'github.com/sourcenetwork/defradb/version.GitCommit=${VERSION_GITCOMMIT}' \
+    -X 'github.com/sourcenetwork/defradb/version.GitCommitDate=${VERSION_GITCOMMITDATE}'" \
+    -o build/defradb cmd/defradb/main.go
   if [ $? -ne 0 ]; then
     echo "BUILD FAILED. Cannot proceed."
     exit 1
@@ -82,6 +91,8 @@ fi
 ```
 
 Use a 300-second timeout on the build command to handle cold builds. If the build fails, report the error and stop -- do not proceed with a stale or missing binary.
+
+Alternatively, the equivalent `make build` invocation produces the same binary with ldflags injected. Using `go build` with explicit ldflags (as above) is preferred when the skill needs fine-grained control; fall back to `make build` only if the ldflag list drifts.
 
 ### Step 2c: Start Instance
 
@@ -228,16 +239,16 @@ The `add_<CollectionName>` mutation accepts an array of documents in its `input`
 ```bash
 for COLLECTION in $(jq -r '.documents | keys[]' "$DEFRA_FIXTURES"); do
   DOCS=$(jq -c ".documents[\"$COLLECTION\"]" "$DEFRA_FIXTURES")
-  COUNT=$(echo "$DOCS" | jq 'length')
+  COUNT=$(printf '%s\n' "$DOCS" | jq 'length')
   MUTATION="mutation { add_${COLLECTION}(input: ${DOCS}) { _docID } }"
   RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
     -H "Content-Type: application/json" \
-    -d "{\"query\": $(echo "$MUTATION" | jq -Rs .)}")
-  ERRORS=$(echo "$RESPONSE" | jq -r '.errors // empty')
+    -d "{\"query\": $(printf '%s' "$MUTATION" | jq -Rs .)}")
+  ERRORS=$(printf '%s\n' "$RESPONSE" | jq -r '.errors // empty')
   if [ -n "$ERRORS" ] && [ "$ERRORS" != "null" ]; then
     echo "Error loading documents into $COLLECTION: $ERRORS"
   else
-    LOADED=$(echo "$RESPONSE" | jq '.data.add_'"$COLLECTION"' | length')
+    LOADED=$(printf '%s\n' "$RESPONSE" | jq '.data.add_'"$COLLECTION"' | length')
     echo "Loaded $LOADED/$COUNT documents into $COLLECTION."
   fi
 done
@@ -266,6 +277,8 @@ curl -s -X POST "$DEFRA_URL/api/v0/collections" \
 Response format is standard GraphQL: `{"data": {...}, "errors": [...]}`. Always check both `data` and `errors` fields. Use `jq` to parse responses for readability.
 
 When constructing queries, escape double quotes inside the JSON body properly. For mutations with string values, use backslash-escaped quotes: `\"value\"`.
+
+**Portability note:** when a response JSON is captured into a shell variable and then fed to `jq`, use `printf '%s\n' "$RESPONSE" | jq .` -- NOT `echo "$RESPONSE" | jq .`. In `zsh`, the built-in `echo` interprets backslash escapes by default, so a legitimate `\n` inside a JSON string (common in DefraDB error messages) gets converted to a literal newline and the resulting stream is no longer valid JSON. `printf '%s\n'` is portable across `bash`, `zsh`, and `sh` and preserves the response bytes exactly. The same concern applies to `jq -Rs .` on authored queries when the query happens to contain newline escapes. All response-handling examples in Section 5 use `printf` for this reason.
 
 ## Section 5: Debugging Loop
 
@@ -329,7 +342,7 @@ Per D-02: keep the expectation short. Detailed reasoning ("because I inserted 3 
 RESPONSE=$(curl -s -X POST "$DEFRA_URL/api/v0/graphql" \
   -H "Content-Type: application/json" \
   -d '{"query": "<gql>"}')
-echo "$RESPONSE" | jq .
+printf '%s\n' "$RESPONSE" | jq .
 ```
 
 **3. Evaluate the response against the hypothesis.**
@@ -352,14 +365,14 @@ When a query result does not match the hypothesis, classify the failure into exa
 Inspect the response structure with `jq`:
 
 ```bash
-ERRORS=$(echo "$RESPONSE" | jq '.errors // empty')
+ERRORS=$(printf '%s\n' "$RESPONSE" | jq '.errors // empty')
 ```
 
 Apply the classification rules in order. Classification is based on response structure, not subjective judgment:
 
-1. **PARSE ERROR** -- The response contains an `errors` array AND the error message indicates a parsing/syntax failure (e.g., contains "Syntax Error", "Unexpected", "unknown field", schema validation failures). The query never reached execution.
+1. **PARSE ERROR** -- The response contains an `errors` array AND the error message indicates a parsing, syntax, or schema validation failure (e.g., contains "Syntax Error", "Unexpected", "unknown field", "Cannot query field", "Expected type", or any GraphQL schema validation failure). The query never reached execution. **Note:** in DefraDB, querying a collection that does not exist, referencing an unknown field, or passing a wrongly-typed argument all surface as schema validation failures and MUST be classified as PARSE ERROR, not RUNTIME ERROR.
 
-2. **RUNTIME ERROR** -- The response contains an `errors` array AND the error message indicates an execution-time failure (e.g., contains "failed to", transaction errors, collection not found at runtime). The query was parsed but failed during execution.
+2. **RUNTIME ERROR** -- The response contains an `errors` array AND the error message indicates an execution-time failure (e.g., contains "failed to", transaction errors, storage errors, CRDT merge failures, internal panics). The query was parsed and schema-validated but failed during execution. RUNTIME ERRORS are comparatively rare against an in-memory store -- DefraDB catches most problems at parse/validation time. If you are unsure whether an error is a parse or runtime error, check whether the error message references an execution verb ("failed to fetch", "failed to commit", "could not read block") -- that signals RUNTIME ERROR.
 
 3. **DATA CORRECTNESS ISSUE** -- The response has NO `errors` array (or errors is null/empty), `data` is present, but the returned data does not match the hypothesis. The query succeeded technically but produced wrong results.
 
