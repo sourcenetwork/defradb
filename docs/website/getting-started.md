@@ -30,7 +30,7 @@ We recommend experimenting with queries using a native GraphQL client. Altair is
 
 Start a node by executing `defradb start`. Keep the node running while going through the following examples.
 
-Verify the node is running by executing `curl localhost:9181/api/v0/health` in another terminal.
+Verify the node is running by executing `curl localhost:9181/health-check` in another terminal.
 
 ## Configuration
 
@@ -91,7 +91,7 @@ Expected response:
 }
 ```
 
-`_docID` is the document's key, a unique identifier of the document, determined by its collection and initial data.
+`_docID` is the document's unique identifier, determined by its collection and initial data.
 
 ## Query documents
 
@@ -261,10 +261,10 @@ It is possible to subscribe to updates on a given collection by specifying its n
 defradb client p2p collection add --url localhost:9182 User
 ```
 
-Multiple collection names can be added at once.
+Multiple collection names can be added at once as a single comma-separated argument.
 
 ```shell
-defradb client p2p collection add --url localhost:9182 User Article
+defradb client p2p collection add --url localhost:9182 User,Article
 ```
 
 ### Replicator example

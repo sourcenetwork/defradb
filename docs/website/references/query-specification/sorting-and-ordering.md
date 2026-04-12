@@ -38,11 +38,11 @@ Additionally, you can sort sub-object fields along with root object fields.
 The query below finds all books ordered by earliest published date and then by the latest authors' birthday.
 ```graphql
 {
-    Books(order: [{ published_at: ASC }, { Author: { birthday: DESC }}]) {
+    Books(order: [{ published_at: ASC }, { author: { birthday: DESC }}]) {
         title
         description
         published_at
-        Author {
+        author {
             name
             birthday
         }
@@ -63,9 +63,9 @@ If `_docID` is included in the sort fields, any field included afterwards will n
 *So, instead of:*
 ```graphql
 {
-    Authors(order: [{ name: DESC }, { Books: { title: ASC }}]) {
+    Authors(order: [{ name: DESC }, { books: { title: ASC }}]) {
         name
-        Books {
+        books {
             title
         }
     }
@@ -76,7 +76,7 @@ If `_docID` is included in the sort fields, any field included afterwards will n
 {
     Authors(order: { name: DESC }) {
         name
-        Books(order: { title: ASC }) {
+        books(order: { title: ASC }) {
             title
         }
     }
@@ -123,14 +123,6 @@ If you have the following objects in the database:
 }
 ```
 
-```graphql
-Book(docID: ["bae-example-id"]) {
-    title 
-    genre
-    description
-}
-```
-
-> Given there are two authors with the same name (John Grisham), the sort object `(sort: { name: "desc", Books: { title: "asc" }}` would suggest we sort duplicate authors using `Books: { title: "asc" }` as the secondary sort field. However, because the books field is an array of objects, there is no single value for the title to compare easily.
+> Given there are two authors with the same name (John Grisham), the sort object `(order: [{ name: DESC }, { books: { title: ASC }}])` would suggest we sort duplicate authors using `books: { title: ASC }` as the secondary sort field. However, because the `books` field is an array of objects, there is no single value for `title` to compare easily.
 >
 > Therefore, sorting on array sub objects from the root field is ***strictly not allowed***.

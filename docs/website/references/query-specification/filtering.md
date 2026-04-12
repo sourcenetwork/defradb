@@ -56,7 +56,7 @@ Filters can also be applied on subfields that have relational objects within the
 		title
 		genre
 		description
-		Author {
+		author {
 			name
 			bio
 		}

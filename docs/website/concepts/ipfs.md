@@ -34,7 +34,7 @@ DefraDB does not run a full IPFS node or participate in the public IPFS network.
 - **Block Storage:** DefraDB uses `boxo/blockstore` and `go-block-format` for its underlying block-based storage layer.
 - **IPLD Data Modeling:** DefraDB uses `go-ipld-format` to model document data as IPLD (InterPlanetary Linked Data) nodes, enabling content-linked data structures.
 
-Peer-to-peer data syncing in DefraDB is scoped to explicitly configured replicator peers and is governed by access control policies (ACP). DefraDB nodes do not share data with the broader IPFS network.
+Peer-to-peer data syncing in DefraDB happens over DefraDB's own libp2p-based networking features, including explicitly configured replicators and pubsub subscriptions for selected collections or documents. DefraDB nodes do not share data with the broader IPFS network.
 
 ## Suggested Reading
 

@@ -24,6 +24,8 @@ mutation {
 
 The above example displays the general structure of an insert mutation. You call the `add_TYPE` mutation, with the given input.
 
+Although the generated schema exposes `input` as a list type, GraphQL input coercion also allows a single input object in practice, which is why many examples use `input: { ... }`.
+
 ### Input Object Type
 
 All mutations use a typed input object to update the data.
@@ -70,6 +72,8 @@ mutation {
 ```
 
 See the structure and syntax of the filter query above. You can also see an additional field `docID`, which will supersede the `filter`; this makes it easy to update a single document or set of documents by their IDs.
+
+The generated schema exposes `docID` as `[ID!]`, but GraphQL input coercion also allows a single `ID` value in practice.
 
 The input object type is the same for both `update_TYPE` and `add_TYPE` mutations.
 
@@ -139,6 +143,8 @@ mutation {
 ```
 
 This will delete the specific document, and return the `_docID` and `name` for the deleted document.
+
+As with updates, the generated schema exposes `docID` as `[ID!]`, while GraphQL input coercion also allows a single `ID` value in practice.
 
 DefraDB uses a soft delete system. When a document is deleted, it is logically marked as deleted rather than physically removed from the database. Deleted documents can be retrieved using the `showDeleted` query argument.
 

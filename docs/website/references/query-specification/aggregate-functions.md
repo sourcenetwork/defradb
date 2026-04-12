@@ -30,15 +30,14 @@ We can also use simpler queries, without any `groupBy` clause, and still use agg
 Let's simply count all the objects returned by a given filter.
 ```graphql
 {
-    COUNT(Books: {})
+    COUNT(Books: {filter: {rating: {_gt: 3.5}}})
 }
 ```
-This returns the total number of Book objects. When using `COUNT` at the top level, it applies to the entire collection.
+This returns the total number of Book objects whose `rating` is greater than `3.5`. When using `COUNT` at the top level, it applies to the full result set selected for that collection argument.
 
 > Note, the special aggregate field `COUNT` does not require a target field, so instead of applying the `count` function to a field, it applies to the entire object. This is only possible with the `count` function; all the other aggregate functions must specify their target field using the `field` argument.
 
 We can further simplify the above count query by including only the `COUNT` field. If we ***only*** return the `COUNT` field, then a single object is returned, instead of an array of objects.
 
 DefraDB also supports applying aggregate functions to relations just like we do fields. However, only the `count` function is available directly on the related object type.
-
 
