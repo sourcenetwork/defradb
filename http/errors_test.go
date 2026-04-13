@@ -71,7 +71,6 @@ func TestHttpStatusFromError(t *testing.T) {
 		{"replicator col has policy", db.ErrReplicatorColHasPolicy, http.StatusUnprocessableEntity},
 		{"collection name mutated", db.ErrCollectionNameMutated, http.StatusUnprocessableEntity},
 		{"cannot delete old version", db.ErrCannotDeleteOldVersion, http.StatusUnprocessableEntity},
-		{"cannot delete collection with docs", db.ErrCannotDeleteCollectionWithDocs, http.StatusUnprocessableEntity},
 		{"migration between non-adjacent versions", db.ErrMigrationBetweenNonAdjacentVersions, http.StatusUnprocessableEntity},
 		{"NAC already disabled", db.ErrNACIsAlreadyDisabled, http.StatusUnprocessableEntity},
 		{"NAC already enabled", db.ErrNACIsAlreadyEnabled, http.StatusUnprocessableEntity},

@@ -12,6 +12,7 @@ package keys
 
 import (
 	"fmt"
+	"strings"
 
 	ds "github.com/ipfs/go-datastore"
 )
@@ -28,6 +29,11 @@ var _ Key = (*CollectionKey)(nil)
 // It assumes the id of the collection is non-empty.
 func NewCollectionKey(id string) CollectionKey {
 	return CollectionKey{CollectionID: id}
+}
+
+func NewCollectionKeyFromString(keyString string) CollectionKey {
+	keyString = strings.TrimPrefix(keyString, COLLECTION_ID+"/")
+	return CollectionKey{CollectionID: keyString}
 }
 
 func (k CollectionKey) ToString() string {

@@ -51,7 +51,7 @@ func (p *P2P) syncCollectionVersion(
 	versionID string,
 	linkSys linking.LinkSystem,
 ) (client.CollectionVersion, error) {
-	col, err := description.GetCollectionByID(ctx, versionID)
+	col, err := description.GetCollectionByID(ctx, p.collectionRepository, versionID)
 	if err != nil {
 		if !errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, err
@@ -213,7 +213,7 @@ func (p *P2P) syncCollectionVersion(
 	// can toggle this locally if they like.
 	col.IsMaterialized = !query.HasValue()
 
-	err = description.SaveCollection(ctx, col)
+	err = description.SaveCollection(ctx, p.collectionRepository, col)
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}

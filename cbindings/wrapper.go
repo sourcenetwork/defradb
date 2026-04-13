@@ -63,7 +63,7 @@ extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
 extern Result AddCollection(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
+extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isReadOnly);
 extern Result GetVersion(int flagFull, int flagJSON);
 extern Result AddView(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
 extern Result RefreshView(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -1044,13 +1044,12 @@ func (w *CWrapper) ExecRequest(
 }
 
 func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	var concurrent C.int = 0
 	var cReadOnly C.int = 0
 	if readOnly {
 		cReadOnly = 1
 	}
 
-	res := C.CreateTransaction(C.uintptr_t(w.handle), concurrent, cReadOnly)
+	res := C.CreateTransaction(C.uintptr_t(w.handle), cReadOnly)
 	errText := C.GoString(res.error)
 	defer C.free(unsafe.Pointer(res.error))
 
@@ -1062,29 +1061,6 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, dsTxn, handle}
 	txnHandleMap.Store(retTxn.tx.ID(), handle)
-	return retTxn, nil
-}
-
-func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	var concurrent C.int = 1
-	var cReadOnly C.int = 0
-	if readOnly {
-		cReadOnly = 1
-	}
-
-	res := C.CreateTransaction(C.uintptr_t(w.handle), concurrent, cReadOnly)
-	errText := C.GoString(res.error)
-	defer C.free(unsafe.Pointer(res.error))
-
-	if res.status != 0 {
-		return nil, errors.New(errText)
-	}
-
-	handle := cgo.Handle(res.txnPtr)
-	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, dsTxn, handle}
-	txnHandleMap.Store(retTxn.tx.ID(), handle)
-
 	return retTxn, nil
 }
 

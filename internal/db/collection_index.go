@@ -39,7 +39,7 @@ import (
 func (db *DB) listIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	collections, err := description.GetCollections(ctx)
+	collections, err := description.GetCollections(ctx, db.collectionRepository)
 
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (c *collection) newIndex(
 
 	c.def.Indexes = append(c.def.Indexes, desc)
 
-	err = description.SaveCollection(ctx, c.def)
+	err = description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return nil, err
@@ -417,7 +417,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 		}
 	}
 
-	err := description.SaveCollection(ctx, c.def)
+	err := description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.Indexes = oldIndexes
 		return err
@@ -489,7 +489,7 @@ func (c *collection) newEncryptedIndex(
 
 	c.def.EncryptedIndexes = append(c.def.EncryptedIndexes, encryptedIndex)
 
-	err = description.SaveCollection(ctx, c.def)
+	err = description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.EncryptedIndexes = c.def.EncryptedIndexes[:len(c.def.EncryptedIndexes)-1]
 		return client.EncryptedIndexDescription{}, err
@@ -573,7 +573,7 @@ func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string)
 		c.def.EncryptedIndexes[indexToRemove+1:]...,
 	)
 
-	err := description.SaveCollection(ctx, c.def)
+	err := description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.EncryptedIndexes = oldEncryptedIndexes
 		return err
@@ -745,7 +745,7 @@ func generateIndexName(colName string, fields []client.IndexedFieldDescription, 
 func (db *DB) listAllEncryptedIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	collections, err := description.GetCollections(ctx)
+	collections, err := description.GetCollections(ctx, db.collectionRepository)
 
 	if err != nil {
 		return nil, err

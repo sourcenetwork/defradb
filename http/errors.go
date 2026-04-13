@@ -150,7 +150,6 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
 		errors.Is(err, db.ErrCollectionNameMutated) ||
 		errors.Is(err, db.ErrCannotDeleteOldVersion) ||
-		errors.Is(err, db.ErrCannotDeleteCollectionWithDocs) ||
 		errors.Is(err, db.ErrMigrationBetweenNonAdjacentVersions) ||
 		errors.Is(err, db.ErrNACIsAlreadyDisabled) ||
 		errors.Is(err, db.ErrNACIsAlreadyEnabled) ||

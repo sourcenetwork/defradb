@@ -91,8 +91,6 @@ const (
 	errCollectionIDCannotBeEmpty                 string = "collection ID cannot be empty"
 	errCannotDeleteOldVersion                    string = "cannot delete a version that is used by a newer version, " +
 		"first delete the new version"
-	errCannotDeleteCollectionWithDocs string = "cannot delete a collection that has documents, first " +
-		"delete the documents and then delete the version"
 	errCanNotHavePolicyWithoutACP          string = "can not specify policy on collection, without acp"
 	errRelationMissingField                string = "relation missing field"
 	errMultipleRelationPrimaries           string = "relation can only have a single field set as primary"
@@ -218,7 +216,6 @@ var (
 	ErrCollectionVersionIDCannotBeMutated        = errors.New(errCollectionVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
-	ErrCannotDeleteCollectionWithDocs            = errors.New(errCannotDeleteCollectionWithDocs)
 	ErrCanNotHavePolicyWithoutACP                = errors.New(errCanNotHavePolicyWithoutACP)
 	ErrRelationMissingField                      = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                 = errors.New(errMultipleRelationPrimaries)
@@ -732,14 +729,6 @@ func NewErrCannotDeleteOldVersion(old, new string) error {
 		errCannotDeleteOldVersion,
 		errors.NewKV("TargetCollectionID", old),
 		errors.NewKV("UsedByCollectionID", new),
-	)
-}
-
-func NewErrCannotDeleteCollectionWithDocs(name, versionID string) error {
-	return errors.New(
-		errCannotDeleteCollectionWithDocs,
-		errors.NewKV("Name", name),
-		errors.NewKV("VersionID", versionID),
 	)
 }
 

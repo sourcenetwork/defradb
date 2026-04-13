@@ -168,7 +168,7 @@ func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, n.p.lensStore)
+		f = lens.NewFetcher(f, n.p.lensStore, n.p.collectionRepository)
 	}
 	n.fetcher = f
 }

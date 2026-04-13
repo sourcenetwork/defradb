@@ -23,6 +23,12 @@ const (
 	errGetCollectionVersions               string = "failed to get collection versions"
 	errDeleteCollection                    string = "failed to delete collection"
 	errCheckCollectionExists               string = "failed to check if collection exists"
+	errCannotDeleteCollectionWithDocs      string = "cannot delete a collection that has documents, first " +
+		"delete the documents and then delete the version"
+)
+
+var (
+	ErrCannotDeleteCollectionWithDocs = errors.New(errCannotDeleteCollectionWithDocs)
 )
 
 // NewErrFailedToCloseCollectionVersionQuery returns a new error indicating that the query
@@ -75,4 +81,12 @@ func NewErrDeleteCollection(inner error, collectionID string) error {
 // NewErrCheckCollectionExists returns a new error indicating that checking collection existence failed.
 func NewErrCheckCollectionExists(inner error, name string) error {
 	return errors.Wrap(errCheckCollectionExists, inner, errors.NewKV("Name", name))
+}
+
+func NewErrCannotDeleteCollectionWithDocs(name, versionID string) error {
+	return errors.New(
+		errCannotDeleteCollectionWithDocs,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", versionID),
+	)
 }

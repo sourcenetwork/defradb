@@ -194,6 +194,7 @@ func (c *collection) makeSelectionPlan(
 		c.db,
 		c.db.p2p,
 		c.db.getLensStore(ctx),
+		c.db.collectionRepository,
 	)
 
 	return planner.MakeSelectionPlan(slct)

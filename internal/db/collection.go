@@ -72,7 +72,7 @@ func (c *collection) newFetcher(ctx context.Context) fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx))
+	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx), c.db.collectionRepository)
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -113,24 +113,34 @@ func (db *DB) getCollections(
 	var cols []client.CollectionVersion
 	switch {
 	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
-		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
+		col, err := description.GetCollectionByName(ctx, db.collectionRepository, opts.CollectionName.Value())
 		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case opts.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, opts.VersionID.Value())
+		col, err := description.GetCollectionByID(ctx, db.collectionRepository, opts.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case opts.CollectionID.HasValue():
-		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, opts.CollectionID.Value())
-		if err != nil {
-			return nil, err
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
+			var err error
+			cols, err = description.GetCollectionsByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// GetActiveCollectionByCollectionID is quite a lot more efficient than GetCollectionsByCollectionID
+			// so we use it when we can.
+			col, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
+				return nil, err
+			}
+			cols = append(cols, col)
 		}
 
 	// Multi-collection self-referencing relations are the only time the collection set id option
@@ -143,13 +153,13 @@ func (db *DB) getCollections(
 	default:
 		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
 			var err error
-			cols, err = description.GetCollections(ctx)
+			cols, err = description.GetCollections(ctx, db.collectionRepository)
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			var err error
-			cols, err = description.GetActiveCollections(ctx)
+			cols, err = description.GetActiveCollections(ctx, db.collectionRepository)
 			if err != nil {
 				return nil, err
 			}
@@ -228,7 +238,7 @@ func (db *DB) addCollection(
 }
 
 func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
-	definitions, err := description.GetActiveCollections(ctx)
+	definitions, err := description.GetActiveCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return err
 	}

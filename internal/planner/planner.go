@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -96,10 +97,11 @@ type P2P interface {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	identity    immutable.Option[acpIdentity.Identity]
-	nodeACP     acpDB.NACInfo
-	documentACP immutable.Option[dac.DocumentACP]
-	db          client.TxnStore
+	identity             immutable.Option[acpIdentity.Identity]
+	nodeACP              acpDB.NACInfo
+	documentACP          immutable.Option[dac.DocumentACP]
+	db                   client.TxnStore
+	collectionRepository *description.CollectionRepository
 
 	p2p       P2P
 	ctx       context.Context
@@ -119,15 +121,17 @@ func New(
 	db client.TxnStore,
 	p2p P2P,
 	lensStore lensStore.Store,
+	collectionRepository *description.CollectionRepository,
 ) *Planner {
 	return &Planner{
-		identity:    identity,
-		nodeACP:     nodeACP,
-		documentACP: documentACP,
-		db:          db,
-		p2p:         p2p,
-		lensStore:   lensStore,
-		ctx:         ctx,
+		identity:             identity,
+		nodeACP:              nodeACP,
+		documentACP:          documentACP,
+		db:                   db,
+		p2p:                  p2p,
+		lensStore:            lensStore,
+		ctx:                  ctx,
+		collectionRepository: collectionRepository,
 	}
 }
 
@@ -861,7 +865,7 @@ func (p *Planner) RunRequest(
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
 func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error) {
-	s, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, selection)
+	s, err := mapper.ToSelect(p.ctx, p.db, p.collectionRepository, mapper.ObjectSelection, selection)
 	if err != nil {
 		return nil, err
 	}
@@ -893,8 +897,7 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 	} else {
 		return nil, ErrMissingQueryOrMutation
 	}
-
-	m, err := mapper.ToOperation(p.ctx, p.db, operation)
+	m, err := mapper.ToOperation(p.ctx, p.db, p.collectionRepository, operation)
 	if err != nil {
 		return nil, err
 	}
