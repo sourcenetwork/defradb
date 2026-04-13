@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
@@ -30,6 +31,8 @@ type concurrentTxn struct {
 	mu sync.Mutex
 }
 
+var _ corekv.Txn = (*concurrentTxn)(nil)
+
 // newConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
 func NewConcurrentTxnFrom(
 	rootstore corekv.TxnStore,
@@ -40,12 +43,13 @@ func NewConcurrentTxnFrom(
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
-	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
+	multistore := NewMultistore(rootConcurentTxn, lockSet, chunkSize)
 
 	return &BasicTxn{
-		Multistore: multistore,
-		txn:        rootConcurentTxn,
-		id:         id,
+		Multistore:    multistore,
+		underlyingTxn: rootTxn,
+		id:            id,
+		ts:            time.Now(),
 	}
 }
 
@@ -71,9 +75,4 @@ func (t *concurrentTxn) Set(ctx context.Context, key []byte, value []byte) error
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Set(ctx, key, value)
-}
-
-// Sync executes the transaction.
-func (t *concurrentTxn) Sync(ctx context.Context) error {
-	return t.Commit()
 }

@@ -12,7 +12,6 @@ package description
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -21,108 +20,33 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // SaveCollection saves the given collection to the system store.
 func SaveCollection(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	desc client.CollectionVersion,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	err := id.SetShortCollectionID(ctx, desc.CollectionID)
-	if err != nil {
-		return NewErrSaveCollection(err, desc.CollectionID)
-	}
-
-	err = id.SetShortFieldIDs(ctx, desc)
-	if err != nil {
-		return NewErrSaveCollection(err, desc.CollectionID)
-	}
-
-	buf, err := json.Marshal(desc)
-	if err != nil {
-		return NewErrSaveCollection(err, desc.CollectionID)
-	}
-
-	key := keys.NewCollectionKey(desc.VersionID)
-	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
-	if err != nil {
-		return NewErrSaveCollection(err, desc.CollectionID)
-	}
-
-	if !desc.IsActive {
-		nameKey := keys.NewCollectionNameKey(desc.Name)
-		idBytes, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
-		if err != nil {
-			if !errors.Is(err, corekv.ErrNotFound) {
-				return NewErrSaveCollection(err, desc.CollectionID)
-			}
-		}
-
-		if string(idBytes) == desc.VersionID {
-			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
-			if err != nil {
-				return NewErrSaveCollection(err, desc.CollectionID)
-			}
-		}
-	}
-
-	if desc.IsActive {
-		nameKey := keys.NewCollectionNameKey(desc.Name)
-		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
-		if err != nil {
-			return NewErrSaveCollection(err, desc.CollectionID)
-		}
-	}
-
-	isNew := desc.CollectionID == desc.VersionID
-	if !isNew {
-		// We don't need to index the version by collection id, if the version id is the collection id
-		collectionVersionKey := keys.NewCollectionVersionKey(desc.CollectionID, desc.VersionID)
-		err = txn.Systemstore().Set(ctx, collectionVersionKey.Bytes(), []byte{})
-		if err != nil {
-			return NewErrSaveCollection(err, desc.CollectionID)
-		}
-	}
-
-	cache := CollectionCacheFromContext(ctx)
-	cache.Add(desc)
-
-	return nil
+	return collectionRepository.Write(ctx, desc)
 }
 
 func GetCollectionByID(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	id string,
 ) (client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	col, ok := cache.CollectionsByVersionID[id]
-	if ok {
-		return col, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	key := keys.NewCollectionKey(id)
-	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
-	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
-			return client.CollectionVersion{}, client.NewErrCollectionNotFoundForCollectionVersion(id)
-		}
-		return client.CollectionVersion{}, NewErrGetCollectionByID(err, id)
-	}
-
-	err = json.Unmarshal(buf, &col)
+	col, ok, err := collectionRepository.TryGet(ctx, CollectionIndex{
+		Kind:  CollectionVersionID,
+		Value: id,
+	})
 	if err != nil {
 		return client.CollectionVersion{}, NewErrGetCollectionByID(err, id)
 	}
-
-	cache.Add(col)
-
+	if !ok {
+		return client.CollectionVersion{}, client.ErrCollectionNotFound
+	}
 	return col, nil
 }
 
@@ -131,57 +55,38 @@ func GetCollectionByID(
 // If no collection of that name is found, it will return an error.
 func GetCollectionByName(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	name string,
 ) (client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	col, ok := cache.ActiveCollectionsByName[name]
-	if ok {
-		return col, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	nameKey := keys.NewCollectionNameKey(name)
-	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
-	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
-			return client.CollectionVersion{}, client.NewErrCollectionNotFoundForName(name)
-		}
-		return client.CollectionVersion{}, NewErrGetCollectionByName(err, name)
-	}
-
-	col, err = GetCollectionByID(ctx, string(idBuf))
+	col, ok, err := collectionRepository.TryGet(ctx, CollectionIndex{
+		Kind:  CollectionName,
+		Value: name,
+	})
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}
-
-	cache.Add(col)
-
-	return col, err
+	if !ok {
+		return client.CollectionVersion{}, client.ErrCollectionNotFound
+	}
+	return col, nil
 }
 
 func GetActiveCollectionByCollectionID(
 	ctx context.Context,
-	collectionID string,
+	collectionRepository *CollectionRepository,
+	colID string,
 ) (client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	col, ok := cache.ActiveCollectionsByID[collectionID]
-	if ok {
-		return col, nil
-	}
-
-	cols, err := GetCollectionsByCollectionID(ctx, collectionID)
+	col, ok, err := collectionRepository.TryGet(ctx, CollectionIndex{
+		Kind:  CollectionID,
+		Value: colID,
+	})
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}
-
-	for _, col := range cols {
-		if col.IsActive {
-			return col, nil
-		}
+	if !ok {
+		return client.CollectionVersion{}, client.ErrCollectionNotFound
 	}
-
-	return client.CollectionVersion{}, client.ErrCollectionNotFound
+	return col, nil
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
@@ -189,28 +94,17 @@ func GetActiveCollectionByCollectionID(
 // If no collections are found an empty set will be returned.
 func GetCollectionsByCollectionID(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	collectionID string,
 ) ([]client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsFullyPopulated {
-		if col, ok := cache.CollectionsByID[collectionID]; ok {
-			return col, nil
-		}
-		return []client.CollectionVersion{}, nil
-	}
-	// It is not practical to cache a sub set of collections at the moment as figuring
-	// out whether the set is complete or not if not possible without fetching the versionIDs
-	// anyway.  So we do not cache collections by CollectionID and instead use the cache one-by-one
-	// in the GetCollectionByID call.
-
-	versionIDs, err := GetCollectionVersionIDs(ctx, collectionID)
+	versionIDs, err := getCollectionVersionIDs(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	cols := []client.CollectionVersion{}
 	for _, versionID := range versionIDs {
-		versionCol, err := GetCollectionByID(ctx, versionID)
+		versionCol, err := GetCollectionByID(ctx, collectionRepository, versionID)
 		if err != nil {
 			if errors.Is(err, client.ErrCollectionNotFound) {
 				continue
@@ -229,16 +123,13 @@ func GetCollectionsByCollectionID(
 // This includes inactive collections.
 func GetCollections(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 ) ([]client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsFullyPopulated {
-		return cache.Collections, nil
-	}
-
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
-		Prefix: []byte(keys.COLLECTION_ID),
+		Prefix:   []byte(keys.COLLECTION_ID),
+		KeysOnly: true,
 	})
 	if err != nil {
 		return nil, NewErrGetCollections(err)
@@ -258,27 +149,28 @@ func GetCollections(
 			break
 		}
 
-		value, err := iter.Value()
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, NewErrGetCollections(err)
-		}
+		key := keys.NewCollectionKeyFromString(string(iter.Key()))
 
-		var col client.CollectionVersion
-		err = json.Unmarshal(value, &col)
+		// We must read via the repository in order to correctly handle collections that may have been
+		// deleted by other (committed) transactions - these must not be read from the store.
+		col, hasValue, err := collectionRepository.TryGet(
+			ctx, CollectionIndex{
+				Kind:  CollectionVersionID,
+				Value: key.CollectionID,
+			},
+		)
 		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
+			if errors.Is(err, client.ErrCollectionNotFound) {
+				continue
 			}
-			return nil, NewErrGetCollections(err)
+			return nil, NewErrGetCollections(errors.Join(err, iter.Close()))
+		}
+		if !hasValue {
+			continue
 		}
 
 		cols = append(cols, col)
 	}
-
-	cache.AddAll(cols)
 
 	return cols, iter.Close()
 }
@@ -286,12 +178,8 @@ func GetCollections(
 // GetActiveCollections returns all active collections in the system.
 func GetActiveCollections(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 ) ([]client.CollectionVersion, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsActiveCollectionsPopulated {
-		return cache.ActiveCollections, nil
-	}
-
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -323,8 +211,11 @@ func GetActiveCollections(
 			return nil, NewErrGetActiveCollections(err)
 		}
 
-		col, err := GetCollectionByID(ctx, string(value))
+		col, err := GetCollectionByID(ctx, collectionRepository, string(value))
 		if err != nil {
+			if errors.Is(err, client.ErrCollectionNotFound) {
+				continue
+			}
 			return nil, errors.Join(err, iter.Close())
 		}
 
@@ -334,48 +225,13 @@ func GetActiveCollections(
 	// Sort the results by ID, so that the order matches that of [GetCollections].
 	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
 
-	cache.AddAllActive(cols)
-
 	return cols, iter.Close()
 }
 
-// HasCollectionByName returns true if there is a collection of the given name,
-// else returns false.
-func HasCollectionByName(
-	ctx context.Context,
-	name string,
-) (bool, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsActiveCollectionsPopulated {
-		_, ok := cache.ActiveCollectionsByName[name]
-		return ok, nil
-	}
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	nameKey := keys.NewCollectionNameKey(name)
-	has, err := txn.Systemstore().Has(ctx, nameKey.Bytes())
-	if err != nil {
-		return false, NewErrCheckCollectionExists(err, name)
-	}
-	return has, nil
-}
-
-func GetCollectionVersionIDs(
+func getCollectionVersionIDs(
 	ctx context.Context,
 	collectionID string,
 ) ([]string, error) {
-	cache := CollectionCacheFromContext(ctx)
-	if cache.IsFullyPopulated {
-		result := []string{}
-		if cols, ok := cache.CollectionsByID[collectionID]; ok {
-			for _, col := range cols {
-				result = append(result, col.VersionID)
-			}
-			return result, nil
-		}
-		return nil, client.ErrCollectionNotFound
-	}
-
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	// Add the collection id as the first version here.
@@ -420,12 +276,13 @@ func GetCollectionVersionIDs(
 // If the related collection is not found, default and false will be returned.
 func GetRelatedCollection(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	host client.CollectionVersion,
 	kind client.FieldKind,
 ) (client.CollectionVersion, bool, error) {
 	switch typedKind := kind.(type) {
 	case *client.NamedKind:
-		col, err := GetCollectionByName(ctx, typedKind.Name)
+		col, err := GetCollectionByName(ctx, collectionRepository, typedKind.Name)
 		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
@@ -433,7 +290,7 @@ func GetRelatedCollection(
 		return col, true, err
 
 	case *client.CollectionKind:
-		col, err := GetActiveCollectionByCollectionID(ctx, typedKind.CollectionID)
+		col, err := GetActiveCollectionByCollectionID(ctx, collectionRepository, typedKind.CollectionID)
 		if errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
@@ -445,7 +302,7 @@ func GetRelatedCollection(
 			return host, true, nil
 		}
 
-		cols, err := GetActiveCollections(ctx)
+		cols, err := GetActiveCollections(ctx, collectionRepository)
 		if err != nil {
 			return client.CollectionVersion{}, false, err
 		}
@@ -473,64 +330,11 @@ func GetRelatedCollection(
 
 func DeleteCollection(
 	ctx context.Context,
-	lockSet *lock.LockSet,
+	collectionRepository *CollectionRepository,
 	version client.CollectionVersion,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
-	if err != nil {
-		return NewErrDeleteCollection(err, version.CollectionID)
-	}
-
-	versions, err := GetCollectionsByCollectionID(ctx, version.CollectionID)
-	if err != nil {
-		return NewErrDeleteCollection(err, version.CollectionID)
-	}
-
-	cache := CollectionCacheFromContext(ctx)
-	cache.Delete(version)
-
-	key := keys.NewCollectionKey(version.VersionID)
-	err = txn.Systemstore().Delete(ctx, key.Bytes())
-	if err != nil {
-		return NewErrDeleteCollection(err, version.CollectionID)
-	}
-
-	if version.IsActive {
-		nameKey := keys.NewCollectionNameKey(version.Name)
-		err = txn.Systemstore().Delete(ctx, nameKey.Bytes())
-		if err != nil {
-			return NewErrDeleteCollection(err, version.CollectionID)
-		}
-	}
-
-	isNew := version.CollectionID == version.VersionID
-	if !isNew {
-		collectionVersionKey := keys.NewCollectionVersionKey(version.CollectionID, version.VersionID)
-		err = txn.Systemstore().Delete(ctx, collectionVersionKey.Bytes())
-		if err != nil {
-			return NewErrDeleteCollection(err, version.CollectionID)
-		}
-	}
-
-	// WARNING - DeleteShortFieldIDs is dependent on the collection short id still existing, it should be called
-	// before deleting the collection short id.
-	err = id.DeleteShortFieldIDs(ctx, lockSet, version, versions)
-	if err != nil {
-		return NewErrDeleteCollection(err, version.CollectionID)
-	}
-
-	if len(versions) == 1 {
-		// It is impossible to recreate the collection short ID once it is deleted, so we must lock the collection
-		// whilst we finalize this operation, otherwise other threads/operations may try and make use of it.
-		lockSet.CollectionLock(txn, shortID)
-
-		// Only delete the collection short ID if this was the last local version
-		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
-		if err != nil {
-			return NewErrDeleteCollection(err, version.CollectionID)
-		}
-	}
-
-	return nil
+	return collectionRepository.Delete(ctx, CollectionIndex{
+		Kind:  CollectionVersionID,
+		Value: version.VersionID,
+	})
 }

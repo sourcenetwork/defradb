@@ -33,6 +33,7 @@ import (
 // This includes CollectionID (if not already set), VersionID, FieldID, and relational field Kinds.
 func setCollectionIDs(
 	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
 	newCollections []client.CollectionVersion,
 	existingCollections []client.CollectionVersion,
 ) error {
@@ -53,7 +54,7 @@ func setCollectionIDs(
 		sortSet(collectionSet)
 
 		substituteRelationFieldKinds(collectionSet, collectionSets, existingCollections)
-		err := saveBlocks(ctx, collectionSet)
+		err := saveBlocks(ctx, collectionRepository, collectionSet)
 		if err != nil {
 			return err
 		}
@@ -407,6 +408,7 @@ setLoop:
 // setting the ids and migrations.
 func saveBlocks(
 	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
 	collectionSet []*client.CollectionVersion,
 ) error {
 	colIds := make([]cidlink.Link, 0, len(collectionSet))
@@ -422,7 +424,7 @@ func saveBlocks(
 		var oldCol client.CollectionVersion
 		if collection.VersionID != "" {
 			var err error
-			oldCol, err = description.GetCollectionByID(ctx, collection.VersionID)
+			oldCol, err = description.GetCollectionByID(ctx, collectionRepository, collection.VersionID)
 			if err != nil {
 				if errors.Is(err, client.ErrCollectionNotFound) {
 					// If the key does not exist, continue, and let the validation code handle it

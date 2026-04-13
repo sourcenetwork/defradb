@@ -38,6 +38,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -104,11 +105,12 @@ type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
 
-	ctx  context.Context
-	db   DB
-	lens *lens.Node
-	host client.Host
-	kms  kms.Service
+	ctx                  context.Context
+	db                   DB
+	lens                 *lens.Node
+	collectionRepository *description.CollectionRepository
+	host                 client.Host
+	kms                  kms.Service
 
 	// replicators is a map from collection CollectionID => peerId => list of addresses.
 	// This is a cached in-memory copy of the persisted replicators in the database.
@@ -174,11 +176,13 @@ func New(
 	host client.Host,
 	nodeIdentity immutable.Option[identity.Identity],
 	collectionRetriever kms.CollectionRetriever,
+	collectionRepository *description.CollectionRepository,
 ) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
 		db:                   db,
 		lens:                 lens,
+		collectionRepository: collectionRepository,
 		host:                 host,
 		identityProtocol:     protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
 		replicators:          make(map[string]map[string][]string),

@@ -758,29 +758,6 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, tx}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "new"}
-	args = append(args, "--concurrent")
-
-	if readOnly {
-		args = append(args, "--read-only")
-	}
-
-	data, err := w.cmd.execute(context.Background(), args)
-	if err != nil {
-		return nil, err
-	}
-	var res http.CreateTxResponse
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
-}
-
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()

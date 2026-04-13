@@ -39,11 +39,3 @@ func Benchmark_Planner_UserSimple_ParseQuery(b *testing.B) {
 		b.Fatal(err)
 	}
 }
-
-func Benchmark_Planner_UserSimple_MakePlan(b *testing.B) {
-	ctx := context.Background()
-	err := runMakePlanBench(b, ctx, fixtures.ForCollection(ctx, "user_simple"), userSimpleQuery)
-	if err != nil {
-		b.Fatal(err)
-	}
-}
