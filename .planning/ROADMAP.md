@@ -13,7 +13,7 @@ This skill goes from nothing to a fully autonomous debugging agent in three phas
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Instance lifecycle, basic query execution, skill entry point, and fixture loading
-- [ ] **Phase 2: Correctness and Reporting** - First-principles validation, error classification, structured bug reports, and user interrupt discipline
+- [x] **Phase 2: Correctness and Reporting** - First-principles validation, error classification, structured bug reports, and user interrupt discipline (completed 2026-04-14)
 - [ ] **Phase 3: Codebase Intelligence** - Sub-agent architecture, codebase-aware query generation, schema introspection, and edge-case targeting
 
 ## Phase Details
@@ -43,11 +43,11 @@ Plans:
   2. When the skill detects a discrepancy, it classifies it as parse error, runtime error, or data correctness issue
   3. The skill only interrupts the user when an anomaly is reproducible (re-run 2-3x) and the skill can articulate WHY the behavior is wrong
   4. Each debug session produces a DEBUG_PROGRESS_<DATE>.md folder containing a chronological execution log and a structured summary report with minimal reproduction steps for each bug found
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [x] 02-01-PLAN.md — Add --verbose flag and rewrite Section 5 with correctness engine, error classification, anomaly reproduction, and structured reporting
+- [x] 02-02-PLAN.md — Integration test correctness engine against live DefraDB instance and human verify
 
 ### Phase 3: Codebase Intelligence
 **Goal**: The skill uses sub-agents to analyze DefraDB source code, introspects the GraphQL schema, and generates targeted edge-case queries informed by planner/request internals while maintaining the dual-track reasoning separation
@@ -72,5 +72,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Foundation | 0/2 | Planning complete | - |
-| 2. Correctness and Reporting | 0/2 | Not started | - |
+| 2. Correctness and Reporting | 2/2 | Complete   | 2026-04-14 |
 | 3. Codebase Intelligence | 0/2 | Not started | - |
