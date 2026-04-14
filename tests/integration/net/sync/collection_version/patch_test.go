@@ -24,6 +24,7 @@ import (
 
 func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing a patched collection version fetches all ancestor versions for an unknown collection.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -110,6 +111,7 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 
 func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing a patched version of a locally-known collection adds it as inactive without deactivating the active version.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

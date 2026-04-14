@@ -24,6 +24,7 @@ import (
 // the transaction results in the version being changed.
 func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that set the active collection version reverts the schema to that version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -64,6 +65,7 @@ func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 // the transaction results in the version not yet being changed.
 func TestTxn_SetActiveCollectionVersion_WithoutCommit_VersionNotChanged(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that set the active collection version leaves the schema unchanged.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

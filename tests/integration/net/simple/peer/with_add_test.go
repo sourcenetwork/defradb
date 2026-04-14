@@ -22,6 +22,7 @@ import (
 
 func TestP2PAddDoesNotSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document via peer sync does not propagate new documents to peer nodes.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -97,6 +98,7 @@ func TestP2PAddDoesNotSync(t *testing.T) {
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PAddWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Collection subscriber receives new documents; non-subscriber does not.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -202,6 +204,7 @@ func TestP2PAddWithP2PCollection(t *testing.T) {
 
 func TestP2PAdd_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "New document added to the head of a five-node chain reaches all subscribed nodes.",
 		Actions: []any{
 			// Having more than 3 nodes is important to test the robustness of the doc update message
 			// processing function. Having more than 3 connected nodes means that there is a chance that
@@ -281,6 +284,7 @@ func TestP2PAdd_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 
 func TestP2PAdd_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Only the last node in a five-node chain subscribes and still receives the new document.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -346,6 +350,7 @@ func TestP2PAdd_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *
 
 func TestP2PAdd_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GraphQL subscription on a collection subscriber receives synced documents from a peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

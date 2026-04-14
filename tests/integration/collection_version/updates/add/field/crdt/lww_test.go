@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldCRDTLWW(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with LWW CRDT type succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with descending order on inner GROUP shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -71,6 +72,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 
 func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with ascending order on inner GROUP shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -121,6 +123,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 
 func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of nested groupBy with order on parent GROUP and inner GROUP shows groupNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

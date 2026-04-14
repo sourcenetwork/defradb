@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain with a primary-side join and orphan documents shows orphanNode iteration stats.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -86,6 +87,7 @@ func TestExecuteExplainWithOrphanNode_WithPrimaryParent_ReportsMetrics(t *testin
 
 func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain with a secondary-side join and orphan documents shows orphanNode indexFetches stats.",
 
 		Actions: []any{
 			&action.AddCollection{

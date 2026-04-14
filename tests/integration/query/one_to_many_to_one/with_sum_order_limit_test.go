@@ -20,6 +20,7 @@ import (
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM and book sub-selection both ordered by publisher yearOpened DESC with limit 2 match.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -75,6 +76,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 // Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM and book sub-selection both ordered by publisher yearOpened ASC with limit 2 match.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -133,6 +135,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 // Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two SUM aggregates with opposite publisher yearOpened orderings and limit 2 produce correct totals.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -178,6 +181,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 // Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM ordered DESC and book sub-selection ordered ASC with limit 2 return independent correct results.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),

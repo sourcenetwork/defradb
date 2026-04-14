@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithSumWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by an aliased SUM value in ASC and DESC directions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

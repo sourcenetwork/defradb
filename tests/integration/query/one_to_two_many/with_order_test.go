@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query two separate one-to-many relations each with independent ordering applied.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

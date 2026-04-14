@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a single document returns all requested scalar fields.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -53,6 +54,7 @@ func TestQuerySimple(t *testing.T) {
 
 func TestQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with field aliases returns results under the aliased names.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -84,6 +86,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with multiple documents returns all rows.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a field that does not exist on the type returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -143,6 +147,7 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document created with only Name set returns nil for all other fields.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -179,6 +184,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document created with empty body returns nil for every field.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{ }`,
@@ -215,6 +221,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 // It documents the fixing of the bug described in #3242.
 func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting docs from collection 2 does not affect results for collection 1.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

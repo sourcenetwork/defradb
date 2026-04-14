@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline integer array slice defined by offset and limit returns the minimum of the window.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

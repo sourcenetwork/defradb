@@ -22,6 +22,7 @@ import (
 
 func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting an existing encrypted index removes it from the collection's index list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *test
 
 func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting an encrypted index that does not exist returns a does-not-exist error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -76,6 +78,7 @@ func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 
 func TestEncryptedIndexDelete_AfterDelete_CanMakeNewIndexAnew(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After deleting an encrypted index, a new encrypted index can be created on the same field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -112,6 +115,7 @@ func TestEncryptedIndexDelete_AfterDelete_CanMakeNewIndexAnew(t *testing.T) {
 
 func TestEncryptedIndexDelete_MultipleIndexes_ShouldOnlyDeleteSpecified(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting one encrypted index from a collection with multiple indexes leaves the others intact.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

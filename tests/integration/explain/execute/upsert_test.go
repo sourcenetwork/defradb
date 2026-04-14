@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an upsert mutation with a matching filter shows upsertNode update path stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -68,6 +69,7 @@ func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *t
 
 func TestExecuteExplainMutationRequest_WithUpsertAndNoMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an upsert mutation with no matching filter shows upsertNode insert path stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

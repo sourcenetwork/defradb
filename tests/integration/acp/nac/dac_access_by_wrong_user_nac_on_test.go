@@ -25,6 +25,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner who owns the document gets NotAuthorizedError from NAC.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -79,6 +80,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_MaterializedVie
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner accessing their own document via materialized view gets a refresh-view NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -133,6 +135,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner who does not own the document gets NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -187,6 +190,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_Materiali
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner accessing a document they do not own via materialized view gets a refresh-view NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -241,6 +245,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *t
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner can access a public document without restriction.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -295,6 +300,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_MaterializedView
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "With NAC enabled, a non-node-owner accessing a public document via materialized view gets a refresh-view NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

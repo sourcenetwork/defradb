@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with showDeleted returns deleted documents with _deleted set to true.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -22,6 +22,7 @@ import (
 
 func TestIndexNew_WithPNCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index on a pncounter CRDT field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -45,6 +46,7 @@ func TestIndexNew_WithPNCounterField_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithPCounterField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index on a pcounter CRDT field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -68,6 +70,7 @@ func TestIndexNew_WithPCounterField_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining an @index directive on a pncounter CRDT field via SDL returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -86,6 +89,7 @@ func TestIndexNew_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining an @index directive on a pcounter CRDT field via SDL returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +108,7 @@ func TestIndexNew_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithPNCounterFloatField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index on a pncounter float CRDT field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -127,6 +132,7 @@ func TestIndexNew_WithPNCounterFloatField_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithLWWField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index on a last-write-wins field succeeds and allows querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -171,6 +177,7 @@ func TestIndexNew_WithLWWField_ShouldSucceed(t *testing.T) {
 
 func TestIndexNew_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a composite index that includes a pncounter CRDT field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -194,6 +201,7 @@ func TestIndexNew_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing.T)
 
 func TestIndexNew_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique index on a pncounter CRDT field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -218,6 +226,7 @@ func TestIndexNew_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 
 func TestIndexNew_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining a collection-level index on a pncounter CRDT field via SDL returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

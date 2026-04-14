@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased max rating greater than zero returns all authors.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -90,6 +91,7 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased max rating greater than 4.8 returns only the author with the highest-rated book.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

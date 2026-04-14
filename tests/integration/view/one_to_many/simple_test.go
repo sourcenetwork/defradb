@@ -20,6 +20,7 @@ import (
 
 func TestView_OneToMany(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View over a one-to-many relation returns nested documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -95,6 +96,7 @@ func TestView_OneToMany(t *testing.T) {
 
 func TestView_OneToManyWithMixedSDL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View over a one-to-many relation with mixed SDL referencing the base collection type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -167,6 +169,7 @@ func TestView_OneToManyWithMixedSDL(t *testing.T) {
 
 func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a one-to-many view from the inner interface type errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -218,6 +221,7 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 
 func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a back-reference field on an inner view interface type errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -275,6 +279,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 
 func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View query includes a relation not declared in the view SDL.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -340,6 +345,7 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 
 func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple views with distinct embedded interface schemas can be created together.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -399,6 +405,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 
 func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A view of a view over a one-to-many relation returns nested results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

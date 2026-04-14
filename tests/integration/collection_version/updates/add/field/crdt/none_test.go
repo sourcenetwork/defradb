@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldCRDTDefault(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field without specifying a CRDT type uses the default and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTDefault(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldCRDTNone(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with CRDT type 0 (none) succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

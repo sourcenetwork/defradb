@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child MIN with a limit considers only the first N sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

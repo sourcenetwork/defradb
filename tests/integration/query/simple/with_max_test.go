@@ -24,6 +24,7 @@ import (
 
 func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX with no collection argument returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -39,6 +40,7 @@ func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a collection without specifying a field returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -54,6 +56,7 @@ func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an empty collection returns nil.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -71,6 +74,7 @@ func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MAX of an integer field returns the correct maximum value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -100,6 +104,7 @@ func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MAX returns the maximum integer value from multiple documents.",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JavaScript does not support 64 bit int
 			state.GoClientType,
@@ -134,6 +139,7 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased MAX on an empty collection returns nil under the alias name.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

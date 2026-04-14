@@ -37,6 +37,7 @@ var countPattern = dataMap{
 
 func TestDebugExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of COUNT on inline array field shows countNode over selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

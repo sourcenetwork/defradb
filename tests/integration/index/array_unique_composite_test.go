@@ -25,6 +25,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Unique composite array index allows docs with unique element combinations and uses index for queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -75,6 +76,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 
 func TestArrayUniqueCompositeIndex_IfDocIsAddedThatViolatesUniqueness_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique composite array index rejects docs that violate element combination uniqueness.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -115,6 +117,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsAddedThatViolatesUniqueness_Error(t *t
 
 func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique composite array index rejects updates that create a duplicate element combination.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -155,6 +158,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t 
 
 func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique composite array index allows docs with nil elements and filters by null correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

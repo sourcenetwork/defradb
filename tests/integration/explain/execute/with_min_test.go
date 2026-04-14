@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequest_WithMinOfInlineArrayField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of MIN on an inline array field returns minNode with scan iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -73,6 +74,7 @@ func TestExecuteExplainRequest_WithMinOfInlineArrayField_Succeeds(t *testing.T) 
 
 func TestExecuteExplainRequest_MinOfRelatedOneToManyField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of MIN on a one-to-many joined field returns minNode wrapping a typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

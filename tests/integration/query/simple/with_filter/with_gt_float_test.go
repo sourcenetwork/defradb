@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a Float field returns one matching document that strictly exceeds the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a Float field with a threshold greater than all documents returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -86,6 +88,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a Float field with a threshold below all documents returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a Float field using an integer threshold correctly returns documents above it.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +164,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt null filter on a Float field returns only documents that have a non-null float value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

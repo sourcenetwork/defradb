@@ -23,6 +23,7 @@ import (
 
 func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signatures verify successfully for create, update, and delete operations using the node identity.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -64,6 +65,7 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 
 func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signature verification succeeds when the node identity uses an Ed25519 key.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
@@ -94,6 +96,7 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 
 func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signature verification returns a public key mismatch error when verified with the wrong identity.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -122,6 +125,7 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 
 func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signature verification returns a not-found error when given a non-existent CID.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{

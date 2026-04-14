@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a DateTime field with the boundary value returns the document at the boundary.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a DateTime field with a threshold after the document's date returns that document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -94,6 +96,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a DateTime field returns only documents that have no datetime value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -130,6 +133,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a DateTime field skips the nil-DateTime document and returns those at or before the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				DocMap: map[string]any{

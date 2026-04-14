@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a groupBy query returns groupNode with child selection and scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesListAllEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListAllEncryptedIndex: authorized node owner identity can list all encrypted indexes.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
@@ -51,6 +52,7 @@ func TestNAC_GatesListAllEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testin
 
 func TestNAC_GatesListAllEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListAllEncryptedIndex: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -70,6 +72,7 @@ func TestNAC_GatesListAllEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing
 
 func TestNAC_GatesListAllEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListAllEncryptedIndex: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{

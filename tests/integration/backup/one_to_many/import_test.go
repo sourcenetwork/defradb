@@ -20,6 +20,7 @@ import (
 
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with docs lacking explicit keys into multiple collections succeeds.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{
@@ -87,6 +88,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with updated docs restores one-to-many relation linking books to their author.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{

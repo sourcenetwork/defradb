@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG aggregate on an inline integer array with a greater-than filter on elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG aggregate on a nillable inline integer array with a filter excludes null values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG aggregate on an inline float array with a less-than filter on elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG aggregate on a nillable inline float array with a less-than filter excludes null values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

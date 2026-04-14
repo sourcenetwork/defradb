@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionInlineArrayAddsCollectionGivenSingleType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an inline array field succeeds and makes the type accessible in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -50,6 +51,7 @@ func TestCollectionVersionInlineArrayAddsCollectionGivenSingleType(t *testing.T)
 
 func TestCollectionVersionInlineArrayAddsCollectionGivenSecondType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a second collection with an inline array field alongside an existing collection succeeds and makes both types accessible.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

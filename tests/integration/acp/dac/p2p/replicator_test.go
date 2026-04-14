@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A one-to-one replicator can be configured with a DAC-permissioned collection using local ACP.",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
@@ -77,6 +78,7 @@ resources:
 
 func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replicator syncs private doc and DAC policy hides it from unauthorized actors on all nodes.",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.SourceHubDocumentACPType,

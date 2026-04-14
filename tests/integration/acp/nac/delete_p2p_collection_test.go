@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesDeleteP2PCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PCollection: authorized node owner identity can delete a P2P collection subscription.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -77,6 +78,7 @@ func TestNAC_GatesDeleteP2PCollection_AuthorizedIdentity_AllowAccess(t *testing.
 
 func TestNAC_GatesDeleteP2PCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PCollection: request with no identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -131,6 +133,7 @@ func TestNAC_GatesDeleteP2PCollection_NoIdentity_NotAuthorizedError(t *testing.T
 
 func TestNAC_GatesDeleteP2PCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PCollection: request with wrong identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

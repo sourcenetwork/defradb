@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining an explicit relation ID field on the secondary side returns a duplicate field error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -44,6 +45,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 
 func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining an explicit relation ID field on the primary side returns a duplicate field error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

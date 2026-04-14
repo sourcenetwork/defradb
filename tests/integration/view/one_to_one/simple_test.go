@@ -20,6 +20,7 @@ import (
 
 func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a second view that redefines an existing embedded interface type errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

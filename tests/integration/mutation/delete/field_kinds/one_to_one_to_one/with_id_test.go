@@ -20,6 +20,7 @@ import (
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Delete a related document by single docID in a one-to-one-to-one chain.",
 		Actions: []any{
 			&action.AddDoc{
 				// Books
@@ -73,6 +74,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Delete a related document by docID and return the result using a field alias.",
 		Actions: []any{
 			&action.AddDoc{
 				// Books
@@ -126,6 +128,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Delete one document by docID from a multi-document one-to-one-to-one chain using an alias.",
 		Actions: []any{
 			&action.AddDoc{
 				// Books

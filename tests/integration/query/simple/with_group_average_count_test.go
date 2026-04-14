@@ -24,6 +24,7 @@ import (
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string and compute AVG and COUNT of a child integer field.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

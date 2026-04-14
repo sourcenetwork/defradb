@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithOperationAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple aliased query operations in one request return results under each alias.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

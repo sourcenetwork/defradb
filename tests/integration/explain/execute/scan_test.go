@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a scan with all documents matching reports correct filterMatches and docFetches.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -85,6 +86,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 
 func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a scan on an empty collection shows zero fetches and zero filterMatches.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -128,6 +130,7 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 
 func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a filtered scan where only some documents match reports partial filterMatches.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -192,6 +195,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 
 func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a scan where no documents match filter reports zero filterMatches.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

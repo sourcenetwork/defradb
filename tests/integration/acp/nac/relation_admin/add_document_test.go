@@ -20,6 +20,7 @@ import (
 
 func TestNAC_AdminRelation_CanAddDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to add a document.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{

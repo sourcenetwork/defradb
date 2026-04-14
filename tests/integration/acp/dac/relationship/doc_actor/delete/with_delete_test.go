@@ -20,6 +20,7 @@ import (
 
 func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the deleter relationship causes the actor to lose delete and read access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

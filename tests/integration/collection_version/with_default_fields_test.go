@@ -22,6 +22,7 @@ import (
 
 func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with @default directives on fields stores the correct typed default values in the collection description.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -99,6 +100,7 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 
 func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an invalid argument value in a @default directive returns a GraphQL argument error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -116,6 +118,7 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 
 func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where a @default argument type mismatches the field type returns a type-mismatch error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -133,6 +136,7 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 
 func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where a @default directive specifies more than one argument type returns a must-specify-one-argument error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -150,6 +154,7 @@ func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *te
 
 func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a @default directive on a relation field returns a not-allowed-for-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -167,6 +172,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 
 func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a @default directive on a list field returns a not-allowed-for-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

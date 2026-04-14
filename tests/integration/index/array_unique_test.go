@@ -25,6 +25,7 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Unique array index allows doc creation when all elements are unique across docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -65,6 +66,7 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 
 func TestArrayUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique array index rejects doc creation when an element duplicates an existing indexed value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -99,6 +101,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Unique array index allows doc update when new elements remain unique across docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -145,6 +148,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 
 func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique array index rejects doc update when updated element duplicates an existing indexed value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -180,6 +184,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 
 func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc with a unique array index succeeds and removes its index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -211,6 +216,7 @@ func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 
 func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique array index with nil elements correctly handles _any equality and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -270,6 +276,7 @@ func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 
 func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique array index with nil elements correctly handles _all comparison and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -334,6 +341,7 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 
 func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unique array index with nil elements correctly handles _none comparison and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

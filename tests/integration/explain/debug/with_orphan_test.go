@@ -73,6 +73,7 @@ var secondaryParentPattern = dataMap{
 
 func TestDebugExplainRequestWithOrderByRelationFieldWithIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query ordered ascending by indexed relation field shows sequenceNode with orphanNode first.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -119,6 +120,7 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndex(t *testing.T) {
 
 func TestDebugExplainRequestWithOrderByRelationFieldWithIndexDESC(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query ordered descending by indexed relation field shows sequenceNode with join first.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -165,6 +167,7 @@ func TestDebugExplainRequestWithOrderByRelationFieldWithIndexDESC(t *testing.T) 
 
 func TestDebugExplainRequestWithOrderByRelationFieldSecondaryParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of secondary parent ordered by related indexed field shows orphanNode wrapping join.",
 
 		Actions: []any{
 			&action.AddCollection{

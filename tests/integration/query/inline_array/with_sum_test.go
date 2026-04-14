@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array field set to null returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array field set to an empty list returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a populated inline integer array returns the sum of all elements including negatives.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a nillable inline integer array ignores null values and sums the remaining elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -144,6 +148,7 @@ func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline float array field set to null returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -175,6 +180,7 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline float array field set to an empty list returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -206,6 +212,7 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a populated inline float array returns the sum of all float elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -237,6 +244,7 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a nillable inline float array ignores null values and sums the remaining elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

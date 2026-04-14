@@ -20,6 +20,7 @@ import (
 
 func TestInputTypeOfOrderFieldWhereCollectionHasManyRelationType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The GROUP field's order argument on a type with a many-relation is typed as the correct list-side order input object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -117,6 +118,7 @@ func TestInputTypeOfOrderFieldWhereCollectionHasManyRelationType(t *testing.T) {
 
 func TestInputTypeOfOrderFieldWhereCollectionHasRelationType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The GROUP field's order argument on a type with a single-object relation is typed as the correct scalar-side order input object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

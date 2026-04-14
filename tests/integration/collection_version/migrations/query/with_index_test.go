@@ -33,6 +33,7 @@ const (
 
 func TestCollectionMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index on non-migrated docs still works correctly after migration is configured.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -111,6 +112,7 @@ func TestCollectionMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *
 
 func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index on a migrated field returns results using the post-migration field values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -198,6 +200,7 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMig
 
 func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index uses original field values when the active collection version is reverted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -288,6 +291,7 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAs
 
 func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index created after migration is configured indexes documents at the latest version values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -378,6 +382,7 @@ func TestCollectionMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocs
 
 func TestCollectionMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index created after setting active version indexes documents at the active version values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -560,6 +565,7 @@ func addMigrationBetweenV3AndV4() any {
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
 func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Switching to a distant old version without migrations does not trigger reindexing.",
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
@@ -596,6 +602,7 @@ func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_Shou
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
 func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Switching to a distant new version without migrations does not trigger reindexing.",
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
@@ -634,6 +641,7 @@ func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_Shou
 
 func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_ShouldReindexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Switching to an old version with an intermediate migration triggers reindex using old values.",
 		Actions: []any{
 			setupDistantVersions(),
 			addMigrationBetweenV3AndV4(),
@@ -670,6 +678,7 @@ func TestCollectionMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetwee
 
 func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_ShouldReindexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Switching to a new distant version with an intermediate migration reindexes using migrated values.",
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
@@ -709,6 +718,7 @@ func TestCollectionMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetwee
 
 func TestCollectionMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a migration between old versions triggers reindexing with the migrated values.",
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
@@ -749,6 +759,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldRein
 // We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
 func TestCollectionMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a migration between newer versions beyond the active version does not reindex.",
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
@@ -785,6 +796,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotR
 
 func TestCollectionMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration registered for unknown versions triggers reindex when the patch links them.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -874,6 +886,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Sh
 
 func TestCollectionMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration included in a schema patch reindexes documents with the migrated values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -955,6 +968,7 @@ func TestCollectionMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t 
 
 func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrationCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Switching between branched versions reindexes with the correct per-branch migration.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1112,6 +1126,7 @@ func TestCollectionMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMi
 
 func TestCollectionMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrationPerBranch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Three collection branches each apply their own distinct migration independently.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

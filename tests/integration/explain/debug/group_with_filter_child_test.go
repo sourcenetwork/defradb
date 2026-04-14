@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with filter on inner GROUP selection shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -46,6 +47,7 @@ func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 
 func TestDebugExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with filters on both parent and inner GROUP shows groupNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

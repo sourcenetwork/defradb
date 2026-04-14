@@ -22,6 +22,7 @@ import (
 
 func TestP2PPeerAddWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document with a new field syncs to a peer node running the older schema version.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -99,6 +100,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 
 func TestP2PPeerAddWithNewFieldSyncsDocsToNewerCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document without a new field syncs to a peer node running the newer schema version.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -158,6 +160,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToNewerCollectionVersion(t *testing.T) {
 
 func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document with a new field syncs correctly when both nodes share the updated schema.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -218,6 +221,7 @@ func TestP2PPeerAddWithNewFieldSyncsDocsToUpdatedCollectionVersion(t *testing.T)
 // https://github.com/sourcenetwork/defradb/issues/2255 is fixed.
 func TestP2PPeerAddWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotReturnNewField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Document synced before the receiving node's schema update does not return the new field.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

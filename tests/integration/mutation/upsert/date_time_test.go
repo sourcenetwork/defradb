@@ -21,6 +21,7 @@ import (
 func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T) {
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
+		Description: "Upsert sets DateTime fields to UTC_NOW on both insert and update paths.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

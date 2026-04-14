@@ -20,6 +20,7 @@ import (
 
 func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books filtered from the many side using an equality filter on the related author docID.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -116,6 +117,7 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 
 func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books filtered using the raw _authorID scalar field equality from the many side.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -212,6 +214,7 @@ func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 
 func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books filtered by the same author via both the relation field and the raw ID field simultaneously.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -313,6 +316,7 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 
 func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered from the one side using a docID equality filter on a related book.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -408,6 +412,7 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 
 func TestQueryFromSingleSideWithFilterOnRelatedObjectID_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering authors by _publishedID (a non-existent scalar) returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

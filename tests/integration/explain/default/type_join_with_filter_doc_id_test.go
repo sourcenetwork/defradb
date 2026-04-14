@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with related type filter and docIDs shows typeJoinMany attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -101,6 +102,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 
 func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with multiple related type filters and docID shows parallelNode attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

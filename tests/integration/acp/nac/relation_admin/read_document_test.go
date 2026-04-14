@@ -25,6 +25,7 @@ func TestNAC_AdminRelation_CanReadDocument(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation grants a user permission to read documents from a collection.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -78,6 +79,7 @@ func TestNAC_AdminRelation_MaterializedView_CanReadDocument(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation grants a user permission to read documents via a materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

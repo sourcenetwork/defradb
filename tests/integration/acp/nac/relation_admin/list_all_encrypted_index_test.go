@@ -21,6 +21,7 @@ import (
 
 func TestNAC_AdminRelation_CanListAllEncryptedIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to list all encrypted indexes.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{

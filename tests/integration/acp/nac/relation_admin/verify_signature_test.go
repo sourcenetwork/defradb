@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "NAC admin relation grants HTTP and CLI clients permission to verify a block signature.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -88,6 +89,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 
 func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "NAC admin relation grants Go and C clients permission to verify a block signature.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{

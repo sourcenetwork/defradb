@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithLikeOpOnBlobField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter on a Blob field with a wildcard pattern returns documents whose hex value matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

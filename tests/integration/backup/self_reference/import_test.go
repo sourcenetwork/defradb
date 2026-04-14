@@ -22,6 +22,7 @@ import (
 
 func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import a self-referential User backup and verify boss relations resolve correctly.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{
@@ -85,6 +86,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 		`]` +
 		`}`
 	test := testUtils.TestCase{
+		Description: "Export and re-import a document with a self-referential boss relation across two nodes.",
 		Actions: []any{
 			// Configure 2 nodes for this test, we will export from the first
 			// and import to the second.
@@ -144,6 +146,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with two collections sharing primary relations and verify cross-collection links.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -210,6 +213,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with collections in reverse order and verify primary relations still resolve correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -297,6 +301,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		`}`
 
 	test := testUtils.TestCase{
+		Description: "Import a backup with split primary relations documents remain unlinked due to a known issue.",
 		Actions: []any{
 			// Configure 2 nodes for this test, we will export from the first
 			// and import to the second.

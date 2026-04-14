@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanSyncP2PBranchableCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to sync a branchable P2P collection.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

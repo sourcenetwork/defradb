@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array slice defined by offset and limit sums only the windowed elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -23,6 +23,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Author filtered by age with related books sorted ascending by rating.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -102,6 +103,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 
 func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered by child rating with related books sorted descending by rating.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{

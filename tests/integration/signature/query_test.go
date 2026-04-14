@@ -20,6 +20,7 @@ import (
 
 func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "A basic document query returns correct results when block signing is enabled.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -62,6 +63,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 
 func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Querying commit metadata without the signature field succeeds when signing is enabled.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{

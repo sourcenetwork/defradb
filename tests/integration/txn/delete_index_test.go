@@ -25,6 +25,7 @@ import (
 // results in the index being created.
 func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that deleted an index removes the index from the collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 // results in the index still existing.
 func TestTxn_DeleteIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that deletes an index leaves the index visible outside the transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -95,6 +97,7 @@ func TestTxn_DeleteIndex_WithoutCommit_DoesNotDelete(t *testing.T) {
 // is maintained, and it can see indexes on schemas created in the same transaction.
 func TestTxn_DeleteIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A transaction can delete an index that was added on a schema created within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

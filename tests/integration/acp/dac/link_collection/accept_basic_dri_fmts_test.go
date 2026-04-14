@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_BasicYAML_SchemaAccepted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection to policy using a basic YAML DRI format and accept it.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

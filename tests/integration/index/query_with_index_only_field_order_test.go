@@ -28,6 +28,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on a DESC-indexed Int field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -110,6 +111,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on a DESC-indexed Int field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -192,6 +194,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Less-than filter on a DESC-indexed Int field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -270,6 +273,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on a DESC-indexed Int field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -352,6 +356,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Less-than filter on a DESC-indexed Float field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -434,6 +439,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on a DESC-indexed Float field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -516,6 +522,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on a DESC-indexed Float field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -598,6 +605,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on a DESC-indexed Float field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -672,6 +680,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 
 func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Range filter on a DESC-indexed Float32 field returns results in descending order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -734,6 +743,7 @@ func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *
 
 func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Like filter on a DESC-indexed String field returns results in descending lexicographic order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

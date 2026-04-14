@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by the related author object returns _authorID and GROUP with author fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -200,6 +201,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by author alias with the author docID and name selected at the group level.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -392,6 +394,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by author alias with _authorID selected returns books partitioned by author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -572,6 +575,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by author alias selecting both _authorID and the related author object at group level.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -768,6 +772,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouping authors by the published array field returns an error as arrays cannot be group keys.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -859,6 +864,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting _publishedID on Author when grouping by the published array field returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

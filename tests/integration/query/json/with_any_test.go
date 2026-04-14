@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_any filter on a JSON array field returns documents that contain at least one null element.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -85,6 +86,7 @@ func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_any filter on a JSON array matches only top-level scalar elements, not values inside nested arrays.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

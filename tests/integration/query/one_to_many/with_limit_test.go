@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query with a limit of one on the related child collection.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -103,6 +104,7 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 
 func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased child selections with different limits on the same relation field.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

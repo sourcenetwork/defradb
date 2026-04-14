@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a single-field order on the parent returns orderNode iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -72,6 +73,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 
 func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a multi-field order on the parent returns orderNode with all document iterations.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -156,6 +158,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 
 func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of order on a child relation shows orderNode inside the join subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -231,6 +234,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 
 func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of order on both parent and child returns orderNode at each level of the plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -310,6 +314,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 
 func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain ordering a parent by a child relation field returns an expected error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -343,6 +348,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 
 func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a subquery ordered DESC by a nested relation field shows limitNode and orderNode stats.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -496,6 +502,7 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 
 func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a subquery ordered ASC by a nested relation field shows limitNode and orderNode stats.",
 
 		Actions: []any{
 			&action.AddCollection{

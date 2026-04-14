@@ -22,6 +22,7 @@ import (
 
 func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Second update to an existing field still syncs even if the first update targeted a new field.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -111,6 +112,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 
 func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update including a new field syncs the known fields to a peer with the older schema.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -25,6 +25,7 @@ import (
 
 func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "Documents added to the source node while the replicator target is offline are synced after it restarts.",
 		EnableSearchableEncryption: true,
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{

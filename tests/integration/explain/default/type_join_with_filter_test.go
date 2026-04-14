@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with related type filter shows typeJoinMany plan and filter attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -93,6 +94,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with multiple related type filters shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

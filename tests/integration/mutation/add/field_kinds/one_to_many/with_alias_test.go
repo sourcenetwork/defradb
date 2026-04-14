@@ -23,6 +23,7 @@ import (
 
 func TestMutationAddOneToMany_AliasedRelationNameWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with an invalid field name returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -44,6 +45,7 @@ func TestMutationAddOneToMany_AliasedRelationNameWithInvalidField_Error(t *testi
 
 func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document using the aliased relation field on the one-side returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -68,6 +70,7 @@ func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationSingleSide_N
 // reference to a document that doesnt exist.
 func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationManySide_AddedDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with an aliased relation referencing a non-existing document succeeds.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -97,6 +100,7 @@ func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationManySide_Add
 
 func TestMutationAddOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document using the aliased relation name correctly links the one-to-many relation.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -164,6 +168,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	bookID := "bae-a2df247a-8bc2-5761-9557-90400f490eef"
 
 	nonAliasedTest := testUtils.TestCase{
+		Description: "Linking via internal relation ID field produces the same docID as using the aliased name.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -200,6 +205,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	// Note: Everything should be same, only diff should be the use of alias.
 
 	aliasedTest := testUtils.TestCase{
+		Description: "Linking via aliased relation name produces the same docID as the internal relation ID field.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

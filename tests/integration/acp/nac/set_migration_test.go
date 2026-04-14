@@ -27,6 +27,7 @@ import (
 
 func TestNAC_GatesSetMigration_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetMigration: authorized node owner identity can configure a lens migration.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -80,6 +81,7 @@ func TestNAC_GatesSetMigration_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesSetMigration_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetMigration: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting all nodes with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -116,6 +118,7 @@ func TestNAC_GatesSetMigration_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesSetMigration_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetMigration: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting all nodes with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

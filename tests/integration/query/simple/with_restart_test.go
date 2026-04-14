@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After a node restart the query returns the same documents that were present before.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

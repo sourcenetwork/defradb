@@ -20,6 +20,7 @@ import (
 
 func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating a non-indexed field on a doc with a unique index succeeds without conflict.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

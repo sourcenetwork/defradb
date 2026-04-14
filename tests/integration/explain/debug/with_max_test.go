@@ -37,6 +37,7 @@ var maxPattern = dataMap{
 
 func TestDebugExplainRequestWithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MAX on inline array field shows maxNode over selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

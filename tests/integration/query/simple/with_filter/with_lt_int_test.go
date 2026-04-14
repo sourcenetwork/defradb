@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on an integer field returns the document whose value is strictly less than the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithIntLessThanFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt null filter on an integer field returns no documents because nothing is less than null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

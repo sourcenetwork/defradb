@@ -24,6 +24,7 @@ import (
 // it is still a valid sourcehub policy for now.
 func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with an empty resources label; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -45,6 +46,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 // it is still a valid sourcehub policy for now.
 func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with no resources label at all; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -64,6 +66,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 // A Policy can have no resources (incompatible with DRI) but it needs a name.
 func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a local-ACP policy whose data is only whitespace returns a name-required error.",
 		SupportedDocumentACPTypes: immutable.Some([]state.DocumentACPType{
 			// This is currently a local-acp only limitation, this test-restriction
 			// can be lifted if/when SourceHub introduces the same limitation.

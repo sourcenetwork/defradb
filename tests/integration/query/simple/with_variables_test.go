@@ -22,6 +22,7 @@ import (
 
 func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a non-null variable correctly passes the value to the query.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -64,6 +65,7 @@ func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 
 func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a variable that has a default value uses the default when none is supplied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -102,6 +104,7 @@ func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 
 func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a non-null variable set to null returns a validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +134,7 @@ func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 
 func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a variable default that is overridden uses the provided value instead.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -169,6 +173,7 @@ func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 
 func TestQuerySimpleWithOrderVariable(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an order variable correctly applies the dynamic order direction.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -213,6 +218,7 @@ func TestQuerySimpleWithOrderVariable(t *testing.T) {
 
 func TestQuerySimpleWithAggregateCountVariable(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a variable used inside an aggregate correctly counts matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -21,6 +21,7 @@ import (
 
 func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing then unsubscribing from a single document leaves the subscription list empty.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -64,6 +65,7 @@ func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 
 func TestP2PDocumentAddRemoveGetMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from one of two document subscriptions leaves only the other in the list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

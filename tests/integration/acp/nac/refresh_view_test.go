@@ -21,6 +21,7 @@ import (
 
 func TestNAC_GatesRefreshView_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates RefreshView: authorized node owner identity can refresh materialized views.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -41,6 +42,7 @@ func TestNAC_GatesRefreshView_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesRefreshView_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates RefreshView: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -62,6 +64,7 @@ func TestNAC_GatesRefreshView_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesRefreshView_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates RefreshView: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

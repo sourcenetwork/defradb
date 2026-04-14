@@ -39,6 +39,7 @@ var sumTypeIndexJoinPattern = dataMap{
 
 func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of sum on a one-to-many joined field shows sumNode with typeIndexJoin attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -116,6 +117,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 
 func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of sum on a joined field with filter shows sumNode with filter in typeIndexJoin.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -207,6 +209,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing
 
 func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of sum with multiple joined field sources shows parallelNode with two typeIndexJoins.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

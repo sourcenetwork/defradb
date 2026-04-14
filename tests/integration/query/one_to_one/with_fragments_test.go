@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOne_WithFragment(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A GraphQL fragment on the parent type correctly spreads related author fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -81,6 +82,7 @@ func TestQueryOneToOne_WithFragment(t *testing.T) {
 
 func TestQueryOneToOne_WithFragmentWithObjectWithFragment(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested fragments on both the parent and the related object type resolve correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

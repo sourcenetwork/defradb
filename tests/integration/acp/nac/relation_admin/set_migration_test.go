@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanSetMigration(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to configure a lens migration.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

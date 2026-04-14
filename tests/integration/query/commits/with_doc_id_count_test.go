@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID requesting COUNT(links) returns correct link counts per commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -62,6 +63,7 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 
 func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with aliased COUNT(links) and COUNT(heads) after an update returns correct counts.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

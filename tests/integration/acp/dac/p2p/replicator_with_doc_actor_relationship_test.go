@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PReplicatorWithPermissionedCollectionAddDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replicator respects DAC: granting and revoking reader relation controls access across all nodes.",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq on an integer field returns only the document with the exact matching value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithIntEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq null on an integer field returns only the document with no integer value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Combine a greater-than numeric filter with descending order returns filtered sorted results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_OneResourceThatIsEmpty_DoesntError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with a single resource that has no permissions or relations; succeeds.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

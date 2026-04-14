@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by height returns one entry per distinct height value.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -61,6 +62,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by height with a GROUP child returns individual commits nested under each height.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -125,6 +127,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by CID with a GROUP child returns each commit grouped by its unique CID.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -180,6 +183,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 
 func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by docID across two documents returns one entry per document.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -235,6 +239,7 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 
 func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by fieldName returns one entry per distinct field including composite.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -279,6 +284,7 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 
 func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group commits by fieldName with a GROUP child nests commit heights under each field name.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

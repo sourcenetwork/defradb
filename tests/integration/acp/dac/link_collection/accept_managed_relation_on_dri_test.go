@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_WithManagedRelation_AcceptCollections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection to policy with a managed relation on the DRI and accept it.",
 
 		Actions: []any{
 

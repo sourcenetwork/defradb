@@ -24,6 +24,7 @@ import (
 
 func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform on the outer type copies a field in a one-to-many view.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -117,6 +118,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 
 func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform synthesises inner embedded documents in a one-to-many view.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

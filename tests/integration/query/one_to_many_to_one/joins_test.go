@@ -20,6 +20,7 @@ import (
 
 func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many-to-one joins resolve nested publisher links correctly for each author.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors

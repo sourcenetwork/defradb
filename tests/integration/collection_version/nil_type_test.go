@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersion_WithMissingType_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a field that has no type specified returns a field-type-not-specified error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

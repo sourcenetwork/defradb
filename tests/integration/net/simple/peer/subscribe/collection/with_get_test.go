@@ -19,6 +19,7 @@ import (
 
 func TestP2PCollectionGetAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing P2P collection subscriptions on a peer with none configured returns an empty list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

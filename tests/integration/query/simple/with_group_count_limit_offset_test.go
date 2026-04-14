@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child COUNT with limit and offset counts only the windowed sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitA
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group limit combined with child COUNT limit and offset independently window the top-level and child results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

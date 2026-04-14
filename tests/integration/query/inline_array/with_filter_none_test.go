@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a nillable string array returns docs where no element is null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a non-null string array returns docs where no element is an empty string.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a nillable integer array returns docs where no element is null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a non-null integer array returns docs where no element satisfies the condition.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +164,7 @@ func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a nillable float array returns docs where no element is null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -195,6 +200,7 @@ func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a non-null float array returns docs where no element satisfies the condition.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +236,7 @@ func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a nillable boolean array returns docs where no element is null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -265,6 +272,7 @@ func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _none on a non-null boolean array returns docs where no element satisfies the condition.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

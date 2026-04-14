@@ -20,6 +20,7 @@ import (
 
 func TestTruncateCollectionBranchableAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a branchable collection removes a previously added document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestTruncateCollectionBranchableAdd_RemovesDocument(t *testing.T) {
 
 func TestTruncateCollectionBranchableAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a branchable collection removes all commit blocks for its documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert creates a new document when no existing document matches the filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -84,6 +85,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_AddsNewDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert updates an existing document when the filter matches exactly one document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -154,6 +156,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert updates a document field even when the update targets the same field used in the filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -224,6 +227,7 @@ func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T
 
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert returns an error when the filter matches more than one document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -266,6 +270,7 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 
 func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert returns an error when the add argument is null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -296,6 +301,7 @@ func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert returns an error when the update argument is null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -326,6 +332,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert returns an error when the filter argument is null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -356,6 +363,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert returns an error when an update would violate a unique composite index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -398,6 +406,7 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 
 func TestMutationUpsertSimple_WithFilterMatchAndVersion_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Upsert updates a matched document and the result is consistent with a subsequent query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

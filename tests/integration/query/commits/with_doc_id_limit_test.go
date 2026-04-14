@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID and limit 2 after two updates returns only two commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

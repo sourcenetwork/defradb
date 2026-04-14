@@ -20,6 +20,7 @@ import (
 
 func TestBackupImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import a flat User document from backup and verify it is queryable.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
@@ -49,6 +50,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 
 func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup from a non-existent file path returns a file open error.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				Filepath:      t.TempDir() + "/some/test.json",
@@ -62,6 +64,7 @@ func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 
 func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup content referencing an unknown collection name returns a collection not found error.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"Invalid":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
@@ -75,6 +78,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup for a document that already exists returns a duplicate document error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -92,6 +96,7 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 
 func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import a document without docID keys and verify it is assigned an ID and queryable.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"age":30,"name":"John"}]}`,
@@ -121,6 +126,7 @@ func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 
 func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import multiple documents without docID keys and verify all are assigned IDs and queryable.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[
@@ -162,6 +168,7 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 
 func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import an empty object document and verify it is created with all fields null.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[{}]}`,
@@ -189,6 +196,7 @@ func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 
 func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import multiple documents where one has an invalid field errors and commits no documents.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[

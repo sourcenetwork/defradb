@@ -24,6 +24,7 @@ import (
 
 func TestNAC_ReEnableNotConfiguredBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC when it has not been configured returns an error.",
 		Actions: []any{
 			testUtils.ReEnableNAC{
 				ExpectedError: "node acp is not configured",
@@ -36,6 +37,7 @@ func TestNAC_ReEnableNotConfiguredBefore_Error(t *testing.T) {
 
 func TestNAC_ReEnableNotConfiguredBeforeWithIdentity_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC with an identity when it has not been configured returns an error.",
 		Actions: []any{
 			testUtils.ReEnableNAC{
 				Identity:      testUtils.ClientIdentity(1),
@@ -49,6 +51,7 @@ func TestNAC_ReEnableNotConfiguredBeforeWithIdentity_Error(t *testing.T) {
 
 func TestNAC_ReEnableWithNoIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC without an identity when NAC is temporarily disabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -74,6 +77,7 @@ func TestNAC_ReEnableWithNoIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
 
 func TestNAC_ReEnableWithWrongIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC with a wrong identity when NAC is temporarily disabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -100,6 +104,7 @@ func TestNAC_ReEnableWithWrongIdentityWhenTemporarilyDisabled_Error(t *testing.T
 
 func TestNAC_ReEnableWithValidIdentityWhenTemporarilyDisabled_NACReEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC with the correct node owner identity when NAC is temporarily disabled succeeds.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -131,6 +136,7 @@ func TestNAC_ReEnableWithValidIdentityWhenTemporarilyDisabled_NACReEnabled(t *te
 
 func TestNAC_ReEnableWithNoIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC without an identity when NAC is already enabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -154,6 +160,7 @@ func TestNAC_ReEnableWithNoIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 
 func TestNAC_ReEnableWithWrongIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC with a wrong identity when NAC is already enabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -178,6 +185,7 @@ func TestNAC_ReEnableWithWrongIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 
 func TestNAC_ReEnableWithValidIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC with the correct identity when NAC is already enabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -202,6 +210,7 @@ func TestNAC_ReEnableWithValidIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 
 func TestNAC_ReEnableSuccessfullyThenRestartWithNoArgs_RemainsReEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC then restarting without args keeps NAC enabled.",
 
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
@@ -246,6 +255,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithNoArgs_RemainsReEnabled(t *testi
 
 func TestNAC_ReEnableSuccessfullyThenRestartWithStartArgs_RemainsReEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC then restarting with start args keeps NAC enabled.",
 
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
@@ -293,6 +303,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithStartArgs_RemainsReEnabled(t *te
 
 func TestNAC_ReEnableTemporarilyDisabledNACAfterRestart_ReEnabledSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Re-enabling NAC that was temporarily disabled before a restart succeeds after restart.",
 
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{

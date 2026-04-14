@@ -28,6 +28,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "DESC sub-order on an indexed child field returns the author's books in descending rating order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -101,6 +102,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "ASC sub-order on an indexed child field returns the author's books in ascending rating order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -174,6 +176,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "ASC sub-order with a limit on an indexed child field returns only the lowest-rated book.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -246,6 +249,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "DESC sub-order on an indexed rating field independently orders each author's books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -343,6 +347,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Sub-order on rating with an additional relation index uses the relation index to scope each author's books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -440,6 +445,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Sub-filter and DESC sub-order on the same indexed field filters and orders each author's books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -536,6 +542,7 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Parent filter on a child relation field combined with DESC sub-order returns filtered and ordered books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -626,6 +633,7 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Nested DESC sub-order on a grandchild indexed field with limit returns the 2 most recent books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -736,6 +744,7 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Nested ASC sub-order on a grandchild indexed field with limit returns the 2 oldest books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -840,6 +849,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive ASC order by a secondary relation field includes orphan docs at the top of results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -899,6 +909,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive DESC order by a secondary relation field includes orphan docs at the bottom of results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -958,6 +969,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive ASC order by a primary relation field includes orphan publishers at the top of results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1019,6 +1031,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive DESC order by a primary relation field appends orphan publishers at the bottom of results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1081,6 +1094,7 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "ASC order by a secondary relation field without @exhaustive excludes orphan docs from results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1139,6 +1153,7 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "ASC order by a primary relation field without @exhaustive excludes orphan publishers from results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1201,6 +1216,7 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Nested DESC sub-order without @exhaustive excludes orphan books and returns the 2 most recent linked books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1318,6 +1334,7 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Nested ASC sub-order without @exhaustive excludes orphan books and returns the 2 oldest linked books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1435,6 +1452,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldInc
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive nested ASC sub-order with limit places orphan books first before linked books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1542,6 +1560,7 @@ func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAp
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive nested DESC sub-order with limit satisfies limit from linked books, orphans not needed.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1646,6 +1665,7 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive order by relation field includes all docs, placing orphans first in ASC order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1706,6 +1726,7 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive order on a secondary relation field returns orphan books (no publisher) before linked ones.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

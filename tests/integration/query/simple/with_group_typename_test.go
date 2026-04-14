@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouped results with __typename return the collection type name for each group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -50,6 +51,7 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GROUP child with __typename returns the type name for each sub-document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

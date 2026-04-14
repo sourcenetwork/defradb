@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with limit exceeding array length counts all available elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 
 func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with limit counts only elements within the limit.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

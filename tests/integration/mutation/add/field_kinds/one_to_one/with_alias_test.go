@@ -23,6 +23,7 @@ import (
 
 func TestMutationAddOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one doc using an aliased relation field with an invalid field name errors.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -47,6 +48,7 @@ func TestMutationAddOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 // reference to a document that doesnt exist.
 func TestMutationAddOneToOne_UseAliasWithNonExistingRelationPrimarySide_AddedDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one doc via alias referencing a non-existing primary-side doc still succeeds.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -76,6 +78,7 @@ func TestMutationAddOneToOne_UseAliasWithNonExistingRelationPrimarySide_AddedDoc
 
 func TestMutationAddOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using an aliased relation name to link a one-to-one relation is queryable from both sides.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -138,6 +141,7 @@ func TestMutationAddOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t
 
 func TestMutationAddOneToOne_UseAliasedRelationNameToLink_CollectionAPI_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using an aliased relation name to set a one-to-one link from the secondary side via collection API errors.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -165,6 +169,7 @@ func TestMutationAddOneToOne_UseAliasedRelationNameToLink_CollectionAPI_Errors(t
 
 func TestMutationAddOneToOne_UseAliasedRelationNameToLink_GQL_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using an aliased relation name to set a one-to-one link from the secondary side via GQL errors.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),

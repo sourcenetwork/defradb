@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesSetActiveCollectionVersion_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetActiveCollectionVersion: authorized node owner identity can set the active collection version.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -65,6 +66,7 @@ func TestNAC_GatesSetActiveCollectionVersion_NoIdentity_NotAuthorizedError(t *te
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates SetActiveCollectionVersion: request with no identity returns NotAuthorizedError (Go client).",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
@@ -116,6 +118,7 @@ func TestNAC_GatesSetActiveCollectionVersion_NoIdentity_CLIClient_NotAuthorizedE
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates SetActiveCollectionVersion: request with no identity returns NotAuthorizedError (CLI client).",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.CLIClientType,
@@ -162,6 +165,7 @@ func TestNAC_GatesSetActiveCollectionVersion_NoIdentity_CLIClient_NotAuthorizedE
 
 func TestNAC_GatesSetActiveCollectionVersion_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetActiveCollectionVersion: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -213,6 +217,7 @@ func TestNAC_GatesSetActiveCollectionVersion_WrongIdentity_NotAuthorizedError(t 
 
 func TestNAC_GatesSetActiveCollectionVersion_WrongIdentity_CLIClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SetActiveCollectionVersion: request with wrong identity returns NotAuthorizedError (CLI client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

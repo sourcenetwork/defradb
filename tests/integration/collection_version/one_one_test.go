@@ -24,6 +24,7 @@ import (
 
 func TestCollectionVersionOneOne_NoPrimary_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one collection without any @primary directive returns a relation-missing-field error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -48,6 +49,7 @@ func TestCollectionVersionOneOne_NoPrimary_Errors(t *testing.T) {
 
 func TestCollectionVersionOneOne_TwoPrimaries_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one collection with @primary on both sides returns a single-primary-field error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +72,7 @@ func TestCollectionVersionOneOne_TwoPrimaries_Errors(t *testing.T) {
 
 func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A self-referencing one-to-one collection with named relation fields produces correct field descriptions, a unique index on the primary side, and correct GraphQL introspection output.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

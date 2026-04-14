@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -52,6 +53,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds
 
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -84,6 +86,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeed
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline integer array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -116,6 +119,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline integer array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -148,6 +152,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc
 
 func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline float array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -180,6 +185,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t
 
 func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline float array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -212,6 +218,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(
 
 func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline float array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -244,6 +251,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Su
 
 func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline float array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

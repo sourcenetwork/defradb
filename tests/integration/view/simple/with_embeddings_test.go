@@ -20,6 +20,7 @@ import (
 
 func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An @embedding directive on a view field does not generate a vector embedding.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

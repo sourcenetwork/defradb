@@ -25,6 +25,7 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on a numeric field within an indexed JSON field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -96,6 +97,7 @@ func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on a numeric field within an indexed JSON field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -165,6 +167,7 @@ func TestJSONIndex_WithGeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on a numeric field within an indexed JSON field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -247,6 +250,7 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on a numeric field within an indexed JSON field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -316,6 +320,7 @@ func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on a numeric field within an indexed JSON field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -386,6 +391,7 @@ func TestJSONIndex_WithNeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a numeric field within an indexed JSON field returns all non-matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -458,6 +464,7 @@ func TestJSONIndex_WithEqFilterOnStringField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on a string field within an indexed JSON field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -533,6 +540,7 @@ func TestJSONIndex_WithLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_like and _ilike filters on a string field within an indexed JSON field scan index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -620,6 +628,7 @@ func TestJSONIndex_WithNLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nlike and _nilike filters on a string field within an indexed JSON field return non-matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -702,6 +711,7 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on a boolean field within an indexed JSON field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -773,6 +783,7 @@ func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a boolean field within an indexed JSON field returns all non-false docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -846,6 +857,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter for null on a field within an indexed JSON field returns docs with that field explicitly null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -916,6 +928,7 @@ func TestJSONIndex_WithNeFilterOnNullNestedField_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal-null filter on a nested field within an indexed JSON field returns docs with non-null values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -979,6 +992,7 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Updating a JSON field updates the index so subsequent filters use the new values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1042,6 +1056,7 @@ func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on a numeric field within an indexed JSON field uses the index for each listed value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1107,6 +1122,7 @@ func TestJSONIndex_WithInFilterOfDifferentTypes_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter with mixed numeric and string values on an indexed JSON field matches each typed value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1165,6 +1181,7 @@ func TestJSONIndex_WithNinFilter_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nin filter on a numeric field within an indexed JSON field excludes docs with listed values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1223,6 +1240,7 @@ func TestJSONIndex_WithNotAndInFilter_ShouldNotUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_not combined with an _in filter on an indexed JSON field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1281,6 +1299,7 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Compound _and filter on two different paths within an indexed JSON field uses the index for both.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1338,6 +1357,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a numeric JSON field returns docs with different values including those with null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1395,6 +1415,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a string JSON field returns docs with different values including those with null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1452,6 +1473,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a boolean JSON field returns docs with different values including those with null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1509,6 +1531,7 @@ func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter for null on a top-level indexed JSON field returns docs with explicit null or missing value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1569,6 +1592,7 @@ func TestJSONIndex_WithGreaterThanFilterOnTopLevelJSONField_ShouldUseIndex(t *te
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-than filter directly on a top-level indexed JSON field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1637,6 +1661,7 @@ func TestJSONIndex_WithGeqNullFilterOnTopLevelJSONField_ShouldNotUseIndex(t *tes
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_geq null filter on a top-level indexed JSON field does not use the index and returns all docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1699,6 +1724,7 @@ func TestJSONIndex_WithGeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testin
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_geq null filter on a nested JSON path does not use the index and returns all docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1761,6 +1787,7 @@ func TestJSONIndex_WithLeqNullFilterOnTopLevelJSONField_ShouldUseIndex(t *testin
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a top-level indexed JSON field uses the index to return docs with null or missing value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1830,6 +1857,7 @@ func TestJSONIndex_WithLeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testin
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a nested JSON path falls back to a full scan because the index can't handle all null cases.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1891,6 +1919,7 @@ func TestJSONIndex_WithEqFilterWithObjectValueOnNestedPath_ShouldFilter(t *testi
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_eq filter with an object value on a nested JSON path does not use the index and filters in-memory.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1950,6 +1979,7 @@ func TestJSONIndex_WithNeqFilterWithObjectValueOnNestedPath_ShouldFilter(t *test
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_neq filter with an object value on a nested JSON path does not use the index and filters in-memory.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -2011,6 +2041,7 @@ func TestJSONIndex_WithInFilterWithObjectValueOnNestedPath_ShouldFilter(t *testi
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_in filter with object values on a nested JSON path does not use the index and filters in-memory.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -2072,6 +2103,7 @@ func TestJSONIndex_WithNinFilterWithObjectValueOnNestedPath_ShouldFilter(t *test
 	}`
 
 	test := testUtils.TestCase{
+		Description: "_nin filter with object values on a nested JSON path does not use the index and filters in-memory.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -22,6 +22,7 @@ import (
 
 func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecryption(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Synced encrypted documents with indexed fields are decrypted and correctly indexed on the peer.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -102,6 +103,7 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 
 func TestDocEncryptionPeer_IfDocDocHasEncryptedIndexedField_ShouldIndexAfterDecryption(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Synced documents with individually encrypted indexed fields are decrypted and indexed on the peer.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

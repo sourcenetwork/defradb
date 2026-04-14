@@ -21,6 +21,7 @@ import (
 
 func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique composite index fails when existing docs have duplicate field combinations.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -67,6 +68,7 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 
 func TestUniqueCompositeIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc that duplicates an existing unique composite index combination returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +106,7 @@ func TestUniqueCompositeIndexNew_UponAddingDocWithExistingFieldValue_ReturnError
 
 func TestUniqueCompositeIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique composite index succeeds when all field combinations are distinct.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -173,6 +176,7 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 
 func TestUniqueCompositeIndexNew_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique composite index with mixed ascending and descending field directions succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

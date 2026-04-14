@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersion_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting the active collection version to an empty string returns an empty-ID error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -46,6 +47,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t 
 
 func TestCollectionVersion_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting the active collection version to an unknown version ID returns a collection-not-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -72,6 +74,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors
 
 func TestCollectionVersion_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting the active version back to the original after a patch makes the new field inaccessible for queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -108,6 +111,7 @@ func TestCollectionVersion_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNo
 
 func TestCollectionVersion_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting the active version to the newly patched version makes the new field accessible for queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

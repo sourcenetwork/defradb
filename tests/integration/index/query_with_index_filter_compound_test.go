@@ -26,6 +26,7 @@ func TestQueryWithIndex_WithOrFilter_ShouldFetchCorrectDocs(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with two equality conditions on the same indexed field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -91,6 +92,7 @@ func TestQueryWithIndex_WithOrFilterWithThreeBranches_ShouldUseIndex(t *testing.
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with three equality conditions on the same indexed field uses the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -160,6 +162,7 @@ func TestQueryWithIndex_WithOrFilterWithRangeConditions_ShouldUseIndex(t *testin
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with range conditions on the same indexed field uses the index for both branches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -226,6 +229,7 @@ func TestQueryWithIndex_WithOrFilterWithOverlappingConditions_ShouldDeduplicateR
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with overlapping conditions on an indexed field deduplicates results correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -291,6 +295,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_ShouldNotUseInde
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with branches on two different indexed fields falls back to a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -367,6 +372,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithOverlap_Shou
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter on different indexed fields with an overlapping match does not duplicate results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -436,6 +442,7 @@ func TestQueryWithIndex_WithOrFilterOnIndexedAndNonIndexedField_ShouldFallbackTo
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter mixing an indexed and a non-indexed field falls back to a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -503,6 +510,7 @@ func TestQueryWithIndex_WithOrFilterOnOnlyNonIndexedFields_ShouldNotUseIndex(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with all branches on non-indexed fields performs a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -569,6 +577,7 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter mixing _any and _none on the same indexed array field falls back to a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -632,6 +641,7 @@ func TestQueryWithIndex_WithOrFilterOnTwoDifferentIndexedFields_WithRangeConditi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_or filter with range conditions on two different indexed fields falls back to a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

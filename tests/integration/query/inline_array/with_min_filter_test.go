@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline integer array with a greater-than filter returns the minimum among filtered elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline integer array with a filter ignores null and excluded elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineNillableIntegerArray_WithMinWithFilter_Succeeds(t *testing.T
 
 func TestQueryInlineFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline float array with a greater-than filter returns the minimum among filtered elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline float array with a filter ignores null and excluded elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

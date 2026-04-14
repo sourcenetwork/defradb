@@ -20,6 +20,7 @@ import (
 
 func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View collapses a one-to-one self-referential relation into a single view type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -97,6 +98,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 
 func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Embedded view interface type is retained after a subsequent schema update.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

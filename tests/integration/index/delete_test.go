@@ -21,6 +21,7 @@ import (
 
 func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting an index does not prevent querying the underlying collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -66,6 +67,7 @@ func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting an index removes it from the collection's index list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -113,6 +115,7 @@ func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 
 func TestIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a non-existent index returns an error and does not affect querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

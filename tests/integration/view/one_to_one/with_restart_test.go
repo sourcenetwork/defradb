@@ -20,6 +20,7 @@ import (
 
 func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Embedded view interface type is retained across a node restart.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

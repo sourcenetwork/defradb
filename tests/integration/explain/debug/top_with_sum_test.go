@@ -42,6 +42,7 @@ var topLevelSumPattern = dataMap{
 
 func TestDebugExplainTopLevelSumRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level SUM query shows topLevelNode with sumNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -66,6 +67,7 @@ func TestDebugExplainTopLevelSumRequest(t *testing.T) {
 
 func TestDebugExplainTopLevelSumRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level SUM with filter shows topLevelNode with sumNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

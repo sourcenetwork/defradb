@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline integer array field set to null returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline integer array field set to an empty array returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline integer array where all elements are zero returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on a populated inline integer array returns the correct average including negatives.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -144,6 +148,7 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on a nillable inline integer array ignores null values in the average calculation.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -175,6 +180,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 
 func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline float array field set to null returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -206,6 +212,7 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline float array field set to an empty array returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -237,6 +244,7 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an inline float array where all elements are zero returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -269,6 +277,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on a populated inline float array returns the correct average including negative values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +309,7 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on a nillable inline float array ignores null values in the average calculation.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

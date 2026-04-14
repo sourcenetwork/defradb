@@ -33,6 +33,7 @@ type Author {
 
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Delete one book in a one-to-many relation and verify showDeleted reflects correct state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: userCollection,

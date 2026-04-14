@@ -24,7 +24,7 @@ func TestACP_AddWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.T) 
 	// Note: In this test that identity is empty (no identity).
 
 	test := testUtils.TestCase{
-
+		Description: "Document added without identity can be deleted without identity (public document).",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -108,7 +108,7 @@ func TestACP_AddWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	// Note: In this test that identity is empty (no identity).
 
 	test := testUtils.TestCase{
-
+		Description: "Public document added without identity can be deleted by an identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -189,7 +189,7 @@ resources:
 
 func TestACP_AddWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document owner can delete their own document using the same identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -274,7 +274,7 @@ resources:
 
 func TestACP_AddWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document cannot be deleted without an identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -365,7 +365,7 @@ resources:
 
 func TestACP_AddWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document cannot be deleted by a different identity than the owner.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 

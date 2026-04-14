@@ -20,6 +20,7 @@ import (
 
 func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship with a dummy relation on the policy grants no access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -143,6 +144,7 @@ resources:
 
 func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship with a relation not defined on the policy errors.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the relation ID field from the primary side groups books under each author ID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -99,6 +100,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the relation ID from the secondary side without GROUP returns only the ID per group.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -164,6 +166,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the relation ID from secondary side with a join returns IDs and author names without GROUP.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -239,6 +242,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the relation ID from secondary side with GROUP returns each book nested under its author ID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -318,6 +322,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy relation ID from secondary side with GROUP and join returns IDs, authors, and books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

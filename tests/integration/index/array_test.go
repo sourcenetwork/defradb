@@ -25,6 +25,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *testing.T
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index query using _any operator with equality filter uses index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -78,6 +79,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index query using _all operator with comparison filter uses index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +133,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index query using _none operator does not use index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -185,6 +188,7 @@ func TestArrayIndexUpdate_IfUpdateRearrangesArrayElements_ShouldFetch(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Updating an indexed array by rearranging elements still fetches correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -239,6 +243,7 @@ func TestArrayIndexUpdate_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Updating an indexed array to remove a queried element yields no index hit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -289,6 +294,7 @@ func TestArrayIndexUpdate_IfUpdateAddsSoughtElement_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Updating an indexed array to add a queried element makes it fetchable via index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -343,6 +349,7 @@ func TestArrayIndexDelete_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Deleting a doc removes its array index entries and filters it from results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -385,6 +392,7 @@ func TestArrayIndex_Bool_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on a non-null boolean field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -430,6 +438,7 @@ func TestArrayIndex_OptionalBool_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on an optional boolean field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -475,6 +484,7 @@ func TestArrayIndex_OptionalInt_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on an optional integer field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -520,6 +530,7 @@ func TestArrayIndex_Float_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on a non-null float field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -565,6 +576,7 @@ func TestArrayIndex_OptionalFloat_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on an optional float field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -610,6 +622,7 @@ func TestArrayIndex_OptionalString_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index on an optional string field uses index with _any equality filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -655,6 +668,7 @@ func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Array index query combining _any and _in operators returns matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -695,6 +709,7 @@ func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithAllAndInOperator_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index query combining _all and _in operators returns only fully matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -741,6 +756,7 @@ func TestArrayIndex_WithAllAndInOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithNoneAndInOperator_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index query combining _none and _in operators returns docs with no matching elements.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -787,6 +803,7 @@ func TestArrayIndex_WithNoneAndInOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithNoneAndNinOperator_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index query combining _none and _nin operators returns correct docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -833,6 +850,7 @@ func TestArrayIndex_WithNoneAndNinOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithAllAndNinOperator_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index query combining _all and _nin operators returns docs where all elements are excluded.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -879,6 +897,7 @@ func TestArrayIndex_WithAllAndNinOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index query combining _any and _nin operators returns docs with excluded elements.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -926,6 +945,7 @@ func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index with nil elements correctly handles _any equality and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -985,6 +1005,7 @@ func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index with nil elements correctly handles _all comparison and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1049,6 +1070,7 @@ func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 
 func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Array index with nil elements correctly handles _none comparison and null filters.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

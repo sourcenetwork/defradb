@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by the _authorID scalar field with author fields accessible in the GROUP.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -184,6 +185,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books grouped by _authorID with the ID selected returns each author's books correctly partitioned.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -348,6 +350,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouping authors by the _publishedID field (non-existent) returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -443,6 +446,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting _publishedID and grouping by _publishedID on Author returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

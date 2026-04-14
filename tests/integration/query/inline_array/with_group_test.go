@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouping by a string field returns inline array values for each document within the group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -66,6 +67,7 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouping by an inline integer array field groups documents with identical array values together.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

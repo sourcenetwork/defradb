@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_OneSided(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query with a schema that only defines the one side of the relation.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

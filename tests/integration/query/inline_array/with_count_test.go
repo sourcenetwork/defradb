@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array field set to null returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array field set to an empty list returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a populated inline integer array returns the total number of elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a nillable inline boolean array counts all elements including null entries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

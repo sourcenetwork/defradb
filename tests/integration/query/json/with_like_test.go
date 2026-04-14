@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithLikeFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter on a JSON string field matches only documents whose string value fits the pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

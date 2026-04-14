@@ -23,6 +23,7 @@ func TestACP_LinkCollection_WhereNoPolicyWasAdded_CollectionRejected(t *testing.
 	nonExistingPolicyID := "1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81"
 
 	test := testUtils.TestCase{
+		Description: "Reject collection referencing a policy ID that was never added to ACP.",
 
 		Actions: []any{
 
@@ -71,6 +72,7 @@ func TestACP_LinkCollection_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_Colle
 	incorrectPolicyID := "1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81"
 
 	test := testUtils.TestCase{
+		Description: "Reject collection when the referenced policy ID does not match any added policy.",
 
 		Actions: []any{
 

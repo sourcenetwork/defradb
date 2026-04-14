@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child SUM with a limit sums only the first N sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

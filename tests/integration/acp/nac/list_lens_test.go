@@ -21,6 +21,7 @@ import (
 
 func TestNAC_GatesListLens_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListLens: authorized node owner identity can list lens migrations.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -41,6 +42,7 @@ func TestNAC_GatesListLens_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesListLens_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListLens: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -62,6 +64,7 @@ func TestNAC_GatesListLens_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesListLens_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListLens: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

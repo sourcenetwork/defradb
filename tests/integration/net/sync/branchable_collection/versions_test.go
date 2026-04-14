@@ -22,6 +22,7 @@ import (
 
 func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Branchable collection syncs docs and branched schema versions across peers correctly.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with limit and offset on inner GROUP shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -46,6 +47,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T
 
 func TestDebugExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with limit/offset on multiple inner GROUPs shows groupNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

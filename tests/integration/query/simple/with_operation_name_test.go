@@ -22,6 +22,7 @@ import (
 
 func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple named operations with operationName selector returns only the specified operation.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -91,6 +92,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 
 func TestQuerySimpleMultipleOperationsWithNoOperationName_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple operations with no operationName selector returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

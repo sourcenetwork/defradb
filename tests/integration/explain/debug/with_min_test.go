@@ -37,6 +37,7 @@ var minPattern = dataMap{
 
 func TestDebugExplainRequestWithMinOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MIN on inline array field shows minNode over selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

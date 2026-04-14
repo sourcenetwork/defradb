@@ -26,6 +26,7 @@ func TestCollectionMigrationQuery_WithBranchingCollection(t *testing.T) {
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
+		Description: "Querying on a branching collection applies the correct branch migration.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

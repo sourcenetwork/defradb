@@ -25,6 +25,7 @@ import (
 
 func TestCollectionMigrationQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration transforms a single document when querying after schema version upgrade.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -86,6 +87,7 @@ func TestCollectionMigrationQuery(t *testing.T) {
 
 func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration transforms all matching documents when querying with multiple docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -168,6 +170,7 @@ func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 // for downgrading documents recieved via P2P.
 func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration registered before schema patch still transforms documents correctly on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -229,6 +232,7 @@ func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t 
 
 func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Partial migration chain applies up to the intermediary version only.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -301,6 +305,7 @@ func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 
 func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration from intermediary version to latest applies correctly when querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -373,6 +378,7 @@ func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 
 func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Chained migrations across multiple schema versions all apply during query.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
@@ -462,6 +468,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 
 func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migrations registered before schema patches chain correctly when querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -549,6 +556,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *
 
 func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migrations registered in reverse order before patches still chain correctly on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -643,6 +651,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWron
 // bridging the gap.
 func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Orphan migration for unknown collection version does not block query execution.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -704,6 +713,7 @@ func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
 
 func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration overwrites an existing scalar field value on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -766,6 +776,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.
 
 func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration replaces an existing inline array field value on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -828,6 +839,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *tes
 
 func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration that removes a field causes that field to return nil on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -890,6 +902,7 @@ func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 
 func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration preserves unrequested fields; they remain accessible in subsequent queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -967,6 +980,7 @@ func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequ
 
 func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration copies a field to a new field even when the source field is not requested.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1030,6 +1044,7 @@ func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequ
 
 func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration copies a field even when neither source nor destination is explicitly requested.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with filtered child SUM returns the sum of matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Rendered GROUP and filtered child SUM shows sub-documents alongside filtered sums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +133,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and matching child SUM filter produce identical filtered sums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -187,6 +190,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and different child SUM filter produce distinct filtered sums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -243,6 +247,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two child SUM aggregates with different filters return independent sums in the same group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

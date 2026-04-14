@@ -21,6 +21,7 @@ import (
 
 func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching collections to add a one-to-one relation automatically creates a unique index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -72,6 +73,7 @@ func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 
 func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching multiple one-to-one relations creates unique indexes with correct sequential IDs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -147,6 +149,7 @@ func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testi
 
 func TestPatchRelation_OneToMany_DoesNotAddUniqueIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching collections to add a one-to-many relation does not create any unique index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -194,6 +197,7 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 	)
 
 	test := testUtils.TestCase{
+		Description: "After switching collection versions, unique index is only present on the active version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

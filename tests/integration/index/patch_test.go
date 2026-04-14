@@ -20,6 +20,7 @@ import (
 
 func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching a collection to add a secondary index via JSON Patch returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -57,6 +58,7 @@ func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 
 func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching a collection to remove indexes via JSON Patch returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -85,6 +87,7 @@ func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 
 func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Patching a collection to modify an existing index via JSON Patch returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

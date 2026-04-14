@@ -22,6 +22,7 @@ import (
 
 func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Named fragment spread returns the same fields as selecting them inline.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -72,6 +73,7 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested fragment spreads compose correctly and return all referenced fields.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -120,6 +122,7 @@ func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Combining fragment spread with explicit field selection returns all fields without duplication.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -165,6 +168,7 @@ func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using an undefined fragment name returns a GraphQL validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -194,6 +198,7 @@ func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A fragment referencing a non-existent field returns a schema validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -226,6 +231,7 @@ func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A fragment containing an aggregate field correctly returns the aggregated value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -258,6 +264,7 @@ func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A fragment used with GraphQL variables substitutes values correctly.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -303,6 +310,7 @@ func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An inline fragment on the correct type returns the selected fields.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with docs lacking explicit keys into multiple collections succeeds.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{
@@ -87,6 +88,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with an author ID restores the one-to-one relation from book to author.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{
@@ -159,6 +161,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with multiple books sharing the same author ID fails due to unique index violation.",
 		Actions: []any{
 			testUtils.ImportBackup{
 				ImportContent: `{
@@ -193,6 +196,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 
 func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Import backup with two named one-to-one relations correctly restores both author and favourite links.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing indexes returns all indexes defined on the collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -61,6 +62,7 @@ func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 
 func TestIndexList_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing indexes for a specific collection returns only that collection's indexes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

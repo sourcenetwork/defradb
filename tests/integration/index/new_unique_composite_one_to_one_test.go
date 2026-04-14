@@ -21,6 +21,7 @@ import (
 
 func TestOneToOneUniqueIndex_OnPrimarySide_AutoAdded(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A unique index is automatically added on the primary side of a one-to-one relation.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoAdded(t *testing.T) {
 
 func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A user-defined unique index with a custom name on a one-to-one relation field is accepted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -89,6 +91,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 
 func TestOneToOneUniqueIndex_UserDefinedNonUniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining a non-unique index on a one-to-one relation field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -111,6 +114,7 @@ func TestOneToOneUniqueIndex_UserDefinedNonUniqueIndex_ReturnsError(t *testing.T
 
 func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A type-level composite unique index that includes the relation ID field is accepted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -146,6 +150,7 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 
 func TestOneToOneUniqueIndex_TypeLevelNonUniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A type-level non-unique index that includes the relation ID field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -170,6 +175,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillAdded(
 	// When user defines a composite index where relation is NOT the first field,
 	// the automatic unique index should still be created
 	test := testUtils.TestCase{
+		Description: "Auto unique index is still created when the relation field is not first in a composite index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -213,6 +219,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillAdded(
 
 func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two docs referencing the same related document violate the one-to-one unique index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -255,6 +262,7 @@ func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *tes
 
 func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple docs with null relation fields are allowed by the one-to-one unique index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -302,6 +310,7 @@ func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 
 func TestOneToOneUniqueIndex_OneToMany_ShouldNotMakeNewIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many relations do not automatically create a unique index on either side.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

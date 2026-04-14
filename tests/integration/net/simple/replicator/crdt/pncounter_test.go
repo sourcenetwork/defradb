@@ -23,6 +23,7 @@ import (
 
 func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replicator propagates a pncounter increment update from source node to target node.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

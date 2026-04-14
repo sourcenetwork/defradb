@@ -22,6 +22,7 @@ import (
 
 func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline boolean array field that is null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -52,6 +53,7 @@ func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
 }
 func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline boolean array field that is an empty list returns an empty slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
 }
 func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline boolean array field with values returns the correct boolean slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a nillable inline boolean array field returns values including null entries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -149,6 +153,7 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 
 func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field not present in the document returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -179,6 +184,7 @@ func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
 
 func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field set to null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -210,6 +216,7 @@ func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 
 func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field set to an empty list returns an empty slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -241,6 +248,7 @@ func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 
 func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field with positive values returns the correct integer slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -272,6 +280,7 @@ func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
 
 func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field with all negative values returns the correct slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -303,6 +312,7 @@ func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
 
 func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline integer array field with mixed positive, negative, and zero values returns correctly.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -333,6 +343,7 @@ func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
 }
 func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a nillable inline integer array field returns values preserving null entries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -370,6 +381,7 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 
 func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline float array field set to null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -401,6 +413,7 @@ func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
 
 func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline float array field set to an empty list returns an empty slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -432,6 +445,7 @@ func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
 
 func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline float array field with values returns the correct float slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -463,6 +477,7 @@ func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a nillable inline float array field returns values preserving null entries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -499,6 +514,7 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 
 func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline string array field set to null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -530,6 +546,7 @@ func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
 
 func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline string array field set to an empty list returns an empty slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -561,6 +578,7 @@ func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
 
 func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an inline string array field with values including empty string returns the correct slice.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -592,6 +610,7 @@ func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a nillable inline string array field returns values preserving null entries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDocIDFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _docID equality returns only the matching document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

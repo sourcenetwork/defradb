@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithVersionAndOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query _version with order applied returns versions sorted by the specified field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

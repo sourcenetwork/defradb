@@ -43,6 +43,7 @@ var debugAverageTypeIndexJoinManyPattern = dataMap{
 
 func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of AVG on one-to-many joined field shows averageNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -66,6 +67,7 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 
 func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of AVG on multiple joined fields with filter shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

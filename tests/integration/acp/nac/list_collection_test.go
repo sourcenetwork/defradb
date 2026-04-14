@@ -22,6 +22,7 @@ import (
 
 func TestNAC_GatesListCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListCollection: authorized node owner identity can list all collections.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -43,6 +44,7 @@ func TestNAC_GatesListCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesListCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListCollection: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -64,6 +66,7 @@ func TestNAC_GatesListCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesListCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListCollection: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

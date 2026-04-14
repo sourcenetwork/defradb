@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with depth 1 on a newly created document returns all three head commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -57,6 +58,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with depth 1 after an update returns only the current head commits at height 2 and 1.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -107,6 +109,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with depth 2 after two updates returns the two most recent heights for each field.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -175,6 +178,7 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with depth 1 across two documents returns all head commits for both.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -228,6 +232,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 
 func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by fieldName with depth 2 after two updates returns commits at both heights for that field.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read-only access via GQL; actor can read but cannot update the document.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

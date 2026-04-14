@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of all related docs alongside a limited-and-offset child listing.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -118,6 +119,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 
 func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count with an offset differs from the child listing using a different offset.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -212,6 +214,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 
 func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of related docs with both limit and offset applied to the count field.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a DateTime field with the boundary value returns the boundary document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a DateTime field with a value less than the document's date returns that document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -94,6 +96,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a DateTime field with a value after all documents returns no results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -127,6 +130,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq null filter on a DateTime field returns all documents regardless of whether the field is set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -165,6 +169,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a DateTime field skips the nil-DateTime document and returns the matching ones.",
 		Actions: []any{
 			&action.AddDoc{
 				DocMap: map[string]any{

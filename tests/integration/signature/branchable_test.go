@@ -26,6 +26,7 @@ import (
 
 func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "All commit blocks for a branchable collection include valid ECDSA256K signature data.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet

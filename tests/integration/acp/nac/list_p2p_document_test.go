@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesListP2PDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListP2PDocument: authorized node owner identity can list P2P document subscriptions.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -87,6 +88,7 @@ func TestNAC_GatesListP2PDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesListP2PDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListP2PDocument: request with no identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -148,6 +150,7 @@ func TestNAC_GatesListP2PDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesListP2PDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListP2PDocument: request with wrong identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

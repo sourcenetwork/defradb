@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithNotInFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_nin filter on an integer field excluding null returns only documents not in the specified list.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

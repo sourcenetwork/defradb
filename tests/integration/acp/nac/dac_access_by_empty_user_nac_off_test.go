@@ -20,6 +20,7 @@ import (
 
 func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNodeOwner_CanNotAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC temporarily disabled and DAC enabled, an empty user cannot access a private document owned by the node owner.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -72,6 +73,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNod
 
 func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNonNodeOwner_CanNotAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC temporarily disabled and DAC enabled, an empty user cannot access a private document owned by a non-node-owner.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -123,6 +125,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNon
 
 func TestNAC_Disabled_WithDACEnabled_AccessEmptyUser_PublicDocument_CanAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC temporarily disabled and DAC enabled, an empty user can access a public document.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

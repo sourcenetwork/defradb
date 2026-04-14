@@ -37,6 +37,7 @@ var addPattern = dataMap{
 
 func TestDebugExplainMutationRequestWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of add mutation shows addNode wrapping selectTopNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -60,6 +61,7 @@ func TestDebugExplainMutationRequestWithAdd(t *testing.T) {
 
 func TestDebugExplainMutationRequestDoesNotAddDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of add mutation with duplicate input shows addNode plan structure.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

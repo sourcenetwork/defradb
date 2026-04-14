@@ -23,6 +23,7 @@ import (
 
 func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A manager grants read access to another actor, who can then read the document.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -192,6 +193,7 @@ resources:
 
 func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A manager grants write access to another actor, who can then update and delete the document.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -390,6 +392,7 @@ resources:
 
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner makes a manager who self-assigns read access and can then read the document.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -559,6 +562,7 @@ resources:
 
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadAndWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner makes a manager who self-assigns full access and can read, update, and delete.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -816,6 +820,7 @@ resources:
 
 func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Manager attempting to add a relationship for a relation it does not manage returns an error.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -982,6 +987,7 @@ resources:
 
 func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadOrWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner makes a manager who has no direct doc permissions and cannot read or write.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -1134,6 +1140,7 @@ resources:
 
 func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An actor that is neither owner nor manager cannot add a doc-actor relationship.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -21,6 +21,7 @@ import (
 
 func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin with DAC manager relation can add a DAC actor relationship.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -87,6 +88,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *
 
 func TestNAC_AdminRelation_WithoutManagerDACRelation_CanNotAddDACActorRelationship(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin without DAC manager relation cannot add a DAC actor relationship.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_UnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a foreign object array field with an unknown collection name returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -45,6 +46,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_UnknownCollectio
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a foreign object array field without a relation name returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +72,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_NoRelationName(t
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObjectArray_KnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a foreign object array field with a known collection but incomplete relation returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

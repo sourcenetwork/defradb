@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors ordered descending by an aliased sum of published book ratings.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

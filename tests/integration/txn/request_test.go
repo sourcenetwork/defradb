@@ -24,6 +24,7 @@ import (
 // results in the mutation adding a document to the database.
 func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that ran a mutation request makes the document queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -85,6 +86,7 @@ func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 // results in the document not yet being in the database.
 func TestTxn_Request_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that ran a mutation request leaves the collection empty to outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

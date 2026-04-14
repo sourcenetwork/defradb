@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG with no collection argument returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -35,6 +36,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on a collection without specifying a field returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -50,6 +52,7 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on an empty collection returns zero.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -67,6 +70,7 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level AVG of an integer field returns the correct average.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -96,6 +100,7 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 
 func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased AVG on an empty collection returns zero under the alias name.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

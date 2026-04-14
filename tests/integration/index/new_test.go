@@ -23,6 +23,7 @@ import (
 
 func TestIndexNewWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index via @index directive does not prevent querying the collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -77,6 +78,7 @@ func TestIndexNewWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexNew_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index imperatively does not prevent querying the collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -135,6 +137,7 @@ func TestIndexNew_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexNew_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index with an invalid name returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -158,6 +161,7 @@ func TestIndexNew_IfInvalidIndexName_ReturnError(t *testing.T) {
 
 func TestIndexNew_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining two indexes with the same name on a collection returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -22,6 +22,7 @@ import (
 
 func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Field-level encryption stores only the specified field's delta encrypted; others remain plaintext.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{
@@ -77,6 +78,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 	}
 
 	test := testUtils.TestCase{
+		Description: "Doc-level and field-level encryption use dedicated keys per individually encrypted field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -138,6 +140,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 	}
 
 	test := testUtils.TestCase{
+		Description: "After update, individually encrypted fields continue to use dedicated per-field encryption keys.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

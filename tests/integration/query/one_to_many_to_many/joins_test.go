@@ -20,6 +20,7 @@ import (
 
 func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Chained one-to-many-to-many query verifies nested join traversal returns correct linked documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

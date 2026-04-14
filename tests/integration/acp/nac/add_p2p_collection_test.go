@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesAddP2PCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PCollection: authorized node owner identity can add a P2P collection subscription.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -72,6 +73,7 @@ func TestNAC_GatesAddP2PCollection_AuthorizedIdentity_AllowAccess(t *testing.T) 
 
 func TestNAC_GatesAddP2PCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PCollection: request with no identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -121,6 +123,7 @@ func TestNAC_GatesAddP2PCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesAddP2PCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PCollection: request with wrong identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

@@ -21,6 +21,7 @@ import (
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an invalid CID string returns an invalid cid error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 
 func TestQuerySimpleWithCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a valid CID returns the document at that exact version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -81,6 +83,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 
 func TestQuerySimple_UnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an unknown but valid-format CID returns a block-not-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -107,6 +110,7 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a CID that belongs to one document only returns that document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -149,6 +153,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 
 func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a CID after updating a counter field returns the cumulative counter value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -193,6 +198,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with CID and showDeleted after deletion returns the deleted document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -236,6 +242,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 
 func TestQuerySimple_ListOfOneCID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a one-element CID list returns the document at that version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -273,6 +280,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 
 func TestQuerySimple_MultipleCIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with multiple CIDs in a list returns an unsupported error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

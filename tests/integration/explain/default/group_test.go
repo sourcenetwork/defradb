@@ -37,6 +37,7 @@ var groupPattern = dataMap{
 
 func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy on a single parent field shows groupNode with groupByFields attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -75,6 +76,7 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 
 func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy on two parent fields shows groupNode with multiple groupByFields.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

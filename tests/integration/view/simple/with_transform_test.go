@@ -24,6 +24,7 @@ import (
 
 func TestView_SimpleWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform copies a source field into a destination field in the view.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -100,6 +101,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 
 func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A view applies multiple chained lens transforms to produce additional fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -188,6 +190,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform that prepends synthetic documents returns more results than source.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -263,6 +266,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens filter transform removes documents that do not match a condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

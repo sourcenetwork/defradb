@@ -20,6 +20,7 @@ import (
 
 func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship with a dummy relation defined on the policy has no effect.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -143,6 +144,7 @@ resources:
 
 func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship with a relation name not on the policy returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

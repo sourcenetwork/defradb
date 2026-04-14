@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply limit and offset within each GROUP to control nested sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -74,6 +75,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Combine top-level limit and offset with group-level limit and offset.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

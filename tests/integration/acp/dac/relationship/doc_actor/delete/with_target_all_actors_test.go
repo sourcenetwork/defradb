@@ -20,6 +20,7 @@ import (
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the wildcard reader relationship removes read access from all non-explicit actors.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -205,6 +206,7 @@ resources:
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking wildcard access only removes implicit access; explicitly granted actors can still read.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -514,6 +516,7 @@ resources:
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking wildcard access removes read access even for unauthenticated (no-identity) requests.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

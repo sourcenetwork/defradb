@@ -25,6 +25,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveASCWithLimit_ManyOrphansEarlyTe
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive ASC order by a relation field with limit returns orphan docs via early termination.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -112,6 +113,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveASC_ManyBooksShowsFullPipeline(
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive ASC order by a relation field without limit runs both the orphan and source phases.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -206,6 +208,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveDESCWithLimit_ManyOrphansSkipsO
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Exhaustive DESC order by a relation field with limit is satisfied by linked docs, skipping the orphan phase.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

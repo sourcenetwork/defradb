@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithInFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on a JSON field returns only the document whose value is in the given list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

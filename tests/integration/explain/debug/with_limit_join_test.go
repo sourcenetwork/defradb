@@ -53,6 +53,7 @@ var debugLimitTypeJoinManyPattern = dataMap{
 
 func TestDebugExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with limit on related child shows limitNode in typeJoinMany subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -92,6 +93,7 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with only offset on related child shows limitNode in typeJoinMany subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -131,6 +133,7 @@ func TestDebugExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with limit and offset on related child shows limitNode in typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -170,6 +173,7 @@ func TestDebugExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with limit on child and limit/offset on parent shows limitNode on both.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

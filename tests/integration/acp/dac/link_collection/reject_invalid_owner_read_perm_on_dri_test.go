@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_OwnerMissingRequiredReadPermissionLabelOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the DRI resource is missing the required read permission label.",
 
 		Actions: []any{
 

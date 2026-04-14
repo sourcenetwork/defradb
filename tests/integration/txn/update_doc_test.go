@@ -24,6 +24,7 @@ import (
 // results in the document being updated in the database.
 func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that updated a document persists the updated field value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -76,6 +77,7 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 // results in the document not yet being updated in the database.
 func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that updated a document leaves the original value visible outside.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -132,6 +134,7 @@ func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 // the documents created inside that transaction.
 func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A transaction can update a document that was added within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -193,6 +196,7 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 // results in the document being updated in the database.
 func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that updated a document with a filter persists the new field value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -244,6 +248,7 @@ func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 // the transaction results in the document not yet being updated in the database.
 func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted filtered update transaction leaves the original document value visible outside.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -299,6 +304,7 @@ func TestTxn_UpdateDocWithFilter_WithoutCommit_DoesNotUpdateDocument(t *testing.
 // the documents created inside that transaction.
 func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A transaction can use a filter to update a document added within the same transaction.",
 		Actions: []any{
 			&action.AddCollection{
 				TransactionID: immutable.Some(1),

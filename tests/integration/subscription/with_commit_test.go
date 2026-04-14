@@ -20,6 +20,7 @@ import (
 
 func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Commit subscription returns one commit event per add mutation.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -75,6 +76,7 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 	create2Heads := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Commit subscription returns commits with links and heads matching the mutation response.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -179,6 +181,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 	addoDocID := testUtils.NewSameValue()
 	addoCreateCid := testUtils.NewSameValue()
 	test := testUtils.TestCase{
+		Description: "Commit subscription filtered by docID only receives commits for that specific document.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

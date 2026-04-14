@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT across multiple inline arrays can be used as an order key in ASC and DESC queries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -80,6 +81,7 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithNullAndCountAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT across nillable inline arrays including null elements can be used as an order key.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

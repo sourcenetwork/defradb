@@ -37,6 +37,7 @@ var limitPattern = dataMap{
 
 func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with only a limit shows limitNode with limit attribute and no offset.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -70,6 +71,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 
 func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with only an offset shows limitNode with offset attribute and no limit.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -103,6 +105,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 
 func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with limit and offset shows limitNode with both limit and offset attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

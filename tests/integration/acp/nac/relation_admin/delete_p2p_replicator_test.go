@@ -23,6 +23,7 @@ import (
 
 func TestNAC_AdminRelation_CanDeleteP2PReplicator(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to delete a P2P replicator.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

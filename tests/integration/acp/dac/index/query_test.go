@@ -20,6 +20,7 @@ import (
 
 func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index query without identity does not return private DAC-protected documents.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -72,6 +73,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 
 func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index query with the owner's identity returns both public and private DAC documents.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -130,6 +132,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 
 func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Index query with a different identity does not return another owner's private DAC documents.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

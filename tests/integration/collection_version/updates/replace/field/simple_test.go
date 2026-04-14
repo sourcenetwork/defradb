@@ -21,6 +21,7 @@ import (
 
 func TestCollectionVersionUpdatesReplaceField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replace a field in a collection schema version using a JSON patch replace operation.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{

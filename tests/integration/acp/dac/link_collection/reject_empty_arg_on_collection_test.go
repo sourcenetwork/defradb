@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_NoArgWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection linked to policy when no @policy arguments are provided.",
 
 		Actions: []any{
 
@@ -81,6 +82,7 @@ resources:
 
 func TestACP_LinkCollection_SpecifiedArgsAreEmptyOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection linked to policy when both @policy id and resource arguments are empty strings.",
 
 		Actions: []any{
 

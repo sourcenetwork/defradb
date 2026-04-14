@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindIntArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Int array field succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindIntArray(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindIntArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Int array field and inserting a document stores and retrieves integer values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindIntArrayWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindIntArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a [Int!] field using string kind substitution stores and retrieves the integer array values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

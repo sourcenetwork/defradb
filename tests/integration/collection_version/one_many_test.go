@@ -24,6 +24,7 @@ import (
 
 func TestCollectionVersionOneMany_Primary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-many collection with @primary on the many side produces correct field descriptions including foreign key and relation name on both sides.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -97,6 +98,7 @@ func TestCollectionVersionOneMany_Primary(t *testing.T) {
 
 func TestCollectionVersionOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A self-referencing one-to-many collection where the scalar field is lexicographically first produces correct field descriptions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -147,6 +149,7 @@ func TestCollectionVersionOneMany_SelfReferenceOneFieldLexographicallyFirst(t *t
 
 func TestCollectionVersionOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A self-referencing one-to-many collection where the list field is lexicographically first produces correct field descriptions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -195,6 +198,7 @@ func TestCollectionVersionOneMany_SelfReferenceManyFieldLexographicallyFirst(t *
 
 func TestCollectionVersionOneMany_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A self-referencing one-to-many collection with named relation fields produces correct field descriptions and correct GraphQL introspection output.",
 		Actions: []any{
 			&action.AddCollection{
 				// Note: The @primary directive is required due to

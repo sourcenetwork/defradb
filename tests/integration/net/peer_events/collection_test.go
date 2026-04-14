@@ -21,6 +21,7 @@ import (
 
 func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTopic(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a collection topic emits a join peer event for that collection.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -57,6 +58,7 @@ func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTo
 
 func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAllTopics(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to multiple collection topics emits join peer events for each collection.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -97,6 +99,7 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 
 func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEvents(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A node subscribed to a collection receives join events from all other subscribing nodes.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -142,6 +145,7 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 
 func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from a collection topic emits a left peer event for that collection.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -189,6 +193,7 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 
 func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from multiple collection topics emits a left peer event for each.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

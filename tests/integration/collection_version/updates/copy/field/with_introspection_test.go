@@ -21,6 +21,7 @@ import (
 
 func TestCollectionVersionUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Copying a field, removing its ID, and renaming it is visible via schema introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship on a collection without a policy returns an error.",
 
 		Actions: []any{
 			&action.AddCollection{

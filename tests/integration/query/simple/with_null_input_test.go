@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the filter argument returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -48,6 +49,7 @@ func TestQuerySimple_WithNullFilter_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullFilterFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null for individual filter fields behaves as if no filter is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -76,6 +78,7 @@ func TestQuerySimple_WithNullFilterFields_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the order argument returns all documents in default order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -104,6 +107,7 @@ func TestQuerySimple_WithNullOrder_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullOrderFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null for individual order fields returns documents in default order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -132,6 +136,7 @@ func TestQuerySimple_WithNullOrderFields_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullLimit_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the limit argument returns all documents without a limit.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +165,7 @@ func TestQuerySimple_WithNullLimit_Succeed(t *testing.T) {
 
 func TestQuerySimple_WithNullOffset_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the offset argument returns all documents from the beginning.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -188,6 +194,7 @@ func TestQuerySimple_WithNullOffset_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the docID argument returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -216,6 +223,7 @@ func TestQuerySimple_WithNullDocID_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null for the docIDs argument returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -244,6 +252,7 @@ func TestQuerySimple_WithNullDocIDs_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullCID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the cid argument returns all documents at the current state.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -272,6 +281,7 @@ func TestQuerySimple_WithNullCID_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullGroupBy_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as the groupBy argument returns all documents ungrouped.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +310,7 @@ func TestQuerySimple_WithNullGroupBy_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNullShowDeleted_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing null as showDeleted returns all non-deleted documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -328,6 +339,7 @@ func TestQuerySimple_WithNullShowDeleted_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullOr_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null _or condition behaves as if no _or filter is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -356,6 +368,7 @@ func TestQuerySimple_WithFilterWithNullOr_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullOrElement_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null element inside _or returns a validation error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -373,6 +386,7 @@ func TestQuerySimple_WithFilterWithNullOrElement_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullOrField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null field value inside _or returns a validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -401,6 +415,7 @@ func TestQuerySimple_WithFilterWithNullOrField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullAnd_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null _and condition behaves as if no _and filter is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -429,6 +444,7 @@ func TestQuerySimple_WithFilterWithNullAnd_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullAndElement_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null element inside _and returns a validation error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -446,6 +462,7 @@ func TestQuerySimple_WithFilterWithNullAndElement_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullAndField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null field value inside _and returns a validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -474,6 +491,7 @@ func TestQuerySimple_WithFilterWithNullAndField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullNot_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null _not condition behaves as if no _not filter is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -502,6 +520,7 @@ func TestQuerySimple_WithFilterWithNullNot_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFilterWithNullNotField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with a null field value inside _not behaves as if no _not filter is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of SUM on an inline array field returns sumNode with scan iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -73,6 +74,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 
 func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of SUM on a one-to-many joined field returns sumNode wrapping a typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

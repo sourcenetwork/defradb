@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with an unknown docID returns an empty result set.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -47,6 +48,7 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 
 func TestQueryCommitsWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits filtered by a valid docID returns all three commits for that document.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -85,6 +87,7 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID requesting links shows composite commit links to field commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -145,6 +148,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID after an update returns all five commits with correct heights.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -205,6 +209,7 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 // includes link._Name).
 func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with links and heads after an update shows updated composite links and heads.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -295,6 +300,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 
 func TestQueryCommits_DocIDEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with an empty docID list returns an empty result set.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -325,6 +331,7 @@ func TestQueryCommits_DocIDEmptyList(t *testing.T) {
 
 func TestQueryCommits_DocIDListOfOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a one-element docID list returns commits only for that document.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -362,6 +369,7 @@ func TestQueryCommits_DocIDListOfOne(t *testing.T) {
 
 func TestQueryCommits_DocIDListOfMany(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with multiple docIDs in a list returns an unsupported error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

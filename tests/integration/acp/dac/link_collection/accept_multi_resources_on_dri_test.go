@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_WithMultipleResources_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection to one valid resource in a multi-resource policy and accept it.",
 
 		Actions: []any{
 
@@ -108,6 +109,7 @@ resources:
 
 func TestACP_LinkCollection_WithMultipleResourcesBothBeingUsed_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link two collections each to a different resource in the same policy and accept both.",
 
 		Actions: []any{
 

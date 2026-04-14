@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesReadDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ReadDocument: authorized node owner identity can read documents.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -60,6 +61,7 @@ func TestNAC_GatesReadDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates ReadDocument: request with no identity returns NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -96,6 +98,7 @@ func TestNAC_GatesReadDocument_NoIdentity_MaterializedView_NotAuthorizedError(t 
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates ReadDocument via materialized view: request with no identity returns refresh-view NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -132,6 +135,7 @@ func TestNAC_GatesReadDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates ReadDocument: request with wrong identity returns NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -168,6 +172,7 @@ func TestNAC_GatesReadDocument_WrongIdentity_MaterializedView_NotAuthorizedError
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description: "NAC gates ReadDocument via materialized view: request with wrong identity returns refresh-view NotAuthorizedError.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

@@ -20,6 +20,7 @@ import (
 
 func TestManyToMany_QueryFromSecondary_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Many-to-many nested query traversing from primary collection through enrollment to related collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

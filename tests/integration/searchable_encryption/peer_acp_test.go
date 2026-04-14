@@ -69,7 +69,8 @@ resources:
 
 func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 	test := testUtils.TestCase{
-		KMS: testUtils.KMS{Activated: true},
+		Description: "A replicator without ACP access cannot read encrypted documents or their commit blocks.",
+		KMS:         testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,

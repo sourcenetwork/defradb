@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain shows basic plan tree with selectTopNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

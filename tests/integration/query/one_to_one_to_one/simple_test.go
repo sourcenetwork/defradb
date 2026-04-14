@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a three-hop one-to-one chain from Publisher through Book to Author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -124,6 +125,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a three-hop chain where the first relation is secondary and the second is primary.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -228,6 +230,7 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 
 func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a three-hop chain where the first relation is primary and the second is secondary.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -331,6 +334,7 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a three-hop one-to-one chain where all relations are secondary.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

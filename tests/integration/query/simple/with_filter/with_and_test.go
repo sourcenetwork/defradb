@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_and filter combining _gt and _lt on an integer field returns only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -74,6 +75,7 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 
 func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_and filter on an inline int array field using _all _geq and _lt returns the matching document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

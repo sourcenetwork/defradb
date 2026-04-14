@@ -42,6 +42,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Concurrent updates across two peers on a branchable collection reach strong eventual consistency.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

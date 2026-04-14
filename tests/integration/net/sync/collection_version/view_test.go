@@ -26,6 +26,7 @@ import (
 
 func TestSyncColVersion_WithView(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing a view collection version transfers it to the peer as non-materialized and inactive.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -127,6 +128,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 
 func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A synced view collection version can be activated and returns lens-transformed query results.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

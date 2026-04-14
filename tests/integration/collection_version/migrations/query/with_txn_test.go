@@ -25,6 +25,7 @@ import (
 
 func TestCollectionMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration configured within a transaction applies correctly when querying in the same transaction.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -88,6 +89,7 @@ func TestCollectionMigrationQueryWithTxn(t *testing.T) {
 
 func TestCollectionMigrationQueryWithTxnAndCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration committed in a transaction is visible to a subsequent transaction query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

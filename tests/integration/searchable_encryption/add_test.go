@@ -21,6 +21,7 @@ import (
 
 func TestEncryptedIndexNew_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding an @encryptedIndex directive in the schema does not prevent normal document querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -63,6 +64,7 @@ func TestEncryptedIndexNew_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *t
 
 func TestEncryptedIndexNew_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding an encrypted index after documents are already stored does not prevent normal querying.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -108,6 +110,7 @@ func TestEncryptedIndexNew_AfterAddRequest_ShouldNotHinderQuerying(t *testing.T)
 
 func TestEncryptedIndexNew_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an encrypted index on a field that does not exist in the collection returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -129,6 +132,7 @@ func TestEncryptedIndexNew_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 
 func TestEncryptedIndexNew_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Attempting to create a duplicate encrypted index on the same field returns an already-exists error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

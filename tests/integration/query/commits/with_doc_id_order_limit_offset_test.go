@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID, ASC order by height, limit 2, and offset 4 returns middle commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

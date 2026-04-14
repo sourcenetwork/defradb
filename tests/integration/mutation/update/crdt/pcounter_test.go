@@ -26,6 +26,7 @@ import (
 
 func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Int field rejects a negative increment with an error.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -75,6 +76,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 
 func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Int field accumulates two positive increments correctly.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -130,6 +132,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 // This test documents what happens when an overflow occurs in a P Counter with Int type.
 func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Int field rolls over to MinInt64 when Int64 maximum is exceeded.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -192,6 +195,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 
 func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Float field accumulates two positive increments correctly.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -247,6 +251,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 
 func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Float32 field accumulates two positive increments correctly.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -301,6 +306,7 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 
 func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Float64 field accumulates two positive increments correctly.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -358,6 +364,7 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 // In this case it is the same as a no-op.
 func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PCounter Float field increment beyond MaxFloat64 is a no-op.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

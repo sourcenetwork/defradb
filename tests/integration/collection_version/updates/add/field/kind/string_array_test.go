@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindStringArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable String array field succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringArray(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindStringArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable String array field and inserting a document stores and retrieves string values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringArrayWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindStringArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a [String!] field using string kind substitution stores and retrieves the string array values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

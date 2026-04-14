@@ -25,6 +25,7 @@ import (
 
 func TestNAC_GatesListEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListEncryptedIndex: authorized node owner identity can list encrypted indexes for a collection.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
@@ -65,6 +66,7 @@ func TestNAC_GatesListEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T
 
 func TestNAC_GatesListEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListEncryptedIndex: request with no identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -105,6 +107,7 @@ func TestNAC_GatesListEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T)
 
 func TestNAC_GatesListEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListEncryptedIndex: request with no identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -146,6 +149,7 @@ func TestNAC_GatesListEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthoriz
 
 func TestNAC_GatesListEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListEncryptedIndex: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -186,6 +190,7 @@ func TestNAC_GatesListEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing
 
 func TestNAC_GatesListEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates ListEncryptedIndex: request with wrong identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

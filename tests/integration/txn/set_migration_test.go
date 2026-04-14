@@ -30,6 +30,7 @@ import (
 // tests/integration/collection_version/migrations/query/with_txn_test.go#TestSchemaMigrationQueryWithTxnAndCommit
 func TestTxn_SetMigration_WithoutCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that sets a migration leaves documents unmigrated to outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

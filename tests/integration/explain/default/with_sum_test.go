@@ -37,6 +37,7 @@ var sumPattern = dataMap{
 
 func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of sum on an inline array field shows sumNode with empty child field attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

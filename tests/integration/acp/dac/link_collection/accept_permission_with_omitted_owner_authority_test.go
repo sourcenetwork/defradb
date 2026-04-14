@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_ACPEnforcesAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection where update permission expr omits owner authority and accept it.",
 
 		Actions: []any{
 
@@ -103,6 +104,7 @@ resources:
 
 func TestACP_LinkCollection_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection where read permission expr omits owner authority and accept it.",
 
 		Actions: []any{
 
@@ -184,6 +186,7 @@ resources:
 
 func TestACP_LinkCollection_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection where delete permission expr omits owner authority and accept it.",
 
 		Actions: []any{
 

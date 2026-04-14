@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits requesting the docID field returns the same document ID for all commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

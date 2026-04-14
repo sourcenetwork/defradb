@@ -37,6 +37,7 @@ var sumPattern = dataMap{
 
 func TestDebugExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of SUM on inline array field shows sumNode over selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

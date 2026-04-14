@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a non-null boolean array matches docs with identical array values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a non-null boolean array excludes docs with a matching array.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a nullable boolean array matches docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.
 
 func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a nullable boolean array excludes docs with a matching array including nulls.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +164,7 @@ func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing
 
 func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a non-null integer array matches docs with an identical array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -195,6 +200,7 @@ func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a non-null integer array excludes docs with a matching array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +236,7 @@ func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a nullable integer array matches docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -265,6 +272,7 @@ func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.
 
 func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a nullable integer array excludes docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +308,7 @@ func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing
 
 func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a non-null float array matches docs with an identical array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -335,6 +344,7 @@ func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a non-null float array excludes docs with a matching array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -369,6 +379,7 @@ func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 }
 func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a nullable float array matches docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -404,6 +415,7 @@ func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T)
 
 func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a nullable float array excludes docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -439,6 +451,7 @@ func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T
 
 func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a non-null string array matches docs with an identical array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -474,6 +487,7 @@ func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a non-null string array excludes docs with a matching array value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -509,6 +523,7 @@ func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _eq on a nullable string array matches docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -544,6 +559,7 @@ func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T
 
 func TestQueryInlineNullableStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _neq on a nullable string array excludes docs with identical arrays including null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -37,6 +37,7 @@ var minPattern = dataMap{
 
 func TestDefaultExplainRequest_WithMinOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of min on an inline array field shows minNode with empty child field attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

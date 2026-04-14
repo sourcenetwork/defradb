@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding an Int field with pcounter CRDT type succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 
 func TestCollectionVersionUpdates_AddFieldCRDTPCounterWithMismatchKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a Boolean field with pcounter CRDT type returns a kind mismatch error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

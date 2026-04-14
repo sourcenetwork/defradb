@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq on a string field returns only the document with the exact matching string.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq null on a string field returns only the document with no string value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -99,6 +101,7 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMatch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting the same string field used in an _eq filter returns only the matching document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -133,6 +136,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMa
 }
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilterWithMatch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting a field different from the _eq string filter field returns the filtered document's other field.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -167,6 +171,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilte
 }
 func TestQuerySimpleWithStringFilterBlockAndSelect_SelectMultipleFieldsButNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering by a string value that matches no document returns an empty result set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

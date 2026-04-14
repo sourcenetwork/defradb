@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesMoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Moving a field to a different index returns an unsupported error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -44,6 +45,7 @@ func TestCollectionVersionUpdatesMoveFieldErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Moving a field reports unsupported errors for all displaced fields, not just the moved one.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

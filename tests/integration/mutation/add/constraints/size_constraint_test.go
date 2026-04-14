@@ -20,6 +20,7 @@ import (
 
 func TestMutationAdd_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with an array matching the size constraint succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -61,6 +62,7 @@ func TestMutationAdd_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 
 func TestMutationAdd_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with an array exceeding the size constraint returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

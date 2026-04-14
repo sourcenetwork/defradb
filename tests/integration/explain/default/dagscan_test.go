@@ -35,6 +35,7 @@ var dagScanPattern = dataMap{
 
 func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of commits query with field filter shows dagScanNode prefixes and attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -75,6 +76,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 
 func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of commits query without field filter shows dagScanNode with doc prefix.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

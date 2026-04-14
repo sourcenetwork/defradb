@@ -36,6 +36,7 @@ var limitTypeJoinPattern = dataMap{
 
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of join query with limit on related child shows limitNode inside subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -84,6 +85,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 
 func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of join query with only offset on related child shows limitNode with offset attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -132,6 +134,7 @@ func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 
 func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of join query with limit and offset on related child shows limitNode with both attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -180,6 +183,7 @@ func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T)
 
 func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of join query with limit on child and both limit and offset on parent shows limitNode at each level.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

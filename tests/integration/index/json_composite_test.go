@@ -113,12 +113,13 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
+				Description: "Composite index on JSON field first with scalar filters using equality.",
 				Actions: []any{
 					&action.AddCollection{
 						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
-								name: String 
-								custom: JSON 
+								name: String
+								custom: JSON
 								age: Int
 							}`,
 					},
@@ -211,6 +212,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 }
 
 func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex2(t *testing.T) {
+	// Tests composite index (age first, then custom JSON) with range and inequality filters.
 	type testCase struct {
 		name         string
 		req          string
@@ -276,12 +278,13 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
+				Description: "Composite index on scalar age first then JSON, with range and inequality filters.",
 				Actions: []any{
 					&action.AddCollection{
 						SDL: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
-								name: String 
-								custom: JSON 
+								name: String
+								custom: JSON
 								age: Int
 							}`,
 					},
@@ -468,12 +471,13 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
+				Description: "Composite index scalar-then-JSON fetches correctly with equality filters.",
 				Actions: []any{
 					&action.AddCollection{
 						SDL: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
-								name: String 
-								custom: JSON 
+								name: String
+								custom: JSON
 								age: Int
 							}`,
 					},
@@ -660,12 +664,13 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
+				Description: "Composite index on JSON array field with scalar uses _any filter and index.",
 				Actions: []any{
 					&action.AddCollection{
 						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
-								name: String 
-								custom: JSON 
+								name: String
+								custom: JSON
 								age: Int
 							}`,
 					},
@@ -852,12 +857,13 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
+				Description: "Composite index on JSON array and string array field uses _any filter for both.",
 				Actions: []any{
 					&action.AddCollection{
 						SDL: `
 							type User @index(includes: [{field: "custom"}, {field: "tags"}]) {
-								name: String 
-								custom: JSON 
+								name: String
+								custom: JSON
 								tags: [String]
 							}`,
 					},

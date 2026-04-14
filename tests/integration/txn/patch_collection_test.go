@@ -24,6 +24,7 @@ import (
 // results in the patch being applied.
 func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that patched a collection applies the field removal permanently.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -63,6 +64,7 @@ func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 // results in the patch not yet being applied.
 func TestTxn_PatchCollection_WithoutCommit_PatchNotApplied(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that patches a collection leaves the schema unchanged for outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

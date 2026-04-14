@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_InvalidPolicyIDArgTypeWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the @policy id argument is given a non-string integer type.",
 
 		Actions: []any{
 
@@ -81,6 +82,7 @@ resources:
 
 func TestACP_LinkCollection_InvalidResourceArgTypeWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the @policy resource argument is given a non-string integer type.",
 
 		Actions: []any{
 

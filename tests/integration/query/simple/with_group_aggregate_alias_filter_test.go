@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter grouped results by an aliased AVG value excludes groups below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -75,6 +76,7 @@ func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 
 func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter grouped results by an aliased SUM value excludes groups below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -130,6 +132,7 @@ func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 
 func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter grouped results by an aliased MIN value excludes groups below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -185,6 +188,7 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 
 func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter grouped results by an aliased MAX value excludes groups above the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -240,6 +244,7 @@ func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 
 func TestQuerySimple_WithGroupCountAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter grouped results by an aliased COUNT value excludes groups below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

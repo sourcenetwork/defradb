@@ -24,6 +24,7 @@ import (
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG and SUM aggregates on the same inline integer array field return correct combined results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

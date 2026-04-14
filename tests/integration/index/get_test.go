@@ -21,6 +21,7 @@ import (
 
 func TestIndexList_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing indexes on a collection with no indexes returns an empty list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

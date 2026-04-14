@@ -66,6 +66,7 @@ import (
 
 func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query using a specific cid and docID fetches the book with its author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -136,6 +137,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 // to parent state).
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query at original parent cid returns current child state after child update.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -210,6 +212,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query at the first cid returns the original parent state after a parent update.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -284,6 +287,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query at the latest cid returns the updated parent state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

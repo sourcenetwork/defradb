@@ -328,6 +328,27 @@ test\:watch:
 test\:clean:
 	@$(MAKE) clean:test && $(MAKE) test
 
+# Synchronise INDEX.md files under tests/integration with the current state of
+# *_test.go files (updates line ranges and descriptions for every Test* row).
+#
+# The optional 'package' variable accepts a comma-separated list of paths or
+# glob patterns relative to tests/integration. * matches one path segment;
+# ** matches any number of segments.
+#
+#   make test-index                               # sync everything
+#   make test-index package=subscription          # exact path
+#   make test-index package=subscription,txn      # comma-separated list
+#   make test-index package="mutation/add/*"      # single-level glob
+#   make test-index package="mutation/**"         # recursive glob
+#   make test-index package="**/crdt,node"        # mixed
+.PHONY: test-index
+test-index:
+ifeq ($(package),)
+	go run ./cmd/genindex
+else
+	go run ./cmd/genindex --package $(package)
+endif
+
 .PHONY: test\:bench
 test\:bench:
 	@$(MAKE) -C ./tests/bench/ bench

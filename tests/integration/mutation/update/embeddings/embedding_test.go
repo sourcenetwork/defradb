@@ -25,6 +25,7 @@ import (
 
 func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update docs with multiple embedding fields re-generates vector embeddings.",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and
@@ -103,6 +104,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 
 func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating a vector field directly skips automatic embedding generation.",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and
@@ -158,6 +160,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 
 func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating non-embedding fields does not trigger vector embedding re-generation.",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and

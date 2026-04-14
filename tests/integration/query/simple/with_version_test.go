@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query _version inline returns the latest commit CID and height for each document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -81,6 +82,7 @@ func TestQuery_AddDocWithNestedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		Description: "Query _version after adding a document returns the initial commit metadata.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -147,6 +149,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		Description: "Query _version after updating a document returns updated commit metadata.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +233,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T) {
 	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		Description: "_version with collectionVersionId returns the schema version CID for each commit.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -269,6 +273,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 	docID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "_version with docID returns the document ID for each commit.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -311,6 +316,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		Description: "Multiple aliased _version selections return correct commit data under each alias.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -380,6 +386,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		Description: "Interleaved aliased _version selections in complex queries return correct commit data.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -486,6 +493,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		Description: "Multiple aliased _version selections with filters return correct filtered commit data.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -553,6 +561,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		Description: "Query _version requesting all commit fields returns complete commit metadata.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: userCollectionGQLSchema,
@@ -628,6 +637,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		Description: "Query _version with all commit fields after an update returns full updated commit metadata.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: userCollectionGQLSchema,

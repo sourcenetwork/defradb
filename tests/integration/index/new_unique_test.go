@@ -21,6 +21,7 @@ import (
 
 func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique index on a collection with existing duplicate field values returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -72,6 +73,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 
 func TestUniqueIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc with a duplicate unique-indexed field value returns a uniqueness violation error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +133,7 @@ func TestUniqueIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testi
 
 func TestUniqueIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique index succeeds when all existing field values are distinct.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -185,6 +188,7 @@ func TestUniqueIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 
 func TestUniqueIndexNew_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating a unique index succeeds when multiple docs have nil for the indexed field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -245,6 +249,7 @@ func TestUniqueIndexNew_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexNew_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc with a nil value on a unique-indexed field succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -269,6 +274,7 @@ func TestUniqueIndexNew_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexNew_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple docs with nil on a unique-indexed field do not violate the uniqueness constraint.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -308,6 +314,7 @@ func TestUniqueIndexNew_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testi
 
 func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc with a duplicate DateTime value on a unique-indexed field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

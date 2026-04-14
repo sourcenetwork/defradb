@@ -28,6 +28,7 @@ https://github.com/sourcenetwork/defradb/pull/2819
 
 func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with seven dummy collection types defined before the target type returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -88,6 +89,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 
 func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with eight dummy collection types before the target returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -151,6 +153,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 
 func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with eight dummy types before in split schema declarations returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -217,6 +220,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 
 func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with eight dummy collection types defined after the target returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -280,6 +284,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 
 func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with seven dummy types before and one after the target returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

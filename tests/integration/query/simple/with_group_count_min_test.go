@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups compute the MIN of a child COUNT across boolean sub-groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

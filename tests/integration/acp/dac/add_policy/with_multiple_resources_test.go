@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with multiple resources each having their own permissions and relations; succeeds.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -58,6 +59,7 @@ resources:
 
 func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy where one resource's permission references a relation defined only in another resource returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

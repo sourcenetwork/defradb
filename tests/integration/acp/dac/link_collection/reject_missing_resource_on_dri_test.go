@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_SpecifiedResourceDoesNotExistOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the specified resource name does not exist on the policy.",
 
 		Actions: []any{
 

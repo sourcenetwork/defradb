@@ -20,6 +20,7 @@ import (
 
 func TestQueryWithDocIDsFilter_SingleTargetNotFound(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by a single docID that does not exist returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -46,6 +47,7 @@ func TestQueryWithDocIDsFilter_SingleTargetNotFound(t *testing.T) {
 
 func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by a single valid docID returns only that document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -77,6 +79,7 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 
 func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with multiple docIDs where one matches returns only the matching document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -114,6 +117,7 @@ func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 
 func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with multiple docIDs that all match returns all matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -162,6 +166,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 
 func TestQuerySimpleReturnsNothinGivenEmptyDocIDsFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with an empty docID list returns no results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

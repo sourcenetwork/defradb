@@ -20,6 +20,7 @@ import (
 
 func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one collection exposes the foreign key ID field on the primary side's mutation input type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -89,6 +90,7 @@ func TestAddOneToOne_Input_PrimaryObject(t *testing.T) {
 
 func TestAddOneToOne_Input_SecondaryObject(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one collection does not expose relation fields on the secondary side's mutation input type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

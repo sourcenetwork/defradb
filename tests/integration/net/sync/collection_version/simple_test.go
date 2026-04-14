@@ -24,6 +24,7 @@ import (
 
 func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing an initial collection version transfers it to the peer as inactive.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -98,6 +99,7 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 
 func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A synced collection version can be activated on the receiving peer and queried.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -25,6 +25,7 @@ func TestQueryWithUniqueIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on a unique indexed field fetches exactly one matching doc.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -60,6 +61,7 @@ func TestQueryWithUniqueIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on a unique indexed integer field returns matching docs using range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -96,6 +98,7 @@ func TestQueryWithUniqueIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on a unique indexed integer field returns all docs meeting the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -133,6 +136,7 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on a unique indexed integer field returns docs below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -169,6 +173,7 @@ func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on a unique indexed integer field returns docs at or below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -206,6 +211,7 @@ func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on a unique indexed string field returns all docs except the matching one.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -250,6 +256,7 @@ func TestQueryWithUniqueIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on a unique indexed integer field fetches all docs with values in the list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -287,6 +294,7 @@ func TestQueryWithUniqueIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nin filter on a unique indexed integer field excludes docs with listed values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -351,11 +359,12 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_like filter with various patterns on a unique indexed string field scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						name: String 
+						name: String
 						email: String @index(unique: true)
 					}`,
 			},
@@ -449,6 +458,7 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nlike filter on a unique indexed string field returns docs not matching the pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -491,6 +501,7 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nilike filter on a unique indexed field excludes docs matching the case-insensitive pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -529,6 +540,7 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 
 func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Equality filter on a unique indexed field with no matching doc returns an empty result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -563,6 +575,7 @@ func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Equality filter for null on a unique indexed field returns docs with no value set.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -610,6 +623,7 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 
 func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Equality filter for zero on a unique indexed integer field does not return docs with a nil value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -662,6 +676,7 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing
 
 func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Not-equal-null filter on a unique indexed integer field returns docs with any non-nil value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -715,6 +730,7 @@ func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testin
 
 func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Null equality filter on a unique indexed field returns all docs with no value set.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -772,6 +788,7 @@ func TestQueryWithUniqueIndex_WithDateTimeField_ShouldIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on a unique indexed DateTime field uses the index for exact match lookup.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

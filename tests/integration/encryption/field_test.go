@@ -25,6 +25,7 @@ import (
 
 func TestDocEncryptionField_IfFieldDoesNotExistInGQLSchema_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Encrypting a non-existent field via GQL mutation returns an invalid argument error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -49,6 +50,7 @@ func TestDocEncryptionField_IfFieldDoesNotExistInGQLSchema_ReturnError(t *testin
 
 func TestDocEncryptionField_IfAttemptToEncryptBuiltinFieldInGQLSchema_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Attempting to encrypt built-in fields via GQL mutation returns an invalid argument error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -78,6 +80,7 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinFieldInGQLSchema_ReturnErro
 
 func TestDocEncryptionField_IfFieldDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Specifying a non-existent field for encryption via collection API returns a field-not-exist error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -103,6 +106,7 @@ func TestDocEncryptionField_IfFieldDoesNotExist_ReturnError(t *testing.T) {
 
 func TestDocEncryptionField_IfAttemptToEncryptBuiltinField_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Attempting to encrypt built-in fields via collection API returns a cannot-encrypt built-in error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,

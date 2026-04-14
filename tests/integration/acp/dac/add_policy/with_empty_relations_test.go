@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_NoRelationsLabel_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with no relations label defined on the resource; succeeds.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -41,6 +42,7 @@ resources:
 
 func TestACP_AddPolicy_EmptyRelations_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with an empty relations list on the resource; succeeds.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -31,6 +31,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 	nameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Commits on a branchable collection sync correctly across a peer connection to a subscribing node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -125,6 +126,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 	doc2AgeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Multiple documents on a branchable collection sync with correct collection DAG across peers.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

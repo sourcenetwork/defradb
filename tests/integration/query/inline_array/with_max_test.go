@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array field set to null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array field set to an empty list returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a populated inline integer array returns the largest element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 
 func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline integer array ignores null values and returns the largest element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -144,6 +148,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 
 func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline float array field set to null returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -175,6 +180,7 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline float array field set to an empty list returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -206,6 +212,7 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a populated inline float array returns the largest element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -237,6 +244,7 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline float array ignores null values and returns the largest element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -268,6 +276,7 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 
 func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline float array filtered by a specific docID returns the correct maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -37,6 +37,7 @@ var orderPattern = dataMap{
 
 func TestDebugExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with ascending order shows orderNode wrapping selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -60,6 +61,7 @@ func TestDebugExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 
 func TestDebugExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with multiple order fields shows orderNode wrapping selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -25,6 +25,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Unique JSON index enforces uniqueness across JSON values and uses index for equality queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -101,6 +102,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Updating a doc with a unique JSON index reflects new JSON field values in the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

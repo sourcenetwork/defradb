@@ -26,6 +26,7 @@ import (
 // the collections are seen by the action.
 func TestTxn_GetCollections_InsideTxnWithAddSchema_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GetCollections inside a transaction sees the collection added within the same transaction.",
 		Actions: []any{
 			&action.AddCollection{
 				TransactionID: immutable.Some(1),
@@ -58,6 +59,7 @@ func TestTxn_GetCollections_InsideTxnWithAddSchema_Succeeds(t *testing.T) {
 // and illustrates that the collections are not seen by the action.
 func TestTxn_GetCollections_InsideTxnWithoutAddSchema_NoCollections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GetCollections in a separate transaction does not see a collection added in another transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

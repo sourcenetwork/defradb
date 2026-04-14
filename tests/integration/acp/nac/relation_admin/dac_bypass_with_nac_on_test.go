@@ -25,6 +25,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows a user to bypass DAC for documents they do not own.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -99,6 +100,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_MaterializedView_CanBypassDAC(t
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows DAC bypass for non-owned documents via materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -173,6 +175,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanBypassDAC(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows a user to bypass DAC for their own private document.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -256,6 +259,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_MaterializedView_CanBypassDAC(t
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows DAC bypass for owned private documents via materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -339,6 +343,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows access to public documents that are not gated by DAC.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -420,6 +425,7 @@ func TestNAC_AdminRelation_PublicDocument_MaterializedView_CanAccessPublicDocume
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "NAC admin relation allows access to public documents via materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -501,6 +507,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "Revoking NAC admin relation removes DAC bypass access and clears the bypass cache.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -583,6 +590,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_MaterializedView_CanNotDACBypass(
 	// todo: Investigate and test this behavior across all view types when implementing granular NAC permissions.
 	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
+		Description:        "Revoking NAC admin relation removes DAC bypass access via materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.MaterializedViewType}),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

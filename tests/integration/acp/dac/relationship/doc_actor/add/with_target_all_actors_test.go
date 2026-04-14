@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_AllActorsCanReadButNotUpdateOrDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to all actors; any actor can read but cannot update or delete.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -236,6 +237,7 @@ resources:
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_CanReadEvenWithoutIdentityButNotUpdateOrDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to all actors; even an anonymous identity can read but not mutate.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

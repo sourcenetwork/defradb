@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a branchable collection with both CID and docID returns only the matching document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

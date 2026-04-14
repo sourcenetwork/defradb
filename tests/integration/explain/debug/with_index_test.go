@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with indexed field filter shows scanNode plan tree.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -61,6 +62,7 @@ func TestDebugExplainWithIndexOnFilter(t *testing.T) {
 
 func TestDebugExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query ordered by an indexed field shows scanNode plan tree.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -105,6 +107,7 @@ func TestDebugExplainWithIndexOnOrder(t *testing.T) {
 // so no orderNode is needed in the subquery.
 func TestDebugExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of subquery ordered by nested relation's indexed field omits orderNode.",
 
 		Actions: []any{
 			&action.AddCollection{

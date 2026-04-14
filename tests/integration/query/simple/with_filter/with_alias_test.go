@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _alias using an aliased field name with _eq operator returns matching document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 
 func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An empty _alias filter object applies no filtering and returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -99,6 +101,7 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 
 func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A null _alias filter value filters out all documents and returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +134,7 @@ func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A non-object _alias filter value filters out all documents and returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -163,6 +167,7 @@ func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering by an alias name that does not exist in the select returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -193,6 +198,7 @@ func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering by _alias using the original field name without an alias still applies the filter.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +236,7 @@ func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Compound _and filter using an aliased field name correctly narrows the result set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -272,6 +279,7 @@ func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithAliasWithCompound_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_alias filter containing a nested _and compound expression correctly filters using aliased field.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

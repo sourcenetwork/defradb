@@ -20,6 +20,7 @@ import (
 
 func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered by rating ASC then publisher yearOpened DESC return correctly sorted results.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -96,6 +97,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 // Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered by publisher yearOpened DESC then rating ASC places nil-publisher book last.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),

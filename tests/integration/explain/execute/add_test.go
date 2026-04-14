@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainMutationRequestWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an add mutation returns actual node iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

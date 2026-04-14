@@ -20,6 +20,7 @@ import (
 
 func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups compute the MAX of a child AVG of integers across boolean sub-groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -115,6 +116,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string computes both AVG and MAX of a child integer field without rendering the group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

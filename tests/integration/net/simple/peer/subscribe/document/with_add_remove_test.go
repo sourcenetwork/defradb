@@ -23,6 +23,7 @@ import (
 
 func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from a document stops its updates from syncing to the peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -85,6 +86,7 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 
 func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from one document stops its sync while the remaining subscription still syncs.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -184,6 +186,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 
 func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A failed unsubscribe with a malformed document ID does not remove existing subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -250,6 +253,7 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 
 func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing an empty document ID list leaves active subscriptions and sync unchanged.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

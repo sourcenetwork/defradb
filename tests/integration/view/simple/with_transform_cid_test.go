@@ -24,6 +24,7 @@ import (
 
 func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A view can reference an existing lens by CID as its transform.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -87,6 +88,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 
 func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a view with a non-existent transform CID returns a lens not found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

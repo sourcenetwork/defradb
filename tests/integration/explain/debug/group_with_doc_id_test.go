@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with single docID on parent shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -49,6 +50,7 @@ func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 
 func TestDebugExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with docIDs and filter on parent shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query requesting __typename returns the collection type name for each document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -50,6 +51,7 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an aliased __typename returns the type name under the alias.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

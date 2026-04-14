@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_NoResourceWasSpecifiedOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the @policy directive omits the resource argument entirely.",
 
 		Actions: []any{
 
@@ -81,6 +82,7 @@ resources:
 
 func TestACP_LinkCollection_SpecifiedResourceArgIsEmptyOnCollection_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the @policy resource argument is explicitly set to an empty string.",
 
 		Actions: []any{
 

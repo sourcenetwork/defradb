@@ -20,6 +20,7 @@ import (
 
 func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship fails when the doc ID is missing.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -107,6 +108,7 @@ resources:
 
 func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship fails when the collection is missing.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -194,6 +196,7 @@ resources:
 
 func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship fails when the relation name is missing.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -281,6 +284,7 @@ resources:
 
 func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship fails when the target actor identity is missing.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -368,6 +372,7 @@ resources:
 
 func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship fails when the requesting identity is missing.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

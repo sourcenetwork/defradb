@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with related type filter shows typeJoinMany plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -63,6 +64,7 @@ func TestDebugExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithManyRelatedFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with multiple related type filters shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

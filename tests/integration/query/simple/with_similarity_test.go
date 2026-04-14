@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using similarity on a query without a vector field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -41,6 +42,7 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using similarity on an undefined field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -63,6 +65,7 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Providing a wrong value type for the similarity vector returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -88,6 +91,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using similarity on a non-vector field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -112,6 +116,7 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query on an empty collection returns an empty result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -137,6 +142,7 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 
 func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query on an integer vector field returns documents ordered by similarity.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -174,6 +180,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query with a vector of different length than the stored field returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -204,6 +211,7 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 
 func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query on a float32 vector field returns documents ordered by similarity.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -241,6 +249,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query on a float64 vector field returns documents ordered by similarity.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -278,6 +287,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query on a document created via JSON returns documents ordered by similarity.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -315,6 +325,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query with a filter on the similarity score returns only qualifying documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -368,6 +379,7 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 
 func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Similarity query with ordering and limit returns top-N most similar documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -421,6 +433,7 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two similarity fields where filtering is applied only to the second returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -475,6 +488,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 // https://github.com/sourcenetwork/defradb/issues/3468
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two similarity fields with filters on both return documents satisfying both similarity conditions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {

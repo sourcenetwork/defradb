@@ -28,6 +28,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
 	test := testUtils.TestCase{
+		Description: "Setting the active version to the latest applies the forward migration on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -91,6 +92,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigrati
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
 	test := testUtils.TestCase{
+		Description: "Reverting to the original collection version applies the inverse migration, clearing added fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -167,6 +169,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAdded
 	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
 
 	test := testUtils.TestCase{
+		Description: "Reverting to the original doc version skips inverse migration and returns the original value.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{

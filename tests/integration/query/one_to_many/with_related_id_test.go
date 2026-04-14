@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books queried from the many side include the _authorID scalar field in results.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -138,6 +139,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 
 func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying _authorID on Author (which only has the many side) returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

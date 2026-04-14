@@ -20,6 +20,7 @@ import (
 
 func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating a non-indexed field on a doc with a unique composite index succeeds without conflict.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -43,6 +43,7 @@ var averageTypeIndexJoinPattern = dataMap{
 
 func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of average on a joined field shows averageNode with countNode and sumNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -146,6 +147,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 
 func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of average on multiple joined fields with filter shows parallelNode with two typeIndexJoins.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -340,6 +342,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 // AVG reuses the rendered join as they have matching filters (average adds a ne nil filter).
 func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of average with matching ne-nil child filter reuses a single typeIndexJoin.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

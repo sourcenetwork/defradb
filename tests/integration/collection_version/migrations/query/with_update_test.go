@@ -24,6 +24,7 @@ import (
 
 func TestCollectionMigrationQueryWithUpdateRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration runs during an update mutation and the result is persisted for subsequent queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -105,6 +106,7 @@ func TestCollectionMigrationQueryWithUpdateRequest(t *testing.T) {
 
 func TestCollectionMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration registered after a document update does not retroactively transform the updated doc.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

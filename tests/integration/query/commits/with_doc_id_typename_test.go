@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID requesting __typename returns 'Commit' for every result.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

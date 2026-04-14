@@ -20,6 +20,7 @@ import (
 
 func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship without a docID returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -107,6 +108,7 @@ resources:
 
 func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship without a collection name returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -194,6 +196,7 @@ resources:
 
 func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship without a relation name returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -281,6 +284,7 @@ resources:
 
 func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship without a target actor identity returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -368,6 +372,7 @@ resources:
 
 func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship without a requestor identity returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

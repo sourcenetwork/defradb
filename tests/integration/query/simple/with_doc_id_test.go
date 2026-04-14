@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDocIDFilter_TargetNotFound(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a docID that does not exist returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -46,6 +47,7 @@ func TestQuerySimpleWithDocIDFilter_TargetNotFound(t *testing.T) {
 
 func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a valid single docID returns only that document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -77,6 +79,7 @@ func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 
 func TestQuerySimpleWithDocIDFilter_MultipleDocumentsTargetFound(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a docID shared by multiple documents returns all matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

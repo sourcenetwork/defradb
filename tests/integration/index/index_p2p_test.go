@@ -22,6 +22,7 @@ import (
 
 func TestIndexP2P_IfPeerAddedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A doc added by one peer is indexed on the subscribing peer after sync.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -74,6 +75,7 @@ func TestIndexP2P_IfPeerAddedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 
 func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A doc updated by one peer causes the subscribing peer to update its index.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -133,6 +135,7 @@ func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 
 func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A doc deleted by one peer causes the subscribing peer to remove its index entry.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

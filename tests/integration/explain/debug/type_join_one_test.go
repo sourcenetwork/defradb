@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of one-to-one join shows typeIndexJoin with typeJoinOne plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -59,6 +60,7 @@ func TestDebugExplainRequestWithAOneToOneJoin(t *testing.T) {
 
 func TestDebugExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of two-level deep nested joins shows nested typeJoinOne plan trees.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

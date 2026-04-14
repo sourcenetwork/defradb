@@ -23,6 +23,7 @@ import (
 
 func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of one-to-many join shows typeIndexJoin with typeJoinMany attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

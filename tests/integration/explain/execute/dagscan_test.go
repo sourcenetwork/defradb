@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a commits dag scan query returns dagScanNode iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

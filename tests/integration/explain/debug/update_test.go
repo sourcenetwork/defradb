@@ -41,6 +41,7 @@ var updatePattern = dataMap{
 
 func TestDebugExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of update mutation with boolean filter shows updateNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -72,6 +73,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of update mutation with multiple docIDs shows updateNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -102,6 +104,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of update mutation with single docID shows updateNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -129,6 +132,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of update mutation with docIDs and filter shows updateNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

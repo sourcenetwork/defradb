@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a JSON numeric field returns the document whose value is below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -65,6 +66,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *tes
 
 func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a JSON numeric field returns no documents when no value is below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -105,6 +107,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *test
 
 func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt null filter on a JSON field returns no documents because no value is less than null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -143,6 +146,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *
 
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a nested JSON numeric field returns the document whose nested value is below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -190,6 +194,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(
 
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a nested JSON path returns no documents when no nested value is below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -230,6 +235,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t
 
 func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt null filter on a nested JSON path returns no documents because no value is less than null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -268,6 +274,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilt
 
 func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter with a boolean value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -306,6 +313,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testin
 
 func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter with a string value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -344,6 +352,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *test
 
 func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter with an object value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -382,6 +391,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *test
 
 func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter with an array value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -420,6 +430,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testi
 
 func TestQueryJSON_WithLesserThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a JSON field matches only the numeric document when mixed JSON types are stored.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

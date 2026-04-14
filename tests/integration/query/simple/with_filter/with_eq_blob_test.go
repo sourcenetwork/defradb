@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithEqOpOnBlobField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq on a Blob field returns only the document with the matching hex value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

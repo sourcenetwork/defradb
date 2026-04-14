@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindJSON(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a JSON field to a collection version succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindJSON(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a JSON field and inserting a document stores and retrieves the JSON object correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindJSONWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindJSONSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a JSON field using string kind substitution stores and retrieves the JSON object correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

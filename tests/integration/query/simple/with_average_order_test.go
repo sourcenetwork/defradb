@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by an aliased multi-field AVG in ASC and DESC directions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

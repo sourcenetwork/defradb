@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with an unknown CRDT type returns an unsupported CRDT error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,6 +44,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldCRDTInvalidErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding multiple fields with unknown CRDT types returns aggregated unsupported CRDT errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

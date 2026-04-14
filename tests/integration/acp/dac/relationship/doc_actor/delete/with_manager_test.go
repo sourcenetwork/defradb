@@ -20,6 +20,7 @@ import (
 
 func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A manager (admin) revoking a reader relationship causes the actor to lose read access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -175,6 +176,7 @@ resources:
 
 func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the admin relationship prevents the manager from granting access to others.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -343,6 +345,7 @@ resources:
 
 func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An admin attempting to revoke the owner's relationship is forbidden.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

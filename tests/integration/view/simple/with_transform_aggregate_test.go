@@ -24,6 +24,7 @@ import (
 
 func TestView_SimpleWithTransformAggregate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform computes a standard deviation aggregate over view documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

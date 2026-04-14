@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanSyncP2PDocuments(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to sync P2P documents across nodes.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups compute the SUM of a child COUNT of integers across boolean sub-groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -119,6 +120,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string computes both AVG and SUM of a child integer field without rendering the group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -25,6 +25,7 @@ import (
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
 func TestCollectionMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration correctly transforms a single document fetched by docID prefix.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +105,7 @@ func TestCollectionMigrationQueryByDocID(t *testing.T) {
 // documents/queries, if the size changes so should this test.
 func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens pool correctly reuses instances across multiple docID-based queries with migration.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

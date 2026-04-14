@@ -61,6 +61,7 @@ resources:
 
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer with both user and node ACP reader access can fetch and decrypt the document.",
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
@@ -141,6 +142,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 
 func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "User with ACP access but without node-level permission cannot decrypt or fetch the document.",
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
@@ -230,6 +232,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 
 func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Node fetches only documents it has access to across mixed encrypted and plaintext access patterns.",
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
@@ -370,6 +373,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 
 func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailable_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "When the origin node is offline, a permitted peer cannot fetch the encrypted document.",
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

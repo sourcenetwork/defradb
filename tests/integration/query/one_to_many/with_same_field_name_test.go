@@ -48,6 +48,7 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 
 func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query where both sides share the same field name works from the one side.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -90,6 +91,7 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 
 func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query where both sides share the same field name works from the many side.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

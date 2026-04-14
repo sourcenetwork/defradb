@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner adding an update relationship twice via GQL shows the relationship already exists.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -164,6 +165,7 @@ resources:
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants update access to another actor via GQL; that actor can then update the document.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

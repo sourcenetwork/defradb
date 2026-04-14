@@ -23,6 +23,7 @@ type dataMap = map[string]any
 
 func TestSimpleExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple explain of a basic query shows selectNode, scanNode, collection name, and prefixes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

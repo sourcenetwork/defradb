@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanSyncP2PCollectionVersions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to sync P2P collection versions.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

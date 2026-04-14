@@ -26,6 +26,7 @@ func TestOrderQueryWithIndex_WithAscendingOrder_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Ascending order query on indexed integer field uses the index and returns sorted results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -102,6 +103,7 @@ func TestOrderQueryWithIndex_WithLimitDescending_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Descending order with limit on indexed field fetches only the required number of docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -150,6 +152,7 @@ func TestOrderQueryWithIndex_WithLimitAscending_ShouldUseIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Ascending order with limit on indexed field fetches only the required number of docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -198,6 +201,7 @@ func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldAscending_ShouldUseIndex
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on non-indexed field with ascending order on indexed field still uses index for ordering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -243,6 +247,7 @@ func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldDescending_ShouldUseInde
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on non-indexed field with descending order on indexed field still uses index for ordering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -288,6 +293,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldAscending_ShouldUseIndex(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Ascending order with range filter on indexed field uses index and respects the limit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -337,6 +343,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldDescending_ShouldUseIndex(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Descending order with upper-bound filter on indexed field uses index and respects the limit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -385,6 +392,7 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Order by a nested relation field that has an index uses the index for ordering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -465,6 +473,7 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Order by a relation ID field that has a unique index uses the index for ordering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -546,6 +555,7 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Ascending query on a descending-indexed field traverses the index in reverse and returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -602,6 +612,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite index with ASC/DESC field directions does not match ASC/ASC or DESC/DESC query order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -718,6 +729,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite index with DESC/ASC field directions does not match ASC/ASC or DESC/DESC query order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -834,6 +846,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite ASC/ASC index does not match ASC/DESC or DESC/ASC query order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -950,6 +963,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite DESC/DESC index does not match ASC/DESC or DESC/ASC query order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1060,6 +1074,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite index is not used when a non-indexed field interrupts the order sequence in the middle.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1180,6 +1195,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Composite index is not used when a non-indexed field appears at the end of the order sequence.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1299,6 +1315,7 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Order by a relation's indexed field from the primary side uses the index correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1400,6 +1417,7 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Order by a relation's indexed field from the secondary side uses the index correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -22,6 +22,7 @@ import (
 
 func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An indexed field on a branchable collection is correctly usable after syncing across a peer connection.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

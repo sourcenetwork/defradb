@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Requesting _version before the join field on a one-to-one relation returns correct docID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -85,6 +86,7 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 
 func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Requesting _version after the join field on a one-to-one relation returns correct docID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

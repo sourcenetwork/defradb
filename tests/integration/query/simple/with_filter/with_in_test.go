@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntInFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on an integer field returns only documents whose age is in the provided value list.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -74,6 +75,7 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on a Float field using mixed integer and float values returns documents with exact matches.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -124,6 +126,7 @@ func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter including null in the list returns documents with nil integer field alongside matching values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

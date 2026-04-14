@@ -39,6 +39,7 @@ var maxTypeIndexJoinPattern = dataMap{
 
 func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of max on a one-to-many joined field shows maxNode with typeIndexJoin attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -116,6 +117,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 
 func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of max on a joined field with filter shows maxNode with filter in typeIndexJoin.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -207,6 +209,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 
 func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of max with multiple joined field sources shows parallelNode with two typeIndexJoins.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

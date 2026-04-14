@@ -23,6 +23,7 @@ import (
 
 func TestP2PWithSingleDocumentConcurrentDeleteAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Concurrent delete and update on different peers results in a deleted document on both nodes.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -93,6 +94,7 @@ func TestP2PWithSingleDocumentConcurrentDeleteAndUpdate(t *testing.T) {
 // of the test system as of production.  See it as a santity check of sorts.
 func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting one subscribed document syncs the deletion while the other document remains visible.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -159,6 +161,7 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 
 func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Synced deletion is visible in showDeleted query results alongside the remaining live document.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -231,6 +234,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 
 func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Pre-connect update followed by deletion syncs the final deleted state to the subscriber.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -311,6 +315,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 
 func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple pre-connect updates followed by deletion syncs the final deleted state to the peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -399,6 +404,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 
 func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Pre-connection delete on one peer does not override a post-connection update on the other.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

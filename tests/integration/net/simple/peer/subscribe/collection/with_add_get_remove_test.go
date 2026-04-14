@@ -20,6 +20,7 @@ import (
 
 func TestP2PCollectionAddRemoveGetSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing then unsubscribing from a collection leaves the subscription list empty.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -54,6 +55,7 @@ func TestP2PCollectionAddRemoveGetSingle(t *testing.T) {
 
 func TestP2PCollectionAddRemoveGetMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from one of two collections leaves only the other collection in the list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

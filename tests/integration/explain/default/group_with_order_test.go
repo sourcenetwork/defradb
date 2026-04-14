@@ -39,6 +39,7 @@ var groupOrderPattern = dataMap{
 
 func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with descending order on parent shows orderNode wrapping groupNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -92,6 +93,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 
 func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with ascending order on parent shows orderNode wrapping groupNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -145,6 +147,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 
 func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with order on both parent and inner GROUP shows orderNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

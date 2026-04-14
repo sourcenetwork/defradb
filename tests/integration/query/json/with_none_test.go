@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_none filter on a JSON array field returns only documents where no element equals null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -61,6 +62,7 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_none filter on a JSON array checks only top-level elements and excludes documents where any element equals the value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

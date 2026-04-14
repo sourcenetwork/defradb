@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a Boolean field with object CRDT type returns an unsupported CRDT error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,6 +44,7 @@ func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testin
 
 func TestCollectionVersionUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding multiple Boolean fields with object CRDT type returns aggregated unsupported CRDT errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestP2PCollectionAddGetSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a single collection lists it in the peer's P2P collection subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -50,6 +51,7 @@ func TestP2PCollectionAddGetSingle(t *testing.T) {
 
 func TestP2PCollectionAddGetMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to multiple collections lists all subscribed collections for the peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

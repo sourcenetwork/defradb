@@ -41,6 +41,7 @@ var averagePattern = dataMap{
 
 func TestDebugExplainRequestWithAverageOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of AVG on inline array field shows averageNode over countNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

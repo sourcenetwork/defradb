@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying commits with both cid and docID params returns an error for mismatched cid.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

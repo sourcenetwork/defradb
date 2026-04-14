@@ -24,6 +24,7 @@ import (
 
 func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "A searchable encryption query on an encrypted-indexed field returns matching document IDs.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -74,6 +75,7 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 
 func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "Searchable encryption queries on each of multiple encrypted-indexed fields all return the correct document ID.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -159,6 +161,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 
 func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "A searchable encryption query filters multiple encrypted documents by value and returns only matching IDs.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -260,6 +263,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 
 func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "Issuing a searchable encryption query on a collection without any encrypted index returns a GraphQL error.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -298,6 +302,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 
 func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "Filtering a searchable encryption query on a non-indexed field returns an invalid argument error.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -336,6 +341,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 
 func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "A searchable encryption query filtering on multiple encrypted fields returns only the intersecting document IDs.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{

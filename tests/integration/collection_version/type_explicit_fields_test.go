@@ -20,7 +20,7 @@ import (
 
 func TestEncryptFieldsForAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Adding a collection with user-defined fields exposes those fields in the UserField enum for use in mutation encryption selectors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

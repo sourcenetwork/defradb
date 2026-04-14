@@ -25,6 +25,7 @@ import (
 // results in the index being created.
 func TestTxn_NewEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that created an encrypted index makes it visible to ListEncryptedIndexes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -68,6 +69,7 @@ func TestTxn_NewEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 // results in the index not yet being created.
 func TestTxn_NewEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that creates an encrypted index leaves no index visible outside.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -110,6 +112,7 @@ func TestTxn_NewEncryptedIndex_WithoutCommit_NoIndexes(t *testing.T) {
 // the indexes are seen by the action.
 func TestTxn_ListEncryptedIndexes_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "ListEncryptedIndexes inside a transaction sees the encrypted index added in the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

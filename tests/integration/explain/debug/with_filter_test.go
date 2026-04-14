@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with string equality filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -44,6 +45,7 @@ func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with integer equality filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -67,6 +69,7 @@ func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with greater-than filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -90,6 +93,7 @@ func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with logical AND compound filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -113,6 +117,7 @@ func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with logical OR compound filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -136,6 +141,7 @@ func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with _in list filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

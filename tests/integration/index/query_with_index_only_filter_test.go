@@ -26,6 +26,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Indexed field filter also returns non-indexed fields in the query result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -65,6 +66,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on an indexed String field fetches the matching document using the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -100,6 +102,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on an indexed field returns all matching docs when multiple exist.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -144,6 +147,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on an indexed Int field uses range optimization to fetch matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -180,6 +184,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on an indexed Int field uses range optimization to fetch matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -217,6 +222,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on an indexed Int field uses range optimization to fetch matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -253,6 +259,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on an indexed Int field uses range optimization to fetch matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -290,6 +297,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on an indexed String field scans all index entries and excludes the match.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -334,6 +342,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on an indexed Int field fetches only docs with matching values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -366,6 +375,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithInFilterOnFloat_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on an indexed Float field fetches only docs with matching float values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -425,6 +435,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on an indexed field returns all matching docs when multiple have the same value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -469,6 +480,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nin filter on an indexed Int field scans all entries and excludes specified values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -533,11 +545,12 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_like filter with various patterns on an indexed String field scans all entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						name: String 
+						name: String
 						email: String @index
 					}`,
 			},
@@ -631,6 +644,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nlike filter on an indexed String field scans all entries and excludes pattern matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -668,6 +682,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An empty filter object on an indexed field returns all documents successfully.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -719,6 +734,7 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 // to avoid having all docs doubled.
 func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter using an indexed field on a relation correctly returns results without duplicates.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -805,6 +821,7 @@ func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *test
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_neq filter on an indexed Int field includes docs with null values in the results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -870,10 +887,11 @@ func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *te
 	}`
 	req2 := `query {
 		User(filter: {rating: {_neq: null}}) {
-			name	
+			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_neq filter on an indexed Float field includes docs with null values in the results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -939,10 +957,11 @@ func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *t
 	}`
 	req2 := `query {
 		User(filter: {city: {_neq: null}}) {
-			name	
+			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_neq filter on an indexed String field includes docs with null values in the results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1008,10 +1027,11 @@ func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t 
 	}`
 	req2 := `query {
 		User(filter: {birthdate: {_neq: null}}) {
-			name	
+			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_neq filter on an indexed DateTime field includes docs with null values in the results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1081,6 +1101,7 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_neq filter on an indexed Boolean field includes docs with null values in the results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1145,6 +1166,7 @@ func TestQueryWithIndex_WithGeqNullFilterOnIntField_ShouldNotUseIndex(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_geq null filter on an indexed Int field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1198,6 +1220,7 @@ func TestQueryWithIndex_WithLeqNullFilterOnIntField_ShouldUseIndex(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_leq null filter on an indexed Int field uses the index to return docs with null values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1248,6 +1271,7 @@ func TestQueryWithIndex_WithGeqNullFilterOnFloatField_ShouldNotUseIndex(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_geq null filter on an indexed Float field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1301,6 +1325,7 @@ func TestQueryWithIndex_WithLeqNullFilterOnFloatField_ShouldUseIndex(t *testing.
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_leq null filter on an indexed Float field uses the index to return docs with null values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1351,6 +1376,7 @@ func TestQueryWithIndex_WithGeqNullFilterOnDateTimeField_ShouldNotUseIndex(t *te
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_geq null filter on an indexed DateTime field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1404,6 +1430,7 @@ func TestQueryWithIndex_WithLeqNullFilterOnDateTimeField_ShouldUseIndex(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_leq null filter on an indexed DateTime field uses the index to return docs with null values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1454,6 +1481,7 @@ func TestQueryWithIndex_WithEqFilterOnJSONFieldWithObjectValue_ShouldNotUseIndex
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_eq filter with a JSON object value on an indexed JSON field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1504,6 +1532,7 @@ func TestQueryWithIndex_WithEqFilterOnJSONFieldWithNestedArrayValue_ShouldNotUse
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_eq filter with a nested JSON array value on an indexed JSON field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1548,6 +1577,7 @@ func TestQueryWithIndex_WithInFilterOnJSONFieldWithObjectValue_ShouldNotUseIndex
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter with a JSON object value on an indexed JSON field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

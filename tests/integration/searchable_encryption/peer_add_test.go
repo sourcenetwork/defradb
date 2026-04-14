@@ -24,6 +24,7 @@ import (
 
 func TestEncryptedIndexNewPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "An @encryptedIndex schema directive generates the encrypted GQL query type in a P2P setup.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
@@ -58,6 +59,7 @@ func TestEncryptedIndexNewPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 
 func TestEncryptedIndexNewPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "Adding an encrypted index after collection creation generates the encrypted GQL query type in a P2P setup.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{

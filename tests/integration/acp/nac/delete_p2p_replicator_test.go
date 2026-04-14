@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesDeleteP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PReplicator: authorized node owner identity can delete a P2P replicator.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -61,6 +62,7 @@ func TestNAC_GatesDeleteP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.
 
 func TestNAC_GatesDeleteP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PReplicator: request with no identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -100,6 +102,7 @@ func TestNAC_GatesDeleteP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T
 
 func TestNAC_GatesDeleteP2PReplicator_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PReplicator: request with wrong identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

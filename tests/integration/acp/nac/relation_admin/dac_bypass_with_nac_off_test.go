@@ -20,6 +20,7 @@ import (
 
 func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotDACBypass(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC disabled, admin relation does not grant DAC bypass for non-owned documents.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -102,6 +103,7 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 
 func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypass(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC disabled, admin relation does not grant DAC bypass for owned private documents.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -192,6 +194,7 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 
 func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "With NAC disabled, admin relation does not grant DAC bypass for public documents.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

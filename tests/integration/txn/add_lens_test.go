@@ -27,6 +27,7 @@ import (
 // results in the lens working as expected.
 func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that added a lens makes the lens transform queryable through a view.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -105,6 +106,7 @@ func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 // results in the lens not being available yet.
 func TestTxn_AddLens_WithoutCommit_Fails(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that adds a lens causes AddView to fail with lens not found.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an inline integer array exposes COUNT aggregate with array and group selectors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -144,6 +145,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an inline float array exposes SUM aggregate with float field selector args.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -266,6 +268,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersSum(t *testing.T) {
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an inline integer array exposes AVG aggregate with array and group selectors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -480,6 +483,7 @@ var aggregateVersionArg = map[string]any{
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a nillable boolean inline array includes BooleanFilterArg with expected operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -606,6 +610,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilte
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a non-null boolean inline array includes NotNullBooleanFilterArg with expected operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -732,6 +737,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *tes
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a nillable integer inline array includes IntFilterArg with expected comparison operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -882,6 +888,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilte
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a non-null integer inline array includes NotNullIntFilterArg with expected comparison operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1032,6 +1039,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *tes
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a nillable float inline array includes Float64FilterArg with expected comparison operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1182,6 +1190,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a non-null float inline array includes NotNullFloat64FilterArg with expected comparison operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1332,6 +1341,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testi
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a nillable string inline array includes StringFilterArg with expected string operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1482,6 +1492,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter
 
 func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT selector for a non-null string inline array includes NotNullStringFilterArg with expected string operators.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

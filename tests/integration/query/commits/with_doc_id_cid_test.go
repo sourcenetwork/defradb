@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a docID and a CID belonging to a different document returns an error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -51,6 +52,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After an update, querying with a mismatched docID and CID still returns an error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -89,6 +91,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 
 func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with matching docID and CID after update returns only that specific commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -130,6 +133,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID, CID, and depth returns the target commit and its ancestor.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

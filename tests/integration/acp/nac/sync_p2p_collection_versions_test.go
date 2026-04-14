@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesSyncP2PCollectionVersions_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PCollectionVersions: authorized node owner identity can sync P2P collection versions.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -68,6 +69,7 @@ func TestNAC_GatesSyncP2PCollectionVersions_AuthorizedIdentity_AllowAccess(t *te
 
 func TestNAC_GatesSyncP2PCollectionVersions_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PCollectionVersions: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beginning is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),
@@ -94,6 +96,7 @@ func TestNAC_GatesSyncP2PCollectionVersions_NoIdentity_NotAuthorizedError(t *tes
 
 func TestNAC_GatesSyncP2PCollectionVersions_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PCollectionVersions: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beginning is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),

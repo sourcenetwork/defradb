@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DocID field to a collection version succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindDocID(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindDocIDWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DocID field and inserting a document stores and retrieves the document identifier.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindDocIDWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindDocIDSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DocID field using string kind substitution stores and retrieves the document identifier.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

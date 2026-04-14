@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array slice defined by offset and limit returns the maximum of the window.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

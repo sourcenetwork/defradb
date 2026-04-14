@@ -20,7 +20,7 @@ import (
 
 func TestGroupByFieldForTheManySideInCollection(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Adding a one-to-many collection exposes the correct groupBy field enum values on the many side, including relation and internal fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -80,7 +80,7 @@ func TestGroupByFieldForTheManySideInCollection(t *testing.T) {
 
 func TestGroupByFieldForTheSingleSideInCollection(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Adding a one-to-many collection exposes the correct groupBy field enum values on the one side, including relation and internal fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

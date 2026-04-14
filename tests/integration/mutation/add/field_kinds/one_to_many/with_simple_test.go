@@ -23,6 +23,7 @@ import (
 
 func TestMutationAddOneToMany_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with an unknown field name in a one-to-many relation returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -44,6 +45,7 @@ func TestMutationAddOneToMany_WithInvalidField_Error(t *testing.T) {
 
 func TestMutationAddOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document using the foreign key ID field on the one-side returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -68,6 +70,7 @@ func TestMutationAddOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *te
 // reference to a document that doesnt exist.
 func TestMutationAddOneToMany_NonExistingRelationManySide_AddedDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with a foreign key referencing a non-existing document succeeds.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -97,6 +100,7 @@ func TestMutationAddOneToMany_NonExistingRelationManySide_AddedDoc(t *testing.T)
 
 func TestMutationAddOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with a foreign key ID correctly links the one-to-many relation.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

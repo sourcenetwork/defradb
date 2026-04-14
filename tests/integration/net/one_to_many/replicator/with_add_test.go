@@ -23,6 +23,7 @@ import (
 // TestP2POneToManyReplicator tests document syncing between a node and a replicator.
 func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replicator propagates both sides of a one-to-many relation to the target node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

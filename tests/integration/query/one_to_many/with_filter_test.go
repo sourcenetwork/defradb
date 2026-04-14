@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered by age greater than 63 return with their published books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -106,6 +107,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 
 func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered on age and child rating with the child field not selected in output.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -175,6 +177,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered by age and published books filtered by rating simultaneously.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -256,6 +259,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 
 func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased child selections each with different rating filters on the same relation.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -359,6 +363,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 
 func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered using compound _or/_and operators combining parent and related-field conditions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -471,6 +476,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 
 func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiveLike_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered with compound operators and a case-insensitive _ilike on related book name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -565,6 +571,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 
 func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors filtered on a _alias that references a related-field rating threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,

@@ -23,6 +23,7 @@ import (
 
 func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "LWW CRDT concurrent updates to different fields on three peers all converge.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -118,6 +119,7 @@ func TestP2PUpdate_WithLWWConcurrentDifferentFields_BothFieldsPreserved(t *testi
 
 func TestP2PUpdate_WithLWWConcurrentSameField_ConvergesToSameValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "LWW CRDT concurrent updates to the same field across three peers converge to one value.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

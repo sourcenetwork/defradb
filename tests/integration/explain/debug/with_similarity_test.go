@@ -37,6 +37,7 @@ var similarityPattern = dataMap{
 
 func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with SIMILARITY function shows similarityNode in plan tree.",
 
 		Actions: []any{
 			&action.AddCollection{

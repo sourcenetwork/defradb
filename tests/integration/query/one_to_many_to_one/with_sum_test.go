@@ -20,6 +20,7 @@ import (
 
 func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array and SUM on a one-to-many relation field both return correct totals.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors

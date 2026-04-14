@@ -25,6 +25,7 @@ import (
 
 func TestCollectionMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter applied after migration correctly matches the migrated field value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -114,6 +115,7 @@ func TestCollectionMigrationQuery_WithFilterAndMigrationBetweenOldVersions_Shoul
 	)
 
 	test := testUtils.TestCase{
+		Description: "Filter with migration between older non-adjacent versions correctly applies the transform.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -211,6 +213,7 @@ func TestCollectionMigrationQuery_WithFilterAndMigrationBetweenOldVersions_Shoul
 
 func TestCollectionMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigration2(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter with migration embedded in an old patch correctly transforms filtered query results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

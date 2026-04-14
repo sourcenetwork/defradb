@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain directive applied to a field instead of an operation returns an error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -44,6 +45,7 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 
 func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of basic query returns full graph with scanNode attributes and prefixes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -88,6 +90,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 
 func TestDefaultExplainWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with field aliases shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

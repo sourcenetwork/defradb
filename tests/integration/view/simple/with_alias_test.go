@@ -20,6 +20,7 @@ import (
 
 func TestView_SimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple view with a field alias in the query exposes the aliased field name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

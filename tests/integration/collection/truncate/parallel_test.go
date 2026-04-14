@@ -20,6 +20,7 @@ import (
 
 func TestTruncateCollectionParallel_DeletesAllPreviouslyExistingDocuments(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating concurrently with document adds removes all pre-existing documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

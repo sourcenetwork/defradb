@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesSyncP2PBranchableCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PBranchableCollection: authorized node owner identity can sync a branchable P2P collection.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -79,6 +80,7 @@ func TestNAC_GatesSyncP2PBranchableCollection_AuthorizedIdentity_AllowAccess(t *
 
 func TestNAC_GatesSyncP2PBranchableCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PBranchableCollection: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beginning is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),
@@ -121,6 +123,7 @@ func TestNAC_GatesSyncP2PBranchableCollection_NoIdentity_NotAuthorizedError(t *t
 
 func TestNAC_GatesSyncP2PBranchableCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates SyncP2PBranchableCollection: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beginning is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),

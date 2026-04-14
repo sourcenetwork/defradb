@@ -42,6 +42,7 @@ var topLevelMinPattern = dataMap{
 
 func TestDefaultExplain_WithTopLevelMinRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of top-level MIN shows topLevelNode with minNode attributes and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -94,6 +95,7 @@ func TestDefaultExplain_WithTopLevelMinRequest_Succeeds(t *testing.T) {
 
 func TestDefaultExplain_WithTopLevelMinRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of top-level MIN with filter shows topLevelNode with minNode and filter attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

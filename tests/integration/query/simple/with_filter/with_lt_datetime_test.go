@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a DateTime field returns the document whose date is strictly before the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt null filter on a DateTime field returns no documents because nothing is less than null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -89,6 +91,7 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeLTAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a DateTime field skips the nil-DateTime document and returns the strictly lesser one.",
 		Actions: []any{
 			&action.AddDoc{
 				DocMap: map[string]any{

@@ -23,6 +23,7 @@ import (
 
 func TestTruncateCollectionViewAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a materialized view removes its documents but allows reconstruction on refresh.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),
@@ -103,6 +104,7 @@ func TestTruncateCollectionViewAdd_RemovesDocument(t *testing.T) {
 }
 func TestTruncateCollectionViewAdd_TruncatingSourceDoesNotTruncateView(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating the source collection does not remove documents from a materialized view.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			state.MaterializedViewType,
 		}),

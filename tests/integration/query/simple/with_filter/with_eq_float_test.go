@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithFloatEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq on a Float field returns only the document with the exact matching value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithFloatEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithFloatEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter by _eq null on a Float field returns only the document with no float value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

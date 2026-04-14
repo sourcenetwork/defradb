@@ -22,6 +22,7 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/2113
 func TestView_OneToManyWithCount_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using COUNT without an aliased field in a one-to-many view query errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -87,6 +88,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 
 func TestView_OneToManyWithAliasedCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View over one-to-many relation exposes an aliased COUNT aggregate field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -160,6 +162,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 
 func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT in the view query is omitted from the view SDL without error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

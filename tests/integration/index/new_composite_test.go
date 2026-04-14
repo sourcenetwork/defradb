@@ -21,6 +21,7 @@ import (
 
 func TestCompositeIndexNew_WhenAdded_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A newly created composite index can be retrieved from the collection's index list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -76,6 +77,7 @@ func TestCompositeIndexNew_WhenAdded_CanRetrieve(t *testing.T) {
 
 func TestCompositeIndexNew_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A composite index declared with DESC direction on the object applies it to all fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -113,6 +115,7 @@ func TestCompositeIndexNew_UsingObjectDirective_SetsDefaultDirection(t *testing.
 
 func TestCompositeIndexNew_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A field-level direction in a composite index overrides the object-level default direction.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -150,6 +153,7 @@ func TestCompositeIndexNew_UsingObjectDirective_OverridesDefaultDirection(t *tes
 
 func TestCompositeIndexNew_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A composite index declared on a field implicitly includes that field first in the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -184,6 +188,7 @@ func TestCompositeIndexNew_UsingFieldDirective_ImplicitlyAddsField(t *testing.T)
 
 func TestCompositeIndexNew_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A composite index on a field directive with DESC direction applies to all included fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -221,6 +226,7 @@ func TestCompositeIndexNew_UsingFieldDirective_SetsDefaultDirection(t *testing.T
 
 func TestCompositeIndexNew_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An explicit field direction in a composite field-directive index overrides the default direction.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -258,6 +264,7 @@ func TestCompositeIndexNew_UsingFieldDirective_OverridesDefaultDirection(t *test
 
 func TestCompositeIndexNew_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Explicit includes order in a field-directive composite index overrides implicit field ordering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

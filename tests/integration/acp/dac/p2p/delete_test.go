@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PDeletePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner can delete private documents on separate nodes after replication via a replicator.",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

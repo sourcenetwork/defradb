@@ -36,6 +36,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed field of a one-to-many relation correctly returns matching parent docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +105,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed field of a one-to-one secondary relation correctly returns matching parent docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -172,6 +174,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed field of a one-to-one primary relation with a unique index on the relation field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -244,14 +247,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed field of a one-to-one primary relation returns correct parent docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary 
-					} 
+						address: Address @primary
+					}
 
 					type Address {
 						user: User
@@ -310,6 +314,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filtering on an indexed relation field uses both the relation and foreign-key indexes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -350,6 +355,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 
 func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed child field of a one-to-many relation returns all sibling docs of matched parent.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -445,6 +451,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 
 func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed child field with a sub-filter on related docs returns only sub-filtered results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -545,13 +552,14 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed child relation field returns matching parent docs and verifies index fetch count.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
 						name: String
 						devices: [Device]
-					} 
+					}
 
 					type Device {
 						model: String @index
@@ -638,6 +646,7 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed secondary relation field in a one-to-one schema returns matching parent docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -692,16 +701,17 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed scalar field of a many-to-one primary document uses the root index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
 						name: String
 						devices: [Device]
-					} 
+					}
 
 					type Device {
-						model: String 
+						model: String
 						year: Int @index
 						owner: User
 					}
@@ -759,6 +769,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed relation owner field uses subType and root indexes to find matching devices.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -809,6 +820,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal-nil filter on an indexed relation ID field uses the index to exclude ownerless docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -890,6 +902,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equal-nil filter on an indexed relation ID field uses the index to return ownerless docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -965,6 +978,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 // multiple indexed fields on the second object are required for the failure.
 func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple indexed relation fields on a child document correctly resolve both parent references.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1034,6 +1048,7 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an indexed field of a child relation returns an empty result when no child docs exist.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1072,6 +1087,7 @@ func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testi
 
 func TestQueryWithIndex_WithScalarAndRelationFilterAtTopLevel_ShouldApplyBothAsAnd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Scalar and relation filters at top level are combined as an implicit AND condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1187,6 +1203,7 @@ func TestQueryWithIndex_WithScalarAndRelationFilterAtTopLevel_ShouldApplyBothAsA
 
 func TestQueryWithIndex_WithMultipleScalarsAndRelationFilter_ShouldApplyAllAsAnd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple scalar fields and a relation filter at top level are all applied as an AND condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

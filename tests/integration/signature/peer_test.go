@@ -25,6 +25,7 @@ import (
 
 func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Documents signed with Secp256k1 keys sync successfully between two peers.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
@@ -82,6 +83,7 @@ func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Documents signed with Ed25519 keys sync successfully between two peers.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
@@ -139,6 +141,7 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Documents from peers using different key types (Secp256k1 and Ed25519) sync and retain correct signatures.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
@@ -237,6 +240,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Peers with different key types updating the same document each preserve their own signature type.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with filtered child MAX returns the maximum of matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Rendered GROUP and filtered child MAX shows sub-documents alongside filtered maximums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +133,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWithMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and matching child MAX filter produce identical filtered maximums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -187,6 +190,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWithDifferentFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and different child MAX filter produce distinct filtered maximums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -243,6 +247,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithDifferentFilters_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two child MAX aggregates with different filters return independent maximums in the same group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

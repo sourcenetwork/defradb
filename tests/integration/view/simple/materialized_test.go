@@ -22,6 +22,7 @@ import (
 
 func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Materialized view automatically refreshes when the view is first added.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -75,6 +76,7 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewAdd(t *testing.T) {
 
 func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Materialized view can be refreshed again after a prior refresh that contained data.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.MaterializedViewType,
 		}),
@@ -140,6 +142,7 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 
 func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Materialized view does not include documents added after the last explicit refresh.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.MaterializedViewType,
 		}),

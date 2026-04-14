@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesNewEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates NewEncryptedIndex: authorized node owner identity can create a new encrypted index.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -58,6 +59,7 @@ func TestNAC_GatesNewEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T)
 
 func TestNAC_GatesNewEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates NewEncryptedIndex: request with no identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -93,6 +95,7 @@ func TestNAC_GatesNewEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) 
 
 func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates NewEncryptedIndex: request with no identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -129,6 +132,7 @@ func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorize
 
 func TestNAC_GatesNewEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates NewEncryptedIndex: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -164,6 +168,7 @@ func TestNAC_GatesNewEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.
 
 func TestNAC_GatesNewEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates NewEncryptedIndex: request with wrong identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

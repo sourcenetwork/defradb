@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering the related author subtype by an integer field returns the matching book.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -72,6 +73,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 
 func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering the root Book collection by a string field returns the matching book with its author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -126,6 +128,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 
 func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering books by a boolean field on the related author returns the matching result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -180,6 +183,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 
 func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering books by a field on the author's linked book traverses the relation back to parent.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -248,6 +252,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 
 func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering books by a boolean on the related author without selecting author fields returns books only.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -292,6 +297,7 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 
 func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A compound _and filter combining a book rating and a related author field narrows results correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -371,6 +377,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 
 func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A compound _or filter combining book rating and related author age returns the expected subset.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,
@@ -495,6 +502,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 
 func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple compound filter shapes (_or, _and, _not) referencing a relation all return correct books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,

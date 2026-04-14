@@ -22,6 +22,7 @@ import (
 
 func TestColVersionSimpleAddsColGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding an empty collection type creates the collection with only the _docID field and exposes it in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -64,6 +65,7 @@ func TestColVersionSimpleAddsColGivenEmptyType(t *testing.T) {
 
 func TestCollectionVersionSimpleErrorsGivenDuplicateCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with the same name as an already-registered collection returns a collection-already-exists error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -85,6 +87,7 @@ func TestCollectionVersionSimpleErrorsGivenDuplicateCollection(t *testing.T) {
 
 func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Providing an SDL with two identically named types in the same AddCollection call returns a collection-already-exists error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -101,6 +104,7 @@ func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDL(t *testi
 
 func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDLMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Providing an SDL with three identically named types returns aggregated collection-already-exists errors for each duplicate.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -118,6 +122,7 @@ func TestCollectionVersionSimpleErrorsGivenDuplicateCollectionInSameSDLMultiple(
 
 func TestCollectionVersionSimpleAddsCollectionGivenNewTypes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding multiple distinct collection types in separate calls makes all types accessible via GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -151,6 +156,7 @@ func TestCollectionVersionSimpleAddsCollectionGivenNewTypes(t *testing.T) {
 
 func TestCollectionVersionSimpleAddsCollectionWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An empty collection type exposes only the default system fields in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -187,6 +193,7 @@ func TestCollectionVersionSimpleAddsCollectionWithDefaultFieldsGivenEmptyType(t 
 
 func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a field of an unrecognised type name returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -204,6 +211,7 @@ func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T
 
 func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with multiple fields of unrecognised types returns aggregated no-type-found errors for each field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -222,6 +230,7 @@ func TestCollectionVersionSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *t
 
 func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a String field exposes that field as a SCALAR String in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -268,6 +277,7 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testin
 
 func TestCollectionVersionSimpleErrorsGivenNonNullField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a non-null scalar field (String!) returns an unsupported-non-null-field error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -285,6 +295,7 @@ func TestCollectionVersionSimpleErrorsGivenNonNullField(t *testing.T) {
 
 func TestCollectionVersionSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a non-null element type in a list relation field returns an unsupported-non-null-variant error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -306,6 +317,7 @@ func TestCollectionVersionSimpleErrorsGivenNonNullManyRelationField(t *testing.T
 
 func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Blob field exposes that field as a SCALAR Blob in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -352,6 +364,7 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.
 
 func TestCollectionVersionSimple_WithJSONField_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a JSON field exposes that field as a SCALAR JSON in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -398,6 +411,7 @@ func TestCollectionVersionSimple_WithJSONField_AddsCollectionGivenType(t *testin
 
 func TestCollectionVersionSimple_WithFloat32Field_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Float32 field exposes that field as a SCALAR Float32 in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -444,6 +458,7 @@ func TestCollectionVersionSimple_WithFloat32Field_AddsCollectionGivenType(t *tes
 
 func TestCollectionVersionSimple_WithFloat64Field_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Float64 field exposes that field as a SCALAR Float64 in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -490,6 +505,7 @@ func TestCollectionVersionSimple_WithFloat64Field_AddsCollectionGivenType(t *tes
 
 func TestCollectionVersionSimple_WithFloatField_AddsCollectionGivenType(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Float field exposes that field as a SCALAR Float64 (the canonical float type) in GraphQL introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -540,6 +556,7 @@ func TestCollectionVersionSimple_WithFloatField_AddsCollectionGivenType(t *testi
 // TODO: https://github.com/sourcenetwork/defradb/issues/3429
 func TestCollectionVersionSimple_WithAllTypes_AddsCollectionGivenTypes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with fields of every supported scalar and array type correctly exposes each field with the expected GraphQL kind and name in introspection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

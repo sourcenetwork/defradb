@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithAOneToManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of one-to-many join shows typeIndexJoin with typeJoinMany plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

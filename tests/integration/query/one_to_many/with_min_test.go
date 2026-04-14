@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased min rating greater than zero returns all authors with books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -90,6 +91,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased min rating less than 4.7 returns only the author with the lowest-rated book.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

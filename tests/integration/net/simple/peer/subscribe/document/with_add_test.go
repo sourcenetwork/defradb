@@ -23,6 +23,7 @@ import (
 
 func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a specific document syncs only that document's updates to the peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -106,6 +107,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 
 func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing with a malformed document ID returns an error and no sync occurs.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

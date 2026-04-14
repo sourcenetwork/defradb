@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq true filter on a Boolean field returns documents that are false or have no value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -64,6 +65,7 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on a Boolean field returns only documents with a non-null boolean value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -107,6 +109,7 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq false filter on a Boolean field returns documents that are true or have no value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -23,6 +23,7 @@ import (
 
 func TestMutationAddOneToOne_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one relation doc with an invalid field name returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -47,6 +48,7 @@ func TestMutationAddOneToOne_WithInvalidField_Error(t *testing.T) {
 // reference to a document that doesnt exist.
 func TestMutationAddOneToOneNoChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one relation doc referencing a non-existing child doc succeeds.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -76,6 +78,7 @@ func TestMutationAddOneToOneNoChild(t *testing.T) {
 
 func TestMutationAddOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one relation links both sides and is queryable bidirectionally.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -140,6 +143,7 @@ func TestMutationAddOneToOne(t *testing.T) {
 
 func TestMutationAddOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting a one-to-one relation from the secondary side via collection API returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -167,6 +171,7 @@ func TestMutationAddOneToOneSecondarySide_CollectionApi(t *testing.T) {
 
 func TestMutationAddOneToOneSecondarySide_GQL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Setting a one-to-one relation from the secondary side via GQL mutation returns an error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -193,6 +198,7 @@ func TestMutationAddOneToOneSecondarySide_GQL(t *testing.T) {
 
 func TestMutationAddOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a second primary-side doc pointing to the same relation target errors on unique index.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanListP2PDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to list P2P document subscriptions.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline integer array with a less-than filter returns the maximum among filtered elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline integer array with a filter ignores null and excluded elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T
 
 func TestQueryInlineFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on an inline float array with a less-than filter returns the maximum among filtered elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MAX on a nillable inline float array with a filter ignores null and excluded elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

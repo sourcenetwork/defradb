@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PAddPrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P replication allows owner to add private documents independently on different nodes.",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
@@ -117,6 +118,7 @@ resources:
 
 func TestACP_P2PAddPrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer syncs private document to subscribing node only after a reader relation is granted.",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.SourceHubDocumentACPType,

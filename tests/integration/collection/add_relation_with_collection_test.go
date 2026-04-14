@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCreatingOneToManyRelationToExistingCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a one-to-many foreign-object relation to an existing collection succeeds and the relation is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -94,6 +95,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCrea
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCreatingOneToManyRelationsToMultipleExistingCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with one-to-many foreign-object relations to multiple existing collections succeeds and all relations are queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -176,6 +178,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithAddCollectionCrea
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationAfterSeparateAddCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A patch that adds a one-to-many relation field between two separately added collections is resolved correctly and the relation is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -256,6 +259,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToM
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToExistingAndNewCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A mixed add-collection batch where one collection references both an existing and a newly added collection creates all relations correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -330,6 +334,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithMixedBatchHavingR
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcrossSeparateCollections_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Chained one-to-many relations across three separately added collections are resolved correctly, allowing a three-level nested query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

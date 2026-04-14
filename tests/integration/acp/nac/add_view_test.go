@@ -21,6 +21,7 @@ import (
 
 func TestNAC_GatesAddView_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddView: authorized node owner identity can add a view.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -60,6 +61,7 @@ func TestNAC_GatesAddView_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesAddView_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddView: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -100,6 +102,7 @@ func TestNAC_GatesAddView_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesAddView_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddView: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

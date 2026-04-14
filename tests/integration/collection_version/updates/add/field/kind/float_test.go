@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a Float64 field to a collection version succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloat(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindFloatWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a Float64 field and inserting a document stores and retrieves the float64 value correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloatWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindFloatSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a Float64 field using string kind substitution stores and retrieves the float64 value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -50,6 +50,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description:   "Commit query returns ECDSA256K signature type, identity, and value for each field block.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -123,6 +124,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description:   "Only the initial field blocks at height 1 are signed; composite blocks at all heights are signed.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -221,6 +223,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 	uniqueSignature := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		Description:   "Composite commit blocks for a deleted document include valid node-identity signature data.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -280,6 +283,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Commit query returns Ed25519 signature type and correctly matched identity and value fields.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
@@ -352,6 +356,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 	t.Skip("Skipping test because signing with client identity is not supported yet")
 	test := testUtils.TestCase{
+		Description:   "Commit blocks are signed with the client identity's key type when a client identity is supplied.",
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.ClientIdentity(0).Value(): crypto.KeyTypeEd25519,
@@ -428,6 +433,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 }
 func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Commit query returns the signer identity as a hex-encoded public key string.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{

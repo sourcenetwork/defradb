@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with filtered child MIN returns the minimum of matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Rendered GROUP and filtered child MIN shows sub-documents alongside filtered minimums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +133,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and matching child MIN filter produce identical filtered minimums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -187,6 +190,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithDifferentFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and different child MIN filter produce distinct filtered minimums.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -243,6 +247,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithDifferentFilters_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two child MIN aggregates with different filters return independent minimums in the same group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

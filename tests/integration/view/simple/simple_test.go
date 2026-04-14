@@ -20,6 +20,7 @@ import (
 
 func TestView_Simple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple cacheless view returns a single document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -67,6 +68,7 @@ func TestView_Simple(t *testing.T) {
 
 func TestView_SimpleMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple cacheless view returns all documents when multiple exist.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -123,6 +125,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 
 func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a field excluded from the view SDL returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -167,6 +170,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 
 func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A field declared in the view SDL but absent from the query returns nil.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -217,6 +221,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 
 func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A field in the view query but absent from the SDL is not exposed to callers.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -269,6 +274,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 
 func TestView_SimpleViewOfView(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A view defined over another view returns data correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

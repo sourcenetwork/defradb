@@ -23,6 +23,7 @@ import (
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add and delete a document within the same transaction succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +71,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Delete in a separate transaction does not affect documents added in another open transaction.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -152,6 +154,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update within the same transaction is visible to subsequent queries in that transaction.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -209,6 +212,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update in one transaction is not visible to a concurrent separate transaction.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -277,6 +281,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Concurrent updates in two transactions cause a conflict error on the second commit.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

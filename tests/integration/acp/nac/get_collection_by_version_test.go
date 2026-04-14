@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesGetCollectionByVersion_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetCollectionByVersion: authorized node owner identity can retrieve a collection by version.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -45,6 +46,7 @@ func TestNAC_GatesGetCollectionByVersion_AuthorizedIdentity_AllowAccess(t *testi
 
 func TestNAC_GatesGetCollectionByVersion_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetCollectionByVersion: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -67,6 +69,7 @@ func TestNAC_GatesGetCollectionByVersion_NoIdentity_NotAuthorizedError(t *testin
 
 func TestNAC_GatesGetCollectionByVersion_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetCollectionByVersion: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

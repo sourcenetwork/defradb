@@ -36,6 +36,7 @@ var orderTypeJoinPattern = dataMap{
 
 func TestDebugExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with order on related child shows orderNode in typeJoinMany subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -75,6 +76,7 @@ func TestDebugExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of join with order on parent and related child shows orderNode on both levels.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -116,6 +118,7 @@ func TestDebugExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) 
 
 func TestDebugExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query ordered by a related child's field returns an error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -175,6 +178,7 @@ var nestedOrderByRelationPattern = dataMap{
 
 func TestDebugExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of subquery ordered by nested relation field shows orderNode and limitNode in join.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -231,6 +235,7 @@ func TestDebugExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.T)
 
 func TestDebugExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of subquery ordered ascending by nested relation field shows orderNode in join.",
 
 		Actions: []any{
 			&action.AddCollection{

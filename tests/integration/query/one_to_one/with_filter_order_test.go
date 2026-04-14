@@ -20,6 +20,7 @@ import (
 
 func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query books ordered DESC by related author age with a filter and no author fields selected.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -84,6 +85,7 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 
 func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query books ordered ASC by related author age with a filter and no author fields selected.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

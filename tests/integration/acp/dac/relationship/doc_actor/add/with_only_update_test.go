@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants update-only access; actor can update and implicitly read without an explicit read permission.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

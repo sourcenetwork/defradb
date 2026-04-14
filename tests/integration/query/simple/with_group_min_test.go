@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMinOfUndefined_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child MIN on an undefined field returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMinOfUndefined_Retu
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child MIN on an empty collection returns nil.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -64,6 +66,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinOnEm
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child integer MIN returns the correct per-group minimum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -112,6 +115,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMin_Suc
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child MIN where values include nil returns the min of non-nil values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -159,6 +163,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMin_Succeed
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with MIN of child MIN returns the correct deeply aggregated minimum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -254,6 +259,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float MIN on an empty collection returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +306,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float MIN returns the correct per-group float minimum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -347,6 +354,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMin_Succe
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with MIN of child float MIN returns the correct deeply aggregated minimum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -442,6 +450,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFloat_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Triple-nested groups with MIN of MIN of MIN returns the correct deeply aggregated float minimum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

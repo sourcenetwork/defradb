@@ -21,6 +21,7 @@ import (
 
 func TestP2PDocumentAddGetSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a single document lists it in the peer's P2P document subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -60,6 +61,7 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 
 func TestP2PDocumentAddGetMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to multiple documents lists all of them in the peer's P2P document subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

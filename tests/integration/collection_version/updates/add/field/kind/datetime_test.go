@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindDateTime(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DateTime field to a collection version succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindDateTime(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindDateTimeWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DateTime field and inserting a document stores and retrieves the timestamp correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindDateTimeWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindDateTimeSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a DateTime field using string kind substitution stores and retrieves the timestamp correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

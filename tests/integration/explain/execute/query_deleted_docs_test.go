@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a query with showDeleted returns scan stats including deleted documents.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

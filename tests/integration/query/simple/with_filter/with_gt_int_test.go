@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnOneAsOneMatches(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on an integer field returns the one document that strictly exceeds the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnOneAsOneMatches(t *testi
 
 func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnNoneAsNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on an integer field with a threshold above all documents returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -89,6 +91,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnNoneAsNoMatch(t *testing
 
 func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnAllMultiMatches(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on an integer field with a low threshold returns all documents that exceed it.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +134,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnAllMultiMatches(t *testi
 
 func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt null filter on an integer field returns only documents that have a non-null integer value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -21,6 +21,7 @@ import (
 
 func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GraphQL introspection exposes correct fields for a one-to-many view type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

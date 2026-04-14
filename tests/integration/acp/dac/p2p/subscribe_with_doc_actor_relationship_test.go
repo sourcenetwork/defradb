@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionAddDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription peer syncs private doc after node identity granted reader relation; revocation hides it again.",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

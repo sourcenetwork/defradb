@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child COUNT with a limit counts only the first N sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level group limit combined with child COUNT limit independently cap their respective result sets.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMaxOfUndefined_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child MAX on an undefined field returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMaxOfUndefined_Retu
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child MAX on an empty collection returns nil.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -64,6 +66,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxOnEm
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child integer MAX returns the correct per-group maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -112,6 +115,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMax_Suc
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child MAX where values include nil returns the max of non-nil values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -159,6 +163,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMax_Succeed
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with MAX of child MAX returns the correct deeply aggregated maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -254,6 +259,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfInt_Succ
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float MAX on an empty collection returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +306,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMax_
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float MAX returns the correct per-group float maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -347,6 +354,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMax_Succe
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfFloat_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with MAX of child float MAX returns the correct deeply aggregated maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -442,6 +450,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfFloat_Su
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfMaxOfFloat_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Triple-nested groups with MAX of MAX of MAX returns the correct deeply aggregated float maximum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child SUM on an undefined field returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child SUM on an empty collection returns zero.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -64,6 +66,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child integer SUM returns the correct per-group sum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -112,6 +115,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child SUM where values include nil sums only non-nil values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -159,6 +163,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with SUM of child SUM returns the correct deeply aggregated sum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -254,6 +259,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float SUM on an empty collection returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +306,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float SUM returns the correct per-group float sum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -347,6 +354,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with SUM of child float SUM returns the correct deeply aggregated sum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -442,6 +450,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Triple-nested groups with SUM of SUM of SUM returns the correct deeply aggregated float sum.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

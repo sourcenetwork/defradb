@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with extra unused relations beyond those referenced by permissions; succeeds.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -51,6 +52,7 @@ resources:
 
 func TestACP_AddPolicy_ExtraDuplicateRelations_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with a duplicate relation key in YAML returns a parse error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

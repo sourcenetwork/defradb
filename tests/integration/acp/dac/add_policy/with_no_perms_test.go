@@ -27,6 +27,7 @@ import (
 
 func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with no permissions and only a resource name; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -47,6 +48,7 @@ resources:
 
 func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with empty permissions label but multiple relations; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -73,6 +75,7 @@ resources:
 
 func TestACP_AddPolicy_NoPermissionsLabelSingleRelation_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with no permissions label and a single relation; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -95,6 +98,7 @@ resources:
 
 func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a non-DRI policy with no permissions label and multiple typed relations; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

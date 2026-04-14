@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the updater relationship causes the actor to lose update and read access.",
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionNamedMutationType,
@@ -224,6 +225,7 @@ resources:
 
 func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the updater relationship via GQL mutation causes the actor to lose update and read access.",
 
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error.

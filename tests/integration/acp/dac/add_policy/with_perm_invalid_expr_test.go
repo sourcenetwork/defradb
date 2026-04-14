@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_PermissionExprWithIncorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with an invalid symbol (^) in a permission expression returns a token recognition error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -50,6 +51,7 @@ resources:
 
 func TestACP_AddPolicy_PermissionExprReferencingOwner_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy where a permission expression directly references the owner relation returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -79,6 +81,7 @@ resources:
 
 func TestACP_AddPolicy_ExpressionReferencesUndeclaredRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy where a permission expression references a relation not declared in the policy returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

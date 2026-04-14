@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM aggregated across two distinct one-to-many join relations simultaneously.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with filter on parent shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Float32 array field succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloat32Array(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindFloat32ArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Float32 array field and inserting a document stores and retrieves the values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindFloat32ArrayWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindFloat32ArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a [Float32!] field using string kind substitution stores and retrieves the array values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

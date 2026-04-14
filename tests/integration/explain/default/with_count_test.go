@@ -37,6 +37,7 @@ var countPattern = dataMap{
 
 func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count on an inline array field shows countNode with scanNode attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

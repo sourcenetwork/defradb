@@ -22,6 +22,7 @@ import (
 
 func TestPeerEvents_OnSubscribeToDocument_ShouldReceiveJoinEventOnDocumentTopic(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a document topic emits a join peer event for that document.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -63,6 +64,7 @@ func TestPeerEvents_OnSubscribeToDocument_ShouldReceiveJoinEventOnDocumentTopic(
 
 func TestPeerEvents_OnSubscribeToMultipleDocuments_ShouldReceiveJoinEventsOnAllTopics(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to multiple document topics emits join peer events for each document.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -116,6 +118,7 @@ func TestPeerEvents_OnSubscribeToMultipleDocuments_ShouldReceiveJoinEventsOnAllT
 
 func TestPeerEvents_DocumentAndDocSyncTopics_ShouldReceiveJoinEventsOnBoth(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a document topic also receives a join event on the doc-sync topic.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -160,6 +163,7 @@ func TestPeerEvents_DocumentAndDocSyncTopics_ShouldReceiveJoinEventsOnBoth(t *te
 
 func TestPeerEvents_AllTopicTypes_ShouldReceiveJoinEventsOnAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to collection, document, and doc-sync topics all emit join peer events.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -215,6 +219,7 @@ func TestPeerEvents_AllTopicTypes_ShouldReceiveJoinEventsOnAll(t *testing.T) {
 
 func TestPeerEvents_OnUnsubscribeFromDocument_ShouldReceiveLeftEvent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from a document topic emits a left peer event for that document.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -267,6 +272,7 @@ func TestPeerEvents_OnUnsubscribeFromDocument_ShouldReceiveLeftEvent(t *testing.
 
 func TestPeerEvents_OnUnsubscribeFromMultipleDocuments_ShouldReceiveLeftEvents(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from multiple document topics emits a left peer event for each.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

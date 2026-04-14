@@ -23,6 +23,7 @@ import (
 
 func TestNAC_AdminRelation_CanGetCollectionByVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to get a collection by version ID.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

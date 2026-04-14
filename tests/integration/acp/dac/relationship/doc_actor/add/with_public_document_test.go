@@ -20,6 +20,7 @@ import (
 
 func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a doc-actor relationship on a public document that is already accessible errors.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

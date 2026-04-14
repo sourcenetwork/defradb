@@ -20,6 +20,7 @@ import (
 
 func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An admin attempting to revoke its own admin relationship is forbidden.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -135,6 +136,7 @@ resources:
 
 func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An owner attempting to revoke its own owner relationship is forbidden.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

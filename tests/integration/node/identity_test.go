@@ -19,6 +19,7 @@ import (
 
 func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Each node returns its own unique identity when queried.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

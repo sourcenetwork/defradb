@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a docID and filter on an unknown fieldName returns an empty result.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -50,6 +51,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID and filter on a numeric field ID string returns empty result.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -80,6 +82,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits filtered by docID and fieldName 'age' returns only the age field commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -114,6 +117,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits filtered by docID and fieldName '_C' returns only the composite commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

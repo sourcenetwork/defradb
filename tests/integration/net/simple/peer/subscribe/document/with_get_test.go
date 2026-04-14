@@ -20,6 +20,7 @@ import (
 
 func TestP2PDocument_GetAllWithNoneConfigured_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing P2P document subscriptions on a peer with none configured returns an empty list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

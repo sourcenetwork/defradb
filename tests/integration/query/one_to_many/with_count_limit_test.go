@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of all related docs alongside a limited child listing uses different limits.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -103,6 +104,7 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 
 func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count with its own limit produces a different result than the separately-limited child listing.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -194,6 +196,7 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 
 func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of related docs with a limit of one returns 1 for every author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

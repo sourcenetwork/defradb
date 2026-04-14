@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWithLimitAndOffset_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child MIN with limit and offset considers only the windowed sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

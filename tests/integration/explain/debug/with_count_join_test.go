@@ -39,6 +39,7 @@ var debugCountTypeIndexJoinManyPattern = dataMap{
 
 func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of COUNT on one-to-many joined field shows countNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -62,6 +63,7 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 
 func TestDebugExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of COUNT on multiple joined fields shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

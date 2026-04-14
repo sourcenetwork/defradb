@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a String field to a collection version succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindString(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindStringWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a String field and inserting a document stores and retrieves the string value correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindStringWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindStringSubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a String field using string kind substitution stores and retrieves the string value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM with no collection argument returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -35,6 +36,7 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a collection without specifying a field returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -50,6 +52,7 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an empty collection returns zero.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -67,6 +70,7 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level SUM of an integer field returns the correct total.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

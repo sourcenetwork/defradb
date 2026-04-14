@@ -20,6 +20,7 @@ import (
 
 func TestFilterForSimpleCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a simple collection exposes a correctly typed filter argument with field-specific operator blocks.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -153,6 +154,7 @@ var defaultUserArgsWithoutFilter = trimFields(
 
 func TestFilterForOneToOneCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one collection exposes relational filter arguments including foreign key and nested object filter types.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -306,6 +308,7 @@ var defaultBookArgsWithoutFilter = trimFields(
 
 func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a JSON field exposes a JSON filter operator (not a block type) in the filter input.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -29,6 +29,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 	headCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Collection with @branchable(if: true) produces a collection-level commit on document create.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -81,6 +82,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 	headCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Collection with @branchable(if: false) omits the collection-level commit from query results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,7 +20,7 @@ import (
 
 func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count aggregate without identity only counts public top-level documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -42,7 +42,7 @@ func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count of related objects without identity only includes public nested documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -71,7 +71,7 @@ func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count aggregate with owner identity counts all owned and public documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -94,7 +94,7 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count of related objects with owner identity counts all accessible nested documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -126,7 +126,7 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count aggregate with wrong identity only counts public documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -149,7 +149,7 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC count of related objects with wrong identity only includes public nested documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 

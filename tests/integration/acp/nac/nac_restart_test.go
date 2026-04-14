@@ -23,6 +23,7 @@ import (
 
 func TestNAC_RestartNodeWithNACEnabledWithoutNACArgs_RestartsAndNACIsStillEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Restarting a NAC-enabled node without NAC args keeps NAC enabled with the original identity.",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
@@ -53,6 +54,7 @@ func TestNAC_RestartNodeWithNACEnabledWithoutNACArgs_RestartsAndNACIsStillEnable
 
 func TestNAC_RestartNodeWithNACEnabledWithExplicitlySpecifyingSameArgs_RestartsAndNACIsStillEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Restarting a NAC-enabled node with the same NAC args keeps NAC enabled.",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
@@ -87,6 +89,7 @@ func TestNAC_RestartNodeWithNACEnabledWithExplicitlySpecifyingSameArgs_RestartsA
 
 func TestNAC_RestartNodeWithNACEnabledWithAnotherIdentity_IgnoreNewIdentityAndRestartWithExistingNACState(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Restarting a NAC-enabled node with a different identity ignores the new identity and preserves existing NAC state.",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to

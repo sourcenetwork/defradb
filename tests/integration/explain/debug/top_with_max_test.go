@@ -42,6 +42,7 @@ var topLevelMaxPattern = dataMap{
 
 func TestDebugExplain_TopLevelMaxRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level MAX query shows topLevelNode with maxNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -66,6 +67,7 @@ func TestDebugExplain_TopLevelMaxRequest_Succeeds(t *testing.T) {
 
 func TestDebugExplain_TopLevelMaxRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level MAX with filter shows topLevelNode with maxNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

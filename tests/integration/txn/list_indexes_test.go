@@ -25,6 +25,7 @@ import (
 // the indexes are seen by the action.
 func TestTxn_ListIndexes_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "ListIndexes inside a transaction sees the index added within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Using COUNT(GROUP) without groupBy returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a non-existent inner GROUP returns a schema validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -71,6 +73,7 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with child COUNT returns the count of sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -118,6 +121,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with child COUNT on an empty collection returns zero counts.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -138,6 +142,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with rendered GROUP and child COUNT returns the count alongside grouped documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -202,6 +207,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 
 func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by an undefined field returns a schema validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -238,6 +244,7 @@ func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child COUNT with an alias returns the count under the alias name.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -287,6 +294,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Two aliased child COUNTs on the same group return independent counts under their respective aliases.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

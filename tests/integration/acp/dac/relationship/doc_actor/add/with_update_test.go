@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner adding an update relationship twice shows the relationship already exists as a no-op.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -165,6 +166,7 @@ resources:
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants update access to another actor, who can then update the document.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -331,6 +333,7 @@ resources:
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants update access to another actor; both the actor and owner retain update access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

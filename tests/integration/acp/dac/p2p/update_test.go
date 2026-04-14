@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner can update private documents on separate replicator-connected nodes after sync.",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

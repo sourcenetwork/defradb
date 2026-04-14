@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _or on two fieldNames returns commits for both matched fields.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -53,6 +54,7 @@ func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *t
 
 func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _and excluding composite and age returns only the name commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

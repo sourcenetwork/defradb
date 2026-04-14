@@ -27,6 +27,7 @@ import (
 // results in the collection being added to the database.
 func TestTxn_AddCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that added a collection makes the collection available.",
 		Actions: []any{
 			&action.AddCollection{
 				TransactionID: immutable.Some(1),
@@ -61,6 +62,7 @@ func TestTxn_AddCollection_WithCommit_Succeeds(t *testing.T) {
 // results in the collection not yet being added to the database.
 func TestTxn_AddCollection_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that adds a collection leaves the database with no collections.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

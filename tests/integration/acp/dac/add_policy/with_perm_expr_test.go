@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ErrorsBecauseOwnerIsInExpr(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy where a permission expression subtracts owner relation returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -51,6 +52,7 @@ resources:
 
 func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with permissions that have no expression field; policy is accepted successfully.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

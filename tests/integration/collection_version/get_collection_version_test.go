@@ -24,6 +24,7 @@ import (
 
 func TestGetCollectionVersion_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching a collection version with a non-existent version ID returns a collection-not-found error.",
 		Actions: []any{
 			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetVersionID("does not exist"),
@@ -37,6 +38,7 @@ func TestGetCollectionVersion_GivenNonExistantCollectionVersionID_Errors(t *test
 
 func TestGetCollectionVersion_GivenNoCollectionReturnsEmptySet(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching collection versions when no collections have been added returns an empty result set.",
 		Actions: []any{
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -49,6 +51,7 @@ func TestGetCollectionVersion_GivenNoCollectionReturnsEmptySet(t *testing.T) {
 
 func TestGetCollectionVersion_GivenNoCollectionGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching collection versions filtered by an unknown collection ID returns an empty result set.",
 		Actions: []any{
 			&action.GetCollections{
 				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
@@ -62,6 +65,7 @@ func TestGetCollectionVersion_GivenNoCollectionGivenUnknownRoot(t *testing.T) {
 
 func TestGetCollectionVersion_GivenNoCollectionGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching collection versions filtered by an unknown name returns an empty result set.",
 		Actions: []any{
 			&action.GetCollections{
 				FilterOptions:   options.GetCollections().SetCollectionName("does not exist"),
@@ -75,6 +79,7 @@ func TestGetCollectionVersion_GivenNoCollectionGivenUnknownName(t *testing.T) {
 
 func TestGetCollectionVersion_ReturnsAllCollections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching all collection versions including inactive ones returns all registered versions across multiple collections.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -152,6 +157,7 @@ func TestGetCollectionVersion_ReturnsCollectionForGivenRoot(t *testing.T) {
 	usersCollectionVersion2ID := "bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq"
 
 	test := testUtils.TestCase{
+		Description: "Fetching collection versions filtered by collection ID returns all versions sharing that collection root.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -219,6 +225,7 @@ func TestGetCollectionVersion_ReturnsCollectionForGivenRoot(t *testing.T) {
 
 func TestGetCollectionVersion_ReturnsCollectionForGivenName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Fetching collection versions filtered by name returns all active and inactive versions with that name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

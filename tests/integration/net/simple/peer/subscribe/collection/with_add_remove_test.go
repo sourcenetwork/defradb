@@ -22,6 +22,7 @@ import (
 
 func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from a collection stops new documents from syncing to the peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -81,6 +82,7 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 
 func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Unsubscribing from one collection stops its docs from syncing while the other still syncs.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -157,6 +159,7 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 
 func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A failed unsubscribe with a non-existent collection ID does not remove existing subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -211,6 +214,7 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 
 func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing an empty collection ID list leaves active subscriptions and sync unchanged.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

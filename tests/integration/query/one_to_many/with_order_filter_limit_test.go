@@ -22,6 +22,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Author filtered by age with related books sorted ascending by rating and limited to one.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -99,6 +100,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortDescend
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Author filtered by age with related books sorted descending by rating and limited to one.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

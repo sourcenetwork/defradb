@@ -20,6 +20,7 @@ import (
 
 func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum of published ratings with authors filtered by age and ordered ascending by age.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -133,6 +134,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 
 func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum of published ratings with authors filtered by age and ordered descending by age.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -246,6 +248,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased sums of published ratings with different order and limit on the second sum.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -368,6 +371,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased sums of published ratings with ascending order and limit on the second sum.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -490,6 +494,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 
 func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased sum with ascending order and limit alongside a matching limited-and-ordered child listing.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -620,6 +625,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 
 func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased sum with descending order and limit alongside a matching limited-and-ordered child listing.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

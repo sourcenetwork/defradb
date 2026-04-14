@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by fieldName 'age' returns only the age field commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -51,6 +52,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 
 func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by a numeric field ID string returns an empty result.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -78,6 +80,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 
 func TestQueryCommitsWithCompositeField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by fieldName '_C' returns only the composite commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -111,6 +114,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter composite commit and return collectionVersionId field shows the schema version CID.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -144,6 +148,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *test
 
 func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits where fieldName is not '_C' returns only field-level commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -177,6 +182,7 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 
 func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by matching fieldName and CID returns the single matching commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -211,6 +217,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 
 func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by a fieldName that does not match the CID's field returns empty results.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -241,6 +248,7 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 
 func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by a non-existent fieldName and a valid CID returns empty results.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

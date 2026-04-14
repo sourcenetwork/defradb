@@ -21,6 +21,7 @@ import (
 
 func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of a single collection filters to only that collection.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -40,6 +41,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 
 func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of all collections preserves one-to-one relation after a doc update.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -72,6 +74,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 
 func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of a schema with two named one-to-one relations includes both foreign key fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -120,6 +123,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 
 func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup with two named one-to-one relations and a doc update captures correct updated docIDs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

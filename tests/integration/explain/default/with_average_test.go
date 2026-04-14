@@ -41,6 +41,7 @@ var averagePattern = dataMap{
 
 func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of average on an inline array field shows averageNode with countNode and sumNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

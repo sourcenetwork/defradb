@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_eq filter on a JSON field matches a document whose value equals the given object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -73,6 +74,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Compound _and filter on two nested JSON field conditions returns only the matching document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -132,6 +134,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_eq filter on a JSON field matches a document with deeply nested objects and arrays.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -185,6 +188,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_eq null filter on a JSON field returns only documents whose field value is null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -226,6 +230,7 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_eq object filter on a JSON field matches only the document stored as an object, skipping other JSON types.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -287,6 +292,7 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_eq filter on a nested JSON path matches documents where the nested value equals the given object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing encrypted indexes per collection returns the correct indexes for each collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -64,6 +65,7 @@ func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 
 func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A dynamically added encrypted index appears in the collection's index list alongside schema-defined ones.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -106,6 +108,7 @@ func TestEncryptedIndexList_IfIndexAddedLater_ShouldReturnListOfExistingIndexes(
 
 func TestEncryptedIndexList_WhenRequestingAllIndexes_ShouldReturn(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Listing all encrypted indexes across the database returns indexes grouped by collection name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

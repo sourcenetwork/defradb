@@ -43,6 +43,7 @@ var groupAveragePattern = dataMap{
 
 func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with AVG on inner field shows averageNode attributes over groupNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -128,6 +129,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of nested groupBy with AVG inside inner GROUP shows averageNode over groupNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -205,6 +207,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of nested groupBy with AVG and nested groupBy shows averageNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -285,6 +288,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of deeply nested groupBy with multiple AVG nodes shows averageNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

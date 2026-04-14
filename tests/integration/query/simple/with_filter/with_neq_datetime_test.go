@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a DateTime field returns only documents whose date does not match the given timestamp.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on a DateTime field returns only documents that have a non-null datetime value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -104,6 +106,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a DateTime field returns nil-DateTime and mismatched-value documents.",
 		Actions: []any{
 			&action.AddDoc{
 				DocMap: map[string]any{

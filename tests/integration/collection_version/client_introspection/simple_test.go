@@ -23,6 +23,7 @@ var clientIntrospectionQuery string
 
 func TestClientIntrospectionBasic(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A standard client introspection query succeeds against an empty schema.",
 		Actions: []any{
 			testUtils.ClientIntrospectionRequest{
 				Request: clientIntrospectionQuery,

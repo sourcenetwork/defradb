@@ -20,6 +20,7 @@ import (
 
 func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc-actor relationship on a public (ownerless) document returns an error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

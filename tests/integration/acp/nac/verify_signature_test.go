@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates VerifySignature: authorized HTTP and CLI client node owner identity can verify a block signature.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -72,6 +73,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates VerifySignature: authorized Go and C client node owner identity can verify a block signature.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -121,6 +123,7 @@ func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *tes
 
 func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates VerifySignature: request with no identity returns NotAuthorizedError.",
 		EnableSigning: true,
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -153,6 +156,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates VerifySignature: request with wrong identity returns NotAuthorizedError.",
 		EnableSigning: true,
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

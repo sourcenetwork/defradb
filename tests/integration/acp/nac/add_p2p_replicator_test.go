@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesAddP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PReplicator: authorized node owner identity can add a P2P replicator.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -56,6 +57,7 @@ func TestNAC_GatesAddP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.T) 
 
 func TestNAC_GatesAddP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PReplicator: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),
@@ -82,6 +84,7 @@ func TestNAC_GatesAddP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesAddP2PReplicator_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddP2PReplicator: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),

@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM across multiple inline arrays can be used as an order key in ASC and DESC queries.",
 		Actions: []any{
 
 			&action.AddDoc{
@@ -81,6 +82,7 @@ func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithNullAndSumAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM across nillable inline arrays with null elements can be used as an order key.",
 		Actions: []any{
 
 			&action.AddDoc{

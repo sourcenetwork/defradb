@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_MissingRequiredReadPermissionOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the DRI resource has no permissions defined at all.",
 
 		Actions: []any{
 

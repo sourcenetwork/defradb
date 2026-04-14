@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline integer array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -52,6 +53,7 @@ func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds
 
 func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline integer array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -84,6 +86,7 @@ func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeed
 
 func TestQueryInlineNillableIntegerArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline integer array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -116,6 +119,7 @@ func TestQueryInlineNillableIntegerArray_WithMinWithOffsetWithLimitWithOrderAsc_
 
 func TestQueryInlineNillableIntegerArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline integer array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -148,6 +152,7 @@ func TestQueryInlineNillableIntegerArray_WithMinWithOffsetWithLimitWithOrderDesc
 
 func TestQueryInlineFloatArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline float array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -180,6 +185,7 @@ func TestQueryInlineFloatArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds(t
 
 func TestQueryInlineFloatArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an inline float array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -212,6 +218,7 @@ func TestQueryInlineFloatArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeeds(
 
 func TestQueryInlineNillableFloatArray_WithMinWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline float array slice defined by offset, limit, and ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -244,6 +251,7 @@ func TestQueryInlineNillableFloatArray_WithMinWithOffsetWithLimitWithOrderAsc_Su
 
 func TestQueryInlineNillableFloatArray_WithMinWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable inline float array slice defined by offset, limit, and descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

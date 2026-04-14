@@ -23,6 +23,7 @@ import (
 
 func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "When a client identity lacks a private key, blocks are signed with the node identity instead.",
 		EnableSigning: true,
 		// Default signer can be only tested with HTTP and CLI clients, because with Go client
 		// when providing an identity, it includes the private key.

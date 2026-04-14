@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Copying a field to a new index returns an unsupported error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestCollectionVersionUpdatesCopyFieldErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple copy field operations in a patch each return unsupported errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -91,6 +93,7 @@ func TestCollectionVersionUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 
 func TestCollectionVersionUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Copying a field and replacing its name adds a new field to the schema version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +134,7 @@ func TestCollectionVersionUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 // This is an odd test, but still a possibility and we should still cover it.
 func TestCollectionVersionUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Copying a field then replacing its name and kind adds a correctly-typed new field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -183,6 +187,7 @@ func TestCollectionVersionUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *
 // This is an odd test, but still a possibility and we should still cover it.
 func TestCollectionVersionUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Copying a field and replacing its kind with an invalid type returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

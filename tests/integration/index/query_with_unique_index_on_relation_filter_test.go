@@ -20,16 +20,17 @@ import (
 
 func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on a unique composite index combining a relation field and a scalar returns matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						name: String 
+						name: String
 						devices: [Device]
 					}
 
 					type Device  {
-						manufacturer: String 
+						manufacturer: String
 						owner: User @index(unique: true, includes: [{field: "manufacturer"}])
 					}
 				`,

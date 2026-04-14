@@ -23,6 +23,7 @@ import (
 
 func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After a full node restart, updates from the source peer still sync to the subscriber.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

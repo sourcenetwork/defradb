@@ -21,6 +21,7 @@ import (
 
 func TestSubscriptionWithAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription receives one event per add mutation for each new document.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -87,6 +88,7 @@ func TestSubscriptionWithAddMutations(t *testing.T) {
 
 func TestSubscriptionWithFilterAndOneAddMutation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription with age filter receives only the add mutation that satisfies the filter.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
@@ -130,6 +132,7 @@ func TestSubscriptionWithFilterAndOneAddMutation(t *testing.T) {
 
 func TestSubscriptionWithFilterAndOneAddMutationOutsideFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription with age filter receives no events when the mutation falls outside the filter.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -163,6 +166,7 @@ func TestSubscriptionWithFilterAndOneAddMutationOutsideFilter(t *testing.T) {
 
 func TestSubscriptionWithFilterAndAddMutations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription with age filter receives only the add mutation that satisfies the filter out of two.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
@@ -220,6 +224,7 @@ func TestSubscriptionWithFilterAndAddMutations(t *testing.T) {
 
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription receives one event for a filtered update mutation targeting a specific document.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -281,6 +286,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription receives one event per document when an update-all mutation is applied.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -354,6 +360,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 
 func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription filtered by docID only receives events for that specific document.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -413,6 +420,7 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 
 func TestSubscription_WithClose_WontBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Closing the node while a subscription is open does not cause a deadlock.",
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -432,6 +440,7 @@ func TestSubscription_WithClose_WontBlock(t *testing.T) {
 
 func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription receives incremental counter CRDT values after each update event.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -485,6 +494,7 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 
 func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscription with showDeleted receives add, update, and delete events in order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

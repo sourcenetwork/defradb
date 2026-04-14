@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with related type filter and docIDs shows typeJoinMany plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -67,6 +68,7 @@ func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 
 func TestDebugExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with multiple related type filters and docID shows parallelNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

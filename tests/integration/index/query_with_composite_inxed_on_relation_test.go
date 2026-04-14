@@ -25,6 +25,7 @@ import (
 // index iterators without closing them.
 func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index on multiple relation fields in a many-to-one schema correctly resolves child nodes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

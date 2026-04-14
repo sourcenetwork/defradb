@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a Float field with the boundary value returns the boundary document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a Float field with a value just below the boundary still matches the boundary document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on a Float field with an integer threshold returns documents with float values at or above it.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq null filter on a Float field returns all documents including those with no float value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

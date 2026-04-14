@@ -32,6 +32,7 @@ resources:
 `
 
 	test := testUtils.TestCase{
+		Description: "Two different identities add the same policy and each receive a distinct valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -61,6 +62,7 @@ resources:
 
 func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Same identity adding identical policies twice produces different expected policy IDs.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -108,6 +110,7 @@ resources:
 
 func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDifferentIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding identical policies in different YAML formats by the same creator produces different policy IDs.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -155,6 +158,7 @@ resources:
 
 func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Same identity adds two distinct policies sequentially and both receive valid policy IDs.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

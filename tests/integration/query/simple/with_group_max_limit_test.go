@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child MAX with a limit considers only the first N sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

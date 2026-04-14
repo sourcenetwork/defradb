@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with filter on parent shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

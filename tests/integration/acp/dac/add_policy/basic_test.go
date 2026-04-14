@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a valid DRI-compliant policy with basic YAML and receive a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -22,6 +22,7 @@ import (
 
 func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer sync replicates an encrypted document's DAG commits with encrypted deltas intact.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -105,6 +106,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 
 func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A peer that has not yet received the encryption key cannot fetch decrypted document data.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

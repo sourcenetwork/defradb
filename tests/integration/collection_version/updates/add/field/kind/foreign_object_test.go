@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a foreign object field with an unresolvable numeric kind returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,6 +44,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_UnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a foreign object field referencing an unknown collection name returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -68,6 +70,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_UnknownCollection(t *
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a relational field when the ID companion field has no kind returns an invalid kind error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -94,6 +97,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t 
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a relational field when the ID companion field has a non-DocID kind returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -120,6 +124,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t 
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a valid one-to-one relational field with a proper ID companion field succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -183,6 +188,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationInSameBatch_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one relation across two collections in a single patch batch succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -269,6 +275,7 @@ func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToO
 
 func TestCollectionVersionUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationInSameBatch_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-many relation across two collections in a single patch batch succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

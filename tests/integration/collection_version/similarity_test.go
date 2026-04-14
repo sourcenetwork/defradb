@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionIntrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a non-null integer array field exposes a SIMILARITY selector with the correct Int vector input type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -112,6 +113,7 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldIntArray(t *testin
 
 func TestCollectionVersionIntrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a non-null Float32 array field exposes a SIMILARITY selector with the correct Float32 vector input type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -204,6 +206,7 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldFloat32Array(t *te
 
 func TestCollectionVersionIntrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with both non-null Int and Float32 array fields exposes a SIMILARITY selector with separate selectors for each vector field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

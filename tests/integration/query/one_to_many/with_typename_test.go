@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query requesting __typename returns the correct type names for both sides.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

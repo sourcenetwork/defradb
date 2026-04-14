@@ -21,6 +21,7 @@ import (
 
 func TestSimpleExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple explain of an equality filter on an indexed field shows a scanNode in the plan shape.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -61,6 +62,7 @@ func TestSimpleExplainWithIndexOnFilter(t *testing.T) {
 
 func TestSimpleExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple explain of an ASC order on an indexed field shows a scanNode with no explicit orderNode.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -102,6 +104,7 @@ func TestSimpleExplainWithIndexOnOrder(t *testing.T) {
 
 func TestSimpleExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Simple explain of subquery ordering by a nested indexed relation shows limitNode without an orderNode.",
 
 		Actions: []any{
 			&action.AddCollection{

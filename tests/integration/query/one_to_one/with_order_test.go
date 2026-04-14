@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered DESC by the related author's boolean field returns verified author first.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -93,6 +94,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 
 func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered ASC by the related author's boolean field returns unverified author first.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -166,6 +168,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 
 func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered DESC by the author's integer age field with no author fields in the selection.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -227,6 +230,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 
 func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered ASC by the author's integer age field with no author fields in the selection.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -288,6 +292,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 
 func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered ASC by an aliased child relation's integer age field are correctly sorted.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -358,6 +363,7 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 
 func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Books ordered ASC by an aliased field inside the author subtype are correctly sorted.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

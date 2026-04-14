@@ -20,6 +20,7 @@ import (
 
 func TestTruncateCollectionIndexFilter_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection removes a document from an indexed field filter result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestTruncateCollectionIndexFilter_RemovesDocument(t *testing.T) {
 
 func TestTruncateCollectionIndexFilter_WithUniqueIndex_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection removes a document that was stored in a unique index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -90,6 +92,7 @@ func TestTruncateCollectionIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 
 func TestTruncateCollectionIndexFilter_WithUniqueIndex_AllowsRecreationOfDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection clears the unique index, allowing the same document to be re-added.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestColVersionBranchable_NoArguments_DefaultTrue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The @branchable directive without arguments defaults the collection to branchable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,6 +44,7 @@ func TestColVersionBranchable_NoArguments_DefaultTrue(t *testing.T) {
 
 func TestColVersionBranchable_ArgumentIfTrue_ShouldBeTrue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The @branchable directive with if: true marks the collection as branchable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -65,6 +67,7 @@ func TestColVersionBranchable_ArgumentIfTrue_ShouldBeTrue(t *testing.T) {
 
 func TestColVersionBranchable_ArgumentIfFalse_ShouldBeFalse(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The @branchable directive with if: false marks the collection as not branchable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

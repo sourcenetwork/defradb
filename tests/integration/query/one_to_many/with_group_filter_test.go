@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors grouped by age with related books filtered by rating inside the GROUP.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -157,6 +158,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors grouped by age with the GROUP filtered to include only those with high-rated books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -297,6 +299,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroupJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors grouped by age with a parent filter and a nested child rating filter inside the GROUP.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a Float field with the boundary value returns the document at the boundary.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a Float field with a threshold just above the boundary returns the lower document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a Float field using an integer threshold returns documents at or below that integer.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 
 func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a Float field returns only documents that have no float value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

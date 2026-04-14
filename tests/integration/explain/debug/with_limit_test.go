@@ -37,6 +37,7 @@ var limitPattern = dataMap{
 
 func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with only limit shows limitNode wrapping selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -59,6 +60,7 @@ func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 
 func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with only offset shows limitNode wrapping selectNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -81,6 +83,7 @@ func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with both limit and offset shows limitNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count with limit on related child shows limitNode inside typeIndexJoin.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -90,6 +91,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 
 func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count with limit on both parent and related child shows limitNode attributes at each level.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

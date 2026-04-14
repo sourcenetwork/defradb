@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation on field name with wrong value errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,6 +44,7 @@ func TestCollectionVersionUpdatesTestFieldNameErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation on field name with correct value passes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -65,6 +67,7 @@ func TestCollectionVersionUpdatesTestFieldNamePasses(t *testing.T) {
 
 func TestCollectionVersionUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation on a full field object with mismatched kind errors.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -88,6 +91,7 @@ func TestCollectionVersionUpdatesTestFieldErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation on a full field object with all correct values passes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -113,6 +117,7 @@ func TestCollectionVersionUpdatesTestFieldPasses(t *testing.T) {
 
 func TestCollectionVersionUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation on a full field using field name as path index passes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -138,6 +143,7 @@ func TestCollectionVersionUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testin
 
 func TestCollectionVersionUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "JSON patch test operation targeting field Kind via field name as path index passes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with a size constraint enforces the array size limit on document writes.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

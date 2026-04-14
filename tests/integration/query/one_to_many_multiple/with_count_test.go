@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on each of two separate one-to-many joins with aliased result fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -140,6 +141,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT aggregated across two distinct one-to-many join relations simultaneously.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

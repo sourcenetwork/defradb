@@ -20,6 +20,7 @@ import (
 
 func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy query with a filter on an indexed relation field returns correct groups.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

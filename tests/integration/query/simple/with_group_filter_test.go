@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply a numeric filter within a GROUP child to return only matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -88,6 +89,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply a parent-level numeric filter to restrict which groups appear in the result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -152,6 +154,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 
 func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply a parent-level filter when the GROUP is not rendered returns correctly filtered group metadata.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -205,6 +208,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Inner number filter that excludes all documents returns empty nested GROUP results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -298,6 +302,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 
 func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply multiple group-level filters on numeric fields.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

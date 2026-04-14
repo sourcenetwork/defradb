@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the relation alias field from the primary side returns each author's books in a GROUP.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -108,6 +109,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy the alias relation field from the secondary side without selecting GROUP returns only IDs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -173,6 +175,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *t
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy alias relation field from secondary side with a join returns IDs and author names.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -248,6 +251,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy alias relation field from secondary side with GROUP returns each book under its author ID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -327,6 +331,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "GroupBy alias relation from secondary side with GROUP and join returns IDs, authors, and books.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

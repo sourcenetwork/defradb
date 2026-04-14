@@ -21,6 +21,7 @@ import (
 
 func TestBackupExport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export a self-referential User collection with a boss relation.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -44,6 +45,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 
 func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export self-referential documents after an update, verifying new docIDs are reflected.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

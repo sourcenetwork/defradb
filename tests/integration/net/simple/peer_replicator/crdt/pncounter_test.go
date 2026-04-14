@@ -24,6 +24,7 @@ import (
 
 func TestP2PPeerReplicatorWithAdd_PNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer-replicator syncs a new pncounter document to the replicator target but not to a peer-only node.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -122,6 +123,7 @@ func TestP2PPeerReplicatorWithAdd_PNCounter_NoError(t *testing.T) {
 
 func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer-replicator propagates a pncounter increment update to all subscribed nodes.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

@@ -23,6 +23,7 @@ import (
 
 func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A single-type self-referencing collection produces a stable, deterministic collection ID and correct field descriptions and GraphQL introspection output.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -108,6 +109,7 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 
 func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two types that form a circular cross-collection self-reference produce stable, deterministic collection IDs that incorporate both types.",
 		Actions: []any{
 			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
@@ -352,6 +354,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 
 func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID_SingleSidedRelations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two types with single-sided circular cross-references produce stable collection IDs encoded with relative-index suffixes distinguishing each type in the set.",
 		Actions: []any{
 			&action.AddCollection{
 				// The two primary relations form a circular two-collection self reference
@@ -444,6 +447,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID_SingleSid
 
 func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two independent circular pairs (User/Dog and Cat/Mouse) produce different complex collection IDs even when a non-circular cross-pair relation exists.",
 		Actions: []any{
 			&action.AddCollection{
 				// - User and Dog form a circular dependency.
@@ -733,6 +737,7 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 
 func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "When a third circular dependency bridges two independent circles (User/Dog and Cat/Mouse), all four types merge into a single collection set sharing the same base ID.",
 		Actions: []any{
 			&action.AddCollection{
 				// - User and Dog form a circular dependency.
@@ -1046,6 +1051,7 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 
 func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_AllHaveSameBaseCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A larger cross-pair circle bridging two independent circles at different entry points (User=>Dog=>Mouse=>Cat=>User) causes all four types to share the same base collection ID.",
 		Actions: []any{
 			&action.AddCollection{
 				// - User and Dog form a circular dependency.

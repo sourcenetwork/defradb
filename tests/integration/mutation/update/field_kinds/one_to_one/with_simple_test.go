@@ -28,6 +28,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 	unknownID := "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation to a non-existent document ID succeeds without error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -68,6 +69,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation from primary side and verify both sides reflect the link.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -143,6 +145,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation from secondary side errors using Collection API.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -180,6 +183,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation from secondary side errors using GQL.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -216,6 +220,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation ID from primary side errors when book is already linked.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -257,6 +262,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation ID from secondary side errors using Collection API.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -301,6 +307,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation ID from secondary side errors using GQL.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -345,6 +352,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 	invalidBookID := "bae-" + invalidLenSubID
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation with an invalid-length relation ID errors with UUID parse error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -377,6 +385,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 
 func TestMutationUpdateOneToOne_WithGQLRequest_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update one-to-one relation via GQL mutation returns the updated document with linked relation.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

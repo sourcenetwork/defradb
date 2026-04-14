@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a branchable collection at the first CID returns the initial document state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -67,6 +68,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 
 func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a branchable collection at a middle CID returns the document at that point.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -114,6 +116,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 
 func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a branchable collection at the latest CID returns all documents at that state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

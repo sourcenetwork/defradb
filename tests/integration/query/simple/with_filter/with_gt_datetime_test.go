@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a DateTime field returns the document with a date strictly greater than the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -57,6 +58,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a DateTime field with a value one day before the document's date returns that document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -94,6 +96,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a DateTime field with a threshold after all documents returns an empty result.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -127,6 +130,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt null filter on a DateTime field returns only documents that have a non-null datetime value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -161,6 +165,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeGTAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_gt filter on a DateTime field skips the nil-DateTime document and returns the strictly greater one.",
 		Actions: []any{
 			&action.AddDoc{
 				DocMap: map[string]any{

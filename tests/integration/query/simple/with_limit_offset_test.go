@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithLimit0(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit of 0 returns an empty result set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -59,6 +60,7 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 
 func TestQuerySimpleWithLimit1(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit of 1 returns only the first document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -96,6 +98,7 @@ func TestQuerySimpleWithLimit1(t *testing.T) {
 
 func TestQuerySimpleWithLimit2(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit of 2 returns only the first two documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -150,6 +153,7 @@ func TestQuerySimpleWithLimit2(t *testing.T) {
 
 func TestQuerySimpleWithLimitBiggerThanTotalDocuments(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit larger than the document count returns all documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -181,6 +185,7 @@ func TestQuerySimpleWithLimitBiggerThanTotalDocuments(t *testing.T) {
 
 func TestQuerySimpleWithOffset0(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Offset of 0 returns all documents from the beginning.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -223,6 +228,7 @@ func TestQuerySimpleWithOffset0(t *testing.T) {
 
 func TestQuerySimpleWithOffset1(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Offset of 1 skips the first document and returns the rest.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -260,6 +266,7 @@ func TestQuerySimpleWithOffset1(t *testing.T) {
 
 func TestQuerySimpleWithOffset2(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Offset of 2 skips the first two documents and returns the rest.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -324,6 +331,7 @@ func TestQuerySimpleWithOffset2(t *testing.T) {
 
 func TestQuerySimpleWithOffsetBiggerThanTotalDocuments(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Offset larger than the document count returns an empty result set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -350,6 +358,7 @@ func TestQuerySimpleWithOffsetBiggerThanTotalDocuments(t *testing.T) {
 
 func TestQuerySimpleWithLimit0AndOffset0(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit 0 and offset 0 together return an empty result set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -392,6 +401,7 @@ func TestQuerySimpleWithLimit0AndOffset0(t *testing.T) {
 
 func TestQuerySimpleWithLimit1AndOffset1(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit 1 and offset 1 return the second document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -429,6 +439,7 @@ func TestQuerySimpleWithLimit1AndOffset1(t *testing.T) {
 
 func TestQuerySimpleWithLimit2AndOffset2(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Limit 2 and offset 2 return the third and fourth documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

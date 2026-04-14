@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with offset and limit exceeding remaining elements counts available items.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t 
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with offset and limit counts only the windowed elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_or filter with two _eq conditions on an integer field returns documents matching either value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -74,6 +75,7 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 
 func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_or filter on an inline int array field using _any operator returns all documents with any qualifying element.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

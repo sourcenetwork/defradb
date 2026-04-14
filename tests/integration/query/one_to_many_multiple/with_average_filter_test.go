@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG across two one-to-many joins where only one join has a filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -145,6 +146,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG across two one-to-many joins where both joins have independent filters applied.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

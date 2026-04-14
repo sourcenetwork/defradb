@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanReadAndWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner makes a manager who self-assigns read and write, confirming full access via GQL.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -279,6 +280,7 @@ resources:
 
 func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantReadOrWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner makes a manager who has no direct doc permissions and cannot read or write via GQL.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -432,6 +434,7 @@ resources:
 
 func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy_GQL_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Manager attempting to add a relationship for a relation it does not manage errors via GQL.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

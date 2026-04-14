@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits filtered by a specific composite commit CID returns only that commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -61,6 +62,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
+		Description: "Query commits filtered by a field commit CID returns only that field commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -99,6 +101,7 @@ func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a totally invalid CID string returns an invalid cid error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -129,6 +132,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a short but syntactically invalid CID returns an invalid cid error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -159,6 +163,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a valid-format but non-existent CID returns a does-not-exist error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -189,6 +194,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 
 func TestQueryCommits_MultipleCids(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with an array of multiple CIDs returns an unsupported error.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -222,6 +228,7 @@ func TestQueryCommits_MultipleCids(t *testing.T) {
 }
 func TestQueryCommits_ListOfOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with a one-element CID array returns the single matching commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with a substring wildcard pattern returns only the document whose name contains the substring.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_ilike filter with a lowercase substring pattern returns the document regardless of original casing.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with a prefix pattern returns only the document whose name starts with that prefix.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_ilike filter with a lowercase prefix pattern returns the document whose name starts with that prefix.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +164,7 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *te
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with a suffix pattern returns only the document whose name ends with that suffix.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -195,6 +200,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_ilike filter with a lowercase suffix pattern returns the document whose name ends with that suffix.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +236,7 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *te
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with an exact string and no wildcards returns only the document with that exact name.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -265,6 +272,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_ilike filter with a full lowercase string matches the document with a different-case exact name.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +308,7 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *tes
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with a common substring pattern returns all documents whose names contain that substring.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -339,6 +348,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter with a prefix and suffix wildcard pattern returns the document matching both ends.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -374,6 +384,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_and of two _like conditions requiring two substrings returns no results when no document matches both.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -405,6 +416,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_or of two _like conditions returns documents matching either of the two substring patterns.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -440,6 +452,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_like filter does not match documents whose Name field is nil when the pattern requires a value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

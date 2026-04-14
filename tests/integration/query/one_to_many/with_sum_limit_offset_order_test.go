@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum of published ratings with offset, limit, and ascending order by book name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +132,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum of published ratings with offset, limit, and descending order by book name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -241,6 +243,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased sums using the same offset and limit but ascending and descending name order respectively.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -356,6 +359,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two aliased sums with the same offset and limit but ordering on different fields (name vs rating).",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -470,6 +474,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildrenOrderedAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum ordered descending by name with a separately rendered child list ordered ascending by name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

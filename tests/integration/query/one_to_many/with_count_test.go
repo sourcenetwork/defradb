@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of related books for an author with no published books returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -53,6 +54,7 @@ func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 
 func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Count of related books for each author returns correct totals for all authors.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -123,6 +125,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on aliased count greater than zero returns all authors with published books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -193,6 +196,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on aliased count greater than one returns only the author with the most books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

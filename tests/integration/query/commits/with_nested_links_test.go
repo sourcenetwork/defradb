@@ -26,6 +26,7 @@ func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query all commits with nested links shows field links within the composite commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -49,7 +50,7 @@ func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 							heads {
 								cid
 								height
-							}	
+							}
 						}
 					}`,
 				Results: map[string]any{
@@ -97,6 +98,7 @@ func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 
 func TestQueryCommits_WithSingleAddNestedLinksCompositeFilter_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter to composite commit and query nested links returns correct linked field commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -144,6 +146,7 @@ func TestQueryCommits_WithSingleAddNestedLinksCompositeFilter_Succeed(t *testing
 
 func TestQueryCommits_WithSingleAddNestedLinksNestedFilter_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter composite commits and apply a nested filter on links to return only the age link.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -195,6 +198,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query all commits after an update with double-nested links and heads returns full DAG metadata.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on an integer field returns only documents whose value does not equal the given integer.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on an integer field returns only documents that have a non-null integer value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

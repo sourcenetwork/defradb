@@ -23,6 +23,7 @@ import (
 // results in the truncation occurring.
 func TestCollectionTruncate_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that truncated a collection removes all documents from the collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

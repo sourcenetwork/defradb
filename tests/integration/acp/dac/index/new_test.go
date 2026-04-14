@@ -20,6 +20,7 @@ import (
 
 func TestACP_IndexNewWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index via separate request on a DAC-protected collection succeeds.",
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -66,6 +67,7 @@ func TestACP_IndexNewWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testi
 
 func TestACP_IndexNewWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Creating an index via @index directive on a DAC-protected collection succeeds.",
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

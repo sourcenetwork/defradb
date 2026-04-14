@@ -21,6 +21,7 @@ import (
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an invalid CID and invalid docID returns an invalid cid error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -50,6 +51,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with an unknown CID and invalid docID returns a block-not-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -77,6 +79,7 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a valid CID and matching docID returns the document at that version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -115,6 +118,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with the first CID and docID after an update returns the original document state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -158,6 +162,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with the latest CID and docID after an update returns the updated state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -201,6 +206,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with a middle CID and docID returns the document at that intermediate version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -261,6 +267,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with first CID returns the correct schema collectionVersionId in _version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -313,6 +320,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query at the first CID with a pncounter int field returns the initial counter value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -369,6 +377,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query at the first CID with a pncounter float field returns the initial float value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -425,6 +434,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query at the first CID with a pcounter int field returns the initial counter value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -476,6 +486,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query at the first CID with a pcounter float field returns the initial float value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

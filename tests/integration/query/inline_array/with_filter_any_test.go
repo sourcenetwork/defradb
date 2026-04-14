@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a nillable string array returns docs that have at least one null element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQueryInlineStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a non-null string array returns docs that contain an empty string element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQueryInlineNotNullStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a nillable integer array returns docs that contain at least one null element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -125,6 +128,7 @@ func TestQueryInlineIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a non-null integer array returns docs where at least one element satisfies the condition.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -160,6 +164,7 @@ func TestQueryInlineNotNullIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a nillable float array returns docs that contain at least one null element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -195,6 +200,7 @@ func TestQueryInlineFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a non-null float array returns docs where at least one element satisfies the condition.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -230,6 +236,7 @@ func TestQueryInlineNotNullFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a nillable boolean array returns docs that contain at least one null element.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -265,6 +272,7 @@ func TestQueryInlineBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a non-null boolean array returns docs where any element is true.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +308,7 @@ func TestQueryInlineNotNullBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineStringArray_WithAnyFilterAndNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering with _any on a null inline string array returns no documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

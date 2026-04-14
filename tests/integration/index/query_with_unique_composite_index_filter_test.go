@@ -38,6 +38,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on one or both fields of a unique composite index returns correct docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -111,6 +112,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on the first field of a unique composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -148,6 +150,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on the second field of a unique composite index scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -185,6 +188,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on the first field of a unique composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -223,6 +227,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on the second field of a unique composite index scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -261,6 +266,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on the first field of a unique composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -298,6 +304,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on the second field of a unique composite index scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -335,6 +342,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on the first field of a unique composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -373,6 +381,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on the second field of a unique composite index scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -411,6 +420,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filters on both fields of a unique composite index scan all entries and exclude matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -456,6 +466,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on the first composite index field with _eq on the second efficiently fetches matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -531,6 +542,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filters on both fields of a unique composite index return docs matching any combination.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -585,6 +597,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nin filters on both fields of a unique composite index exclude docs matching any listed value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -654,12 +667,13 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_like filters on both fields of a unique composite index scan all entries for pattern matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
-						name: String 
-						email: String 
+						name: String
+						email: String
 					}`,
 			},
 			testUtils.AddPredefinedDocs{
@@ -750,6 +764,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nlike filters on both fields of a unique composite index return docs not matching either pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -789,6 +804,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nilike and _nlike filters on a unique composite index exclude docs matching either pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -824,6 +840,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 
 func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter only on the second field of a unique composite index does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -852,6 +869,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 
 func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Null equality filter on the first field of a unique composite index returns docs with no name set.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -905,6 +923,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 			}
 		}`
 	test := testUtils.TestCase{
+		Description: "Null equality on the first composite field returns all docs with that field unset, even if second differs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -960,6 +979,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 
 func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Null equality filter on the second field of a unique composite index returns docs with no age set.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1026,6 +1046,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 			}
 		}`
 	test := testUtils.TestCase{
+		Description: "Null equality on the second composite field returns all docs with that field unset for the given name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1090,6 +1111,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 
 func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Null equality on both composite index fields returns docs with both fields unset.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1190,6 +1212,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 
 func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After updating docs to set or clear composite index fields, null filters return the correct updated docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1330,6 +1353,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 
 func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter skipping the middle field of a three-field unique composite index still returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

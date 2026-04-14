@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array with a greater-than filter sums only matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a nillable inline integer array with a filter sums only matching non-null elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline float array with a less-than filter sums only matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on a nillable inline float array with a filter sums only matching non-null elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

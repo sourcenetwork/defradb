@@ -28,6 +28,7 @@ func TestQueryCommits(t *testing.T) {
 	headCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query all commits for a single created document returns three unique CIDs.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -65,6 +66,7 @@ func TestQueryCommits(t *testing.T) {
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query all commits across multiple documents returns all field and composite CIDs.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -118,6 +120,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 
 func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits requesting the collectionVersionId field returns the correct schema version CID.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -159,6 +162,7 @@ func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits requesting fieldName returns age, name, and composite (_C) entries.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -197,6 +201,7 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits after an update returns duplicate age and composite fieldName entries.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -254,6 +259,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query all commit fields after an update returns full metadata including links and heads.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -374,6 +380,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 
 func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits using a field alias returns results under the aliased name.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

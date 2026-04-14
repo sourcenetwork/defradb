@@ -31,6 +31,7 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 	//    └─────── Node 3 ──── Node 4
 
 	test := testUtils.TestCase{
+		Description:  "Branchable collection syncs all docs across a multi-hop linked five-node network.",
 		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -148,6 +149,7 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 
 func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_ShouldSyncAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:  "Node joining a synced peer pair receives all heads from both prior peers.",
 		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -236,6 +238,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 	sameCid4 := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description:  "Fully-connected four-node branchable collection sync produces identical DAG on all nodes.",
 		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -376,6 +379,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 	sameCid5 := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description:  "New doc added after multi-phase sync links all prior heads and yields identical DAG.",
 		FlakeRetries: 5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

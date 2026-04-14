@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_WithExtraPermsHavingRequiredRelation_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection to policy with extra permissions beyond required DRI and accept it.",
 
 		Actions: []any{
 

@@ -49,6 +49,7 @@ resources:
 
 func TestTruncateCollectionDAC_RemovedPrivateDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After truncation, re-adding a private document retains the original owner's permissions.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -103,6 +104,7 @@ func TestTruncateCollectionDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 
 func TestTruncateCollectionDAC_RemovedPublicDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "After truncation, a public document re-added with an identity is owned by the new identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

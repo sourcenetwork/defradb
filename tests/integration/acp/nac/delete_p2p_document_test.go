@@ -24,6 +24,7 @@ import (
 
 func TestNAC_GatesDeleteP2PDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PDocument: authorized node owner identity can delete a P2P document subscription.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -87,6 +88,7 @@ func TestNAC_GatesDeleteP2PDocument_AuthorizedIdentity_AllowAccess(t *testing.T)
 
 func TestNAC_GatesDeleteP2PDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PDocument: request with no identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -151,6 +153,7 @@ func TestNAC_GatesDeleteP2PDocument_NoIdentity_NotAuthorizedError(t *testing.T) 
 
 func TestNAC_GatesDeleteP2PDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteP2PDocument: request with wrong identity returns NotAuthorizedError.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

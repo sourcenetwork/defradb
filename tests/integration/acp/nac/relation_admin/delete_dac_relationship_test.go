@@ -21,6 +21,7 @@ import (
 
 func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin with DAC manager relation can delete a DAC actor relationship.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -95,6 +96,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(
 
 func TestNAC_AdminRelation_WithoutDACManagerRelation_CanNotDeleteDACActorRelationship(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin without DAC manager relation cannot delete a DAC actor relationship.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

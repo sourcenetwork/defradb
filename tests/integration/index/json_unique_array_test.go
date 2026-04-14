@@ -25,6 +25,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Unique JSON array index rejects duplicate array elements across docs and uses index for queries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

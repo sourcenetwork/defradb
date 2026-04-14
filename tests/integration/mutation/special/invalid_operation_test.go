@@ -20,6 +20,7 @@ import (
 
 func TestMutationInvalidMutation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Mutation with an unrecognized operation name returns a schema error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

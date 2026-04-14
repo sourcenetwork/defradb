@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithNullDepth(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with depth set to null returns all commits as if no depth were specified.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -57,6 +58,7 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 
 func TestQueryCommitsWithNullCID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with cid set to null returns all commits as if no CID filter were applied.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -94,6 +96,7 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 
 func TestQueryCommitsWithNullField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits by fieldName equal to null returns an empty result set.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -121,6 +124,7 @@ func TestQueryCommitsWithNullField(t *testing.T) {
 
 func TestQueryCommitsWithNullOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with order set to null returns all commits in default order.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -158,6 +162,7 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 
 func TestQueryCommitsWithNullOrderField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with docID set to null returns all commits as if no docID filter were applied.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -195,6 +200,7 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 
 func TestQueryCommitsWithNullLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with limit set to null returns all commits without any limit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -232,6 +238,7 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 
 func TestQueryCommitsWithNullOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with offset set to null returns all commits starting from the beginning.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -269,6 +276,7 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 
 func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query commits with groupBy set to null returns all commits without any grouping.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

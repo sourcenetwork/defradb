@@ -25,6 +25,7 @@ import (
 
 func TestCollectionMigrationQueryWithP2PReplicatedDocOnOtherCollectionBranch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P replicated doc on a different collection branch applies correct inverse then forward migration.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

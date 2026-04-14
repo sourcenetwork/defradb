@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group and order commits by docID descending returns two distinct docIDs in reverse order.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

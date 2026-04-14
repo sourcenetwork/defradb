@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersion_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a String array field annotated with @embedding returns an invalid-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -37,6 +38,7 @@ func TestCollectionVersion_WithStringForEmbedding_ShouldError(t *testing.T) {
 
 func TestCollectionVersion_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an Int array field annotated with @embedding returns an invalid-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +55,7 @@ func TestCollectionVersion_WithIntForEmbedding_ShouldError(t *testing.T) {
 }
 func TestCollectionVersion_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Float array field annotated with @embedding returns an invalid-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +73,7 @@ func TestCollectionVersion_WithFloatForEmbedding_ShouldError(t *testing.T) {
 
 func TestCollectionVersion_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a Float64 array field annotated with @embedding returns an invalid-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -87,6 +91,7 @@ func TestCollectionVersion_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 
 func TestCollectionVersion_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a nillable Float32 array field annotated with @embedding returns an invalid-type error (only non-null [Float32!] is valid).",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +109,7 @@ func TestCollectionVersion_WithNillableFloat32ForEmbedding_ShouldError(t *testin
 
 func TestCollectionVersion_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a non-null Float32 array field and a fully specified @embedding directive succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -121,6 +127,7 @@ func TestCollectionVersion_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 
 func TestCollectionVersion_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where the @embedding fields list references a non-existent field returns a does-not-exist error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -139,6 +146,7 @@ func TestCollectionVersion_WithNonExistantFieldForEmbedding_ShouldError(t *testi
 
 func TestCollectionVersion_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where the @embedding fields list includes a JSON field returns an invalid-field-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -158,6 +166,7 @@ func TestCollectionVersion_WithInvalidEmbeddingGenerationFieldType_ShouldError(t
 
 func TestCollectionVersion_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an unknown provider in the @embedding directive returns an unknown-provider error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -176,6 +185,7 @@ func TestCollectionVersion_WithUnsupportedProviderForEmbedding_ShouldError(t *te
 
 func TestCollectionVersion_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a valid provider but no model in the @embedding directive returns an empty-model error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -194,6 +204,7 @@ func TestCollectionVersion_WithMissingModelForEmbedding_ShouldError(t *testing.T
 
 func TestCollectionVersion_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where an @embedding field lists itself in its fields list returns a self-reference error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -212,6 +223,7 @@ func TestCollectionVersion_ReferenceToSelfForEmbedding_ShouldError(t *testing.T)
 
 func TestCollectionVersion_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection where an @embedding field lists another embedding field in its fields list returns a cross-embedding-reference error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

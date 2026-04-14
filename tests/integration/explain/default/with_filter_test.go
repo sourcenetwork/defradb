@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with string equality filter shows scanNode with filter attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -63,6 +64,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with integer equality filter shows scanNode with numeric filter attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -105,6 +107,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with greater-than filter shows scanNode with _gt filter attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -147,6 +150,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with compound AND filter shows scanNode with _and filter attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -198,6 +202,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with compound OR filter shows scanNode with _or filter attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -249,6 +254,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with _in list filter shows scanNode with _in filter attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -295,6 +301,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 
 func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with JSON equality filter shows scanNode with JSON filter attribute.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

@@ -20,6 +20,7 @@ import (
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner adding a delete relationship twice shows the relationship already exists.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -148,6 +149,7 @@ resources:
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants delete access to another actor, who can then delete the document.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -312,6 +314,7 @@ resources:
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants delete access to another actor; both the actor and owner can delete.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

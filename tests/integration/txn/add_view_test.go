@@ -24,6 +24,7 @@ import (
 // results in the view being usable.
 func TestTxn_AddView_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that added a view makes the view queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -77,6 +78,7 @@ func TestTxn_AddView_WithCommit_Succeeds(t *testing.T) {
 // results in the view notbeing usable.
 func TestTxn_AddView_WithoutCommit_Fails(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that adds a view leaves the view unavailable to queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

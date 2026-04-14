@@ -20,6 +20,7 @@ import (
 
 func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering authors by nested publisher yearOpened returns only matching author with books.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
@@ -130,6 +131,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on book rating filtered by publisher yearOpened works with two independent filter conditions.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -172,6 +174,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM with deep filter and a filtered sub-selection on book return correct independent results.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -222,6 +225,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 
 func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two-level deep filter on author returns all books with publisher yearOpened in results.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -295,6 +299,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Compound _and/_or filters on author with nested publisher conditions match correct authors.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -376,6 +381,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Compound filter on author and nested book sub-filter both apply independently and correctly.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),

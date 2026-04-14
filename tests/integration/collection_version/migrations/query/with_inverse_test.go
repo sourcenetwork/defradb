@@ -24,6 +24,7 @@ import (
 
 func TestCollectionMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Inverse migrations across multiple versions clear fields when querying an older version.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

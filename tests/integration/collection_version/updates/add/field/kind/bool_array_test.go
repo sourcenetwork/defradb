@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Boolean array field succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -53,6 +54,7 @@ func TestCollectionVersionUpdatesAddFieldKindBoolArray(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindBoolArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a non-nullable Boolean array field and inserting a document stores and retrieves the values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldKindBoolArrayWithAdd(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindBoolArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a [Boolean!] field using string kind substitution stores and retrieves the array values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

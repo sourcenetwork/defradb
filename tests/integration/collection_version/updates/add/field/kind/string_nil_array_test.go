@@ -22,6 +22,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a nillable String array field succeeds and the field is queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -55,6 +56,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindNillableStringArrayWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a nillable String array field and inserting a document stores and retrieves nullable values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -104,6 +106,7 @@ func TestCollectionVersionUpdatesAddFieldKindNillableStringArrayWithAdd(t *testi
 
 func TestCollectionVersionUpdatesAddFieldKindNillableStringArraySubstitutionWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a [String] field using string kind substitution stores and retrieves nullable string array values.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

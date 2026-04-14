@@ -38,6 +38,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on first or both composite index fields uses the index efficiently.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -93,6 +94,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on the first field of a composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -130,6 +132,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on the second field of a composite index performs a full index scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -167,6 +170,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on the first field of a composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -205,6 +209,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on the second field of a composite index performs a full index scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -243,6 +248,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on the first field of a composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -280,6 +286,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-than filter on the second field of a composite index performs a full index scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -317,6 +324,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on the first field of a composite index uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -355,6 +363,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on the second field of a composite index performs a full index scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -393,6 +402,7 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on both composite index fields scans all index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -437,6 +447,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_in filter on both composite index fields correctly fetches matching documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -475,6 +486,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nin filter on both composite index fields performs a full index scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -544,12 +556,13 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_like filter on both composite index fields performs a full index scan and returns pattern matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "email"}]) {
-						name: String 
-						email: String 
+						name: String
+						email: String
 					}`,
 			},
 			testUtils.AddPredefinedDocs{
@@ -640,6 +653,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "_nlike filter on composite index fields performs a full scan and excludes pattern matches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -674,6 +688,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query filtering only on the second composite index field does not use the index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -702,6 +717,7 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 
 func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Equality filter on null value for the first composite index field returns docs with null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -748,6 +764,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 
 func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Equality filter on null value for the second composite index field returns docs with null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -804,6 +821,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 
 func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index skips the middle field value when it is absent from the query filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -878,6 +896,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			}
 		}`
 	test := testUtils.TestCase{
+		Description: "Consecutive equality filters on all composite index fields each narrow the index scan progressively.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

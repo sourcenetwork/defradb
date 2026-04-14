@@ -49,6 +49,7 @@ var debugTypeJoinPattern = dataMap{
 
 func TestDebugExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of two one-to-one joins and one many join shows parallelNode with multiScanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -27,6 +27,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-many relation ID from single side returns field-not-found error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -79,6 +80,7 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
+		Description: "Update book's relation ID with a malformed author ID returns UUID error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -118,6 +120,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
+		Description: "Update book with a non-existent field alongside a relation ID returns field error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -170,6 +173,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
+		Description: "Update book's relation ID from the many-side re-links it to a different author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

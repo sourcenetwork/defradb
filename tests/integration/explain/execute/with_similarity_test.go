@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a SIMILARITY query returns similarityNode wrapping the selectNode stats.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {

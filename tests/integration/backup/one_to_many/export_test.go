@@ -21,6 +21,7 @@ import (
 
 func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of a single collection filters to only that collection.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -40,6 +41,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 
 func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of all collections preserves one-to-many relation after a doc update.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -72,6 +74,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 
 func TestBackupExport_AllCollectionsMultipleDocsAndMultipleDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup of all collections with multiple docs and multiple updates includes correct docIDs.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

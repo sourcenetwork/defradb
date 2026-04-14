@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query from the many (Book) side resolves the related author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -69,6 +70,7 @@ func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 
 func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query from the one (Author) side returns all related books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -159,6 +161,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 
 func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query where the related author does not exist returns nil.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

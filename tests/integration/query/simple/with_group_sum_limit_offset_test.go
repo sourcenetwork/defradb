@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child SUM with limit and offset considers only the windowed sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

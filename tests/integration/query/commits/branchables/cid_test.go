@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a commit by cid on a branchable collection returns the collection-level commit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

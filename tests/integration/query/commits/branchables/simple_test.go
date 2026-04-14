@@ -24,6 +24,7 @@ func TestQueryCommitsBranchables(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		Description: "Querying all commits on a branchable collection returns four unique CIDs including the collection commit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -77,6 +78,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 	nameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Querying all commit fields on a branchable collection returns correct metadata for all commit types.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

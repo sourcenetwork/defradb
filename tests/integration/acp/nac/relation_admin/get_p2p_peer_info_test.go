@@ -23,6 +23,7 @@ import (
 
 func TestNAC_AdminRelation_CanGetP2PPeerInfo(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to get P2P peer info.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

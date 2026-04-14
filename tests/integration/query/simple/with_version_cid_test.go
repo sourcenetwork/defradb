@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query _version with a CID returns the commit history anchored at that CID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

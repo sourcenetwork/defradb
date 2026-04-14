@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT query with a compound _or filter referencing a one-to-one relation returns correct count.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: bookAuthorGQLSchema,

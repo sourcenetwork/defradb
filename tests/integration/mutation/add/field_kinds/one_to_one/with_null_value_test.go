@@ -20,6 +20,7 @@ import (
 
 func TestMutationAddOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a one-to-one doc with an explicit null relation on the primary side stores nil.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

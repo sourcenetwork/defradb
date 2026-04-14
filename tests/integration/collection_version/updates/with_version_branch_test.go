@@ -28,6 +28,7 @@ func TestCollectionVersionUpdates_WithBranchingCollection(t *testing.T) {
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
 
 	test := testUtils.TestCase{
+		Description: "Branching a collection creates multiple inactive and active version branches, with only the active branch's fields queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -186,6 +187,7 @@ func TestCollectionVersionUpdates_WithPatchOnBranchedCollection(t *testing.T) {
 	collectionVersion4ID := "bafyreibuscrpd27xb2zelovaid6souccvac5rkl4xrvjowe3jpfhormr6e"
 
 	test := testUtils.TestCase{
+		Description: "Patching an active branched collection version extends the active branch, making the new fields queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -328,6 +330,7 @@ func TestCollectionVersionUpdates_WithBranchingCollectionAndSetActiveCollectionT
 	collectionVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
 
 	test := testUtils.TestCase{
+		Description: "Setting the active collection version to a different branch makes that branch's fields queryable and the previous branch's fields inaccessible.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -425,6 +428,7 @@ func TestCollectionVersionUpdates_WithBranchingCollectionAndSetActiveCollectionT
 	collectionVersion4ID := "bafyreibuscrpd27xb2zelovaid6souccvac5rkl4xrvjowe3jpfhormr6e"
 
 	test := testUtils.TestCase{
+		Description: "Patching after switching to a different branch extends that branch, with the new version sourced from the switched-to branch.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -569,6 +573,7 @@ func TestCollectionVersionUpdates_WithBranchingCollectionAndGetCollectionAtVersi
 	collectionVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
+		Description: "After creating a new active collection version, the original version can still be retrieved by its version ID and is marked inactive.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

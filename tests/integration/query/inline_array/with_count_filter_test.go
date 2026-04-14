@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline boolean array with an equality filter counts matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -51,6 +52,7 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a nillable inline boolean array with filter counts only matching non-null elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -82,6 +84,7 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with a greater-than filter counts matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -113,6 +116,7 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a nillable inline integer array with filter skips null elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -144,6 +148,7 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline integer array with a compound _and filter counts elements matching both conditions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -175,6 +180,7 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 
 func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline float array with a less-than filter counts matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -206,6 +212,7 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a nillable inline float array with filter counts only matching non-null elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -237,6 +244,7 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an inline string array with an _in filter counts elements matching allowed values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -268,6 +276,7 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on a nillable inline string array with an _in filter skips null and non-matching elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

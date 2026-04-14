@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with docID filter on inner GROUP shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

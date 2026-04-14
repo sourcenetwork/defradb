@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased sum of ratings greater than zero returns all authors with books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -90,6 +91,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased sum of ratings greater than five returns only the author with more books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -155,6 +157,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 
 func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on an aliased sum of Float32 ratings greater than five returns only the prolific author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

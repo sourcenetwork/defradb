@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithChildDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query filtering the related collection to a single specific docID.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

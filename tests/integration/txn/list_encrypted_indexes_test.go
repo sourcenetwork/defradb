@@ -25,6 +25,7 @@ import (
 // is maintained, and that it can see indexes on schemas created in the same transaction.
 func TestTxn_AddEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An encrypted index added and committed within a transaction is visible after the commit.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

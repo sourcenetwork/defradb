@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_nlike filter on a JSON field returns all documents whose string value does not match the pattern.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

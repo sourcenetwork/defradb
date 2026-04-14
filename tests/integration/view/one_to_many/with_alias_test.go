@@ -20,6 +20,7 @@ import (
 
 func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View over one-to-many relation uses a field alias on the outer type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -95,6 +96,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 
 func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View over one-to-many relation uses a field alias on the inner embedded type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy where one relation manages another relation; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

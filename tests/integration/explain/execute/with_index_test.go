@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an equality filter on an indexed field reports non-zero indexFetches.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -87,6 +88,7 @@ func TestExecuteExplainWithIndexOnFilter(t *testing.T) {
 
 func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an ASC order on an indexed field reports non-zero indexFetches in scan.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -154,6 +156,7 @@ func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 
 func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of ordering by an indexed relation field shows orphanNode and index fetches in join.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -275,6 +278,7 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 
 func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of subquery ordering by a nested indexed relation shows index fetches eliminating orderNode.",
 
 		Actions: []any{
 			&action.AddCollection{

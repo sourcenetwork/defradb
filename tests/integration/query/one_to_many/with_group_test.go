@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Related books grouped by rating inside a nested join on authors.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -135,6 +136,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 
 func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors grouped by age with each group containing nested published books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -284,6 +286,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 
 func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting a non-group-by field at the group level in a nested join returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

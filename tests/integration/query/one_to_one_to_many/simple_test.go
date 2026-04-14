@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query across a one-to-one-to-many chain returns the full linked hierarchy.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -94,6 +95,7 @@ func TestQueryOneToOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query from the secondary one-to-one side traverses into the one-to-many observations list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -170,6 +172,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query from the secondary one-to-one side traverses back through the one-to-one link to indicator.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -244,6 +247,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query from the secondary indicator side retrieves the observable with its many observations.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

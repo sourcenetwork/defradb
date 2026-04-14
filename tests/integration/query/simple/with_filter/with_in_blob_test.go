@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithInOpOnBlobField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on a Blob field returns only the document whose hex value is in the provided list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

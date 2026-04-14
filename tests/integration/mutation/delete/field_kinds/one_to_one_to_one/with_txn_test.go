@@ -23,6 +23,7 @@ import (
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Transactional deletion from the primary side verifies the linked doc is unset when queried forward.",
 		Actions: []any{
 			&action.AddDoc{
 				// publishers
@@ -92,6 +93,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Transactional deletion from the primary side verifies the deleted doc is absent when queried backward.",
 		Actions: []any{
 			&action.AddDoc{
 				// books
@@ -155,6 +157,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A concurrent transaction reads a record deleted in an uncommitted transaction via forward traversal.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -257,6 +260,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A concurrent transaction reads a record deleted in an uncommitted transaction via backward traversal.",
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -353,6 +357,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Transactional deletion from the non-primary side confirms the publisher is removed when queried forward.",
 		Actions: []any{
 			&action.AddDoc{
 				// books
@@ -417,6 +422,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Transactional deletion from the non-primary side leaves the book with a nil publisher when queried backward.",
 		Actions: []any{
 			&action.AddDoc{
 				// books

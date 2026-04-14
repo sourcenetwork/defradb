@@ -39,6 +39,7 @@ var debugMinTypeIndexJoinManyPattern = dataMap{
 
 func TestDebugExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MIN on one-to-many joined field shows minNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -65,6 +66,7 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing.T
 
 func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MIN on one-to-many joined field with filter shows minNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -97,6 +99,7 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 
 func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MIN on multiple one-to-many joined fields shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

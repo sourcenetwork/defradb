@@ -24,6 +24,7 @@ import (
 
 func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PNCounter field increments are accumulated and synced correctly across two peers.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -85,6 +86,7 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 
 func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PNCounter simultaneous increments and decrements from three peers are summed correctly.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -178,6 +180,7 @@ func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T
 
 func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "PNCounter simultaneous increments from two peers are both accumulated after sync.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

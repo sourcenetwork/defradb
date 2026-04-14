@@ -20,7 +20,7 @@ import (
 
 func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC average aggregate without identity only includes public documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -43,7 +43,7 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryAverageWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC average aggregate with owner identity includes all owned documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -67,7 +67,7 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 
 func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC average aggregate with wrong identity only includes public documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 

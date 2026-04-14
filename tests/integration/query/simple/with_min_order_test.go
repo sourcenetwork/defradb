@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by an aliased MIN value in ASC and DESC directions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

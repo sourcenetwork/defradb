@@ -36,6 +36,7 @@ var normalTypeJoinPattern = dataMap{
 
 func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of two one-to-one joins and one many join shows parallelNode with join attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

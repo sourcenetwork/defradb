@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithNotInFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_nin filter on a JSON field returns only documents whose value is not in the given list.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

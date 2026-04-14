@@ -24,6 +24,7 @@ import (
 // results in the document being deleted from the database.
 func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that deleted a document removes it from the database.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +71,7 @@ func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 // results in the document not yet being deleted from the database.
 func TestTxn_DeleteDoc_WithoutCommit_DoesNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that deletes a document leaves the document visible to outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -124,6 +126,7 @@ func TestTxn_DeleteDoc_WithoutCommit_DoesNotDelete(t *testing.T) {
 // is maintained, and that it can see documents created within the same transaction.
 func TestTxn_DeleteDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A transaction can delete a document that was added within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

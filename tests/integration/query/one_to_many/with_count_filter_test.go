@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many count of related docs filtered by a rating threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -90,6 +91,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 
 func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many count and child listing both filtered independently by rating presence.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -183,6 +185,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 
 func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level count with combined JSON metadata filter and related-field filter succeeds.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

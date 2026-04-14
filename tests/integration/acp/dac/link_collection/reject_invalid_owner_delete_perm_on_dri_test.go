@@ -20,6 +20,7 @@ import (
 
 func TestACP_LinkCollection_OwnerMissingRequiredDeletePermissionLabelOnDRI_CollectionRejected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Reject collection when the DRI resource is missing the required delete permission label.",
 
 		Actions: []any{
 

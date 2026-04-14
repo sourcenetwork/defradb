@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child AVG filtered on age returns the average of matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with rendered GROUP and filtered child AVG returns the average alongside group members.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -130,6 +132,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with rendered GROUP and child AVG filtered on a DateTime field returns correct averages.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -197,6 +200,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group-level filter and matching child AVG filter return only documents satisfying both conditions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -253,6 +257,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group-level DateTime filter and matching child AVG filter return documents satisfying both conditions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -313,6 +318,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group-level filter and different child AVG filter independently narrow the rendered group and average.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -373,6 +379,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two child AVGs with different filters on the same field return independent averages per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -424,6 +431,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilterAndNilItem(t *testing.T) {
 	// This test checks that the appended/internal nil filter does not clash with the consumer-defined filter
 	test := testUtils.TestCase{
+		Description: "Child AVG with a filter when some group members are nil returns the average of non-nil matching items.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

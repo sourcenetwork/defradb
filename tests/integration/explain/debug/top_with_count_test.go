@@ -42,6 +42,7 @@ var topLevelCountPattern = dataMap{
 
 func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level COUNT query shows topLevelNode with countNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -62,6 +63,7 @@ func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 
 func TestDebugExplainTopLevelCountRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level COUNT with filter shows topLevelNode with countNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

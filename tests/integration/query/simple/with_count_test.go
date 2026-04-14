@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT with no collection argument returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -35,6 +36,7 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 
 func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT on an empty collection returns zero.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -52,6 +54,7 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level COUNT on a collection returns the total number of documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -81,6 +84,7 @@ func TestQuerySimpleWithCount(t *testing.T) {
 
 func TestQuerySimple_WithAliasedCount_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased COUNT on an empty collection returns zero under the alias name.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

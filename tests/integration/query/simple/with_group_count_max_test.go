@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfCount_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups compute the MAX of a child COUNT across boolean sub-groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -23,6 +23,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 	user1ID := "bae-1d57efc8-a1f3-5b0e-9d08-51e03359285e"
 
 	test := testUtils.TestCase{
+		Description: "Update self-referencing one-to-one relation from primary side and verify both traversal directions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

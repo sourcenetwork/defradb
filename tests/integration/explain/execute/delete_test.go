@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a delete mutation by docID returns deleteNode iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -70,6 +71,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 
 func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a delete mutation by filter returns deleteNode iteration and scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

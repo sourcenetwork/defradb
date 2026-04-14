@@ -31,6 +31,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 	}
 
 	test1 := testUtils.TestCase{
+		Description: "Index on integer field provides measurable query performance benefit over full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -91,6 +92,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 	}
 
 	test1 := testUtils.TestCase{
+		Description: "Index on Float32 field provides measurable query performance benefit over full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

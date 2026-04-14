@@ -22,6 +22,7 @@ import (
 // func by targeting a specific docID in the parent select.
 func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a nillable float inline array when filtering by a specific docID returns the minimum value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

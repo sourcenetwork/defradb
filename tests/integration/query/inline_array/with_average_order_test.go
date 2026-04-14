@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on inline arrays can be used as an order key in ascending and descending queries.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -80,6 +81,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG on nillable inline arrays with null elements can be used as an order key.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

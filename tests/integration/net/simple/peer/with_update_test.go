@@ -25,6 +25,7 @@ import (
 // of the test system as of production.  See it as a santity check of sorts.
 func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update from the source node syncs to the subscriber node via document subscription.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -85,6 +86,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 // of the test system as of production.  See it as a santity check of sorts.
 func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update from the target node syncs back to the source node via document subscription.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -144,6 +146,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
 func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Concurrent updates from both nodes converge to one of the two values after sync.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -215,6 +218,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update syncs to the subscribed peer node but not to an unconnected third node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -307,6 +311,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update from an unmapped node does not propagate to connected peer nodes.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -396,6 +401,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 // TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
 func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple updates from both nodes converge to one of the two latest values after sync.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -491,6 +497,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 // ensuring that the added document and its update reach the node that subscribes to the P2P collection topic.
 func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "New document and its subsequent update both reach the collection-subscribed peer node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -560,6 +567,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 // subscribes to the P2P collection topic.
 func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Multiple updates per node plus a new document all reach the collection-subscribed peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -39,6 +39,7 @@ var debugMaxTypeIndexJoinManyPattern = dataMap{
 
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MAX on one-to-many joined field shows maxNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -65,6 +66,7 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T
 
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MAX on one-to-many joined field with filter shows maxNode over typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -97,6 +99,7 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of MAX on multiple one-to-many joined fields shows parallelNode with typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

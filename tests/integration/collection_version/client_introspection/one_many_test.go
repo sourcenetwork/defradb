@@ -21,6 +21,7 @@ import (
 
 func TestClientIntrospectionWithOneToManyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A client introspection query succeeds after adding a one-to-many relational collection.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

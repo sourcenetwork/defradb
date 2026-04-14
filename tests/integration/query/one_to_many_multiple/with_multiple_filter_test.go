@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter on parent and two separate one-to-many relations in the same query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

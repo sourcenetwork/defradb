@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a one-to-one join query returns typeJoinOne with root and subType scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -91,6 +92,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 
 func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of multiple one-to-one joins shows a parallelNode with separate typeIndexJoin stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -198,6 +200,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 
 func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of two-level deep nested one-to-one joins returns nested typeJoinOne stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -293,6 +296,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 
 func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a one-to-one join from secondary side shows non-zero indexFetches in subType.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

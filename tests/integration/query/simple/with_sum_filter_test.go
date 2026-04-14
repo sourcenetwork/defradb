@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level SUM with a filter sums only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

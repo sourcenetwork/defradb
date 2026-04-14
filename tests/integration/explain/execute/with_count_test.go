@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of COUNT on a one-to-many relation returns countNode wrapping a typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

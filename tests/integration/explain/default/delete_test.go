@@ -37,6 +37,7 @@ var deletePattern = dataMap{
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with filter shows deleteNode attributes with filter and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -91,6 +92,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with empty filter shows deleteNode with nil filter attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -137,6 +139,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 
 func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with single docID shows deleteNode with docID attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -185,6 +188,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with multiple docIDs shows deleteNode with all docID attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -238,6 +242,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with empty docID list shows deleteNode with empty docID attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -284,6 +289,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation with both filter and docIDs shows deleteNode with combined attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

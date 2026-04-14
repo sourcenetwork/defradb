@@ -23,6 +23,7 @@ import (
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Concurrent transactions creating linked Book-Publisher documents resolve with SSI conflict on second commit.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -185,6 +186,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Concurrent transactions creating linked Book-Publisher documents both commit successfully when queried backward.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

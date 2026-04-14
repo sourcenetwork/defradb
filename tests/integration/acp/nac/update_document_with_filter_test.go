@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesUpdateDocumentWithFilter_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates UpdateDocumentWithFilter: authorized node owner identity can update documents using a filter.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -71,6 +72,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_AuthorizedIdentity_AllowAccess(t *tes
 
 func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates UpdateDocumentWithFilter: request with no identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -128,6 +130,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_NotAuthorizedError(t *test
 
 func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates UpdateDocumentWithFilter: request with no identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -186,6 +189,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 
 func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates UpdateDocumentWithFilter: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -243,6 +247,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_NotAuthorizedError(t *t
 
 func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates UpdateDocumentWithFilter: request with wrong identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

@@ -20,6 +20,7 @@ import (
 
 func TestView_SimpleWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "View query with a filter returns only documents matching the filter condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -74,6 +75,7 @@ func TestView_SimpleWithFilter(t *testing.T) {
 
 func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filters on both the view definition and the query are applied conjunctively.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -24,6 +24,7 @@ import (
 
 func TestNetInfoPeers_NoP2PConfigured(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Calling ActivePeers returns an error when no P2P system is configured.",
 		SupportedClientTypes: immutable.Some(
 			// Everything besides the JS client is supported, as the JS client does not have
 			// an `ActivePeers` function to call.
@@ -47,6 +48,7 @@ func TestNetInfoPeers_NoP2PConfigured(t *testing.T) {
 
 func TestNetInfoPeers(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A P2P-enabled node with no connections reports an empty active peers list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.ActivePeers{
@@ -61,6 +63,7 @@ func TestNetInfoPeers(t *testing.T) {
 
 func TestNetInfoConnectPeers(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Connecting two peers makes the remote peer appear in the active peers list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -80,6 +83,7 @@ func TestNetInfoConnectPeers(t *testing.T) {
 
 func TestNetInfoConnectMultiplePeers(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Connecting three nodes causes all peers to appear in each node's active peers list.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

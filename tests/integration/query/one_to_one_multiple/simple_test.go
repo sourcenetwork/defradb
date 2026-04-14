@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying Book with two @primary relations returns correct publisher and author for each book.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -124,6 +125,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying Book with one @primary and one secondary relation resolves both sides correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -228,6 +230,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying Book with two secondary relations owned by Publisher and Author resolves both correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -332,6 +335,7 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 
 func TestAddCollectionWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a schema with cyclic mutually referential relations between three types does not error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

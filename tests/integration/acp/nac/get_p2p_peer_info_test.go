@@ -22,6 +22,7 @@ import (
 
 func TestNAC_GatesGetP2PPeerInfo_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetP2PPeerInfo: authorized node owner identity can retrieve P2P peer info.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -55,6 +56,7 @@ func TestNAC_GatesGetP2PPeerInfo_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesGetP2PPeerInfo_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetP2PPeerInfo: request with no identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),
@@ -80,6 +82,7 @@ func TestNAC_GatesGetP2PPeerInfo_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesGetP2PPeerInfo_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates GetP2PPeerInfo: request with wrong identity returns NotAuthorizedError.",
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),

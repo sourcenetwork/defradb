@@ -25,6 +25,7 @@ import (
 
 func TestCollectionMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P replicated doc at an older schema version is migrated up on the receiving node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -119,6 +120,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *tes
 
 func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P replicated doc multiple versions behind is chained-migrated up on the receiving node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -240,6 +242,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t 
 
 func TestCollectionMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P replicated doc at a newer schema version is inverse-migrated down on the older node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -337,6 +340,7 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *tes
 
 func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSchemaHistoryGap(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "P2P synced doc with a schema history gap is still accessible on the receiving node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

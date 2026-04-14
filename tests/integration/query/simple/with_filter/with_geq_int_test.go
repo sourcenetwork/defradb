@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on an integer field with the boundary value returns the boundary document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq filter on an integer field with a value below the target returns the greater document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_geq null filter on an integer field returns all documents including those with no integer value set.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

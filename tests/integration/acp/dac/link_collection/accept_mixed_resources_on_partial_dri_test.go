@@ -21,6 +21,7 @@ import (
 
 func TestACP_LinkCollection_UseValidResource_AcceptCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Link collection to the valid resource in a partially-DRI-compliant policy and accept it.",
 
 		Actions: []any{
 

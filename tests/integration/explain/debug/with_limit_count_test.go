@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of COUNT with limit on related child shows parallelNode with limitNode in join.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -71,6 +72,7 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of COUNT with limits on both parent and related child shows limitNode wrapping countNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -24,6 +24,7 @@ import (
 // This test runs VerifyBlockSignature inside of a transaction, illustrating that it works.
 func TestTxn_VerifyBlockSignature_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "VerifyBlockSignature succeeds when verifying a block created within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -66,6 +67,7 @@ func TestTxn_VerifyBlockSignature_InsideTxn_Succeeds(t *testing.T) {
 // verify, illustrating transactional isolation.
 func TestTxn_VerifyBlockSignature_OutsideTxn_Fails(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "VerifyBlockSignature fails when the block exists only in a different uncommitted transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

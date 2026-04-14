@@ -27,7 +27,7 @@ func TestACP_AddWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.T) 
 	// Note: In this test that identity is empty (no identity).
 
 	test := testUtils.TestCase{
-
+		Description: "Public document added without identity can be updated without identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -123,7 +123,7 @@ func TestACP_AddWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 	// Note: In this test that identity is empty (no identity).
 
 	test := testUtils.TestCase{
-
+		Description: "Public document added without identity can be updated by an identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -216,7 +216,7 @@ resources:
 
 func TestACP_AddWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document owner can update their own document using the same identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -313,7 +313,7 @@ resources:
 
 func TestACP_AddWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document cannot be updated without an identity (collection and save mutation types).",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
 			state.CollectionNamedMutationType,
@@ -416,7 +416,7 @@ resources:
 
 func TestACP_AddWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document cannot be updated by a different identity than the owner (collection and save mutation types).",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
 			state.CollectionNamedMutationType,
@@ -523,7 +523,7 @@ resources:
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
 func TestACP_AddWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document update without identity via GQL silently fails (no error, update is ignored).",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
 			state.GQLRequestMutationType,
@@ -627,7 +627,7 @@ resources:
 // to behave the same in: https://github.com/sourcenetwork/defradb/issues/2410
 func TestACP_AddWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document update with wrong identity via GQL silently fails (no error, update is ignored).",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
 			state.GQLRequestMutationType,

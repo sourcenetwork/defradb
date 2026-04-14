@@ -20,6 +20,7 @@ import (
 
 func TestTruncateCollectionAdd_RemovesDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection removes a previously added document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -59,6 +60,7 @@ func TestTruncateCollectionAdd_RemovesDocument(t *testing.T) {
 // https://github.com/sourcenetwork/defradb/issues/4671
 func TestTruncateCollectionAdd_RemovesSignedDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Truncating a collection removes a previously added digitally signed document.",
 		EnableSigning: true,
 		Actions: []any{
 			&action.AddCollection{
@@ -95,6 +97,7 @@ func TestTruncateCollectionAdd_RemovesSignedDocument(t *testing.T) {
 
 func TestTruncateCollectionAdd_RemovesEncryptedDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection removes a previously added encrypted document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +134,7 @@ func TestTruncateCollectionAdd_RemovesEncryptedDocument(t *testing.T) {
 
 func TestTruncateCollectionAdd_RemovesBlocks(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating a collection removes all commit blocks associated with a document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -168,6 +172,7 @@ func TestTruncateCollectionAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	docID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "A document re-added after truncation has the same docID as the original.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -231,6 +236,7 @@ func TestTruncateCollectionAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 	compositeCID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "A document re-added after truncation has the same composite commit CID as the original.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -292,6 +298,7 @@ func TestTruncateCollectionAdd_AddsDocWithSameCIDAsOriginal(t *testing.T) {
 
 func TestTruncateCollectionAdd_AddsDocWithBlocksAtHeight1(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A document re-added after truncation has all its commit blocks at height 1.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a three-hop one-to-one chain ordered by a nested relation field.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

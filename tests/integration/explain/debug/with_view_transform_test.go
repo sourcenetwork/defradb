@@ -46,6 +46,7 @@ var transformViewPattern = dataMap{
 
 func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:        "Debug explain of query on a view with lens transform shows lensNode in viewNode plan.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			&action.AddCollection{

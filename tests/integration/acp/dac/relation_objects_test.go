@@ -20,7 +20,7 @@ import (
 
 func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC many-to-one relation query without identity hides private parent documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -56,7 +56,7 @@ func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC one-to-many relation query without identity only returns public parent documents with their public children.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -90,7 +90,7 @@ func TestACP_QueryOneToManyRelationObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC many-to-one relation query with owner identity returns all documents with their parent.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -136,7 +136,7 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC one-to-many relation query with owner identity returns all documents with all their children.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -180,7 +180,7 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC many-to-one relation query with wrong identity hides private parent documents.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
@@ -217,7 +217,7 @@ func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "DAC one-to-many relation query with wrong identity only returns public parent documents with their public children.",
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 

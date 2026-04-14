@@ -21,13 +21,14 @@ import (
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	req := `query {
 		User(filter: {
-			name: {_in: ["Fred", "Islam", "Addo"]}, 
+			name: {_in: ["Fred", "Islam", "Addo"]},
 			age:  {_gt: 40}
 		}) {
 			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Combining an indexed field filter with a non-indexed field filter correctly narrows results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -60,7 +61,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testing.T) {
 	req := `query {
 		User(filter: {
-			name: {_like: "%a%"}, 
+			name: {_like: "%a%"},
 			age:  {_gt: 30},
 			email: {_like: "%m@gmail.com"}
 		}) {
@@ -68,6 +69,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Multiple indexed field filters combined with a non-indexed filter all apply correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -101,13 +103,14 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldFilter(t *testing.T) {
 	req := `query {
 		User(filter: {
-			name: {_ilike: "a%"}, 
+			name: {_ilike: "a%"},
 			age:  {_gt: 30},
 		}) {
 			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Multiple indexed field filters including a case-insensitive _ilike filter all apply correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -148,6 +151,7 @@ func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Filter on a non-indexed field does not use any index and performs a full scan.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

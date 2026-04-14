@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_not filter with an _eq condition excludes documents matching that value and returns the rest.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -78,6 +79,7 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_not filter with a _gt comparison returns only documents that do not exceed the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -127,6 +129,7 @@ func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_not filter wrapping an _or condition excludes documents matching either of the two conditions.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -181,6 +184,7 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An empty _not filter object returns an empty result set with no error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -225,6 +229,7 @@ func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested _not filters combining _eq and _not conditions returns documents not satisfying both exclusions simultaneously.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying encrypted documents on both sides of a relation returns all fields decrypted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -83,6 +84,7 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 
 func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an encrypted primary-side document with its related documents returns decrypted fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -145,6 +147,7 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 
 func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying an encrypted secondary-side document with its related documents returns decrypted fields.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

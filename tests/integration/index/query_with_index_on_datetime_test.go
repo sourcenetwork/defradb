@@ -25,6 +25,7 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Equality filter on an indexed DateTime field uses the index to fetch matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -71,6 +72,7 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-than filter on an indexed DateTime field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -130,6 +132,7 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Greater-or-equal filter on an indexed DateTime field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -183,6 +186,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Less-than filter on an indexed DateTime field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -229,6 +233,7 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 
 	test := testUtils.TestCase{
+		Description: "Less-or-equal filter on an indexed DateTime field uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -276,6 +281,7 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Not-equal filter on an indexed DateTime field returns all non-matching docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -37,6 +37,7 @@ var deletePattern = dataMap{
 
 func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with name filter shows deleteNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -59,6 +60,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with empty filter shows deleteNode matching all docs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -81,6 +83,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *te
 
 func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with single docID shows deleteNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -103,6 +106,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with multiple docIDs shows deleteNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -128,6 +132,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with empty docID list shows deleteNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -150,6 +155,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of delete mutation with both filter and docIDs shows deleteNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

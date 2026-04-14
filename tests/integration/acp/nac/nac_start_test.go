@@ -20,6 +20,7 @@ import (
 
 func TestNAC_StartWithDefaultConfig_NACStatusIsDisabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Starting a node with default config results in NAC being disabled.",
 		Actions: []any{
 			testUtils.GetNACStatus{
 				ExpectedStatus: client.NACNotConfigured,
@@ -32,6 +33,7 @@ func TestNAC_StartWithDefaultConfig_NACStatusIsDisabled(t *testing.T) {
 
 func TestNAC_StartWithDefaultConfigWithIdentity_NACStatusIsDisabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Starting a node with default config and an identity still results in NAC being disabled.",
 		Actions: []any{
 			testUtils.GetNACStatus{
 				Identity:       testUtils.ClientIdentity(1),
@@ -45,6 +47,7 @@ func TestNAC_StartWithDefaultConfigWithIdentity_NACStatusIsDisabled(t *testing.T
 
 func TestNAC_StartNodeWithIdentityAndWithNACEnableTrue_NACEnabledSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Starting a node with an identity and NAC enable flag set to true enables NAC successfully.",
 		Actions: []any{
 			testUtils.GetNACStatus{
 				ExpectedStatus: client.NACNotConfigured,
@@ -72,6 +75,7 @@ func TestNAC_StartNodeWithIdentityAndWithNACEnableTrue_NACEnabledSuccessfully(t 
 
 func TestNAC_StartNodeNoIdentityWithNACEnableTrue_ErrorAsIdentityIsNeeded(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Starting a node with NAC enable true but no identity returns an error.",
 		Actions: []any{
 			testUtils.GetNACStatus{
 				ExpectedStatus: client.NACNotConfigured,
@@ -91,6 +95,7 @@ func TestNAC_StartNodeNoIdentityWithNACEnableTrue_ErrorAsIdentityIsNeeded(t *tes
 
 func TestNAC_StartNodeWithIdentityAndWithNACEnableFalse_NACNotEnabled(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Starting a node with an identity but NAC enable false does not enable NAC.",
 		Actions: []any{
 			testUtils.GetNACStatus{
 				ExpectedStatus: client.NACNotConfigured,

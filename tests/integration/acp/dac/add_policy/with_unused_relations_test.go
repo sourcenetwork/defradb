@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with a relation that is not referenced by any permission; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

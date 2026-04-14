@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query filtering on an aliased average of related field returns all authors.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -90,6 +91,7 @@ func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "One-to-many query filtering on an aliased average of related field returns one matching author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

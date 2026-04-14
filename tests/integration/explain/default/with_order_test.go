@@ -37,6 +37,7 @@ var orderPattern = dataMap{
 
 func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with ascending order shows orderNode with ASC direction attribute.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -77,6 +78,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 
 func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with multiple order fields shows orderNode with multiple direction attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

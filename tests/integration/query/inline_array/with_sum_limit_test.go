@@ -20,6 +20,7 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "SUM on an inline integer array with a limit sums only the first N elements.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

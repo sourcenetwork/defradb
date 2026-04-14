@@ -21,6 +21,7 @@ import (
 
 func TestPNCounterAdd_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with a pncounter Int field stores and returns the positive value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -63,6 +64,7 @@ func TestPNCounterAdd_IntKindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterAdd_Float32KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with a pncounter Float32 field stores and returns the positive value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -105,6 +107,7 @@ func TestPNCounterAdd_Float32KindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterAdd_Float64KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a document with a pncounter Float64 field stores and returns the positive value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

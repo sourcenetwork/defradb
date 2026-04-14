@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithMinFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MIN with a filter computes the minimum of only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

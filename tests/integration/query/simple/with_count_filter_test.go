@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level COUNT with an Age filter counts only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 
 func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level COUNT with a DateTime filter counts only documents past the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

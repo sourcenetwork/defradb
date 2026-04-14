@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKind15(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with reserved numeric kind 15 returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -45,6 +46,7 @@ func TestCollectionVersionUpdatesAddFieldKind15(t *testing.T) {
 // please update this test to be the newly lowest unsupported value.
 func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with the first unsupported numeric kind above the valid range returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -70,6 +72,7 @@ func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
 // high values.
 func TestCollectionVersionUpdatesAddFieldKind198(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with a high arbitrary unsupported numeric kind returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -93,6 +96,7 @@ func TestCollectionVersionUpdatesAddFieldKind198(t *testing.T) {
 
 func TestCollectionVersionUpdatesAddFieldKindInvalid(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with an unrecognized string kind value returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

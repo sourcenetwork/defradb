@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one relation from the primary (Book) side returns linked author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -69,6 +70,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 
 func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one relation from the secondary (Author) side returns linked book.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -118,6 +120,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one relation with multiple records returns each book with its author.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -201,6 +204,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one from the secondary side with multiple records returns each author with their book.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -279,6 +283,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one from secondary side returns nil when the related book is absent.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -312,6 +317,7 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query one-to-one from primary side returns nil when the related author is absent.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -344,6 +350,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying the relation ID field from the primary side returns the linked document ID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -395,6 +402,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying the relation ID field from the secondary side returns the linked document ID.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with CID and a matching docID returns the version at that CID for that document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -68,6 +69,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 
 func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with CID and mixed docIDs returns the version only for the matching document.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -119,6 +121,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 
 func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query with CID and a non-matching docID returns an empty result.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an update mutation by docIDs returns updateNode with update count and scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -84,6 +85,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 
 func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of an update mutation by filter returns updateNode iteration and filtered scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

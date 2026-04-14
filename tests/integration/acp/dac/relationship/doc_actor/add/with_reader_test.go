@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner adding a read relationship twice shows the relationship already exists as a no-op.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -142,6 +143,7 @@ resources:
 
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to another actor, who can then read the document.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -273,6 +275,7 @@ resources:
 // that no transfer of ownership has taken place.
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to another actor; both the actor and owner retain read access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -408,6 +411,7 @@ resources:
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read-only access; actor can read the document but cannot update it.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -575,6 +579,7 @@ resources:
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read-only access; actor can read the document but cannot delete it.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

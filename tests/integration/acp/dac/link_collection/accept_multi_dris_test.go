@@ -39,6 +39,7 @@ resources:
 `
 
 	test := testUtils.TestCase{
+		Description: "Link two collections to the same-resource policy added by different actors and accept both.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

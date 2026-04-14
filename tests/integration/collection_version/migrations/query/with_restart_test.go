@@ -24,6 +24,7 @@ import (
 
 func TestCollectionMigrationQueryWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration persists across a node restart and transforms documents on query.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -86,6 +87,7 @@ func TestCollectionMigrationQueryWithRestart(t *testing.T) {
 
 func TestCollectionMigrationQueryWithRestartAndMigrationBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Migration registered before patch persists through restart and transforms documents correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

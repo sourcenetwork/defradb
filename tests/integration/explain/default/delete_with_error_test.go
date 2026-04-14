@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of delete mutation without sub-selection returns a parse error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -26,6 +26,7 @@ import (
 // the lens is seen by the action.
 func TestTxn_ListLenses_InsideTxnWithAddLens_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "ListLenses inside a transaction sees the lens added within the same transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -82,6 +83,7 @@ func TestTxn_ListLenses_InsideTxnWithAddLens_Succeeds(t *testing.T) {
 func TestTxn_ListLenses_InsideTxnWithoutAddLens_NoLenses(t *testing.T) {
 	// LevelDB does not support concurrent transactions
 	test := testUtils.TestCase{
+		Description: "ListLenses in a separate transaction does not see a lens added in another transaction.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a query with limit and offset on the parent returns limitNode iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -72,6 +73,7 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 
 func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a query with limit on parent and child returns nested limitNode stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

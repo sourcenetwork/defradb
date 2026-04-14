@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by a field with GROUP selection returns the docID of each grouped document.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

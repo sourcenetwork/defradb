@@ -28,6 +28,7 @@ import (
 
 func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Float pncounter increment overflow produces infinity, breaking HTTP/CLI query JSON parsing.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -76,6 +77,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 
 func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Float pncounter decrement overflow produces negative infinity, breaking HTTP/CLI query JSON parsing.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -124,6 +126,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 
 func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Float pncounter overflow to infinity causes collection.Get to return empty string, blocking subsequent updates.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

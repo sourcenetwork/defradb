@@ -22,6 +22,7 @@ import (
 
 func TestCollectionAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a PN counter field of Int kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -59,6 +60,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 
 func TestCollectionAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a PN counter field of Float kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -96,6 +98,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) 
 
 func TestCollectionAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a PN counter field on a non-numeric kind returns an error.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -116,6 +119,7 @@ func TestCollectionAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 
 func TestCollectionAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with an invalid CRDT type string returns a GraphQL argument error.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -136,6 +140,7 @@ func TestCollectionAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a P counter field of Int kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -173,6 +178,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a P counter field of Float kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -210,6 +216,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a P counter field of Float64 kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -247,6 +254,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T)
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a P counter field of Float32 kind succeeds and stores the correct CRDT type.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -284,6 +292,7 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T)
 
 func TestCollectionAdd_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection with a P counter field on a non-numeric kind returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

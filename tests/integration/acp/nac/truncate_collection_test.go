@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesTruncateCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates TruncateCollection: authorized node owner identity can truncate a collection.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -52,6 +53,7 @@ func TestNAC_GatesTruncateCollection_AuthorizedIdentity_AllowAccess(t *testing.T
 func TestNAC_GatesTruncateCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	test := testUtils.TestCase{
+		Description: "NAC gates TruncateCollection: request with no identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -90,6 +92,7 @@ func TestNAC_GatesTruncateCollection_NoIdentity_NotAuthorizedError(t *testing.T)
 func TestNAC_GatesTruncateCollection_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	test := testUtils.TestCase{
+		Description: "NAC gates TruncateCollection: request with no identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -128,6 +131,7 @@ func TestNAC_GatesTruncateCollection_NoIdentity_CLIandCandHTTPClient_NotAuthoriz
 
 func TestNAC_GatesTruncateCollection_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates TruncateCollection: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -165,6 +169,7 @@ func TestNAC_GatesTruncateCollection_WrongIdentity_NotAuthorizedError(t *testing
 
 func TestNAC_GatesTruncateCollection_WrongIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates TruncateCollection: request with wrong identity returns NotAuthorizedError (CLI and HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

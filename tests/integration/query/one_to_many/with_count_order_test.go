@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Authors ordered descending by an aliased count of their published books.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

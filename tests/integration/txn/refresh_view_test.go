@@ -24,6 +24,7 @@ import (
 // results in the view being refreshed.
 func TestTxn_RefreshView_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that refreshed a view includes documents added after the initial view creation.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.MaterializedViewType,
 		}),
@@ -92,6 +93,7 @@ func TestTxn_RefreshView_WithCommit_Succeeds(t *testing.T) {
 // results in the view not being refreshed.
 func TestTxn_RefreshView_WithoutCommit_DoesNotRefresh(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that refreshes a view leaves the view stale to outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

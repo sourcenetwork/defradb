@@ -20,6 +20,7 @@ import (
 
 func TestEncryptedIndexNew_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A searchable encryption query fails with a GraphQL error when P2P networking is disabled.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

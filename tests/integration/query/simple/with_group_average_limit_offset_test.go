@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child AVG with limit and offset considers only the windowed sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

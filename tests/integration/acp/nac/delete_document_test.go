@@ -23,6 +23,7 @@ import (
 
 func TestNAC_GatesDeleteDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteDocument: authorized node owner identity can delete a document.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -70,6 +71,7 @@ func TestNAC_GatesDeleteDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesDeleteDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteDocument: request with no identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -126,6 +128,7 @@ func TestNAC_GatesDeleteDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesDeleteDocument_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteDocument: request with no identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -183,6 +186,7 @@ func TestNAC_GatesDeleteDocument_NoIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 
 func TestNAC_GatesDeleteDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteDocument: request with wrong identity returns NotAuthorizedError (Go client).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -239,6 +243,7 @@ func TestNAC_GatesDeleteDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 
 func TestNAC_GatesDeleteDocument_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates DeleteDocument: request with wrong identity returns NotAuthorizedError (CLI, C, HTTP clients).",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

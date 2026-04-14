@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a JSON numeric field returns documents whose value is less than or equal to the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -63,6 +64,7 @@ func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T
 
 func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a JSON numeric field excludes documents whose value exceeds the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -106,6 +108,7 @@ func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a JSON field returns only documents with a null or absent field value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -148,6 +151,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T)
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a nested JSON numeric field returns documents whose nested value is at or below the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -191,6 +195,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *tes
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a nested JSON path excludes documents whose nested value exceeds the threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -234,6 +239,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *te
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq null filter on a nested JSON path returns documents with a null or absent nested value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -285,6 +291,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *test
 
 func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter with a boolean value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -322,6 +329,7 @@ func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T)
 
 func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter with a string value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -359,6 +367,7 @@ func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter with an object value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -396,6 +405,7 @@ func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter with an array value on a JSON field returns an unexpected-type error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -433,6 +443,7 @@ func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T
 
 func TestQueryJSON_WithLesserEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_leq filter on a JSON field matches only the numeric document when mixed JSON types are stored.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

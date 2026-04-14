@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "groupBy with an empty field list returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -65,6 +66,7 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group documents by an integer field returns one entry per distinct value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -119,6 +121,7 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 
 func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group documents by a DateTime field returns one entry per distinct datetime.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -173,6 +176,7 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by integer with a GROUP sub-selection returns nested documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -248,6 +252,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 
 func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Grouping without selecting the grouped field still returns correct GROUP children.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -323,6 +328,7 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 
 func TestQuerySimpleWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group documents by a string field returns one entry per distinct string value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -398,6 +404,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with a nested GROUP by boolean returns doubly-nested groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -510,6 +517,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string then boolean returns correctly nested two-level groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -609,6 +617,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 
 func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by boolean then number returns correctly nested two-level groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -708,6 +717,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by an undefined field with empty collection returns no groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -751,6 +761,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by an undefined field with children returns no groups and no sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -810,6 +821,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 
 func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Selecting a non-grouped field outside of GROUP returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

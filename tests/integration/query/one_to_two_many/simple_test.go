@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query two named one-to-many relations on one type from the one side.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -143,6 +144,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query two named one-to-many relations on one type from the many side.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -270,6 +272,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query a type with two named many-to-one relations plus a third unnamed relation.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -433,6 +436,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Query two named relations and one unnamed relation from the many side.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

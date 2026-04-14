@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionAggregateTopLevelAddsCountGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes a top-level COUNT query field with correct selector args.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -98,6 +99,7 @@ func TestCollectionVersionAggregateTopLevelAddsCountGivenCollection(t *testing.T
 
 func TestCollectionVersionAggregateTopLevelAddsSumGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes a top-level SUM query field with correct numeric selector args.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -206,6 +208,7 @@ func TestCollectionVersionAggregateTopLevelAddsSumGivenCollection(t *testing.T) 
 
 func TestCollectionVersionAggregateTopLevelAddsAverageGivenCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes a top-level AVG query field with correct numeric selector args.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

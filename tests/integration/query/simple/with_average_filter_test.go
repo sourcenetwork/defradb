@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level AVG with an Age filter averages only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 
 func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level AVG with a DateTime filter averages only documents past the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

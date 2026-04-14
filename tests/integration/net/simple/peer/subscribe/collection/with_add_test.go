@@ -24,6 +24,7 @@ import (
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PCollectionAddSingle(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to a collection syncs new docs to the subscriber but not the non-subscriber.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -99,6 +100,7 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 
 func TestP2PCollectionAddMultiple(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to two of three collections only syncs documents from the subscribed collections.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -195,6 +197,7 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 
 func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing with a non-existent collection ID returns an error and no sync occurs.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -241,6 +244,7 @@ func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 
 func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A batch subscribe with a mix of valid and invalid IDs errors and rolls back all subscriptions.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -288,6 +292,7 @@ func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 
 func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A failed subscribe call does not affect a previously successful collection subscription.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -342,6 +347,7 @@ func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 
 func TestP2PCollectionAddNone(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribing to an empty collection ID list causes no sync.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

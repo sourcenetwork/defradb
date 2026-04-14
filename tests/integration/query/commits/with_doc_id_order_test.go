@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order commits by height descending places the update commit before create commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -76,6 +77,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order commits by height ascending places the create commits before the update commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -132,6 +134,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order commits by CID descending returns commits in reverse lexicographic CID order.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -188,6 +191,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order commits by CID ascending returns commits in lexicographic CID order.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -244,6 +248,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order commits by height ascending after three updates returns all commits in chronological order.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

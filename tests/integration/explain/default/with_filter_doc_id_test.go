@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with a single docID filter shows scanNode with matching prefix.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -68,6 +69,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with docIDs filter using one ID shows scanNode with single prefix.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -115,6 +117,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with duplicate docIDs filter shows scanNode with deduplicated prefixes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -169,6 +172,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with multiple unique docIDs shows scanNode with multiple distinct prefixes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -223,6 +227,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 
 func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with ID equality filter shows scanNode with docID-keyed prefix.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

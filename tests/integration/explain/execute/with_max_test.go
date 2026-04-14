@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of MAX on an inline array field returns maxNode with scan iteration stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -73,6 +74,7 @@ func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) 
 
 func TestExecuteExplainRequest_MaxOfRelatedOneToManyField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of MAX on a one-to-many joined field returns maxNode wrapping a typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

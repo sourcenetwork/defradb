@@ -27,6 +27,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-many alias relation from the one-side via Collection API returns error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.CollectionSaveMutationType,
 			state.CollectionNamedMutationType,
@@ -76,6 +77,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
+		Description: "Update one-to-many alias relation from the one-side via GQL returns invalid argument error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			state.GQLRequestMutationType,
 		}),
@@ -126,6 +128,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
+		Description: "Update book's alias relation field with a malformed author ID via GQL returns UUID error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -165,6 +168,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
+		Description: "Update book's alias relation field with a malformed author ID via Collection API returns UUID error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -204,6 +208,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
+		Description: "Update book with a non-existent field alongside an alias relation ID returns field error.",
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -256,6 +261,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
+		Description: "Update book's alias relation field from the many-side re-links it to a different author.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

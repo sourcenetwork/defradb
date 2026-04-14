@@ -32,6 +32,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Querying commits after a document update shows correct collection and document DAG with heads.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

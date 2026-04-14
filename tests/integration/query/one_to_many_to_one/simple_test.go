@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToOneRelations(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying Book returns both author and publisher relations, including nil publisher.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors

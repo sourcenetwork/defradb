@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order within each GROUP by a numeric field in ascending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -94,6 +95,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order within each GROUP by a numeric field in descending order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -168,6 +170,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 
 func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level descending order combined with ascending GROUP order returns correctly sorted results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -242,6 +245,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with descending inner order returns correctly sorted nested sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -355,6 +359,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Outer ascending GROUP order combined with inner descending order returns correctly sorted nested results.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

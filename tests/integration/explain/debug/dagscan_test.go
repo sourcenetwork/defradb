@@ -35,6 +35,7 @@ var dagScanPattern = dataMap{
 
 func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of commits query with field filter shows dagScanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -59,6 +60,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 
 func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of commits query without field filter shows dagScanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

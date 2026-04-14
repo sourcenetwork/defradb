@@ -20,6 +20,7 @@ import (
 
 func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index returns results in default ASC/ASC field order when no explicit order is specified.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -97,6 +98,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 
 func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDefaultOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index returns results in default field order when using case-insensitive _ilike filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -180,6 +182,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite index with DESC first field returns results in descending name order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -274,6 +277,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "DESC first-field composite index satisfies a DESC order query without an additional filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -362,6 +366,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 
 func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index with DESC first field returns results in descending order with case-insensitive filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -451,6 +456,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 
 func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Composite index with DESC second field returns results with age in descending order within each name.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -530,6 +536,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
+		Description: "Composite ASC/DESC index returns descending age order within each name using case-insensitive filter.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -607,6 +614,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 
 func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Exact equality filter on first field of a DESC composite index returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -664,6 +672,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 
 func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Exact equality filter on second DESC field of a composite index returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -721,6 +730,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 
 func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on the DESC first field of a composite index returns correct results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -756,6 +766,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 // TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_in filter on the DESC second field of a composite index returns results (documents known-incorrect ordering).",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -804,6 +815,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimi
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Range filter on the first field of a composite index uses range optimization to reduce fetches.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -886,6 +898,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Range filter on first field combined with equality on second field uses composite index range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -972,6 +985,7 @@ func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUse
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Range filter on a DESC first field of a composite index correctly uses range optimization.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -23,6 +23,7 @@ import (
 
 func TestNAC_AdminRelation_CanSetActiveCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to set the active collection version.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -88,6 +89,7 @@ func TestNAC_AdminRelation_CanSetActiveCollectionVersion(t *testing.T) {
 
 func TestNAC_AdminRelation_CLIClient_CanSetActiveCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants the CLI client permission to set the active collection version.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

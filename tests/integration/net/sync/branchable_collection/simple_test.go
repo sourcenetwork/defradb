@@ -24,6 +24,7 @@ import (
 
 func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Branchable collection syncs all docs from a populated node to an empty peer.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -86,6 +87,7 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 
 func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Branchable collection bi-directional sync merges disjoint docs from both peers.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -154,6 +156,7 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 
 func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Branchable collection sync does not auto-subscribe to future docs added after sync.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -236,6 +239,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 
 func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing a non-branchable collection returns an error.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{
@@ -257,6 +261,7 @@ func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *tes
 
 func TestBranchableCollectionSync_WithNonExistentCollection_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Syncing a non-existent collection index returns an out-of-range error.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.AddCollection{

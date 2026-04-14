@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with extra non-DRI permissions alongside required ones; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -44,6 +45,7 @@ resources:
 
 func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with a duplicate permission key in YAML returns a parse error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

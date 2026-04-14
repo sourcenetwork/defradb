@@ -24,6 +24,7 @@ import (
 
 func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Encrypted LWW CRDT document stores all field commit deltas in encrypted form.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{
@@ -93,6 +94,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 
 func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating an encrypted LWW CRDT document produces encrypted commit deltas.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{
@@ -132,6 +134,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 
 func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Only the encrypted document has encrypted commit deltas; plaintext doc remains unencrypted.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{
@@ -194,6 +197,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 	const docID = "bae-c60ff298-7222-528f-920f-783ca0caeae1"
 
 	test := testUtils.TestCase{
+		Description: "Encrypted counter CRDT document stores commit deltas in encrypted form.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -240,6 +244,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 	const docID = "bae-c60ff298-7222-528f-920f-783ca0caeae1"
 
 	test := testUtils.TestCase{
+		Description: "Updating an encrypted counter CRDT produces encrypted commit deltas for each increment.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -286,6 +291,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 
 func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Batch-inserting multiple encrypted documents stores all their commit deltas encrypted.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{
@@ -339,6 +345,7 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 
 func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two documents with identical field values produce distinct cipher texts due to per-doc keys.",
 		Actions: []any{
 			addUserCollection(),
 			&action.AddDoc{

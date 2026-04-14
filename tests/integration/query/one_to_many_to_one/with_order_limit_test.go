@@ -21,6 +21,7 @@ import (
 
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering books by nested publisher yearOpened DESC and ASC with limit 1 returns correct books.",
 		// With indexes, books without publishers are excluded because the join is inverted.
 		MultiplierExcludes: []multiplier.Name{multiplier.SecondaryIndex},
 		Actions: []any{

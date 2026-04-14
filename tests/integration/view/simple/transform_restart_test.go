@@ -24,6 +24,7 @@ import (
 
 func TestView_SimpleWithTransformAndRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform on a view persists and works correctly after a node restart.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -24,6 +24,7 @@ func TestACP_LinkCollection_UseSameResourceOnDifferentSchemas_AcceptCollections(
 	sharedSameResourceName := "users"
 
 	test := testUtils.TestCase{
+		Description: "Link two different collections to the same resource on one policy and accept both.",
 
 		Actions: []any{
 

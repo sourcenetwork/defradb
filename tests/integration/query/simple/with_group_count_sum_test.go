@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups compute the SUM of a child COUNT across boolean sub-groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommitsBranchables_WithFieldNameFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filtering commits by null fieldName returns only the collection-level commit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

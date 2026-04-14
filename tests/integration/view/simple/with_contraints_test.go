@@ -22,6 +22,7 @@ import (
 
 func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Cacheless view with @constraints(size) does not enforce the size limit.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.CachelessViewType,
 		}),
@@ -96,6 +97,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 // TODO: https://github.com/sourcenetwork/defradb/issues/3428
 func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolation(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Materialized view with @constraints(size) does not enforce the size limit.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.MaterializedViewType,
 		}),

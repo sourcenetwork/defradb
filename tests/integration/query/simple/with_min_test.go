@@ -24,6 +24,7 @@ import (
 
 func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN with no collection argument returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -39,6 +40,7 @@ func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on a collection without specifying a field returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -54,6 +56,7 @@ func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "MIN on an empty collection returns nil.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -71,6 +74,7 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MIN of an integer field returns the correct minimum value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -100,6 +104,7 @@ func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MIN returns the minimum integer value from multiple documents.",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JavaScript does not support 64 bit int
 			state.GoClientType,
@@ -134,6 +139,7 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Aliased MIN on an empty collection returns nil under the alias name.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {

@@ -20,6 +20,7 @@ import (
 
 func TestNAC_GatesAddDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddDocument: authorized node owner identity can add a document.",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -55,6 +56,7 @@ func TestNAC_GatesAddDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesAddDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddDocument: request with no identity returns NotAuthorizedError.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{
@@ -95,6 +97,7 @@ func TestNAC_GatesAddDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesAddDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC gates AddDocument: request with wrong identity returns NotAuthorizedError.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{

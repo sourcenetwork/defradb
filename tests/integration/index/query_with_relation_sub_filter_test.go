@@ -29,6 +29,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Sub-filter on an indexed child field in a one-to-many query uses the index to filter devices.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -115,6 +116,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Sub-filter on a non-indexed child field in a one-to-many query does not use any index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -192,6 +194,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Sub-filter with order and limit on an indexed child field uses the index and returns ordered results.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -287,6 +290,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Ordered parent query with an indexed sub-filter correctly filters child docs for each parent.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -383,6 +387,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Indexed parent filter combined with an indexed sub-filter uses both indexes for efficient fetching.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -472,6 +477,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Different indexed filters on parent and sub-type use the index for both parent existence and child retrieval.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -555,6 +561,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Same indexed filter value on both parent and sub-type correctly returns only matched child docs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -632,6 +639,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Parent filter on one indexed relation field and sub-filter on a different indexed field each use their index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -734,6 +742,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Parent filter uses the relation index while sub-filter on a non-indexed field is applied in-memory.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -817,6 +826,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Parent scalar filter, relation filter, and sub-filter on different indexed fields are all combined correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

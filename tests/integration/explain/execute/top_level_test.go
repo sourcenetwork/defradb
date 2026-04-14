@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a top-level AVG aggregate returns averageNode, sumNode, and countNode stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -109,6 +110,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 
 func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a top-level COUNT aggregate returns countNode with scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -180,6 +182,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 
 func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of a top-level SUM aggregate returns sumNode with scan stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

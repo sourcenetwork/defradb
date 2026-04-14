@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child AVG on an undefined field returns an error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -44,6 +45,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child AVG on an empty collection returns zero.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -64,6 +66,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageO
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child integer AVG returns the correct per-group average.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -112,6 +115,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child AVG where values include nil returns the average of non-nil values.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -159,6 +163,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfInt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with AVG of a child AVG returns the correct deeply aggregated value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -254,6 +259,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float AVG on an empty collection returns zero.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -300,6 +306,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by string with child float AVG returns the correct per-group float average.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -347,6 +354,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nested groups with AVG of a child float AVG returns the correct deeply aggregated value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -442,6 +450,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfAverageOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Triple-nested groups with AVG of AVG of AVG returns the correct value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

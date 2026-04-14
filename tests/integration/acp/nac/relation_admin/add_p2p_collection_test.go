@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanAddP2PCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to add a P2P collection subscription.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

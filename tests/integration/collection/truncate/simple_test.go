@@ -20,6 +20,7 @@ import (
 
 func TestTruncateCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Truncating an empty collection completes without error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

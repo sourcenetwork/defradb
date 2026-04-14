@@ -25,6 +25,7 @@ import (
 // results in the document being added to the database.
 func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction that added a document makes the document queryable.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -74,6 +75,7 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 // results in the document not yet being in the database.
 func TestTxn_AddDoc_WithoutCommit_EmptyResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "An uncommitted transaction that adds a document leaves the collection empty to outside queries.",
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -121,6 +123,7 @@ func TestTxn_AddDoc_WithoutCommit_EmptyResults(t *testing.T) {
 // results in the document being added to the database.
 func TestTxn_AddDoc_InsideTxnWithAddCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Committing a transaction containing both AddCollection and AddDoc persists both together.",
 		Actions: []any{
 			&action.AddCollection{
 				TransactionID: immutable.Some(1),

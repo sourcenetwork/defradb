@@ -29,6 +29,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 	createNameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query composite commits after document deletion returns both delete and create composite commits.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

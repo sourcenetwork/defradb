@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanDeleteP2PDocument(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to delete a P2P document subscription.",
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

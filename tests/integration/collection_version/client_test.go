@@ -22,6 +22,7 @@ import (
 // defines the ExplainType enum.
 func TestIntrospectionExplainTypeDefined(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "The GraphQL schema introspection exposes the ExplainType enum with correct kind and description.",
 		Actions: []any{
 			testUtils.IntrospectionRequest{
 				Request: `

@@ -33,6 +33,7 @@ func TestQueryCommitsBranchables_WithMultipleAdd(t *testing.T) {
 	doc1CompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Query all commits on a branchable collection after adding two documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

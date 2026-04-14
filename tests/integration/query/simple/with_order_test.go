@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing an empty order object returns all documents in default order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -72,6 +73,7 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a numeric field ascending returns them from lowest to highest.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -133,6 +135,7 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a float32 field ascending returns them from lowest to highest.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -200,6 +203,7 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a float64 field ascending returns them from lowest to highest.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -267,6 +271,7 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a blob field ascending returns them in lexicographic order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -334,6 +339,7 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a DateTime field ascending returns them chronologically.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -399,6 +405,7 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a numeric field descending returns them from highest to lowest.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -460,6 +467,7 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a float32 field descending returns them from highest to lowest.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -527,6 +535,7 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 
 func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a float64 field descending returns them from highest to lowest.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -594,6 +603,7 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a blob field descending returns them in reverse lexicographic order.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {
@@ -661,6 +671,7 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order documents by a DateTime field descending returns them reverse-chronologically.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -726,6 +737,7 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Order by numeric descending then boolean ascending returns the correct compound sort.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -796,6 +808,7 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 
 func TestQuerySimple_WithMultipleOrderFieldsASCAndASC_ShouldOrderCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two ASC order fields produce the expected compound sort.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -857,6 +870,7 @@ func TestQuerySimple_WithMultipleOrderFieldsASCAndASC_ShouldOrderCorrectly(t *te
 
 func TestQuerySimple_WithMultipleOrderFieldsACSAndDESC_ShouldOrderCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "First field ASC, second field DESC produces the expected compound sort.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -918,6 +932,7 @@ func TestQuerySimple_WithMultipleOrderFieldsACSAndDESC_ShouldOrderCorrectly(t *t
 
 func TestQuerySimple_WithMultipleOrderFieldsDESCAndASC_ShouldOrderCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "First field DESC, second field ASC produces the expected compound sort.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -979,6 +994,7 @@ func TestQuerySimple_WithMultipleOrderFieldsDESCAndASC_ShouldOrderCorrectly(t *t
 
 func TestQuerySimple_WithMultipleOrderFieldsDECSAndDESC_ShouldOrderCorrectly(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two DESC order fields produce the expected compound sort.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1040,6 +1056,7 @@ func TestQuerySimple_WithMultipleOrderFieldsDECSAndDESC_ShouldOrderCorrectly(t *
 
 func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Passing an invalid order direction enum value returns a schema validation error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -1059,6 +1076,7 @@ func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Specifying multiple order fields in a single order object returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -1077,6 +1095,7 @@ func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMultipleOrderFieldsNestedWithinMultpleFields_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Nesting multiple order fields within a compound order object returns an error.",
 		Actions: []any{
 			&action.Request{
 				Request: `query {
@@ -1095,6 +1114,7 @@ func TestQuerySimple_WithMultipleOrderFieldsNestedWithinMultpleFields_ReturnsErr
 
 func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an aliased aggregate field sorts documents by the aggregated value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1156,6 +1176,7 @@ func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
 
 func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias that refers to a non-aliased field sorts by the underlying field value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1217,6 +1238,7 @@ func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testi
 
 func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias that references a non-existent field returns a schema error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1259,6 +1281,7 @@ func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) 
 
 func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias with an invalid direction value returns a schema validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1301,6 +1324,7 @@ func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias with an empty order object returns documents in default order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1363,6 +1387,7 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 
 func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias with a null direction returns documents in default order.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1425,6 +1450,7 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 
 func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by an alias with an integer direction value returns a schema validation error.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -1467,6 +1493,7 @@ func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithCompoundAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Ordering by a compound alias that aggregates multiple fields sorts by the combined value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -48,6 +48,7 @@ resources:
 
 func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signature verification fails when the requesting identity lacks ACP read access.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
@@ -91,6 +92,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 
 func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:   "Block signature is validated successfully when the requesting identity has ACP read access.",
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing

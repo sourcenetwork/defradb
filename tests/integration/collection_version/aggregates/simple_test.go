@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionAggregateSimpleAddsUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes COUNT aggregate with correct selector args on the type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -116,6 +117,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersCount(t *testing.T) {
 
 func TestCollectionVersionAggregateSimpleAddsUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes SUM aggregate with correct numeric selector args on the type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -314,6 +316,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersSum(t *testing.T) {
 
 func TestCollectionVersionAggregateSimpleAddsUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a collection exposes AVG aggregate with correct numeric selector args on the type.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {}`,

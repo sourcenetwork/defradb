@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with limit and offset on inner GROUP shows groupNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -69,6 +70,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of groupBy with limit/offset on multiple inner GROUPs shows groupNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

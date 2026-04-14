@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Apply a limit within each GROUP to cap the number of nested sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -78,6 +79,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Different GROUP limits applied to different groups return independent counts.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -152,6 +154,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level limit lower than group limit; top-level limit controls number of groups.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -205,6 +208,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level limit higher than group limit; group limit caps sub-documents independently.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

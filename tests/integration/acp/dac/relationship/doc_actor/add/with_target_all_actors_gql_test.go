@@ -23,6 +23,7 @@ import (
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdateOrDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to all actors via GQL; any actor can read but not update or delete.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{
@@ -232,6 +233,7 @@ resources:
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityButNotUpdateOrDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Owner grants read access to all actors via GQL; even an anonymous identity can read but not mutate.",
 
 		SupportedMutationTypes: immutable.Some(
 			[]state.MutationType{

@@ -39,6 +39,7 @@ var countTypeIndexJoinPattern = dataMap{
 
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count on a one-to-many joined field shows countNode with typeIndexJoin attributes.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -112,6 +113,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count with multiple joined field sources shows countNode with parallelNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -253,6 +255,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 // COUNT reuses the rendered join as they have matching filters.
 func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count with matching child filter reuses a single typeIndexJoin instead of parallelNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -295,6 +298,7 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 // reuse the rendered join as they dont have matching filters.
 func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of count with non-matching child filter uses parallelNode with two typeIndexJoins.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

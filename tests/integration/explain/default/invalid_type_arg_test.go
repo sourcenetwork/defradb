@@ -21,6 +21,7 @@ import (
 
 func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Explain request with an invalid type argument returns a validation error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

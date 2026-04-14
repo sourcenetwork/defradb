@@ -20,6 +20,7 @@ import (
 
 func TestCollectionVersionUpdatesAddFieldKindNone(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding a field with kind 0 (unset/none) returns a no-type-found error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

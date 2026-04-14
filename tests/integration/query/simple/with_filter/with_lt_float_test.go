@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a Float field returns the document whose value is strictly less than the threshold.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt filter on a Float field using an integer threshold returns the document below that integer.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -90,6 +92,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_lt null filter on a Float field returns no documents because nothing is less than null.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

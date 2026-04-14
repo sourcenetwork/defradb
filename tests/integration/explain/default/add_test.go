@@ -37,6 +37,7 @@ var addPattern = dataMap{
 
 func TestDefaultExplainMutationRequestWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of add mutation shows addNode attributes including input fields.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -74,6 +75,7 @@ func TestDefaultExplainMutationRequestWithAdd(t *testing.T) {
 
 func TestDefaultExplainMutationRequestDoesNotAddDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of add mutation with partial input shows addNode attributes without optional fields.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

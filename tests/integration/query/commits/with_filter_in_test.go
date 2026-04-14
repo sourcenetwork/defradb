@@ -20,6 +20,7 @@ import (
 
 func TestQueryCommits_WithFilterFieldNameIn_ReturnsMatchingCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _in for age and name returns both field-level commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -49,6 +50,7 @@ func TestQueryCommits_WithFilterFieldNameIn_ReturnsMatchingCommits(t *testing.T)
 
 func TestQueryCommits_WithFilterFieldNameInComposite_ReturnsCompositeCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _in containing '_C' returns only the composite commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -77,6 +79,7 @@ func TestQueryCommits_WithFilterFieldNameInComposite_ReturnsCompositeCommit(t *t
 
 func TestQueryCommits_WithFilterFieldNameInEmpty_ReturnsNoCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with an empty _in list returns no commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -103,6 +106,7 @@ func TestQueryCommits_WithFilterFieldNameInEmpty_ReturnsNoCommits(t *testing.T) 
 
 func TestQueryCommits_WithFilterFieldNameNotIn_ExcludesMatchingCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _nin excluding composite and age returns only the name commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -131,6 +135,7 @@ func TestQueryCommits_WithFilterFieldNameNotIn_ExcludesMatchingCommits(t *testin
 
 func TestQueryCommits_WithFilterFieldNameNotInComposite_ExcludesCompositeCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _nin excluding '_C' returns only field-level commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -160,6 +165,7 @@ func TestQueryCommits_WithFilterFieldNameNotInComposite_ExcludesCompositeCommit(
 
 func TestQueryCommits_WithFilterFieldNameNotInEmpty_ReturnsAllCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with an empty _nin list returns all commits.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -190,6 +196,7 @@ func TestQueryCommits_WithFilterFieldNameNotInEmpty_ReturnsAllCommits(t *testing
 
 func TestQueryCommits_WithFilterFieldNameInAndCondition_ReturnsFilteredCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _in combined with _and to further exclude age returns only name commit.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -218,6 +225,7 @@ func TestQueryCommits_WithFilterFieldNameInAndCondition_ReturnsFilteredCommits(t
 
 func TestQueryCommits_WithFilterFieldNameNotInOrCondition_ReturnsFilteredCommits(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Filter commits with _nin combined in _or to also include composite returns age and composite.",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

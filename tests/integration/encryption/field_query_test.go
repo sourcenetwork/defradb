@@ -20,6 +20,7 @@ import (
 
 func TestDocEncryptionField_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a document with an encrypted field returns the decrypted field value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

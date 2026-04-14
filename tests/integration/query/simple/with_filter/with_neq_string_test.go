@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a string field returns only documents whose value does not equal the given string.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -55,6 +56,7 @@ func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on a string field returns only documents that have a non-null string value.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

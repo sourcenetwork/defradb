@@ -21,6 +21,7 @@ import (
 
 func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of AVG on an inline array field returns averageNode, countNode, and sumNode stats.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -79,6 +80,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 
 func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Execute explain of AVG on a joined one-to-many field returns averageNode wrapping a typeJoinMany.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -21,6 +21,7 @@ import (
 
 func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Querying a fully encrypted document returns all fields correctly decrypted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -68,6 +69,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 		}`
 
 	test := testUtils.TestCase{
+		Description: "Querying an encrypted counter CRDT document returns the correctly decrypted and accumulated value.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},

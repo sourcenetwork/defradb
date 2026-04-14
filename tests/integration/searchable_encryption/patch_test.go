@@ -22,6 +22,7 @@ import (
 // TestPatchCollection_NewEncryptedIndex_ShouldError verifies that encrypted indexes cannot be added via patch.
 func TestPatchCollection_NewEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Adding an encrypted index via a JSON patch operation on a collection returns an immutability error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -57,6 +58,7 @@ func TestPatchCollection_NewEncryptedIndex_ShouldError(t *testing.T) {
 // TestPatchCollection_RemoveEncryptedIndex_ShouldError verifies that encrypted indexes cannot be removed via patch.
 func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing an encrypted index via a JSON patch remove operation on a collection returns an immutability error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -86,6 +88,7 @@ func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 // TestPatchCollection_ModifyEncryptedIndex_ShouldError verifies that encrypted indexes cannot be modified via patch.
 func TestPatchCollection_ModifyEncryptedIndex_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Replacing an encrypted index via a JSON patch replace operation on a collection returns an immutability error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

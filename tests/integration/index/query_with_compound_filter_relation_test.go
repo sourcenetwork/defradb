@@ -20,6 +20,7 @@ import (
 
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_and compound filter on an indexed relation field returns empty result when no data exists.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -57,6 +58,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_or compound filter on an indexed relation field returns empty result when no data exists.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -94,6 +96,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_not compound filter on an indexed relation field returns empty result when no data exists.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -131,6 +134,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 
 func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_and compound filter on an indexed one-to-many relation field returns matching programs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -214,6 +218,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 
 func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_or compound filter on an indexed one-to-many relation field returns programs from either condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -302,6 +307,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
 
 func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_not compound filter on an indexed one-to-many relation field excludes matching programs.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Top-level MAX with a filter computes the maximum of only matching documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

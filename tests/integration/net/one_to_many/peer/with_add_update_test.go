@@ -25,6 +25,7 @@ import (
 // document does not exist at the destination.
 func TestP2POneToManyPeerWithAddUpdateLinkingSyncedDocToUnsyncedDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer syncs a book update linking it to an author that does not exist on the peer node.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

@@ -23,6 +23,7 @@ import (
 
 func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_LocalACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A collection subscription can be registered on a DAC-permissioned collection using local ACP.",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
@@ -93,6 +94,7 @@ resources:
 
 func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Subscribed peer cannot access a private doc without a DAC relation; unauthorized actors always see nothing.",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.SourceHubDocumentACPType,

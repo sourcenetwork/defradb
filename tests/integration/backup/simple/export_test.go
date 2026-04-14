@@ -21,6 +21,7 @@ import (
 
 func TestBackupExport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export a flat User document and verify the JSON backup content.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -37,6 +38,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 
 func TestBackupExport_Empty_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export a document with no fields set and verify the backup contains only the docID.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -53,6 +55,7 @@ func TestBackupExport_Empty_NoError(t *testing.T) {
 
 func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup to a non-existent nested path returns a file creation error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -72,6 +75,7 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 
 func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup filtered to a non-existent collection name returns a collection not found error.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -91,6 +95,7 @@ func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Export backup filtered to the User collection only produces correct scoped output.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

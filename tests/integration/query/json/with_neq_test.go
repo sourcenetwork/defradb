@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a JSON field excludes the document whose value equals the given object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -75,6 +76,7 @@ func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a JSON field excludes the document with deeply nested objects matching the given value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -128,6 +130,7 @@ func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T
 
 func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on a JSON field returns only documents whose field value is non-null.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -169,6 +172,7 @@ func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a nested JSON numeric field returns documents whose nested value differs from the given number.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -222,6 +226,7 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a nested JSON string field returns documents whose nested value differs from the given string.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -275,6 +280,7 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a nested JSON boolean field returns documents whose nested value differs from the given boolean.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -328,6 +334,7 @@ func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq null filter on a nested JSON path returns only documents with a non-null nested value.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -381,6 +388,7 @@ func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNotEqualFilterWithNestedObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "_neq filter on a nested JSON path excludes the document whose nested value equals the given object.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

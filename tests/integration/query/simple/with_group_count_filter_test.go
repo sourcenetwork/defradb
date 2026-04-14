@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group by number with filtered child COUNT counts only matching sub-documents.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -67,6 +68,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Rendered GROUP and filtered child COUNT shows sub-documents alongside filtered counts.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -131,6 +133,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and matching child COUNT filter produce identical filtered counts.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -187,6 +190,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Group filter and different child COUNT filter produce distinct filtered counts.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -243,6 +247,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Two child COUNTs with different filters return independent counts in the same group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

@@ -24,6 +24,7 @@ import (
 
 func TestNAC_AdminRelation_CanNewEncryptedIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants a user permission to create a new encrypted index.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
@@ -69,6 +70,7 @@ func TestNAC_AdminRelation_CanNewEncryptedIndex(t *testing.T) {
 
 func TestNAC_AdminRelation_CLIandCandHTTPClient_CanNewEncryptedIndex(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "NAC admin relation grants CLI, C and HTTP clients permission to create a new encrypted index.",
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(

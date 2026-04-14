@@ -20,6 +20,7 @@ import (
 
 func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking a reader relationship twice reports no record found on the second deletion.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -135,6 +136,7 @@ resources:
 
 func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Revoking the reader relationship causes the actor to lose read access.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

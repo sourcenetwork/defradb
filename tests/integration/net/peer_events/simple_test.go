@@ -22,6 +22,7 @@ const docSyncTopic = "doc-sync"
 
 func TestPeerEvents_OnConnect_ShouldReceiveJoinEventOnDocSyncTopic(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Connecting two peers emits a join peer event on the doc-sync topic.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -43,6 +44,7 @@ func TestPeerEvents_OnConnect_ShouldReceiveJoinEventOnDocSyncTopic(t *testing.T)
 
 func TestPeerEvents_OnConnectMultiplePeers_ShouldReceiveAllJoinEvents(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Connecting multiple peers emits join peer events for all connected nodes.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -69,6 +71,7 @@ func TestPeerEvents_OnConnectMultiplePeers_ShouldReceiveAllJoinEvents(t *testing
 
 func TestPeerEvents_OnConnectBidirectional_BothNodesShouldReceiveJoinEvents(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Connecting two peers causes both nodes to receive a join event on the doc-sync topic.",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

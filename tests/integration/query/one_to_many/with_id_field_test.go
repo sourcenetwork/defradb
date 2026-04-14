@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Defining a duplicate _authorID field explicitly in the schema returns an error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

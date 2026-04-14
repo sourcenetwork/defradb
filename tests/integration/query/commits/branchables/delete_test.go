@@ -31,6 +31,7 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 	ageCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		Description: "Querying commits after deleting a document shows correct collection-level DAG with delete commit.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -20,6 +20,7 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Child AVG with a limit considers only the first N sub-documents per group.",
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

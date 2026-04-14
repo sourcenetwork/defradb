@@ -21,6 +21,7 @@ import (
 
 func TestDefaultExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with an indexed field filter shows index-based scanNode plan.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -61,6 +62,7 @@ func TestDefaultExplainWithIndexOnFilter(t *testing.T) {
 
 func TestDefaultExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of query with index on the order field shows index-based plan attributes.",
 
 		Actions: []any{
 			&action.AddCollection{
@@ -102,6 +104,7 @@ func TestDefaultExplainWithIndexOnOrder(t *testing.T) {
 
 func TestDefaultExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of nested relation query with index on order shows typeIndexJoin plan.",
 
 		Actions: []any{
 			&action.AddCollection{

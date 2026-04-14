@@ -21,6 +21,7 @@ import (
 
 func TestCollectionVersionUpdatesRemoveField(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing a field from the schema version makes it unqueryable while other fields remain.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
@@ -65,6 +66,7 @@ func TestCollectionVersionUpdatesRemoveField(t *testing.T) {
 
 func TestCollectionVersionUpdatesRemoveAllFields(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing all fields from the schema version leaves only the built-in _docID queryable.",
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
@@ -100,6 +102,7 @@ func TestCollectionVersionUpdatesRemoveAllFields(t *testing.T) {
 
 func TestCollectionVersionUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing the Name property of an existing field returns a mutation error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -124,6 +127,7 @@ func TestCollectionVersionUpdatesRemoveFieldNameErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing the Kind property of an existing field returns a mutation error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -148,6 +152,7 @@ func TestCollectionVersionUpdatesRemoveFieldKindErrors(t *testing.T) {
 
 func TestCollectionVersionUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Removing the Typ property of an existing field returns a mutation error.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

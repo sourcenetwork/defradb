@@ -48,6 +48,7 @@ var topLevelAveragePattern = dataMap{
 
 func TestDebugExplainTopLevelAverageRequest(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level AVG query shows topLevelNode with averageNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -72,6 +73,7 @@ func TestDebugExplainTopLevelAverageRequest(t *testing.T) {
 
 func TestDebugExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of top-level AVG with filter shows topLevelNode with averageNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

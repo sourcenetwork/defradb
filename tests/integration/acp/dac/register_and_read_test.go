@@ -20,7 +20,7 @@ import (
 
 func TestACP_AddWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Public document added without identity is readable without identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -99,7 +99,7 @@ resources:
 
 func TestACP_AddWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Public document added without identity is readable with any identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -180,7 +180,7 @@ resources:
 
 func TestACP_AddWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document owner can read their own document using the same identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -263,7 +263,7 @@ resources:
 
 func TestACP_AddWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document is not readable without an identity.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -338,7 +338,7 @@ resources:
 
 func TestACP_AddWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T) {
 	test := testUtils.TestCase{
-
+		Description: "Private document is not readable by a different identity than the owner.",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 

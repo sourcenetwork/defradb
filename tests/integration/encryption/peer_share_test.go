@@ -23,6 +23,7 @@ import (
 
 func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A peer syncing a public encrypted document fetches the key and returns the decrypted value.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -72,6 +73,7 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 
 func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A peer syncing a public doc with one encrypted field fetches the field key and decrypts it.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -123,6 +125,7 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 
 func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeysAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A peer fetches both doc-level and field-level keys and decrypts all fields successfully.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -175,6 +178,7 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 
 func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypted_ShouldFetchKeysAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer decrypts an encrypted public doc where every field is also individually encrypted.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -227,6 +231,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 
 func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_ShouldFetchKeysAndDecrypt(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer fetches per-field keys and decrypts a public doc where all fields are individually encrypted.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -278,6 +283,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 
 func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer correctly decrypts and merges accumulated updates on an encrypted counter CRDT field.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -340,6 +346,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 
 func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer decrypts and correctly merges counter CRDT updates on a fully encrypted document.",
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -402,6 +409,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 
 func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer correctly decrypts and merges updates that set an encrypted field to an empty string.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -471,6 +479,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 
 func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Peer correctly decrypts and merges updates that set an encrypted field to null.",
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

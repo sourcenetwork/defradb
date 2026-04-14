@@ -26,6 +26,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite array index query using _any operator uses index efficiently.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -92,6 +93,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite array index query using _all operator uses index efficiently.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -159,6 +161,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite array index query using _none operator scans index for pre-filtering.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -227,6 +230,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite index on two consecutive array fields filters correctly using _any.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -301,6 +305,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite index on two non-adjacent array fields filters correctly using _any.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -368,14 +373,15 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 	req := `query {
 		User(filter: {
-			numbers1: {_all: {_gt: 0}}, 
-			numbers2: {_none: {_eq: 40}}, 
+			numbers1: {_all: {_gt: 0}},
+			numbers2: {_none: {_eq: 40}},
 			numbers3: {_any: {_leq: 200}}
 		}) {
 			name
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "Composite array index with mixed _any, _none, and _all operators filters correctly.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -443,6 +449,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 
 func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Updating a doc with two composite array index fields reflects correct index state.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -553,6 +560,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 
 func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a doc with a composite array index removes all its index entries.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -23,6 +23,7 @@ import (
 
 func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:                "After deleting an encrypted index, the corresponding searchable encryption GQL query type is removed.",
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{

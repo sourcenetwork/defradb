@@ -24,6 +24,7 @@ import (
 
 func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Lens transform on the outer type copies a field in a one-to-one view.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

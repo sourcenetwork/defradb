@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyWithSumWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Sum of published book ratings with a limit of two applied to the aggregation.",
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

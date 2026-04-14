@@ -19,6 +19,7 @@ import (
 
 func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Add a policy with extra non-DRI permissions and relations; returns a valid policy ID.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

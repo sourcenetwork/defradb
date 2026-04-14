@@ -23,6 +23,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 	const deviceDocID = "bae-3d4ad011-fdf2-502a-a672-9df76b4bbc51"
 
 	test := testUtils.TestCase{
+		Description: "Encrypting documents across a relation stores all field commit deltas encrypted.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -37,6 +37,7 @@ var upsertPattern = dataMap{
 
 func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Default explain of upsert mutation shows upsertNode wrapping selectTopNode and scanNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

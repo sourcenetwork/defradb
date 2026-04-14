@@ -25,6 +25,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index filters docs by scalar element value across mixed types using index.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -122,6 +123,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _any equality filter does not consider nested sub-arrays as elements.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -195,6 +197,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _any comparison filter does not consider nested sub-arrays as elements.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -252,6 +255,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _none equality filter returns docs with no matching top-level elements.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -329,6 +333,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _none comparison filter returns docs with no top-level elements above threshold.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -414,6 +419,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _all equality filter returns docs where all top-level elements match.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -496,6 +502,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 		}
 	}`
 	test := testUtils.TestCase{
+		Description: "JSON array index _all comparison filter returns docs where all top-level elements satisfy the condition.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

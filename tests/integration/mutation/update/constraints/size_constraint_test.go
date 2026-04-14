@@ -20,6 +20,7 @@ import (
 
 func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update succeeds when array value matches the size constraint.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -66,6 +67,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 
 func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Update errors when updated array length violates the size constraint.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

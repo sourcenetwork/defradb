@@ -21,6 +21,7 @@ import (
 
 func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with single docID filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -44,6 +45,7 @@ func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with docIDs list containing one ID shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -67,6 +69,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with duplicate docIDs in filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -95,6 +98,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with multiple unique docIDs in filter shows basic scanNode plan tree.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -123,6 +127,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 
 func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of query with _docID equality filter in filter clause shows scanNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

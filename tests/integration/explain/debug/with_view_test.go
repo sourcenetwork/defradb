@@ -42,6 +42,7 @@ var viewPattern = dataMap{
 
 func TestDebugExplainRequestWithView(t *testing.T) {
 	test := testUtils.TestCase{
+		Description:        "Debug explain of query on a cacheless view shows viewNode wrapping selectTopNode and scanNode.",
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
 		Actions: []any{
 			&action.AddCollection{

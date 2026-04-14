@@ -20,6 +20,7 @@ import (
 
 func TestManyToMany_QueryFromJoinCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Many-to-many query via junction collection filtered and ordered in both directions.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

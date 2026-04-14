@@ -20,6 +20,7 @@ import (
 
 func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "COUNT aggregate with a JSON field filter correctly counts matching documents.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type Users {

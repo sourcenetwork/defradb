@@ -21,6 +21,7 @@ import (
 
 func TestNAC_DeleteRelationshipWhenNACNotConfiguredBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a NAC relationship when NAC has not been configured returns an error.",
 		Actions: []any{
 			// With requestor identity.
 			testUtils.DeleteNACActorRelationship{
@@ -53,6 +54,7 @@ func TestNAC_DeleteRelationshipWhenNACNotConfiguredBefore_Error(t *testing.T) {
 
 func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a NAC relationship with no or wrong identity when NAC is enabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -108,6 +110,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 
 func TestNAC_DeleteRelationshipWhenNACIsDisabledWithInvalidIdentities_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a NAC relationship with no or wrong identity when NAC is temporarily disabled returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -165,6 +168,7 @@ func TestNAC_DeleteRelationshipWhenNACIsDisabledWithInvalidIdentities_Error(t *t
 
 func TestNAC_DeleteRelationshipWithInvalidRelationName_Error(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a NAC relationship with an invalid relation name returns an error.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -186,6 +190,7 @@ func TestNAC_DeleteRelationshipWithInvalidRelationName_Error(t *testing.T) {
 
 func TestNAC_DeleteRelationshipWithValidIdentity_RelationshipDeleted(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting a NAC relationship with a valid node owner identity succeeds.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -231,6 +236,7 @@ func TestNAC_DeleteRelationshipWithValidIdentity_RelationshipDeleted(t *testing.
 
 func TestNAC_DeleteRelationshipForAllIdentities_AllImplicitIdentitiesAccessRevoked(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Deleting the all-identity NAC relationship revokes implicit access for all identities.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -298,6 +304,7 @@ func TestNAC_DeleteRelationshipForAllIdentities_AllImplicitIdentitiesAccessRevok
 
 func TestNAC_DeleteRelationshipStillRequiresIdentityEvenIfAllIdentitiesGivenAccess_StillNeedIdentity(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Even with all-identity NAC access granted, explicit identity is still required after deletion of another relation.",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{

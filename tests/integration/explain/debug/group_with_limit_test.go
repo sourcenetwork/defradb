@@ -41,6 +41,7 @@ var debugGroupLimitPattern = dataMap{
 
 func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with limit and offset on parent shows limitNode wrapping groupNode.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -70,6 +71,7 @@ func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "Debug explain of groupBy with limit on both parent and inner GROUP shows limitNode plan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

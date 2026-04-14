@@ -20,6 +20,7 @@ import (
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "AVG aggregated across two distinct one-to-many join relations simultaneously.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

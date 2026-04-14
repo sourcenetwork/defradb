@@ -20,6 +20,7 @@ import (
 
 func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "A @default directive on a view field does not populate a value at query time.",
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
