@@ -358,7 +358,62 @@ Once the setup is complete, proceed to query generation via sub-agent (Step 5d) 
 
 ### Step 5c: Codebase Analysis (Optional)
 
-*This step is populated by Task 2. See Step 5c below.*
+This step is OPTIONAL -- the orchestrator decides whether codebase analysis would benefit the current session based on the target area. For simple CRUD testing, skip it. For complex areas (filtering edge cases, join semantics, aggregation boundaries), spawn the sub-agent.
+
+The codebase analysis sub-agent reads targeted DefraDB source files to identify edge cases, boundary conditions, and unusual code paths that are worth testing. It produces "probe targets" -- specific query patterns and areas to exercise -- without formulating expectations about what the results SHOULD be.
+
+Spawn the sub-agent with allowed tools: `Read`, `Grep`, `Glob`. No Bash or Write -- the codebase analysis sub-agent only reads source code.
+
+**Sub-agent prompt template:**
+
+```
+You are a codebase analyst for DefraDB.
+
+Target area: {area from user prompt}
+
+Read these source files to understand the implementation:
+{targeted file list from mapping table}
+
+Produce a structured analysis with:
+1. Key code paths exercised by {target area} operations
+2. Edge cases visible in the code (boundary checks, error handling, special cases)
+3. Specific query patterns that would exercise unusual code paths
+4. Any TODO/FIXME comments related to the target area
+
+Do NOT include expected behavior or correctness criteria.
+Only report WHAT to test and WHY it might be interesting, not what the result SHOULD be.
+```
+
+**Codebase analysis targeting table.** Use this mapping to construct the targeted file list for the sub-agent based on the test area. Limit each sub-agent invocation to 3-5 targeted files (under 3K lines total). If the target area spans multiple packages, spawn multiple sub-agents or do multiple rounds.
+
+| Test Area | Primary Files | Secondary Files |
+|-----------|---------------|-----------------|
+| Filtering | `internal/planner/filter/` (entire dir) | `internal/connor/` (match operators) |
+| Relations/Joins | `internal/planner/type_join.go` | `internal/planner/scan.go`, `internal/planner/multi.go` |
+| Aggregations | `internal/planner/aggregate.go`, `average.go`, `count.go`, `sum.go`, `min.go`, `max.go` | `internal/planner/group.go` |
+| CRUD mutations | `internal/planner/add.go`, `update.go`, `delete.go`, `upsert.go` | `internal/db/document.go`, `internal/db/collection.go` |
+| Ordering/Limits | `internal/planner/order.go`, `limit.go` | `internal/planner/top.go` |
+| Schema parsing | `internal/request/graphql/schema/` | `internal/request/graphql/parser/` |
+| Explain | `internal/planner/explain.go` | `internal/planner/plan.go` |
+| Views | `internal/planner/view.go` | `internal/planner/pipe.go` |
+| Similarity/Vector | `internal/planner/similarity.go` | `internal/db/embedding.go` |
+
+The sub-agent returns a structured summary of probe targets. These targets flow into the query generation sub-agent (Step 5d) as the `Test targets` parameter.
+
+### Dual-Track Reasoning Separation
+
+The skill enforces a strict separation between two tracks of reasoning:
+
+- **Track 1 (WHERE to probe):** The codebase analysis sub-agent and schema introspection produce "probe targets" -- specific query patterns, edge cases, boundary conditions. These flow INTO the query generation sub-agent as `Test targets`.
+- **Track 2 (WHAT should happen):** The orchestrator formulates hypotheses in Step 5e BEFORE executing each query, using ONLY database first-principles. The orchestrator NEVER receives the raw codebase analysis output -- only the generated queries from the query sub-agent.
+
+This means the orchestrator cannot be biased by implementation details when formulating expectations. It sees the query (what to run) but not why the codebase analysis suggested it.
+
+**Anti-patterns to avoid:**
+- The codebase analysis sub-agent MUST NOT include expected results or correctness criteria in its output
+- The query generation sub-agent MUST NOT include expected results -- only what each query tests
+- The orchestrator MUST formulate hypotheses from first-principles (database semantics), never from codebase knowledge
+- If the orchestrator has already seen codebase details from a previous session, it must still base hypotheses on first-principles reasoning
 
 ### Step 5d: Query Generation via Sub-Agent
 
