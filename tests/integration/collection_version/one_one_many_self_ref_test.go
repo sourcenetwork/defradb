@@ -14,6 +14,9 @@ package collection_version
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -25,18 +28,117 @@ func TestCollectionVersionWith_OneOne_OneMany_SelfRef(t *testing.T) {
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
-					type Dev_RC_Domain2 {
-						routes: [Dev_RC_RedirectRoute2]
-						firstRoute: Dev_RC_RedirectRoute2 @primary @relation(name: "domain_first_route")
+					type Dev_RC_Domain {
+						routes: [Dev_RC_RedirectRoute]
+						firstRoute: Dev_RC_RedirectRoute @primary @relation(name: "domain_first_route")
 					}
 
-					type Dev_RC_RedirectRoute2 {
-						firstForDomain: Dev_RC_Domain2 @relation(name: "domain_first_route")
+					type Dev_RC_RedirectRoute {
+						firstForDomain: Dev_RC_Domain @relation(name: "domain_first_route")
 
-						domain: Dev_RC_Domain2
-						after: Dev_RC_RedirectRoute2
+						domain: Dev_RC_Domain
+						after: Dev_RC_RedirectRoute
 					}
 				`,
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Dev_RC_Domain",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "_firstRouteID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								IsPrimary:    true,
+								RelationName: immutable.Some("domain_first_route"),
+							},
+							{
+								Name: "firstRoute",
+								Kind: &client.SelfKind{
+									RelativeID: "1",
+								},
+								Typ:          client.NONE_CRDT,
+								IsPrimary:    true,
+								RelationName: immutable.Some("domain_first_route"),
+							},
+							{
+								Name: "routes",
+								Kind: &client.SelfKind{
+									RelativeID: "1",
+									Array:      true,
+								},
+								Typ:          client.NONE_CRDT,
+								RelationName: immutable.Some("dev_rc_domain_dev_rc_redirectroute"),
+							},
+						},
+					},
+					{
+						Name:           "Dev_RC_RedirectRoute",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "_afterID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								IsPrimary:    true,
+								RelationName: immutable.Some("dev_rc_redirectroute_dev_rc_redirectroute"),
+							},
+							{
+								Name:         "_domainID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								IsPrimary:    true,
+								RelationName: immutable.Some("dev_rc_domain_dev_rc_redirectroute"),
+							},
+							{
+								Name:         "_firstForDomainID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								RelationName: immutable.Some("domain_first_route"),
+							},
+							{
+								Name: "after",
+								Kind: &client.SelfKind{
+									RelativeID: "1",
+								},
+								Typ:          client.NONE_CRDT,
+								IsPrimary:    true,
+								RelationName: immutable.Some("dev_rc_redirectroute_dev_rc_redirectroute"),
+							},
+							{
+								Name: "domain",
+								Kind: &client.SelfKind{
+									RelativeID: "0",
+								},
+								Typ:          client.NONE_CRDT,
+								IsPrimary:    true,
+								RelationName: immutable.Some("dev_rc_domain_dev_rc_redirectroute"),
+							},
+							{
+								Name: "firstForDomain",
+								Kind: &client.SelfKind{
+									RelativeID: "0",
+								},
+								Typ:          client.NONE_CRDT,
+								RelationName: immutable.Some("domain_first_route"),
+							},
+						},
+					},
+				},
 			},
 		},
 	}
