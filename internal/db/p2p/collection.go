@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -216,5 +217,6 @@ func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "Loaded P2P collections", corelog.Int("Count", len(collectionIDs)))
 	return nil
 }

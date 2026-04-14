@@ -367,7 +367,6 @@ func getOrCreateEncryptionKey(kr keyring.Keyring) ([]byte, error) {
 		if err != nil {
 			return nil, NewErrStoreEncryptionKey(err)
 		}
-		log.Info("generated encryption key")
 	}
 	return encryptionKey, nil
 }
@@ -388,7 +387,6 @@ func getOrCreateSearchableEncryptionKey(kr keyring.Keyring) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Info("generated searchable encryption key")
 	}
 	return seKey, nil
 }
@@ -404,7 +402,6 @@ func getOrCreatePeerKey(kr keyring.Keyring) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Info("generated peer key")
 	} else if err != nil {
 		return nil, err
 	}

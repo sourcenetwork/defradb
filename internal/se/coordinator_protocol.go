@@ -12,9 +12,6 @@ package se
 
 import (
 	"context"
-	"strings"
-
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/event"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -48,16 +45,6 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
-	sb := strings.Builder{}
-	for i, netArtifact := range req.Artifacts {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(netArtifact.DocID)
-	}
-	log.InfoContext(ctx, "Handle push SE artifacts",
-		corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
-
 	artifacts := make([]secore.Artifact, len(req.Artifacts))
 	for i, netArtifact := range req.Artifacts {
 		artifacts[i] = secore.Artifact{
@@ -89,10 +76,6 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 			fieldNames = append(fieldNames, fieldName)
 		}
 
-		log.InfoContext(ctx, "Publishing SE artifact sync complete event",
-			corelog.String("DocID", docID),
-			corelog.String("CollectionID", req.CollectionID))
-
 		coordinator.db.Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
 			DocID:        docID,
 			CollectionID: req.CollectionID,
@@ -109,12 +92,8 @@ func (coordinator *Coordinator) processQuerySEArtifactsRequest(
 ) (QuerySEArtifactsReply, error) {
 	matchingDocIDs, err := coordinator.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {
-		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
 		return QuerySEArtifactsReply{}, err
 	}
-
-	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
-		corelog.String("Sender", req.SenderID))
 
 	return QuerySEArtifactsReply{
 		DocIDs: matchingDocIDs,
