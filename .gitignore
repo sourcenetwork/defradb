@@ -72,3 +72,4 @@ crash.log
 .env
 
 .planning
+DEBUG_PROGRESS*
