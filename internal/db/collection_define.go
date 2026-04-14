@@ -219,15 +219,9 @@ existingVersionLoop:
 	}
 
 	for key, col := range newColsByID {
-		previousCol := existingColsByName[col.Name]
-
-		previousFieldNames := make(map[string]struct{}, len(previousCol.Fields))
-		for _, field := range previousCol.Fields {
-			previousFieldNames[field.FieldID] = struct{}{}
-		}
-
 		for i, field := range col.Fields {
-			if _, existed := previousFieldNames[field.FieldID]; !existed && field.Typ == client.NONE_CRDT {
+			// Object fields don't recieve a crdt, so exclude those from this check
+			if field.FieldID == "" && !field.Kind.IsObject() && field.Typ == client.NONE_CRDT {
 				// If no CRDT Type has been provided to a new field, default to LWW_REGISTER.
 				// If the field existed before it might have been explicitly cleared by the user, in which
 				// case it is up to the validation logic to error or not.

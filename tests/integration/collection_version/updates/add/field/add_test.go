@@ -124,7 +124,7 @@ func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing
 }
 
 // This test documents a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
-// it only occured when adding a field to a collection that already has a secondary relationship.
+// it only occurred when adding a field to a collection that already has a secondary relationship.
 func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelationship(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -147,7 +147,20 @@ func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelations
 				DocMap: map[string]any{
 					"name": "Penguin Books",
 				},
-				ExpectedError: "unknown crdt. Type: none",
+			},
+			&action.Request{
+				Request: `query {
+					Publisher {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"name": "Penguin Books",
+						},
+					},
+				},
 			},
 		},
 	}
