@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/immutable"
@@ -375,6 +376,9 @@ func (c *Client) GetCollections(
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
+	// If there is an explicit transaction, we need to get it to attach to the collection
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if opt.CollectionName.HasValue() {
@@ -400,8 +404,16 @@ func (c *Client) GetCollections(
 		return nil, err
 	}
 	collections := make([]client.Collection, len(descriptions))
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		txnOpt = immutable.Some(txn)
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
+		collections[i] = &Collection{c.http, d, txnOpt}
 	}
 	return collections, nil
 }

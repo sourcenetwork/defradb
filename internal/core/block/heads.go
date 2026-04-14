@@ -46,12 +46,20 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 
-	return hh.store.Set(ctx, hh.key(c).Bytes(), buf[0:n])
+	err := hh.store.Set(ctx, hh.key(c).Bytes(), buf[0:n])
+	if err != nil {
+		return NewErrWritingHead(c, err)
+	}
+	return nil
 }
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
-	return hh.store.Has(ctx, hh.key(c).Bytes())
+	has, err := hh.store.Has(ctx, hh.key(c).Bytes())
+	if err != nil {
+		return false, NewErrCheckingIfIsHead(c, err)
+	}
+	return has, nil
 }
 
 // Replace replaces a head with a new CID.
@@ -65,15 +73,10 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 
 	err := hh.store.Delete(ctx, hh.key(old).Bytes())
 	if err != nil {
-		return err
+		return NewErrDeletingHead(old, err)
 	}
 
-	err = hh.Write(ctx, new, height)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return hh.Write(ctx, new, height)
 }
 
 // List returns the list of current heads plus the max height.
@@ -83,7 +86,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		Prefix: hh.namespace.Bytes(),
 	})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, NewErrListingHeads(err)
 	}
 
 	heads := make([]cid.Cid, 0)
@@ -99,7 +102,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 
 		headKey, err := keys.NewHeadstoreKey(string(iter.Key()))
 		if err != nil {
-			return nil, 0, errors.Join(err, iter.Close())
+			return nil, 0, errors.Join(NewErrParsingHeadKey(err), iter.Close())
 		}
 
 		value, err := iter.Value()

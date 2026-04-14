@@ -36,6 +36,9 @@ func AddCollection(nodePtr C.uintptr_t, sdl *C.char, identityPtr C.uintptr_t) C.
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opt := options.WithIdentity(options.AddCollection(), iIdentity.FromContext(ctx))
 	collectionVersions, err := store.AddCollection(ctx, C.GoString(sdl), opt)
 	if err != nil {

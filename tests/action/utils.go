@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -38,16 +39,22 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 	return []int{nodeID.Value()}, []*state.NodeState{nodes[nodeID.Value()]}
 }
 
-// refreshCollections refreshes all the collections of the given names, preserving order.
-//
+// RefreshCollections refreshes all the collections of the given names, preserving order.
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
-func refreshCollections(
+func RefreshCollections(
 	s *state.State,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+
+		// Create a txn for this refresh
+		txn, err := node.NewTxn(false)
+		defer txn.Discard()
+		require.Nil(s.T, err)
+		ctx := db.InitContext(s.Ctx, txn)
+
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
@@ -57,7 +64,7 @@ func refreshCollections(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		allCollections, err := node.GetCollections(s.Ctx, opts)
+		allCollections, err := txn.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -81,6 +88,69 @@ func refreshCollections(
 			}
 		}
 	}
+}
+
+// GetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
+// If one is not provided, it will default to running the GetCollections function on the node itself.
+// Importantly, this will use the same ordering as would be found in the node.Collections slice that
+// is refreshed by the RefreshCollections function.
+func GetCanonicallyOrderedCollections(
+	s *state.State,
+	node *state.NodeState,
+	txn immutable.Option[client.Txn],
+) []client.Collection {
+	var clientTxn client.Txn
+	if txn.HasValue() {
+		clientTxn = txn.Value()
+	}
+
+	// Find the nodeID for this node
+	nodeID := -1
+	for i, n := range s.Nodes {
+		if n == node {
+			nodeID = i
+			break
+		}
+	}
+
+	nodeIdentity := NodeIdentity(nodeID)
+
+	newCollections := make([]client.Collection, len(s.CollectionNames))
+
+	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+	opts := options.GetCollections()
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
+	var allCollections []client.Collection
+	var err error
+
+	if clientTxn != nil {
+		allCollections, err = clientTxn.GetCollections(s.Ctx, opts)
+	} else {
+		allCollections, err = node.GetCollections(s.Ctx, opts)
+	}
+	require.Nil(s.T, err)
+
+	for i, collectionName := range s.CollectionNames {
+		for _, collection := range allCollections {
+			if collection.Name() == collectionName {
+				if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
+					s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
+				}
+				break
+			}
+		}
+	}
+
+	for _, collection := range allCollections {
+		if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+			newCollections[index] = collection
+		}
+	}
+
+	return newCollections
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {

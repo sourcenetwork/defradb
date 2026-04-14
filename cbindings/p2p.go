@@ -37,6 +37,8 @@ func GetP2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opts := options.WithIdentity(options.PeerInfo(), acpIdentity.FromContext(ctx))
 	addresses, err := node.DB.PeerInfo(ctx, opts)
 	if err != nil {
@@ -58,6 +60,8 @@ func ListP2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opts := options.WithIdentity(options.ActivePeers(), acpIdentity.FromContext(ctx))
 	peers, err := node.DB.ActivePeers(ctx, opts)
 	if err != nil {
@@ -78,6 +82,9 @@ func ListP2PReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	listRepOpt := options.WithIdentity(options.ListReplicators(), acpIdentity.FromContext(ctx))
 	reps, err := node.DB.ListReplicators(ctx, listRepOpt)
 	if err != nil {
@@ -103,6 +110,9 @@ func AddP2PReplicator(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opt := options.WithIdentity(
 		options.AddReplicator().SetCollectionNames(colArgs),
 		acpIdentity.FromContext(ctx),
@@ -127,6 +137,9 @@ func DeleteP2PReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	delRepOpt := options.WithIdentity(
 		options.DeleteReplicator().SetCollectionNames(colArgs),
 		acpIdentity.FromContext(ctx),
@@ -151,6 +164,9 @@ func AddP2PCollection(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	addP2PColOpt := options.WithIdentity(options.AddP2PCollections(), acpIdentity.FromContext(ctx))
 	err = node.DB.AddP2PCollections(ctx, colArgs, addP2PColOpt)
 	if err != nil {
@@ -172,6 +188,9 @@ func DeleteP2PCollection(nodePtr C.uintptr_t, collections *C.char, identityPtr C
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	deleteP2PColOpt := options.WithIdentity(options.DeleteP2PCollections(), acpIdentity.FromContext(ctx))
 	err = node.DB.DeleteP2PCollections(ctx, colArgs, deleteP2PColOpt)
 	if err != nil {
@@ -191,6 +210,9 @@ func ListP2PCollections(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	listP2PColOpt := options.WithIdentity(options.ListP2PCollections(), acpIdentity.FromContext(ctx))
 	cols, err := node.DB.ListP2PCollections(ctx, listP2PColOpt)
 
@@ -213,6 +235,9 @@ func AddP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	addP2PDocOpt := options.WithIdentity(options.AddP2PDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.AddP2PDocuments(ctx, colArgs, addP2PDocOpt)
 	if err != nil {
@@ -234,6 +259,9 @@ func DeleteP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.u
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	deleteP2PDocOpt := options.WithIdentity(options.DeleteP2PDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.DeleteP2PDocuments(ctx, colArgs, deleteP2PDocOpt)
 	if err != nil {
@@ -253,6 +281,9 @@ func ListP2PDocuments(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	listP2PDocOpt := options.WithIdentity(options.ListP2PDocuments(), acpIdentity.FromContext(ctx))
 	cols, err := node.DB.ListP2PDocuments(ctx, listP2PDocOpt)
 	if err != nil {
@@ -294,6 +325,9 @@ func SyncP2PDocuments(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	syncOpts := options.WithIdentity(options.SyncDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs, syncOpts)
 	if err != nil {
@@ -334,6 +368,9 @@ func SyncP2PCollectionVersions(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opts := options.WithIdentity(options.SyncCollectionVersions(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncCollectionVersions(ctx, versionArgs, opts)
 	if err != nil {
@@ -365,6 +402,9 @@ func SyncP2PBranchableCollection(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	opts := options.WithIdentity(options.SyncBranchableCollection(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionID), opts)
 	if err != nil {
@@ -384,6 +424,9 @@ func ConnectP2PPeers(nodePtr C.uintptr_t, peerAddresses *C.char, identityPtr C.u
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	ctx = attachTxnFromPointer(nodePtr, ctx)
+
 	addresses := splitCommaSeparatedString(C.GoString(peerAddresses))
 	connectOpt := options.WithIdentity(options.Connect(), acpIdentity.FromContext(ctx))
 	err = node.DB.Connect(ctx, addresses, connectOpt)

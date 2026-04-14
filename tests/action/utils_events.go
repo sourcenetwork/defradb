@@ -51,7 +51,8 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -115,6 +116,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			collectionID = i
 		}
 	}
+
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()
@@ -141,12 +143,15 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 		)
 	}
 
-	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+	updateConnectedNodes(s, nodeID, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
 }
 
-// updateConnectedNodes updates the expected document heads of connected nodes
+// updateConnectedNodes updates the expected document heads of connected nodes.
+// originNodeID is the node that authored the update and stays constant through recursion.
+// nodeID is the current node being visited in the connection graph traversal.
 func updateConnectedNodes(
 	s *state.State,
+	originNodeID int,
 	nodeID int,
 	nodesCovered map[int]struct{},
 	ident immutable.Option[state.Identity],
@@ -173,18 +178,18 @@ func updateConnectedNodes(
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
-				state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
 			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
 				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
-				state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
 			)
 		}
 
-		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
+		updateConnectedNodes(s, originNodeID, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 

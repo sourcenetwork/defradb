@@ -168,9 +168,30 @@ func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, n.p.lensStore)
+		f = lens.NewFetcher(f, n.p.lensStore, n.p.collectionRepository)
 	}
 	n.fetcher = f
+}
+
+// cloneWithFilter creates a new scanNode that shares the collection, fields, select mapping,
+// and planner reference from this node but uses the given filter and index.
+// A fresh fetcher is initialized. The clone is independent and safe to use concurrently
+// with the original (e.g., for orphan fetching while the main scan is in use).
+func (n *scanNode) cloneWithFilter(
+	filter *mapper.Filter,
+	index immutable.Option[client.IndexDescription],
+) *scanNode {
+	clone := &scanNode{
+		p:         n.p,
+		col:       n.col,
+		fields:    n.fields,
+		slct:      n.slct,
+		docMapper: n.docMapper,
+		filter:    filter,
+		index:     index,
+	}
+	clone.initFetcher(immutable.Option[[]string]{})
+	return clone
 }
 
 // Start starts the internal logic of the scanner

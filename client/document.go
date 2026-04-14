@@ -678,11 +678,11 @@ func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 func (doc *Document) SetWithJSON(ctx context.Context, obj []byte) error {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
-		return err
+		return NewErrDocumentJSONParseFailed(err)
 	}
 	o, err := v.Object()
 	if err != nil {
-		return err
+		return NewErrDocumentJSONParseFailed(err)
 	}
 
 	return doc.setWithFastJSONObject(ctx, o)
@@ -759,7 +759,7 @@ func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string
 	for k, v := range value {
 		err := doc.Set(ctx, k, v)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, k)
 		}
 	}
 	return nil
@@ -772,7 +772,7 @@ func (doc *Document) setDefaultValues(ctx context.Context) error {
 		}
 		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, field.Name)
 		}
 	}
 	return nil

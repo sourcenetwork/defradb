@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Query Execution
 
 - [x] **QEXE-01**: Skill executes GraphQL queries against defradb HTTP API via curl
-- [ ] **QEXE-02**: Skill introspects GraphQL schema before generating queries
+- [x] **QEXE-02**: Skill introspects GraphQL schema before generating queries
 - [x] **QEXE-03**: Skill accepts user-provided JSON fixtures via `--fixtures` flag
 
 ### Correctness Engine
@@ -28,10 +28,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Codebase Analysis
 
-- [ ] **CODE-01**: Sub-agents read relevant source code to understand target area implementation
-- [ ] **CODE-02**: Skill identifies the query surface area relevant to the user's prompt
-- [ ] **CODE-03**: Skill generates edge-case queries from planner/request internals
-- [ ] **CODE-04**: Skill uses dual-track reasoning — codebase for WHERE to probe, first-principles for WHAT should happen
+- [x] **CODE-01**: Sub-agents read relevant source code to understand target area implementation
+- [x] **CODE-02**: Skill identifies the query surface area relevant to the user's prompt
+- [x] **CODE-03**: Skill generates edge-case queries from planner/request internals
+- [x] **CODE-04**: Skill uses dual-track reasoning — codebase for WHERE to probe, first-principles for WHAT should happen
 
 ### Reporting
 
@@ -94,14 +94,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIFE-04 | Phase 1 | Complete |
 | LIFE-05 | Phase 1 | Complete |
 | QEXE-01 | Phase 1 | Complete |
-| QEXE-02 | Phase 3 | Pending |
+| QEXE-02 | Phase 3 | Complete |
 | QEXE-03 | Phase 1 | Complete |
 | CORR-01 | Phase 2 | Complete |
 | CORR-02 | Phase 2 | Complete |
-| CODE-01 | Phase 3 | Pending |
-| CODE-02 | Phase 3 | Pending |
-| CODE-03 | Phase 3 | Pending |
-| CODE-04 | Phase 3 | Pending |
+| CODE-01 | Phase 3 | Complete |
+| CODE-02 | Phase 3 | Complete |
+| CODE-03 | Phase 3 | Complete |
+| CODE-04 | Phase 3 | Complete |
 | REPT-01 | Phase 2 | Complete |
 | REPT-02 | Phase 2 | Complete |
 | REPT-03 | Phase 2 | Complete |

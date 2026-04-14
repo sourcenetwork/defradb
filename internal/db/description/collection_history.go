@@ -71,10 +71,11 @@ func (t *TargetedCollectionHistoryLink) Previous() immutable.Option[*TargetedCol
 // reachable from the given version has a migration transform.
 func HasMigrations(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	collectionID string,
 	versionID string,
 ) (bool, error) {
-	history, err := GetTargetedCollectionHistory(ctx, collectionID, versionID)
+	history, err := GetTargetedCollectionHistory(ctx, collectionRepository, collectionID, versionID)
 	if err != nil {
 		return false, err
 	}
@@ -101,10 +102,11 @@ func HasMigrations(
 // This includes any history items that are only known via registered collection migrations.
 func GetTargetedCollectionHistory(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	collectionRoot string,
 	targetCollectionVersionID string,
 ) (map[string]*TargetedCollectionHistoryLink, error) {
-	history, err := getCollectionHistory(ctx, collectionRoot)
+	history, err := getCollectionHistory(ctx, collectionRepository, collectionRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -189,9 +191,10 @@ func linkBackwards(
 // This includes any history items that are only known via registered collection migrations.
 func getCollectionHistory(
 	ctx context.Context,
+	collectionRepository *CollectionRepository,
 	collectionRoot string,
 ) (map[string]*collectionHistoryLink, error) {
-	cols, err := GetCollectionsByCollectionID(ctx, collectionRoot)
+	cols, err := GetCollectionsByCollectionID(ctx, collectionRepository, collectionRoot)
 	if err != nil {
 		return nil, err
 	}

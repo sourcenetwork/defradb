@@ -61,8 +61,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [x] 03-01-PLAN.md -- Schema introspection, query generation sub-agent, codebase analysis sub-agent, dual-track integration
+- [ ] 03-02-PLAN.md -- Integration test sub-agent architecture against live DefraDB instance and human verify
 
 ## Progress
 
@@ -73,4 +73,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|---------------|--------|-----------|
 | 1. Foundation | 0/2 | Planning complete | - |
 | 2. Correctness and Reporting | 2/2 | Complete   | 2026-04-14 |
-| 3. Codebase Intelligence | 0/2 | Not started | - |
+| 3. Codebase Intelligence | 1/2 | In progress | - |

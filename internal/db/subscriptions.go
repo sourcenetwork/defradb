@@ -86,6 +86,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				db,
 				db.p2p,
 				db.getLensStore(ctx),
+				db.collectionRepository,
 			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 

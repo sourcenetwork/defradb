@@ -517,11 +517,11 @@ func validateEncryptedIndexesNotModified(
 
 		if len(oldCol.EncryptedIndexes) != len(newCol.EncryptedIndexes) {
 			errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
-		}
-
-		for i := range oldCol.EncryptedIndexes {
-			if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
-				errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+		} else {
+			for i := range oldCol.EncryptedIndexes {
+				if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
+					errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+				}
 			}
 		}
 	}
@@ -1163,7 +1163,7 @@ func validateVersionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "VersionID", col.VersionID))
 			continue
 		}
 
@@ -1197,7 +1197,7 @@ func validateCollectionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "CollectionID", col.CollectionID))
 			continue
 		}
 

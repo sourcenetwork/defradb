@@ -14,6 +14,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -39,11 +40,22 @@ func appendIdentityArg(args []string, ident immutable.Option[identity.Identity])
 	return args
 }
 
+// appendTxnArg extracts a transaction from an immutable.Option and appends --tx flag to args
+// if transaction is present.
+func appendTxnArg(args []string, txn immutable.Option[client.Txn]) []string {
+	if !txn.HasValue() {
+		return args
+	}
+	args = append(args, "--tx", fmt.Sprintf("%d", txn.Value().ID()))
+	return args
+}
+
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
 	cmd *cliWrapper
 	def client.CollectionVersion
+	txn immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -98,6 +110,7 @@ func (c *Collection) NewIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -120,6 +133,7 @@ func (c *Collection) DeleteIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
@@ -134,6 +148,7 @@ func (c *Collection) ListIndexes(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -158,6 +173,7 @@ func (c *Collection) NewEncryptedIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -177,6 +193,7 @@ func (c *Collection) ListEncryptedIndexes(
 	args = append(args, "--collection", c.Version().Name)
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -201,6 +218,7 @@ func (c *Collection) DeleteEncryptedIndex(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err
@@ -214,6 +232,7 @@ func (c *Collection) Truncate(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

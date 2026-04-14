@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,228 +11,112 @@
 package description
 
 import (
-	"context"
+	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/cache"
 )
 
-type collectionCacheKey struct{}
+type collectionRepository struct {
+	forbiddenLock sync.RWMutex
+	// Collections may be forbidden, in which case we must prevent as much interaction with
+	// them as possible, regardless of what the underlying corekv store thinks.
+	//
+	// Collections are forbidden when the last local version is deleted from the node.  They
+	// will become unforbidden if they are re-added.
+	forbiddenCollectionIDs map[string]struct{}
 
-// InitCollectionCache initialializes the context with a none-nil collection cache.
-//
-// It is done to avoid an extra check to see if the cache exists or not when fetching
-// it from the context.
-func InitCollectionCache(ctx context.Context) context.Context {
-	return context.WithValue(ctx, collectionCacheKey{}, NewCollectionCache())
+	// The cached active collection versions mapped by their CollectionID
+	activeCollectionsByCollectionID map[string]client.CollectionVersion
+
+	// The cached active collection versions mapped by their Name
+	activeCollectionsByName map[string]client.CollectionVersion
+
+	// The cached collection versions mapped by their VersionID.
+	//
+	// Includes inactive versions.
+	collectionsByVersionID map[string]client.CollectionVersion
 }
 
-// InitCollectionCache initialializes the context with a none-nil collection cache.
-//
-// It is done to avoid an extra check to see if the cache exists or not when fetching
-// it from the context.
-func ContextWithCollectionCache(ctx context.Context, cache *CollectionCache) context.Context {
-	return context.WithValue(ctx, collectionCacheKey{}, cache)
-}
+var _ cache.Cache[CollectionIndex, client.CollectionVersion] = (*collectionRepository)(nil)
 
-// getCollectionCache retrieves the collection short-id cache from the given context.
-func CollectionCacheFromContext(ctx context.Context) *CollectionCache {
-	return ctx.Value(collectionCacheKey{}).(*CollectionCache) //nolint:forcetypeassert
-}
-
-// collectionCache is an object providing easy access to cached collections.
-type CollectionCache struct {
-	IsFullyPopulated             bool
-	IsActiveCollectionsPopulated bool
-
-	// The cached collection versions mapped by their CollectionID
-	ActiveCollectionsByID map[string]client.CollectionVersion
-
-	// The cached collection versions mapped by their CollectionID
-	ActiveCollectionsByName map[string]client.CollectionVersion
-
-	// The cached collection versions mapped by their CollectionID
-	CollectionsByVersionID map[string]client.CollectionVersion
-
-	// The full set of [CollectionVersion]s within this cache
-	Collections       []client.CollectionVersion
-	ActiveCollections []client.CollectionVersion
-	// The cached collection versions mapped by their CollectionID
-	CollectionsByID map[string][]client.CollectionVersion
-}
-
-// NewCollectionCache creates a new [collectionCache] populated with the given [CollectionVersion]s.
-func NewCollectionCache() *CollectionCache {
-	return &CollectionCache{
-		CollectionsByVersionID:  make(map[string]client.CollectionVersion),
-		ActiveCollectionsByName: make(map[string]client.CollectionVersion),
-		ActiveCollectionsByID:   make(map[string]client.CollectionVersion),
+func newCollectionCache() *collectionRepository {
+	return &collectionRepository{
+		forbiddenCollectionIDs:          map[string]struct{}{},
+		activeCollectionsByCollectionID: map[string]client.CollectionVersion{},
+		activeCollectionsByName:         map[string]client.CollectionVersion{},
+		collectionsByVersionID:          map[string]client.CollectionVersion{},
 	}
 }
 
-func (cache *CollectionCache) Add(col client.CollectionVersion) {
-	_, isOld := cache.CollectionsByVersionID[col.VersionID]
-	cache.CollectionsByVersionID[col.VersionID] = col
+func (i *collectionRepository) TryGet(key CollectionIndex) (client.CollectionVersion, bool) {
+	var col client.CollectionVersion
+	var hasValue bool
 
-	if col.IsActive {
-		cache.ActiveCollectionsByName[col.Name] = col
-		cache.ActiveCollectionsByID[col.CollectionID] = col
-	} else if isOld {
-		// If the version already existed in the cache, and the given collection is inactive,
-		// ensure that there is no old cached active version
-		delete(cache.ActiveCollectionsByID, col.CollectionID)
-		delete(cache.ActiveCollectionsByName, col.Name)
+	switch key.Kind {
+	case CollectionVersionID:
+		col, hasValue = i.collectionsByVersionID[key.Value]
+
+	case CollectionID:
+		col, hasValue = i.activeCollectionsByCollectionID[key.Value]
+
+	case CollectionName:
+		col, hasValue = i.activeCollectionsByName[key.Value]
 	}
 
-	if cache.IsFullyPopulated {
-		if !isOld {
-			cache.Collections = append(cache.Collections, col)
+	if hasValue {
+		i.forbiddenLock.RLock()
+		_, isForbidden := i.forbiddenCollectionIDs[col.CollectionID]
+		i.forbiddenLock.RUnlock()
 
-			colVersions := cache.CollectionsByID[col.CollectionID]
-			colVersions = append(colVersions, col)
-			cache.CollectionsByID[col.CollectionID] = colVersions
-		} else {
-			for i, oldC := range cache.Collections {
-				if oldC.VersionID == col.VersionID {
-					cache.Collections[i] = col
-					break
-				}
-			}
-
-			colVersions := cache.CollectionsByID[col.CollectionID]
-			for i := range colVersions {
-				if colVersions[i].VersionID == col.VersionID {
-					colVersions[i] = col
-					break
-				}
-			}
-			cache.CollectionsByID[col.CollectionID] = colVersions
+		if isForbidden {
+			hasValue = false
+			col = client.CollectionVersion{}
 		}
 	}
 
-	if cache.IsActiveCollectionsPopulated {
-		if !isOld {
-			if col.IsActive {
-				var found bool
-				// If the collection ID already existed in the cache, we need to swap it for the new
-				// version
-				for i, oldC := range cache.ActiveCollections {
-					if oldC.CollectionID == col.CollectionID {
-						cache.ActiveCollections[i] = col
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					cache.ActiveCollections = append(cache.ActiveCollections, col)
-				}
-			}
-		} else {
-			if col.IsActive {
-				var found bool
-				// If the collection version ID already existed in the cache, it may have been patched
-				// in which case we need to find and replace the original
-				for i, oldC := range cache.ActiveCollections {
-					if oldC.VersionID == col.VersionID {
-						cache.ActiveCollections[i] = col
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					cache.ActiveCollections = append(cache.ActiveCollections, col)
-				}
-			} else {
-				for i, oldC := range cache.ActiveCollections {
-					if oldC.VersionID == col.VersionID {
-						// If the collection has been deactivated, ensure that it is removed from the active set
-						cache.ActiveCollections = append(cache.ActiveCollections[:i], cache.ActiveCollections[i+1:]...)
-						break
-					}
-				}
-			}
-		}
-	}
+	return col, hasValue
 }
 
-func (cache *CollectionCache) Delete(version client.CollectionVersion) {
-	delete(cache.CollectionsByVersionID, version.VersionID)
-
-	if cols, ok := cache.CollectionsByID[version.CollectionID]; ok {
-		var indexToRemove int
-		for i, col := range cols {
-			if col.VersionID == version.VersionID {
-				indexToRemove = i
-				break
-			}
-		}
-		cache.CollectionsByID[version.CollectionID] = append(cols[:indexToRemove], cols[indexToRemove+1:]...)
-	}
-
-	var indexToRemove int
-	for i, col := range cache.Collections {
-		if col.VersionID == version.VersionID {
-			indexToRemove = i
-			break
+func (i *collectionRepository) Cache(value client.CollectionVersion) {
+	if value.IsActive {
+		i.activeCollectionsByName[value.Name] = value
+		i.activeCollectionsByCollectionID[value.CollectionID] = value
+	} else {
+		oldVersion, oldVersionCached := i.collectionsByVersionID[value.VersionID]
+		if oldVersionCached && oldVersion.IsActive {
+			// If we are deactivating a collection we must remove the old values from the
+			// active caches.
+			// todo - the unforbidding is currently untested, and should be done as part of:
+			// https://github.com/sourcenetwork/defradb/issues/4268
+			delete(i.activeCollectionsByName, oldVersion.Name)
+			delete(i.activeCollectionsByCollectionID, oldVersion.CollectionID)
 		}
 	}
-	cache.Collections = append(cache.Collections[:indexToRemove], cache.Collections[indexToRemove+1:]...)
+	i.collectionsByVersionID[value.VersionID] = value
 
-	if version.IsActive {
-		delete(cache.ActiveCollectionsByID, version.CollectionID)
-		delete(cache.ActiveCollectionsByName, version.Name)
-
-		var indexToRemove int
-		for i, col := range cache.ActiveCollections {
-			if col.VersionID == version.VersionID {
-				indexToRemove = i
-				break
-			}
-		}
-		cache.ActiveCollections = append(
-			cache.ActiveCollections[:indexToRemove],
-			cache.ActiveCollections[indexToRemove+1:]...,
-		)
-	}
+	i.forbiddenLock.Lock()
+	// If this transaction writes a collection version that was previously forbidden, we must unforbid it
+	// within the context of this transaction.
+	// todo - the unforbidding is currently untested, and should be done as part of:
+	// https://github.com/sourcenetwork/defradb/issues/4268
+	delete(i.forbiddenCollectionIDs, value.CollectionID)
+	i.forbiddenLock.Unlock()
 }
 
-func (cache *CollectionCache) AddAll(cols []client.CollectionVersion) {
-	cache.Collections = make([]client.CollectionVersion, 0, len(cols))
-	cache.ActiveCollections = make([]client.CollectionVersion, 0)
-	cache.CollectionsByID = make(map[string][]client.CollectionVersion)
-
-	for _, col := range cols {
-		cache.Collections = append(cache.Collections, col)
-		cache.CollectionsByVersionID[col.VersionID] = col
-
-		colVersions := cache.CollectionsByID[col.CollectionID]
-		colVersions = append(colVersions, col)
-		cache.CollectionsByID[col.CollectionID] = colVersions
-
-		if col.IsActive {
-			cache.ActiveCollectionsByName[col.Name] = col
-			cache.ActiveCollectionsByID[col.CollectionID] = col
-			cache.ActiveCollections = append(cache.ActiveCollections, col)
-		}
+func (i *collectionRepository) Remove(key CollectionIndex) {
+	value, ok := i.TryGet(key)
+	if !ok {
+		return
 	}
 
-	cache.IsFullyPopulated = true
-	cache.IsActiveCollectionsPopulated = true
+	delete(i.activeCollectionsByName, value.Name)
+	delete(i.activeCollectionsByCollectionID, value.CollectionID)
+	delete(i.collectionsByVersionID, value.VersionID)
 }
 
-func (cache *CollectionCache) AddAllActive(cols []client.CollectionVersion) {
-	cache.ActiveCollections = make([]client.CollectionVersion, 0, len(cols))
-
-	for _, col := range cols {
-		cache.CollectionsByVersionID[col.VersionID] = col
-
-		if col.IsActive {
-			cache.ActiveCollectionsByName[col.Name] = col
-			cache.ActiveCollectionsByID[col.CollectionID] = col
-			cache.ActiveCollections = append(cache.ActiveCollections, col)
-		}
-	}
-
-	cache.IsActiveCollectionsPopulated = true
+func (i *collectionRepository) Forbid(value client.CollectionVersion) {
+	i.forbiddenLock.Lock()
+	i.forbiddenCollectionIDs[value.CollectionID] = struct{}{}
+	i.forbiddenLock.Unlock()
 }

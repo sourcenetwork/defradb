@@ -2,7 +2,7 @@
 name: defradb:debug
 description: Agentically test and debug DefraDB through end-to-end black-box testing via GraphQL HTTP API
 disable-model-invocation: true
-allowed-tools: Bash Read Grep Glob Write
+allowed-tools: Bash Read Grep Glob Write Agent
 argument-hint: "<prompt> [--fixtures path] [--store memory|badger] [--remote url]"
 ---
 
@@ -34,9 +34,12 @@ This skill performs end-to-end black-box testing of DefraDB. The workflow is:
 3. Start a fresh instance (skip if `--remote`)
 4. Poll health check until ready
 5. Load fixtures if `--fixtures` was provided
-6. Execute targeted queries with hypothesis-based correctness validation
-7. Finalize session report with bug summary and reproduction steps
-8. Shut down the instance (skip if `--remote`)
+6. Introspect schema via `sdl generate` to produce expanded GraphQL schema
+7. (Optional) Spawn codebase analysis sub-agent for target area
+8. Spawn query generation sub-agent with expanded schema + targets
+9. Execute validated queries with hypothesis-based correctness validation
+10. Finalize session report with bug summary and reproduction steps
+11. Shut down the instance (skip if `--remote`)
 
 ## Section 2: Instance Lifecycle
 
@@ -316,15 +319,147 @@ Use the Write tool (not Bash heredoc) to create the initial report file in the w
 
 Remember the report filename for use in all subsequent steps. The report file accumulates findings as the session progresses so that state is preserved across Bash tool calls -- do not wait until the end to write the log entries.
 
-### Step 5b: Query Planning
+### Step 5b: Query Planning and Schema Setup
 
 Analyze `DEFRA_PROMPT` to understand the target area. Identify which DefraDB features are involved (CRUD, filtering, relations, aggregations, updates, deletes, etc.). Design schemas and a sequence of queries that systematically probe the target area. Start simple and increase complexity.
 
 Per D-01: the skill is a reasoning agent, not a test harness. Think about what database operations SHOULD do based on fundamental database semantics (CRUD consistency, referential integrity, filter semantics, GraphQL spec), NOT based on what DefraDB's code does. Code-aligned expectations risk validating buggy behavior.
 
-Create the schemas via the pattern in Section 4. Insert any needed documents via the `add_<CollectionName>` mutation pattern from Section 3. Once the setup is complete, enter the hypothesis-then-verify loop below.
+Create the schemas via the pattern in Section 4. Insert any needed documents via the `add_<CollectionName>` mutation pattern from Section 3.
 
-### Step 5c: Hypothesis-Then-Verify Loop
+After loading the schema (either from fixtures in Section 3, or from schemas created above), run `sdl generate` to produce the fully-expanded GraphQL schema. Schema introspection happens on-demand -- after every schema load, not just once at startup. This handles the case where the skill creates new schemas during a testing session.
+
+```bash
+# Write SDL to temp file (avoids shell escaping issues with echo)
+DEFRA_PORT=9281
+SDL_FILE="/tmp/defradb-debug-sdl-${DEFRA_PORT}.sdl"
+printf '%s' "$SDL" > "$SDL_FILE"
+
+# Generate expanded schema
+DEFRA_ROOT=$(git rev-parse --show-toplevel)
+EXPANDED_SCHEMA="/tmp/defradb-debug-schema-${DEFRA_PORT}.graphql"
+"$DEFRA_ROOT/build/defradb" sdl generate "$SDL_FILE" -o "$EXPANDED_SCHEMA" -y
+
+if [ $? -ne 0 ]; then
+  echo "ERROR: sdl generate failed. Cannot validate queries against schema."
+  # Continue without schema validation -- queries will be generated without pre-validation
+else
+  echo "Expanded schema: $(wc -l < "$EXPANDED_SCHEMA") lines"
+fi
+```
+
+After generating the expanded schema, extract a type catalog -- a summary of available types, their fields, field types, and relations. Read the expanded schema file and identify the top-level `Query` and `Mutation` types to understand available operations. This catalog serves as a "menu of what can be queried" for the query generation sub-agent and for the orchestrator's query planning.
+
+When the skill auto-generates schemas (no `--fixtures`), the orchestrator designs the SDL based on the target area, loads it into the running instance via the collections endpoint, AND runs `sdl generate` on the same SDL to get the expanded schema. Both steps use the same SDL string.
+
+If schema introspection fails (`sdl generate` returns non-zero), log the failure and fall back to generating queries without schema validation. The session can still proceed -- queries just will not be pre-validated.
+
+Once the setup is complete, proceed to query generation via sub-agent (Step 5d) or directly to the hypothesis-then-verify loop (Step 5e) if schema introspection is unavailable.
+
+### Step 5c: Codebase Analysis (Optional)
+
+This step is OPTIONAL -- the orchestrator decides whether codebase analysis would benefit the current session based on the target area. For simple CRUD testing, skip it. For complex areas (filtering edge cases, join semantics, aggregation boundaries), spawn the sub-agent.
+
+The codebase analysis sub-agent reads targeted DefraDB source files to identify edge cases, boundary conditions, and unusual code paths that are worth testing. It produces "probe targets" -- specific query patterns and areas to exercise -- without formulating expectations about what the results SHOULD be.
+
+Spawn the sub-agent with allowed tools: `Read`, `Grep`, `Glob`. No Bash or Write -- the codebase analysis sub-agent only reads source code.
+
+**Sub-agent prompt template:**
+
+```
+You are a codebase analyst for DefraDB.
+
+Target area: {area from user prompt}
+
+Read these source files to understand the implementation:
+{targeted file list from mapping table}
+
+Produce a structured analysis with:
+1. Key code paths exercised by {target area} operations
+2. Edge cases visible in the code (boundary checks, error handling, special cases)
+3. Specific query patterns that would exercise unusual code paths
+4. Any TODO/FIXME comments related to the target area
+
+Do NOT include expected behavior or correctness criteria.
+Only report WHAT to test and WHY it might be interesting, not what the result SHOULD be.
+```
+
+**Codebase analysis targeting table.** Use this mapping to construct the targeted file list for the sub-agent based on the test area. Limit each sub-agent invocation to 3-5 targeted files (under 3K lines total). If the target area spans multiple packages, spawn multiple sub-agents or do multiple rounds.
+
+| Test Area | Primary Files | Secondary Files |
+|-----------|---------------|-----------------|
+| Filtering | `internal/planner/filter/` (entire dir) | `internal/connor/` (match operators) |
+| Relations/Joins | `internal/planner/type_join.go` | `internal/planner/scan.go`, `internal/planner/multi.go` |
+| Aggregations | `internal/planner/aggregate.go`, `average.go`, `count.go`, `sum.go`, `min.go`, `max.go` | `internal/planner/group.go` |
+| CRUD mutations | `internal/planner/add.go`, `update.go`, `delete.go`, `upsert.go` | `internal/db/document.go`, `internal/db/collection.go` |
+| Ordering/Limits | `internal/planner/order.go`, `limit.go` | `internal/planner/top.go` |
+| Schema parsing | `internal/request/graphql/schema/` | `internal/request/graphql/parser/` |
+| Explain | `internal/planner/explain.go` | `internal/planner/plan.go` |
+| Views | `internal/planner/view.go` | `internal/planner/pipe.go` |
+| Similarity/Vector | `internal/planner/similarity.go` | `internal/db/embedding.go` |
+
+The sub-agent returns a structured summary of probe targets. These targets flow into the query generation sub-agent (Step 5d) as the `Test targets` parameter.
+
+### Dual-Track Reasoning Separation
+
+The skill enforces a strict separation between two tracks of reasoning:
+
+- **Track 1 (WHERE to probe):** The codebase analysis sub-agent and schema introspection produce "probe targets" -- specific query patterns, edge cases, boundary conditions. These flow INTO the query generation sub-agent as `Test targets`.
+- **Track 2 (WHAT should happen):** The orchestrator formulates hypotheses in Step 5e BEFORE executing each query, using ONLY database first-principles. The orchestrator NEVER receives the raw codebase analysis output -- only the generated queries from the query sub-agent.
+
+This means the orchestrator cannot be biased by implementation details when formulating expectations. It sees the query (what to run) but not why the codebase analysis suggested it.
+
+**Anti-patterns to avoid:**
+- The codebase analysis sub-agent MUST NOT include expected results or correctness criteria in its output
+- The query generation sub-agent MUST NOT include expected results -- only what each query tests
+- The orchestrator MUST formulate hypotheses from first-principles (database semantics), never from codebase knowledge
+- If the orchestrator has already seen codebase details from a previous session, it must still base hypotheses on first-principles reasoning
+
+### Step 5d: Query Generation via Sub-Agent
+
+The orchestrator spawns a query generation sub-agent using the Agent tool. The sub-agent absorbs the full expanded schema (which can be 2600+ lines) so the orchestrator does not need to hold it in context. This implements the context isolation boundary between schema details and the orchestrator's reasoning.
+
+The sub-agent:
+
+1. Reads the expanded schema from `$EXPANDED_SCHEMA` (the temp file produced by `sdl generate`)
+2. Receives a description of what to test (derived from `DEFRA_PROMPT` and optionally from codebase analysis)
+3. Generates edge-case queries targeting the described area
+4. Validates EACH query against the expanded schema using `npx @graphql-inspector/cli validate`
+5. Returns ONLY queries that pass validation, with a one-line description of what each tests
+6. Does NOT include expected results or correctness criteria (dual-track separation -- codebase knowledge determines WHERE to probe, first-principles reasoning determines WHAT SHOULD HAPPEN)
+
+Spawn the sub-agent with allowed tools: `Bash`, `Read`. The sub-agent uses Bash for running `npx @graphql-inspector/cli validate` and writing temp query files, and Read for reading the expanded schema file.
+
+**Sub-agent prompt template:**
+
+```
+You are a GraphQL query generator for DefraDB testing.
+
+Read the expanded GraphQL schema from: /tmp/defradb-debug-schema-{PORT}.graphql
+
+Target area: {description from orchestrator}
+Test targets: {list from codebase analysis, if available}
+
+Generate {N} GraphQL queries that:
+1. Test edge cases and boundary conditions for the target area
+2. Include a mix of queries, mutations, and filters
+3. Cover both happy paths and expected-to-fail scenarios
+
+For EACH query:
+1. Write it to /tmp/defradb-debug-query-{N}.graphql
+2. Run: npx @graphql-inspector/cli validate /tmp/defradb-debug-query-{N}.graphql /tmp/defradb-debug-schema-{PORT}.graphql
+3. If validation fails, fix the query and re-validate
+4. Only return queries that pass validation
+
+Return a numbered list of valid queries with a one-line description of what each tests.
+Do NOT include expected results or correctness criteria -- only what the query tests.
+```
+
+After the sub-agent returns, the orchestrator parses the numbered list of validated queries. These queries feed into the hypothesis-then-verify loop (Step 5e). The orchestrator formulates hypotheses for each query using first-principles reasoning BEFORE execution -- exactly as in Phase 2.
+
+If the expanded schema file does not exist (`sdl generate` failed earlier), skip sub-agent query generation and fall back to the orchestrator generating queries inline (the Phase 2 behavior). Log: "Schema introspection unavailable -- generating queries without pre-validation."
+
+### Step 5e: Hypothesis-Then-Verify Loop
 
 For EACH query in the sequence, follow these substeps in strict order.
 
@@ -348,7 +483,7 @@ printf '%s\n' "$RESPONSE" | jq .
 **3. Evaluate the response against the hypothesis.**
 
 - If the response matches the hypothesis: log as `PASS` with the one-liner in the chronological log.
-- If the response does NOT match: proceed to Step 5d (classification) and Step 5e (reproduction) before continuing.
+- If the response does NOT match: proceed to Step 5f (classification) and Step 5g (reproduction) before continuing.
 
 **4. Append a row to the chronological log** in the report file (via the Write tool -- read the current file, add the row, write it back):
 
@@ -358,7 +493,7 @@ printf '%s\n' "$RESPONSE" | jq .
 
 If `DEFRA_VERBOSE` is set to `true`, also include the full request body and full response body below the log table in a fenced code block labeled `Query N`. Per D-05: verbose mode controls whether full request/response bodies appear; non-verbose mode keeps the log compact with only brief expectations and pass/fail status.
 
-### Step 5d: Error Classification
+### Step 5f: Error Classification
 
 When a query result does not match the hypothesis, classify the failure into exactly ONE of three categories. Per D-08 and CORR-02: strict 3-category classification with NO sub-categories.
 
@@ -378,7 +513,7 @@ Apply the classification rules in order. Classification is based on response str
 
 Pitfall: an empty result set (`{"data": {"User": []}}`) with no errors is NOT a runtime error -- it is a DATA CORRECTNESS ISSUE if the hypothesis expected non-empty data. Classification reads the response shape, not how the data "feels."
 
-### Step 5e: Anomaly Reproduction
+### Step 5g: Anomaly Reproduction
 
 When a mismatch is detected (any of the 3 classifications above), confirm reproducibility before recording a bug. Per D-03: 1 re-run, 2 total executions.
 
@@ -390,11 +525,11 @@ When a mismatch is detected (any of the 3 classifications above), confirm reprod
 
 With memory store, behavior should be deterministic, so confirmed failures are real bugs.
 
-Per D-04 and INVK-02: Do NOT interrupt the user mid-session. Continue testing regardless of how many anomalies are found. All confirmed findings are batched into the end-of-session report produced in Step 5g.
+Per D-04 and INVK-02: Do NOT interrupt the user mid-session. Continue testing regardless of how many anomalies are found. All confirmed findings are batched into the end-of-session report produced in Step 5i.
 
 If the query under test is itself a mutation (e.g., an update or delete that changes state), the re-run operates on different state. In that case, reconstruct the precondition state first (re-insert the documents), then re-run the mutation, and note in the reproduction entry that reproduction required re-establishing state.
 
-### Step 5f: @explain Investigation
+### Step 5h: @explain Investigation
 
 Per D-09: the `@explain` GraphQL directive is a general-purpose investigation tool. When investigating anomalies or when the query plan might be relevant to understanding a failure, run an explain query against the same query body:
 
@@ -412,7 +547,7 @@ Three explain types are available:
 
 Include the explain output in the bug report when it adds diagnostic value (regardless of `DEFRA_VERBOSE` mode). The explain output answers "why did the query plan look like this," which is valuable context for bug investigation -- especially for data correctness issues involving filters, joins, or indexes.
 
-### Step 5g: Session Report Finalization
+### Step 5i: Session Report Finalization
 
 After all queries are complete, finalize the report file by reading it, appending the summary section, and writing it back with the Write tool. The finalized file must contain both the chronological log and the structured summary report, separated by headings (per D-07).
 
@@ -482,7 +617,7 @@ The final report structure:
 
 For each confirmed bug (REPT-04): include the MINIMAL reproduction steps. This means the smallest schema, fewest documents, and simplest query that reproduces the issue. Strip away anything not needed for reproduction. The goal is that a reader can copy the steps verbatim and trigger the same bug on a fresh instance.
 
-Only bugs marked **CONFIRMED** in Step 5e appear in the Bugs Found section. Unconfirmed/flaky anomalies stay in the chronological log but are excluded from the bug summary.
+Only bugs marked **CONFIRMED** in Step 5g appear in the Bugs Found section. Unconfirmed/flaky anomalies stay in the chronological log but are excluded from the bug summary.
 
 ## Section 6: Shutdown
 
