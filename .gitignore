@@ -70,3 +70,5 @@ crash.log
 
 # Ignore .env files containing sensitive information.
 .env
+
+.planning
