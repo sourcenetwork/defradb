@@ -122,3 +122,34 @@ func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test documents a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
+// it only occured when adding a field to a collection that already has a secondary relationship.
+func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelationship(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						publisher: Publisher @primary
+					}
+
+					type Publisher {
+						book: Book
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{"op":"add","path":"/Publisher/Fields/-","value":{"Name":"name","Kind":"String"}}]`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+				ExpectedError: "unknown crdt. Type: none",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
