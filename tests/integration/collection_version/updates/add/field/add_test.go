@@ -123,8 +123,9 @@ func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
+// This test covers a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
 // it only occurred when adding a field to a collection that already has a secondary relationship.
+// The bug has been fixed, but the test remains as coverage of this case is important.
 func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelationship(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
