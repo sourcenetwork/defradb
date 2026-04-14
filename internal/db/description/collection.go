@@ -308,10 +308,6 @@ func GetRelatedCollection(
 		}
 
 		for _, col := range cols {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}

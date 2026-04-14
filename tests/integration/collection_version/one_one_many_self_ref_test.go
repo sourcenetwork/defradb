@@ -37,7 +37,6 @@ func TestCollectionVersionWith_OneOne_OneMany_SelfRef(t *testing.T) {
 						after: Dev_RC_RedirectRoute2
 					}
 				`,
-				ExpectedError: "no type found for given name. Field: after, Kind: Self-1",
 			},
 		},
 	}
