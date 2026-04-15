@@ -651,11 +651,12 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 	docFilter *mapper.Filter,
 	index immutable.Option[client.IndexDescription],
 	ordering []mapper.OrderCondition,
+	canSatisfyOrder bool,
 ) ([]core.Doc, error) {
 	clone := r.primaryScan.cloneWithFilter(docFilter, index, ordering)
 
 	var source planNode = clone
-	if len(ordering) > 0 {
+	if len(ordering) > 0 && !canSatisfyOrder {
 		source = &orderNode{
 			p:         r.primaryScan.p,
 			plan:      clone,
@@ -669,6 +670,10 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 
 	r.primaryScan.execInfo.iterations += clone.execInfo.iterations
 	r.primaryScan.execInfo.fetches.Add(clone.execInfo.fetches)
+
+	if orderNode, ok := source.(*orderNode); ok {
+		r.primaryScan.execInfo.iterations += orderNode.execInfo.iterations
+	}
 
 	closeErr := source.Close()
 
@@ -721,7 +726,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	// intermediate nodes (orderNode, etc.) that have already consumed their input.
 	// Use a cloned scanNode wrapped in an orderNode instead.
 	if r.primarySide.isFirst {
-		return r.collectDocsWithClone(docFilter, result.index, r.ordering)
+		return r.collectDocsWithClone(docFilter, result.index, r.ordering, result.canSatisfyOrder)
 	}
 
 	// Non-inverted path: the plan tree is not shared, so we can safely reinitialize
