@@ -895,11 +895,6 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
-	if hadTxn {
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	}
-
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
@@ -920,12 +915,7 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
-	var txnOpt immutable.Option[client.Txn]
-	if hadTxn {
-		txnOpt = immutable.Some(txn)
-	} else {
-		txnOpt = immutable.None[client.Txn]()
-	}
+	txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
