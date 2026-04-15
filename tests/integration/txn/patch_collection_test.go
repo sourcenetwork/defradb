@@ -26,8 +26,9 @@ import (
 // results in the patch being applied.
 func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		// The secondary-index multiplier adds @index directives which shifts field indices,
-		// causing the hardcoded "Fields/2" path to target the wrong field.
+		// The secondary-index multiplier adds @index on all fields. Removing a field that
+		// has a dependent index fails with "the given field does not exist".
+		// https://github.com/sourcenetwork/defradb/issues/4722
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -68,8 +69,9 @@ func TestTxn_PatchCollection_WithCommit_Succeeds(t *testing.T) {
 // results in the patch not yet being applied.
 func TestTxn_PatchCollection_WithoutCommit_PatchNotApplied(t *testing.T) {
 	test := testUtils.TestCase{
-		// The secondary-index multiplier adds @index directives which shifts field indices,
-		// causing the hardcoded "Fields/2" path to target the wrong field.
+		// The secondary-index multiplier adds @index on all fields. Removing a field that
+		// has a dependent index fails with "the given field does not exist".
+		// https://github.com/sourcenetwork/defradb/issues/4722
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
