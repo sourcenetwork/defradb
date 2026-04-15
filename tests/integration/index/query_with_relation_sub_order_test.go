@@ -1696,6 +1696,80 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithNestedOrderByRelationField_ExhaustiveWithPrimaryParentASC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Author {
+			name
+			book(order: {publisher: {yearOpened: ASC}}) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String
+						book: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						yearOpened: Int @index
+						book: [Book]
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.AddDoc{
+				CollectionID: 2,
+				Doc:          `{"name": "Publisher2020", "yearOpened": 2020}`,
+			},
+			// Book with a publisher
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":        "LinkedBook",
+					"author":       testUtils.NewDocIndex(0, 0),
+					"_publisherID": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			// Book without a publisher (orphan)
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				// ASC + @exhaustive: OrphanBook (null publisher) comes first, LinkedBook after.
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"book": []map[string]any{
+								{"title": "OrphanBook"},
+								{"title": "LinkedBook"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnOrphans(t *testing.T) {
 	// Book is the secondary side (Publisher stores _bookID via @primary).
 	// Querying with order on publisher.establishedYear + @exhaustive triggers orphan detection
