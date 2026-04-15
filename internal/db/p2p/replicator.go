@@ -49,6 +49,10 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	log.InfoContext(ctx, "Adding replicator",
+		corelog.Any("Addresses", addresses),
+		corelog.Any("CollectionNames", collectionNames))
+
 	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
@@ -153,6 +157,12 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 		}
 	}
 
+	peerIDs := make([]string, 0, len(replicatorMap))
+	for id := range replicatorMap {
+		peerIDs = append(peerIDs, id)
+	}
+	log.InfoContext(ctx, "Replicator added", corelog.Any("PeerIDs", peerIDs))
+
 	txn.OnSuccessAsync(func() {
 		for id, addresses := range replicatorMap {
 			p.updateReplicators(context.Background(), id, addresses, storedRepCollectionIDs[id])
@@ -256,6 +266,8 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	log.InfoContext(ctx, "Deleting replicator", corelog.Any("PeerID", id))
+
 	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
@@ -320,6 +332,8 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 			return NewErrStoreReplicator(err, id)
 		}
 	}
+
+	log.InfoContext(ctx, "Replicator deleted", corelog.Any("PeerID", id))
 
 	txn.OnSuccessAsync(func() {
 		p.updateReplicators(context.Background(), storedRep.ID, storedRep.Addresses, storedCollectionIDs)
@@ -495,6 +509,7 @@ func updateReplicatorStatus(
 	if err != nil {
 		return NewErrUnmarshalReplicator(err, peerID)
 	}
+	oldStatus := rep.Status
 	switch active {
 	case true:
 		if rep.Status == client.ReplicatorStatusInactive {
@@ -513,6 +528,15 @@ func updateReplicatorStatus(
 	}
 	if err := peerstore.Set(ctx, key.Bytes(), b); err != nil {
 		return NewErrStoreReplicator(err, peerID)
+	}
+	if oldStatus != rep.Status {
+		log.InfoContext(
+			ctx,
+			"Replicator status changed",
+			corelog.Any("PeerID", peerID),
+			corelog.Any("OldStatus", oldStatus),
+			corelog.Any("NewStatus", rep.Status),
+		)
 	}
 	return nil
 }
@@ -590,8 +614,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to unmarshal replicator retry info", err)
 			// If we can't unmarshal the retry info, we delete the retry key and all related retry docs.
-			err = p.deleteReplicatorRetryAndDocs(ctx, key.PeerID)
-			if err != nil {
+			if err = p.deleteReplicatorRetryAndDocs(ctx, key.PeerID); err != nil {
 				log.ErrorContextE(ctx, "Failed to delete replicator retry and docs", err)
 			}
 			continue
@@ -606,8 +629,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 				continue
 			}
 			if !exists {
-				err = p.deleteReplicatorRetryAndDocs(ctx, key.PeerID)
-				if err != nil {
+				if err = p.deleteReplicatorRetryAndDocs(ctx, key.PeerID); err != nil {
 					log.ErrorContextE(ctx, "Failed to delete replicator retry and docs", err)
 				}
 				continue
@@ -695,7 +717,8 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		log.ErrorContextE(ctx, "Failed iterate replicator retry docID keys", err)
+		log.ErrorContextE(ctx, "Failed to iterate replicator retry docID keys", err)
+		return
 	}
 	defer closeQueryResults(iter)
 
@@ -722,22 +745,19 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		}
 		err = p.retryDoc(ctx, peerID, key.DocID)
 		if err != nil {
-			log.ErrorContextE(ctx, "Failed to retry doc", err)
-			err = p.handleCompletedReplicatorRetry(ctx, peerID, false)
-			if err != nil {
+			log.ErrorContextE(ctx, "Failed to retry doc", err, corelog.String("DocID", key.DocID))
+			if err = p.handleCompletedReplicatorRetry(ctx, peerID, false); err != nil {
 				log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 			}
 			// if one doc fails, stop retrying the rest and just wait for the next retry
 			return
 		}
-		err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes())
-		if err != nil {
+		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
 	}
 
-	err = p.handleCompletedReplicatorRetry(ctx, peerID, true)
-	if err != nil {
+	if err = p.handleCompletedReplicatorRetry(ctx, peerID, true); err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 	}
 }

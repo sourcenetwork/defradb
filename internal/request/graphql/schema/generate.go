@@ -1695,10 +1695,6 @@ func (g *Generator) getRelatedCollection(
 		}
 
 		for _, col := range g.typDefCollectionMap {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}
