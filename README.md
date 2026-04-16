@@ -37,6 +37,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
    * [Access Control System](#access-control-system)
    * [Supporting CORS](#supporting-cors)
+   * [P2P Resource Management](#p2p-resource-management)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Community](#community)
@@ -501,6 +502,20 @@ defradb start --allowed-origins=http://localhost:3000
 ```
 
 The catch-all `*` is also a valid origin. 
+
+## P2P Resource Management
+
+By default, DefraDB autoscales the resource limits for p2p connections based on system availability. For deployments with specific resource constraints or performance requirements, the `--resource-profile` flag selects a predefined limit profile:
+
+```shell
+defradb start --resource-profile limited
+```
+
+| Profile | Use case | Description |
+|---------|----------|-------------|
+| *(unset)* | General | autoscaled defaults |
+| `limited` | Edge nodes, constrained hardware | Conservative system-wide caps on connections, streams, and memory |
+| `server` | High-throughput nodes | Per-peer connections, stream and memory caps; system limits remain autoscaled |
 
 ## Backing up and restoring
 
