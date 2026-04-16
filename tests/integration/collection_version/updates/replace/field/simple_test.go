@@ -21,7 +21,9 @@ import (
 
 func TestCollectionVersionUpdatesReplaceField(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		// The secondary-index multiplier adds @index on all fields. Replacing a field that
+		// has a dependent index is not supported.
+		// https://github.com/sourcenetwork/defradb/issues/4722
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{

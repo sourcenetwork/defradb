@@ -103,5 +103,15 @@ func (a *PatchCollection) Execute() {
 
 	if !a.TransactionID.HasValue() {
 		RefreshCollections(a.s)
+
+		// Track any new collection versions created by the patch so that tests
+		// can reference them via {{.CollectionVersionID<N>}} templates.
+		for _, node := range a.s.Nodes {
+			for _, col := range node.Collections {
+				if col != nil {
+					appendCollectionVersion(a.s, col.Version().VersionID)
+				}
+			}
+		}
 	}
 }

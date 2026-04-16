@@ -373,7 +373,8 @@ func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 
 func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		// Lens migrations return nil for migrated field values when indexes are present.
+		// https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -404,8 +405,8 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
-					DestinationCollectionVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					SourceCollectionVersionID:      "{{.CollectionVersionID0}}",
+					DestinationCollectionVersionID: "{{.CollectionVersionID1}}",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -421,8 +422,8 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
-					DestinationCollectionVersionID: "bafyreiabghlustwur2y3pdxmoyq35rxcxg7bbgx6hxe2vezqow3q27g6za",
+					SourceCollectionVersionID:      "{{.CollectionVersionID1}}",
+					DestinationCollectionVersionID: "{{.CollectionVersionID2}}",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

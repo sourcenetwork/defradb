@@ -65,6 +65,9 @@ func configureMigration(
 	s *state.State,
 	action ConfigureMigration,
 ) {
+	action.SourceCollectionVersionID = replace(s, 0, action.SourceCollectionVersionID)
+	action.DestinationCollectionVersionID = replace(s, 0, action.DestinationCollectionVersionID)
+
 	var lensID string
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
