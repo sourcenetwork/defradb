@@ -153,18 +153,12 @@ func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t 
 		return C.uintptr_t(nodeHandle)
 	}
 
-	id := txn.ID()
-
-	if storedHandle, ok := txnHandleMap.Load(id); ok {
-		handle, ok := storedHandle.(cgo.Handle)
-		if !ok {
-			// This should not happen, but we defensively panic to be safe
-			panic("txnHandleMap stored value is not a cgo.Handle")
-		}
-		return C.uintptr_t(handle)
+	ctxn, ok := txn.(*Transaction)
+	if !ok {
+		return C.uintptr_t(nodeHandle)
 	}
 
-	return C.uintptr_t(nodeHandle)
+	return C.uintptr_t(ctxn.handle)
 }
 
 // setCtxTxnFromCollection is a helper function that checks if a collection has a transaction
