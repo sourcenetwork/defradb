@@ -219,7 +219,7 @@ func CtxTryGetClientTxn(ctx context.Context) (client.Txn, bool) {
 	return txn, ok
 }
 
-// CtxTryGetTxnOption returns a immutable.Option[client.Txn] which wraps the
+// CtxTryGetTxnOption returns a immutable.Option[Txn] which wraps the
 // transaction present inside a context, if it exists, or None if it does not.
 func CtxTryGetTxnOption(ctx context.Context) immutable.Option[Txn] {
 	txn, gotTxn := CtxTryGetTxn(ctx)
