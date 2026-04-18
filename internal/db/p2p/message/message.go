@@ -286,6 +286,14 @@ func signAndSetMetaData(h client.Host, m Message) error {
 	m.SetVersion()
 	m.SetPubkey(nodePubKey)
 	m.SetSenderID(h.ID())
+	// Explicitly clear the signature before marshaling the signing bytes.
+	// verifyMessage does the same (see SetSignature(nil) below), and the Rust
+	// reimplementation (defradb.rs) clears before signing too. Today every
+	// call site hands us a fresh message where Signature is already nil, but
+	// any future code that reuses a Message struct across sends would fold a
+	// stale signature into the signing bytes and produce a signature that
+	// never verifies on the receiver. See #4719.
+	m.SetSignature(nil)
 
 	forSigning, err := cbor.Marshal(m)
 	if err != nil {
