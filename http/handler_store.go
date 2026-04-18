@@ -474,7 +474,10 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 
 	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		// Use the GraphQL error envelope so clients that only look for
+		// {"errors":[{"message":...}]} on this endpoint see the real cause
+		// instead of falling through to a generic transport error.
+		responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{err})
 		return
 	}
 
@@ -489,7 +492,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
 	if result.Subscription != nil {
-		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+		responseJSON(rw, http.StatusNotAcceptable, gqlErrorResponse{ErrInvalidSubscriptionTransport})
 		return
 	}
 
@@ -502,7 +505,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 
 	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{err})
 		return
 	}
 
@@ -511,7 +514,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
+		responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{ErrStreamingNotSupported})
 		return
 	}
 
