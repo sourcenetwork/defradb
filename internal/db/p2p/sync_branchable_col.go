@@ -56,6 +56,8 @@ func (p *P2P) SyncBranchableCollection(
 	collectionID string,
 	opts *options.SyncBranchableCollectionOptions,
 ) error {
+	log.InfoContext(ctx, "Starting branchable collection sync", corelog.String("CollectionID", collectionID))
+
 	getColOpts := options.GetCollections().SetCollectionID(collectionID)
 	options.WithIdentity(getColOpts, opts.Identity)
 
@@ -72,7 +74,13 @@ func (p *P2P) SyncBranchableCollection(
 		return NewErrCollectionNotBranchable(collectionID)
 	}
 
-	return p.syncBranchableCollection(ctx, collectionID)
+	err = p.syncBranchableCollection(ctx, collectionID)
+	if err != nil {
+		return err
+	}
+
+	log.InfoContext(ctx, "Branchable collection sync completed", corelog.String("CollectionID", collectionID))
+	return nil
 }
 
 // syncBranchableCollection requests branchable collection synchronization from the network.
@@ -156,7 +164,6 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 	syncedHeads map[string]cid.Cid,
 ) (string, error) {
 	if resp.Err != nil {
-		log.ErrorE("Received error response from peer", resp.Err)
 		return "", resp.Err
 	}
 
@@ -182,7 +189,6 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 	for _, headBytes := range reply.Heads {
 		_, colCid, err := cid.CidFromBytes(headBytes)
 		if err != nil {
-			log.ErrorE("Failed to parse CID from reply", err)
 			return reply.Sender, err
 		}
 

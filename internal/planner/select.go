@@ -342,13 +342,18 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
-		result := selectIndex(selectIndexOptions{
-			collection: origScan.col,
-			filter:     origScan.filter,
-			ordering:   origScan.ordering,
-			docMapping: origScan.documentMapping,
-		})
-		origScan.index = result.index
+		// The VersionedFetcher (used when CIDs are present) operates on a temporary
+		// in-memory store that doesn't contain index data, so secondary index
+		// selection must be skipped for CID-based queries.
+		if !n.selectReq.Cids.HasValue() {
+			result := selectIndex(selectIndexOptions{
+				collection: origScan.col,
+				filter:     origScan.filter,
+				ordering:   origScan.ordering,
+				docMapping: origScan.documentMapping,
+			})
+			origScan.index = result.index
+		}
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 

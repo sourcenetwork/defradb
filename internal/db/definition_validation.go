@@ -98,10 +98,6 @@ func (s *definitionState) getCollection(
 		}
 
 		for _, col := range s.collections {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}

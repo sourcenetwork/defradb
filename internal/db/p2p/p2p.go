@@ -482,11 +482,6 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
-	log.Info("Received new pubsub message",
-		corelog.String("PeerID", p.host.ID()),
-		corelog.Any("SenderId", from),
-		corelog.String("Topic", topic))
-
 	req := &protocol.PushLogRequest{}
 	if err := cbor.Unmarshal(msg, req); err != nil {
 		return nil, err

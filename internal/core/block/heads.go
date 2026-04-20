@@ -19,7 +19,6 @@ import (
 	cid "github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -64,13 +63,6 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
-	log.InfoContext(
-		ctx,
-		"Replacing DAG head",
-		corelog.Any("Old", old),
-		corelog.Any("CID", new),
-		corelog.Uint64("Height", height))
-
 	err := hh.store.Delete(ctx, hh.key(old).Bytes())
 	if err != nil {
 		return NewErrDeletingHead(old, err)

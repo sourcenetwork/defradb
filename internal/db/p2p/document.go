@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -130,6 +131,7 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 	if err != nil {
 		return NewErrLoadP2PDocuments(err)
 	}
+	count := 0
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -146,6 +148,8 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
+		count++
 	}
+	log.InfoContext(ctx, "Loaded P2P documents", corelog.Int("Count", count))
 	return iter.Close()
 }

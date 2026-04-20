@@ -12,7 +12,6 @@ package dac
 
 import (
 	"context"
-	"strconv"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 
@@ -62,7 +61,6 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
-
 	return policyID, nil
 }
 
@@ -150,7 +148,6 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 	// as long as they have any of the permissions that imply read access.
 	if permission == acpTypes.DocumentReadPerm {
 		var canRead bool = false
-		var withPermission string
 		var err error
 
 		for _, permissionThatImpliesRead := range acpTypes.ImplyDocumentReadPerm {
@@ -176,20 +173,9 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			}
 
 			if canRead {
-				withPermission = permissionThatImpliesRead.String()
 				break
 			}
 		}
-
-		log.InfoContext(
-			ctx,
-			"Document readable="+strconv.FormatBool(canRead),
-			corelog.Any("Permission", withPermission),
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("DocID", docID),
-		)
 
 		return canRead, nil
 	}
@@ -214,16 +200,6 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			docID,
 		)
 	}
-
-	log.InfoContext(
-		ctx,
-		"Document accessible="+strconv.FormatBool(hasAccess),
-		corelog.Any("Permission", permission),
-		corelog.Any("PolicyID", policyID),
-		corelog.Any("Resource", resourceName),
-		corelog.Any("ActorID", actorID),
-		corelog.Any("DocID", docID),
-	)
 
 	return hasAccess, nil
 }

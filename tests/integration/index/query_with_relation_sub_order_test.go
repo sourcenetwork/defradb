@@ -606,9 +606,14 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 5 indexFetch: parent filter uses rating index via inverted join (1 book matches _ge: 4.0)
-				// For the matched author full index scan is done to get all 4 books
-				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(5),
+				// subType=Book: parent filter uses rating index via inverted join (1 book matches _geq: 4.0).
+				// For the matched author, a clone scan fetches all her books (4 books = 4 index fetches).
+				// Total: 1 (filter match) + 4 (clone for Alice's books) = 5 index fetches, 5 doc fetches.
+				// The rating index also satisfies the sub-ordering (canSatisfyOrder=true),
+				// so the clone skips the redundant in-memory sort — saving 3 iterations.
+				// Without the optimization: iterations would be 8 (5 scan + 3 orderNode).
+				Asserter: testUtils.NewExplainAsserter("subType").
+					WithDocFetches(5).WithFieldFetches(15).WithIndexFetches(5).WithIterations(5),
 			},
 		},
 	}
@@ -1696,6 +1701,80 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithNestedOrderByRelationField_ExhaustiveWithPrimaryParentASC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Author {
+			name
+			book(order: {publisher: {yearOpened: ASC}}) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String
+						book: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						yearOpened: Int @index
+						book: [Book]
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.AddDoc{
+				CollectionID: 2,
+				Doc:          `{"name": "Publisher2020", "yearOpened": 2020}`,
+			},
+			// Book with a publisher
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":        "LinkedBook",
+					"author":       testUtils.NewDocIndex(0, 0),
+					"_publisherID": testUtils.NewDocIndex(2, 0),
+				},
+			},
+			// Book without a publisher (orphan)
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				// ASC + @exhaustive: OrphanBook (null publisher) comes first, LinkedBook after.
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"book": []map[string]any{
+								{"title": "OrphanBook"},
+								{"title": "LinkedBook"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnOrphans(t *testing.T) {
 	// Book is the secondary side (Publisher stores _bookID via @primary).
 	// Querying with order on publisher.establishedYear + @exhaustive triggers orphan detection
@@ -1753,5 +1832,178 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderOnSameIndexedField_ShouldFilterThenOrderASC(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(filter: {rating: {_gt: 3.0}}, order: {rating: ASC}) {
+				title
+				rating
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						rating: Float @index
+						author: Author
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Low Rated",
+					"rating": 2.0,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Mid Rated",
+					"rating": 4.5,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "High Rated",
+					"rating": 4.9,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				// Filter and order on the same field (rating) at the child level.
+				// Only books with rating > 3.0 should be returned, ordered ASC.
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Mid Rated", "rating": 4.5},
+								{"title": "High Rated", "rating": 4.9},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// root=Author: 1 doc fetched (John), no index on Author.
+				// subType=Book: the rating index satisfies both filter and order.
+				//   2 index fetches (only entries with rating > 3.0), 2 doc fetches for matched books.
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderOnSameIndexedField_ShouldFilterThenOrderDESC(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(filter: {rating: {_geq: 4.5}}, order: {rating: DESC}) {
+				title
+				rating
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						rating: Float @index
+						author: Author
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Low Rated",
+					"rating": 2.0,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Mid Rated",
+					"rating": 4.5,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "High Rated",
+					"rating": 4.9,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Top Rated",
+					"rating": 5.0,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				// Filter and order on the same field (rating) at the child level.
+				// Only books with rating >= 4.5 should be returned, ordered DESC.
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Top Rated", "rating": 5.0},
+								{"title": "High Rated", "rating": 4.9},
+								{"title": "Mid Rated", "rating": 4.5},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// root=Author: 1 doc fetched (John), no index on Author.
+				// subType=Book: the rating index satisfies both filter and order.
+				//   3 index fetches (only entries with rating >= 4.5), 3 doc fetches for matched books.
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(3).WithIndexFetches(3),
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

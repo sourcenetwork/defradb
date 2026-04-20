@@ -77,7 +77,6 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
@@ -94,8 +93,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
-
-var txnHandleMap = sync.Map{} // map[client.Txn]cgo.Handle
 
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
@@ -898,11 +895,6 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
-	if hadTxn {
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	}
-
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
@@ -923,12 +915,7 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
-	var txnOpt immutable.Option[client.Txn]
-	if hadTxn {
-		txnOpt = immutable.Some(txn)
-	} else {
-		txnOpt = immutable.None[client.Txn]()
-	}
+	txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
@@ -1060,7 +1047,6 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	handle := cgo.Handle(res.txnPtr)
 	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, dsTxn, handle}
-	txnHandleMap.Store(retTxn.tx.ID(), handle)
 	return retTxn, nil
 }
 
