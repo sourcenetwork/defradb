@@ -52,6 +52,10 @@ type lensedFetcher struct {
 
 	targetVersionID string
 
+	// history is the collection version history keyed by VersionID, used to compute
+	// effective stamp versions for partially-migrated docs.
+	history map[string]*description.TargetedCollectionHistoryLink
+
 	// If true there are migrations registered for the collection being fetched.
 	hasMigrations bool
 }
@@ -109,6 +113,7 @@ func (f *lensedFetcher) Init(
 		return err
 	}
 	f.lens = new(ctx, f.store, f.col.Version().VersionID, history)
+	f.history = history
 	f.txn = txn
 
 	for _, historyItem := range history {
@@ -210,7 +215,7 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 				return nil, fetcher.ExecInfo{}, err
 			}
 
-			err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
+			err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc, doc.CollectionVersionID())
 			if err != nil {
 				return nil, fetcher.ExecInfo{}, err
 			}
@@ -293,12 +298,100 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 	}, nil
 }
 
+// effectiveStampVersion returns the version to stamp a doc with after migration.
+//
+// When migrations are incomplete (some links have no transform yet), the lens pipeline
+// passes docs through no-op links without actually transforming them. Stamping such a
+// doc with the target version would falsely mark it as fully migrated — future fetches
+// would skip the migration even after the missing transforms are registered.
+//
+// We walk from srcVersion toward targetVersionID (forward or backward through history)
+// and stamp with the LAST version we actually transformed into. If target is reachable
+// without hitting any missing-transform tail, we stamp target (fully migrated). Otherwise
+// we stamp at the furthest position where a real transform ran — future fetches at that
+// version will re-enter the migration path and pick up newly-registered transforms for
+// the remaining no-op tail.
+//
+// Direction is determined by walking the history and seeing which side target lies on.
+// If target isn't reachable in either direction (shouldn't happen in practice), we fall
+// back to targetVersionID.
+func (f *lensedFetcher) effectiveStampVersion(srcVersion string) string {
+	if srcVersion == f.targetVersionID {
+		return f.targetVersionID
+	}
+	srcLink, ok := f.history[srcVersion]
+	if !ok {
+		return f.targetVersionID
+	}
+
+	if stamp, ok := f.walkStamp(srcLink, true); ok {
+		return stamp
+	}
+	if stamp, ok := f.walkStamp(srcLink, false); ok {
+		return stamp
+	}
+	return f.targetVersionID
+}
+
+// walkStamp walks from the starting link toward targetVersionID in the given direction
+// (true=forward/Next, false=backward/Previous). It tracks the last version where a real
+// transform ran along the path. Returns (stamp, true) if target was reached along this
+// direction, otherwise (_, false).
+//
+// If the last leg to target is a no-op (pending migration or schema-only patch), the
+// stamp is at the last version where a real transform ran — future fetches at that
+// version will re-enter the migration path and pick up newly-registered transforms
+// for the remaining tail.
+func (f *lensedFetcher) walkStamp(start *description.TargetedCollectionHistoryLink, forward bool) (string, bool) {
+	link := start
+	lastTransformedVersion := link.Collection().VersionID
+	for {
+		var nextOpt immutable.Option[*description.TargetedCollectionHistoryLink]
+		if forward {
+			nextOpt = link.Next()
+		} else {
+			nextOpt = link.Previous()
+		}
+		if !nextOpt.HasValue() {
+			break
+		}
+		next := nextOpt.Value()
+
+		// The transform that matters for this step:
+		//   forward:  incoming link of `next` (next.PreviousVersion)
+		//   backward: incoming link of `link` (link.PreviousVersion) — applied via Inverse
+		var stepHasTransform bool
+		if forward {
+			col := next.Collection()
+			stepHasTransform = col.PreviousVersion.HasValue() &&
+				col.PreviousVersion.Value().Transform.HasValue()
+		} else {
+			col := link.Collection()
+			stepHasTransform = col.PreviousVersion.HasValue() &&
+				col.PreviousVersion.Value().Transform.HasValue()
+		}
+		if stepHasTransform {
+			lastTransformedVersion = next.Collection().VersionID
+		}
+		if next.Collection().VersionID == f.targetVersionID {
+			return lastTransformedVersion, true
+		}
+		link = next
+	}
+	return "", false
+}
+
 // updateDataStore updates the datastore with the migrated values.
 //
 // This removes the need to migrate a document everytime it is fetched as the second time around
 // the underlying fetcher will return the migrated values cached in the datastore instead of the
 // underlying dag store values.
-func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string]any, migrated map[string]any) error {
+func (f *lensedFetcher) updateDataStore(
+	ctx context.Context,
+	original map[string]any,
+	migrated map[string]any,
+	srcVersion string,
+) error {
 	modifiedFieldValuesByName := map[string]any{}
 	for name, originalValue := range original {
 		migratedValue, ok := migrated[name]
@@ -370,8 +463,9 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
+	stampVersion := f.effectiveStampVersion(srcVersion)
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err = txn.Datastore().Set(ctx, versionKey, []byte(f.targetVersionID))
+	err = txn.Datastore().Set(ctx, versionKey, []byte(stampVersion))
 	if err != nil {
 		return NewErrStoreLensVersion(err)
 	}
