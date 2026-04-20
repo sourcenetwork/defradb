@@ -37,6 +37,22 @@ func EnabledSigningFromContext(ctx context.Context) (bool, immutable.Option[iden
 	return val.(bool), extractFullIdentity(ctx) //nolint:forcetypeassert
 }
 
+type signingOverrideContextKey struct{}
+
+// ContextWithSigningOverride returns a context with a per-request signing override.
+func ContextWithSigningOverride(ctx context.Context, enable bool) context.Context {
+	return context.WithValue(ctx, signingOverrideContextKey{}, enable)
+}
+
+// SigningOverrideFromContext returns the per-request signing override if set.
+func SigningOverrideFromContext(ctx context.Context) immutable.Option[bool] {
+	val := ctx.Value(signingOverrideContextKey{})
+	if val == nil {
+		return immutable.None[bool]()
+	}
+	return immutable.Some(val.(bool)) //nolint:forcetypeassert
+}
+
 func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIdentity] {
 	ident := iIdentity.FromContext(ctx)
 	if !ident.HasValue() {

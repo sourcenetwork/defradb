@@ -1162,6 +1162,9 @@ func deleteDoc(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
+		if action.EnableSigning.HasValue() {
+			opts.SetEnableSigning(action.EnableSigning.Value())
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1263,6 +1266,9 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
+	if action.EnableSigning.HasValue() {
+		saveOpts.SetEnableSigning(action.EnableSigning.Value())
+	}
 	return collection.SaveDocument(s.Ctx, doc, saveOpts)
 }
 
@@ -1294,6 +1300,9 @@ func updateDocViaColUpdate(
 	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		updateOpts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return collection.UpdateDocument(s.Ctx, doc, updateOpts)
 }

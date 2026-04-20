@@ -505,6 +505,9 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequ
 	if len(request.Variables) > 0 {
 		opt.SetVariables(request.Variables)
 	}
+	if enable, ok := signingFromRequest(req); ok {
+		opt.SetEnableSigning(enable)
+	}
 
 	return request, opt, nil
 }

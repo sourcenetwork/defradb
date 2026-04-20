@@ -485,6 +485,10 @@ func (c *Client) ExecRequest(
 		return result
 	}
 
+	q := req.URL.Query()
+	setSigningQueryParam(q, opt.EnableSigning)
+	req.URL.RawQuery = q.Encode()
+
 	err = c.http.setDefaultHeaders(req)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)

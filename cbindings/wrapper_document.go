@@ -221,6 +221,9 @@ func (c *Collection) SaveDocument(
 		if saveOpt.Identity.HasValue() {
 			updateOpts.SetIdentity(saveOpt.Identity.Value())
 		}
+		if saveOpt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(saveOpt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {

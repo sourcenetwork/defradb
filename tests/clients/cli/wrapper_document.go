@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -85,7 +87,19 @@ func makeDocAddArgs(
 	if len(opt.EncryptedFields) > 0 {
 		args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
 	}
+	args = appendSigningArgs(args, opt.EnableSigning)
 
+	return args
+}
+
+func appendSigningArgs(args []string, enableSigning immutable.Option[bool]) []string {
+	if enableSigning.HasValue() {
+		if enableSigning.Value() {
+			args = append(args, "--signing")
+		} else {
+			args = append(args, "--no-signing")
+		}
+	}
 	return args
 }
 
@@ -106,6 +120,7 @@ func (c *Collection) UpdateDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendSigningArgs(args, opt.EnableSigning)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -132,6 +147,9 @@ func (c *Collection) SaveDocument(
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
+		if opt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
@@ -141,6 +159,9 @@ func (c *Collection) SaveDocument(
 			SetEncryptedFields(opt.EncryptedFields)
 		if opt.GetIdentity().HasValue() {
 			addOpt.SetIdentity(opt.GetIdentity().Value())
+		}
+		if opt.EnableSigning.HasValue() {
+			addOpt.SetEnableSigning(opt.EnableSigning.Value())
 		}
 		return c.AddDocument(ctx, doc, addOpt)
 	}
@@ -158,6 +179,7 @@ func (c *Collection) DeleteDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendSigningArgs(args, opt.EnableSigning)
 
 	_, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -202,6 +224,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendSigningArgs(args, opt.EnableSigning)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -231,6 +254,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	args = appendSigningArgs(args, opt.EnableSigning)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {

@@ -20,6 +20,8 @@ import (
 type AddDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 	// EncryptDoc enables document encryption when adding a document.
 	EncryptDoc bool
 	// EncryptedFields specifies a list of fields to be encrypted.
@@ -49,6 +51,14 @@ func (b *AddDocumentOptionsBuilder) SetIdentity(id identity.Identity) *AddDocume
 	return b
 }
 
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *AddDocumentOptionsBuilder) SetEnableSigning(enable bool) *AddDocumentOptionsBuilder {
+	b.append(func(opts *AddDocumentOptions) {
+		opts.EnableSigning = immutable.Some(enable)
+	})
+	return b
+}
+
 // SetEncryptDoc enables or disables document encryption.
 func (b *AddDocumentOptionsBuilder) SetEncryptDoc(encrypt bool) *AddDocumentOptionsBuilder {
 	b.append(func(opts *AddDocumentOptions) {
@@ -72,6 +82,8 @@ func (b *AddDocumentOptionsBuilder) SetEncryptedFields(fields []string) *AddDocu
 type UpdateDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 }
 
 // GetIdentity returns the identity for the operation.
@@ -97,6 +109,14 @@ func (b *UpdateDocumentOptionsBuilder) SetIdentity(id identity.Identity) *Update
 	return b
 }
 
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *UpdateDocumentOptionsBuilder) SetEnableSigning(enable bool) *UpdateDocumentOptionsBuilder {
+	b.append(func(opts *UpdateDocumentOptions) {
+		opts.EnableSigning = immutable.Some(enable)
+	})
+	return b
+}
+
 type SaveDocumentOptions = AddDocumentOptions
 
 type SaveDocumentOptionsBuilder = AddDocumentOptionsBuilder
@@ -110,6 +130,8 @@ func SaveDocument() *SaveDocumentOptionsBuilder {
 type DeleteDocumentOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 }
 
 // GetIdentity returns the identity for the operation.
@@ -131,6 +153,14 @@ func DeleteDocument() *DeleteDocumentOptionsBuilder {
 func (b *DeleteDocumentOptionsBuilder) SetIdentity(id identity.Identity) *DeleteDocumentOptionsBuilder {
 	b.append(func(opts *DeleteDocumentOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *DeleteDocumentOptionsBuilder) SetEnableSigning(enable bool) *DeleteDocumentOptionsBuilder {
+	b.append(func(opts *DeleteDocumentOptions) {
+		opts.EnableSigning = immutable.Some(enable)
 	})
 	return b
 }
@@ -178,6 +208,8 @@ func (b *GetDocumentOptionsBuilder) SetShowDeleted(showDeleted bool) *GetDocumen
 type UpdateDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 }
 
 // GetIdentity returns the identity for the operation.
@@ -205,10 +237,22 @@ func (b *UpdateDocumentsWithFilterOptionsBuilder) SetIdentity(
 	return b
 }
 
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *UpdateDocumentsWithFilterOptionsBuilder) SetEnableSigning(
+	enable bool,
+) *UpdateDocumentsWithFilterOptionsBuilder {
+	b.append(func(opts *UpdateDocumentsWithFilterOptions) {
+		opts.EnableSigning = immutable.Some(enable)
+	})
+	return b
+}
+
 // DeleteDocumentsWithFilterOptions contains options for DeleteDocumentsWithFilter operation.
 type DeleteDocumentsWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// EnableSigning overrides the node-level signing config for this request.
+	EnableSigning immutable.Option[bool]
 }
 
 // GetIdentity returns the identity for the operation.
@@ -232,6 +276,16 @@ func (b *DeleteDocumentsWithFilterOptionsBuilder) SetIdentity(
 ) *DeleteDocumentsWithFilterOptionsBuilder {
 	b.append(func(opts *DeleteDocumentsWithFilterOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetEnableSigning overrides the node-level signing config for this request.
+func (b *DeleteDocumentsWithFilterOptionsBuilder) SetEnableSigning(
+	enable bool,
+) *DeleteDocumentsWithFilterOptionsBuilder {
+	b.append(func(opts *DeleteDocumentsWithFilterOptions) {
+		opts.EnableSigning = immutable.Some(enable)
 	})
 	return b
 }

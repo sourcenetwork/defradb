@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -35,6 +36,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
+
+func setContextSigningOverride(ctx context.Context, enableSigning immutable.Option[bool]) context.Context {
+	if enableSigning.HasValue() {
+		return coreblock.ContextWithSigningOverride(ctx, enableSigning.Value())
+	}
+	return ctx
+}
 
 // docIDResult wraps the result of an attempt at a DocID retrieval operation.
 type docIDResult struct {
@@ -147,6 +155,7 @@ func (c *collection) AddDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -179,6 +188,7 @@ func (c *collection) AddManyDocuments(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -309,6 +319,7 @@ func (c *collection) UpdateDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -391,6 +402,7 @@ func (c *collection) SaveDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -441,6 +453,7 @@ func (c *collection) SaveManyDocuments(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -530,7 +543,11 @@ func (c *collection) save(
 		ctx = iIdentity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
-	if !c.db.signingDisabled {
+	enableSigning := !c.db.signingDisabled
+	if override := coreblock.SigningOverrideFromContext(ctx); override.HasValue() {
+		enableSigning = override.Value()
+	}
+	if enableSigning {
 		ctx = coreblock.ContextWithEnabledSigning(ctx)
 	}
 
@@ -690,6 +707,7 @@ func (c *collection) DeleteDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigningOverride(ctx, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
