@@ -50,7 +50,7 @@ func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
 				CollectionID:  0,
 				Filter:        invalidFilterType{Number: 1},
 				Updater:       `{"name": "Eric"}`,
-				ExpectedError: "invalid filter",
+				ExpectedError: "unsupported filter type",
 			},
 		},
 	}
@@ -65,7 +65,7 @@ func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 				CollectionID:  0,
 				Filter:        "",
 				Updater:       `{"name": "Eric"}`,
-				ExpectedError: "invalid filter",
+				ExpectedError: "filter cannot be empty",
 			},
 		},
 	}

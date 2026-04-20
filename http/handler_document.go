@@ -59,7 +59,7 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 		}
 
 		if err := col.AddManyDocuments(ctx, docList, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -70,7 +70,7 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 			return
 		}
 		if err := col.AddDocument(ctx, doc, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -94,12 +94,12 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 
 	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 
 	err = col.UpdateDocument(ctx, doc, updateOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -137,7 +137,7 @@ func (h *collectionHandler) DeleteDocument(rw http.ResponseWriter, req *http.Req
 
 	_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -161,12 +161,12 @@ func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Reques
 
 	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 

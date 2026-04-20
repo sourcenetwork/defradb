@@ -59,6 +59,10 @@ type docSyncItem struct {
 // This function call will block until there is a response for all of the docIDs listed.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+	log.InfoContext(ctx, "Starting document sync",
+		corelog.Any("CollectionName", collectionName),
+		corelog.Int("DocIDCount", len(docIDs)))
+
 	cols, err := p.db.GetCollections(
 		ctx,
 		options.WithIdentity(
@@ -75,7 +79,12 @@ func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 
 	collectionID := cols[0].Version().CollectionID
 	_, err = p.syncDocuments(ctx, collectionID, docIDs)
-	return err
+	if err != nil {
+		return err
+	}
+
+	log.InfoContext(ctx, "Document sync completed", corelog.Any("CollectionName", collectionName))
+	return nil
 }
 
 // syncDocuments requests document synchronization from the network.
@@ -164,14 +173,14 @@ func (p *P2P) handleDocSyncResponse(
 	results map[string][]cid.Cid,
 ) string {
 	if resp.Err != nil {
-		log.ErrorE("Received error response from peer", resp.Err)
-		return ""
+		log.ErrorE("Received error response from peer", resp.Err, corelog.String("PeerID", resp.From))
+		return resp.From
 	}
 
 	var reply docSyncReply
 	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
 		log.ErrorE("Failed to unmarshal doc sync reply", err)
-		return ""
+		return resp.From
 	}
 
 	for _, item := range reply.Results {
@@ -279,9 +288,11 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 		result, err := p.processDocSyncItem(docID)
 		if err != nil {
 			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
-			continue // Skip failed items
+			continue
 		}
-		results = append(results, result)
+		if len(result.Heads) > 0 {
+			results = append(results, result)
+		}
 	}
 
 	reply := &docSyncReply{
@@ -307,7 +318,9 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	if len(cids) == 0 {
-		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
+		// This node doesn't have this document — normal in a broadcast sync where
+		// all subscribed nodes receive the request regardless of whether they own the doc.
+		return docSyncItem{}, nil
 	}
 
 	result := docSyncItem{

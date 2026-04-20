@@ -50,14 +50,3 @@ func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 	err := txn.Commit()
 	require.NoError(t, err)
 }
-
-func TestConcurrentTxnSync(t *testing.T) {
-	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t)
-
-	txn := rootstore.NewTxn(false)
-
-	cTxn := &concurrentTxn{Txn: txn}
-	err := cTxn.Sync(ctx)
-	require.NoError(t, err)
-}

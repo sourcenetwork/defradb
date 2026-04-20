@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -39,7 +40,7 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 		key := keys.NewP2PDocumentKey(docID)
 		err = txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PDocument(err, docID)
 		}
 	}
 
@@ -71,7 +72,7 @@ func (p *P2P) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 		key := keys.NewP2PDocumentKey(docID)
 		err = txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PDocument(err, docID)
 		}
 	}
 
@@ -99,7 +100,7 @@ func (p *P2P) ListP2PDocuments(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PDocuments(err)
 	}
 
 	docIDs := []string{}
@@ -128,8 +129,9 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrLoadP2PDocuments(err)
 	}
+	count := 0
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -146,6 +148,8 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
+		count++
 	}
+	log.InfoContext(ctx, "Loaded P2P documents", corelog.Int("Count", count))
 	return iter.Close()
 }

@@ -223,7 +223,7 @@ func (n *orphanPointLookupNode) initPointLookupState() error {
 		docMapping: n.documentMapping,
 	})
 
-	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index)
+	n.parentClone = parentScan.cloneWithFilter(parentFilter, parentResult.index, nil)
 	if err := n.parentClone.Init(); err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (n *orphanPointLookupNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, e
 
 		hasChild, err := ds.Has(n.planner.ctx, &indexKey)
 		if err != nil {
-			return core.Doc{}, false, err
+			return core.Doc{}, false, NewErrCheckOrphanPointLookup(err)
 		}
 		n.execInfo.fetches.IndexesFetched++
 

@@ -233,12 +233,16 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	ds := txn.Datastore()
 	exists, err := ds.Has(ctx, &key)
 	if err != nil {
-		return err
+		return NewErrCheckIndexKeyExists(err, index.desc.Name)
 	}
 	if !exists {
 		return NewErrCorruptedIndex(index.desc.Name)
 	}
-	return ds.Delete(ctx, &key)
+	err = ds.Delete(ctx, &key)
+	if err != nil {
+		return NewErrDeleteIndexKey(err)
+	}
+	return nil
 }
 
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
@@ -260,7 +264,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateDeleteIndexIterator(err)
 	}
 
 	keysToDelete := make([]keys.IndexDataStoreKey, 0)
@@ -364,7 +368,11 @@ func (index *collectionSimpleIndex) Save(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	return index.generateKeysAndProcess(ctx, doc, true, func(key keys.IndexDataStoreKey) error {
-		return txn.Datastore().Set(ctx, &key, []byte{})
+		err := txn.Datastore().Set(ctx, &key, []byte{})
+		if err != nil {
+			return NewErrStoreIndexKey(err)
+		}
+		return nil
 	})
 }
 
@@ -375,9 +383,12 @@ func (index *collectionSimpleIndex) Update(
 ) error {
 	err := index.Delete(ctx, oldDoc)
 	if err != nil {
-		return err
+		return NewErrUpdateIndex(err, index.desc.Name)
 	}
-	return index.Save(ctx, newDoc)
+	if err := index.Save(ctx, newDoc); err != nil {
+		return NewErrUpdateIndex(err, index.desc.Name)
+	}
+	return nil
 }
 
 func (index *collectionSimpleIndex) Delete(
@@ -456,7 +467,7 @@ func validateUniqueKeyValue(
 	if len(val) != 0 {
 		exists, err := txn.Datastore().Has(ctx, &key)
 		if err != nil {
-			return err
+			return NewErrCheckUniqueIndexConstraint(err)
 		}
 		if exists {
 			return newUniqueIndexError(doc, fieldsDescs)
@@ -498,7 +509,11 @@ func (index *collectionUniqueIndex) Delete(
 		if err != nil {
 			return err
 		}
-		return txn.Datastore().Delete(ctx, &key)
+		err = txn.Datastore().Delete(ctx, &key)
+		if err != nil {
+			return NewErrDeleteIndexKey(err)
+		}
+		return nil
 	})
 }
 
@@ -515,10 +530,13 @@ func (index *collectionUniqueIndex) Update(
 
 	err := index.Delete(ctx, oldDoc)
 	if err != nil {
-		return err
+		return NewErrUpdateIndex(err, index.desc.Name)
 	}
 
-	return index.Save(ctx, newDoc)
+	if err := index.Save(ctx, newDoc); err != nil {
+		return NewErrUpdateIndex(err, index.desc.Name)
+	}
+	return nil
 }
 
 func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {

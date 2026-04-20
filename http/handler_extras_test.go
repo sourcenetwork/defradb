@@ -59,5 +59,5 @@ func TestPurgeDevModeFalse(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
-	require.Equal(t, 400, res.StatusCode)
+	require.Equal(t, 403, res.StatusCode)
 }

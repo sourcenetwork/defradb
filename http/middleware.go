@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -92,13 +90,7 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 		opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(req.Context()))
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
-			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-				rw.WriteHeader(http.StatusUnauthorized)
-				_, _ = fmt.Fprintln(rw, err.Error())
-				return
-			}
-			rw.WriteHeader(http.StatusNotFound)
-			_, _ = fmt.Fprintln(rw, err.Error())
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
 
