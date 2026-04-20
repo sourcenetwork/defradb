@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/stretchr/testify/require"
 )
 
@@ -85,10 +84,6 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 	for i, c := range cols {
 		collections[i] = c.Definition
 	}
-
-	cache := description.NewCollectionCache()
-	cache.AddAll(collections)
-	ctx = description.ContextWithCollectionCache(ctx, cache)
 
 	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
