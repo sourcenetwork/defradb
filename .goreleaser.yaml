@@ -89,7 +89,6 @@ dmg:
     extra_files:
       - README.md
       - licenses/BSL.txt
-    replace: true
 
 brews:
   - name: defradb

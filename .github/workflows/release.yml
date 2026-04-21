@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'New tag name'
+        description: "New tag name"
         required: true
 
 # Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
@@ -43,7 +43,7 @@ jobs:
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v6
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
           cache: false
 
@@ -58,6 +58,19 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
 
       - name: Run GoReleaser
+        if: matrix.os != 'macos-latest'
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser-pro
+          version: 2.6.1
+          args: release --clean --split ${{ env.flags }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+
+      - name: Run GoReleaser with MacOS notarization
+        if: matrix.os == 'macos-latest'
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
@@ -110,7 +123,7 @@ jobs:
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v6
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
           cache: false
 
@@ -167,7 +180,8 @@ jobs:
 
   docker-build-push:
     name: Build and push Docker image
-    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+    runs-on:
+      runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
     steps:
       - name: Enable RunsOn action
