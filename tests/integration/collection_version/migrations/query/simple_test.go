@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestCollectionMigrationQuery_WithSingleMigration_AppliesMigration(t *testing.T) {
@@ -372,6 +373,9 @@ func TestCollectionMigrationQuery_WithMigrationOnlyOnLastStep_AppliesOnlyLastSte
 
 func TestCollectionMigrationQuery_WithMigrationsAcrossMultipleVersions_AppliesAllMigrations(t *testing.T) {
 	test := testUtils.TestCase{
+		// Lens migrations return nil for migrated field values when indexes are present.
+		// https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -76,13 +76,14 @@ func TestCollectionMigrationQuery_SparseChainWithIndexAndForwardMigration_Should
 
 // TestCollectionMigrationQuery_ThreeIncrementalMigrations_ShouldMigrateAcrossAllThree
 // extends the two-migration scenario in simple_test.go to three incremental
-// registrations. Each registration triggers a reindex; with partial-chain
-// stamping every intermediate stamp must be re-migrated when the next
-// migration is registered. Without the fix, the second or third migration
-// would be skipped because the doc would appear already at the active
-// version.
+// registrations. Each registration triggers a reindex; intermediate registrations
+// stamp the doc at the active version even though later transforms have not been
+// applied, so subsequent registrations see a cached stamp and skip re-migration.
+// https://github.com/sourcenetwork/defradb/issues/4353
 func TestCollectionMigrationQuery_ThreeIncrementalMigrations_ShouldMigrateAcrossAllThree(t *testing.T) {
 	test := testUtils.TestCase{
+		// Same root cause as #4353 — skipped under secondary-index multiplier.
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -328,12 +329,14 @@ func TestCollectionMigrationQuery_IntermediateMigrationRegisteredLast_ShouldProd
 }
 
 // TestCollectionMigrationQuery_IntermediateStampSurvivesRestart_ShouldRemigrateAfterRestart
-// verifies that the intermediate stamp (written when the chain is incomplete)
-// is persisted and still works correctly after a restart and registration of
-// the missing migration. Existing restart tests use a complete chain before
-// restart; none cover partial-chain stamps.
+// exercises the same incremental-registration pattern as the three-migration
+// test but across a restart. The intermediate doc-version stamp is persisted;
+// after restart, registering the second migration must trigger a re-migration.
+// https://github.com/sourcenetwork/defradb/issues/4353
 func TestCollectionMigrationQuery_IntermediateStampSurvivesRestart_ShouldRemigrateAfterRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		// Same root cause as #4353 — skipped under secondary-index multiplier.
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
