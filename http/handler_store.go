@@ -515,7 +515,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Add("Content-Type", sseAcceptHeader)
+	rw.Header().Add("Content-Type", "application/json")
 	rw.Header().Add("Cache-Control", "no-cache")
 	rw.Header().Add("Connection", "keep-alive")
 	rw.WriteHeader(http.StatusOK)
