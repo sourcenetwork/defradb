@@ -23,13 +23,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-// These tests exercise the partial-chain stamp logic introduced to fix
-// https://github.com/sourcenetwork/defradb/issues/4353. They go beyond
+// These tests document the incremental-registration bug tracked in
+// https://github.com/sourcenetwork/defradb/issues/4736. They go beyond
 // `TestCollectionMigrationQuery_WithMigrationsAcrossMultipleVersions_AppliesAllMigrations` in `simple_test.go`
 // (which registers exactly two incremental migrations) by covering sparse
 // version chains, three or more incremental registrations, out-of-order
-// intermediate registration, and persistence of intermediate stamps across
-// a restart.
+// intermediate registration, and persistence of stale stamps across a
+// restart. Cases that require the proper fix (stamp invalidation on chain
+// change) are excluded under the secondary-index multiplier.
 
 // TestCollectionMigrationQuery_SparseChainWithIndexAndForwardMigration_ShouldMigrateAndReindexCorrectly
 // covers a five-version chain where only the middle link (v3→v4) has a
@@ -79,10 +80,10 @@ func TestCollectionMigrationQuery_SparseChainWithIndexAndForwardMigration_Should
 // registrations. Each registration triggers a reindex; intermediate registrations
 // stamp the doc at the active version even though later transforms have not been
 // applied, so subsequent registrations see a cached stamp and skip re-migration.
-// https://github.com/sourcenetwork/defradb/issues/4353
+// https://github.com/sourcenetwork/defradb/issues/4736
 func TestCollectionMigrationQuery_ThreeIncrementalMigrations_ShouldMigrateAcrossAllThree(t *testing.T) {
 	test := testUtils.TestCase{
-		// Same root cause as #4353 — skipped under secondary-index multiplier.
+		// Same root cause as #4736 — skipped under secondary-index multiplier.
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -197,23 +198,14 @@ func TestCollectionMigrationQuery_ThreeIncrementalMigrations_ShouldMigrateAcross
 
 // TestCollectionMigrationQuery_IntermediateMigrationRegisteredLast_ShouldProduceFullyMigratedResults
 // covers the case where the outer migrations are registered first and an
-// intermediate migration closes the chain last. The docs get stamped at
-// intermediate versions during each registration; the final registration
-// must re-migrate them through the newly-complete chain. Unlike
-// `TestCollectionMigrationQuery_WithMigrationsRegisteredBeforePatchesInReverseOrder_AppliesAllMigrations`
-// which registers migrations before the patches exist, here patches and
-// outer migrations are already in place when the intermediate arrives.
-//
-// Known limitation: under the secondary-index multiplier the partial-chain stamp
-// logic can't tell a "schema-only patch" no-op from a "pending migration" no-op.
-// When an outer migration is registered first, the intermediate step is recorded
-// as a no-op, and the doc is stamped past it. When the intermediate migration is
-// finally registered the doc already appears at target and is not re-migrated.
-// Fixing this requires tracking which no-op links are "pending" vs "permanent",
-// which isn't captured in the current data model.
+// intermediate migration closes the chain last. Under an index, each
+// registration triggers a reindex that stamps the doc past the still-nil
+// intermediate edge; when that edge is later filled, the stamp already equals
+// the active version and the fetcher short-circuits.
 // https://github.com/sourcenetwork/defradb/issues/4736
 func TestCollectionMigrationQuery_IntermediateMigrationRegisteredLast_ShouldProduceFullyMigratedResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// Same root cause as #4736 — skipped under secondary-index multiplier.
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -330,12 +322,12 @@ func TestCollectionMigrationQuery_IntermediateMigrationRegisteredLast_ShouldProd
 
 // TestCollectionMigrationQuery_IntermediateStampSurvivesRestart_ShouldRemigrateAfterRestart
 // exercises the same incremental-registration pattern as the three-migration
-// test but across a restart. The intermediate doc-version stamp is persisted;
-// after restart, registering the second migration must trigger a re-migration.
-// https://github.com/sourcenetwork/defradb/issues/4353
+// test but across a restart. The stale doc-version stamp is persisted to disk
+// and survives the restart, so the second registration still sees a cache hit.
+// https://github.com/sourcenetwork/defradb/issues/4736
 func TestCollectionMigrationQuery_IntermediateStampSurvivesRestart_ShouldRemigrateAfterRestart(t *testing.T) {
 	test := testUtils.TestCase{
-		// Same root cause as #4353 — skipped under secondary-index multiplier.
+		// Same root cause as #4736 — skipped under secondary-index multiplier.
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{

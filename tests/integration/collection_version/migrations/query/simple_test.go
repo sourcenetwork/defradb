@@ -373,8 +373,10 @@ func TestCollectionMigrationQuery_WithMigrationOnlyOnLastStep_AppliesOnlyLastSte
 
 func TestCollectionMigrationQuery_WithMigrationsAcrossMultipleVersions_AppliesAllMigrations(t *testing.T) {
 	test := testUtils.TestCase{
-		// Lens migrations return nil for migrated field values when indexes are present.
-		// https://github.com/sourcenetwork/defradb/issues/4353
+		// The doc-version stamp written during reindex does not invalidate when a new
+		// migration is registered on a previously-nil edge, so the second registration
+		// is cached-over and the migrated field stays nil.
+		// https://github.com/sourcenetwork/defradb/issues/4736
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
