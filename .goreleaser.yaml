@@ -90,10 +90,12 @@ dmg:
       - README.md
       - licenses/BSL.txt
 
-brews:
+homebrew_casks:
   - name: defradb
     ids:
       - defradb_archive
+    binaries:
+      - defradb
     repository:
       owner: sourcenetwork
       name: homebrew-tap
@@ -105,10 +107,12 @@ brews:
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    install: |
-      bin.install "defradb"
-    test: |
-      system "#{bin}/defradb", "version"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/defradb"]
+          end
 
 release:
   target_commitish: "{{ .Commit }}"
