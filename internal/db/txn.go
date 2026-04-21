@@ -31,34 +31,30 @@ import (
 // The returned context will contain the transaction
 // along with the copied values from the input context.
 func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Context, *Txn, error) {
-	// explicit transaction
-	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
-	if ok {
-		txn, ok := ctxTxn.(*Txn)
-		if !ok {
-			return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
+	var ctxTxn any
+	var existsOnCtx bool
+	ctxTxn, existsOnCtx = datastore.CtxTryGetTxn(ctx)
+	if !existsOnCtx {
+		var err error
+		ctxTxn, err = db.NewTxn(readOnly)
+		if err != nil {
+			return nil, nil, err
 		}
-
-		if txn.explicit {
-			// if it's already an explicit txn we return it as is.
-			return InitContext(ctx, txn), txn, nil
-		}
-
-		// If the txn has already been set on the context but it hasn't already been set as explicit,
-		// we create a copy of the txn and mark it as an explicit txn.
-		explicitTxn := &Txn{
-			txn.BasicTxn,
-			txn.db,
-			true,
-		}
-		return InitContext(ctx, explicitTxn), explicitTxn, nil
 	}
 
-	clientTxn, err := db.NewTxn(readOnly)
-	if err != nil {
-		return nil, nil, err
+	txn, ok := ctxTxn.(*Txn)
+	if !ok {
+		return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 	}
-	txn := clientTxn.(*Txn) //nolint:forcetypeassert
+
+	if !txn.explicit && existsOnCtx {
+		txn = &Txn{
+			BasicTxn: txn.BasicTxn,
+			db:       txn.db,
+			explicit: true,
+		}
+	}
+
 	return InitContext(ctx, txn), txn, nil
 }
 
