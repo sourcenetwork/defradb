@@ -45,12 +45,13 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
-	_ "github.com/sourcenetwork/defradb/tests/multiplier"
+	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func init() {
+	os.Setenv(multipliersEnvName, "signed-docs")
 	multiplier.Init(multipliersEnvName)
 }
 
@@ -743,6 +744,31 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 	for i, idx := range actionIndices {
 		testCase.Actions[idx] = modified[i]
+	}
+
+	applyTestCaseLevelMultipliers(testCase, multiplier.Get())
+}
+
+// applyTestCaseLevelMultipliers mutates TestCase fields based on the given
+// comma-separated list of active multiplier names.
+//
+// Multipliers registered with testo can only modify actions via the
+// [multiplier.Multiplier] interface. Some multipliers need to flip
+// TestCase-level configuration instead (e.g. [SignedDocs] sets
+// [TestCase.EnableSigning]). Each case below is a documented exception that
+// cannot be expressed via action rewriting.
+//
+// The hook only upgrades values; it never downgrades. Tests that already
+// configure the flag explicitly are unaffected.
+//
+// activeNames is passed in rather than read from testo's package-level state
+// so this function is directly unit-testable.
+func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
+	for _, name := range strings.Split(activeNames, ",") {
+		switch strings.TrimSpace(name) {
+		case defraMultiplier.SignedDocs:
+			testCase.EnableSigning = true
+		}
 	}
 }
 
