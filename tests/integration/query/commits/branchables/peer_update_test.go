@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t *testing.T) {
@@ -42,6 +43,9 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// Signed counter deltas are double-applied across peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

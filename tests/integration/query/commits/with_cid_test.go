@@ -16,10 +16,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -61,6 +66,10 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -220,8 +229,13 @@ func TestQueryCommits_MultipleCids(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
 func TestQueryCommits_ListOfOne(t *testing.T) {
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
