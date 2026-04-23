@@ -682,7 +682,7 @@ func TestColVersionUpdateRemoveCollection_ReferencedByRelation_ReturnsError(t *t
 						{ "op": "remove", "path": "/Users" }
 					]
 				`,
-				ExpectedError: "no type found for given name",
+				ExpectedError: "cannot remove a collection while another field references it",
 			},
 			// Transaction rolled back: both collections still exist.
 			&action.GetCollections{
@@ -727,7 +727,7 @@ func TestColVersionUpdateRemoveCollection_ReferencedByRelation_OtherSide_Returns
 						{ "op": "remove", "path": "/Books" }
 					]
 				`,
-				ExpectedError: "no type found for given name",
+				ExpectedError: "cannot remove a collection while another field references it",
 			},
 			// Transaction rolled back: both collections still exist.
 			&action.GetCollections{

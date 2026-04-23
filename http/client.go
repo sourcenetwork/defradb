@@ -177,9 +177,7 @@ func (c *Client) DeleteCollection(
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	q := methodURL.Query()
-	for _, name := range names {
-		q.Add("name", name)
-	}
+	q.Set("name", strings.Join(names, ","))
 	methodURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)

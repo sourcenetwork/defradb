@@ -1054,7 +1054,7 @@
         },
         "/collections": {
             "delete": {
-                "description": "Delete the active version of a collection by name",
+                "description": "Delete the active version of one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names.",
                 "operationId": "delete_collection",
                 "parameters": [
                     {
@@ -1072,9 +1072,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [

@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -148,10 +149,9 @@ func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Reques
 
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
-	names := req.URL.Query()["name"]
-	if len(names) == 0 {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrCollectionNameRequired})
-		return
+	var names []string
+	if joined := req.URL.Query().Get("name"); joined != "" {
+		names = strings.Split(joined, ",")
 	}
 
 	opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(ctx))
@@ -832,7 +832,8 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	deleteCollection := openapi3.NewOperation()
 	deleteCollection.OperationID = "delete_collection"
-	deleteCollection.Description = "Delete the active version of a collection by name"
+	deleteCollection.Description = "Delete the active version of one or more collections. " +
+		"The 'name' query parameter accepts a comma-separated (CSV) list of collection names."
 	deleteCollection.Tags = []string{"collection"}
 	deleteCollection.AddParameter(openapi3.NewQueryParameter("name").
 		WithRequired(true).

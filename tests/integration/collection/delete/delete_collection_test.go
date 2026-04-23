@@ -305,7 +305,7 @@ func TestDeleteCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
 			},
 			&action.DeleteCollection{
 				Names:         []string{"Users"},
-				ExpectedError: "no type found for given name",
+				ExpectedError: "cannot remove a collection while another field references it",
 			},
 			// The failed delete must roll back atomically: both collections still exist.
 			&action.GetCollections{
@@ -345,7 +345,7 @@ func TestDeleteCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing
 			},
 			&action.DeleteCollection{
 				Names:         []string{"Books"},
-				ExpectedError: "no type found for given name",
+				ExpectedError: "cannot remove a collection while another field references it",
 			},
 
 			// The failed delete must roll back atomically: both collections still exist.

@@ -141,6 +141,15 @@ func NewErrTypeNotFound(typeName string) error {
 	)
 }
 
+func NewErrTypeNotFoundOnField(typeName, referencedBy, fieldName string) error {
+	return errors.New(
+		errTypeNotFound,
+		errors.NewKV("Type", typeName),
+		errors.NewKV("ReferencedBy", referencedBy),
+		errors.NewKV("Field", fieldName),
+	)
+}
+
 func NewErrNonNullForTypeNotSupported(typeName string) error {
 	return errors.New(
 		errNonNullForTypeNotSupported,
