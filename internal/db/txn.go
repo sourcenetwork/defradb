@@ -376,11 +376,11 @@ func (txn *Txn) PatchCollection(
 
 func (txn *Txn) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteCollection(ctx, name, opts...)
+	return txn.db.DeleteCollection(ctx, names, opts...)
 }
 
 func (txn *Txn) SetActiveCollectionVersion(

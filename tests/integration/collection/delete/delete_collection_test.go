@@ -33,7 +33,7 @@ func TestDeleteCollection_Simple_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Name: "Users",
+				Names: []string{"Users"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -55,7 +55,7 @@ func TestDeleteCollection_Simple_QueriesNoLongerWork(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Name: "Users",
+				Names: []string{"Users"},
 			},
 			&action.Request{
 				Request: `query {
@@ -95,7 +95,7 @@ func TestDeleteCollection_WithDocuments_ReturnsError(t *testing.T) {
 				},
 			},
 			&action.DeleteCollection{
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: "cannot delete a collection that has documents",
 			},
 		},
@@ -124,7 +124,7 @@ func TestDeleteCollection_WithSoftDeletedDocuments_ReturnsError(t *testing.T) {
 				DocID:        0,
 			},
 			&action.DeleteCollection{
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: "cannot delete a collection that has documents",
 			},
 		},
@@ -137,7 +137,7 @@ func TestDeleteCollection_NonExistentCollection_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.DeleteCollection{
-				Name:          "NonExistent",
+				Names:         []string{"NonExistent"},
 				ExpectedError: "collection not found",
 			},
 		},
@@ -160,7 +160,7 @@ func TestDeleteCollection_MultipleCollections_DeleteOne(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Name: "Users",
+				Names: []string{"Users"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
@@ -207,7 +207,7 @@ func TestDeleteCollection_WithTransaction_Succeeds(t *testing.T) {
 			},
 			&action.DeleteCollection{
 				TransactionID: immutable.Some(1),
-				Name:          "Users",
+				Names:         []string{"Users"},
 			},
 			&action.CommitTransaction{
 				TransactionID: 1,
@@ -240,7 +240,7 @@ func TestDeleteCollection_WithTransactionWithoutCommit_CollectionStillExists(t *
 			},
 			&action.DeleteCollection{
 				TransactionID: immutable.Some(1),
-				Name:          "Users",
+				Names:         []string{"Users"},
 			},
 			// Without committing, the collection data should still exist. Verify via
 			// GetCollections which reads from a separate transaction.
@@ -274,10 +274,10 @@ func TestDeleteCollection_DeleteBothCollections_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Name: "Users",
+				Names: []string{"Users"},
 			},
 			&action.DeleteCollection{
-				Name: "Books",
+				Names: []string{"Books"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -304,8 +304,23 @@ func TestDeleteCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: "no type found for given name",
+			},
+			// The failed delete must roll back atomically: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
 			},
 		},
 	}
@@ -329,8 +344,110 @@ func TestDeleteCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing
 				`,
 			},
 			&action.DeleteCollection{
-				Name:          "Books",
+				Names:         []string{"Books"},
 				ExpectedError: "no type found for given name",
+			},
+
+			// The failed delete must roll back atomically: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Multiple unrelated collections can be deleted in a single call.
+func TestDeleteCollection_MultipleCollections_AtomicallyInOneCall(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Books {
+						title: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users", "Books"},
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// The whole point of multi-delete: two collections referencing each other cannot be
+// deleted one at a time (see the relation-error tests above), but passing both to a
+// single DeleteCollection call succeeds because the underlying patch is atomic.
+func TestDeleteCollection_BothRelatedCollections_InOneCall_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users", "Books"},
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// If any name in the list is unknown, the whole call fails and nothing is deleted.
+func TestDeleteCollection_MixedValidAndInvalidName_RollsBack(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names:         []string{"Users", "NonExistent"},
+				ExpectedError: "collection not found",
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
 			},
 		},
 	}

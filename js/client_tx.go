@@ -113,8 +113,8 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 }
 
 func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
-	name, err := stringArg(args, 0, "name")
-	if err != nil {
+	var names []string
+	if err := structArg(args, 0, "names", &names); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 1, t.txns)
@@ -123,7 +123,7 @@ func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value
 	}
 	opt := options.DeleteCollection()
 	setOptIdentity(opt, args, 1)
-	err = t.txn.DeleteCollection(ctx, name, opt)
+	err = t.txn.DeleteCollection(ctx, names, opt)
 	return js.Undefined(), err
 }
 

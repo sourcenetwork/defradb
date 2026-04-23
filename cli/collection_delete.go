@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -20,33 +21,46 @@ import (
 )
 
 func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
-	var name string
 	var cmd = &cobra.Command{
-		Use:   "delete --name <name>",
-		Short: "Delete the active collection version",
-		Long: `Delete the active version of a collection by name.
+		Use:   "delete [collectionNames]",
+		Short: "Delete the active collection versions",
+		Long: `Delete the active version of one or more collections by name.
 
-Only the latest (head) version is deleted per call. If the collection has multiple
+A single name, or a comma-separated list of names, may be provided. All named
+collections are removed atomically in a single operation. This can be used to
+delete collections that reference each other via relations, since deleting them
+one at a time would leave a dangling reference and be rolled back.
+
+Only the latest (head) version is deleted per call. If a collection has multiple
 versions, earlier versions must be deleted separately after each head is removed.
 
-The collection must not contain any documents. Delete all documents first before
-deleting the collection.`,
+The named collections must not contain any documents. Delete all documents first
+before deleting the collection.`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if name == "" {
-				return NewErrRequiredFlagEmpty("name", "n")
+			var names []string
+			for name := range strings.SplitSeq(args[0], ",") {
+				name = strings.TrimSpace(name)
+				if name == "" {
+					continue
+				}
+				names = append(names, name)
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
 
 			opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(cmd.Context()))
-			return cliClient.DeleteCollection(cmd.Context(), name, opt)
+			return cliClient.DeleteCollection(cmd.Context(), names, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "delete a collection by name",
-		`defradb client collection delete --name Users`)
+	EmbedCLIExample(ctx, cmd, "delete a single collection",
+		`defradb client collection delete Users`)
 
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Collection name to delete")
+	EmbedCLIExample(ctx, cmd,
+		"delete multiple collections in one call (this can be used to delete collections that reference "+
+			"each other via relations)",
+		`defradb client collection delete Users,Books`)
 
 	return cmd
 }

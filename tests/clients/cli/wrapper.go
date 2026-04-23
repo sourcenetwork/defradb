@@ -425,10 +425,10 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
-	args := []string{"client", "collection", "delete", "--name", name}
+	args := []string{"client", "collection", "delete", strings.Join(names, ",")}
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

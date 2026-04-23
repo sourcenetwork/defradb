@@ -42,7 +42,7 @@ func TestNAC_GatesDeleteCollection_AuthorizedIdentity_AllowAccess(t *testing.T) 
 			// This should work as the identity is authorized.
 			&action.DeleteCollection{
 				Identity: testUtils.ClientIdentity(1),
-				Name:     "Users",
+				Names:    []string{"Users"},
 			},
 		},
 	}
@@ -80,7 +80,7 @@ func TestNAC_GatesDeleteCollection_NoIdentity_NotAuthorizedError(t *testing.T) {
 			// We haven't authorized non-identities. So, this should error.
 			&action.DeleteCollection{
 				Identity:      testUtils.NoIdentity(),
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePatchCollectionPerm),
 			},
 		},
@@ -117,7 +117,7 @@ func TestNAC_GatesDeleteCollection_NoIdentity_CLIClient_NotAuthorizedError(t *te
 			// We haven't authorized non-identities. So, this should error.
 			&action.DeleteCollection{
 				Identity:      testUtils.NoIdentity(),
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},
@@ -157,7 +157,7 @@ func TestNAC_GatesDeleteCollection_WrongIdentity_NotAuthorizedError(t *testing.T
 			// Wrong user/identity will also not be authorized.
 			&action.DeleteCollection{
 				Identity:      testUtils.ClientIdentity(2),
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePatchCollectionPerm),
 			},
 		},
@@ -194,7 +194,7 @@ func TestNAC_GatesDeleteCollection_WrongIdentity_CLIClient_NotAuthorizedError(t 
 			// Wrong user/identity will also not be authorized.
 			&action.DeleteCollection{
 				Identity:      testUtils.ClientIdentity(2),
-				Name:          "Users",
+				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 		},

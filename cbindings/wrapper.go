@@ -695,16 +695,16 @@ func (w *CWrapper) PatchCollection(
 
 func (w *CWrapper) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	cNames := C.CString(strings.Join(names, ","))
+	defer C.free(unsafe.Pointer(cNames))
 	defer C.FreeIdentity(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cName, cIdentity))
+	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cNames, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

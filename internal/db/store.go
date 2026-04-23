@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -248,7 +249,7 @@ func (db *DB) PatchCollection(
 
 func (db *DB) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
@@ -267,7 +268,7 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	err = db.deleteCollection(ctx, name)
+	err = db.deleteCollection(ctx, names)
 	if err != nil {
 		return err
 	}
@@ -275,13 +276,27 @@ func (db *DB) DeleteCollection(
 	return txn.Commit()
 }
 
-func (db *DB) deleteCollection(ctx context.Context, name string) error {
-	col, err := db.getCollectionByName(ctx, name)
-	if err != nil {
-		return err
+func (db *DB) deleteCollection(ctx context.Context, names []string) error {
+	if len(names) == 0 {
+		return client.ErrCollectionNameRequired
 	}
 
-	patch := fmt.Sprintf(`[{"op": "remove", "path": "/%s"}]`, col.Version().VersionID)
+	seen := make(map[string]struct{}, len(names))
+	ops := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		col, err := db.getCollectionByName(ctx, name)
+		if err != nil {
+			return err
+		}
+		ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+	}
+
+	patch := "[" + strings.Join(ops, ",") + "]"
 	return db.patchCollection(ctx, patch, immutable.None[model.Lens]())
 }
 

@@ -205,15 +205,20 @@ type Store interface {
 		opts ...options.Enumerable[options.PatchCollectionOptions],
 	) error
 
-	// DeleteCollection deletes the active version of the collection with the given name.
+	// DeleteCollection deletes the active versions of the collections with the given names.
 	//
-	// Only the latest (head) version is deleted per call. If the collection has multiple versions,
-	// earlier versions must be deleted separately after each head is removed.
+	// All names are removed atomically in a single patch; if any removal leaves the schema
+	// in an invalid state (e.g. one of the remaining collections still references a deleted
+	// one via a relation) the entire operation is rolled back.
 	//
-	// It will error if the collection contains any documents - they must be deleted first.
+	// Only the latest (head) version of each named collection is deleted per call. If a
+	// collection has multiple versions, earlier versions must be deleted separately after
+	// each head is removed.
+	//
+	// It will error if any named collection contains documents - they must be deleted first.
 	DeleteCollection(
 		ctx context.Context,
-		name string,
+		names []string,
 		opts ...options.Enumerable[options.DeleteCollectionOptions],
 	) error
 

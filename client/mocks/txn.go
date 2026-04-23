@@ -1103,12 +1103,12 @@ func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses
 }
 
 // DeleteCollection provides a mock function for the type Txn
-func (_mock *Txn) DeleteCollection(ctx context.Context, name string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error {
+func (_mock *Txn) DeleteCollection(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, name, opts)
+		tmpRet = _mock.Called(ctx, names, opts)
 	} else {
-		tmpRet = _mock.Called(ctx, name)
+		tmpRet = _mock.Called(ctx, names)
 	}
 	ret := tmpRet
 
@@ -1117,8 +1117,8 @@ func (_mock *Txn) DeleteCollection(ctx context.Context, name string, opts ...opt
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.DeleteCollectionOptions]) error); ok {
-		r0 = returnFunc(ctx, name, opts...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Enumerable[options.DeleteCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, names, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1132,22 +1132,22 @@ type Txn_DeleteCollection_Call struct {
 
 // DeleteCollection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
+//   - names []string
 //   - opts ...options.Enumerable[options.DeleteCollectionOptions]
-func (_e *Txn_Expecter) DeleteCollection(ctx interface{}, name interface{}, opts ...interface{}) *Txn_DeleteCollection_Call {
+func (_e *Txn_Expecter) DeleteCollection(ctx interface{}, names interface{}, opts ...interface{}) *Txn_DeleteCollection_Call {
 	return &Txn_DeleteCollection_Call{Call: _e.mock.On("DeleteCollection",
-		append([]interface{}{ctx, name}, opts...)...)}
+		append([]interface{}{ctx, names}, opts...)...)}
 }
 
-func (_c *Txn_DeleteCollection_Call) Run(run func(ctx context.Context, name string, opts ...options.Enumerable[options.DeleteCollectionOptions])) *Txn_DeleteCollection_Call {
+func (_c *Txn_DeleteCollection_Call) Run(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions])) *Txn_DeleteCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 []string
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].([]string)
 		}
 		var arg2 []options.Enumerable[options.DeleteCollectionOptions]
 		var variadicArgs []options.Enumerable[options.DeleteCollectionOptions]
@@ -1169,7 +1169,7 @@ func (_c *Txn_DeleteCollection_Call) Return(err error) *Txn_DeleteCollection_Cal
 	return _c
 }
 
-func (_c *Txn_DeleteCollection_Call) RunAndReturn(run func(ctx context.Context, name string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error) *Txn_DeleteCollection_Call {
+func (_c *Txn_DeleteCollection_Call) RunAndReturn(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error) *Txn_DeleteCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }

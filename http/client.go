@@ -169,7 +169,7 @@ func (c *Client) PatchCollection(
 
 func (c *Client) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
@@ -177,7 +177,9 @@ func (c *Client) DeleteCollection(
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	q := methodURL.Query()
-	q.Set("name", name)
+	for _, name := range names {
+		q.Add("name", name)
+	}
 	methodURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)

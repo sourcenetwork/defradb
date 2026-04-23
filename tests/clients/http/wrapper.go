@@ -294,10 +294,10 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
-	return w.client.DeleteCollection(ctx, name, opts...)
+	return w.client.DeleteCollection(ctx, names, opts...)
 }
 
 func (w *Wrapper) SetActiveCollectionVersion(

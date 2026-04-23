@@ -20,12 +20,17 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// DeleteCollection deletes the active version of a collection by name.
+// DeleteCollection deletes the active versions of one or more collections by name.
 //
-// Only the latest (head) version is deleted per call. If the collection has multiple
-// versions, earlier versions must be deleted separately after each head is removed.
+// All named collections are removed atomically in a single operation. This can be used
+// to delete collections that reference each other via relations, since removing them
+// one at a time would leave a dangling reference and be rolled back.
 //
-// The collection must not contain any documents - they must be deleted first.
+// Only the latest (head) version of each named collection is deleted per call. If a
+// collection has multiple versions, earlier versions must be deleted separately after
+// each head is removed.
+//
+// The collections must not contain any documents - they must be deleted first.
 type DeleteCollection struct {
 	stateful
 
@@ -39,8 +44,11 @@ type DeleteCollection struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The name of the collection to delete.
-	Name string
+	// Names is the list of collection names to delete atomically.
+	//
+	// A single-name delete is just a one-element slice; the underlying API handles
+	// one or many names uniformly.
+	Names []string
 
 	// Any error expected from the action. Optional.
 	//
@@ -72,9 +80,9 @@ func (a *DeleteCollection) Execute() {
 		if a.TransactionID.HasValue() {
 			txn, err = a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-			err = txn.DeleteCollection(a.s.Ctx, a.Name, opts)
+			err = txn.DeleteCollection(a.s.Ctx, a.Names, opts)
 		} else {
-			err = node.DeleteCollection(a.s.Ctx, a.Name, opts)
+			err = node.DeleteCollection(a.s.Ctx, a.Names, opts)
 		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

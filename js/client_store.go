@@ -74,8 +74,8 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 }
 
 func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
-	name, err := stringArg(args, 0, "name")
-	if err != nil {
+	var names []string
+	if err := structArg(args, 0, "names", &names); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 1, c.txns)
@@ -84,7 +84,7 @@ func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, err
 	}
 	opt := options.DeleteCollection()
 	setOptIdentity(opt, args, 1)
-	err = c.node.DB.DeleteCollection(ctx, name, opt)
+	err = c.node.DB.DeleteCollection(ctx, names, opt)
 	return js.Undefined(), err
 }
 

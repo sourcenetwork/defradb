@@ -18,13 +18,14 @@ import "C"
 
 import (
 	"context"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export DeleteCollection
-func DeleteCollection(nodePtr C.uintptr_t, name *C.char, identityPtr C.uintptr_t) C.Result {
+func DeleteCollection(nodePtr C.uintptr_t, names *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -40,7 +41,13 @@ func DeleteCollection(nodePtr C.uintptr_t, name *C.char, identityPtr C.uintptr_t
 	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	opt := options.WithIdentity(options.DeleteCollection(), iIdentity.FromContext(ctx))
-	err = store.DeleteCollection(ctx, C.GoString(name), opt)
+
+	var nameList []string
+	if joined := C.GoString(names); joined != "" {
+		nameList = strings.Split(joined, ",")
+	}
+
+	err = store.DeleteCollection(ctx, nameList, opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

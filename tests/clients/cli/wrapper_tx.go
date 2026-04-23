@@ -130,11 +130,11 @@ func (txn *Transaction) PatchCollection(
 
 func (txn *Transaction) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.DeleteCollection(ctx, name, opts...)
+	return txn.Wrapper.DeleteCollection(ctx, names, opts...)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(

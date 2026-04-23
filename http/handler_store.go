@@ -148,8 +148,8 @@ func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Reques
 
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
-	name := req.URL.Query().Get("name")
-	if name == "" {
+	names := req.URL.Query()["name"]
+	if len(names) == 0 {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrCollectionNameRequired})
 		return
 	}
@@ -159,9 +159,9 @@ func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Reques
 	// If there is an explicit transaction, use it. Otherwise use the db.
 	var err error
 	if !hadTxn {
-		err = db.DeleteCollection(ctx, name, opt)
+		err = db.DeleteCollection(ctx, names, opt)
 	} else {
-		err = txn.DeleteCollection(ctx, name, opt)
+		err = txn.DeleteCollection(ctx, names, opt)
 	}
 	if err != nil {
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})

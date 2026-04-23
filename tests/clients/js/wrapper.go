@@ -333,12 +333,16 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) DeleteCollection(
 	ctx context.Context,
-	name string,
+	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	_, err := execute(ctx, w.value, "deleteCollection", name)
+	namesVal, err := goji.MarshalJS(names)
+	if err != nil {
+		return err
+	}
+	_, err = execute(ctx, w.value, "deleteCollection", namesVal)
 	return err
 }
 
