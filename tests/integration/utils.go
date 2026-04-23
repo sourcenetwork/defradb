@@ -51,7 +51,6 @@ import (
 )
 
 func init() {
-	os.Setenv(multipliersEnvName, "signed-docs")
 	multiplier.Init(multipliersEnvName)
 }
 
