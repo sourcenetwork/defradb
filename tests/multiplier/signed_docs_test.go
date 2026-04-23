@@ -112,7 +112,7 @@ func TestSignedDocs_IsRegistered(t *testing.T) {
 	// The package init() registers the multiplier with testo. We verify
 	// registration indirectly by activating it via Init and asking the
 	// testo package to report active multipliers.
-	m.Init("__signed_docs_test_unset_env__", string(SignedDocs))
+	m.Init("__signed_docs_test_unset_env__", SignedDocs)
 	t.Cleanup(func() {
 		// Reset to a no-default state to avoid leaking test state into
 		// other tests running in the same process.

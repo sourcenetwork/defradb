@@ -22,7 +22,7 @@ import (
 func TestApplyTestCaseLevelMultipliers_WithSignedDocs_EnablesSigning(t *testing.T) {
 	tc := &TestCase{EnableSigning: false}
 
-	applyTestCaseLevelMultipliers(tc, string(defraMultiplier.SignedDocs))
+	applyTestCaseLevelMultipliers(tc, defraMultiplier.SignedDocs)
 
 	assert.True(t, tc.EnableSigning)
 }
@@ -30,7 +30,7 @@ func TestApplyTestCaseLevelMultipliers_WithSignedDocs_EnablesSigning(t *testing.
 func TestApplyTestCaseLevelMultipliers_WithSignedDocsAlreadyTrue_RemainsTrue(t *testing.T) {
 	tc := &TestCase{EnableSigning: true}
 
-	applyTestCaseLevelMultipliers(tc, string(defraMultiplier.SignedDocs))
+	applyTestCaseLevelMultipliers(tc, defraMultiplier.SignedDocs)
 
 	assert.True(t, tc.EnableSigning)
 }
