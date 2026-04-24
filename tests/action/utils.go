@@ -94,11 +94,11 @@ func RefreshCollections(
 // If one is not provided, it will default to running the GetCollections function on the node itself.
 // Importantly, this will use the same ordering as would be found in the node.Collections slice that
 // is refreshed by the RefreshCollections function.
-func GetCanonicallyOrderedCollections(
+func getCanonicallyOrderedCollectionsE(
 	s *state.State,
 	node *state.NodeState,
 	txn immutable.Option[client.Txn],
-) []client.Collection {
+) ([]client.Collection, error) {
 	var clientTxn client.Txn
 	if txn.HasValue() {
 		clientTxn = txn.Value()
@@ -131,7 +131,9 @@ func GetCanonicallyOrderedCollections(
 	} else {
 		allCollections, err = node.GetCollections(s.Ctx, opts)
 	}
-	require.Nil(s.T, err)
+	if err != nil {
+		return nil, err
+	}
 
 	for i, collectionName := range s.CollectionNames {
 		for _, collection := range allCollections {
@@ -150,7 +152,18 @@ func GetCanonicallyOrderedCollections(
 		}
 	}
 
-	return newCollections
+	return newCollections, nil
+}
+
+func GetCanonicallyOrderedCollections(
+	s *state.State,
+	node *state.NodeState,
+	txn immutable.Option[client.Txn],
+) []client.Collection {
+	cols, err := getCanonicallyOrderedCollectionsE(s, node, txn)
+	require.NoError(s.T, err)
+
+	return cols
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {

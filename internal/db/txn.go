@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,11 +12,12 @@ package db
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -52,16 +53,60 @@ func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Conte
 			BasicTxn: txn.BasicTxn,
 			db:       txn.db,
 			explicit: true,
+			isClosed: txn.isClosed,
+			// We do not need to copy the mutex (or a pointer to it), as if we are doing this,
+			// we can be sure that this txn clone is a child of the parent context, and so
+			// should not be locking anyway.
 		}
 	}
 
 	return InitContext(ctx, txn), txn, nil
 }
 
+func lockForTxn(ctx context.Context, txn *Txn) (context.Context, func()) {
+	type txnCtxInProgressKey uint64
+
+	// Defra's public functions may themselves call other public functions, and we use the
+	// context to track this. We must not try to lock using this txn within a child function
+	// call, as that would deadlock (the parent already holds the lock).
+	//
+	// To track this we use the `txnCtxInProgressKey` context key - because setting this creates
+	// a new child context, we never need to worry about leakage or cleanup beyond the top-level
+	// public txn call.  It also means read/writing it in this way is inherently thread safe - if
+	// two threads concurrently try to set it up, they will have two different contexts and the
+	// inProgressLock will make them run serially (as they should).
+	thisContextOwnsTxnLock := ctx.Value(txnCtxInProgressKey(txn.ID())) == nil
+	if thisContextOwnsTxnLock {
+		ctx = context.WithValue(ctx, txnCtxInProgressKey(txn.ID()), struct{}{})
+		txn.inProgressLock.Lock()
+	}
+
+	return ctx, func() {
+		if thisContextOwnsTxnLock {
+			defer txn.inProgressLock.Unlock()
+		}
+	}
+}
+
 type Txn struct {
 	*datastore.BasicTxn
 	db       *DB
 	explicit bool
+
+	// Badger will panic if a transaction is used after it has been committed/discarded, which is not
+	// great for users, and is a pain for us testing, so we handle this upfront here, returning an
+	// error instead.
+	//
+	// We handle this here at this level, instead of corekv, as it allows us to not worry about concurrency
+	// due to the protection of the inProgressLock.
+	isClosed bool
+
+	// The inProgressLock forces top-level txn-actions to execute serially, preventing concurrent action
+	// execution within the transaction.
+	//
+	// Child Defra public function calls from within top level public Defra functions must *not* attempt to
+	// lock this, as that will deadlock.  This is protected against using the context (see `lockForTxn`).
+	inProgressLock sync.Mutex
 }
 
 var _ client.Txn = (*Txn)(nil)
@@ -81,7 +126,20 @@ func (txn *Txn) Commit() error {
 		// `Commit` on an explicit transaction should result in a no-op.
 		return nil
 	}
-	return txn.BasicTxn.Commit()
+
+	// We lock/unlock without checking the context here, as if a child call to a public Defra function
+	// is committing, the code is probably already quite broken, and it is a lot of hassle for both us
+	// and users to add context as a param to this function.
+	txn.inProgressLock.Lock()
+	defer txn.inProgressLock.Unlock()
+
+	err := txn.BasicTxn.Commit()
+	if err != nil {
+		return err
+	}
+
+	txn.isClosed = true
+	return nil
 }
 
 func (txn *Txn) Discard() {
@@ -91,10 +149,25 @@ func (txn *Txn) Discard() {
 		// `Discard` on an explicit transaction should result in a no-op.
 		return
 	}
+
+	// We lock/unlock without checking the context here, as if a child call to a public Defra function
+	// is discarding, the code is probably already quite broken, and it is a lot of hassle for both us
+	// and users to add context as a param to this function.
+	txn.inProgressLock.Lock()
+	defer txn.inProgressLock.Unlock()
+
 	txn.BasicTxn.Discard()
+	txn.isClosed = true
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return printStore(ctx, txn.Rootstore())
 }
 
@@ -104,6 +177,14 @@ func (txn *Txn) AddDACPolicy(
 	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.AddPolicyResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.AddDACPolicy(ctx, policy, opts...)
 }
 
@@ -116,6 +197,14 @@ func (txn *Txn) AddDACActorRelationship(
 	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.AddActorRelationshipResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
@@ -128,6 +217,14 @@ func (txn *Txn) DeleteDACActorRelationship(
 	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.DeleteActorRelationshipResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
@@ -138,6 +235,14 @@ func (txn *Txn) AddNACActorRelationship(
 	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.AddActorRelationshipResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.AddNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
@@ -148,16 +253,40 @@ func (txn *Txn) DeleteNACActorRelationship(
 	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.DeleteActorRelationshipResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
 func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.ReEnableNAC(ctx, opts...)
 }
 
 func (txn *Txn) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.DisableNAC(ctx, opts...)
 }
 
@@ -166,11 +295,27 @@ func (txn *Txn) GetNACStatus(
 	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.NACStatusResult{}, ErrTxnDiscarded
+	}
+
 	return txn.db.GetNACStatus(ctx, opts...)
 }
 
-func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return immutable.None[acpIdentity.PublicRawIdentity](), ErrTxnDiscarded
+	}
+
 	return txn.db.GetNodeIdentity(ctx)
 }
 
@@ -181,6 +326,14 @@ func (txn *Txn) VerifySignature(
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
@@ -190,6 +343,14 @@ func (txn *Txn) AddCollection(
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.AddCollection(ctx, sdl, opts...)
 }
 
@@ -200,6 +361,14 @@ func (txn *Txn) PatchCollection(
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
 }
 
@@ -209,6 +378,14 @@ func (txn *Txn) SetActiveCollectionVersion(
 	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
@@ -219,11 +396,27 @@ func (txn *Txn) AddView(
 	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
 func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.RefreshViews(ctx, opts...)
 }
 
@@ -231,6 +424,14 @@ func (txn *Txn) SetMigration(
 	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return "", ErrTxnDiscarded
+	}
+
 	return txn.db.SetMigration(ctx, config, opts...)
 }
 
@@ -240,6 +441,14 @@ func (txn *Txn) AddLens(
 	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return "", ErrTxnDiscarded
+	}
+
 	return txn.db.AddLens(ctx, lens, opts...)
 }
 
@@ -248,6 +457,14 @@ func (txn *Txn) ListLenses(
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListLenses(ctx)
 }
 
@@ -257,7 +474,20 @@ func (txn *Txn) GetCollectionByName(
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetCollectionByName(ctx, name, opts...)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
+	col, err := txn.db.GetCollectionByName(ctx, name, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTxnCollection(txn, col), nil
 }
 
 func (txn *Txn) GetCollections(
@@ -265,7 +495,24 @@ func (txn *Txn) GetCollections(
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetCollections(ctx, opts...)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
+	cols, err := txn.db.GetCollections(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, col := range cols {
+		cols[i] = newTxnCollection(txn, col)
+	}
+
+	return cols, nil
 }
 
 func (txn *Txn) ListIndexes(
@@ -273,6 +520,14 @@ func (txn *Txn) ListIndexes(
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListIndexes(ctx, opts...)
 }
 
@@ -281,6 +536,14 @@ func (txn *Txn) ListAllEncryptedIndexes(
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListAllEncryptedIndexes(ctx, opts...)
 }
 
@@ -290,11 +553,31 @@ func (txn *Txn) ExecRequest(
 	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return &client.RequestResult{
+			GQL: client.GQLResult{
+				Errors: []error{ErrTxnDiscarded},
+			},
+		}
+	}
+
 	return txn.db.ExecRequest(ctx, request, opts...)
 }
 
 func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.BasicImport(ctx, filepath)
 }
 
@@ -304,22 +587,51 @@ func (txn *Txn) BasicExport(
 	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.BasicExport(ctx, filepath, opts...)
 }
 
 func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.PeerInfo(ctx, opts...)
 }
 
 func (txn *Txn) ActivePeers(
 	ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ActivePeers(ctx, opts...)
 }
 
 func (txn *Txn) Connect(
 	ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions],
 ) error {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
@@ -329,6 +641,14 @@ func (txn *Txn) AddReplicator(
 	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.AddReplicator(ctx, addresses, opts...)
 }
 
@@ -338,6 +658,14 @@ func (txn *Txn) DeleteReplicator(
 	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.DeleteReplicator(ctx, id, opts...)
 }
 
@@ -346,6 +674,14 @@ func (txn *Txn) ListReplicators(
 	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListReplicators(ctx, opts...)
 }
 
@@ -355,6 +691,14 @@ func (txn *Txn) AddP2PCollections(
 	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.AddP2PCollections(ctx, collectionNames, opts...)
 }
 
@@ -364,6 +708,14 @@ func (txn *Txn) DeleteP2PCollections(
 	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.DeleteP2PCollections(ctx, collectionNames, opts...)
 }
 
@@ -372,6 +724,14 @@ func (txn *Txn) ListP2PCollections(
 	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
@@ -381,6 +741,14 @@ func (txn *Txn) AddP2PDocuments(
 	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.AddP2PDocuments(ctx, docIDs, opts...)
 }
 
@@ -390,6 +758,14 @@ func (txn *Txn) DeleteP2PDocuments(
 	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
@@ -398,6 +774,14 @@ func (txn *Txn) ListP2PDocuments(
 	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
 	return txn.db.ListP2PDocuments(ctx, opts...)
 }
 
@@ -408,6 +792,14 @@ func (txn *Txn) SyncDocuments(
 	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.SyncDocuments(ctx, collectionName, docIDs, opts...)
 }
 
@@ -417,6 +809,14 @@ func (txn *Txn) SyncCollectionVersions(
 	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.SyncCollectionVersions(ctx, versionIDs, opts...)
 }
 
@@ -426,5 +826,13 @@ func (txn *Txn) SyncBranchableCollection(
 	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
 	return txn.db.SyncBranchableCollection(ctx, collectionID, opts...)
 }

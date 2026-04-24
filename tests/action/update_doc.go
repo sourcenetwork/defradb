@@ -105,7 +105,6 @@ func (a *UpdateDoc) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
-	var err error
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -118,7 +117,13 @@ func (a *UpdateDoc) Execute() {
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
 		}
 
-		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := getCanonicallyOrderedCollectionsE(a.s, node, txnOption)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(node, func() error {
