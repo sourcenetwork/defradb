@@ -788,7 +788,7 @@ ActionLoop:
 			}
 			continue
 
-		case UpdateDoc:
+		case *action.UpdateDoc:
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
