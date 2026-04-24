@@ -56,7 +56,7 @@ func TestP2PWithSingleDocumentConcurrentDeleteAndUpdate(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Jane"
@@ -256,7 +256,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 					"Age": 74
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -336,7 +336,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 					"Age": 74
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -344,7 +344,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -424,7 +424,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					"Age": 74
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -432,7 +432,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -454,7 +454,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					state.NewColDocIndex(0, 1),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the second node only
 				NodeID: immutable.Some(1),
 				DocID:  0,

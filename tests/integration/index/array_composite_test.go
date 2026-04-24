@@ -466,7 +466,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 					"hobbies": ["sports", "books"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"name": "Shahzad",

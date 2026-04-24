@@ -44,13 +44,13 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10
@@ -113,7 +113,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 					"points": %d
 				}`, math.MaxInt64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 1
@@ -161,13 +161,13 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -216,13 +216,13 @@ func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *tes
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -270,13 +270,13 @@ func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *tes
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -333,7 +333,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 					"points": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: fmt.Sprintf(`{
 					"points": %g
@@ -389,7 +389,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 					"points": %g
 				}`, -math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: fmt.Sprintf(`{
 					"points": %g
@@ -437,7 +437,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 					"points": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// `1` is insignificant to a large float64 and adding it to the large value
 				// should not result in a value change
 				Doc: `{

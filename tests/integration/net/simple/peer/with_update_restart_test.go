@@ -52,7 +52,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				},
 			},
 			testUtils.Restart{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

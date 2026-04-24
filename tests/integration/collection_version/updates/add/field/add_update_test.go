@@ -70,7 +70,7 @@ func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterCollectionUpdateA
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -137,7 +137,7 @@ func TestCollectionVersionUpdatesAddFieldWithAddWithUpdateAfterCollectionUpdateA
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
