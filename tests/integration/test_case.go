@@ -256,54 +256,6 @@ type DeleteDoc struct {
 	TransactionID immutable.Option[int]
 }
 
-// UpdateDoc will attempt to update the given document using the set [state.MutationType].
-type UpdateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
-	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only update public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then
-	// can also update private document(s) that are owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection in which this document exists.
-	CollectionID int
-
-	// The index-identifier of the document within the collection.  This is based on
-	// the order in which it was created, not the ordering of the document within the
-	// database.
-	DocID int
-
-	// The document update, in JSON string format. Will only update the properties
-	// provided.
-	Doc string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-
-	// Skip waiting for an update event on the local event bus.
-	//
-	// This should only be used for tests that do not correctly
-	// publish an update event to the local event bus.
-	SkipLocalUpdateEvent bool
-
-	// TransactionID to use for the action. Optional.
-	TransactionID immutable.Option[int]
-}
-
 // UpdateWithFilter will update the set of documents that match the given filter.
 type UpdateWithFilter struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
