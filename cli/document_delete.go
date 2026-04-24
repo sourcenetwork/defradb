@@ -26,7 +26,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
 		Short: "Delete documents by docID or filter.",
-		Long: `Delete documents by docID or filter and lists the number of documents deleted.
+		Long: `Delete documents by docID or filter and list the number of documents deleted.
 
 This is a soft delete. The document's data and commit history remain available locally
 and can be accessed using the --show-deleted flag on the 'document get' command
