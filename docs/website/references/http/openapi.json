@@ -642,7 +642,7 @@
     },
     "info": {
         "title": "DefraDB API",
-        "version": "0"
+        "version": "1"
     },
     "openapi": "3.0.3",
     "paths": {
@@ -1029,6 +1029,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1074,6 +1077,9 @@
                         "description": "GraphQL response"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1453,6 +1459,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1490,6 +1499,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1536,6 +1548,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1571,6 +1586,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1660,6 +1678,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1698,6 +1719,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -1787,6 +1811,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -1824,6 +1851,9 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -2602,7 +2632,7 @@
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
-                    "400": {
+                    "403": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -2615,44 +2645,6 @@
             "post": {
                 "description": "Create a new transaction",
                 "operationId": "new_transaction",
-                "parameters": [
-                    {
-                        "description": "Read only transaction",
-                        "in": "query",
-                        "name": "read_only",
-                        "schema": {
-                            "default": false,
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/create_tx"
-                                }
-                            }
-                        },
-                        "description": "Transaction info"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "transaction"
-                ]
-            }
-        },
-        "/tx/concurrent": {
-            "post": {
-                "description": "Create a new concurrent transaction",
-                "operationId": "new_concurrent_transaction",
                 "parameters": [
                     {
                         "description": "Read only transaction",
@@ -2709,6 +2701,9 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
                     "default": {
                         "description": ""
                     }
@@ -2736,6 +2731,12 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "409": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
@@ -2851,8 +2852,16 @@
     },
     "servers": [
         {
-            "description": "Local DefraDB instance",
+            "description": "DefraDB latest version",
+            "url": "/api"
+        },
+        {
+            "description": "DefraDB version 0",
             "url": "/api/v0"
+        },
+        {
+            "description": "DefraDB version 1",
+            "url": "/api/v1"
         }
     ],
     "tags": [

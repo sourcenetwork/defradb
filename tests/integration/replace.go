@@ -68,6 +68,16 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	},
 }
 
+// replace resolves template placeholders like {{.CollectionVersionID0}} in the input string.
+func replace(s *state.State, nodeId int, input string) string {
+	if !strings.Contains(input, "{{") {
+		return input
+	}
+
+	replacements := replaceMap(s, nodeId, []string{input})
+	return replacements[input]
+}
+
 func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string {
 	templateData := map[string]string{}
 	for _, datasetGenerator := range templateDataGenerators {
@@ -78,7 +88,7 @@ func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string
 
 	result := make(map[string]string, len(inputSet))
 	for _, input := range inputSet {
-		// WARNING - This does not respect the full Go-replace syntax, at the momement it is a
+		// WARNING - This does not respect the full Go-replace syntax, at the moment it is a
 		// very simple/lightweight key-lookup.  We may want to change this in the future.
 
 		inputID := strings.TrimPrefix(input, "{{.")

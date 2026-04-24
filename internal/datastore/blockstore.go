@@ -62,20 +62,24 @@ func newToMergeKey(cid []byte) []byte {
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
-		return false, err
+		return false, NewErrCheckBlockExists(err)
 	}
 	if !hasBlock {
 		return false, nil
 	}
 	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.Bytes()))
 	if err != nil {
-		return false, err
+		return false, NewErrCheckBlockMergeStatus(err)
 	}
 	return !notMerged, nil
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
-	return bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	if err != nil {
+		return NewErrMarkBlockAsMerged(err)
+	}
+	return nil
 }
 
 type p2pBlockStore struct {
@@ -93,9 +97,13 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	}
 	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
 	if err != nil {
-		return err
+		return NewErrStoreBlock(err)
 	}
-	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+	err = bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+	if err != nil {
+		return NewErrStoreBlock(err)
+	}
+	return nil
 }
 
 // PutMany stores multiple blocks to the blockstore.
@@ -107,11 +115,11 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		}
 		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
 		if err != nil {
-			return err
+			return NewErrStoreBlock(err)
 		}
 		err = bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
 		if err != nil {
-			return err
+			return NewErrStoreBlock(err)
 		}
 	}
 	return nil

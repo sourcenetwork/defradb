@@ -383,18 +383,6 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, serverTxn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	clientTxn, err := w.client.NewConcurrentTxn(readOnly)
-	if err != nil {
-		return nil, err
-	}
-	serverTxn, err := w.handler.Transaction(clientTxn.ID())
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, serverTxn}, nil
-}
-
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()

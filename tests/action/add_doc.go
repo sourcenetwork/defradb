@@ -85,6 +85,9 @@ type AddDoc struct {
 
 	// Used to identify the transaction for this to be executed in. Optional.
 	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*AddDoc)(nil)
@@ -151,7 +154,9 @@ func (a *AddDoc) Execute() {
 				return err
 			},
 		)
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

@@ -134,8 +134,6 @@ func (coordinator *Coordinator) processSERetries(ctx context.Context) {
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
 func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo seRetryInfo) {
-	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
-
 	err := coordinator.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
 		retryInfo.CollectionID, retryInfo.FieldNames, true)
 	if err != nil {

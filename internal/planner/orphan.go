@@ -157,7 +157,7 @@ func (n *orphanNode) initStandaloneScan() error {
 	})
 
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
-	n.standaloneScan = parentScan.cloneWithFilter(orphanFilter, result.index)
+	n.standaloneScan = parentScan.cloneWithFilter(orphanFilter, result.index, nil)
 
 	return n.standaloneScan.Init()
 }

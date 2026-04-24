@@ -97,7 +97,7 @@ func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
 func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
-		return nil, err
+		return nil, NewErrSerializeLWWValue(err, l.fieldName)
 	}
 
 	return &LWWDelta{
@@ -133,7 +133,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	key := l.key.WithValueFlag()
 	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
+		return NewErrGetRegisterStatus(err, l.key.DocID, l.fieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
@@ -143,7 +143,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	} else if priority == curPrio {
 		curValue, err := l.store.Get(ctx, key)
 		if err != nil {
-			return err
+			return NewErrGetRegisterValue(err, l.key.DocID, l.fieldName)
 		}
 
 		if bytes.Compare(curValue, val) >= 0 {
@@ -158,7 +158,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// create.
 		err = l.store.Delete(ctx, key)
 		if err != nil {
-			return err
+			return NewErrDeleteRegisterValue(err, l.key.DocID, l.fieldName)
 		}
 	} else {
 		err = l.store.Set(ctx, key, val)

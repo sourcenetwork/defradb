@@ -254,19 +254,6 @@ func (c *Client) newTxn(this js.Value, args []js.Value) (js.Value, error) {
 	return newTransaction(txn, c.txns), nil
 }
 
-func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, error) {
-	readOnly, err := boolArg(args, 0, "readOnly")
-	if err != nil {
-		return js.Undefined(), err
-	}
-	txn, err := c.node.DB.NewConcurrentTxn(readOnly)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn, c.txns), nil
-}
-
 func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, error) {
 	pubKeyHex, err := stringArg(args, 0, "publicKey")
 	if err != nil {

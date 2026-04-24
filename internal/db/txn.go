@@ -23,11 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// transactionDB is a db that can create transactions.
-type transactionDB interface {
-	NewTxn(bool) (client.Txn, error)
-}
-
 // ensureContextTxn ensures that the returned context has a transaction.
 //
 // If a transactions exists on the context it will be made explicit,
@@ -35,41 +30,30 @@ type transactionDB interface {
 //
 // The returned context will contain the transaction
 // along with the copied values from the input context.
-func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
+func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Context, *Txn, error) {
 	// explicit transaction
 	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
-		switch txn := ctxTxn.(type) {
-		case *Txn:
-			if txn.explicit {
-				// if it's already an explicit txn we return it as is.
-				return InitContext(ctx, txn), txn, nil
-			}
-			// If the txn has already been set on the context but it hasn't already been set as explicit,
-			// we create a copy of the txn and mark it as an explicit txn.
-			explicitTxn := &Txn{
-				txn.BasicTxn,
-				txn.db,
-				true,
-			}
-			return InitContext(ctx, explicitTxn), explicitTxn, nil
-		case *datastore.BasicTxn:
-			// There are scenarios where the transaction passed to the `db` methods was created
-			// from a separate package (ex: `net`). In that situation the type of transaction passed in
-			// will most likely be of type `*datastore.Txn`. We can wrap it in a `*Txn` and mark it as explicit.
-			//
-			// WARNING: This scenario creates a transaction where `*DB` is nil. Calling any method that requires this
-			// will result in a panic.
-			explicitTxn := &Txn{
-				txn,
-				nil,
-				true,
-			}
-			return InitContext(ctx, explicitTxn), explicitTxn, nil
-		default:
+		txn, ok := ctxTxn.(*Txn)
+		if !ok {
 			return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 		}
+
+		if txn.explicit {
+			// if it's already an explicit txn we return it as is.
+			return InitContext(ctx, txn), txn, nil
+		}
+
+		// If the txn has already been set on the context but it hasn't already been set as explicit,
+		// we create a copy of the txn and mark it as an explicit txn.
+		explicitTxn := &Txn{
+			txn.BasicTxn,
+			txn.db,
+			true,
+		}
+		return InitContext(ctx, explicitTxn), explicitTxn, nil
 	}
+
 	clientTxn, err := db.NewTxn(readOnly)
 	if err != nil {
 		return nil, nil, err

@@ -14,7 +14,10 @@ package telemetry
 
 import (
 	"context"
+	"strings"
+	"sync"
 
+	"github.com/sourcenetwork/corelog"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -22,13 +25,16 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	_ Tracer = (*otelTracer)(nil)
 	_ Span   = (*otelSpan)(nil)
+
+	log      = corelog.NewLogger("telemetry")
+	warnOnce sync.Once
 )
 
 type otelTracer struct {
@@ -102,5 +108,15 @@ func ConfigureTelemetry(ctx context.Context, version string) error {
 	otel.SetMeterProvider(meterProvider)
 	// set the global trace provider for all otel instances
 	otel.SetTracerProvider(tracerProvider)
+	// reduce spammy connection messages
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		if strings.Contains(err.Error(), "connection refused") {
+			warnOnce.Do(func() {
+				log.ErrorE("OpenTelemetry export failed, ensure your OTLP collector is running and reachable", err)
+			})
+		} else {
+			log.ErrorE("OpenTelemetry error", err)
+		}
+	}))
 	return nil
 }

@@ -22,6 +22,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/p2p"
 
@@ -34,6 +35,8 @@ import (
 )
 
 func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	log.InfoContext(ctx, "Starting collection version sync", corelog.Int("VersionIDCount", len(versionIDs)))
+
 	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	for _, versionID := range versionIDs {
@@ -43,6 +46,7 @@ func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) 
 		}
 	}
 
+	log.InfoContext(ctx, "Collection version sync completed")
 	return nil
 }
 
@@ -51,7 +55,7 @@ func (p *P2P) syncCollectionVersion(
 	versionID string,
 	linkSys linking.LinkSystem,
 ) (client.CollectionVersion, error) {
-	col, err := description.GetCollectionByID(ctx, versionID)
+	col, err := description.GetCollectionByID(ctx, p.collectionRepository, versionID)
 	if err != nil {
 		if !errors.Is(err, client.ErrCollectionNotFound) {
 			return client.CollectionVersion{}, err
@@ -213,7 +217,7 @@ func (p *P2P) syncCollectionVersion(
 	// can toggle this locally if they like.
 	col.IsMaterialized = !query.HasValue()
 
-	err = description.SaveCollection(ctx, col)
+	err = description.SaveCollection(ctx, p.collectionRepository, col)
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}

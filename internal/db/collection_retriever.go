@@ -18,18 +18,16 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
 type collectionRetriever struct {
-	db    client.TxnStore
+	db    *DB
 	ident immutable.Option[identity.Identity]
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
-func NewCollectionRetriever(db client.TxnStore) collectionRetriever {
+func NewCollectionRetriever(db *DB) collectionRetriever {
 	return collectionRetriever{
 		db: db,
 	}
@@ -46,8 +44,6 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
 ) (client.Collection, error) {
-	_, hadTxn := datastore.CtxTryGetTxn(ctx)
-
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
 		return nil, err
@@ -74,18 +70,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		opt = opt.SetIdentity(r.ident.Value())
 	}
 
-	// If we have a transaction, we will use it here. Otherwise we use r.db
-	var cols []client.Collection
-	if hadTxn {
-		clientTxn, ok := txn.(client.Txn)
-		// This error should not happen through any normal code path, but we can be defensive here.
-		if !ok {
-			return nil, errors.New("unsupported txn type in context")
-		}
-		cols, _ = clientTxn.GetCollections(ctx, opt)
-	} else {
-		cols, _ = r.db.GetCollections(ctx, opt)
-	}
+	cols, _ := txn.GetCollections(ctx, opt)
 
 	if len(cols) == 0 {
 		return nil, client.NewErrCollectionNotFoundForCollectionVersion(

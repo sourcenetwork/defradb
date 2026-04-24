@@ -50,7 +50,7 @@ func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, re
 
 	result, err := col.DeleteDocumentsWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -70,7 +70,7 @@ func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, re
 
 	result, err := col.UpdateDocumentsWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -95,7 +95,7 @@ func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) 
 
 	index, err := col.NewIndex(ctx, descWithoutID, newIndexOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, index)
@@ -108,7 +108,7 @@ func (h *collectionHandler) ListIndexes(rw http.ResponseWriter, req *http.Reques
 	ident := identity.FromContext(ctx)
 	col, err := db.GetCollectionByName(ctx, name, options.WithIdentity(options.GetCollectionByName(), ident))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -130,7 +130,7 @@ func (h *collectionHandler) DeleteIndex(rw http.ResponseWriter, req *http.Reques
 
 	err := col.DeleteIndex(ctx, chi.URLParam(req, "index"), deleteIndexOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -149,7 +149,7 @@ func (h *collectionHandler) NewEncryptedIndex(rw http.ResponseWriter, req *http.
 
 	index, err := col.NewEncryptedIndex(req.Context(), indexDesc, opts)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, index)
@@ -180,7 +180,7 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 
 	err := col.DeleteEncryptedIndex(req.Context(), fieldName, opts)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -194,7 +194,7 @@ func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) 
 
 	err := col.Truncate(ctx, truncateOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -265,6 +265,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	addDocument.Responses = openapi3.NewResponses()
 	addDocument.Responses.Set("200", successResponse)
 	addDocument.Responses.Set("400", errorResponse)
+	addDocument.Responses.Set("409", errorResponse)
 
 	updateCollectionWithRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -321,6 +322,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	}
 	newIndex.AddResponse(200, newIndexResponse)
 	newIndex.Responses.Set("400", errorResponse)
+	newIndex.Responses.Set("409", errorResponse)
 
 	indexArraySchema := openapi3.NewArraySchema()
 	indexArraySchema.Items = indexSchema
@@ -350,6 +352,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteIndex.Responses = openapi3.NewResponses()
 	deleteIndex.Responses.Set("200", successResponse)
 	deleteIndex.Responses.Set("400", errorResponse)
+	deleteIndex.Responses.Set("404", errorResponse)
 
 	documentIDPathParam := openapi3.NewPathParameter("docID").
 		WithRequired(true).
@@ -367,6 +370,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	getDocument.AddParameter(documentIDPathParam)
 	getDocument.AddResponse(200, getDocumentResponse)
 	getDocument.Responses.Set("400", errorResponse)
+	getDocument.Responses.Set("404", errorResponse)
 
 	updateDocument := openapi3.NewOperation()
 	updateDocument.Description = "Update a document by docID"
@@ -377,6 +381,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	updateDocument.Responses = openapi3.NewResponses()
 	updateDocument.Responses.Set("200", successResponse)
 	updateDocument.Responses.Set("400", errorResponse)
+	updateDocument.Responses.Set("404", errorResponse)
 
 	deleteDocument := openapi3.NewOperation()
 	deleteDocument.Description = "Delete a document by docID"
@@ -387,6 +392,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteDocument.Responses = openapi3.NewResponses()
 	deleteDocument.Responses.Set("200", successResponse)
 	deleteDocument.Responses.Set("400", errorResponse)
+	deleteDocument.Responses.Set("404", errorResponse)
 
 	newEncryptedIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -405,6 +411,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	}
 	newEncryptedIndex.AddResponse(200, newEncryptedIndexResponse)
 	newEncryptedIndex.Responses.Set("400", errorResponse)
+	newEncryptedIndex.Responses.Set("409", errorResponse)
 
 	encryptedIndexArraySchema := openapi3.NewArraySchema()
 	encryptedIndexArraySchema.Items = encryptedIndexSchema
@@ -435,6 +442,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteEncryptedIndex.Responses = openapi3.NewResponses()
 	deleteEncryptedIndex.Responses.Set("200", successResponse)
 	deleteEncryptedIndex.Responses.Set("400", errorResponse)
+	deleteEncryptedIndex.Responses.Set("404", errorResponse)
 
 	truncate := openapi3.NewOperation()
 	truncate.OperationID = "truncate"

@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -107,10 +106,6 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			for i, c := range cols {
 				collections[i] = c.Definition
 			}
-
-			cache := description.NewCollectionCache()
-			cache.AddAll(collections)
-			ctx := description.ContextWithCollectionCache(ctx, cache)
 
 			_, err = schemaManager.Generator.Generate(ctx, collections)
 			if err != nil {
