@@ -303,11 +303,24 @@ func executeTestCase(
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
-	seedCollectionVersionsFromState(s)
+	seedCollectionVersions(s)
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, testCase, i, testCase.Actions[i])
+	}
+
+	// In the source phase of the change detector, persist the in-memory test
+	// state slices that templates depend on so the assert phase can resolve
+	// {{.CollectionVersionID<N>}} (and friends) to the bytes the source side
+	// produced.  See https://github.com/sourcenetwork/defradb/issues/4752 and
+	// the `change_detector` package for details.
+	if changeDetector.Enabled && changeDetector.SetupOnly {
+		err := changeDetector.WriteTestState(s.T, changeDetector.TestState{
+			CollectionVersions: s.CollectionVersions,
+			LensIDs:            s.LensIDs,
+		})
+		require.NoError(s.T, err)
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -954,18 +967,40 @@ func refreshTokens(
 	}
 }
 
-// seedCollectionVersionsFromState populates s.CollectionVersions with the version IDs
-// of any collection versions already present in the database. This ensures that
-// {{.CollectionVersionID<N>}} templates resolve to the same values across the change
-// detector source/target split, where setup-only actions run in one process and the
-// rest in another (and s.CollectionVersions does not survive process boundaries).
+// seedCollectionVersions populates s.CollectionVersions so that
+// {{.CollectionVersionID<N>}} templates can be resolved.
 //
-// Versions are walked from oldest to newest via the PreviousVersion chain so the
-// indexing matches the order in which they were created.
+// Under the change detector, the source phase writes a sidecar JSON file
+// containing the version IDs it produced. The assert phase reads that file
+// here so templates resolve to the SAME bytes the source side saw — that's
+// what gives the change detector its coverage of those values.
 //
-// Note: this reads version IDs from the post-upgrade Defra on both sides of the
-// change detector split, so assertions using these templates are not actually
-// covered by the change detector. See https://github.com/sourcenetwork/defradb/issues/4752.
+// If the file is missing (older source branch, or no setup phase), we fall
+// back to seedCollectionVersionsFromState which re-derives version IDs from
+// whatever is already in the on-disk DB.
+//
+// Outside the change detector we just call the seeder, which is a no-op when
+// the database is fresh.
+func seedCollectionVersions(s *state.State) {
+	if changeDetector.Enabled && !changeDetector.SetupOnly {
+		state, found, err := changeDetector.ReadTestState(s.T)
+		require.NoError(s.T, err)
+		if found {
+			s.CollectionVersions = state.CollectionVersions
+			return
+		}
+	}
+	seedCollectionVersionsFromState(s)
+}
+
+// seedCollectionVersionsFromState populates s.CollectionVersions by walking
+// the collection version history present in the on-disk database. It is the
+// fallback used by seedCollectionVersions when no source-phase sidecar file
+// is available — for example when the change detector source branch
+// pre-dates the sidecar mechanism, or the test has no setup phase.
+//
+// Versions are walked from oldest to newest via the PreviousVersion chain so
+// the indexing matches the order in which they were created.
 func seedCollectionVersionsFromState(s *state.State) {
 	if len(s.Nodes) == 0 {
 		return
