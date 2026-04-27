@@ -794,7 +794,7 @@ ActionLoop:
 		case Restart:
 			continue
 
-		case CommitTransaction:
+		case *action.CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
