@@ -962,6 +962,10 @@ func refreshTokens(
 //
 // Versions are walked from oldest to newest via the PreviousVersion chain so the
 // indexing matches the order in which they were created.
+//
+// Note: this reads version IDs from the post-upgrade Defra on both sides of the
+// change detector split, so assertions using these templates are not actually
+// covered by the change detector. See https://github.com/sourcenetwork/defradb/issues/4752.
 func seedCollectionVersionsFromState(s *state.State) {
 	if len(s.Nodes) == 0 {
 		return
