@@ -35,7 +35,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -81,7 +81,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -160,7 +160,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -196,7 +196,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -236,7 +236,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -280,7 +280,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -323,7 +323,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -358,7 +358,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(

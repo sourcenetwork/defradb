@@ -35,7 +35,7 @@ func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 					"score": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,

@@ -430,9 +430,6 @@ func performAction(
 	case DeleteDoc:
 		deleteDoc(s, action)
 
-	case UpdateDoc:
-		updateDoc(s, action)
-
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
@@ -801,7 +798,7 @@ ActionLoop:
 			}
 			continue
 
-		case UpdateDoc:
+		case *action.UpdateDoc:
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
@@ -1351,197 +1348,6 @@ func deleteDoc(
 
 		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
 	}
-}
-
-// updateDoc updates a document using the chosen [state.ActiveMutationType].
-// Handles multi-node mutations with node-local transactions, and waits for update events safely.
-func updateDoc(
-	s *state.State,
-	a UpdateDoc,
-) {
-	var mutation func(
-		*state.State,
-		UpdateDoc,
-		client.TxnStore,
-		int,
-		client.Collection,
-		immutable.Option[client.Txn],
-	) error
-
-	switch state.ActiveMutationType {
-	case state.CollectionSaveMutationType:
-		mutation = updateDocViaColSave
-	case state.CollectionNamedMutationType:
-		mutation = updateDocViaColUpdate
-	case state.GQLRequestMutationType:
-		mutation = updateDocViaGQL
-	default:
-		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
-	var expectedErrorRaised bool
-	doNotWaitForUpdate := false
-	var err error
-
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-
-		txnOption := immutable.None[client.Txn]()
-		if a.TransactionID.HasValue() {
-			txn, err := s.GetTransaction(node, a.TransactionID)
-			require.NoError(s.T, err)
-			txnOption = immutable.Some(txn)
-			doNotWaitForUpdate = true // if using txn, we skip local update wait
-		}
-
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[a.CollectionID]
-
-		err = withRetryOnNode(node, func() error {
-			return mutation(s, a, node, nodeID, collection, txnOption)
-		})
-
-		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
-
-	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
-		waitForUpdateEvents(
-			s,
-			a.NodeID,
-			a.CollectionID,
-			getEventsForUpdateDoc(s, a),
-			immutable.None[state.Identity](),
-		)
-	}
-}
-
-func updateDocViaColSave(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	if txn.HasValue() {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	saveOpts := options.SaveDocument()
-	if identOption.HasValue() {
-		saveOpts.SetIdentity(identOption.Value())
-	}
-	return collection.SaveDocument(ctx, doc, saveOpts)
-}
-
-func updateDocViaColUpdate(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	if txn.HasValue() {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	updateOpts := options.UpdateDocument()
-	if identOption.HasValue() {
-		updateOpts.SetIdentity(identOption.Value())
-	}
-	return collection.UpdateDocument(ctx, doc, updateOpts)
-}
-
-func updateDocViaGQL(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	hadTxn := txn.HasValue()
-	if hadTxn {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	input, err := jsonToGQL(action.Doc)
-	require.NoError(s.T, err)
-
-	request := fmt.Sprintf(
-		`mutation {
-			update_%s(docID: "%s", input: %s) {
-				_docID
-			}
-		}`,
-		collection.Name(),
-		docID.String(),
-		input,
-	)
-
-	reqOption := options.ExecRequest()
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	if identOption.HasValue() {
-		reqOption.SetIdentity(identOption.Value())
-	}
-
-	var result *client.RequestResult
-	if hadTxn {
-		result = txn.Value().ExecRequest(ctx, request, reqOption)
-	} else {
-		result = node.ExecRequest(ctx, request, reqOption)
-	}
-	if len(result.GQL.Errors) > 0 {
-		return result.GQL.Errors[0]
-	}
-	return nil
 }
 
 // updateWithFilter updates the set of matched documents.

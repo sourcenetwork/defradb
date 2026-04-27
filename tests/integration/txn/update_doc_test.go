@@ -39,7 +39,7 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28
@@ -98,7 +98,7 @@ func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28
@@ -156,7 +156,7 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28

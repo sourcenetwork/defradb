@@ -29,14 +29,14 @@ func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{

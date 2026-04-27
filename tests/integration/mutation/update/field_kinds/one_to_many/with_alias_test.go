@@ -54,7 +54,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -102,7 +102,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -143,7 +143,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -182,7 +182,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -233,7 +233,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -279,7 +279,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 					author1ID,
 				),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(

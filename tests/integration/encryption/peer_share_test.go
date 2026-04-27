@@ -302,7 +302,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 3}`,
 			},
@@ -310,7 +310,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 2}`,
 			},
@@ -364,7 +364,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 3}`,
 			},
@@ -372,7 +372,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"age": 2}`,
 			},
@@ -427,7 +427,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"name": ""}`,
 			},
@@ -445,7 +445,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 					},
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"name": "John"}`,
 			},
@@ -496,7 +496,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"name": null}`,
 			},
@@ -514,7 +514,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 					},
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc:    `{"name": "John"}`,
 			},

@@ -44,7 +44,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": -10
@@ -93,13 +93,13 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10
@@ -162,7 +162,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 					"points": %d
 				}`, math.MaxInt64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 1
@@ -210,13 +210,13 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -265,13 +265,13 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -319,13 +319,13 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.1
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 10.2
@@ -376,7 +376,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 					"points": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"points": 1000

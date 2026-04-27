@@ -154,7 +154,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"Age": 22
 				}`,
@@ -387,7 +387,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 					"Age": 21
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"Age": 22
 				}`,
@@ -639,7 +639,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"Age": 22}`,

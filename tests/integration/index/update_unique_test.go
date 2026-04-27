@@ -37,7 +37,7 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 						"age":	36
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `

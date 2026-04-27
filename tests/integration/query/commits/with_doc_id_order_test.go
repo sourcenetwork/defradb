@@ -29,7 +29,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -85,7 +85,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -141,7 +141,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -197,7 +197,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -253,21 +253,21 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	23
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
