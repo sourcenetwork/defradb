@@ -14,6 +14,7 @@ package action
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/stretchr/testify/require"
 
@@ -72,6 +73,9 @@ type UpdateDoc struct {
 
 	// TransactionID to use for the action. Optional.
 	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*UpdateDoc)(nil)
@@ -121,7 +125,9 @@ func (a *UpdateDoc) Execute() {
 			return mutation(a.s, a, node, nodeID, collection, txnOption)
 		})
 
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
