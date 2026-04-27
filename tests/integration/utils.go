@@ -303,6 +303,7 @@ func executeTestCase(
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	seedCollectionVersionsFromState(s)
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
@@ -951,6 +952,71 @@ func refreshTokens(
 			s.Identities[identKey] = identHolder
 		}
 	}
+}
+
+// seedCollectionVersionsFromState populates s.CollectionVersions with the version IDs
+// of any collection versions already present in the database. This ensures that
+// {{.CollectionVersionID<N>}} templates resolve to the same values across the change
+// detector source/target split, where setup-only actions run in one process and the
+// rest in another (and s.CollectionVersions does not survive process boundaries).
+//
+// Versions are walked from oldest to newest via the PreviousVersion chain so the
+// indexing matches the order in which they were created.
+func seedCollectionVersionsFromState(s *state.State) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	node := s.Nodes[0]
+
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(0), 0)
+	getOpts := options.GetCollections().SetGetInactive(true)
+	if identOption.HasValue() {
+		getOpts.SetIdentity(identOption.Value())
+	}
+	allCols, err := node.GetCollections(s.Ctx, getOpts)
+	require.NoError(s.T, err)
+
+	colsByVersionID := make(map[string]client.Collection, len(allCols))
+	for _, col := range allCols {
+		colsByVersionID[col.Version().VersionID] = col
+	}
+
+	// For each active collection (canonical order in node.Collections), walk back
+	// the PreviousVersion chain to root, then append from root forward.
+	for _, active := range node.Collections {
+		if active == nil {
+			continue
+		}
+
+		var chain []string
+		current := active.Version()
+		for {
+			chain = append(chain, current.VersionID)
+			if !current.PreviousVersion.HasValue() {
+				break
+			}
+			prevID := current.PreviousVersion.Value().SourceCollectionID
+			prev, ok := colsByVersionID[prevID]
+			if !ok {
+				break
+			}
+			current = prev.Version()
+		}
+
+		for i := len(chain) - 1; i >= 0; i-- {
+			appendCollectionVersionID(s, chain[i])
+		}
+	}
+}
+
+// appendCollectionVersionID appends a collection version ID to s.CollectionVersions
+// if it is not already present.
+func appendCollectionVersionID(s *state.State, versionID string) {
+	if slices.Contains(s.CollectionVersions, versionID) {
+		return
+	}
+	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
