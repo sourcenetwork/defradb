@@ -55,13 +55,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					"Age": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: fmt.Sprintf(`{
 					"Age": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: fmt.Sprintf(`{
 					"Age": %g
@@ -87,7 +87,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// This is an arbitrary update on both nodes to force the sync of the document added
 				// before the peer connection was configured.
 				Doc: `{
@@ -166,13 +166,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					"Age": %g
 				}`, -math.MaxFloat64/10),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: fmt.Sprintf(`{
 					"Age": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: fmt.Sprintf(`{
 					"Age": %g
@@ -198,7 +198,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// This is an arbitrary update on both nodes to force the sync of the document added
 				// before the peer connection was configured.
 				Doc: `{

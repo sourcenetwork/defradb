@@ -48,7 +48,7 @@ func TestP2POneToOneReplicatorWithAddWithUpdate(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -112,7 +112,7 @@ func TestP2POneToOneReplicatorWithAddWithUpdateOnRecipientNode(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the seond node only, and allow the value to sync
 				// back to the original node that added the document.
 				NodeID: immutable.Some(1),
@@ -176,7 +176,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					"Age": 40
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update Fred's Age
 				NodeID: immutable.Some(1),
 				DocID:  1,

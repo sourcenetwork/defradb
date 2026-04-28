@@ -48,7 +48,7 @@ func TestNAC_AdminRelation_CanUpdateDocument(t *testing.T) {
 				}`,
 			},
 			// This user, can not perform this gated operation yet.
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				DocID:        0,
@@ -69,7 +69,7 @@ func TestNAC_AdminRelation_CanUpdateDocument(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				DocID:        0,

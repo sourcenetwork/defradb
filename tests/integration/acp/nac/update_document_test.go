@@ -47,7 +47,7 @@ func TestNAC_GatesUpdateDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				DocID:        0,
@@ -97,7 +97,7 @@ func TestNAC_GatesUpdateDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				DocID:        0,
@@ -152,7 +152,7 @@ func TestNAC_GatesUpdateDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				DocID:        0,
