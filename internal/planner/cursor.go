@@ -11,13 +11,19 @@
 package planner
 
 import (
+	"errors"
 	"slices"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/cursor"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -227,7 +233,11 @@ func (n *cursorNode) bufferBackwardPage() (bool, error) {
 	}
 
 	if n.beforeCursor.HasValue() {
-		n.hasNextPage = true
+		hasNext, err := n.beforeCursorBoundarySurvives()
+		if err != nil {
+			return false, err
+		}
+		n.hasNextPage = hasNext
 	}
 
 	slices.Reverse(buf)
@@ -236,6 +246,7 @@ func (n *cursorNode) bufferBackwardPage() (bool, error) {
 
 func (n *cursorNode) drainBackwardPage() (bool, error) {
 	var buf []core.Doc
+	foundBefore := false
 	for {
 		hasNext, err := n.plan.Next()
 		if err != nil {
@@ -246,6 +257,7 @@ func (n *cursorNode) drainBackwardPage() (bool, error) {
 		}
 		doc := n.plan.Value()
 		if n.beforePayload != nil && doc.GetID() == n.beforePayload.DocID {
+			foundBefore = true
 			break
 		}
 		buf = append(buf, doc.Clone())
@@ -257,10 +269,100 @@ func (n *cursorNode) drainBackwardPage() (bool, error) {
 	}
 
 	if n.beforeCursor.HasValue() {
-		n.hasNextPage = true
+		n.hasNextPage = foundBefore
 	}
 
 	return n.initBackwardBuffer(buf), nil
+}
+
+func (n *cursorNode) beforeCursorBoundarySurvives() (bool, error) {
+	if n.beforePayload == nil {
+		return false, nil
+	}
+
+	scan := getNode[*scanNode](n.plan)
+	if scan == nil || !scan.index.HasValue() {
+		return false, nil
+	}
+
+	seekKey := scan.buildCursorSeekKey()
+	if seekKey == nil {
+		return false, nil
+	}
+	seekKey.Offset = 0
+	if scan.index.Value().Unique {
+		appendDocIDToNilUniqueIndexKey(seekKey, n.beforePayload.DocID)
+	}
+
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	val, err := txn.Datastore().Get(n.p.ctx, seekKey)
+	if errors.Is(err, corekv.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if len(val) > 0 && string(val) != n.beforePayload.DocID {
+		return false, nil
+	}
+
+	return n.beforeCursorDocMatches(scan)
+}
+
+func (n *cursorNode) beforeCursorDocMatches(scan *scanNode) (bool, error) {
+	docID, err := client.NewDocIDFromString(n.beforePayload.DocID)
+	if err != nil {
+		return false, nil
+	}
+
+	shortID, err := id.GetShortCollectionID(n.p.ctx, scan.col.Version().CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	f := fetcher.NewDocumentFetcher()
+	err = f.Init(
+		n.p.ctx,
+		n.p.identity,
+		txn,
+		n.p.nodeACP,
+		n.p.documentACP,
+		immutable.None[client.IndexDescription](),
+		scan.col,
+		scan.fields,
+		scan.filter,
+		nil,
+		scan.documentMapping,
+		scan.showDeleted,
+	)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = f.Close() }()
+
+	err = f.Start(n.p.ctx, keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             docID.String(),
+	})
+	if err != nil {
+		return false, err
+	}
+
+	doc, _, err := f.FetchNext(n.p.ctx)
+	if err != nil {
+		return false, err
+	}
+	return doc != nil, nil
+}
+
+func appendDocIDToNilUniqueIndexKey(key *keys.IndexDataStoreKey, docID string) {
+	for _, field := range key.Fields {
+		if field.Value.IsNil() {
+			key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(docID)})
+			return
+		}
+	}
 }
 
 func (n *cursorNode) initBackwardBuffer(buf []core.Doc) bool {

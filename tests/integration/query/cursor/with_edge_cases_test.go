@@ -404,3 +404,83 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 	}
 	executeTestCase(t, test)
 }
+
+func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
+			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
+			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+
+			&action.Request{
+				Request: `query {
+					_cursor {
+						User(first: 5, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							endCursor
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Alice", "age": int64(25)},
+							{"name": "Bob", "age": int64(30)},
+							{"name": "Carol", "age": int64(35)},
+							{"name": "Dave", "age": int64(40)},
+							{"name": "Eve", "age": int64(45)},
+						},
+						"_pageInfo": map[string]any{
+							"endCursor": testUtils.CaptureCursor("eveCursor"),
+						},
+					},
+				},
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        4,
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("eveCursor"),
+				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(last: 2, before: $cursor, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+							startCursor
+							endCursor
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Carol", "age": int64(35)},
+							{"name": "Dave", "age": int64(40)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":     false,
+							"hasPrev":     true,
+							"startCursor": testUtils.ValidCursor(),
+							"endCursor":   testUtils.ValidCursor(),
+						},
+					},
+				},
+			},
+		},
+	}
+	executeTestCase(t, test)
+}
