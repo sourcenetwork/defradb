@@ -315,3 +315,35 @@ func TestCursorWithCompositeIndex_OrderByNonIndexedFieldFails(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestCursorWithCompositeIndex_RejectsPrefixOrderOnNonUniqueCompositeIndex(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 2, order: {name: ASC}) {
+				name
+				age
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @index(includes: [{field: "name"}, {field: "age"}]) {
+						name: String
+						age: Int
+						email: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
+			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
+			&action.Request{
+				Request:       req,
+				ExpectedError: "no supporting index for cursor order field",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

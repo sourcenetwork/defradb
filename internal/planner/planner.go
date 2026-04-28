@@ -973,8 +973,19 @@ func (p *Planner) validateCursorIndex(plan *selectTopNode) (bool, error) {
 		return false, ErrNoSupportingIndexForCursor
 	}
 
+	if isUnsupportedCursorCompositePrefix(scan.ordering, scan.index.Value()) {
+		return false, ErrNoSupportingIndexForCursor
+	}
+
 	// Return reversed flag for propagation instead of rejecting
 	return reversed, nil
+}
+
+func isUnsupportedCursorCompositePrefix(
+	ordering []mapper.OrderCondition,
+	index client.IndexDescription,
+) bool {
+	return !index.Unique && len(ordering) < len(index.Fields)
 }
 
 // @TODO {defradb/issues/368}: Test this exported function.
