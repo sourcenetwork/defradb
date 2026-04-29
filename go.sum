@@ -1804,8 +1804,8 @@ github.com/sourcenetwork/corekv/memory v0.3.1 h1:+8REYpiwFMsiTkEe3RE/ZGI3Alrhgc/
 github.com/sourcenetwork/corekv/memory v0.3.1/go.mod h1:2vIJDWlvhwyO41tynkCkFFYTYrIsf1QGvAxBqVFV0bI=
 github.com/sourcenetwork/corekv/namespace v0.3.1 h1:XllaUw6cteZkJYC5tgcJ40c6hIMh7DUn2tk/fPjV35A=
 github.com/sourcenetwork/corekv/namespace v0.3.1/go.mod h1:uidxEQZsJ1eqecq1Zn5NipnFAgxL+VyXB6bPGziBewk=
-github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
-github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
+github.com/sourcenetwork/corelog v0.0.9 h1:wpoBbvju4wYtwpolfpGo8CrUVsRI8Gz1IeaXPQCW8yY=
+github.com/sourcenetwork/corelog v0.0.9/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
 github.com/sourcenetwork/go-p2p v0.1.9 h1:bM5FjPqBxNBQuWS4Rd7wQZqa342sD1A3M84U3Ihzee4=
