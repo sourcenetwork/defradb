@@ -481,18 +481,6 @@ type AddPredefinedDocs struct {
 	Docs predefined.DocsList
 }
 
-// CommitTransaction represents a commit request for a transaction of the given id.
-type CommitTransaction struct {
-	// Used to identify the transaction to commit.
-	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 type IntrospectionRequest struct {
 	// NodeID is the node ID (index) of the node in which to introspect.
 	NodeID immutable.Option[int]

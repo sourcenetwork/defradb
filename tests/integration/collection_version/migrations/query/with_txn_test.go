@@ -126,7 +126,7 @@ func TestCollectionMigrationQueryWithTxnAndCommit(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
 			&action.Request{

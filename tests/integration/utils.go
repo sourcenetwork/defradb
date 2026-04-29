@@ -438,9 +438,6 @@ func performAction(
 	case ImportBackup:
 		importBackup(s, action)
 
-	case CommitTransaction:
-		commitTransaction(s, action)
-
 	case IntrospectionRequest:
 		assertIntrospectionResults(s, action)
 
@@ -819,7 +816,7 @@ ActionLoop:
 		case Restart:
 			continue
 
-		case CommitTransaction:
+		case *action.CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
@@ -1708,26 +1705,6 @@ func getTransaction(
 	}
 
 	return s.Txns[transactionID]
-}
-
-// commitTransaction commits the given transaction.
-//
-// Will panic if the given transaction does not exist. Discards the transaction if
-// an error is returned on commit.
-func commitTransaction(
-	s *state.State,
-	a CommitTransaction,
-) {
-	err := s.Txns[a.TransactionID].Commit()
-	if err != nil {
-		s.Txns[a.TransactionID].Discard()
-	}
-
-	action.RefreshCollections(s)
-
-	expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
