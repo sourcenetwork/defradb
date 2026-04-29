@@ -45,7 +45,6 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 						{"cid": uniqueCid, "COUNT": 2},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
