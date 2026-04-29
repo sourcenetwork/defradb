@@ -45,7 +45,7 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 28
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -162,7 +162,7 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 					"age": 28
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -213,7 +213,7 @@ func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -321,7 +321,7 @@ func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

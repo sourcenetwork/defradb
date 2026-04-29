@@ -49,7 +49,7 @@ func TestTxn_AddLens_WithCommit_Succeeds(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.AddView{

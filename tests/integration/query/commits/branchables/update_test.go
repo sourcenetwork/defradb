@@ -64,6 +64,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 							}
 						}
 					}`,
+				NonOrderedResults: true,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{

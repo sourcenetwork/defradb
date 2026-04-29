@@ -46,7 +46,7 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
-	_ "github.com/sourcenetwork/defradb/tests/multiplier"
+	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -451,9 +451,6 @@ func performAction(
 	case ImportBackup:
 		importBackup(s, action)
 
-	case CommitTransaction:
-		commitTransaction(s, action)
-
 	case IntrospectionRequest:
 		assertIntrospectionResults(s, action)
 
@@ -755,6 +752,31 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	for i, idx := range actionIndices {
 		testCase.Actions[idx] = modified[i]
 	}
+
+	applyTestCaseLevelMultipliers(testCase, multiplier.Get())
+}
+
+// applyTestCaseLevelMultipliers mutates TestCase fields based on the given
+// comma-separated list of active multiplier names.
+//
+// Multipliers registered with testo can only modify actions via the
+// [multiplier.Multiplier] interface. Some multipliers need to flip
+// TestCase-level configuration instead (e.g. [SignedDocs] sets
+// [TestCase.EnableSigning]). Each case below is a documented exception that
+// cannot be expressed via action rewriting.
+//
+// The hook only upgrades values; it never downgrades. Tests that already
+// configure the flag explicitly are unaffected.
+//
+// activeNames is passed in rather than read from testo's package-level state
+// so this function is directly unit-testable.
+func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
+	for _, name := range strings.Split(activeNames, ",") {
+		switch strings.TrimSpace(name) {
+		case defraMultiplier.SignedDocs:
+			testCase.EnableSigning = true
+		}
+	}
 }
 
 // getActionRange returns the index of the first action to be run, and the last.
@@ -807,7 +829,7 @@ ActionLoop:
 		case Restart:
 			continue
 
-		case CommitTransaction:
+		case *action.CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
@@ -1713,26 +1735,6 @@ func getTransaction(
 	}
 
 	return s.Txns[transactionID]
-}
-
-// commitTransaction commits the given transaction.
-//
-// Will panic if the given transaction does not exist. Discards the transaction if
-// an error is returned on commit.
-func commitTransaction(
-	s *state.State,
-	a CommitTransaction,
-) {
-	err := s.Txns[a.TransactionID].Commit()
-	if err != nil {
-		s.Txns[a.TransactionID].Discard()
-	}
-
-	action.RefreshCollections(s)
-
-	expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected

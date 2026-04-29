@@ -60,7 +60,7 @@ func TestTxn_RefreshView_WithCommit_Succeeds(t *testing.T) {
 			&action.RefreshViews{
 				TransactionID: immutable.Some(1),
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
