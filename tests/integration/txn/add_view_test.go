@@ -45,7 +45,7 @@ func TestTxn_AddView_WithCommit_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.AddDoc{

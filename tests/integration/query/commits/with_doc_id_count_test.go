@@ -71,7 +71,7 @@ func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"age":	22
 				}`,

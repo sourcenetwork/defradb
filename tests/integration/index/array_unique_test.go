@@ -119,7 +119,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 					"nfts": [10, 40]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"nfts": [10, 60]
@@ -165,7 +165,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 					"nfts": [10, 40]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"nfts": [50, 30]

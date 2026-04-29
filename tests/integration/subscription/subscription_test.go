@@ -391,12 +391,12 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 					"age":  31,
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 28}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        1,
 				Doc:          `{"age": 32}`,
@@ -468,7 +468,7 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 					"counter": int64(1),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"counter": 1}`,
@@ -529,7 +529,7 @@ func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"name": "Johny"}`,

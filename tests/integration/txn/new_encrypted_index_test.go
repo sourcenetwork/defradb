@@ -46,7 +46,7 @@ func TestTxn_NewEncryptedIndex_WithCommit_Succeeds(t *testing.T) {
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			testUtils.ListEncryptedIndexes{

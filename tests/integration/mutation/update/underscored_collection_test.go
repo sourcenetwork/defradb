@@ -34,7 +34,7 @@ func TestMutationUpdateUnderscoredCollection(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,

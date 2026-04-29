@@ -138,7 +138,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t 
 					"nfts2": [2, 4, 5, 6]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"name": "Shahzad",

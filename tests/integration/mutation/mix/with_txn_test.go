@@ -338,10 +338,10 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					},
 				},
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 				ExpectedError: "transaction conflict. Please retry",
 			},

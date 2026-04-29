@@ -136,12 +136,12 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 					"name": "John",
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "John Doe"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "John Doe Junior"
 				}`,
@@ -372,12 +372,12 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					"age": 21
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"age": 23
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `{
 					"name": "John Doe"

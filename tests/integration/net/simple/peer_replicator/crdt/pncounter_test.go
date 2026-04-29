@@ -157,7 +157,7 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's points on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
