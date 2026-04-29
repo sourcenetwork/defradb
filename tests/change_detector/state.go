@@ -13,8 +13,6 @@ package change_detector
 
 import (
 	"encoding/json"
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,6 +21,15 @@ import (
 // stateFileName is the filename used for the per-test change-detector
 // sidecar inside DatabaseDir(t).
 const stateFileName = "_change_detector_state.json"
+
+// File mode for the per-test data directory. Standard test-fixture default
+// (rwx for owner, rx for everyone else); matches what t.TempDir and badger
+// use, no security-sensitive content.
+const stateDirMode = 0o755
+
+// File mode for the sidecar JSON file. Standard test-fixture default
+// (rw for owner, r for everyone else); no security-sensitive content.
+const stateFileMode = 0o644
 
 // TestState is the slice of in-memory test harness state that the source
 // phase of the change detector hands to the assert phase via a JSON sidecar
@@ -36,9 +43,6 @@ type TestState struct {
 	// during the source phase, used to resolve {{.CollectionVersionIDN}}
 	// templates on the assert side against the values the source side produced.
 	CollectionVersions []string `json:"collectionVersions"`
-	// LensIDs is the ordered list of lens IDs registered during the source
-	// phase. Reserved for future use; not currently consumed by any test.
-	LensIDs []string `json:"lensIDs,omitempty"`
 }
 
 // stateFilePath returns the absolute path of the sidecar file for the given test.
@@ -46,16 +50,10 @@ func stateFilePath(t testing.TB) string {
 	return filepath.Join(DatabaseDir(t), stateFileName)
 }
 
-// WriteTestState marshals state as JSON and writes it atomically into the
-// per-test change-detector data directory. The write goes to a sibling
-// `*.tmp` file and is then renamed into place, so a partially-written file
-// is never visible to a concurrent reader (or to the assert-phase process).
-//
-// It is a programming error to call this when changeDetector is not in
-// SetupOnly mode; callers must guard accordingly.
+// WriteTestState marshals state as JSON and writes it into the per-test
+// change-detector data directory. Callers must guard with SetupOnly.
 func WriteTestState(t testing.TB, state TestState) error {
-	dir := DatabaseDir(t)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(DatabaseDir(t), stateDirMode); err != nil {
 		return err
 	}
 
@@ -64,39 +62,18 @@ func WriteTestState(t testing.TB, state TestState) error {
 		return err
 	}
 
-	tmpPath := stateFilePath(t) + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0o644); err != nil {
-		return err
-	}
-
-	if err := os.Rename(tmpPath, stateFilePath(t)); err != nil {
-		// best-effort cleanup of the tmp file on failure
-		_ = os.Remove(tmpPath)
-		return err
-	}
-	return nil
+	return os.WriteFile(stateFilePath(t), data, stateFileMode)
 }
 
-// ReadTestState reads the sidecar file written by WriteTestState in the
-// matching source-phase test invocation. The bool return distinguishes
-// "file missing" (acceptable: source branch may pre-date the sidecar, or
-// the test wrote nothing) from "file corrupt" (a real error).
-//
-//   - (state, true,  nil) — file existed and parsed cleanly
-//   - (zero,  false, nil) — file did not exist
-//   - (_,     false, err) — file existed but could not be read or parsed
-func ReadTestState(t testing.TB) (TestState, bool, error) {
+// ReadTestState reads the sidecar file written by the matching source-phase
+// invocation. Callers can detect a missing file via errors.Is(err, fs.ErrNotExist)
+// to fall back gracefully when the source branch pre-dates this mechanism.
+func ReadTestState(t testing.TB) (TestState, error) {
 	data, err := os.ReadFile(stateFilePath(t))
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return TestState{}, false, nil
-		}
-		return TestState{}, false, err
+		return TestState{}, err
 	}
 
 	var state TestState
-	if err := json.Unmarshal(data, &state); err != nil {
-		return TestState{}, false, err
-	}
-	return state, true, nil
+	return state, json.Unmarshal(data, &state)
 }
