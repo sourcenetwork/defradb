@@ -42,7 +42,7 @@ Add, describe, patch, set-active, delete, and truncate collections.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client collection add](defradb_client_collection_add.md)	 - Add new collection
-* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete the active collection versions
+* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete collections
 * [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
 * [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
 * [defradb client collection set-active](defradb_client_collection_set-active.md)	 - Set the active collection version

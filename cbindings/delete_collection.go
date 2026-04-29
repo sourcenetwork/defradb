@@ -25,7 +25,12 @@ import (
 )
 
 //export DeleteCollection
-func DeleteCollection(nodePtr C.uintptr_t, names *C.char, identityPtr C.uintptr_t) C.Result {
+func DeleteCollection(
+	nodePtr C.uintptr_t,
+	names *C.char,
+	activeOnly C.int,
+	identityPtr C.uintptr_t,
+) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -41,6 +46,7 @@ func DeleteCollection(nodePtr C.uintptr_t, names *C.char, identityPtr C.uintptr_
 	ctx = attachTxnFromPointer(nodePtr, ctx)
 
 	opt := options.WithIdentity(options.DeleteCollection(), iIdentity.FromContext(ctx))
+	opt.SetActiveOnly(activeOnly != 0)
 
 	var nameList []string
 	if joined := C.GoString(names); joined != "" {

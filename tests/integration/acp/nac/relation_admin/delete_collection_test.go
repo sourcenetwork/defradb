@@ -51,6 +51,7 @@ func TestNAC_AdminRelation_CanDeleteCollection(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Identity:      testUtils.ClientIdentity(2),
 				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePatchCollectionPerm),
@@ -66,8 +67,9 @@ func TestNAC_AdminRelation_CanDeleteCollection(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			&action.DeleteCollection{
-				Identity: testUtils.ClientIdentity(2),
-				Names:    []string{"Users"},
+				ActiveOnly: true,
+				Identity:   testUtils.ClientIdentity(2),
+				Names:      []string{"Users"},
 			},
 		},
 	}
@@ -102,6 +104,7 @@ func TestNAC_AdminRelation_CLIClient_CanDeleteCollection(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Identity:      testUtils.ClientIdentity(2),
 				Names:         []string{"Users"},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
@@ -117,8 +120,9 @@ func TestNAC_AdminRelation_CLIClient_CanDeleteCollection(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			&action.DeleteCollection{
-				Identity: testUtils.ClientIdentity(2),
-				Names:    []string{"Users"},
+				ActiveOnly: true,
+				Identity:   testUtils.ClientIdentity(2),
+				Names:      []string{"Users"},
 			},
 		},
 	}

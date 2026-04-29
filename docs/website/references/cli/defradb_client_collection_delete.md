@@ -1,18 +1,19 @@
 ## defradb client collection delete
 
-Delete the active collection versions
+Delete collections
 
 ### Synopsis
 
-Delete the active version of one or more collections by name.
+Delete one or more collections by name.
 
 A single name, or a comma-separated list of names, may be provided. All named
 collections are removed atomically in a single operation. This can be used to
 delete collections that reference each other via relations, since deleting them
 one at a time would leave a dangling reference and be rolled back.
 
-Only the latest (head) version is deleted per call. If a collection has multiple
-versions, earlier versions must be deleted separately after each head is removed.
+By default, every version of each named collection is deleted (active head and
+all earlier versions). Pass --active-only to delete only the latest (head) version
+and keep earlier versions intact.
 
 The named collections must not contain any documents. Delete all documents first
 before deleting the collection.
@@ -24,17 +25,21 @@ defradb client collection delete [collectionNames] [flags]
 ### Examples
 
 ```
-delete a single collection:  
+delete every version of a single collection:  
   defradb client collection delete Users
 
-delete multiple collections in one call (this can be used to delete collections that reference each other via relations):  
+delete every version of multiple collections in one call (this can be used to delete collections that reference each other via relations):  
   defradb client collection delete Users,Books
+
+delete only the active head version, keeping earlier versions:  
+  defradb client collection delete --active-only Users
 ```
 
 ### Options
 
 ```
-  -h, --help   help for delete
+      --active-only   Delete only the active head version of each named collection (default deletes every version)
+  -h, --help          help for delete
 ```
 
 ### Options inherited from parent commands

@@ -20,15 +20,15 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// DeleteCollection deletes the active versions of one or more collections by name.
+// DeleteCollection deletes one or more collections by name.
 //
 // All named collections are removed atomically in a single operation. This can be used
 // to delete collections that reference each other via relations, since removing them
 // one at a time would leave a dangling reference and be rolled back.
 //
-// Only the latest (head) version of each named collection is deleted per call. If a
-// collection has multiple versions, earlier versions must be deleted separately after
-// each head is removed.
+// By default, every version of each named collection is deleted (active head and all
+// earlier versions). Set ActiveOnly to true to delete only the latest (head) version
+// and keep earlier versions intact.
 //
 // The collections must not contain any documents - they must be deleted first.
 type DeleteCollection struct {
@@ -49,6 +49,11 @@ type DeleteCollection struct {
 	// A single-name delete is just a one-element slice; the underlying API handles
 	// one or many names uniformly.
 	Names []string
+
+	// ActiveOnly limits the delete to only the active head version of each named
+	// collection. When false (the default) every version of each named collection
+	// is removed.
+	ActiveOnly bool
 
 	// Any error expected from the action. Optional.
 	//
@@ -74,6 +79,7 @@ func (a *DeleteCollection) Execute() {
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
+		opts.SetActiveOnly(a.ActiveOnly)
 
 		var txn client.Txn
 		var err error

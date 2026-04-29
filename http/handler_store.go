@@ -154,7 +154,18 @@ func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Reques
 		names = strings.Split(joined, ",")
 	}
 
+	var activeOnly bool
+	if raw := req.URL.Query().Get("active-only"); raw != "" {
+		parsed, err := strconv.ParseBool(raw)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		activeOnly = parsed
+	}
+
 	opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(ctx))
+	opt.SetActiveOnly(activeOnly)
 
 	// If there is an explicit transaction, use it. Otherwise use the db.
 	var err error
@@ -832,12 +843,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 
 	deleteCollection := openapi3.NewOperation()
 	deleteCollection.OperationID = "delete_collection"
-	deleteCollection.Description = "Delete the active version of one or more collections. " +
-		"The 'name' query parameter accepts a comma-separated (CSV) list of collection names."
+	deleteCollection.Description = "Delete one or more collections. " +
+		"The 'name' query parameter accepts a comma-separated (CSV) list of collection names. " +
+		"By default every version of each named collection is deleted; set 'active-only=true' " +
+		"to delete only the active head version and keep earlier versions intact."
 	deleteCollection.Tags = []string{"collection"}
 	deleteCollection.AddParameter(openapi3.NewQueryParameter("name").
 		WithRequired(true).
 		WithSchema(openapi3.NewStringSchema()))
+	deleteCollection.AddParameter(openapi3.NewQueryParameter("active-only").
+		WithRequired(false).
+		WithSchema(openapi3.NewBoolSchema()))
 	deleteCollection.Responses = openapi3.NewResponses()
 	deleteCollection.Responses.Set("200", successResponse)
 	deleteCollection.Responses.Set("400", errorResponse)

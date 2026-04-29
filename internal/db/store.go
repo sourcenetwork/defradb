@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -268,7 +269,7 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	err = db.deleteCollection(ctx, names)
+	err = db.deleteCollection(ctx, names, opt.ActiveOnly)
 	if err != nil {
 		return err
 	}
@@ -276,7 +277,7 @@ func (db *DB) DeleteCollection(
 	return txn.Commit()
 }
 
-func (db *DB) deleteCollection(ctx context.Context, names []string) error {
+func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) error {
 	if len(names) == 0 {
 		return client.ErrCollectionNameRequired
 	}
@@ -293,7 +294,21 @@ func (db *DB) deleteCollection(ctx context.Context, names []string) error {
 		if err != nil {
 			return err
 		}
-		ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+
+		if activeOnly {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+			continue
+		}
+
+		allVersions, err := description.GetCollectionsByCollectionID(
+			ctx, db.collectionRepository, col.Version().CollectionID,
+		)
+		if err != nil {
+			return err
+		}
+		for _, v := range allVersions {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
+		}
 	}
 
 	patch := "[" + strings.Join(ops, ",") + "]"

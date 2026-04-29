@@ -30,7 +30,7 @@ extern Result VerifyBlockSignature(uintptr_t nodePtr, char* keyType, char* publi
 uintptr_t identity);
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result PatchCollection(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
-extern Result DeleteCollection(uintptr_t nodePtr, char* name, uintptr_t identityPtr);
+extern Result DeleteCollection(uintptr_t nodePtr, char* name, int activeOnly, uintptr_t identityPtr);
 extern Result NewIdentity(char* keyType);
 extern void FreeIdentity(uintptr_t identityPtr);
 extern Result GetNodeIdentity(uintptr_t nodePtr);
@@ -698,13 +698,19 @@ func (w *CWrapper) DeleteCollection(
 	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	cNames := C.CString(strings.Join(names, ","))
 	defer C.free(unsafe.Pointer(cNames))
 	defer C.FreeIdentity(cIdentity)
 
+	cActiveOnly := C.int(0)
+	if opt.ActiveOnly {
+		cActiveOnly = 1
+	}
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cNames, cIdentity))
+	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cNames, cActiveOnly, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

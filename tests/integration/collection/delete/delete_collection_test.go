@@ -33,7 +33,8 @@ func TestDeleteCollection_Simple_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users"},
+				ActiveOnly: true,
+				Names:      []string{"Users"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -55,7 +56,8 @@ func TestDeleteCollection_Simple_QueriesNoLongerWork(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users"},
+				ActiveOnly: true,
+				Names:      []string{"Users"},
 			},
 			&action.Request{
 				Request: `query {
@@ -95,6 +97,7 @@ func TestDeleteCollection_WithDocuments_ReturnsError(t *testing.T) {
 				},
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"Users"},
 				ExpectedError: "cannot delete a collection that has documents",
 			},
@@ -124,6 +127,7 @@ func TestDeleteCollection_WithSoftDeletedDocuments_ReturnsError(t *testing.T) {
 				DocID:        0,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"Users"},
 				ExpectedError: "cannot delete a collection that has documents",
 			},
@@ -137,6 +141,7 @@ func TestDeleteCollection_NonExistentCollection_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"NonExistent"},
 				ExpectedError: "collection not found",
 			},
@@ -160,7 +165,8 @@ func TestDeleteCollection_MultipleCollections_DeleteOne(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users"},
+				ActiveOnly: true,
+				Names:      []string{"Users"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
@@ -206,6 +212,7 @@ func TestDeleteCollection_WithTransaction_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				TransactionID: immutable.Some(1),
 				Names:         []string{"Users"},
 			},
@@ -239,6 +246,7 @@ func TestDeleteCollection_WithTransactionWithoutCommit_CollectionStillExists(t *
 				`,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				TransactionID: immutable.Some(1),
 				Names:         []string{"Users"},
 			},
@@ -274,10 +282,12 @@ func TestDeleteCollection_DeleteBothCollections_Succeeds(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users"},
+				ActiveOnly: true,
+				Names:      []string{"Users"},
 			},
 			&action.DeleteCollection{
-				Names: []string{"Books"},
+				ActiveOnly: true,
+				Names:      []string{"Books"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -304,6 +314,7 @@ func TestDeleteCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"Users"},
 				ExpectedError: "cannot remove a collection while another field references it",
 			},
@@ -344,6 +355,7 @@ func TestDeleteCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing
 				`,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"Books"},
 				ExpectedError: "cannot remove a collection while another field references it",
 			},
@@ -384,7 +396,8 @@ func TestDeleteCollection_MultipleCollections_AtomicallyInOneCall(t *testing.T) 
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users", "Books"},
+				ActiveOnly: true,
+				Names:      []string{"Users", "Books"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -414,7 +427,8 @@ func TestDeleteCollection_BothRelatedCollections_InOneCall_Succeeds(t *testing.T
 				`,
 			},
 			&action.DeleteCollection{
-				Names: []string{"Users", "Books"},
+				ActiveOnly: true,
+				Names:      []string{"Users", "Books"},
 			},
 			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
@@ -437,6 +451,7 @@ func TestDeleteCollection_MixedValidAndInvalidName_RollsBack(t *testing.T) {
 				`,
 			},
 			&action.DeleteCollection{
+				ActiveOnly:    true,
 				Names:         []string{"Users", "NonExistent"},
 				ExpectedError: "collection not found",
 			},
@@ -448,6 +463,115 @@ func TestDeleteCollection_MixedValidAndInvalidName_RollsBack(t *testing.T) {
 						IsActive:       true,
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Default delete (ActiveOnly == false) removes every version of the named collection,
+// active head and all earlier (inactive) versions.
+func TestDeleteCollection_Default_RemovesAllVersions(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {}
+				`,
+			},
+			// Adding a field promotes the new version to active and demotes the original
+			// to an inactive earlier version.
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+			},
+			// Default behaviour: every version is removed including the inactive earlier one.
+			&action.DeleteCollection{
+				Names: []string{"Users"},
+			},
+			&action.GetCollections{
+				FilterOptions:   options.GetCollections().SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// With ActiveOnly the earlier version remains after the active head is removed; it is
+// effectively a rollback to the previous version (which is promoted to active).
+func TestDeleteCollection_ActiveOnly_LeavesEarlierVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+			},
+			&action.DeleteCollection{
+				ActiveOnly: true,
+				Names:      []string{"Users"},
+			},
+			// One version of Users still exists after the active head was removed; it
+			// was the earlier (inactive) version and remains inactive.
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Default delete across multiple collections each with multiple versions removes all of them.
+func TestDeleteCollection_Default_MultipleCollectionsWithMultipleVersions_RemovesAllVersions(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {}
+					type Books {}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Books/Fields/-", "value": {"Name": "title", "Kind": "String"} }
+					]
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users", "Books"},
+			},
+			&action.GetCollections{
+				FilterOptions:   options.GetCollections().SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
 	}

@@ -537,6 +537,10 @@ func (b *PatchCollectionOptionsBuilder) SetIdentity(id identity.Identity) *Patch
 type DeleteCollectionOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// ActiveOnly limits the delete to only the active head version of each named
+	// collection. When false (the default) every version of each named collection
+	// is removed.
+	ActiveOnly bool
 }
 
 // GetIdentity returns the identity for the operation.
@@ -558,6 +562,15 @@ func DeleteCollection() *DeleteCollectionOptionsBuilder {
 func (b *DeleteCollectionOptionsBuilder) SetIdentity(id identity.Identity) *DeleteCollectionOptionsBuilder {
 	b.append(func(opts *DeleteCollectionOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetActiveOnly toggles whether only the active head version of each named collection
+// is deleted. Defaults to false (delete every version).
+func (b *DeleteCollectionOptionsBuilder) SetActiveOnly(activeOnly bool) *DeleteCollectionOptionsBuilder {
+	b.append(func(opts *DeleteCollectionOptions) {
+		opts.ActiveOnly = activeOnly
 	})
 	return b
 }

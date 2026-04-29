@@ -21,18 +21,20 @@ import (
 )
 
 func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
+	var activeOnly bool
 	var cmd = &cobra.Command{
 		Use:   "delete [collectionNames]",
-		Short: "Delete the active collection versions",
-		Long: `Delete the active version of one or more collections by name.
+		Short: "Delete collections",
+		Long: `Delete one or more collections by name.
 
 A single name, or a comma-separated list of names, may be provided. All named
 collections are removed atomically in a single operation. This can be used to
 delete collections that reference each other via relations, since deleting them
 one at a time would leave a dangling reference and be rolled back.
 
-Only the latest (head) version is deleted per call. If a collection has multiple
-versions, earlier versions must be deleted separately after each head is removed.
+By default, every version of each named collection is deleted (active head and
+all earlier versions). Pass --active-only to delete only the latest (head) version
+and keep earlier versions intact.
 
 The named collections must not contain any documents. Delete all documents first
 before deleting the collection.`,
@@ -50,17 +52,24 @@ before deleting the collection.`,
 			cliClient := mustGetContextCLIClient(cmd)
 
 			opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(cmd.Context()))
+			opt.SetActiveOnly(activeOnly)
 			return cliClient.DeleteCollection(cmd.Context(), names, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "delete a single collection",
+	cmd.Flags().BoolVar(&activeOnly, "active-only", false,
+		"Delete only the active head version of each named collection (default deletes every version)")
+
+	EmbedCLIExample(ctx, cmd, "delete every version of a single collection",
 		`defradb client collection delete Users`)
 
 	EmbedCLIExample(ctx, cmd,
-		"delete multiple collections in one call (this can be used to delete collections that reference "+
-			"each other via relations)",
+		"delete every version of multiple collections in one call (this can be used to delete collections "+
+			"that reference each other via relations)",
 		`defradb client collection delete Users,Books`)
+
+	EmbedCLIExample(ctx, cmd, "delete only the active head version, keeping earlier versions",
+		`defradb client collection delete --active-only Users`)
 
 	return cmd
 }

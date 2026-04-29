@@ -1054,7 +1054,7 @@
         },
         "/collections": {
             "delete": {
-                "description": "Delete the active version of one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names.",
+                "description": "Delete one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names. By default every version of each named collection is deleted; set 'active-only=true' to delete only the active head version and keep earlier versions intact.",
                 "operationId": "delete_collection",
                 "parameters": [
                     {
@@ -1063,6 +1063,13 @@
                         "required": true,
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "active-only",
+                        "schema": {
+                            "type": "boolean"
                         }
                     }
                 ],

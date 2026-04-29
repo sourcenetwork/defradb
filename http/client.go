@@ -178,6 +178,9 @@ func (c *Client) DeleteCollection(
 	methodURL := c.http.apiURL.JoinPath("collections")
 	q := methodURL.Query()
 	q.Set("name", strings.Join(names, ","))
+	if opt.ActiveOnly {
+		q.Set("active-only", "true")
+	}
 	methodURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
