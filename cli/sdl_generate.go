@@ -37,8 +37,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 		Short: "Generate full GraphQL formatted schema.",
 		Long: `Generates the fully formatted GraphQL schema from a given user type definition(s).
 
-		Accepts multiple input files as well as "-" to use stdin.
-		`,
+Accepts multiple input files as well as "-" to use stdin.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sdlBuf string
