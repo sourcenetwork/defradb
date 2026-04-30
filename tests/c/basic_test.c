@@ -23,15 +23,15 @@ int main() {
     nodeOpts.disableAPI = 1;
     nodeOpts.enableNodeACP = 0;
 
-    NewNodeResult node = NewNode(opts);
-    if (node.status != 0) {
-        fprintf(stderr, "NewNode failed: %s\n", node.error);
+    NewNodeResult nodeRes = NewNode(nodeOpts);
+    if (nodeRes.status != 0) {
+        fprintf(stderr, "NewNode failed: %s\n", nodeRes.error);
         return 1;
     }
 
-    Result close_result = CloseNode(node.nodePtr);
-    if (close_result.status != 0) {
-        fprintf(stderr, "CloseNode failed: %s\n", close_result.error);
+    Result closeRes = CloseNode(nodeRes.nodePtr);
+    if (closeRes.status != 0) {
+        fprintf(stderr, "CloseNode failed: %s\n", closeRes.error);
         return 1;
     }
 
