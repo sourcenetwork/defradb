@@ -48,7 +48,9 @@ jobs:
         run: make deps:modules
 
       - name: Build Linux C shared library
-        run: make build-c-shared-linux
+        run: |
+          chmod +x tools/scripts/build-c-shared-linux.sh
+          make build-c-shared-linux
 
       - name: Compile C test program
         run: gcc -o c_test tests/c/basic_test.c -I./build -L./build -ldefradb
