@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -456,7 +457,7 @@ type GraphQLRequest struct {
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// handle different request transports
 	// specifically, SSE
-	if req.Header.Get("Accept") == sseAcceptHeader {
+	if strings.Contains(req.Header.Get("Accept"), sseAcceptHeader) {
 		execSSESubscription(rw, req)
 		return
 	}
