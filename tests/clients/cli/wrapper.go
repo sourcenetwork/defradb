@@ -428,9 +428,13 @@ func (w *Wrapper) DeleteCollection(
 	names []string,
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
-	args := []string{"client", "collection", "delete", strings.Join(names, ",")}
+	args := []string{"client", "collection", "delete"}
 
 	opt := utils.NewOptions(opts...)
+	if opt.ActiveOnly {
+		args = append(args, "--active-only")
+	}
+	args = append(args, strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)

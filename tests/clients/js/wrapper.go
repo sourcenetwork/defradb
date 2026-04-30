@@ -342,7 +342,7 @@ func (w *Wrapper) DeleteCollection(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, w.value, "deleteCollection", namesVal)
+	_, err = execute(ctx, w.value, "deleteCollection", namesVal, opt.ActiveOnly)
 	return err
 }
 
