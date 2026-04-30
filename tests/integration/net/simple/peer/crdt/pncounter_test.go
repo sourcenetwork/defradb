@@ -26,7 +26,10 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		//
+		// Signed counter deltas are double-applied across peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -87,7 +90,10 @@ func TestP2PUpdate_WithPNCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		//
+		// Signed counter deltas are double-applied across peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
