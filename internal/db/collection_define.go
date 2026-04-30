@@ -195,10 +195,6 @@ existingVersionLoop:
 		}
 	}
 
-	if err := validateRemovedCollectionsNotReferenced(removedCollectionVersions, newColsByID); err != nil {
-		return err
-	}
-
 	for _, col := range newColsByID {
 		// Automatically add any id fields for object fields added by the patch, if the patch did not explicitly
 		// add one.
@@ -253,18 +249,23 @@ existingVersionLoop:
 			}
 		}
 
-		// If an existing collection is not present in the new collection set,
-		// it must have mutated into a new collection version.
-		// The original still needs to exist and must be validated against.
-		// It may also be mutated later in this function.
+		// If an existing collection is not present in the new collection set, it has either
+		// been mutated into a new version (a replacement with the same CollectionID exists) or
+		// explicitly removed by the patch (no replacement). For the mutation case we re-add the
+		// original as inactive so it can be validated against and saved alongside the new
+		// version. For the removal case we leave it out so validation sees the deletion.
 		if isMissing {
+			var hasReplacement bool
 			for _, newCol := range newCollections {
 				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
 					existingCol.IsActive = false
+					hasReplacement = true
 					break
 				}
 			}
-			newCollections = append(newCollections, existingCol)
+			if hasReplacement {
+				newCollections = append(newCollections, existingCol)
+			}
 		}
 	}
 
@@ -383,42 +384,6 @@ existingVersionLoop:
 	}
 
 	return db.loadCollectionDefinitions(ctx)
-}
-
-// validateRemovedCollectionsNotReferenced errors if any field in the post-patch state
-// references a collection that is being removed by the patch. It surfaces which removed
-// collection is still being referenced via the host field name.
-func validateRemovedCollectionsNotReferenced(
-	removed []client.CollectionVersion,
-	newColsByID map[string]client.CollectionVersion,
-) error {
-	if len(removed) == 0 {
-		return nil
-	}
-	removedNames := make(map[string]struct{}, len(removed))
-	removedColIDs := make(map[string]struct{}, len(removed))
-	for _, r := range removed {
-		removedNames[r.Name] = struct{}{}
-		removedColIDs[r.CollectionID] = struct{}{}
-	}
-	for _, col := range newColsByID {
-		for _, field := range col.Fields {
-			if !field.Kind.IsObject() {
-				continue
-			}
-			switch k := field.Kind.(type) {
-			case *client.NamedKind:
-				if _, ok := removedNames[k.Name]; ok {
-					return NewErrRemoveReferencedCollectionFromField(removed, col.Name, field.Name)
-				}
-			case *client.CollectionKind:
-				if _, ok := removedColIDs[k.CollectionID]; ok {
-					return NewErrRemoveReferencedCollectionFromField(removed, col.Name, field.Name)
-				}
-			}
-		}
-	}
-	return nil
 }
 
 const (

@@ -369,19 +369,12 @@ func NewErrRemoveReferencedCollection(inner error, removed []string) error {
 
 // NewErrRemoveReferencedCollectionFromField errors when a patch removes a collection
 // that is still being referenced by a field on another collection in the post-patch
-// state. It identifies which removed collection(s) are still in use and the host
+// state. It identifies which removed collection is still in use and the host
 // collection/field doing the referencing.
-func NewErrRemoveReferencedCollectionFromField(
-	removed []client.CollectionVersion,
-	hostCollection, hostField string,
-) error {
-	names := make([]string, 0, len(removed))
-	for _, c := range removed {
-		names = append(names, c.Name)
-	}
+func NewErrRemoveReferencedCollectionFromField(removedName, hostCollection, hostField string) error {
 	return errors.New(
 		errRemoveReferencedCollection,
-		errors.NewKV("Removed", strings.Join(names, ",")),
+		errors.NewKV("Removed", removedName),
 		errors.NewKV("ReferencedBy", hostCollection),
 		errors.NewKV("Field", hostField),
 	)
