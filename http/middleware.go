@@ -72,7 +72,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			next.ServeHTTP(rw, req)
+			responseJSON(rw, httpStatusFromError(db.ErrTxnDiscarded), errorResponse{db.ErrTxnDiscarded})
 			return
 		}
 		ctx := req.Context()
