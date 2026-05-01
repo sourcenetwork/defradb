@@ -19,8 +19,6 @@
 int main() {
     NodeInitOptions nodeOpts = {0};
     nodeOpts.inMemory = 1;
-    nodeOpts.disableP2P = 1;
-    nodeOpts.disableAPI = 1;
     nodeOpts.enableNodeACP = 0;
 
     NewNodeResult nodeRes = NewNode(nodeOpts);
