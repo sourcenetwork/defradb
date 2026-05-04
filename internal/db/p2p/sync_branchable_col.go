@@ -12,6 +12,8 @@ package p2p
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -28,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	dbid "github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -41,9 +44,10 @@ type syncBranchableCollectionRequest struct {
 
 // syncBranchableCollectionReply represents the response to a collection sync request.
 type syncBranchableCollectionReply struct {
-	CollectionID string   `json:"collectionID"`
-	Heads        [][]byte `json:"heads"`
-	Sender       string   `json:"sender"`
+	CollectionID string                     `json:"collectionID"`
+	Heads        [][]byte                   `json:"heads"`
+	Sender       string                     `json:"sender"`
+	Signatures   []protocol.SignatureRecord `json:"signatures" cbor:",omitempty"`
 }
 
 // SyncBranchableCollection initiates a request for the latest version of the branchable
@@ -179,6 +183,13 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 		return reply.Sender, nil
 	}
 
+	if err := p.storeSignatureRecords(ctx, reply.Signatures); err != nil {
+		log.ErrorE("Failed to store synced branchable collection signatures", err,
+			corelog.String("CollectionID", collectionID),
+			corelog.String("Sender", reply.Sender))
+		return reply.Sender, err
+	}
+
 	for _, headBytes := range reply.Heads {
 		_, colCid, err := cid.CidFromBytes(headBytes)
 		if err != nil {
@@ -217,6 +228,11 @@ func (p *P2P) syncCollectionAndMerge(
 		return err
 	}
 
+	docMergeEvents, err := p.collectBranchableCollectionDocMergeEvents(ctx, senderID, collectionID, head)
+	if err != nil {
+		return err
+	}
+
 	evt := event.Merge{
 		ByPeer:       senderID,
 		FromPeer:     p.host.ID(),
@@ -224,7 +240,100 @@ func (p *P2P) syncCollectionAndMerge(
 		CollectionID: collectionID,
 	}
 
-	return p.db.Merge(ctx, evt)
+	if err := p.db.Merge(ctx, evt); err != nil {
+		return err
+	}
+
+	for _, evt := range docMergeEvents {
+		if err := p.db.Merge(ctx, evt); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *P2P) collectBranchableCollectionDocMergeEvents(
+	ctx context.Context,
+	senderID string,
+	collectionID string,
+	head cid.Cid,
+) ([]event.Merge, error) {
+	bstore := p.db.Multistore().Blockstore()
+	stack := []cid.Cid{head}
+	visited := make(map[string]struct{})
+	eventsByCID := make(map[string]event.Merge)
+
+	for len(stack) > 0 {
+		currentCID := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		cidString := currentCID.String()
+		if _, ok := visited[cidString]; ok {
+			continue
+		}
+		visited[cidString] = struct{}{}
+
+		rawBlock, err := bstore.Get(ctx, currentCID)
+		if err != nil {
+			return nil, fmt.Errorf("load branchable collection block %s: %w", currentCID, err)
+		}
+
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
+		if err != nil {
+			return nil, err
+		}
+		if !block.Delta.IsCollection() {
+			continue
+		}
+
+		for _, head := range block.Heads {
+			stack = append(stack, head.Cid)
+		}
+
+		for _, link := range block.Links {
+			rawDocBlock, err := bstore.Get(ctx, link.Cid)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"load document composite link %s from branchable collection block %s: %w",
+					link.Cid,
+					currentCID,
+					err,
+				)
+			}
+
+			docBlock, err := coreblock.GetFromBytes(rawDocBlock.RawData())
+			if err != nil {
+				return nil, err
+			}
+			if !docBlock.Delta.IsComposite() {
+				continue
+			}
+
+			docID := string(docBlock.Delta.GetDocID())
+			if docID == "" {
+				continue
+			}
+
+			eventsByCID[link.Cid.String()] = event.Merge{
+				DocID:        docID,
+				ByPeer:       senderID,
+				FromPeer:     p.host.ID(),
+				Cid:          link.Cid,
+				CollectionID: collectionID,
+			}
+		}
+	}
+
+	result := make([]event.Merge, 0, len(eventsByCID))
+	for _, evt := range eventsByCID {
+		result = append(result, evt)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Cid.String() < result[j].Cid.String()
+	})
+
+	return result, nil
 }
 
 // syncCollectionDAG synchronizes the DAG for a specific branchable collection CID.
@@ -251,25 +360,29 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 		return nil, err
 	}
 
-	heads, err := p.processSyncBranchableCollection(req.CollectionID)
+	heads, signatures, err := p.processSyncBranchableCollection(req.CollectionID)
 	if err != nil {
 		heads = [][]byte{}
+		signatures = nil
 	}
 
 	reply := &syncBranchableCollectionReply{
 		Sender:       p.host.ID(),
 		CollectionID: req.CollectionID,
 		Heads:        heads,
+		Signatures:   signatures,
 	}
 
 	return cbor.Marshal(reply)
 }
 
 // processSyncBranchableCollection processes a branchable collection sync request and returns all head CIDs.
-func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, error) {
+func (p *P2P) processSyncBranchableCollection(
+	collectionID string,
+) ([][]byte, []protocol.SignatureRecord, error) {
 	ident, err := p.db.GetNodeIdentity(p.ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	getColOpts := options.GetCollections().SetCollectionID(collectionID)
 	if ident.HasValue() {
@@ -278,17 +391,17 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 
 	cols, err := p.db.GetCollections(p.ctx, getColOpts)
 	if err != nil || len(cols) == 0 {
-		return nil, err
+		return nil, nil, err
 	}
 
 	col := cols[0].Version()
 	if !col.IsBranchable {
-		return nil, NewErrCollectionNotBranchable(collectionID)
+		return nil, nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
 	shortID, err := dbid.GetUncachedShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	key := keys.NewHeadstoreColKey(shortID)
@@ -296,17 +409,45 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 
 	cids, _, err := headset.List(p.ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(cids) == 0 {
-		return nil, NewErrNoHeadsForBranchableCol(collectionID)
+		return nil, nil, NewErrNoHeadsForBranchableCol(collectionID)
 	}
 
 	heads := make([][]byte, len(cids))
+	recordsBySignatureCID := make(map[string]protocol.SignatureRecord)
 	for i, c := range cids {
 		heads[i] = c.Bytes()
+
+		rawBlock, err := p.db.Multistore().Blockstore().Get(p.ctx, c)
+		if err != nil {
+			log.ErrorE("Failed to load block for branchable sync signatures", err,
+				corelog.String("CollectionID", collectionID),
+				corelog.String("CID", c.String()))
+			continue
+		}
+
+		records, err := p.collectSignatureRecords(p.ctx, c, rawBlock.RawData())
+		if err != nil {
+			log.ErrorE("Failed to collect branchable sync signatures", err,
+				corelog.String("CollectionID", collectionID),
+				corelog.String("CID", c.String()))
+			continue
+		}
+		for _, record := range records {
+			recordsBySignatureCID[string(record.SignatureCID)] = record
+		}
 	}
 
-	return heads, nil
+	signatures := make([]protocol.SignatureRecord, 0, len(recordsBySignatureCID))
+	for _, record := range recordsBySignatureCID {
+		signatures = append(signatures, record)
+	}
+	sort.Slice(signatures, func(i, j int) bool {
+		return string(signatures[i].SignatureCID) < string(signatures[j].SignatureCID)
+	})
+
+	return heads, signatures, nil
 }

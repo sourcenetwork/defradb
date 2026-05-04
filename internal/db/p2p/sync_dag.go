@@ -16,10 +16,8 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -46,15 +44,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 
 	linkSystem := makeLinkSystem(p.host.IPLDStore())
 
-	// Store the block in the DAG store
-	_, err := linkSystem.Store(linking.LinkContext{Ctx: sessionCtx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return err
-	}
-
-	bstore := p.db.Multistore().Blockstore()
-
-	return p.loadBlockLinks(sessionCtx, &linkSystem, block, bstore)
+	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
 }
 
 // loadBlockLinks loads the links of a block iteratively.
@@ -64,9 +54,9 @@ func (p *P2P) loadBlockLinks(
 	ctx context.Context,
 	linkSys *linking.LinkSystem,
 	block *coreblock.Block,
-	bstore datastore.Blockstore,
 ) error {
 	stack := make([]*coreblock.Block, 0, 64)
+	visited := make(map[string]struct{})
 
 	processBlock := func(current *coreblock.Block) error {
 		// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
@@ -75,6 +65,12 @@ func (p *P2P) loadBlockLinks(
 		if err != nil {
 			return err
 		}
+		cidString := link.Cid.String()
+		if _, ok := visited[cidString]; ok {
+			return nil
+		}
+		visited[cidString] = struct{}{}
+
 		// We deliberately ignore the first returned value, which indicates whether
 		// the block was actually verified or not. Unsigned blocks are still allowed,
 		// but invalid embedded or sidecar signatures must reject the DAG.
@@ -85,6 +81,10 @@ func (p *P2P) loadBlockLinks(
 			p.db.Multistore().Systemstore(),
 			linkSys,
 		); err != nil {
+			return err
+		}
+
+		if _, err := linkSys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), current.GenerateNode()); err != nil {
 			return err
 		}
 
@@ -132,29 +132,10 @@ func (p *P2P) loadBlockLinks(
 		return err
 	}
 
-	var txnCtx context.Context
-	if _, ok := corekv.TryGetCtxTxn(ctx); ok {
-		txnCtx = ctx
-	} else {
-		txn := p.db.Rootstore().NewTxn(true)
-		defer txn.Discard()
-		txnCtx = corekv.SetCtxTxn(ctx, txn)
-	}
-
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		link, err := current.GenerateLink()
-		if err != nil {
-			return err
-		}
-		merged, err := bstore.IsMerged(txnCtx, link.Cid)
-		if err != nil {
-			return err
-		}
-		if merged {
-			continue
-		}
+
 		if err := processBlock(current); err != nil {
 			return err
 		}

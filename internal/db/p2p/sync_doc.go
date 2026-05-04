@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sort"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -29,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -49,8 +51,9 @@ type docSyncReply struct {
 
 // docSyncItem represents the sync result for a single document.
 type docSyncItem struct {
-	DocID string   `json:"docID"`
-	Heads [][]byte `json:"heads"`
+	DocID      string                     `json:"docID"`
+	Heads      [][]byte                   `json:"heads"`
+	Signatures []protocol.SignatureRecord `json:"signatures" cbor:",omitempty"`
 }
 
 // SyncDocuments initiates a request for the latest document versions of the
@@ -197,6 +200,13 @@ func (p *P2P) handleDocSyncItem(
 	collectionID string,
 	results map[string][]cid.Cid,
 ) {
+	if err := p.storeSignatureRecords(ctx, item.Signatures); err != nil {
+		log.ErrorE("Failed to store synced document signatures", err,
+			corelog.String("DocID", item.DocID),
+			corelog.String("Sender", senderID))
+		return
+	}
+
 	for _, headBytes := range item.Heads {
 		_, docCid, err := cid.CidFromBytes(headBytes)
 		if err != nil {
@@ -315,9 +325,37 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 		Heads: make([][]byte, 0, len(cids)),
 	}
 
+	recordsBySignatureCID := make(map[string]protocol.SignatureRecord)
 	for _, cid := range cids {
 		result.Heads = append(result.Heads, cid.Bytes())
+
+		rawBlock, err := p.db.Multistore().Blockstore().Get(p.ctx, cid)
+		if err != nil {
+			log.ErrorE("Failed to load block for doc sync signatures", err,
+				corelog.String("DocID", docID),
+				corelog.String("CID", cid.String()))
+			continue
+		}
+
+		records, err := p.collectSignatureRecords(p.ctx, cid, rawBlock.RawData())
+		if err != nil {
+			log.ErrorE("Failed to collect doc sync signatures", err,
+				corelog.String("DocID", docID),
+				corelog.String("CID", cid.String()))
+			continue
+		}
+		for _, record := range records {
+			recordsBySignatureCID[string(record.SignatureCID)] = record
+		}
 	}
+
+	result.Signatures = make([]protocol.SignatureRecord, 0, len(recordsBySignatureCID))
+	for _, record := range recordsBySignatureCID {
+		result.Signatures = append(result.Signatures, record)
+	}
+	sort.Slice(result.Signatures, func(i, j int) bool {
+		return string(result.Signatures[i].SignatureCID) < string(result.Signatures[j].SignatureCID)
+	})
 
 	return result, nil
 }

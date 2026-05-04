@@ -38,7 +38,7 @@ func init() {
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
 		badgerOpts.IndexCacheSize = 100 << 20
-		badgerOpts.ValueThreshold = 1 << 8
+		badgerOpts.ValueThreshold = 1 << 10
 		badgerOpts.Compression = badgeropts.ZSTD
 		badgerOpts.ZSTDCompressionLevel = 1
 

@@ -23,6 +23,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -711,6 +712,7 @@ type parsedDocInfo struct {
 	headCID       cid.Cid
 	regularBlocks []blocks.Block
 	encBlocks     []blocks.Block
+	sigBlocks     []blocks.Block
 }
 
 // processCARBatch processes multiple CAR documents in a single transaction.
@@ -739,6 +741,7 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			headCID:       headCID,
 			regularBlocks: parsed.regularBlocks,
 			encBlocks:     parsed.encBlocks,
+			sigBlocks:     parsed.sigBlocks,
 		})
 	}
 
@@ -755,6 +758,7 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 		// transactions since the last attempt should be skipped.
 		var regularBlocks []blocks.Block
 		var encBlocks []blocks.Block
+		var sigBlocks []blocks.Block
 		var mergeEvts []event.Merge
 		var validDocs []*protocol.DocumentInfo
 
@@ -764,6 +768,7 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			}
 			regularBlocks = append(regularBlocks, pd.regularBlocks...)
 			encBlocks = append(encBlocks, pd.encBlocks...)
+			sigBlocks = append(sigBlocks, pd.sigBlocks...)
 			mergeEvts = append(mergeEvts, event.Merge{
 				DocID:        pd.doc.DocID,
 				ByPeer:       req.SenderID,
@@ -778,7 +783,7 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			return nil
 		}
 
-		lastErr = p.tryProcessCARBatch(ctx, req, regularBlocks, encBlocks, mergeEvts, validDocs)
+		lastErr = p.tryProcessCARBatch(ctx, req, regularBlocks, encBlocks, sigBlocks, mergeEvts, validDocs)
 		if lastErr == nil {
 			return nil
 		}
@@ -807,6 +812,7 @@ func (p *P2P) tryProcessCARBatch(
 	req *protocol.PushLogRequest,
 	allRegularBlocks []blocks.Block,
 	allEncBlocks []blocks.Block,
+	allSigBlocks []blocks.Block,
 	mergeEvts []event.Merge,
 	validDocs []*protocol.DocumentInfo,
 ) error {
@@ -830,9 +836,12 @@ func (p *P2P) tryProcessCARBatch(
 		}
 	}
 
-	if len(allRegularBlocks) > 0 {
+	blockstoreBlocks := make([]blocks.Block, 0, len(allRegularBlocks)+len(allSigBlocks))
+	blockstoreBlocks = append(blockstoreBlocks, allRegularBlocks...)
+	blockstoreBlocks = append(blockstoreBlocks, allSigBlocks...)
+	if len(blockstoreBlocks) > 0 {
 		bstore := datastore.BlindWriteBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
-		if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
+		if err := bstore.PutMany(txnCtx, blockstoreBlocks); err != nil {
 			log.ErrorE("Batch CAR import failed", err)
 			return err
 		}
@@ -844,6 +853,11 @@ func (p *P2P) tryProcessCARBatch(
 			log.ErrorE("Batch encrypted block import failed", err)
 			return err
 		}
+	}
+
+	if err := p.verifyCARBlockSignatures(txnCtx, allRegularBlocks); err != nil {
+		log.ErrorE("Batch CAR signature verification failed", err)
+		return err
 	}
 
 	wrappedTxn := p.db.WrapCorekvTxn(txn)
@@ -877,6 +891,34 @@ func (p *P2P) tryProcessCARBatch(
 		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
 		if err := p.SendUpdate(updateEvt); err != nil {
 			log.ErrorE("Failed to send update after sync", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *P2P) verifyCARBlockSignatures(ctx context.Context, regularBlocks []blocks.Block) error {
+	if len(regularBlocks) == 0 {
+		return nil
+	}
+
+	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	linkSys := makeLinkSystem(blockstore.NewIPLDStore(bstore))
+
+	for _, rawBlock := range regularBlocks {
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
+		if err != nil {
+			continue
+		}
+
+		if _, err := coreblock.VerifyStoredBlockSignature(
+			ctx,
+			rawBlock.Cid(),
+			block,
+			p.db.Multistore().Systemstore(),
+			&linkSys,
+		); err != nil {
+			return err
 		}
 	}
 
