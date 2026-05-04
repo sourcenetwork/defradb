@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -85,10 +86,17 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := mustGetContextClientDB(req)
+		//db := mustGetContextClientDB(req)
+		var store client.Store
+		txn, ok := datastore.CtxTryGetClientTxn(req.Context())
+		if ok {
+			store = txn
+		} else {
+			store = mustGetContextClientDB(req)
+		}
 
 		opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(req.Context()))
-		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
+		col, err := store.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
 			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
