@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -99,6 +100,14 @@ func TestMutationUpdate_ConcurrentWrite(t *testing.T) {
 
 func TestMutationUpdate_ConcurrentCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			state.GoClientType,
+			state.HTTPClientType,
+			state.CLIClientType,
+			state.JSClientType,
+			// The C client can return a different error on the update doc call due to a race condition.
+			// https://github.com/sourcenetwork/defradb/issues/4771
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -173,6 +182,14 @@ func TestMutationUpdate_ConcurrentCommit(t *testing.T) {
 
 func TestMutationUpdate_ConcurrentDiscard(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			state.GoClientType,
+			state.HTTPClientType,
+			state.CLIClientType,
+			state.JSClientType,
+			// The C client can return a different error on the second add doc call due to a race condition.
+			// https://github.com/sourcenetwork/defradb/issues/4771
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
