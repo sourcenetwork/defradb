@@ -430,6 +430,17 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 			return err
 		}
 
+		signatureLinks, err := coreblock.DeleteSignatureLinks(ctx, txn.Systemstore(), currentBlockCid)
+		if err != nil {
+			return err
+		}
+		for _, signatureLink := range signatureLinks {
+			err = blockstore.DeleteBlock(ctx, signatureLink.Cid)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = blockstore.DeleteBlock(ctx, currentBlockCid)
 		if err != nil {
 			return err

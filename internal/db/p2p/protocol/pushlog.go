@@ -14,6 +14,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
+// SignatureRecord carries a sidecar signature block for a canonical DAG block.
+type SignatureRecord struct {
+	BlockCID     []byte
+	SignatureCID []byte
+	Signature    []byte
+}
+
 // PushLogRequest is the struct used to send a resource update to a peer node.
 type PushLogRequest struct {
 	message.MetaData
@@ -23,6 +30,8 @@ type PushLogRequest struct {
 	Creator string
 	// Documents contains document infos (always used, even for single doc).
 	Documents []DocumentInfo
+	// Signatures contains sidecar signatures for blocks referenced by Documents.
+	Signatures []SignatureRecord `cbor:",omitempty"`
 }
 
 // DocumentInfo contains the metadata for a single document.

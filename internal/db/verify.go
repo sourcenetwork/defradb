@@ -35,6 +35,8 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeVerifySignaturePerm); err != nil {
@@ -46,7 +48,18 @@ func (db *DB) VerifySignature(
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	// If we have a transaction, we will use it to set the blockstore. Otherwise, we will use the db.
+	var blockStore *bsadapter.Adapter
+	if hadTxn {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(txn.Rootstore(), db.blockStoreChunkSize)}
+	} else {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	}
+	systemStore := datastore.SystemstoreFrom(db.rootstore)
+	if hadTxn {
+		systemStore = txn.Systemstore()
+	}
+
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true
@@ -59,10 +72,6 @@ func (db *DB) VerifySignature(
 	block, err := coreblock.GetFromNode(nd)
 	if err != nil {
 		return err
-	}
-
-	if block.Signature == nil {
-		return ErrMissingSignature
 	}
 
 	if db.documentACP.HasValue() {
@@ -91,6 +100,12 @@ func (db *DB) VerifySignature(
 		}
 	}
 
-	_, err = coreblock.VerifyBlockSignatureWithKey(block, &linkSys, pubKey)
-	return err
+	verified, err := coreblock.VerifyStoredBlockSignatureWithKey(ctx, parsedCid, block, systemStore, &linkSys, pubKey)
+	if err != nil {
+		return err
+	}
+	if !verified {
+		return ErrMissingSignature
+	}
+	return nil
 }

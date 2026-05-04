@@ -71,14 +71,21 @@ func (p *P2P) loadBlockLinks(
 	processBlock := func(current *coreblock.Block) error {
 		// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
 		// https://github.com/sourcenetwork/defradb/issues/3525
-		if current.Signature != nil {
-			// we deliberately ignore the first returned value, which indicates whether the signature
-			// the block was actually verified or not, because we don't handle it any different here.
-			// But we want to keep the API of VerifyBlockSignature explicit about the results.
-			_, err := coreblock.VerifyBlockSignature(current, linkSys)
-			if err != nil {
-				return err
-			}
+		link, err := current.GenerateLink()
+		if err != nil {
+			return err
+		}
+		// We deliberately ignore the first returned value, which indicates whether
+		// the block was actually verified or not. Unsigned blocks are still allowed,
+		// but invalid embedded or sidecar signatures must reject the DAG.
+		if _, err := coreblock.VerifyStoredBlockSignature(
+			ctx,
+			link.Cid,
+			current,
+			p.db.Multistore().Systemstore(),
+			linkSys,
+		); err != nil {
+			return err
 		}
 
 		var encResults *encryption.Results

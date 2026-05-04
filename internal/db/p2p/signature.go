@@ -36,13 +36,47 @@ func (p *P2P) newPushLogRequest(
 	}
 
 	return protocol.PushLogRequest{
-		DocID:        docID,
-		CID:          blockCID.Bytes(),
 		CollectionID: collectionID,
 		Creator:      p.host.ID(),
-		Block:        blockBytes,
-		Signatures:   signatures,
+		Documents: []protocol.DocumentInfo{{
+			DocID: docID,
+			CID:   blockCID.Bytes(),
+			Block: blockBytes,
+		}},
+		Signatures: signatures,
 	}, nil
+}
+
+func (p *P2P) collectSignatureRecordsForDocuments(
+	ctx context.Context,
+	documents []protocol.DocumentInfo,
+) ([]protocol.SignatureRecord, error) {
+	recordsBySignatureCID := map[string]protocol.SignatureRecord{}
+
+	for _, doc := range documents {
+		blockCID, err := cid.Cast(doc.CID)
+		if err != nil {
+			return nil, err
+		}
+
+		records, err := p.collectSignatureRecords(ctx, blockCID, doc.Block)
+		if err != nil {
+			return nil, err
+		}
+		for _, record := range records {
+			recordsBySignatureCID[string(record.SignatureCID)] = record
+		}
+	}
+
+	records := make([]protocol.SignatureRecord, 0, len(recordsBySignatureCID))
+	for _, record := range recordsBySignatureCID {
+		records = append(records, record)
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return string(records[i].SignatureCID) < string(records[j].SignatureCID)
+	})
+
+	return records, nil
 }
 
 func (p *P2P) collectSignatureRecords(

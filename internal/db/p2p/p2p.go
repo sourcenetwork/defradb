@@ -670,6 +670,10 @@ func (p *P2P) processDocuments(ctx context.Context, req *protocol.PushLogRequest
 
 // processMessageBatch processes all documents in a message as a single batch.
 func (p *P2P) processMessageBatch(ctx context.Context, req *protocol.PushLogRequest, isReplicator bool) error {
+	if err := p.storeSignatureRecords(ctx, req.Signatures); err != nil {
+		return err
+	}
+
 	if len(req.Documents) == 0 {
 		return nil
 	}
@@ -1191,13 +1195,19 @@ func (pb *pubsubBatcher) processCollectionBatch(collectionID string, reqs []pubs
 			Creator:      pb.p2p.host.ID(),
 			Documents:    documents,
 		}
-
-		b, err := cbor.Marshal(pubsubReq)
+		signatures, err := pb.p2p.collectSignatureRecordsForDocuments(pb.ctx, documents)
 		if err != nil {
-			log.ErrorE("Failed to marshal relay batch request", err)
+			log.ErrorE("Failed to collect relay batch signatures", err)
 		} else {
-			if err := pb.p2p.host.PublishToTopicAsync(pb.ctx, collectionID, b); err != nil {
-				log.ErrorE("Failed to publish relay batch to collection topic", err)
+			pubsubReq.Signatures = signatures
+
+			b, err := cbor.Marshal(pubsubReq)
+			if err != nil {
+				log.ErrorE("Failed to marshal relay batch request", err)
+			} else {
+				if err := pb.p2p.host.PublishToTopicAsync(pb.ctx, collectionID, b); err != nil {
+					log.ErrorE("Failed to publish relay batch to collection topic", err)
+				}
 			}
 		}
 	}
@@ -1266,9 +1276,18 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 		documents[i].CAR = carData
 	}
 
+	signatures, err := pb.p2p.collectSignatureRecordsForDocuments(batchCtx, documents)
+	if err != nil {
+		log.ErrorE("Failed to collect batched pubsub signatures", err)
+		return
+	}
+
 	estimatedSize := 0
 	for _, doc := range documents {
 		estimatedSize += len(doc.DocID) + len(doc.CID) + len(doc.Block) + len(doc.CAR) + 50
+	}
+	for _, signature := range signatures {
+		estimatedSize += len(signature.BlockCID) + len(signature.SignatureCID) + len(signature.Signature)
 	}
 
 	if estimatedSize > maxPubsubMessageSize && len(batch) > 1 {
@@ -1282,6 +1301,7 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 		CollectionID: collectionID,
 		Creator:      pb.p2p.host.ID(),
 		Documents:    documents,
+		Signatures:   signatures,
 	}
 
 	b, err := cbor.Marshal(pubsubReq)
@@ -1296,10 +1316,16 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 
 	for i, req := range batch {
 		if req.evt.DocID != "" {
+			docSignatures, err := pb.p2p.collectSignatureRecordsForDocuments(batchCtx, []protocol.DocumentInfo{documents[i]})
+			if err != nil {
+				log.ErrorE("Failed to collect doc pubsub signatures", err)
+				continue
+			}
 			docReq := &protocol.PushLogRequest{
 				CollectionID: collectionID,
 				Creator:      pb.p2p.host.ID(),
 				Documents:    []protocol.DocumentInfo{documents[i]},
+				Signatures:   docSignatures,
 			}
 			docB, err := cbor.Marshal(docReq)
 			if err != nil {

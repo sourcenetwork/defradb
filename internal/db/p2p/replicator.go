@@ -34,7 +34,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -229,14 +228,9 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		pushLogReq := protocol.PushLogRequest{
-			CollectionID: collectionID,
-			Creator:      p.host.ID(),
-			Documents: []protocol.DocumentInfo{{
-				DocID: docID,
-				CID:   head.cid.Bytes(),
-				Block: rawblock,
-			}},
+		pushLogReq, err := p.newPushLogRequest(ctx, docID, head.cid, collectionID, rawblock)
+		if err != nil {
+			return err
 		}
 
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
@@ -362,14 +356,21 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 			go func() {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
-				pushLogReq := protocol.PushLogRequest{
-					CollectionID: lg.CollectionID,
-					Creator:      p.host.ID(),
-					Documents: []protocol.DocumentInfo{{
-						DocID: lg.DocID,
-						CID:   lg.Cid.Bytes(),
-						Block: lg.Block,
-					}},
+				pushLogReq, err := p.newPushLogRequest(ctx, lg.DocID, lg.Cid, lg.CollectionID, lg.Block)
+				if err != nil {
+					log.ErrorE(
+						"Failed to prepare push log",
+						err,
+						corelog.String("DocID", lg.DocID),
+						corelog.Any("CID", lg.Cid),
+						corelog.Any("PeerID", peerID))
+					if !lg.IsRetry {
+						err = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
+						if err != nil {
+							log.ErrorE("Failed to handle replicator failure.", err)
+						}
+					}
+					return
 				}
 				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 					log.ErrorE(
@@ -809,14 +810,15 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		pushLogReq := protocol.PushLogRequest{
-			CollectionID: head.block.Delta.GetCollectionVersionID(),
-			Creator:      p.host.ID(),
-			Documents: []protocol.DocumentInfo{{
-				DocID: docID,
-				CID:   head.cid.Bytes(),
-				Block: rawblock,
-			}},
+		pushLogReq, err := p.newPushLogRequest(
+			ctx,
+			docID,
+			head.cid,
+			head.block.Delta.GetCollectionVersionID(),
+			rawblock,
+		)
+		if err != nil {
+			return err
 		}
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 			return err

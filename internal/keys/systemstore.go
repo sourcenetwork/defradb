@@ -20,6 +20,7 @@ const (
 	FIELD_SHORT_ID      = "/field/shortID"
 	P2P_COLLECTION      = "/p2p/collection"
 	P2P_DOCUMENT        = "/p2p/document"
+	BLOCK_SIGNATURE     = "/signature/block"
 	COLLECTION_SEQ      = "/seq/collection"
 	INDEX_ID_SEQ        = "/seq/index"
 	FIELD_ID_SEQ        = "/seq/field"
