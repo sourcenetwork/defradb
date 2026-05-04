@@ -61,7 +61,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
-	github.com/valyala/fastjson v1.6.4
+	github.com/valyala/fastjson v1.6.10
 	github.com/vito/go-sse v1.1.3
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.246
 	github.com/zalando/go-keyring v0.2.8
