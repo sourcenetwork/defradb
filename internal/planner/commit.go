@@ -363,9 +363,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		n.commitSelect.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
 
-	if block.Signature != nil &&
-		n.commitSelect.IndexesByName[request.SignatureFieldName] != nil {
-		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
+	if n.commitSelect.IndexesByName[request.SignatureFieldName] != nil {
+		err := n.addBlockSignatureFieldToDoc(block, link, &commit)
 		if err != nil {
 			return core.Doc{}, err
 		}
@@ -480,6 +479,27 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	n.commitSelect.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
 
 	return nil
+}
+
+func (n *dagScanNode) addBlockSignatureFieldToDoc(
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+	commit *core.Doc,
+) error {
+	if block.Signature != nil {
+		return n.addSignatureFieldToDoc(*block.Signature, commit)
+	}
+
+	txn := datastore.CtxMustGetTxn(n.planner.ctx)
+	signatures, err := coreblock.ListSignatureLinks(n.planner.ctx, txn.Systemstore(), blockLink.Cid)
+	if err != nil {
+		return err
+	}
+	if len(signatures) == 0 {
+		return nil
+	}
+
+	return n.addSignatureFieldToDoc(signatures[0].Link, commit)
 }
 
 func (n *dagScanNode) reset() {

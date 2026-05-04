@@ -40,7 +40,7 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
+				Cid:            "bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e",
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
@@ -49,12 +49,12 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreichuvsbsr3oo4xeqfi55mrh4us77z2bg2foemuzhn5idomya6epl4",
+				Cid:            "bafyreiehh36sndwjshkpatwir3cqhfi7vya22kdsst65oyp5ejufbf7m4e",
 			},
 			testUtils.DeleteDoc{},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreigq4hkl7kgcj6qssol4ms3spagjjlaume2xatogdxqxc3h45td6q4",
+				Cid:            "bafyreigkrr44sl5rtlieru5d7wpggsqyyjghypasuj3u2uqohzppruckce",
 			},
 		},
 	}
@@ -84,7 +84,7 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibxlg2hmbbhbia4zywlif4xhozrf47js6r46ag5bcw72uc5m53csi",
+				Cid:            "bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e",
 			},
 		},
 	}
@@ -111,7 +111,7 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(1).Value(),
-				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
+				Cid:            "bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e",
 				ExpectedError:  coreblock.ErrSignaturePubKeyMismatch.Error(),
 			},
 		},
@@ -139,7 +139,7 @@ func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreichuvsbsr3oo4xeqfi55mrh4us77z2bg2foemuzhn5idomya6epl4",
+				Cid:            "bafyreiehh36sndwjshkpatwir3cqhfi7vya22kdsst65oyp5ejufbf7m4e",
 				ExpectedError:  "could not find",
 			},
 		},
