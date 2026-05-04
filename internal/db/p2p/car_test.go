@@ -440,6 +440,76 @@ func TestVerifyCARBlockSignatures_VerifiesSidecarSignatures(t *testing.T) {
 	require.NoError(t, p.verifyCARBlockSignatures(ctx, []blocks.Block{rootRawBlock}))
 }
 
+func TestIndexCARSignatureBlocks_RebuildsSignatureLinksFromCARBlocks(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
+	multistore := datastore.NewMultistore(rootstore, lockSet, immutable.None[int]())
+	p := &P2P{
+		db: &carTestDB{
+			rootstore:  rootstore,
+			multistore: multistore,
+		},
+	}
+
+	rootBlock, rootCID, rootBytes := buildTestBlock(t)
+	rootRawBlock, err := blocks.NewBlockWithCid(rootBytes, rootCID)
+	require.NoError(t, err)
+	require.NoError(t, multistore.Blockstore().Put(ctx, rootRawBlock))
+
+	sigCID, sigBytes := buildSignatureBlockForBlock(t, rootBlock)
+	sigRawBlock, err := blocks.NewBlockWithCid(sigBytes, sigCID)
+	require.NoError(t, err)
+	require.NoError(t, multistore.Blockstore().Put(ctx, sigRawBlock))
+
+	signature, err := coreblock.GetSignatureBlockFromBytes(sigBytes)
+	require.NoError(t, err)
+
+	err = p.indexCARSignatureBlocks(ctx, []blocks.Block{rootRawBlock}, []blocks.Block{sigRawBlock})
+	require.NoError(t, err)
+
+	sigLink, found, err := coreblock.GetSignatureLink(
+		ctx,
+		multistore.Systemstore(),
+		rootCID,
+		string(signature.Header.Identity),
+	)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, sigCID, sigLink.Cid)
+	require.NoError(t, p.verifyCARBlockSignatures(ctx, []blocks.Block{rootRawBlock}))
+}
+
+func TestIndexCARSignatureBlocks_IfSignatureDoesNotMatchRegularBlock_ShouldError(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
+	multistore := datastore.NewMultistore(rootstore, lockSet, immutable.None[int]())
+	p := &P2P{
+		db: &carTestDB{
+			rootstore:  rootstore,
+			multistore: multistore,
+		},
+	}
+
+	rootBlock, rootCID, rootBytes := buildTestBlock(t)
+	rootRawBlock, err := blocks.NewBlockWithCid(rootBytes, rootCID)
+	require.NoError(t, err)
+
+	otherBlock := rootBlock.Clone()
+	otherBlock.Delta.DocCompositeDelta.DocID = []byte("otherDoc")
+	sigCID, sigBytes := buildSignatureBlockForBlock(t, otherBlock)
+	sigRawBlock, err := blocks.NewBlockWithCid(sigBytes, sigCID)
+	require.NoError(t, err)
+
+	err = p.indexCARSignatureBlocks(ctx, []blocks.Block{rootRawBlock}, []blocks.Block{sigRawBlock})
+	require.Error(t, err)
+
+	signatures, err := coreblock.ListSignatureLinks(ctx, multistore.Systemstore(), rootCID)
+	require.NoError(t, err)
+	require.Empty(t, signatures)
+}
+
 func TestParseCAR_EmptyData(t *testing.T) {
 	_, err := parseCAR([]byte{})
 	require.Error(t, err)

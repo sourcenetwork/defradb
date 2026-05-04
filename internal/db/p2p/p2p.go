@@ -21,6 +21,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
@@ -855,6 +856,11 @@ func (p *P2P) tryProcessCARBatch(
 		}
 	}
 
+	if err := p.indexCARSignatureBlocks(txnCtx, allRegularBlocks, allSigBlocks); err != nil {
+		log.ErrorE("Batch CAR signature indexing failed", err)
+		return err
+	}
+
 	if err := p.verifyCARBlockSignatures(txnCtx, allRegularBlocks); err != nil {
 		log.ErrorE("Batch CAR signature verification failed", err)
 		return err
@@ -891,6 +897,86 @@ func (p *P2P) tryProcessCARBatch(
 		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
 		if err := p.SendUpdate(updateEvt); err != nil {
 			log.ErrorE("Failed to send update after sync", err)
+		}
+	}
+
+	return nil
+}
+
+type carBlockToVerify struct {
+	cid   cid.Cid
+	block *coreblock.Block
+}
+
+func (p *P2P) indexCARSignatureBlocks(
+	ctx context.Context,
+	regularBlocks []blocks.Block,
+	sigBlocks []blocks.Block,
+) error {
+	if len(sigBlocks) == 0 {
+		return nil
+	}
+
+	regularBlocksByCID := make(map[string]carBlockToVerify, len(regularBlocks))
+	for _, rawBlock := range regularBlocks {
+		if _, ok := regularBlocksByCID[rawBlock.Cid().String()]; ok {
+			continue
+		}
+
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
+		if err != nil {
+			continue
+		}
+
+		regularBlocksByCID[rawBlock.Cid().String()] = carBlockToVerify{
+			cid:   rawBlock.Cid(),
+			block: block,
+		}
+	}
+
+	if len(regularBlocksByCID) == 0 {
+		return errors.New("car has signature blocks but no regular blocks")
+	}
+
+	systemStore := datastore.SystemstoreFrom(p.db.Rootstore())
+	indexedSigBlocks := make(map[string]struct{}, len(sigBlocks))
+	for _, rawSigBlock := range sigBlocks {
+		sigCID := rawSigBlock.Cid()
+		if _, ok := indexedSigBlocks[sigCID.String()]; ok {
+			continue
+		}
+		indexedSigBlocks[sigCID.String()] = struct{}{}
+
+		signature, err := coreblock.GetSignatureBlockFromBytes(rawSigBlock.RawData())
+		if err != nil {
+			return err
+		}
+
+		indexed := false
+		for _, regularBlock := range regularBlocksByCID {
+			if err := coreblock.VerifySignatureBlock(regularBlock.block, signature); err != nil {
+				continue
+			}
+
+			err := coreblock.StoreSignatureLink(
+				ctx,
+				systemStore,
+				regularBlock.cid,
+				signature,
+				cidlink.Link{Cid: sigCID},
+			)
+			if err != nil {
+				return err
+			}
+			indexed = true
+			break
+		}
+
+		if !indexed {
+			return errors.New(
+				"car signature block does not match any data block",
+				errors.NewKV("SignatureCID", sigCID.String()),
+			)
 		}
 	}
 
