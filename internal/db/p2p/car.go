@@ -57,6 +57,7 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 
 	bstore := p.db.Multistore().Blockstore()
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
+	systemStore := datastore.SystemstoreFrom(p.db.Rootstore())
 	collectedBlocks := make(map[string]*collectedBlock)
 	rootCIDs := make([]cid.Cid, 0, len(rootBlocks))
 
@@ -82,6 +83,9 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 				cid:      rootCID,
 				rawBytes: rb.rawBytes,
 			}
+			if err := collectSignatureBlocks(txnCtx, bstore, systemStore, rootCID, collectedBlocks); err != nil {
+				return nil, err
+			}
 			if rb.block.Signature != nil {
 				sigCID := rb.block.Signature.Cid
 				if _, seen := collectedBlocks[sigCID.String()]; !seen {
@@ -106,13 +110,20 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 					}
 				}
 			}
-			for _, dagLink := range rb.block.Links {
-				if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, dagLink.Cid, collectedBlocks); err != nil {
+			for _, dagLink := range rb.block.AllLinks() {
+				if err := p.collectDAGBlocksWithBytes(
+					txnCtx,
+					bstore,
+					encStore,
+					systemStore,
+					dagLink.Cid,
+					collectedBlocks,
+				); err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, rootCID, collectedBlocks); err != nil {
+			if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, systemStore, rootCID, collectedBlocks); err != nil {
 				return nil, err
 			}
 		}
@@ -138,6 +149,7 @@ func (p *P2P) collectDAGBlocksWithBytes(
 	ctx context.Context,
 	bstore datastore.Blockstore,
 	encStore datastore.Blockstore,
+	systemStore corekv.Reader,
 	blockCID cid.Cid,
 	collected map[string]*collectedBlock,
 ) error {
@@ -170,6 +182,10 @@ func (p *P2P) collectDAGBlocksWithBytes(
 	block, err := coreblock.GetFromBytes(rawBytes)
 	if err != nil {
 		return nil
+	}
+
+	if err := collectSignatureBlocks(ctx, bstore, systemStore, blockCID, collected); err != nil {
+		return err
 	}
 
 	if block.Signature != nil {
@@ -212,9 +228,49 @@ func (p *P2P) collectDAGBlocksWithBytes(
 		}
 	}
 
-	for _, dagLink := range block.Links {
-		if err := p.collectDAGBlocksWithBytes(ctx, bstore, encStore, dagLink.Cid, collected); err != nil {
+	for _, dagLink := range block.AllLinks() {
+		if err := p.collectDAGBlocksWithBytes(ctx, bstore, encStore, systemStore, dagLink.Cid, collected); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func collectSignatureBlocks(
+	ctx context.Context,
+	bstore datastore.Blockstore,
+	systemStore corekv.Reader,
+	blockCID cid.Cid,
+	collected map[string]*collectedBlock,
+) error {
+	signatures, err := coreblock.ListSignatureLinks(ctx, systemStore, blockCID)
+	if err != nil {
+		return err
+	}
+
+	for _, signature := range signatures {
+		sigCID := signature.Link.Cid
+		if _, seen := collected[sigCID.String()]; seen {
+			continue
+		}
+
+		if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(sigCID); ok {
+			collected[sigCID.String()] = &collectedBlock{
+				cid:      sigCID,
+				rawBytes: cachedBytes,
+			}
+			continue
+		}
+
+		sigBlk, err := bstore.Get(ctx, sigCID)
+		if err != nil {
+			return err
+		}
+
+		collected[sigCID.String()] = &collectedBlock{
+			cid:      sigCID,
+			rawBytes: sigBlk.RawData(),
 		}
 	}
 
@@ -226,6 +282,7 @@ type parsedCAR struct {
 	rootBlock     *coreblock.Block
 	regularBlocks []blocks.Block
 	encBlocks     []blocks.Block
+	sigBlocks     []blocks.Block
 }
 
 // parseCAR extracts all blocks from a CAR file without creating a transaction.
@@ -242,6 +299,7 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 
 	var regularBlocks []blocks.Block
 	var encBlocks []blocks.Block
+	var sigBlocks []blocks.Block
 	var rootBlock *coreblock.Block
 
 	for {
@@ -258,9 +316,16 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 			_, encErr := coreblock.GetEncryptionBlockFromBytes(carBlock.RawData())
 			if encErr == nil {
 				encBlocks = append(encBlocks, carBlock)
-			} else {
-				regularBlocks = append(regularBlocks, carBlock)
+				continue
 			}
+
+			_, sigErr := coreblock.GetSignatureBlockFromBytes(carBlock.RawData())
+			if sigErr == nil {
+				sigBlocks = append(sigBlocks, carBlock)
+				continue
+			}
+
+			regularBlocks = append(regularBlocks, carBlock)
 			continue
 		}
 
@@ -279,5 +344,6 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 		rootBlock:     rootBlock,
 		regularBlocks: regularBlocks,
 		encBlocks:     encBlocks,
+		sigBlocks:     sigBlocks,
 	}, nil
 }
