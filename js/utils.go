@@ -51,16 +51,6 @@ func boolArg(args []js.Value, index int, name string) (bool, error) {
 	return args[index].Bool(), nil
 }
 
-func intArg(args []js.Value, index int, name string) (int, error) {
-	if len(args) < index {
-		return 0, fmt.Errorf("%s argument is required", name)
-	}
-	if args[index].Type() != js.TypeBoolean {
-		return 0, fmt.Errorf("%s argument must be an int", name)
-	}
-	return args[index].Int(), nil
-}
-
 func structArg(args []js.Value, index int, name string, out any) error {
 	if len(args) < index {
 		return fmt.Errorf("%s argument is required", name)
