@@ -13,6 +13,8 @@ package coreblock
 import (
 	"context"
 
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -60,7 +62,7 @@ func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIden
 	}
 
 	fullIdent, ok := ident.Value().(identity.FullIdentity)
-	if !ok {
+	if !ok || fullIdent.PrivateKey() == nil {
 		return immutable.None[identity.FullIdentity]()
 	}
 
@@ -72,16 +74,16 @@ func signBlock(
 	blockstore datastore.Blockstore,
 	block *Block,
 	ident identity.FullIdentity,
-) error {
+) (*Signature, cidlink.Link, bool, error) {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
 	if block.Delta.IsField() && block.Delta.GetPriority() > 1 {
-		return nil
+		return nil, cidlink.Link{}, false, nil
 	}
 
-	blockBytes, err := block.Marshal()
+	blockBytes, err := getBlockBytesToSign(block)
 	if err != nil {
-		return err
+		return nil, cidlink.Link{}, false, err
 	}
 
 	var sigType string
@@ -92,12 +94,12 @@ func signBlock(
 	case crypto.KeyTypeEd25519:
 		sigType = SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedKeyForSigning(ident.PrivateKey().Type())
+		return nil, cidlink.Link{}, false, NewErrUnsupportedKeyForSigning(ident.PrivateKey().Type())
 	}
 
 	sigBytes, err := ident.PrivateKey().Sign(blockBytes)
 	if err != nil {
-		return err
+		return nil, cidlink.Link{}, false, err
 	}
 
 	sig := &Signature{
@@ -110,10 +112,8 @@ func signBlock(
 
 	sigBlockLink, err := putBlock(ctx, blockstore, sig)
 	if err != nil {
-		return err
+		return nil, cidlink.Link{}, false, err
 	}
 
-	block.Signature = &sigBlockLink
-
-	return nil
+	return sig, sigBlockLink, true, nil
 }

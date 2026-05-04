@@ -11,9 +11,15 @@
 package coreblock
 
 import (
+	"context"
+
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
+
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/crypto"
 )
@@ -159,8 +165,106 @@ func VerifyBlockSignatureWithKey(block *Block, lsys *linking.LinkSystem, pubKey 
 	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
 }
 
+func VerifyStoredBlockSignature(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *Block,
+	store corekv.Reader,
+	lsys *linking.LinkSystem,
+) (bool, error) {
+	if block.Signature != nil {
+		return VerifyBlockSignature(block, lsys)
+	}
+
+	signatures, err := ListSignatureLinks(ctx, store, blockCID)
+	if err != nil {
+		return false, err
+	}
+	if len(signatures) == 0 {
+		return false, nil
+	}
+
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return false, err
+	}
+
+	for _, signature := range signatures {
+		sigBlock, err := LoadSignatureBlock(signature.Link, lsys)
+		if err != nil {
+			return true, err
+		}
+		if err := verifySignatureBlockBytes(sigBlock, signedBytes); err != nil {
+			return true, err
+		}
+	}
+
+	return true, nil
+}
+
+func VerifyStoredBlockSignatureWithKey(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *Block,
+	store corekv.Reader,
+	lsys *linking.LinkSystem,
+	pubKey crypto.PublicKey,
+) (bool, error) {
+	if block.Signature != nil {
+		return VerifyBlockSignatureWithKey(block, lsys, pubKey)
+	}
+
+	signature, found, err := GetSignatureLink(ctx, store, blockCID, pubKey.String())
+	if err != nil {
+		return false, err
+	}
+	if !found {
+		signatures, err := ListSignatureLinks(ctx, store, blockCID)
+		if err != nil {
+			return false, err
+		}
+		if len(signatures) > 0 {
+			return false, ErrSignaturePubKeyMismatch
+		}
+		return false, nil
+	}
+
+	sigBlock, err := LoadSignatureBlock(signature, lsys)
+	if err != nil {
+		return true, err
+	}
+
+	return true, VerifySignatureBlockWithKey(block, sigBlock, pubKey)
+}
+
+func VerifySignatureBlock(block *Block, sigBlock *Signature) error {
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return err
+	}
+
+	return verifySignatureBlockBytes(sigBlock, signedBytes)
+}
+
+func VerifySignatureBlockWithKey(block *Block, sigBlock *Signature, pubKey crypto.PublicKey) error {
+	if string(sigBlock.Header.Identity) != pubKey.String() {
+		return ErrSignaturePubKeyMismatch
+	}
+
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return err
+	}
+
+	return verifySignature(pubKey, signedBytes, sigBlock.Value)
+}
+
 func loadSignatureBlock(block *Block, lsys *linking.LinkSystem) (*Signature, error) {
-	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
+	return LoadSignatureBlock(*block.Signature, lsys)
+}
+
+func LoadSignatureBlock(link cidlink.Link, lsys *linking.LinkSystem) (*Signature, error) {
+	nd, err := lsys.Load(ipld.LinkContext{}, link, SignatureSchemaPrototype)
 	if err != nil {
 		return nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
@@ -170,6 +274,15 @@ func loadSignatureBlock(block *Block, lsys *linking.LinkSystem) (*Signature, err
 		return nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
 	return sigBlock, nil
+}
+
+func verifySignatureBlockBytes(sigBlock *Signature, signedBytes []byte) error {
+	pubKey, err := getPublicKeyFromSignature(sigBlock)
+	if err != nil {
+		return err
+	}
+
+	return verifySignature(pubKey, signedBytes, sigBlock.Value)
 }
 
 // getBlockBytesToSign returns the bytes to sign for a block

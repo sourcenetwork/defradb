@@ -118,16 +118,22 @@ func AddDelta(
 		return link, b, err
 	}
 
-	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
-		if err != nil {
-			return cidlink.Link{}, nil, err
-		}
-	}
-
 	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
+	}
+
+	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
+		sig, sigLink, signed, err := signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+		if signed {
+			err = StoreSignatureLink(ctx, txn.Systemstore(), link.Cid, sig, sigLink)
+			if err != nil {
+				return cidlink.Link{}, nil, err
+			}
+		}
 	}
 
 	// merge the delta and update the state
