@@ -28,13 +28,19 @@ func (c *Client) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.AddDACPolicy()
 	setOptIdentity(opt, args, 1)
-	res, err := c.node.DB.AddDACPolicy(ctx, policy, opt)
+	res, err := store.AddDACPolicy(ctx, policy, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -58,13 +64,19 @@ func (c *Client) addDACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, c.txns)
+	ctx, err := contextArg(args, 4)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 4, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.AddDACActorRelationship()
 	setOptIdentity(opt, args, 4)
-	res, err := c.node.DB.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	res, err := store.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -88,13 +100,19 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, c.txns)
+	ctx, err := contextArg(args, 4)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 4, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.DeleteDACActorRelationship()
 	setOptIdentity(opt, args, 4)
-	res, err := c.node.DB.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	res, err := store.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -122,10 +140,11 @@ func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 5, c.txns)
+	ctx, err := contextArg(args, 5)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
 	if !c.node.DB.DocumentACP().HasValue() {
 		return js.Undefined(), fmt.Errorf("ACP system not available")
 	}
@@ -150,13 +169,17 @@ func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, erro
 }
 
 func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	opt := options.GetNACStatus()
 	setOptIdentity(opt, args, 0)
-	res, err := c.node.DB.GetNACStatus(ctx, opt)
+	res, err := store.GetNACStatus(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -164,24 +187,32 @@ func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (c *Client) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	opt := options.ReEnableNAC()
 	setOptIdentity(opt, args, 0)
-	err = c.node.DB.ReEnableNAC(ctx, opt)
+	err = store.ReEnableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
 func (c *Client) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	opt := options.DisableNAC()
 	setOptIdentity(opt, args, 0)
-	err = c.node.DB.DisableNAC(ctx, opt)
+	err = store.DisableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -194,13 +225,17 @@ func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	opt := options.AddNACActorRelationship()
 	setOptIdentity(opt, args, 2)
-	res, err := c.node.DB.AddNACActorRelationship(ctx, relation, targetActor, opt)
+	res, err := store.AddNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -216,13 +251,17 @@ func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	opt := options.DeleteNACActorRelationship()
 	setOptIdentity(opt, args, 2)
-	res, err := c.node.DB.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
+	res, err := store.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -230,11 +269,17 @@ func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.
 }
 
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.GetNodeIdentity(ctx)
+
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	res, err := store.GetNodeIdentity(ctx)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -267,7 +312,11 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, c.txns)
+	ctx, err := contextArg(args, 3)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	store, err := contextStoreArg(c.node.DB, args, 3, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -277,7 +326,7 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	}
 	opt := options.VerifySignature()
 	setOptIdentity(opt, args, 3)
-	err = c.node.DB.VerifySignature(ctx, blockCID, pubKey, opt)
+	err = store.VerifySignature(ctx, blockCID, pubKey, opt)
 	return js.Undefined(), err
 }
 
