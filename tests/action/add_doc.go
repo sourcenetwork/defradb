@@ -136,7 +136,7 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections, err := getCanonicallyOrderedCollectionsE(a.s, node, txnOption)
+		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
 		if err != nil {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue

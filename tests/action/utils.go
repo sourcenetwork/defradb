@@ -90,11 +90,11 @@ func RefreshCollections(
 	}
 }
 
-// GetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
+// MustGetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
 // If one is not provided, it will default to running the GetCollections function on the node itself.
 // Importantly, this will use the same ordering as would be found in the node.Collections slice that
 // is refreshed by the RefreshCollections function.
-func getCanonicallyOrderedCollectionsE(
+func getCanonicallyOrderedCollections(
 	s *state.State,
 	node *state.NodeState,
 	txn immutable.Option[client.Txn],
@@ -155,12 +155,12 @@ func getCanonicallyOrderedCollectionsE(
 	return newCollections, nil
 }
 
-func GetCanonicallyOrderedCollections(
+func MustGetCanonicallyOrderedCollections(
 	s *state.State,
 	node *state.NodeState,
 	txn immutable.Option[client.Txn],
 ) []client.Collection {
-	cols, err := getCanonicallyOrderedCollectionsE(s, node, txn)
+	cols, err := getCanonicallyOrderedCollections(s, node, txn)
 	require.NoError(s.T, err)
 
 	return cols
