@@ -48,6 +48,8 @@ func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Conte
 		return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 	}
 
+	// If the txn has already been set on the context but it hasn't already been set as explicit,
+	// we create a copy of the txn and mark it as an explicit txn.
 	if !txn.explicit && existsOnCtx {
 		txn = &Txn{
 			BasicTxn: txn.BasicTxn,
