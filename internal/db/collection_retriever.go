@@ -70,7 +70,10 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		opt = opt.SetIdentity(r.ident.Value())
 	}
 
-	cols, _ := txn.GetCollections(ctx, opt)
+	cols, err := txn.GetCollections(ctx, opt)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(cols) == 0 {
 		return nil, client.NewErrCollectionNotFoundForCollectionVersion(

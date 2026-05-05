@@ -342,6 +342,12 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	}
 
 	docID := string(entBlock.DocID)
+	if docID == "" {
+		// Collection-scoped encryption blocks (e.g. those produced for a `@branchable`
+		// collection's own head) carry no DocID and therefore have no doc-level permission
+		// to enforce here.
+		return true, nil
+	}
 	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID)
 	if err != nil {
 		return false, err
