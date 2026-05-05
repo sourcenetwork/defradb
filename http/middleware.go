@@ -86,7 +86,6 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//db := mustGetContextClientDB(req)
 		var store client.Store
 		txn, ok := datastore.CtxTryGetClientTxn(req.Context())
 		if ok {
