@@ -79,7 +79,7 @@ func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -101,7 +101,7 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 	if err := structArg(args, 1, "lens", &migration); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -116,7 +116,7 @@ func (t *transaction) setActiveCollectionVersion(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -139,7 +139,7 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 	if err := structArg(args, 2, "transformCID", &transformCID); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, t.txns)
+	ctx, err := contextArg(args, 3)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -160,7 +160,7 @@ func (t *transaction) refreshViews(this js.Value, args []js.Value) (js.Value, er
 	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -175,7 +175,7 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 	if err := structArg(args, 0, "config", &config); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -193,7 +193,7 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 	if err := structArg(args, 0, "lens", &lens); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -207,7 +207,7 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (t *transaction) listLenses(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -225,7 +225,7 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -235,7 +235,7 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return newCollection(col, t.txns), nil
+	return newCollection(col), nil
 }
 
 func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, error) {
@@ -243,7 +243,7 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -255,13 +255,13 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 	}
 	wrappers := make([]any, len(cols))
 	for i, col := range cols {
-		wrappers[i] = newCollection(col, t.txns)
+		wrappers[i] = newCollection(col)
 	}
 	return js.ValueOf(wrappers), nil
 }
 
 func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -275,7 +275,7 @@ func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, err
 }
 
 func (t *transaction) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -309,7 +309,7 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 			opt.SetVariables(variablesMap)
 		}
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -336,7 +336,7 @@ func (t *transaction) addDACPolicy(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -366,7 +366,7 @@ func (t *transaction) addDACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, t.txns)
+	ctx, err := contextArg(args, 4)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -396,7 +396,7 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, t.txns)
+	ctx, err := contextArg(args, 4)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -410,7 +410,7 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 }
 
 func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -424,7 +424,7 @@ func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, er
 }
 
 func (t *transaction) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -435,7 +435,7 @@ func (t *transaction) reEnableNAC(this js.Value, args []js.Value) (js.Value, err
 }
 
 func (t *transaction) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -454,7 +454,7 @@ func (t *transaction) addNACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -476,7 +476,7 @@ func (t *transaction) deleteNACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -490,7 +490,7 @@ func (t *transaction) deleteNACActorRelationship(this js.Value, args []js.Value)
 }
 
 func (t *transaction) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -514,7 +514,7 @@ func (t *transaction) verifySignature(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, t.txns)
+	ctx, err := contextArg(args, 3)
 	if err != nil {
 		return js.Undefined(), err
 	}

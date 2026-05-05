@@ -31,7 +31,7 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 		return js.Undefined(), err
 	}
 
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -54,7 +54,7 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 		return js.Undefined(), err
 	}
 
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -102,7 +102,7 @@ func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -130,7 +130,7 @@ func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -152,7 +152,7 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -178,7 +178,7 @@ func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -196,7 +196,7 @@ func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -218,7 +218,7 @@ func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
