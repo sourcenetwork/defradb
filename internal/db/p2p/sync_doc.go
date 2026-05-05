@@ -226,7 +226,7 @@ func (p *P2P) handleDocSyncItem(
 			results[item.DocID] = []cid.Cid{docCid}
 		}
 
-		err = p.syncDocumentAndMerge(ctx, senderID, collectionID, item.DocID, docCid)
+		err = p.syncDocumentAndMerge(ctx, senderID, collectionID, item.DocID, docCid, item.Signatures)
 		if err != nil {
 			log.ErrorE("Failed to sync document", err,
 				corelog.String("DocID", item.DocID),
@@ -242,8 +242,9 @@ func (p *P2P) syncDocumentAndMerge(
 	senderID string,
 	collectionID, docID string,
 	head cid.Cid,
+	signatureRecords []protocol.SignatureRecord,
 ) error {
-	err := p.syncDocumentDAG(ctx, head)
+	err := p.syncDocumentDAG(ctx, head, signatureRecords)
 	if err != nil {
 		return err
 	}
@@ -260,7 +261,11 @@ func (p *P2P) syncDocumentAndMerge(
 }
 
 // syncDocumentDAG synchronizes the DAG for a specific document CID.
-func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
+func (p *P2P) syncDocumentDAG(
+	ctx context.Context,
+	docCid cid.Cid,
+	signatureRecords ...[]protocol.SignatureRecord,
+) error {
 	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
@@ -273,7 +278,7 @@ func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
 		return err
 	}
 
-	return p.syncDAG(ctx, linkBlock)
+	return p.syncDAG(ctx, linkBlock, signatureRecords...)
 }
 
 // docSyncMessageHandler handles incoming document sync requests from the pubsub network.

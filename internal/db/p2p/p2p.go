@@ -672,11 +672,10 @@ func (p *P2P) processDocuments(ctx context.Context, req *protocol.PushLogRequest
 
 // processMessageBatch processes all documents in a message as a single batch.
 func (p *P2P) processMessageBatch(ctx context.Context, req *protocol.PushLogRequest, isReplicator bool) error {
-	if err := p.storeSignatureRecords(ctx, req.Signatures); err != nil {
-		return err
-	}
-
 	if len(req.Documents) == 0 {
+		if err := p.storeSignatureRecords(ctx, req.Signatures); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -854,6 +853,11 @@ func (p *P2P) tryProcessCARBatch(
 			log.ErrorE("Batch encrypted block import failed", err)
 			return err
 		}
+	}
+
+	if err := p.storeSignatureRecords(txnCtx, req.Signatures); err != nil {
+		log.ErrorE("Batch CAR signature record indexing failed", err)
+		return err
 	}
 
 	if err := p.indexCARSignatureBlocks(txnCtx, allRegularBlocks, allSigBlocks); err != nil {
@@ -1051,7 +1055,7 @@ func (p *P2P) processDocument(
 		return nil
 	}
 
-	if err := p.syncDAG(ctx, block); err != nil {
+	if err := p.syncDAG(ctx, block, req.Signatures); err != nil {
 		return err
 	}
 

@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -35,7 +36,7 @@ func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
+func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block, signatureRecords ...[]protocol.SignatureRecord) error {
 	sessionCtx, cancelSession := context.WithCancel(ctx)
 	defer cancelSession()
 
@@ -44,7 +45,12 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 
 	linkSystem := makeLinkSystem(p.host.IPLDStore())
 
-	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
+	var records []protocol.SignatureRecord
+	if len(signatureRecords) > 0 {
+		records = signatureRecords[0]
+	}
+
+	return p.loadBlockLinks(sessionCtx, &linkSystem, block, records)
 }
 
 // loadBlockLinks loads the links of a block iteratively.
@@ -54,6 +60,7 @@ func (p *P2P) loadBlockLinks(
 	ctx context.Context,
 	linkSys *linking.LinkSystem,
 	block *coreblock.Block,
+	signatureRecords []protocol.SignatureRecord,
 ) error {
 	stack := make([]*coreblock.Block, 0, 64)
 	visited := make(map[string]struct{})
@@ -70,6 +77,12 @@ func (p *P2P) loadBlockLinks(
 			return nil
 		}
 		visited[cidString] = struct{}{}
+
+		if len(signatureRecords) > 0 {
+			if err := p.storeSignatureRecordsForBlock(ctx, signatureRecords, link.Cid, current); err != nil {
+				return err
+			}
+		}
 
 		// We deliberately ignore the first returned value, which indicates whether
 		// the block was actually verified or not. Unsigned blocks are still allowed,

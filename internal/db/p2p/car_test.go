@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 )
 
 // buildTestBlock constructs a minimal coreblock.Block, marshals it to bytes,
@@ -504,6 +505,108 @@ func TestIndexCARSignatureBlocks_IfSignatureDoesNotMatchRegularBlock_ShouldError
 
 	err = p.indexCARSignatureBlocks(ctx, []blocks.Block{rootRawBlock}, []blocks.Block{sigRawBlock})
 	require.Error(t, err)
+
+	signatures, err := coreblock.ListSignatureLinks(ctx, multistore.Systemstore(), rootCID)
+	require.NoError(t, err)
+	require.Empty(t, signatures)
+}
+
+func TestStoreSignatureRecords_VerifiesBeforeIndexing(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
+	multistore := datastore.NewMultistore(rootstore, lockSet, immutable.None[int]())
+	p := &P2P{
+		db: &carTestDB{
+			rootstore:  rootstore,
+			multistore: multistore,
+		},
+	}
+
+	rootBlock, rootCID, rootBytes := buildTestBlock(t)
+	rootRawBlock, err := blocks.NewBlockWithCid(rootBytes, rootCID)
+	require.NoError(t, err)
+	require.NoError(t, multistore.Blockstore().Put(ctx, rootRawBlock))
+
+	sigCID, sigBytes := buildSignatureBlockForBlock(t, rootBlock)
+	signature, err := coreblock.GetSignatureBlockFromBytes(sigBytes)
+	require.NoError(t, err)
+
+	err = p.storeSignatureRecords(ctx, []protocol.SignatureRecord{{
+		BlockCID:     rootCID.Bytes(),
+		SignatureCID: sigCID.Bytes(),
+		Signature:    sigBytes,
+	}})
+	require.NoError(t, err)
+
+	sigLink, found, err := coreblock.GetSignatureLink(
+		ctx,
+		multistore.Systemstore(),
+		rootCID,
+		string(signature.Header.Identity),
+	)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, sigCID, sigLink.Cid)
+}
+
+func TestStoreSignatureRecords_IfSignatureDoesNotMatchBlock_ShouldErrorAndNotIndex(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
+	multistore := datastore.NewMultistore(rootstore, lockSet, immutable.None[int]())
+	p := &P2P{
+		db: &carTestDB{
+			rootstore:  rootstore,
+			multistore: multistore,
+		},
+	}
+
+	rootBlock, rootCID, rootBytes := buildTestBlock(t)
+	rootRawBlock, err := blocks.NewBlockWithCid(rootBytes, rootCID)
+	require.NoError(t, err)
+	require.NoError(t, multistore.Blockstore().Put(ctx, rootRawBlock))
+
+	otherBlock := rootBlock.Clone()
+	otherBlock.Delta.DocCompositeDelta.DocID = []byte("otherDoc")
+	sigCID, sigBytes := buildSignatureBlockForBlock(t, otherBlock)
+
+	err = p.storeSignatureRecords(ctx, []protocol.SignatureRecord{{
+		BlockCID:     rootCID.Bytes(),
+		SignatureCID: sigCID.Bytes(),
+		Signature:    sigBytes,
+	}})
+	require.Error(t, err)
+
+	signatures, err := coreblock.ListSignatureLinks(ctx, multistore.Systemstore(), rootCID)
+	require.NoError(t, err)
+	require.Empty(t, signatures)
+}
+
+func TestStoreSignatureRecords_IfTargetBlockMissing_ShouldStoreSignatureBlockOnly(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
+	multistore := datastore.NewMultistore(rootstore, lockSet, immutable.None[int]())
+	p := &P2P{
+		db: &carTestDB{
+			rootstore:  rootstore,
+			multistore: multistore,
+		},
+	}
+
+	rootBlock, rootCID, _ := buildTestBlock(t)
+	sigCID, sigBytes := buildSignatureBlockForBlock(t, rootBlock)
+
+	err := p.storeSignatureRecords(ctx, []protocol.SignatureRecord{{
+		BlockCID:     rootCID.Bytes(),
+		SignatureCID: sigCID.Bytes(),
+		Signature:    sigBytes,
+	}})
+	require.NoError(t, err)
+
+	_, err = multistore.Blockstore().Get(ctx, sigCID)
+	require.NoError(t, err)
 
 	signatures, err := coreblock.ListSignatureLinks(ctx, multistore.Systemstore(), rootCID)
 	require.NoError(t, err)

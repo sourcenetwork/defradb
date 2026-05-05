@@ -202,7 +202,7 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 			continue
 		}
 
-		err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
+		err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid, reply.Signatures)
 		if err != nil {
 			log.ErrorE("Failed to sync collection and merge", err,
 				corelog.String("CollectionID", collectionID),
@@ -222,8 +222,9 @@ func (p *P2P) syncCollectionAndMerge(
 	senderID string,
 	collectionID string,
 	head cid.Cid,
+	signatureRecords []protocol.SignatureRecord,
 ) error {
-	err := p.syncCollectionDAG(ctx, head)
+	err := p.syncCollectionDAG(ctx, head, signatureRecords)
 	if err != nil {
 		return err
 	}
@@ -337,7 +338,11 @@ func (p *P2P) collectBranchableCollectionDocMergeEvents(
 }
 
 // syncCollectionDAG synchronizes the DAG for a specific branchable collection CID.
-func (p *P2P) syncCollectionDAG(ctx context.Context, colCid cid.Cid) error {
+func (p *P2P) syncCollectionDAG(
+	ctx context.Context,
+	colCid cid.Cid,
+	signatureRecords ...[]protocol.SignatureRecord,
+) error {
 	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: colCid}, coreblock.BlockSchemaPrototype)
@@ -350,7 +355,7 @@ func (p *P2P) syncCollectionDAG(ctx context.Context, colCid cid.Cid) error {
 		return err
 	}
 
-	return p.syncDAG(ctx, linkBlock)
+	return p.syncDAG(ctx, linkBlock, signatureRecords...)
 }
 
 // syncBranchableCollectionMessageHandler handles incoming branchable collection sync requests from the pubsub network.

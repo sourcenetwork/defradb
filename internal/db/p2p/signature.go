@@ -150,48 +150,112 @@ func (p *P2P) collectSignatureRecords(
 
 func (p *P2P) storeSignatureRecords(ctx context.Context, records []protocol.SignatureRecord) error {
 	for _, record := range records {
-		blockCID, err := cid.Cast(record.BlockCID)
+		blockCID, signatureCID, signature, err := p.storeSignatureRecordBlock(ctx, record)
 		if err != nil {
 			return err
 		}
 
-		signatureCID, err := cid.Cast(record.SignatureCID)
+		rawBlock, err := p.db.Multistore().Blockstore().Get(ctx, blockCID)
+		if err != nil {
+			continue
+		}
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
 		if err != nil {
 			return err
 		}
 
-		computedCID, err := signatureCID.Prefix().Sum(record.Signature)
-		if err != nil {
-			return err
-		}
-		if !computedCID.Equals(signatureCID) {
-			return errors.New("signature CID does not match signature bytes")
-		}
-
-		signature, err := coreblock.GetSignatureBlockFromBytes(record.Signature)
-		if err != nil {
-			return err
-		}
-
-		rawBlock, err := blocks.NewBlockWithCid(record.Signature, signatureCID)
-		if err != nil {
-			return err
-		}
-		if err := p.db.Multistore().Blockstore().Put(ctx, rawBlock); err != nil {
-			return err
-		}
-
-		err = coreblock.StoreSignatureLink(
-			ctx,
-			p.db.Multistore().Systemstore(),
-			blockCID,
-			signature,
-			cidlink.Link{Cid: signatureCID},
-		)
-		if err != nil {
+		if err := p.indexVerifiedSignatureRecord(ctx, blockCID, block, signatureCID, signature); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (p *P2P) storeSignatureRecordsForBlock(
+	ctx context.Context,
+	records []protocol.SignatureRecord,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+) error {
+	for _, record := range records {
+		recordBlockCID, err := cid.Cast(record.BlockCID)
+		if err != nil {
+			return err
+		}
+		if !recordBlockCID.Equals(blockCID) {
+			continue
+		}
+		_, signatureCID, signature, err := p.storeSignatureRecordBlock(ctx, record)
+		if err != nil {
+			return err
+		}
+		if err := p.indexVerifiedSignatureRecord(ctx, blockCID, block, signatureCID, signature); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *P2P) storeSignatureRecordBlock(
+	ctx context.Context,
+	record protocol.SignatureRecord,
+) (cid.Cid, cid.Cid, *coreblock.Signature, error) {
+	blockCID, err := cid.Cast(record.BlockCID)
+	if err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+
+	signatureCID, err := cid.Cast(record.SignatureCID)
+	if err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+
+	computedCID, err := signatureCID.Prefix().Sum(record.Signature)
+	if err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+	if !computedCID.Equals(signatureCID) {
+		return cid.Undef, cid.Undef, nil, errors.New("signature CID does not match signature bytes")
+	}
+
+	signature, err := coreblock.GetSignatureBlockFromBytes(record.Signature)
+	if err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+
+	rawBlock, err := blocks.NewBlockWithCid(record.Signature, signatureCID)
+	if err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+	if err := p.db.Multistore().Blockstore().Put(ctx, rawBlock); err != nil {
+		return cid.Undef, cid.Undef, nil, err
+	}
+
+	return blockCID, signatureCID, signature, nil
+}
+
+func (p *P2P) indexVerifiedSignatureRecord(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	signatureCID cid.Cid,
+	signature *coreblock.Signature,
+) error {
+	if err := coreblock.VerifySignatureBlock(block, signature); err != nil {
+		return errors.Wrap(
+			"signature record does not verify target block",
+			err,
+			errors.NewKV("BlockCID", blockCID.String()),
+			errors.NewKV("SignatureCID", signatureCID.String()),
+		)
+	}
+
+	return coreblock.StoreSignatureLink(
+		ctx,
+		p.db.Multistore().Systemstore(),
+		blockCID,
+		signature,
+		cidlink.Link{Cid: signatureCID},
+	)
 }
