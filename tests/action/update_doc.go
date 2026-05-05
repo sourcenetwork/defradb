@@ -122,6 +122,10 @@ func (a *UpdateDoc) Execute() {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
 			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
 			require.NoError(a.s.T, err)
 		}
 		collection := collections[a.CollectionID]
