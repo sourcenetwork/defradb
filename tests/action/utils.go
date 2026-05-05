@@ -90,7 +90,7 @@ func RefreshCollections(
 	}
 }
 
-// MustGetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
+// getCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
 // If one is not provided, it will default to running the GetCollections function on the node itself.
 // Importantly, this will use the same ordering as would be found in the node.Collections slice that
 // is refreshed by the RefreshCollections function.
@@ -155,6 +155,10 @@ func getCanonicallyOrderedCollections(
 	return newCollections, nil
 }
 
+// MustGetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
+// If one is not provided, it will default to running the GetCollections function on the node itself.
+// Importantly, this will use the same ordering as would be found in the node.Collections slice that
+// is refreshed by the RefreshCollections function.
 func MustGetCanonicallyOrderedCollections(
 	s *state.State,
 	node *state.NodeState,
