@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
