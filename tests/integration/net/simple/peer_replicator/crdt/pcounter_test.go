@@ -122,7 +122,10 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		//
+		// Signed counter deltas are double-applied to replicated peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -155,7 +158,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's points on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

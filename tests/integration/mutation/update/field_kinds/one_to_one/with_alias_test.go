@@ -46,7 +46,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -91,7 +91,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -135,7 +135,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -171,7 +171,7 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(

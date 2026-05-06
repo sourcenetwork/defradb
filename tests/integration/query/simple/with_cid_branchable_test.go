@@ -33,7 +33,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,
@@ -80,7 +80,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,
@@ -127,7 +127,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,

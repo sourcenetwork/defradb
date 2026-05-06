@@ -16,10 +16,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 	test := testUtils.TestCase{
+		// The collection-level commit CID is hardcoded in this test, and no
+		// template placeholder exists for it yet.
+		// See https://github.com/sourcenetwork/defradb/issues/4744.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

@@ -166,7 +166,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"address": "Website"
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{

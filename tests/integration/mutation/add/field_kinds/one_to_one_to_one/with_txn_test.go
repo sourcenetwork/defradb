@@ -140,14 +140,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 					},
 				},
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
 			// The second commit fails with a transaction conflict due to SSI semantics:
 			// - Txn0 writes index key for Website publisher, reads index key for Online publisher (via query)
 			// - Txn1 writes index key for Online publisher, reads index key for Website publisher (via query)
 			// - This creates an anti-dependency cycle that SSI detects as a conflict
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
@@ -293,10 +293,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 			// Commit the transactions before querying the end result
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

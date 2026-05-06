@@ -33,7 +33,7 @@ func TestMutationUpdate_IfStringFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": null
 				}`,

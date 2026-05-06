@@ -205,7 +205,7 @@ func TestArrayIndexUpdate_IfUpdateRearrangesArrayElements_ShouldFetch(t *testing
 					"numbers": [30, 40, 50, 30]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"name": "Shahzad",
@@ -259,7 +259,7 @@ func TestArrayIndexUpdate_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 					"numbers": [30, 40, 50, 30]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"name": "Shahzad",
@@ -309,7 +309,7 @@ func TestArrayIndexUpdate_IfUpdateAddsSoughtElement_ShouldFetch(t *testing.T) {
 					"numbers": [40, 50]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: `{
 					"name": "Shahzad",

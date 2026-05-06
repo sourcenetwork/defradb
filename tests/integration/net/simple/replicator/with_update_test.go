@@ -47,7 +47,7 @@ func TestP2POneToOneReplicatorUpdatesDocAddedBeforeReplicatorConfig(t *testing.T
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -101,7 +101,7 @@ func TestP2POneToOneReplicatorUpdatesDocAddedBeforeReplicatorConfigWithNodesInve
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the second node only, and allow the value to sync
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -172,12 +172,12 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 					"Age": 22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 				Doc:    `{"Age": 22}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  1,
 				Doc:    `{"Age": 23}`,
@@ -254,12 +254,12 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 				Doc:    `{"Age": 22}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  1,
 				Doc:    `{"Age": 23}`,

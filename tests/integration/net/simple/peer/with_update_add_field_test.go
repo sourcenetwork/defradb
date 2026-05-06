@@ -54,14 +54,14 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the new field on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Email": "imnotyourbuddyguy@source.ca"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the existing field on the first node only, and allow the value to sync
 				// We need to make sure any errors caused by the first update to not break the sync
 				NodeID: immutable.Some(0),
@@ -143,7 +143,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the new field and existing field on the first node only, and allow the values to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

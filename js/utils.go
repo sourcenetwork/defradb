@@ -27,7 +27,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/db"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -51,16 +50,6 @@ func boolArg(args []js.Value, index int, name string) (bool, error) {
 	return args[index].Bool(), nil
 }
 
-func intArg(args []js.Value, index int, name string) (int, error) {
-	if len(args) < index {
-		return 0, fmt.Errorf("%s argument is required", name)
-	}
-	if args[index].Type() != js.TypeBoolean {
-		return 0, fmt.Errorf("%s argument must be an int", name)
-	}
-	return args[index].Int(), nil
-}
-
 func structArg(args []js.Value, index int, name string, out any) error {
 	if len(args) < index {
 		return fmt.Errorf("%s argument is required", name)
@@ -68,7 +57,7 @@ func structArg(args []js.Value, index int, name string, out any) error {
 	return goji.UnmarshalJS(args[index], out)
 }
 
-func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, error) {
+func contextArg(args []js.Value, index int) (context.Context, error) {
 	ctx := context.Background()
 	if index >= len(args) {
 		return ctx, nil
@@ -77,19 +66,19 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	if err != nil {
 		return ctx, err
 	}
-	txn, err := contextTransactionArg(args[index], txns)
-	if err != nil {
-		return ctx, err
-	}
 	ctx = iIdentity.WithContext(ctx, identity)
-	ctx = db.InitContext(ctx, txn)
 	return ctx, nil
 }
 
-func contextTransactionArg(value js.Value, txns *sync.Map) (client.Txn, error) {
+func contextStoreArg(db client.Store, args []js.Value, index int, txns *sync.Map) (client.Store, error) {
+	if index >= len(args) {
+		return db, nil
+	}
+	value := args[index]
+
 	id := value.Get("transaction")
 	if id.Type() != js.TypeNumber {
-		return nil, nil
+		return db, nil
 	}
 	txn, ok := txns.Load(uint64(id.Int()))
 	if !ok {

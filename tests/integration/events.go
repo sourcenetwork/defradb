@@ -439,22 +439,6 @@ func updateConnectedNodes(
 	}
 }
 
-// getEventsForUpdateDoc returns a map of docIDs that should be
-// published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	docMap := make(map[string]any)
-	err := json.Unmarshal([]byte(action.Doc), &docMap)
-	require.NoError(s.T, err)
-
-	return map[string]struct{}{
-		docID.String(): {},
-	}
-}
-
 func waitForSync(s *state.State, action WaitForSync) {
 	waitForMergeEvents(s, action)
 }

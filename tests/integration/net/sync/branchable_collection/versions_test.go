@@ -59,7 +59,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"email": "andy@gmail.com",
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  1,
 				Doc: `{
@@ -93,7 +93,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"score": 100,
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				DocID:  1,
 				Doc: `{

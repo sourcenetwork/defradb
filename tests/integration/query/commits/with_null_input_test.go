@@ -19,6 +19,8 @@ import (
 )
 
 func TestQueryCommitsWithNullDepth(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -38,16 +40,17 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -56,6 +59,8 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullCID(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -75,16 +80,17 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -120,6 +126,8 @@ func TestQueryCommitsWithNullField(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOrder(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -139,16 +147,17 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -157,6 +166,8 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOrderField(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -176,16 +187,17 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -194,6 +206,8 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullLimit(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -213,16 +227,17 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -231,6 +246,8 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOffset(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -250,16 +267,17 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -268,6 +286,8 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullGroupBy(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -287,16 +307,17 @@ func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

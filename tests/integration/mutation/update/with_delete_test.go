@@ -43,7 +43,7 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 0,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"name": "Fred"
