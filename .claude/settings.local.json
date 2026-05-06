@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del acp.go add_collection.go block.go document.go encrypted_index.go identity.go index.go lens.go node.go p2p.go txn.go version.go view.go)"
+    ]
+  }
+}

@@ -17,9 +17,6 @@ package cbindings
 import "C"
 
 import (
-	"context"
-	"runtime/cgo"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 )
@@ -37,30 +34,4 @@ func NewIdentity(keyType *C.char) C.NewIdentityResult {
 		return returnNewIdentityResultC(1, err.Error(), nil)
 	}
 	return returnNewIdentityResultC(0, "", newIdentity)
-}
-
-//export GetNodeIdentity
-func GetNodeIdentity(nodePtr C.uintptr_t) C.Result {
-	ctx := context.Background()
-	store, err := getStoreFromPointer(nodePtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	identity, err := store.GetNodeIdentity(ctx)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-	if identity.HasValue() {
-		return returnC(marshalJSONToGoCResult(identity.Value()))
-	}
-	return returnC(returnGoC(0, "", "Node has no identity assigned to it."))
-}
-
-//export FreeIdentity
-func FreeIdentity(identityPtr C.uintptr_t) {
-	_, err := getIdentityFromPointer(identityPtr)
-	if err == nil && identityPtr != 0 {
-		cgo.Handle(identityPtr).Delete()
-	}
 }

@@ -23,41 +23,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export AddView
-func AddView(nodePtr C.uintptr_t,
-	query *C.char,
-	sdl *C.char,
-	transformCIDStr *C.char,
-	identityPtr C.uintptr_t,
-) C.Result {
-	ctx := context.Background()
-
-	ctx, err := contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	opts := options.WithIdentity(options.AddView(), acpIdentity.FromContext(ctx))
-	transformCIDValue := C.GoString(transformCIDStr)
-	if transformCIDValue != "" {
-		opts.SetTransformCID(transformCIDValue)
-	}
-
-	store, err := getStoreFromPointer(nodePtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
-	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), opts)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	return returnC(marshalJSONToGoCResult(defs))
-}
-
 //export RefreshView
 func RefreshView(nodePtr C.uintptr_t,
 	cOptions C.CollectionOptions,

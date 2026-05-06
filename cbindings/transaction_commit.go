@@ -20,21 +20,7 @@ import (
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
-
-//export CreateTransaction
-func CreateTransaction(nodePtr C.uintptr_t, isReadOnly C.int) C.NewTxnResult {
-	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node) //nolint:forcetypeassert
-
-	tx, err := n.DB.NewTxn(isReadOnly != 0)
-	if err != nil {
-		return returnNewTxnResultC(1, err.Error(), nil)
-	}
-
-	return returnNewTxnResultC(0, "", tx)
-}
 
 //export CommitTransaction
 func CommitTransaction(txnPtr C.uintptr_t) C.Result {
@@ -48,19 +34,4 @@ func CommitTransaction(txnPtr C.uintptr_t) C.Result {
 	}
 
 	return returnC(returnGoC(0, "", ""))
-}
-
-//export DiscardTransaction
-func DiscardTransaction(txnPtr C.uintptr_t) {
-	// Avoid panic in the case of a double discard
-	defer func() {
-		if r := recover(); r != nil {
-			return
-		}
-	}()
-
-	h := cgo.Handle(txnPtr)
-	txn := h.Value().(client.Txn) //nolint:forcetypeassert
-	txn.Discard()
-	h.Delete()
 }
