@@ -20,6 +20,8 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
+const headLinkName = "_head"
+
 func addFieldFromBlock(fields map[string]any, block *coreblock.Block) {
 	delta := block.Delta
 
@@ -48,7 +50,7 @@ func addFieldFromBlock(fields map[string]any, block *coreblock.Block) {
 
 func addLinkedFields(fields map[string]any, block *coreblock.Block, blocksByCID map[string]*coreblock.Block) {
 	for _, link := range block.Links {
-		if link.Name == "" || link.Name == "_head" {
+		if link.Name == "" || link.Name == headLinkName {
 			continue
 		}
 		childBlock := blocksByCID[link.Cid.String()]
@@ -159,7 +161,7 @@ func (p *P2P) filterNonCARDocument(
 		// Composite block: follow Links to get field-level blocks from the blockstore
 		bstore := p.db.Multistore().Blockstore()
 		for _, link := range block.Links {
-			if link.Name == "" || link.Name == "_head" {
+			if link.Name == "" || link.Name == headLinkName {
 				continue
 			}
 			childRaw, err := bstore.Get(ctx, link.Cid)

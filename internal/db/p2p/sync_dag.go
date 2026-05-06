@@ -36,7 +36,11 @@ func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block, signatureRecords ...[]protocol.SignatureRecord) error {
+func (p *P2P) syncDAG(
+	ctx context.Context,
+	block *coreblock.Block,
+	signatureRecords ...[]protocol.SignatureRecord,
+) error {
 	sessionCtx, cancelSession := context.WithCancel(ctx)
 	defer cancelSession()
 
@@ -97,7 +101,12 @@ func (p *P2P) loadBlockLinks(
 			return err
 		}
 
-		if _, err := linkSys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), current.GenerateNode()); err != nil {
+		_, err = linkSys.Store(
+			linking.LinkContext{Ctx: ctx},
+			coreblock.GetLinkPrototype(),
+			current.GenerateNode(),
+		)
+		if err != nil {
 			return err
 		}
 

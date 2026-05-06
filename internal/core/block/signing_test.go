@@ -16,9 +16,9 @@ import (
 	"time"
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"

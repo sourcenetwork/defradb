@@ -20,11 +20,10 @@ import (
 	gocar "github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/storage"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/corekv/memory"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -32,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
+	"github.com/sourcenetwork/immutable"
 )
 
 // buildTestBlock constructs a minimal coreblock.Block, marshals it to bytes,
