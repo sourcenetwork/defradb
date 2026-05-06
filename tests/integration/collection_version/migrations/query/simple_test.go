@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestCollectionMigrationQuery(t *testing.T) {
+func TestCollectionMigrationQuery_WithSingleMigration_AppliesMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -84,7 +84,7 @@ func TestCollectionMigrationQuery(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
+func TestCollectionMigrationQuery_WithMultipleDocs_AppliesMigrationToAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -166,7 +166,7 @@ func TestCollectionMigrationQueryMultipleDocs(t *testing.T) {
 
 // Users may want to register migrations before the collection is locally updated. This may be particularly useful
 // for downgrading documents recieved via P2P.
-func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationRegisteredBeforePatch_AppliesMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -227,7 +227,7 @@ func TestCollectionMigrationQueryWithMigrationRegisteredBeforePatchCollection(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationOnlyOnFirstStep_AppliesOnlyFirstStep(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -299,7 +299,7 @@ func TestCollectionMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationOnlyOnLastStep_AppliesOnlyLastStep(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -371,10 +371,12 @@ func TestCollectionMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationsAcrossMultipleVersions_AppliesAllMigrations(t *testing.T) {
 	test := testUtils.TestCase{
-		// Lens migrations return nil for migrated field values when indexes are present.
-		// https://github.com/sourcenetwork/defradb/issues/4353
+		// The doc-version stamp written during reindex does not invalidate when a new
+		// migration is registered on a previously-nil edge, so the second registration
+		// is cached-over and the migrated field stays nil.
+		// https://github.com/sourcenetwork/defradb/issues/4736
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -461,7 +463,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationsRegisteredBeforePatches_AppliesAllMigrations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -548,7 +550,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrder(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationsRegisteredBeforePatchesInReverseOrder_AppliesAllMigrations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -642,7 +644,7 @@ func TestCollectionMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWron
 // It is important to allow these orphans to be persisted as they may later become linked to the
 // collection version history chain as either new migrations are added or the local collection is updated
 // bridging the gap.
-func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
+func TestCollectionMigrationQuery_WithUnknownCollectionVersionIDs_IgnoresMigration(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -703,7 +705,7 @@ func TestCollectionMigrationQueryWithUnknownCollectionMigration(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationMutatingScalarField_AppliesMutation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -765,7 +767,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingScalarField(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationMutatingInlineArrayField_AppliesMutation(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -827,7 +829,7 @@ func TestCollectionMigrationQueryMigrationMutatesExistingInlineArrayField(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationRemovingField_ReturnsNilForRemovedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -889,7 +891,7 @@ func TestCollectionMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationMutatingFieldNotInFirstRequest_PreservesUnmutatedFieldInSecondRequest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -966,7 +968,7 @@ func TestCollectionMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequ
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationCopyingFieldWhenSrcFieldNotRequested_AppliesCopy(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -1029,7 +1031,7 @@ func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequ
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
+func TestCollectionMigrationQuery_WithMigrationCopyingFieldWhenSrcAndDstFieldNotRequested_AppliesCopy(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
