@@ -28,7 +28,7 @@ echo "Removing existing .so and .h files..."
 rm -f build/libdefradb.so build/libdefradb.h
 
 echo "Building shared object..."
-CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $BUILD_FLAGS \
+CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags "cshared ${BUILD_TAGS:-}" $BUILD_FLAGS \
   -buildmode=c-shared -o build/libdefradb.so ./cbindings
 
 # Copy extra headers if needed

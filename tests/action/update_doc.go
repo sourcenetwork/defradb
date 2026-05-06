@@ -14,6 +14,7 @@ package action
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/stretchr/testify/require"
 
@@ -72,6 +73,9 @@ type UpdateDoc struct {
 
 	// TransactionID to use for the action. Optional.
 	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*UpdateDoc)(nil)
@@ -101,7 +105,6 @@ func (a *UpdateDoc) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
-	var err error
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -114,14 +117,26 @@ func (a *UpdateDoc) Execute() {
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
 		}
 
-		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(node, func() error {
 			return mutation(a.s, a, node, nodeID, collection, txnOption)
 		})
 
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

@@ -19,6 +19,8 @@ import (
 )
 
 func TestQueryCommitsWithDocIDAndLimitAndOffset(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -58,12 +60,8 @@ func TestQueryCommitsWithDocIDAndLimitAndOffset(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid": "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
-						},
-						{
-							"cid": "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
-						},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
 					},
 				},
 				NonOrderedResults: true,

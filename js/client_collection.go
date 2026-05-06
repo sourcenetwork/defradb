@@ -13,7 +13,6 @@
 package js
 
 import (
-	"sync"
 	"syscall/js"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -22,14 +21,12 @@ import (
 )
 
 type clientCollection struct {
-	col  client.Collection
-	txns *sync.Map
+	col client.Collection
 }
 
-func newCollection(col client.Collection, txns *sync.Map) js.Value {
+func newCollection(col client.Collection) js.Value {
 	c := &clientCollection{
-		col:  col,
-		txns: txns,
+		col: col,
 	}
 	return js.ValueOf(map[string]any{
 		"name":                      goji.Async(c.name),
@@ -75,7 +72,7 @@ func (c *clientCollection) newIndex(this js.Value, args []js.Value) (js.Value, e
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -93,7 +90,7 @@ func (c *clientCollection) deleteIndex(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -104,7 +101,7 @@ func (c *clientCollection) deleteIndex(this js.Value, args []js.Value) (js.Value
 }
 
 func (c *clientCollection) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -122,7 +119,7 @@ func (c *clientCollection) newEncryptedIndex(this js.Value, args []js.Value) (js
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -140,7 +137,7 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -151,7 +148,7 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 }
 
 func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -165,7 +162,7 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 }
 
 func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}

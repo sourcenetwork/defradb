@@ -16,9 +16,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -45,26 +48,11 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
 					},
 				},
 			},
@@ -75,6 +63,8 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -101,26 +91,11 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
-							"height": int64(2),
-						},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(2)},
 					},
 				},
 			},
@@ -132,6 +107,10 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test verifies result ordering by CID bytes. Under signing the CIDs
+		// differ, so the test's hardcoded ordering no longer matches — but the
+		// "order by CID" guarantee is fully exercised by the non-multiplier run.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -188,6 +167,10 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test verifies result ordering by CID bytes. Under signing the CIDs
+		// differ, so the test's hardcoded ordering no longer matches — but the
+		// "order by CID" guarantee is fully exercised by the non-multiplier run.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -243,6 +226,8 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -283,42 +268,15 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 					 }`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
-							"height": int64(3),
-						},
-						{
-							"cid":    "bafyreicbj6l6nnv6mlkjfhbc4ij36coaui7bejn7zbtxvhdl23d2w6qm5i",
-							"height": int64(3),
-						},
-						{
-							"cid":    "bafyreidw723v77miekvwuoouci6npeb6kkv6hidnplh5ob5sbahwsjduuy",
-							"height": int64(4),
-						},
-						{
-							"cid":    "bafyreigkfzwwfmcw2lkss4xecb27a6s3f6uzfaj5d3mqx5wninv6dnnhhq",
-							"height": int64(4),
-						},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(3)},
+						{"cid": uniqueCid, "height": int64(3)},
+						{"cid": uniqueCid, "height": int64(4)},
+						{"cid": uniqueCid, "height": int64(4)},
 					},
 				},
 			},

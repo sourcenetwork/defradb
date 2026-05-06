@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommits(t *testing.T) {
@@ -64,6 +65,8 @@ func TestQueryCommits(t *testing.T) {
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -89,26 +92,15 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-						},
-						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-						},
-						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-						},
-						{
-							"cid": "bafyreibeindczotofvlnhqgoeedqrphxxayp4ugsrcutr4kgda3uq3fy2y",
-						},
-						{
-							"cid": "bafyreigbqcwozrscjscuclr3hxehca4skh5n7eqvtfsmbzcql7uz2pyk7e",
-						},
-						{
-							"cid": "bafyreihaypay6hfz3czcdjzasyqthwf6kw3hhpucmsmrdx4et6wwokjw64",
-						},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -117,6 +109,8 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 }
 
 func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -137,19 +131,20 @@ func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":                 "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid":                 uniqueCid,
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":                 uniqueCid,
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid":                 uniqueCid,
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -254,6 +249,9 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// Asserts signature == nil on every commit, which is untrue once
+		// signing is enabled (composite commits gain a non-nil signature).
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -282,7 +280,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							}
 							heads {
 								cid
-							}	
+							}
 							signature {
 								type
 							}
@@ -373,6 +371,8 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 }
 
 func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -391,17 +391,12 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"history": []map[string]any{
-						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-						},
-						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-						},
-						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-						},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
