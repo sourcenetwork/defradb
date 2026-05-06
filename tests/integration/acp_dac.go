@@ -321,7 +321,10 @@ func getCollectionAndDocInfo(s *state.State, collectionID, docInd, nodeID int) (
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {
+		s.Nodes[nodeID].CollectionsLock.RLock()
 		collection := s.Nodes[nodeID].Collections[collectionID]
+		s.Nodes[nodeID].CollectionsLock.RLock()
+
 		if collection.Version().Name == "" {
 			require.Fail(s.T, "Expected non-empty collection name, but it was empty.")
 		}

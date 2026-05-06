@@ -86,7 +86,10 @@ func (a *WaitForPeersEvents) Execute() {
 	}
 
 	for colIndex, peerNodeIDs := range a.ExpectedPeersByCollection {
+		a.s.Nodes[a.NodeID].CollectionsLock.RLock()
 		col := a.s.Nodes[a.NodeID].Collections[colIndex]
+		a.s.Nodes[a.NodeID].CollectionsLock.RUnlock()
+
 		topic := col.CollectionID()
 		addExpectedPeers(topic, peerNodeIDs)
 	}

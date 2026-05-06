@@ -222,7 +222,8 @@ type NodeState struct {
 	DbPath string
 	// Collections by index present in the test.
 	// Indexes matches that of collectionNames.
-	Collections []client.Collection
+	Collections     []client.Collection
+	CollectionsLock sync.RWMutex
 	// indicates if the node is Closed.
 	Closed bool
 	// CachedAddresses holds the node's addresses so that the node can be

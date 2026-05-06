@@ -56,6 +56,8 @@ func (a *SyncBranchableCollection) Execute() {
 
 	nodeState := a.s.Nodes[a.NodeID]
 
+	nodeState.CollectionsLock.RLock()
+	defer nodeState.CollectionsLock.RUnlock()
 	if a.CollectionID >= len(nodeState.Collections) {
 		err := assertError(a.s.T,
 			errors.New("collection index out of range"),

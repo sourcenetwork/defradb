@@ -116,7 +116,10 @@ func addCollectionSubscription(
 			continue
 		}
 
+		s.Nodes[action.NodeID].CollectionsLock.RLock()
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		s.Nodes[action.NodeID].CollectionsLock.RUnlock()
+
 		collectionNames = append(collectionNames, col.Name())
 	}
 
@@ -152,7 +155,10 @@ func deleteCollectionSubscription(
 			continue
 		}
 
+		s.Nodes[action.NodeID].CollectionsLock.RLock()
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		s.Nodes[action.NodeID].CollectionsLock.RUnlock()
+
 		collectionNames = append(collectionNames, col.Name())
 	}
 
@@ -182,7 +188,10 @@ func listP2PCollections(
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
+		s.Nodes[action.NodeID].CollectionsLock.RLock()
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		s.Nodes[action.NodeID].CollectionsLock.RUnlock()
+
 		expectedCollections = append(expectedCollections, col.Name())
 	}
 

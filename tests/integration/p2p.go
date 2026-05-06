@@ -201,7 +201,10 @@ func syncDocs(s *state.State, action SyncDocs) {
 		s.DocIDsLock.RUnlock()
 	}
 
+	node.CollectionsLock.RLock()
 	collections := node.Collections
+	node.CollectionsLock.RUnlock()
+
 	collectionName := collections[action.CollectionID].Name()
 
 	syncOpts := options.SyncDocuments()

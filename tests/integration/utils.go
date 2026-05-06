@@ -512,7 +512,11 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 func generateDocs(s *state.State, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
+
+	s.Nodes[firstNodesID].CollectionsLock.RLock()
 	collections := s.Nodes[firstNodesID].Collections
+	s.Nodes[firstNodesID].CollectionsLock.RUnlock()
+
 	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
@@ -529,7 +533,11 @@ func generateDocs(s *state.State, action GenerateDocs) {
 func generatePredefinedDocs(s *state.State, action AddPredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
+
+	s.Nodes[firstNodesID].CollectionsLock.RLock()
 	collections := s.Nodes[firstNodesID].Collections
+	s.Nodes[firstNodesID].CollectionsLock.RUnlock()
+
 	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, col := range collections {
 		defs = append(defs, col.Version())
@@ -1037,6 +1045,8 @@ func seedCollectionVersionsFromState(s *state.State) {
 
 	// For each active collection (canonical order in node.Collections), walk back
 	// the PreviousVersion chain to root, then append from root forward.
+	node.CollectionsLock.RLock()
+	defer node.CollectionsLock.RUnlock()
 	for _, active := range node.Collections {
 		if active == nil {
 			continue
@@ -1090,7 +1100,11 @@ func refreshCollections(
 			// doesn't fail due to lack of authorization(s) if NAC is enabled.
 			nodeIdentity = NodeIdentity(nodeID)
 		}
+
+		node.CollectionsLock.Lock()
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
+		node.CollectionsLock.Unlock()
+
 		txn := getTransaction(s, node, transactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
 		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
@@ -1118,7 +1132,9 @@ func refreshCollections(
 
 		for _, collection := range allCollections {
 			if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+				node.CollectionsLock.RLock()
 				node.Collections[index] = collection
+				node.CollectionsLock.RUnlock()
 			}
 		}
 	}
@@ -1175,11 +1191,15 @@ func refreshDocuments(
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
 	s.DocIDsLock.Lock()
+	s.Nodes[0].CollectionsLock.RLock()
+
 	s.DocIDs = make([][]client.DocID, len(s.Nodes[0].Collections))
 
 	for i := range s.Nodes[0].Collections {
 		s.DocIDs[i] = []client.DocID{}
 	}
+
+	s.Nodes[0].CollectionsLock.RUnlock()
 	s.DocIDsLock.Unlock()
 
 	for i := 0; i < startActionIndex; i++ {
@@ -1191,7 +1211,10 @@ func refreshDocuments(
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			firstNodesID := nodeIDs[0]
+
+			s.Nodes[firstNodesID].CollectionsLock.RLock()
 			collection := s.Nodes[firstNodesID].Collections[action.CollectionID]
+			s.Nodes[firstNodesID].CollectionsLock.RUnlock()
 
 			if action.DocMap != nil {
 				substituteRelations(s, action)

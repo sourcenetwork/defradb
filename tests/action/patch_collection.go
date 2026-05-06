@@ -107,11 +107,13 @@ func (a *PatchCollection) Execute() {
 		// Track any new collection versions created by the patch so that tests
 		// can reference them via {{.CollectionVersionID<N>}} templates.
 		for _, node := range a.s.Nodes {
+			node.CollectionsLock.RLock()
 			for _, col := range node.Collections {
 				if col != nil {
 					appendCollectionVersion(a.s, col.Version().VersionID)
 				}
 			}
+			node.CollectionsLock.RUnlock()
 		}
 	}
 }
