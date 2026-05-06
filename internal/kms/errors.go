@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	errUnknownKMSType string = "unknown KMS type"
+	errUnknownKMSType              string = "unknown KMS type"
+	errNoPeerSuppliedEncryptionKey string = "no peer supplied the encryption key"
 )
 
 var (
-	ErrUnknownKMSType = errors.New(errUnknownKMSType)
+	ErrUnknownKMSType              = errors.New(errUnknownKMSType)
+	ErrNoPeerSuppliedEncryptionKey = errors.New(errNoPeerSuppliedEncryptionKey)
 )
 
 func NewErrUnknownKMSType(t ServiceType) error {
