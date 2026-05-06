@@ -49,10 +49,9 @@ func (a *Async) Execute() {
 	childReady.Add(1)
 	go func() {
 		childReady.Done()
+		defer a.s.AsyncWG.Done()
 
 		a.Child.Execute()
-
-		a.s.AsyncWG.Done()
 	}()
 
 	// Wait for all the children to be ready before returning.

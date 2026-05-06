@@ -67,7 +67,7 @@ func (a *Truncate) Execute() {
 		nodeID := nodeIDs[index]
 		var collections []client.Collection
 		var err error
-		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections = MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionIndex]
 
 		opts := options.TruncateCollection()

@@ -164,8 +164,10 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigrati
 
 func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_ClearsMigrations(t *testing.T) {
 	test := testUtils.TestCase{
-		// Lens migrations return nil for migrated field values when indexes are present.
-		// https://github.com/sourcenetwork/defradb/issues/4353
+		// Switching the active version back to the original does not clear the
+		// stale doc-version stamp written during the prior reindex, so the second
+		// reindex cache-hits and the migrated values are not reset.
+		// https://github.com/sourcenetwork/defradb/issues/4736
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
