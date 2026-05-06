@@ -6,8 +6,7 @@ Generate full GraphQL formatted schema.
 
 Generates the fully formatted GraphQL schema from a given user type definition(s).
 
-		Accepts multiple input files as well as "-" to use stdin.
-		
+Accepts multiple input files as well as "-" to use stdin.
 
 ```
 defradb sdl generate --output schema.graphql <input schema files...> [flags]
