@@ -13,6 +13,7 @@ package action
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/stretchr/testify/require"
 
@@ -59,6 +60,9 @@ type PatchCollection struct {
 	//
 	// This should only be used for rare, known, unrecoverable errors.
 	SkipTestOnError error
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*PatchCollection)(nil)
@@ -94,6 +98,10 @@ func (a *PatchCollection) Execute() {
 		if a.SkipTestOnError != nil && err != nil && errors.Is(err, a.SkipTestOnError) {
 			a.s.SkipTest = fmt.Sprintf("known error: %s", err.Error())
 			return
+		}
+
+		if len(a.IgnoreError) > 0 && err != nil && strings.Contains(err.Error(), a.IgnoreError) {
+			continue
 		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
