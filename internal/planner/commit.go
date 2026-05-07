@@ -39,7 +39,8 @@ type dagScanNode struct {
 	depthVisited uint64
 	visitedNodes map[string]bool
 
-	queuedCids []*cid.Cid
+	queuedCids            []*cid.Cid
+	currentSelectCidIndex int
 
 	fetcher        fetcher.HeadFetcher
 	fetcherStarted bool
@@ -203,17 +204,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else if n.commitSelect.Cids.HasValue() && len(n.visitedNodes) == 0 {
-		if len(n.commitSelect.Cids.Value()) == 0 {
-			return false, nil
-		}
-
-		cid, err := cid.Parse(n.commitSelect.Cids.Value()[0])
+	} else if n.commitSelect.Cids.HasValue() && n.currentSelectCidIndex < len(n.commitSelect.Cids.Value()) {
+		cid, err := cid.Parse(n.commitSelect.Cids.Value()[n.currentSelectCidIndex])
 		if err != nil {
 			return false, err
 		}
 
 		currentCid = &cid
+		n.currentSelectCidIndex++
 	} else if !n.commitSelect.Cids.HasValue() && n.fetcherStarted {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
