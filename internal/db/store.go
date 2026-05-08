@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -243,6 +246,73 @@ func (db *DB) PatchCollection(
 	}
 
 	return txn.Commit()
+}
+
+func (db *DB) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
+		return err
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+
+	defer txn.Discard()
+
+	err = db.deleteCollection(ctx, names, opt.ActiveOnly)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
+func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) error {
+	if len(names) == 0 {
+		return client.ErrCollectionNameRequired
+	}
+
+	seen := make(map[string]struct{}, len(names))
+	ops := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		col, err := db.getCollectionByName(ctx, name)
+		if err != nil {
+			return err
+		}
+
+		if activeOnly {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+			continue
+		}
+
+		allVersions, err := description.GetCollectionsByCollectionID(
+			ctx, db.collectionRepository, col.Version().CollectionID,
+		)
+		if err != nil {
+			return err
+		}
+		for _, v := range allVersions {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
+		}
+	}
+
+	patch := "[" + strings.Join(ops, ",") + "]"
+	return db.patchCollection(ctx, patch, immutable.None[model.Lens]())
 }
 
 func (db *DB) SetActiveCollectionVersion(

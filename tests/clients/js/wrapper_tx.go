@@ -111,6 +111,11 @@ func (txn *Transaction) PatchCollection(
 	return txn.Wrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (txn *Transaction) DeleteCollection(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteCollection(ctx, names, opts...)
+}
+
 func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetActiveCollectionVersion(ctx, version, opts...)
