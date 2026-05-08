@@ -121,7 +121,7 @@ func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}

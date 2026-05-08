@@ -82,14 +82,20 @@ func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.DeleteCollection()
 	setOptIdentity(opt, args, 2)
 	opt.SetActiveOnly(activeOnly)
-	err = c.node.DB.DeleteCollection(ctx, names, opt)
+	err = store.DeleteCollection(ctx, names, opt)
 	return js.Undefined(), err
 }
 
