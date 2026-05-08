@@ -58,16 +58,18 @@ type CollectionRetriever interface {
 }
 
 type pubSubService struct {
-	ctx          context.Context
-	peerID       string
-	pubsub       PubSubServer
-	encStore     *ipldEncStorage
-	nodeACP      acpDB.NACInfo
+	ctx      context.Context
+	peerID   string
+	pubsub   PubSubServer
+	encStore *ipldEncStorage
+	// nodeACP returns the current NAC state. It is a getter rather than a captured
+	// value because NAC may be initialised AFTER the KMS service is constructed
+	nodeACP      func() acpDB.NACInfo
 	documentACP  immutable.Option[dac.DocumentACP]
 	colRetriever CollectionRetriever
 	// nodeIdentity is this node's own identity. Used to authorize node-internal
 	// operations (e.g. NAC-gated collection lookups while answering KMS key
-	// requests). It is NOT the requester's identity — that travels on the wire
+	// requests). It is NOT the requester's identity, that travels on the wire
 	// in fetchEncryptionKeyRequest.Identity and is consulted for DAC.
 	nodeIdentity immutable.Option[identity.Identity]
 }
@@ -95,7 +97,7 @@ func NewPubSubService(
 	peerID string,
 	pubsub PubSubServer,
 	encstore datastore.Blockstore,
-	nodeACP acpDB.NACInfo,
+	nodeACP func() acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeIdentity immutable.Option[identity.Identity],
@@ -330,16 +332,27 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		// Collection-scoped encryption blocks (e.g. those produced for a `@branchable`
-		// collection's own head) carry no DocID and therefore have no doc-level
-		// permission to enforce. Skip the doc-permission check for those.
 		docID := string(encBlock.DocID)
 		if docID != "" {
+			// Doc-scoped block: gate on per-doc DAC.
 			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
 				return nil, err
 			}
 			if !hasPerm {
+				continue
+			}
+		} else {
+			// Collection-scoped block (e.g. a `@branchable` collection's own head).
+			// The block doesn't carry a CollectionID, so we can't run a per-collection
+			// DAC check. Fall back to a node-level NAC gate: if the requester has no
+			// authorized access on this node, refuse to serve. When NAC is not enabled
+			// this is a no-op, preserving existing behaviour.
+			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
+			if err != nil {
+				return nil, err
+			}
+			if !hasNodeAccess {
 				continue
 			}
 		}
@@ -374,12 +387,42 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		actorIdentity,
-		s.nodeACP,
+		s.nodeACP(),
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,
 		docID,
 	)
+}
+
+// doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to
+// perform a read on this node, used as a fallback gate for encryption blocks
+// that have no DocID (e.g. a `@branchable` collection's own head, where there
+// is no per-doc ACL to consult). Returns true unconditionally when NAC is not
+// enabled.
+func (s *pubSubService) doesIdentityHaveNodeReadAccess(
+	ctx context.Context,
+	actorIdentity immutable.Option[identity.Identity],
+) (bool, error) {
+	var actorDID string
+	if actorIdentity.HasValue() {
+		actorDID = actorIdentity.Value().DID()
+	}
+
+	err := acpDB.CheckNodeOperationAccess(
+		ctx,
+		actorDID,
+		s.nodeACP(),
+		acpTypes.NodeReadDocumentPerm,
+		acpTypes.NodeACPObject,
+	)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
+		return false, nil
+	}
+	return false, err
 }
 
 func encodeToBase64(data []byte) []byte {

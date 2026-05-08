@@ -71,3 +71,56 @@ func TestDocEncryptionNAC_SyncBranchableCollection_AuthorizedIdentity_AllowAcces
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// A peer whose node identity has no NAC grant on the source must not receive the
+// encryption key for a `@branchable` collection's collection-scoped encryption
+// block. Node 0 enforces NAC; node 1 carries an unauthorized node identity on
+// the KMS wire, its key fetch must be denied.
+func TestDocEncryptionNAC_SyncBranchableCollection_UnauthorizedNodeIdentity_LeaksKey(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS: testUtils.KMS{Activated: true},
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			testUtils.ConnectPeers{
+				Identity:     testUtils.ClientIdentity(1),
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(1),
+				SDL: `
+					type User @branchable {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				NodeID:   immutable.Some(0),
+				Identity: testUtils.ClientIdentity(1),
+				DocMap: map[string]any{
+					"name": "John",
+				},
+				IsDocEncrypted: true,
+			},
+			&action.SyncBranchableCollection{
+				Identity:      testUtils.ClientIdentity(1),
+				NodeID:        1,
+				ExpectedError: "failed to load encryption block",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

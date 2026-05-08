@@ -229,7 +229,7 @@ func New(
 				eventHandler: p.peerEventHandler,
 			},
 			datastore.EncstoreFrom(db.Rootstore()),
-			db.NodeACP(),
+			db.NodeACP,
 			db.DocumentACP(),
 			collectionRetriever,
 			nodeIdentity,
