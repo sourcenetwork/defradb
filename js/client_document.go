@@ -13,6 +13,7 @@
 package js
 
 import (
+	"context"
 	"errors"
 	"syscall/js"
 
@@ -28,14 +29,11 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	var opt options.AddDocumentOptions
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
+	ctx := context.Background()
 	doc, err := client.NewDocFromMap(ctx, docMap, c.col.Version())
 	if err != nil {
 		return js.Undefined(), err
@@ -49,14 +47,11 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	var opt options.AddDocumentOptions
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
+	ctx := context.Background()
 	var docs []*client.Document
 	for _, d := range docMaps {
 		doc, err := client.NewDocFromMap(ctx, d, c.col.Version())
@@ -81,10 +76,6 @@ func (c *clientCollection) saveDocument(this js.Value, args []js.Value) (js.Valu
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	docID, err := client.NewDocIDFromString(docIDString)
 	if err != nil {
 		return js.Undefined(), err
@@ -93,6 +84,7 @@ func (c *clientCollection) saveDocument(this js.Value, args []js.Value) (js.Valu
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
+	ctx := context.Background()
 	getOpt := options.GetDocumentOptions{
 		Identity:    opt.Identity,
 		ShowDeleted: true,
@@ -123,10 +115,6 @@ func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	docID, err := client.NewDocIDFromString(docIDString)
 	if err != nil {
 		return js.Undefined(), err
@@ -135,6 +123,7 @@ func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Va
 	if err := parseOptions(optsVal, &updateOpt); err != nil {
 		return js.Undefined(), err
 	}
+	ctx := context.Background()
 	// Use the same identity to fetch the document.
 	getOpt := options.GetDocumentOptions{
 		Identity:    updateOpt.Identity,
@@ -156,10 +145,6 @@ func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	docID, err := client.NewDocIDFromString(docIDString)
 	if err != nil {
 		return js.Undefined(), err
@@ -168,7 +153,7 @@ func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Va
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	deleted, err := c.col.DeleteDocument(ctx, docID, asOpts(opt))
+	deleted, err := c.col.DeleteDocument(context.Background(), docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -181,10 +166,6 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	docID, err := client.NewDocIDFromString(docIDString)
 	if err != nil {
 		return js.Undefined(), err
@@ -193,7 +174,7 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	exists, err := c.col.ExistsDocument(ctx, docID, asOpts(opt))
+	exists, err := c.col.ExistsDocument(context.Background(), docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -210,15 +191,11 @@ func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	var opt options.UpdateDocumentsWithFilterOptions
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.col.UpdateDocumentsWithFilter(ctx, filter, updater, asOpts(opt))
+	result, err := c.col.UpdateDocumentsWithFilter(context.Background(), filter, updater, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -231,15 +208,11 @@ func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	var opt options.DeleteDocumentsWithFilterOptions
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.col.DeleteDocumentsWithFilter(ctx, filter, asOpts(opt))
+	result, err := c.col.DeleteDocumentsWithFilter(context.Background(), filter, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -252,10 +225,6 @@ func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
 	docID, err := client.NewDocIDFromString(docIDString)
 	if err != nil {
 		return js.Undefined(), err
@@ -264,7 +233,7 @@ func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := c.col.GetDocument(ctx, docID, asOpts(opt))
+	doc, err := c.col.GetDocument(context.Background(), docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}

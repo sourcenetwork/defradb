@@ -4,8 +4,10 @@ Export the database to a file
 
 ### Synopsis
 
-Export the database to a file. If a file exists at the <output_path> location, it will be overwritten.
-		
+Export the database to a file.
+
+If a file exists at the `<output_path>` location, it will be overwritten.
+
 If the --collection flag is provided, only the data for that collection will be exported.
 Otherwise, all collections in the database will be exported.
 

@@ -367,6 +367,15 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	_, err := execute(ctx, w.value, "deleteCollection", goji.MustMarshalJS(names), jsOpts(opts))
+	return err
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,

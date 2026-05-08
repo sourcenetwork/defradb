@@ -35,7 +35,7 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"likedIndexes": null
 				}`,
@@ -79,7 +79,7 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"likedIndexes": []
 				}`,
@@ -123,7 +123,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"likedIndexes": [true, false, true, false]
 				}`,
@@ -167,7 +167,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"likedIndexes": [false, true]
 				}`,
@@ -211,7 +211,7 @@ func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"likedIndexes": [true, false, true, false, true, true]
 				}`,

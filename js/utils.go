@@ -13,7 +13,6 @@
 package js
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -29,8 +28,24 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/db"
 )
+
+const (
+	identityFullProp = "fullIdentity"
+	identityProp     = "identity"
+)
+
+// transientKeys are JS option keys that are handled out-of-band and stripped
+// before JSON-decoding into typed options structs. Both camelCase (used by
+// hand-written JS callers) and PascalCase (produced by Go-side struct
+// marshalling in the test wrapper) variants are listed.
+var transientKeys = []any{
+	"identity", "Identity",
+	"fullIdentity", "FullIdentity",
+	"nodeIdentity", "NodeIdentity",
+	"fullNodeIdentity", "FullNodeIdentity",
+	"transaction", "Transaction",
+}
 
 func stringArg(args []js.Value, index int, name string) (string, error) {
 	if len(args) <= index {
@@ -87,27 +102,13 @@ func optionsValue(args []js.Value, index int) js.Value {
 	return js.Undefined()
 }
 
-// makeContext builds the context for an operation from the JS options object.
-//
-// Only the transaction binding is read here. Identity is decoded into the
-// per-operation options struct by parseOptions, which the DB layer copies
-// into the context itself.
-func makeContext(optsVal js.Value, txns *sync.Map) (context.Context, error) {
-	ctx := context.Background()
-	txn, err := optionsTransaction(optsVal, txns)
-	if err != nil {
-		return ctx, err
+func optionsStore(db client.Store, optsVal js.Value, txns *sync.Map) (client.Store, error) {
+	if optsVal.IsUndefined() || optsVal.IsNull() {
+		return db, nil
 	}
-	return db.InitContext(ctx, txn), nil
-}
-
-func optionsTransaction(opts js.Value, txns *sync.Map) (client.Txn, error) {
-	if opts.IsUndefined() || opts.IsNull() {
-		return nil, nil
-	}
-	id := opts.Get("transaction")
+	id := optsVal.Get("transaction")
 	if id.Type() != js.TypeNumber {
-		return nil, nil
+		return db, nil
 	}
 	txn, ok := txns.Load(uint64(id.Int()))
 	if !ok {
@@ -117,19 +118,13 @@ func optionsTransaction(opts js.Value, txns *sync.Map) (client.Txn, error) {
 }
 
 // optionsIdentity parses the `identity` (public key hex) or `fullIdentity`
-// (private key hex) property out of the JS options object.
+// (private key hex) property out of the JS options object. The private key
+// takes precedence when both are present.
 func optionsIdentity(opts js.Value) (immutable.Option[acpIdentity.Identity], error) {
-	return parseIdentityKeys(opts, "fullIdentity", "identity")
-}
-
-// parseIdentityKeys reads a private/public key hex pair from the given JS
-// options object using the supplied property names. The private key takes
-// precedence when both are present.
-func parseIdentityKeys(opts js.Value, fullKey, identityKey string) (immutable.Option[acpIdentity.Identity], error) {
 	if opts.IsUndefined() || opts.IsNull() {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
-	full := opts.Get(fullKey)
+	full := opts.Get(identityFullProp)
 	if full.Type() == js.TypeString {
 		data, err := hex.DecodeString(full.String())
 		if err != nil {
@@ -142,7 +137,7 @@ func parseIdentityKeys(opts js.Value, fullKey, identityKey string) (immutable.Op
 		}
 		return immutable.Some[acpIdentity.Identity](identity), nil
 	}
-	ident := opts.Get(identityKey)
+	ident := opts.Get(identityProp)
 	if ident.Type() != js.TypeString {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
@@ -155,18 +150,6 @@ func parseIdentityKeys(opts js.Value, fullKey, identityKey string) (immutable.Op
 		return immutable.None[acpIdentity.Identity](), err
 	}
 	return immutable.Some(identity), nil
-}
-
-// transientKeys are JS option keys that are handled out-of-band and stripped
-// before JSON-decoding into typed options structs. Both camelCase (used by
-// hand-written JS callers) and PascalCase (produced by Go-side struct
-// marshalling in the test wrapper) variants are listed.
-var transientKeys = []any{
-	"identity", "Identity",
-	"fullIdentity", "FullIdentity",
-	"nodeIdentity", "NodeIdentity",
-	"fullNodeIdentity", "FullNodeIdentity",
-	"transaction", "Transaction",
 }
 
 // parseOptions decodes the JS options object directly into the typed options

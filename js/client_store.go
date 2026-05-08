@@ -13,6 +13,7 @@
 package js
 
 import (
+	"context"
 	"syscall/js"
 
 	"github.com/sourcenetwork/goji"
@@ -29,7 +30,7 @@ func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error)
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -37,7 +38,7 @@ func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error)
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := c.node.DB.AddCollection(ctx, sdl, asOpts(opt))
+	cols, err := store.AddCollection(context.Background(), sdl, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -54,7 +55,7 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -62,7 +63,24 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.PatchCollection(ctx, patch, migration, asOpts(opt))
+	return js.Undefined(), store.PatchCollection(context.Background(), patch, migration, asOpts(opt))
+}
+
+func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	names, err := stringSliceArg(args, 0, "names")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.DeleteCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), store.DeleteCollection(context.Background(), names, asOpts(opt))
 }
 
 func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
@@ -71,7 +89,7 @@ func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -79,7 +97,7 @@ func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.SetActiveCollectionVersion(ctx, version, asOpts(opt))
+	return js.Undefined(), store.SetActiveCollectionVersion(context.Background(), version, asOpts(opt))
 }
 
 func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
@@ -92,7 +110,7 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -100,7 +118,7 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, asOpts(opt))
+	cols, err := store.AddView(context.Background(), gqlQuery, sdl, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -109,7 +127,7 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 
 func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -117,7 +135,7 @@ func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) 
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.RefreshViews(ctx, asOpts(opt))
+	return js.Undefined(), store.RefreshViews(context.Background(), asOpts(opt))
 }
 
 func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) {
@@ -126,7 +144,7 @@ func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) 
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -134,7 +152,7 @@ func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) 
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := c.node.DB.SetMigration(ctx, config, asOpts(opt))
+	lensID, err := store.SetMigration(context.Background(), config, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -147,7 +165,7 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -155,7 +173,7 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := c.node.DB.AddLens(ctx, lens, asOpts(opt))
+	lensID, err := store.AddLens(context.Background(), lens, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -164,7 +182,7 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 
 func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -172,7 +190,7 @@ func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	lenses, err := c.node.DB.ListLenses(ctx, asOpts(opt))
+	lenses, err := store.ListLenses(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -185,7 +203,7 @@ func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, 
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -193,16 +211,16 @@ func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, 
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	col, err := c.node.DB.GetCollectionByName(ctx, name, asOpts(opt))
+	col, err := store.GetCollectionByName(context.Background(), name, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return newCollection(col, c.txns), nil
+	return newCollection(col), nil
 }
 
 func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -210,20 +228,20 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := c.node.DB.GetCollections(ctx, asOpts(opt))
+	cols, err := store.GetCollections(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
 	wrappers := make([]any, len(cols))
 	for i, col := range cols {
-		wrappers[i] = newCollection(col, c.txns)
+		wrappers[i] = newCollection(col)
 	}
 	return js.ValueOf(wrappers), nil
 }
 
 func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -231,7 +249,7 @@ func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := c.node.DB.ListIndexes(ctx, asOpts(opt))
+	indexes, err := store.ListIndexes(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -240,7 +258,7 @@ func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 
 func (c *Client) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -248,7 +266,7 @@ func (c *Client) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Val
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := c.node.DB.ListAllEncryptedIndexes(ctx, asOpts(opt))
+	indexes, err := store.ListAllEncryptedIndexes(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -261,7 +279,7 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -269,7 +287,7 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res := c.node.DB.ExecRequest(ctx, request, asOpts(opt))
+	res := store.ExecRequest(context.Background(), request, asOpts(opt))
 	return marshalRequestResult(res)
 }
 
@@ -307,11 +325,11 @@ func handleSubscription(sub <-chan client.GQLResult) js.Value {
 
 func (c *Client) printDump(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.PrintDump(ctx)
+	return js.Undefined(), store.PrintDump(context.Background())
 }
 
 func (c *Client) basicImport(this js.Value, args []js.Value) (js.Value, error) {
@@ -320,11 +338,11 @@ func (c *Client) basicImport(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.BasicImport(ctx, filepath)
+	return js.Undefined(), store.BasicImport(context.Background(), filepath)
 }
 
 func (c *Client) basicExport(this js.Value, args []js.Value) (js.Value, error) {
@@ -333,7 +351,7 @@ func (c *Client) basicExport(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -341,5 +359,5 @@ func (c *Client) basicExport(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.BasicExport(ctx, filepath, asOpts(opt))
+	return js.Undefined(), store.BasicExport(context.Background(), filepath, asOpts(opt))
 }

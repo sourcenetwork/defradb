@@ -12,6 +12,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -28,6 +29,7 @@ const (
 	errAddingP2PCollection                       string = "cannot add collection ID"
 	errRemovingP2PCollection                     string = "cannot remove collection ID"
 	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection                string = "cannot remove a collection while another field references it"
 	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
 	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
 	errCannotSetVersionID                        string = "setting the VersionID is not supported"
@@ -186,6 +188,7 @@ const (
 	errGetAllDocIDs               string = "failed to get all document IDs"
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
+	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
 )
 
 var (
@@ -217,6 +220,7 @@ var (
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
 	ErrCanNotHavePolicyWithoutACP                = errors.New(errCanNotHavePolicyWithoutACP)
+	ErrRemoveReferencedCollection                = errors.New(errRemoveReferencedCollection)
 	ErrRelationMissingField                      = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                 = errors.New(errMultipleRelationPrimaries)
 	ErrP2PColHasPolicy                           = errors.New(errP2PColHasPolicy)
@@ -256,6 +260,7 @@ var (
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
+	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -351,6 +356,27 @@ func NewErrAddCollectionWithPatch(name string) error {
 	return errors.New(
 		errAddCollectionWithPatch,
 		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrRemoveReferencedCollection(inner error, removed []string) error {
+	return errors.Wrap(
+		errRemoveReferencedCollection,
+		inner,
+		errors.NewKV("Removed", strings.Join(removed, ",")),
+	)
+}
+
+// NewErrRemoveReferencedCollectionFromField errors when a patch removes a collection
+// that is still being referenced by a field on another collection in the post-patch
+// state. It identifies which removed collection is still in use and the host
+// collection/field doing the referencing.
+func NewErrRemoveReferencedCollectionFromField(removedName, hostCollection, hostField string) error {
+	return errors.New(
+		errRemoveReferencedCollection,
+		errors.NewKV("Removed", removedName),
+		errors.NewKV("ReferencedBy", hostCollection),
+		errors.NewKV("Field", hostField),
 	)
 }
 

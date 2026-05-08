@@ -56,7 +56,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,
@@ -104,7 +104,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 					"favourite": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,
@@ -156,7 +156,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				CollectionID: 1,
 				Doc:          `{"name": "Game of chains"}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,

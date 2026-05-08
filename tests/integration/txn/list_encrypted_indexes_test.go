@@ -55,7 +55,7 @@ func TestTxn_AddEncryptedIndex_ExhibitsTransactionalIsolation_Succeeds(t *testin
 				TransactionID: immutable.Some(1),
 				FieldName:     "name",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			testUtils.ListEncryptedIndexes{

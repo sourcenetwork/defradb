@@ -13,6 +13,7 @@
 package js
 
 import (
+	"context"
 	"syscall/js"
 
 	"github.com/sourcenetwork/goji"
@@ -22,7 +23,7 @@ import (
 
 func (c *Client) peerInfo(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -30,7 +31,7 @@ func (c *Client) peerInfo(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.PeerInfo(ctx, asOpts(opt))
+	res, err := store.PeerInfo(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -39,7 +40,7 @@ func (c *Client) peerInfo(this js.Value, args []js.Value) (js.Value, error) {
 
 func (c *Client) activePeers(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -47,7 +48,7 @@ func (c *Client) activePeers(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.ActivePeers(ctx, asOpts(opt))
+	res, err := store.ActivePeers(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -60,7 +61,7 @@ func (c *Client) connect(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -68,7 +69,7 @@ func (c *Client) connect(this js.Value, args []js.Value) (js.Value, error) {
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.Connect(ctx, addresses, asOpts(opt))
+	return js.Undefined(), store.Connect(context.Background(), addresses, asOpts(opt))
 }
 
 func (c *Client) addReplicator(this js.Value, args []js.Value) (js.Value, error) {
@@ -77,7 +78,7 @@ func (c *Client) addReplicator(this js.Value, args []js.Value) (js.Value, error)
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -85,7 +86,7 @@ func (c *Client) addReplicator(this js.Value, args []js.Value) (js.Value, error)
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.AddReplicator(ctx, addresses, asOpts(opt))
+	return js.Undefined(), store.AddReplicator(context.Background(), addresses, asOpts(opt))
 }
 
 func (c *Client) deleteReplicator(this js.Value, args []js.Value) (js.Value, error) {
@@ -94,7 +95,7 @@ func (c *Client) deleteReplicator(this js.Value, args []js.Value) (js.Value, err
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -102,12 +103,12 @@ func (c *Client) deleteReplicator(this js.Value, args []js.Value) (js.Value, err
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.DeleteReplicator(ctx, id, asOpts(opt))
+	return js.Undefined(), store.DeleteReplicator(context.Background(), id, asOpts(opt))
 }
 
 func (c *Client) listReplicators(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -115,7 +116,7 @@ func (c *Client) listReplicators(this js.Value, args []js.Value) (js.Value, erro
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.ListReplicators(ctx, asOpts(opt))
+	res, err := store.ListReplicators(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -128,7 +129,7 @@ func (c *Client) addP2PCollections(this js.Value, args []js.Value) (js.Value, er
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -136,7 +137,7 @@ func (c *Client) addP2PCollections(this js.Value, args []js.Value) (js.Value, er
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.AddP2PCollections(ctx, collectionIDs, asOpts(opt))
+	return js.Undefined(), store.AddP2PCollections(context.Background(), collectionIDs, asOpts(opt))
 }
 
 func (c *Client) deleteP2PCollections(this js.Value, args []js.Value) (js.Value, error) {
@@ -145,7 +146,7 @@ func (c *Client) deleteP2PCollections(this js.Value, args []js.Value) (js.Value,
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -153,12 +154,12 @@ func (c *Client) deleteP2PCollections(this js.Value, args []js.Value) (js.Value,
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.DeleteP2PCollections(ctx, collectionIDs, asOpts(opt))
+	return js.Undefined(), store.DeleteP2PCollections(context.Background(), collectionIDs, asOpts(opt))
 }
 
 func (c *Client) listP2PCollections(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -166,7 +167,7 @@ func (c *Client) listP2PCollections(this js.Value, args []js.Value) (js.Value, e
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.ListP2PCollections(ctx, asOpts(opt))
+	res, err := store.ListP2PCollections(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -179,7 +180,7 @@ func (c *Client) addP2PDocuments(this js.Value, args []js.Value) (js.Value, erro
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -187,7 +188,7 @@ func (c *Client) addP2PDocuments(this js.Value, args []js.Value) (js.Value, erro
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.AddP2PDocuments(ctx, docIDs, asOpts(opt))
+	return js.Undefined(), store.AddP2PDocuments(context.Background(), docIDs, asOpts(opt))
 }
 
 func (c *Client) deleteP2PDocuments(this js.Value, args []js.Value) (js.Value, error) {
@@ -196,7 +197,7 @@ func (c *Client) deleteP2PDocuments(this js.Value, args []js.Value) (js.Value, e
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -204,12 +205,12 @@ func (c *Client) deleteP2PDocuments(this js.Value, args []js.Value) (js.Value, e
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.DeleteP2PDocuments(ctx, docIDs, asOpts(opt))
+	return js.Undefined(), store.DeleteP2PDocuments(context.Background(), docIDs, asOpts(opt))
 }
 
 func (c *Client) listP2PDocuments(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -217,7 +218,7 @@ func (c *Client) listP2PDocuments(this js.Value, args []js.Value) (js.Value, err
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.ListP2PDocuments(ctx, asOpts(opt))
+	res, err := store.ListP2PDocuments(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -234,7 +235,7 @@ func (c *Client) syncDocuments(this js.Value, args []js.Value) (js.Value, error)
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 2)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -242,7 +243,7 @@ func (c *Client) syncDocuments(this js.Value, args []js.Value) (js.Value, error)
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.SyncDocuments(ctx, collectionName, docIDs, asOpts(opt))
+	return js.Undefined(), store.SyncDocuments(context.Background(), collectionName, docIDs, asOpts(opt))
 }
 
 func (c *Client) syncCollectionVersions(this js.Value, args []js.Value) (js.Value, error) {
@@ -251,7 +252,7 @@ func (c *Client) syncCollectionVersions(this js.Value, args []js.Value) (js.Valu
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -259,7 +260,7 @@ func (c *Client) syncCollectionVersions(this js.Value, args []js.Value) (js.Valu
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.SyncCollectionVersions(ctx, versionIDs, asOpts(opt))
+	return js.Undefined(), store.SyncCollectionVersions(context.Background(), versionIDs, asOpts(opt))
 }
 
 func (c *Client) syncBranchableCollection(this js.Value, args []js.Value) (js.Value, error) {
@@ -268,7 +269,7 @@ func (c *Client) syncBranchableCollection(this js.Value, args []js.Value) (js.Va
 		return js.Undefined(), err
 	}
 	optsVal := optionsValue(args, 1)
-	ctx, err := makeContext(optsVal, c.txns)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -276,5 +277,5 @@ func (c *Client) syncBranchableCollection(this js.Value, args []js.Value) (js.Va
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.node.DB.SyncBranchableCollection(ctx, collectionID, asOpts(opt))
+	return js.Undefined(), store.SyncBranchableCollection(context.Background(), collectionID, asOpts(opt))
 }

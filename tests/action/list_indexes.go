@@ -78,7 +78,7 @@ func (a *ListIndexes) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections := GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections := MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
