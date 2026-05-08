@@ -28,7 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -51,7 +50,11 @@ type PubSubServer interface {
 }
 
 type CollectionRetriever interface {
-	RetrieveCollectionFromDocID(context.Context, string) (client.Collection, error)
+	RetrieveCollectionFromDocID(
+		context.Context,
+		string,
+		immutable.Option[identity.Identity],
+	) (client.Collection, error)
 }
 
 type pubSubService struct {
@@ -62,7 +65,11 @@ type pubSubService struct {
 	nodeACP      acpDB.NACInfo
 	documentACP  immutable.Option[dac.DocumentACP]
 	colRetriever CollectionRetriever
-	nodeDID      string
+	// nodeIdentity is this node's own identity. Used to authorize node-internal
+	// operations (e.g. NAC-gated collection lookups while answering KMS key
+	// requests). It is NOT the requester's identity — that travels on the wire
+	// in fetchEncryptionKeyRequest.Identity and is consulted for DAC.
+	nodeIdentity immutable.Option[identity.Identity]
 }
 
 var _ Service = (*pubSubService)(nil)
@@ -91,7 +98,7 @@ func NewPubSubService(
 	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
-	nodeDID string,
+	nodeIdentity immutable.Option[identity.Identity],
 ) (*pubSubService, error) {
 	s := &pubSubService{
 		ctx:          ctx,
@@ -101,7 +108,7 @@ func NewPubSubService(
 		nodeACP:      nodeACP,
 		documentACP:  documentACP,
 		colRetriever: colRetriever,
-		nodeDID:      nodeDID,
+		nodeIdentity: nodeIdentity,
 	}
 	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
 	if err != nil {
@@ -138,8 +145,12 @@ func (s *pubSubService) prepareFetchEncryptionKeyRequest(
 	cids []cidlink.Link,
 	ephemeralPublicKey []byte,
 ) (*fetchEncryptionKeyRequest, error) {
+	var didBytes []byte
+	if s.nodeIdentity.HasValue() {
+		didBytes = []byte(s.nodeIdentity.Value().DID())
+	}
 	req := &fetchEncryptionKeyRequest{
-		Identity:           []byte(s.nodeDID),
+		Identity:           didBytes,
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
@@ -302,6 +313,11 @@ func (s *pubSubService) getEncryptionKeysLocally(
 	ctx context.Context,
 	req *fetchEncryptionKeyRequest,
 ) ([][]byte, error) {
+	var actorIdentity immutable.Option[identity.Identity]
+	if len(req.Identity) > 0 {
+		actorIdentity = immutable.Some(identity.FromDID(string(req.Identity)))
+	}
+
 	blocks := make([][]byte, 0, len(req.Links))
 	for _, link := range req.Links {
 		encBlock, err := s.encStore.get(ctx, link)
@@ -314,12 +330,18 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		hasPerm, err := s.doesIdentityHaveDocPermission(ctx, string(req.Identity), encBlock)
-		if err != nil {
-			return nil, err
-		}
-		if !hasPerm {
-			continue
+		// Collection-scoped encryption blocks (e.g. those produced for a `@branchable`
+		// collection's own head) carry no DocID and therefore have no doc-level
+		// permission to enforce. Skip the doc-permission check for those.
+		docID := string(encBlock.DocID)
+		if docID != "" {
+			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+			if err != nil {
+				return nil, err
+			}
+			if !hasPerm {
+				continue
+			}
 		}
 
 		encBlockBytes, err := encBlock.Marshal()
@@ -332,30 +354,26 @@ func (s *pubSubService) getEncryptionKeysLocally(
 	return blocks, nil
 }
 
+// doesIdentityHaveDocPermission asks whether actorIdentity may read docID.
+// The collection lookup runs as the node itself (NAC), the DAC check runs as
+// the requester. docID must be non-empty.
 func (s *pubSubService) doesIdentityHaveDocPermission(
 	ctx context.Context,
-	actorIdentity string,
-	entBlock *coreblock.Encryption,
+	actorIdentity immutable.Option[identity.Identity],
+	docID string,
 ) (bool, error) {
 	if !s.documentACP.HasValue() {
 		return true, nil
 	}
 
-	docID := string(entBlock.DocID)
-	if docID == "" {
-		// Collection-scoped encryption blocks (e.g. those produced for a `@branchable`
-		// collection's own head) carry no DocID and therefore have no doc-level permission
-		// to enforce here.
-		return true, nil
-	}
-	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID)
+	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID, s.nodeIdentity)
 	if err != nil {
 		return false, err
 	}
 
 	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.FromDID(actorIdentity)),
+		actorIdentity,
 		s.nodeACP,
 		s.documentACP.Value(),
 		collection,

@@ -21,15 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestDocEncryptionNAC_SyncBranchableCollection_AuthorizedIdentity_AllowAccess
-// covers branchable-collection sync of an encrypted doc when NAC is enabled
-// on the serving node and the requester carries an authorized identity: the
-// requester must receive the key and complete the sync.
-//
-// Edge case: the serving node's KMS performs an internal collection lookup
-// while answering the key request, which crosses NAC's collection-access
-// check. That lookup must be authorized as a node-internal call rather than
-// be subjected to the requester's NAC permissions.
+// Branchable collection, encrypted doc, NAC enabled, requester has an
+// authorized identity. Sync must succeed end-to-end.
 func TestDocEncryptionNAC_SyncBranchableCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},

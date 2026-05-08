@@ -232,7 +232,7 @@ func New(
 			db.NodeACP(),
 			db.DocumentACP(),
 			collectionRetriever,
-			nodeIdentity.Value().DID(),
+			nodeIdentity,
 		)
 		if err != nil {
 			return nil, err

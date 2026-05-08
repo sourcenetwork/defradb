@@ -205,7 +205,7 @@ func newDB(
 			db,
 			node, cfg.P2P.Value(),
 			db.nodeIdentity,
-			NewCollectionRetriever(db).WithIdentity(db.nodeIdentity),
+			NewCollectionRetriever(db),
 			db.collectionRepository,
 		)
 		if err != nil {
