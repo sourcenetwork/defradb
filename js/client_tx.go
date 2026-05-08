@@ -13,16 +13,16 @@
 package js
 
 import (
-	"fmt"
 	"sync"
 	"syscall/js"
+
+	"github.com/sourcenetwork/goji"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/goji"
-	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 type transaction struct {
@@ -51,6 +51,9 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"listIndexes":                goji.Async(wrapper.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(wrapper.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(wrapper.execRequest),
+		"printDump":                  goji.Async(wrapper.printDump),
+		"basicImport":                goji.Async(wrapper.basicImport),
+		"basicExport":                goji.Async(wrapper.basicExport),
 		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
 		"addDACActorRelationship":    goji.Async(wrapper.addDACActorRelationship),
 		"deleteDACActorRelationship": goji.Async(wrapper.deleteDACActorRelationship),
@@ -61,12 +64,26 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"deleteNACActorRelationship": goji.Async(wrapper.deleteNACActorRelationship),
 		"getNodeIdentity":            goji.Async(wrapper.getNodeIdentity),
 		"verifySignature":            goji.Async(wrapper.verifySignature),
+		"peerInfo":                   goji.Async(wrapper.peerInfo),
+		"activePeers":                goji.Async(wrapper.activePeers),
+		"connect":                    goji.Async(wrapper.connect),
+		"addReplicator":              goji.Async(wrapper.addReplicator),
+		"deleteReplicator":           goji.Async(wrapper.deleteReplicator),
+		"listReplicators":            goji.Async(wrapper.listReplicators),
+		"addP2PCollections":          goji.Async(wrapper.addP2PCollections),
+		"deleteP2PCollections":       goji.Async(wrapper.deleteP2PCollections),
+		"listP2PCollections":         goji.Async(wrapper.listP2PCollections),
+		"addP2PDocuments":            goji.Async(wrapper.addP2PDocuments),
+		"deleteP2PDocuments":         goji.Async(wrapper.deleteP2PDocuments),
+		"listP2PDocuments":           goji.Async(wrapper.listP2PDocuments),
+		"syncDocuments":              goji.Async(wrapper.syncDocuments),
+		"syncCollectionVersions":     goji.Async(wrapper.syncCollectionVersions),
+		"syncBranchableCollection":   goji.Async(wrapper.syncBranchableCollection),
 	})
 }
 
 func (t *transaction) commit(this js.Value, args []js.Value) (js.Value, error) {
-	err := t.txn.Commit()
-	return js.Undefined(), err
+	return js.Undefined(), t.txn.Commit()
 }
 
 func (t *transaction) discard(this js.Value, args []js.Value) (js.Value, error) {
@@ -79,13 +96,16 @@ func (t *transaction) addCollection(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddCollection()
-	setOptIdentity(opt, args, 1)
-	cols, err := t.txn.AddCollection(ctx, sdl, opt)
+	var opt options.AddCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	cols, err := t.txn.AddCollection(ctx, sdl, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -101,14 +121,16 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 	if err := structArg(args, 1, "lens", &migration); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.PatchCollection()
-	setOptIdentity(opt, args, 2)
-	err = t.txn.PatchCollection(ctx, patch, migration, opt)
-	return js.Undefined(), err
+	var opt options.PatchCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.PatchCollection(ctx, patch, migration, asOpts(opt))
 }
 
 func (t *transaction) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
@@ -116,14 +138,16 @@ func (t *transaction) setActiveCollectionVersion(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.SetActiveCollectionVersion()
-	setOptIdentity(opt, args, 1)
-	err = t.txn.SetActiveCollectionVersion(ctx, version, opt)
-	return js.Undefined(), err
+	var opt options.SetActiveCollectionVersionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.SetActiveCollectionVersion(ctx, version, asOpts(opt))
 }
 
 func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) {
@@ -135,20 +159,16 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var transformCID immutable.Option[string]
-	if err := structArg(args, 2, "transformCID", &transformCID); err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 3, t.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opts := options.AddView()
-	setOptIdentity(opts, args, 3)
-	if transformCID.HasValue() {
-		opts.SetTransformCID(transformCID.Value())
+	var opt options.AddViewOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
 	}
-	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, opts)
+	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -156,18 +176,16 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (t *transaction) refreshViews(this js.Value, args []js.Value) (js.Value, error) {
-	var input collectionFetchOptions
-	if err := structArg(args, 0, "options", &input); err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := collectionFetchOptionsToGetCollectionsOptions(input)
-	setOptIdentity(opt, args, 1)
-	err = t.txn.RefreshViews(ctx, opt)
-	return js.Undefined(), err
+	var opt options.RefreshViewsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.RefreshViews(ctx, asOpts(opt))
 }
 
 func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, error) {
@@ -175,13 +193,16 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 	if err := structArg(args, 0, "config", &config); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.SetMigration()
-	setOptIdentity(opt, args, 1)
-	lensID, err := t.txn.SetMigration(ctx, config, opt)
+	var opt options.SetMigrationOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	lensID, err := t.txn.SetMigration(ctx, config, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -193,13 +214,16 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 	if err := structArg(args, 0, "lens", &lens); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddLens()
-	setOptIdentity(opt, args, 1)
-	lensID, err := t.txn.AddLens(ctx, lens, opt)
+	var opt options.AddLensOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	lensID, err := t.txn.AddLens(ctx, lens, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -207,13 +231,16 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (t *transaction) listLenses(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ListLenses()
-	setOptIdentity(opt, args, 0)
-	lenses, err := t.txn.ListLenses(ctx, opt)
+	var opt options.ListLensesOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	lenses, err := t.txn.ListLenses(ctx, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -225,13 +252,16 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetCollectionByName()
-	setOptIdentity(opt, args, 1)
-	col, err := t.txn.GetCollectionByName(ctx, name, opt)
+	var opt options.GetCollectionByNameOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	col, err := t.txn.GetCollectionByName(ctx, name, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -239,17 +269,16 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 }
 
 func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, error) {
-	var input collectionFetchOptions
-	if err := structArg(args, 0, "options", &input); err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := collectionFetchOptionsToGetCollectionsOptions(input)
-	setOptIdentity(opt, args, 1)
-	cols, err := t.txn.GetCollections(ctx, opt)
+	var opt options.GetCollectionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	cols, err := t.txn.GetCollections(ctx, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -261,13 +290,16 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 }
 
 func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ListIndexes()
-	setOptIdentity(opt, args, 0)
-	indexes, err := t.txn.ListIndexes(ctx, opt)
+	var opt options.ListIndexesOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	indexes, err := t.txn.ListIndexes(ctx, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -275,13 +307,16 @@ func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, err
 }
 
 func (t *transaction) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ListAllEncryptedIndexes()
-	setOptIdentity(opt, args, 0)
-	indexes, err := t.txn.ListAllEncryptedIndexes(ctx, opt)
+	var opt options.ListAllEncryptedIndexesOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	indexes, err := t.txn.ListAllEncryptedIndexes(ctx, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -293,42 +328,56 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var opt *options.ExecRequestOptionsBuilder
-	if args[1].Type() == js.TypeObject {
-		opt = options.ExecRequest()
-		operationName := args[1].Get("OperationName")
-		if operationName.Type() == js.TypeString {
-			opt.SetOperationName(operationName.String())
-		}
-		variables := args[1].Get("Variables")
-		if variables.Type() == js.TypeObject {
-			var variablesMap map[string]any
-			if err := goji.UnmarshalJS(variables, &variablesMap); err != nil {
-				return js.Undefined(), fmt.Errorf("failed to parse variables %w", err)
-			}
-			opt.SetVariables(variablesMap)
-		}
-	}
-	ctx, err := contextArg(args, 2, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	if opt == nil {
-		opt = options.ExecRequest()
+	var opt options.ExecRequestOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
 	}
-	setOptIdentity(opt, args, 2)
-	res := t.txn.ExecRequest(ctx, request, opt)
-	gql, err := goji.MarshalJS(res.GQL)
+	res := t.txn.ExecRequest(ctx, request, asOpts(opt))
+	return marshalRequestResult(res)
+}
+
+func (t *transaction) printDump(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	out := map[string]any{
-		"gql": gql,
+	return js.Undefined(), t.txn.PrintDump(ctx)
+}
+
+func (t *transaction) basicImport(this js.Value, args []js.Value) (js.Value, error) {
+	filepath, err := stringArg(args, 0, "filepath")
+	if err != nil {
+		return js.Undefined(), err
 	}
-	if res.Subscription != nil {
-		out["subscription"] = handleSubscription(res.Subscription)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
 	}
-	return js.ValueOf(out), nil
+	return js.Undefined(), t.txn.BasicImport(ctx, filepath)
+}
+
+func (t *transaction) basicExport(this js.Value, args []js.Value) (js.Value, error) {
+	filepath, err := stringArg(args, 0, "filepath")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.BasicExportOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.BasicExport(ctx, filepath, asOpts(opt))
 }
 
 func (t *transaction) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) {
@@ -336,13 +385,16 @@ func (t *transaction) addDACPolicy(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, t.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddDACPolicy()
-	setOptIdentity(opt, args, 1)
-	res, err := t.txn.AddDACPolicy(ctx, policy, opt)
+	var opt options.AddDACPolicyOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.AddDACPolicy(ctx, policy, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -366,13 +418,16 @@ func (t *transaction) addDACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, t.txns)
+	optsVal := optionsValue(args, 4)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddDACActorRelationship()
-	setOptIdentity(opt, args, 4)
-	res, err := t.txn.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	var opt options.AddDACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -396,13 +451,16 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4, t.txns)
+	optsVal := optionsValue(args, 4)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteDACActorRelationship()
-	setOptIdentity(opt, args, 4)
-	res, err := t.txn.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	var opt options.DeleteDACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -410,13 +468,16 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 }
 
 func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetNACStatus()
-	setOptIdentity(opt, args, 0)
-	res, err := t.txn.GetNACStatus(ctx, opt)
+	var opt options.GetNACStatusOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.GetNACStatus(ctx, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -424,25 +485,29 @@ func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, er
 }
 
 func (t *transaction) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ReEnableNAC()
-	setOptIdentity(opt, args, 0)
-	err = t.txn.ReEnableNAC(ctx, opt)
-	return js.Undefined(), err
+	var opt options.ReEnableNACOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.ReEnableNAC(ctx, asOpts(opt))
 }
 
 func (t *transaction) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DisableNAC()
-	setOptIdentity(opt, args, 0)
-	err = t.txn.DisableNAC(ctx, opt)
-	return js.Undefined(), err
+	var opt options.DisableNACOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.DisableNAC(ctx, asOpts(opt))
 }
 
 func (t *transaction) addNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
@@ -454,13 +519,16 @@ func (t *transaction) addNACActorRelationship(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddNACActorRelationship()
-	setOptIdentity(opt, args, 2)
-	res, err := t.txn.AddNACActorRelationship(ctx, relation, targetActor, opt)
+	var opt options.AddNACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.AddNACActorRelationship(ctx, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -476,13 +544,16 @@ func (t *transaction) deleteNACActorRelationship(this js.Value, args []js.Value)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, t.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteNACActorRelationship()
-	setOptIdentity(opt, args, 2)
-	res, err := t.txn.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
+	var opt options.DeleteNACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.DeleteNACActorRelationship(ctx, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -490,7 +561,8 @@ func (t *transaction) deleteNACActorRelationship(this js.Value, args []js.Value)
 }
 
 func (t *transaction) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, t.txns)
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -506,7 +578,7 @@ func (t *transaction) verifySignature(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	pubKeyType, err := stringArg(args, 1, "publicKeyType")
+	pubKeyType := optionalStringArg(args, 1)
 	if pubKeyType == "" {
 		pubKeyType = string(crypto.KeyTypeSecp256k1)
 	}
@@ -514,7 +586,8 @@ func (t *transaction) verifySignature(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, t.txns)
+	optsVal := optionsValue(args, 3)
+	ctx, err := makeContext(optsVal, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -522,8 +595,268 @@ func (t *transaction) verifySignature(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.VerifySignature()
-	setOptIdentity(opt, args, 3)
-	err = t.txn.VerifySignature(ctx, blockCID, pubKey, opt)
-	return js.Undefined(), err
+	var opt options.VerifySignatureOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.VerifySignature(ctx, blockCID, pubKey, asOpts(opt))
+}
+
+func (t *transaction) peerInfo(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.PeerInfoOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.PeerInfo(ctx, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) activePeers(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ActivePeersOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.ActivePeers(ctx, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) connect(this js.Value, args []js.Value) (js.Value, error) {
+	addresses, err := stringSliceArg(args, 0, "addresses")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ConnectOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.Connect(ctx, addresses, asOpts(opt))
+}
+
+func (t *transaction) addReplicator(this js.Value, args []js.Value) (js.Value, error) {
+	addresses, err := stringSliceArg(args, 0, "addresses")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.AddReplicatorOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.AddReplicator(ctx, addresses, asOpts(opt))
+}
+
+func (t *transaction) deleteReplicator(this js.Value, args []js.Value) (js.Value, error) {
+	id, err := stringArg(args, 0, "id")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.DeleteReplicatorOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.DeleteReplicator(ctx, id, asOpts(opt))
+}
+
+func (t *transaction) listReplicators(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ListReplicatorsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.ListReplicators(ctx, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) addP2PCollections(this js.Value, args []js.Value) (js.Value, error) {
+	collectionIDs, err := stringSliceArg(args, 0, "collectionIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.AddP2PCollectionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.AddP2PCollections(ctx, collectionIDs, asOpts(opt))
+}
+
+func (t *transaction) deleteP2PCollections(this js.Value, args []js.Value) (js.Value, error) {
+	collectionIDs, err := stringSliceArg(args, 0, "collectionIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.DeleteP2PCollectionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.DeleteP2PCollections(ctx, collectionIDs, asOpts(opt))
+}
+
+func (t *transaction) listP2PCollections(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ListP2PCollectionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.ListP2PCollections(ctx, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) addP2PDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	docIDs, err := stringSliceArg(args, 0, "docIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.AddP2PDocumentsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.AddP2PDocuments(ctx, docIDs, asOpts(opt))
+}
+
+func (t *transaction) deleteP2PDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	docIDs, err := stringSliceArg(args, 0, "docIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.DeleteP2PDocumentsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.DeleteP2PDocuments(ctx, docIDs, asOpts(opt))
+}
+
+func (t *transaction) listP2PDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ListP2PDocumentsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.ListP2PDocuments(ctx, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) syncDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	collectionName, err := stringArg(args, 0, "collectionName")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	docIDs, err := stringSliceArg(args, 1, "docIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.SyncDocumentsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.SyncDocuments(ctx, collectionName, docIDs, asOpts(opt))
+}
+
+func (t *transaction) syncCollectionVersions(this js.Value, args []js.Value) (js.Value, error) {
+	versionIDs, err := stringSliceArg(args, 0, "versionIDs")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.SyncCollectionVersionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.SyncCollectionVersions(ctx, versionIDs, asOpts(opt))
+}
+
+func (t *transaction) syncBranchableCollection(this js.Value, args []js.Value) (js.Value, error) {
+	collectionID, err := stringArg(args, 0, "collectionID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.SyncBranchableCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.SyncBranchableCollection(ctx, collectionID, asOpts(opt))
 }

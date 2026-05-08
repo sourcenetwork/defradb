@@ -13,11 +13,13 @@
 package js
 
 import (
+	"errors"
 	"syscall/js"
+
+	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/goji"
 )
 
 func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value, error) {
@@ -25,22 +27,20 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
 		return js.Undefined(), err
 	}
-
-	opts, err := getAddOptionsFromArg(args, 1, 2)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	ctx, err := contextArg(args, 2, c.txns)
-	if err != nil {
+	var opt options.AddDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
 	doc, err := client.NewDocFromMap(ctx, docMap, c.col.Version())
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.AddDocument(ctx, doc, opts...)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.AddDocument(ctx, doc, asOpts(opt))
 }
 
 func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.Value, error) {
@@ -48,14 +48,13 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 	if err := structArg(args, 0, "doc", &docMaps); err != nil {
 		return js.Undefined(), err
 	}
-
-	opts, err := getAddOptionsFromArg(args, 1, 2)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	ctx, err := contextArg(args, 2, c.txns)
-	if err != nil {
+	var opt options.AddDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
 	var docs []*client.Document
@@ -66,31 +65,52 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 		}
 		docs = append(docs, doc)
 	}
-	err = c.col.AddManyDocuments(ctx, docs, opts...)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.AddManyDocuments(ctx, docs, asOpts(opt))
 }
 
-// addOptionsInput represents the input structure for add options from JS.
-type addOptionsInput struct {
-	EncryptDoc      bool     `json:"encryptDoc"`
-	EncryptedFields []string `json:"encryptedFields"`
-}
-
-func getAddOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.AddDocumentOptions], error) {
-	var input addOptionsInput
-	if err := structArg(args, argIndex, "options", &input); err != nil {
-		return nil, err
+// saveDocument applies the given JSON patch to the document with the given
+// ID, creating it if it does not yet exist. The wire format mirrors
+// updateDocument so that only the dirty fields in the patch produce commits.
+func (c *clientCollection) saveDocument(this js.Value, args []js.Value) (js.Value, error) {
+	docIDString, err := stringArg(args, 0, "docID")
+	if err != nil {
+		return js.Undefined(), err
 	}
-
-	opt := options.AddDocument()
-	if input.EncryptDoc {
-		opt.SetEncryptDoc(true)
+	patch, err := stringArg(args, 1, "patch")
+	if err != nil {
+		return js.Undefined(), err
 	}
-	if len(input.EncryptedFields) > 0 {
-		opt.SetEncryptedFields(input.EncryptedFields)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, c.txns)
+	if err != nil {
+		return js.Undefined(), err
 	}
-	setOptIdentity(opt, args, ctxArgIndex)
-	return []options.Enumerable[options.AddDocumentOptions]{opt}, nil
+	docID, err := client.NewDocIDFromString(docIDString)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.SaveDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	getOpt := options.GetDocumentOptions{
+		Identity:    opt.Identity,
+		ShowDeleted: true,
+	}
+	doc, err := c.col.GetDocument(ctx, docID, asOpts(getOpt))
+	if err != nil {
+		if !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+			return js.Undefined(), err
+		}
+		doc, err = client.NewDocWithID(ctx, docID, c.col.Version())
+		if err != nil {
+			return js.Undefined(), err
+		}
+	}
+	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), c.col.SaveDocument(ctx, doc, asOpts(opt))
 }
 
 func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Value, error) {
@@ -102,7 +122,8 @@ func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -110,19 +131,23 @@ func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	getOpt := options.GetDocument().SetShowDeleted(true)
-	setOptIdentity(getOpt, args, 2)
-	doc, err := c.col.GetDocument(ctx, docID, getOpt)
+	var updateOpt options.UpdateDocumentOptions
+	if err := parseOptions(optsVal, &updateOpt); err != nil {
+		return js.Undefined(), err
+	}
+	// Use the same identity to fetch the document.
+	getOpt := options.GetDocumentOptions{
+		Identity:    updateOpt.Identity,
+		ShowDeleted: true,
+	}
+	doc, err := c.col.GetDocument(ctx, docID, asOpts(getOpt))
 	if err != nil {
 		return js.Undefined(), err
 	}
 	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.UpdateDocument()
-	setOptIdentity(opt, args, 2)
-	err = c.col.UpdateDocument(ctx, doc, opt)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.UpdateDocument(ctx, doc, asOpts(updateOpt))
 }
 
 func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Value, error) {
@@ -130,7 +155,8 @@ func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -138,9 +164,11 @@ func (c *clientCollection) deleteDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteDocument()
-	setOptIdentity(opt, args, 1)
-	deleted, err := c.col.DeleteDocument(ctx, docID, opt)
+	var opt options.DeleteDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	deleted, err := c.col.DeleteDocument(ctx, docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -152,7 +180,8 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -160,9 +189,11 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ExistsDocument()
-	setOptIdentity(opt, args, 1)
-	exists, err := c.col.ExistsDocument(ctx, docID, opt)
+	var opt options.ExistsDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	exists, err := c.col.ExistsDocument(ctx, docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -178,13 +209,16 @@ func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	optsVal := optionsValue(args, 2)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.UpdateDocumentsWithFilter()
-	setOptIdentity(opt, args, 2)
-	result, err := c.col.UpdateDocumentsWithFilter(ctx, filter, updater, opt)
+	var opt options.UpdateDocumentsWithFilterOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	result, err := c.col.UpdateDocumentsWithFilter(ctx, filter, updater, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -196,13 +230,16 @@ func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteDocumentsWithFilter()
-	setOptIdentity(opt, args, 1)
-	result, err := c.col.DeleteDocumentsWithFilter(ctx, filter, opt)
+	var opt options.DeleteDocumentsWithFilterOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	result, err := c.col.DeleteDocumentsWithFilter(ctx, filter, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -214,11 +251,8 @@ func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	showDeleted, err := boolArg(args, 1, "showDeleted")
-	if err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 2, c.txns)
+	optsVal := optionsValue(args, 1)
+	ctx, err := makeContext(optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -226,9 +260,11 @@ func (c *clientCollection) getDocument(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetDocument().SetShowDeleted(showDeleted)
-	setOptIdentity(opt, args, 2)
-	doc, err := c.col.GetDocument(ctx, docID, opt)
+	var opt options.GetDocumentOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	doc, err := c.col.GetDocument(ctx, docID, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}

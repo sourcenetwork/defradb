@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,18 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build js
+
 package node
 
-import (
-	"context"
+import "context"
 
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
-)
-
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
-	if n.opts.DisableP2P {
-		return nil
-	}
-	return ErrP2PNotSupported
+func (n *Node) startAPI(_ context.Context) error {
+	return nil // HTTP API is not available in JS builds
 }
