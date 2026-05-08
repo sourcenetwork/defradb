@@ -791,6 +791,13 @@ func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 			// action.
 			state.GoClientType,
 		}),
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
