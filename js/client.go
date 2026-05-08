@@ -41,6 +41,7 @@ func (c *Client) JSValue() js.Value {
 	return js.ValueOf(map[string]any{
 		"addCollection":              goji.Async(c.addCollection),
 		"patchCollection":            goji.Async(c.patchCollection),
+		"deleteCollection":           goji.Async(c.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(c.setActiveCollectionVersion),
 		"addView":                    goji.Async(c.addView),
 		"refreshViews":               goji.Async(c.refreshViews),

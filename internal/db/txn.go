@@ -374,6 +374,15 @@ func (txn *Txn) PatchCollection(
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (txn *Txn) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteCollection(ctx, names, opts...)
+}
+
 func (txn *Txn) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,

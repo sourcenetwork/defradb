@@ -1102,6 +1102,78 @@ func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses
 	return _c
 }
 
+// DeleteCollection provides a mock function for the type Txn
+func (_mock *Txn) DeleteCollection(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, names, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, names)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteCollection")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Enumerable[options.DeleteCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, names, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_DeleteCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteCollection'
+type Txn_DeleteCollection_Call struct {
+	*mock.Call
+}
+
+// DeleteCollection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - names []string
+//   - opts ...options.Enumerable[options.DeleteCollectionOptions]
+func (_e *Txn_Expecter) DeleteCollection(ctx interface{}, names interface{}, opts ...interface{}) *Txn_DeleteCollection_Call {
+	return &Txn_DeleteCollection_Call{Call: _e.mock.On("DeleteCollection",
+		append([]interface{}{ctx, names}, opts...)...)}
+}
+
+func (_c *Txn_DeleteCollection_Call) Run(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions])) *Txn_DeleteCollection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		var arg2 []options.Enumerable[options.DeleteCollectionOptions]
+		var variadicArgs []options.Enumerable[options.DeleteCollectionOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteCollectionOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_DeleteCollection_Call) Return(err error) *Txn_DeleteCollection_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_DeleteCollection_Call) RunAndReturn(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error) *Txn_DeleteCollection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error) {
 	var tmpRet mock.Arguments

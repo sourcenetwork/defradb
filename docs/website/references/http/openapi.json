@@ -1053,6 +1053,38 @@
             }
         },
         "/collections": {
+            "delete": {
+                "description": "Delete one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names. By default every version of each named collection is deleted; set 'active-only=true' to delete only the active head version and keep earlier versions intact.",
+                "operationId": "delete_collection",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "active-only",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "describe_collection",

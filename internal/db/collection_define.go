@@ -249,18 +249,23 @@ existingVersionLoop:
 			}
 		}
 
-		// If an existing collection is not present in the new collection set,
-		// it must have mutated into a new collection version.
-		// The original still needs to exist and must be validated against.
-		// It may also be mutated later in this function.
+		// If an existing collection is not present in the new collection set, it has either
+		// been mutated into a new version (a replacement with the same CollectionID exists) or
+		// explicitly removed by the patch (no replacement). For the mutation case we re-add the
+		// original as inactive so it can be validated against and saved alongside the new
+		// version. For the removal case we leave it out so validation sees the deletion.
 		if isMissing {
+			var hasReplacement bool
 			for _, newCol := range newCollections {
 				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
 					existingCol.IsActive = false
+					hasReplacement = true
 					break
 				}
 			}
-			newCollections = append(newCollections, existingCol)
+			if hasReplacement {
+				newCollections = append(newCollections, existingCol)
+			}
 		}
 	}
 

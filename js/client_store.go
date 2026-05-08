@@ -73,6 +73,32 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 	return js.Undefined(), err
 }
 
+func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	var names []string
+	if err := structArg(args, 0, "names", &names); err != nil {
+		return js.Undefined(), err
+	}
+	activeOnly, err := boolArg(args, 1, "activeOnly")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	opt := options.DeleteCollection()
+	setOptIdentity(opt, args, 2)
+	opt.SetActiveOnly(activeOnly)
+	err = store.DeleteCollection(ctx, names, opt)
+	return js.Undefined(), err
+}
+
 func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
 	version, err := stringArg(args, 0, "version")
 	if err != nil {
