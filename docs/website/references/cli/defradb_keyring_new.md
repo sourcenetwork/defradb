@@ -8,11 +8,15 @@ Create new private keys.
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
-The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
-This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
+The DEFRA_KEYRING_SECRET environment variable is used to unlock an existing
+keyring. When no value is provided on a first run the keyring is initialised
+with "secret" as its password, which should be rotated before putting the
+node into production. The value can also be supplied through a .env file in
+the working directory or at a path defined with the --secret-file flag.
 
-WARNING: This will overwrite existing keys in the keyring.
+Existing keys are preserved unless --force is passed; running the command
+again without --force when a key already exists returns an error rather
+than overwriting.
 
 ```
 defradb keyring new [flags]
@@ -48,7 +52,7 @@ with system keyring:
 ```
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path to store encrypted keys when using the file backend. Relative paths are resolved against --rootdir, so the default "keys" resolves to <rootdir>/keys (usually ~/.defradb/keys). (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")
