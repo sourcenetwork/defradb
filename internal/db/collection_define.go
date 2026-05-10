@@ -21,6 +21,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -28,9 +29,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) addCollections(
@@ -681,7 +684,7 @@ func (db *DB) deleteCollectionVersion(
 		return err
 	}
 
-	return nil
+	return deleteCollectionDefinitionHeads(ctx, db.collectionRepository, version)
 }
 
 func (db *DB) validateCollectionDoesNotHaveHigherVersion(
@@ -740,6 +743,104 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// deleteCollectionDefinitionHeads removes the collection-definition and
+// field-definition headstore entries for version's collection name, once no
+// other versions of that collection remain.
+//
+// These CRDT heads are namespaced by collection name, not by VersionID. While
+// at least one version of the name still exists in storage, the head entries
+// point at it via the CRDT DAG and must be left alone - they will be replaced
+// naturally on the next mutation that produces a new collection version. Once
+// the last version is gone, the heads still point at blocks that
+// [deleteCollectionBlocks] just removed, so a subsequent [AddCollection] that
+// re-uses the same name reads stale CIDs and errors, if we don't do this
+// clean up.
+func deleteCollectionDefinitionHeads(
+	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
+	version client.CollectionVersion,
+) error {
+	remaining, err := description.GetCollectionsByCollectionID(
+		ctx,
+		collectionRepository,
+		version.CollectionID,
+	)
+	if err != nil {
+		return err
+	}
+	if len(remaining) > 0 {
+		// Other versions of this collection still exist; their heads must stay.
+		return nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	headstore := txn.Headstore()
+
+	// A trailing '/' is appended so that prefix iteration matches only this
+	// collection name and not other names that happen to start with it (e.g.
+	// "User" must not pick up "Users").
+	fieldPrefix := []byte(
+		keys.HeadstoreFieldDefinition{CollectionName: version.Name}.ToString() + "/",
+	)
+	if err := deleteHeadstoreByPrefix(ctx, headstore, fieldPrefix); err != nil {
+		return err
+	}
+
+	colPrefix := []byte(
+		keys.HeadstoreCollectionDefinition{CollectionName: version.Name}.ToString() + "/",
+	)
+	return deleteHeadstoreByPrefix(ctx, headstore, colPrefix)
+}
+
+// deleteHeadstoreByPrefix removes every key matching the given prefix from the
+// headstore in chunks, mirroring the iterate-then-delete pattern used by the
+// truncate path. Chunked deletion is required because not every corekv backend
+// supports mutation while an iterator is open.
+func deleteHeadstoreByPrefix(
+	ctx context.Context,
+	headstore corekv.ReaderWriter,
+	prefix []byte,
+) error {
+	for {
+		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
+			Prefix:   prefix,
+			KeysOnly: true,
+		})
+		if err != nil {
+			return NewErrCreateTruncateIterator(err)
+		}
+
+		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+		hasMore := true
+		for range hardDeleteChunkSize {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !hasNext {
+				hasMore = false
+				break
+			}
+			// Convert via string so the underlying iterator buffer is not retained.
+			keysToDelete = append(keysToDelete, []byte(string(iter.Key())))
+		}
+
+		if err := iter.Close(); err != nil {
+			return err
+		}
+
+		for _, k := range keysToDelete {
+			if err := headstore.Delete(ctx, k); err != nil {
+				return NewErrTruncateHeadstoreKey(err, string(k))
+			}
+		}
+
+		if !hasMore {
+			return nil
+		}
+	}
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
