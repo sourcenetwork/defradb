@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -23,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -46,6 +48,12 @@ type dagScanNode struct {
 
 	linksScanNodes []*dagScanNode
 	headsScanNodes []*dagScanNode
+
+	// cachedCols memoizes the per-versionID collection lookups used by both
+	// the DAC access check and dagBlockToNodeDoc. A `_commits` query may
+	// span docs from different collection versions, so the cache is keyed
+	// by collection version ID.
+	cachedCols map[string]client.Collection
 
 	execInfo dagScanExecInfo
 }
@@ -93,6 +101,32 @@ func (p *Planner) CommitSelect(commitSelect *mapper.CommitSelect) (planNode, err
 
 func (n *dagScanNode) Kind() string {
 	return "dagScanNode"
+}
+
+// getCollectionByVersionID resolves and caches a collection by its
+// CollectionVersionID. The lookup result is shared between the DAC access
+// check and dagBlockToNodeDoc.
+func (n *dagScanNode) getCollectionByVersionID(versionID string) (client.Collection, error) {
+	if c, ok := n.cachedCols[versionID]; ok {
+		return c, nil
+	}
+
+	cols, err := n.planner.db.GetCollections(
+		n.planner.ctx,
+		options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
+	}
+
+	if n.cachedCols == nil {
+		n.cachedCols = make(map[string]client.Collection)
+	}
+	n.cachedCols[versionID] = cols[0]
+	return cols[0], nil
 }
 
 func (n *dagScanNode) Init() error {
@@ -246,6 +280,43 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
+	// We want to enforce DAC, so we skip commits the caller has no read access to.
+	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
+	// doc-mapping cost. We only check when document acp is configured,
+	// Note:
+	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
+	// the collection has no policy or the doc is public.
+	// - Collection-level deltas (e.g. schema changes) carry no docID and
+	// are not DAC-gated, only doc-level deltas need an access check.
+	docIDBytes := dagBlock.Delta.GetDocID()
+	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+		versionID := dagBlock.Delta.GetCollectionVersionID()
+
+		col, err := n.getCollectionByVersionID(versionID)
+		if err != nil {
+			return false, err
+		}
+
+		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+			n.planner.ctx,
+			n.planner.identity,
+			n.planner.nodeACP,
+			n.planner.documentACP.Value(),
+			col,
+			acpTypes.DocumentReadPerm,
+			string(docIDBytes),
+		)
+		if err != nil {
+			return false, err
+		}
+		if !hasPermission {
+			// Mark visited so the same denied cid is not re-checked if it
+			// reappears via a links/heads queue elsewhere in the traversal.
+			n.visitedNodes[currentCid.String()] = true
+			return n.Next()
+		}
+	}
+
 	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
 	if err != nil {
 		return false, err
@@ -345,15 +416,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
-	)
-	if err != nil {
+	if _, err := n.getCollectionByVersionID(collectionVersionId); err != nil {
 		return core.Doc{}, err
-	}
-	if len(cols) == 0 {
-		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(collectionVersionId)
 	}
 
 	var fieldName any
