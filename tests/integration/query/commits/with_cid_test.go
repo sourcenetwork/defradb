@@ -239,8 +239,6 @@ func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents undesirable behaviour and should be changed as part of:
-// https://github.com/sourcenetwork/defradb/issues/2469
 func TestQueryCommits_MultipleCidsDifferentDocs_NoAccessToSecondCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -301,14 +299,11 @@ resources:
 						}
 					}`,
 				Results: map[string]any{
-					// The second commit should not be readable as it is not public and we are querying without
+					// The second commit is not readable as it is not public and we are querying without
 					// an identity
 					"_commits": []map[string]any{
 						{
 							"cid": "bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e",
-						},
-						{
-							"cid": "bafyreig2bqffvdrxc3bzot5m6bcm6qssybzgof6xdllxuy6cg7rtmpuwjy",
 						},
 					},
 				},
