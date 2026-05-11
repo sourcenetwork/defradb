@@ -14,13 +14,22 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestColVersionUpdateRemoveView_DoesNotDeadlockIfDeletingVersionWithNoNewFieldsWhilstOtherTxnReading(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

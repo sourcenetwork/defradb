@@ -167,6 +167,13 @@ func TestColVersionUpdateRemoveCollection_DeadlockIfDeletingVersionWithNewFieldW
 
 func TestColVersionUpdateRemoveCollection_GetCollectionsShouldNotReturnCollectionDeletedWhilstTxnWasOpen(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -227,6 +234,13 @@ func TestColVersionUpdateRemoveCollection_GetCollectionsShouldNotReturnCollectio
 
 func TestColVersionUpdateRemoveCollection_CollectionMayBeRedeclaredAndUsedByTxn(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
