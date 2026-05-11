@@ -392,7 +392,7 @@ func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
 				},
 			},
 			&action.Request{
-				// Query with the cid for the iniitial version of `John`, and the updated version.
+				// Query with the cid for the initial version of `John`, and the updated version.
 				Request: `query {
 					Users (
 							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreiecis4aqmvr4effzlb74cwflphkykfnibpdnnftdyp6o2cneqy57q"]
