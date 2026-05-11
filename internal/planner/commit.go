@@ -49,12 +49,6 @@ type dagScanNode struct {
 	linksScanNodes []*dagScanNode
 	headsScanNodes []*dagScanNode
 
-	// cachedCols memoizes the per-versionID collection lookups used by both
-	// the DAC access check and dagBlockToNodeDoc. A `_commits` query may
-	// span docs from different collection versions, so the cache is keyed
-	// by collection version ID.
-	cachedCols map[string]client.Collection
-
 	execInfo dagScanExecInfo
 }
 
@@ -101,32 +95,6 @@ func (p *Planner) CommitSelect(commitSelect *mapper.CommitSelect) (planNode, err
 
 func (n *dagScanNode) Kind() string {
 	return "dagScanNode"
-}
-
-// getCollectionByVersionID resolves and caches a collection by its
-// CollectionVersionID. The lookup result is shared between the DAC access
-// check and dagBlockToNodeDoc.
-func (n *dagScanNode) getCollectionByVersionID(versionID string) (client.Collection, error) {
-	if c, ok := n.cachedCols[versionID]; ok {
-		return c, nil
-	}
-
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
-	}
-
-	if n.cachedCols == nil {
-		n.cachedCols = make(map[string]client.Collection)
-	}
-	n.cachedCols[versionID] = cols[0]
-	return cols[0], nil
 }
 
 func (n *dagScanNode) Init() error {
@@ -292,9 +260,15 @@ func (n *dagScanNode) Next() (bool, error) {
 	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
-		col, err := n.getCollectionByVersionID(versionID)
+		cols, err := n.planner.db.GetCollections(
+			n.planner.ctx,
+			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
+		)
 		if err != nil {
 			return false, err
+		}
+		if len(cols) == 0 {
+			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
 		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
@@ -302,7 +276,7 @@ func (n *dagScanNode) Next() (bool, error) {
 			n.planner.identity,
 			n.planner.nodeACP,
 			n.planner.documentACP.Value(),
-			col,
+			cols[0],
 			acpTypes.DocumentReadPerm,
 			string(docIDBytes),
 		)
@@ -416,8 +390,15 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
-	if _, err := n.getCollectionByVersionID(collectionVersionId); err != nil {
+	cols, err := n.planner.db.GetCollections(
+		n.planner.ctx,
+		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
+	)
+	if err != nil {
 		return core.Doc{}, err
+	}
+	if len(cols) == 0 {
+		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(collectionVersionId)
 	}
 
 	var fieldName any
