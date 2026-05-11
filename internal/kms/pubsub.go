@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const pubsubTopic = "encryption"
@@ -144,12 +145,19 @@ func (s *pubSubService) handleRequestFromPeer(peerID string, topic string, msg [
 }
 
 func (s *pubSubService) prepareFetchEncryptionKeyRequest(
+	ctx context.Context,
 	cids []cidlink.Link,
 	ephemeralPublicKey []byte,
 ) (*fetchEncryptionKeyRequest, error) {
+	// Prefer the caller's identity from ctx; fall back to the node identity
+	// for paths that don't carry a user identity (e.g. gossip-triggered fetches).
+	ident := iIdentity.FromContext(ctx)
+	if !ident.HasValue() {
+		ident = s.nodeIdentity
+	}
 	var didBytes []byte
-	if s.nodeIdentity.HasValue() {
-		didBytes = []byte(s.nodeIdentity.Value().DID())
+	if ident.HasValue() {
+		didBytes = []byte(ident.Value().DID())
 	}
 	req := &fetchEncryptionKeyRequest{
 		Identity:           didBytes,
@@ -176,7 +184,7 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 	}
 
 	ephPubKeyBytes := ephPrivKey.PublicKey().Bytes()
-	req, err := s.prepareFetchEncryptionKeyRequest(cids, ephPubKeyBytes)
+	req, err := s.prepareFetchEncryptionKeyRequest(ctx, cids, ephPubKeyBytes)
 	if err != nil {
 		return err
 	}

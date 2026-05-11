@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	dbid "github.com/sourcenetwork/defradb/internal/db/id"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -56,6 +57,7 @@ func (p *P2P) SyncBranchableCollection(
 	collectionID string,
 	opts *options.SyncBranchableCollectionOptions,
 ) error {
+	ctx = iIdentity.WithContext(ctx, opts.Identity)
 	log.InfoContext(ctx, "Starting branchable collection sync", corelog.String("CollectionID", collectionID))
 
 	getColOpts := options.GetCollections().SetCollectionID(collectionID)
