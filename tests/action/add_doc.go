@@ -120,7 +120,6 @@ func (a *AddDoc) Execute() {
 
 	var expectedErrorRaised bool
 	var docIDs []client.DocID
-	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
@@ -137,10 +136,21 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
+
 		collection := collections[a.CollectionID]
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error

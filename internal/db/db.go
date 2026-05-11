@@ -205,7 +205,7 @@ func newDB(
 			db,
 			node, cfg.P2P.Value(),
 			db.nodeIdentity,
-			NewCollectionRetriever(db).WithIdentity(db.nodeIdentity),
+			NewCollectionRetriever(db),
 			db.collectionRepository,
 		)
 		if err != nil {
@@ -228,7 +228,7 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 		return nil, db.ctx.Err()
 	}
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
+	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 

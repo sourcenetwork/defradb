@@ -40,6 +40,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"discard":                    goji.Async(wrapper.discard),
 		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
+		"deleteCollection":           goji.Async(wrapper.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),
 		"refreshViews":               goji.Async(wrapper.refreshViews),
@@ -108,6 +109,26 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 	opt := options.PatchCollection()
 	setOptIdentity(opt, args, 2)
 	err = t.txn.PatchCollection(ctx, patch, migration, opt)
+	return js.Undefined(), err
+}
+
+func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	var names []string
+	if err := structArg(args, 0, "names", &names); err != nil {
+		return js.Undefined(), err
+	}
+	activeOnly, err := boolArg(args, 1, "activeOnly")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	opt := options.DeleteCollection()
+	setOptIdentity(opt, args, 2)
+	opt.SetActiveOnly(activeOnly)
+	err = t.txn.DeleteCollection(ctx, names, opt)
 	return js.Undefined(), err
 }
 

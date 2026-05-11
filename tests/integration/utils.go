@@ -1338,7 +1338,7 @@ func deleteDoc(
 
 		nodeID := nodeIDs[index]
 
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocument()
@@ -1391,7 +1391,7 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		}
 
 		nodeID := nodeIDs[index]
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
@@ -1442,7 +1442,7 @@ func newEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -1506,7 +1506,7 @@ func listEncryptedIndexes(
 			txnOption = immutable.Some(txn)
 		}
 
-		var collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		var collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(
@@ -1596,7 +1596,7 @@ func deleteEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
