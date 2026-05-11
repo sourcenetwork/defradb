@@ -18,10 +18,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TODO: enable after DAC commits fix lands.
 // Private doc. _commits with a fieldName filter should also be DAC-protected:
 // querying without identity must not return the field commit.
-/*
 func TestACP_QueryCommitsWithFieldNameFilterOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -45,7 +43,7 @@ func TestACP_QueryCommitsWithFieldNameFilterOnPrivateDocWithoutIdentity_CanNotSe
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.Request{
@@ -66,7 +64,6 @@ func TestACP_QueryCommitsWithFieldNameFilterOnPrivateDocWithoutIdentity_CanNotSe
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
 // Private doc. _commits with a fieldName filter and owner identity should
 // return the field commit.
@@ -190,10 +187,8 @@ func TestACP_QueryCommitsAfterUpdateOnPrivateDocWithOwnerIdentity_CanSeeAllCommi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: enable after DAC commits fix lands.
 // Private doc + an update. _commits without identity should NOT see any of
 // the 5 commits (per DAC).
-/*
 func TestACP_QueryCommitsAfterUpdateOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -217,7 +212,7 @@ func TestACP_QueryCommitsAfterUpdateOnPrivateDocWithoutIdentity_CanNotSeeCommits
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.UpdateDoc{
@@ -248,12 +243,9 @@ func TestACP_QueryCommitsAfterUpdateOnPrivateDocWithoutIdentity_CanNotSeeCommits
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
-// TODO: enable after DAC commits fix lands.
 // Private doc + an update. _commits(depth: 1) without identity should NOT
 // see any commits (per DAC).
-/*
 func TestACP_QueryCommitsWithDepthOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -277,7 +269,7 @@ func TestACP_QueryCommitsWithDepthOnPrivateDocWithoutIdentity_CanNotSeeCommits(t
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.UpdateDoc{
@@ -308,4 +300,3 @@ func TestACP_QueryCommitsWithDepthOnPrivateDocWithoutIdentity_CanNotSeeCommits(t
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/

@@ -177,10 +177,8 @@ func TestACP_QueryCommitsOnPrivateDocWithOwnerIdentity_CanSeeCommits(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: enable after DAC commits fix lands.
 // A doc registered with identity is private. Querying _commits without
 // identity should NOT return the doc's commits (per DAC).
-/*
 func TestACP_QueryCommitsOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -204,7 +202,7 @@ func TestACP_QueryCommitsOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.Request{
@@ -224,12 +222,9 @@ func TestACP_QueryCommitsOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
-// TODO: enable after DAC commits fix lands.
 // A doc registered with identity is private. Querying _commits with a
 // different identity should NOT return the doc's commits (per DAC).
-/*
 func TestACP_QueryCommitsOnPrivateDocWithWrongIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -253,7 +248,7 @@ func TestACP_QueryCommitsOnPrivateDocWithWrongIdentity_CanNotSeeCommits(t *testi
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.Request{
@@ -274,12 +269,9 @@ func TestACP_QueryCommitsOnPrivateDocWithWrongIdentity_CanNotSeeCommits(t *testi
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
-// TODO: enable after DAC commits fix lands.
 // A mix of public + private doc. Querying _commits without identity should
 // only return commits for the public doc (3 commits).
-/*
 func TestACP_QueryCommitsOnMixedDocsWithoutIdentity_CanOnlySeePublicCommits(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 
@@ -304,7 +296,7 @@ func TestACP_QueryCommitsOnMixedDocsWithoutIdentity_CanOnlySeePublicCommits(t *t
 
 			&action.AddDoc{
 				CollectionID: 0,
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.AddDoc{
@@ -340,7 +332,6 @@ func TestACP_QueryCommitsOnMixedDocsWithoutIdentity_CanOnlySeePublicCommits(t *t
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
 // A mix of public + private doc. Querying _commits with the owner identity
 // should return commits for both docs (6 commits total).
@@ -409,10 +400,8 @@ func TestACP_QueryCommitsOnMixedDocsWithOwnerIdentity_CanSeeAllCommits(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: enable after DAC commits fix lands.
 // A mix of public + private doc. Querying _commits with a wrong identity
 // should only return commits for the public doc (3 commits).
-/*
 func TestACP_QueryCommitsOnMixedDocsWithWrongIdentity_CanOnlySeePublicCommits(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 
@@ -437,7 +426,7 @@ func TestACP_QueryCommitsOnMixedDocsWithWrongIdentity_CanOnlySeePublicCommits(t 
 
 			&action.AddDoc{
 				CollectionID: 0,
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.AddDoc{
@@ -474,4 +463,3 @@ func TestACP_QueryCommitsOnMixedDocsWithWrongIdentity_CanOnlySeePublicCommits(t 
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/

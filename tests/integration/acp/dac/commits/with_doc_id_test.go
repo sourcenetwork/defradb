@@ -123,10 +123,8 @@ func TestACP_QueryCommitsWithDocIDOnPrivateDocWithOwnerIdentity_CanSeeCommits(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: enable after DAC commits fix lands.
 // Private doc. Querying _commits(docID:) without identity should NOT return
 // commits (per DAC).
-/*
 func TestACP_QueryCommitsWithDocIDOnPrivateDocWithoutIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -150,7 +148,7 @@ func TestACP_QueryCommitsWithDocIDOnPrivateDocWithoutIdentity_CanNotSeeCommits(t
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.Request{
@@ -170,12 +168,9 @@ func TestACP_QueryCommitsWithDocIDOnPrivateDocWithoutIdentity_CanNotSeeCommits(t
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
-// TODO: enable after DAC commits fix lands.
 // Private doc. Querying _commits(docID:) with a wrong identity should NOT
 // return commits (per DAC).
-/*
 func TestACP_QueryCommitsWithDocIDOnPrivateDocWithWrongIdentity_CanNotSeeCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -199,7 +194,7 @@ func TestACP_QueryCommitsWithDocIDOnPrivateDocWithWrongIdentity_CanNotSeeCommits
 			&action.AddDoc{
 				CollectionID: 0,
 				Identity:     testUtils.ClientIdentity(1),
-				Doc: userDoc,
+				Doc:          userDoc,
 			},
 
 			&action.Request{
@@ -220,4 +215,3 @@ func TestACP_QueryCommitsWithDocIDOnPrivateDocWithWrongIdentity_CanNotSeeCommits
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
