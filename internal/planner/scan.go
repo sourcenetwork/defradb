@@ -164,7 +164,7 @@ func (n *scanNode) addField(field client.CollectionFieldDescription) {
 func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
-		f = new(fetcher.VersionedFetcher)
+		f = new(fetcher.MultiVersioned)
 	} else {
 		f = fetcher.NewDocumentFetcher()
 

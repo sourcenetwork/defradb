@@ -132,12 +132,6 @@ func parseSelect(
 				continue // value is nil
 			}
 
-			if len(v) > 1 {
-				// todo - This limitiation is temporary and should be removed in
-				// https://github.com/sourcenetwork/defradb/issues/4304
-				return nil, ErrMultipleCidsNotSupported
-			}
-
 			cids := make([]string, len(v))
 			for i, value := range v {
 				cids[i] = value.(string)
