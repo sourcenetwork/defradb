@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -23,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -244,6 +246,49 @@ func (n *dagScanNode) Next() (bool, error) {
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
 	if err != nil {
 		return false, err
+	}
+
+	// We want to enforce DAC, so we skip commits the caller has no read access to.
+	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
+	// doc-mapping cost. We only check when document acp is configured,
+	// Note:
+	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
+	// the collection has no policy or the doc is public.
+	// - Collection-level deltas (e.g. schema changes) carry no docID and
+	// are not DAC-gated, only doc-level deltas need an access check.
+	docIDBytes := dagBlock.Delta.GetDocID()
+	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+		versionID := dagBlock.Delta.GetCollectionVersionID()
+
+		cols, err := n.planner.db.GetCollections(
+			n.planner.ctx,
+			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
+		)
+		if err != nil {
+			return false, err
+		}
+		if len(cols) == 0 {
+			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
+		}
+
+		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+			n.planner.ctx,
+			n.planner.identity,
+			n.planner.nodeACP,
+			n.planner.documentACP.Value(),
+			cols[0],
+			acpTypes.DocumentReadPerm,
+			string(docIDBytes),
+		)
+		if err != nil {
+			return false, err
+		}
+		if !hasPermission {
+			// Mark visited so the same denied cid is not re-checked if it
+			// reappears via a links/heads queue elsewhere in the traversal.
+			n.visitedNodes[currentCid.String()] = true
+			return n.Next()
+		}
 	}
 
 	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
