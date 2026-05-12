@@ -11,7 +11,9 @@
 package fetcher
 
 import (
+	"bytes"
 	"context"
+	"slices"
 
 	"github.com/sourcenetwork/corekv"
 
@@ -68,6 +70,87 @@ type indexIterResult struct {
 	key      *keys.IndexDataStoreKey
 	foundKey bool
 	value    []byte
+}
+
+func applyCursorStartKey(
+	iter indexIterator,
+	startKey keys.Walkable,
+	baseKey *keys.IndexDataStoreKey,
+	reverse bool,
+) indexIterator {
+	if iter == nil {
+		return nil
+	}
+	switch typed := iter.(type) {
+	case *indexMatchIterator:
+		applyCursorStartKeyToMatchIterator(typed, startKey, baseKey)
+		return typed
+	case *multiIndexIterator:
+		return &cursorBoundedIndexIterator{
+			inner:    typed,
+			startKey: startKey,
+			reverse:  reverse,
+		}
+	case *memorizingIndexIterator:
+		typed.inner = applyCursorStartKey(typed.inner, startKey, baseKey, reverse)
+		return typed
+	default:
+		return &cursorBoundedIndexIterator{
+			inner:    iter,
+			startKey: startKey,
+			reverse:  reverse,
+		}
+	}
+}
+
+func applyCursorStartKeyToMatchIterator(
+	iter *indexMatchIterator,
+	startKey keys.Walkable,
+	baseKey *keys.IndexDataStoreKey,
+) {
+	iter.prefixKey = nil
+
+	if iter.reverse {
+		// For reverse iteration, the cursor position becomes the exclusive upper bound.
+		iter.startKey = baseKey
+		iter.endKey = startKey
+		return
+	}
+
+	iter.startKey = startKey
+	if iter.endKey == nil {
+		iter.endKey = baseKey.PrefixEnd()
+	}
+}
+
+type cursorBoundedIndexIterator struct {
+	inner    indexIterator
+	startKey keys.Walkable
+	reverse  bool
+}
+
+var _ indexIterator = (*cursorBoundedIndexIterator)(nil)
+
+func (iter *cursorBoundedIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
+	return iter.inner.Init(ctx, store)
+}
+
+func (iter *cursorBoundedIndexIterator) Next() (indexIterResult, error) {
+	for {
+		res, err := iter.inner.Next()
+		if err != nil || !res.foundKey {
+			return res, err
+		}
+
+		cmp := bytes.Compare(res.key.Bytes(), iter.startKey.Bytes())
+		if (!iter.reverse && cmp >= 0) || (iter.reverse && cmp < 0) {
+			return res, nil
+		}
+	}
+}
+
+func (iter *cursorBoundedIndexIterator) Close() error {
+	return iter.inner.Close()
 }
 
 // indexMatchIterator is a unified iterator that can work with either prefix or range queries.
@@ -257,6 +340,7 @@ func (iter *multiIndexIterator) nextIterator() (bool, error) {
 		if err != nil {
 			return false, err
 		}
+		iter.indexIterator = nil
 	}
 
 	if iter.nextIdx >= iter.count {
@@ -488,6 +572,21 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 	inValues, err := client.ToArrayOfNormalValues(fieldConditions[0].val)
 	if err != nil {
 		return nil, NewErrInvalidInOperatorValue(err)
+	}
+	if ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping); ordered {
+		baseKey, err := f.newIndexDataStoreKey()
+		if err != nil {
+			return nil, err
+		}
+		slices.SortFunc(inValues, func(a, b client.NormalValue) int {
+			aKey := f.createKeyWithValue(baseKey, a)
+			bKey := f.createKeyWithValue(baseKey, b)
+			cmp := bytes.Compare(aKey.Bytes(), bKey.Bytes())
+			if reverse {
+				return -cmp
+			}
+			return cmp
+		})
 	}
 
 	// iterators for _in filter already iterate over keys with first field value

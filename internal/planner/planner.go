@@ -256,7 +256,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.cursor != nil {
-		err := p.expandCusrorPlan(plan)
+		err := p.expandCursorPlan(plan)
 		if err != nil {
 			return err
 		}
@@ -284,7 +284,7 @@ type aggregateNode interface {
 	SetPlan(plan planNode)
 }
 
-func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
+func (p *Planner) expandCursorPlan(plan *selectTopNode) error {
 	reversed, err := p.validateCursorIndex(plan)
 	if err != nil {
 		return err
@@ -325,6 +325,54 @@ func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
 		scan.cursorDrivenOrdering = isBackward && plan.cursor.indexSeekActive
 	}
 	return nil
+}
+
+// validateCursorIndex checks that a cursor query has a compatible index for ordering.
+// Returns (reversed, error) where reversed indicates if iteration should be in reverse direction.
+func (p *Planner) validateCursorIndex(plan *selectTopNode) (bool, error) {
+	scan := getNode[*scanNode](plan.selectNode)
+	if scan == nil {
+		return false, ErrNoSupportingIndexForCursor
+	}
+
+	if len(scan.ordering) == 0 || isCursorDocIDOrder(scan) {
+		return false, nil
+	}
+
+	if !scan.index.HasValue() {
+		return false, ErrNoSupportingIndexForCursor
+	}
+
+	ok, reversed := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
+	if !ok {
+		return false, ErrNoSupportingIndexForCursor
+	}
+
+	if isUnsupportedCursorCompositePrefix(scan.ordering, scan.index.Value()) {
+		return false, ErrNoSupportingIndexForCursor
+	}
+
+	return reversed, nil
+}
+
+func isCursorDocIDOrder(scan *scanNode) bool {
+	fieldName, ok := cursorOrderFirstFieldName(scan)
+	return ok && fieldName == request.DocIDFieldName
+}
+
+func cursorOrderFirstFieldName(scan *scanNode) (string, bool) {
+	if len(scan.ordering) == 0 || len(scan.ordering[0].FieldIndexes) == 0 {
+		return "", false
+	}
+
+	return scan.documentMapping.TryToFindNameFromIndex(scan.ordering[0].FieldIndexes[0])
+}
+
+func isUnsupportedCursorCompositePrefix(
+	ordering []mapper.OrderCondition,
+	index client.IndexDescription,
+) bool {
+	return !index.Unique && len(ordering) < len(index.Fields)
 }
 
 func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
@@ -934,43 +982,6 @@ func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error)
 //
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
-
-// validateCursorIndex checks that a cursor query has a compatible index for ordering.
-// Returns (reversed, error) where reversed indicates if iteration should be in reverse direction.
-func (p *Planner) validateCursorIndex(plan *selectTopNode) (bool, error) {
-	scan := getNode[*scanNode](plan.selectNode)
-	if scan == nil {
-		return false, ErrNoSupportingIndexForCursor
-	}
-
-	if len(scan.ordering) == 0 {
-		return false, nil
-	}
-
-	if !scan.index.HasValue() {
-		return false, ErrNoSupportingIndexForCursor
-	}
-
-	ok, reversed := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
-	if !ok {
-		return false, ErrNoSupportingIndexForCursor
-	}
-
-	if isUnsupportedCursorCompositePrefix(scan.ordering, scan.index.Value()) {
-		return false, ErrNoSupportingIndexForCursor
-	}
-
-	// Return reversed flag for propagation instead of rejecting
-	return reversed, nil
-}
-
-func isUnsupportedCursorCompositePrefix(
-	ordering []mapper.OrderCondition,
-	index client.IndexDescription,
-) bool {
-	return !index.Unique && len(ordering) < len(index.Fields)
-}
-
 // @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 	// TODO handle multiple operation statements

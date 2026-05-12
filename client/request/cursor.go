@@ -10,6 +10,8 @@
 
 package request
 
+import "github.com/sourcenetwork/immutable"
+
 // PageInfoSelect represents the _pageInfo selection within a cursor query.
 type PageInfoSelect struct {
 	HasNext     bool
@@ -60,4 +62,24 @@ func (c *CursorSelect) Validate() []error {
 	result = append(result, c.Select.Validate()...)
 
 	return result
+}
+
+// Firstable is an embeddable struct for forward cursor-based pagination.
+type Firstable struct {
+	First immutable.Option[uint64]
+}
+
+// Afterable is an embeddable struct for forward cursor-based pagination.
+type Afterable struct {
+	After immutable.Option[string]
+}
+
+// Lastable is an embeddable struct for backward cursor-based pagination.
+type Lastable struct {
+	Last immutable.Option[uint64]
+}
+
+// Beforeable is an embeddable struct for backward cursor-based pagination.
+type Beforeable struct {
+	Before immutable.Option[string]
 }
