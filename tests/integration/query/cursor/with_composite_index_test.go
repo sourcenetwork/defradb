@@ -75,6 +75,8 @@ func TestCursorWithCompositeIndex_OrderByAllFields(t *testing.T) {
 // TestCursorWithCompositeIndex_MultiRoundTrip verifies full dataset traversal
 // using cursor pagination with a composite index ordering by all index fields.
 func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
@@ -109,12 +111,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
-					users := extractUsers(cursor["User"])
-					allDocs = append(allDocs, users...)
-					return true, ""
-				}),
+				Asserter: appendCursorUsers(&allDocs),
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -124,7 +121,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -133,7 +130,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 			// Page 2: next 2 docs (Andy 30, Chris 40)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -148,12 +145,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
-					users := extractUsers(cursor["User"])
-					allDocs = append(allDocs, users...)
-					return true, ""
-				}),
+				Asserter: appendCursorUsers(&allDocs),
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -163,7 +155,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -172,7 +164,7 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 			// Page 3: final page (Chris 45), verify global properties
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {

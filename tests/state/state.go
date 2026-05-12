@@ -47,10 +47,6 @@ type TestState interface {
 	GetIdentity(Identity) acpIdentity.Identity
 	// GetDocID returns the document ID for the given collection index and document index.
 	GetDocID(collectionIndex, docIndex int) client.DocID
-	// SetCapturedVariable stores a named value for later retrieval.
-	SetCapturedVariable(name string, value any)
-	// GetCapturedVariable retrieves a named value.
-	GetCapturedVariable(name string) (any, bool)
 }
 
 // TestStateMatcher is a matcher that requires access to the test state.
@@ -367,10 +363,6 @@ type State struct {
 	// Calling `T.SkipNow()` from a child routine does not skip the test - so test actions looking to
 	// skip the current test should instead set this, and allow it to be acted upon by the parent routine.
 	SkipTest string
-
-	// CapturedVariables stores values captured by matchers for use in
-	// subsequent request Variables. Key is variable name, value is captured value.
-	CapturedVariables map[string]any
 }
 
 func (s *State) GetClientType() ClientType {
@@ -392,32 +384,6 @@ func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
 
 	return docID
 }
-
-// SetCapturedVariable stores a named value for later retrieval.
-func (s *State) SetCapturedVariable(name string, value any) {
-	if s.CapturedVariables == nil {
-		s.CapturedVariables = make(map[string]any)
-	}
-	s.CapturedVariables[name] = value
-}
-
-// GetCapturedVariable retrieves a named value.
-func (s *State) GetCapturedVariable(name string) (any, bool) {
-	if s.CapturedVariables == nil {
-		return nil, false
-	}
-	v, ok := s.CapturedVariables[name]
-	return v, ok
-}
-
-// CapturedVar references a value captured by CaptureCursor.
-//
-// Example:
-//
-//	Variables: immutable.Some(map[string]any{
-//	    "cursor": testUtils.CapturedVar("page1Cursor"),
-//	}),
-type CapturedVar string
 
 // NewState returns a new fresh state for the given testCase.
 func NewState(

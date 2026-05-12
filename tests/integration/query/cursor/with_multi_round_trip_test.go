@@ -21,10 +21,15 @@ import (
 )
 
 func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -48,12 +53,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
-					users := extractUsers(cursor["User"])
-					allDocs = append(allDocs, users...)
-					return true, ""
-				}),
+				Asserter: appendCursorUsers(&allDocs),
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -64,7 +64,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -73,7 +73,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 			// Page 2: next 3 docs (ages 40, 50, 60)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -88,12 +88,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
-					users := extractUsers(cursor["User"])
-					allDocs = append(allDocs, users...)
-					return true, ""
-				}),
+				Asserter: appendCursorUsers(&allDocs),
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -104,7 +99,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -113,7 +108,7 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 			// Page 3: final page (age 70), verify global properties
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -161,12 +156,16 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_TwoPages(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 15}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 35}`},
@@ -198,7 +197,7 @@ func TestCursorMultiRoundTrip_TwoPages(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -207,7 +206,7 @@ func TestCursorMultiRoundTrip_TwoPages(t *testing.T) {
 			// Page 2: remaining 2 docs (ages 45, 55)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -238,12 +237,16 @@ func TestCursorMultiRoundTrip_TwoPages(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_ExactPageBoundary(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -276,7 +279,7 @@ func TestCursorMultiRoundTrip_ExactPageBoundary(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -285,7 +288,7 @@ func TestCursorMultiRoundTrip_ExactPageBoundary(t *testing.T) {
 			// Page 2: exactly 3 remaining docs (ages 40, 50, 60), hasNext=false at boundary
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -317,14 +320,19 @@ func TestCursorMultiRoundTrip_ExactPageBoundary(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -367,7 +375,7 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -376,7 +384,7 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 			// Page 2: first 5 after cursor (ages 40, 50, 60, 70, 80)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -409,7 +417,7 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -418,7 +426,7 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 			// Page 3: first 10 after cursor (only ages 90, 100 remaining)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -467,14 +475,20 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
+	page3End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -509,7 +523,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -518,7 +532,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 			// Page 2: first 1 after cursor (age 20)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -547,7 +561,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -556,7 +570,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 			// Page 3: first 1 after cursor (age 30)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -585,7 +599,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page3End"),
+							"endCursor": page3End,
 						},
 					},
 				},
@@ -594,7 +608,7 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 			// Page 4: final page (age 40)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page3End"),
+					"cursor": page3End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -642,14 +656,18 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_FilteredSubset(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 15}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 35}`},
@@ -688,7 +706,7 @@ func TestCursorMultiRoundTrip_FilteredSubset(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -697,7 +715,7 @@ func TestCursorMultiRoundTrip_FilteredSubset(t *testing.T) {
 			// Page 2: remaining filtered docs (ages 65, 75)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -746,14 +764,18 @@ func TestCursorMultiRoundTrip_FilteredSubset(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorMultiRoundTrip_FilteredFewResults(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -795,7 +817,7 @@ func TestCursorMultiRoundTrip_FilteredFewResults(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -804,7 +826,7 @@ func TestCursorMultiRoundTrip_FilteredFewResults(t *testing.T) {
 			// Page 2: remaining filtered doc (age 100 only)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -852,5 +874,102 @@ func TestCursorMultiRoundTrip_FilteredFewResults(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCursorMultiRoundTrip_FilterInUsesCursorBoundary(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	var allDocs []map[string]any
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
+			testUtils.CreateDoc{Doc: `{"name": "A", "age": 25}`},
+			testUtils.CreateDoc{Doc: `{"name": "B", "age": 35}`},
+			testUtils.CreateDoc{Doc: `{"name": "C", "age": 45}`},
+			testUtils.CreateDoc{Doc: `{"name": "D", "age": 55}`},
+			testUtils.CreateDoc{Doc: `{"name": "E", "age": 65}`},
+
+			&action.Request{
+				Request: `query {
+					_cursor {
+						User(first: 2, filter: {age: {_in: [55, 25, 45, 35]}}, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+							endCursor
+						}
+					}
+				}`,
+				Asserter: appendCursorUsers(&allDocs),
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "A", "age": int64(25)},
+							{"name": "B", "age": int64(35)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":   true,
+							"hasPrev":   false,
+							"endCursor": page1End,
+						},
+					},
+				},
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": page1End,
+				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(first: 2, after: $cursor, filter: {age: {_in: [55, 25, 45, 35]}}, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+							endCursor
+						}
+					}
+				}`,
+				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+					cursor := result["_cursor"].(map[string]any)
+					users := extractUsers(cursor["User"])
+					allDocs = append(allDocs, users...)
+
+					if len(allDocs) != 4 {
+						return false, fmt.Sprintf("expected 4 docs total, got %d", len(allDocs))
+					}
+					for i, doc := range allDocs {
+						expectedAge := int64(25 + i*10)
+						if doc["age"] != expectedAge {
+							return false, fmt.Sprintf("expected age %d at index %d, got %v", expectedAge, i, doc["age"])
+						}
+					}
+					return true, ""
+				}),
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "C", "age": int64(45)},
+							{"name": "D", "age": int64(55)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":   false,
+							"hasPrev":   true,
+							"endCursor": testUtils.ValidCursor(),
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
 }

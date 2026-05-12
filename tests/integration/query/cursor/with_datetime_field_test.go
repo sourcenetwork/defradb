@@ -75,6 +75,8 @@ func TestCursorWithDateTimeField_BasicPagination(t *testing.T) {
 }
 
 func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
@@ -118,7 +120,7 @@ func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -127,7 +129,7 @@ func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
 			// Page 2: next 2 docs (2002, 2003)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -157,7 +159,7 @@ func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -166,7 +168,7 @@ func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
 			// Page 3: final doc (2004), verify global chronological order
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -265,6 +267,7 @@ func TestCursorWithDateTimeField_IndexUsage(t *testing.T) {
 }
 
 func TestCursorWithDateTimeField_SameYearDifferentDates(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
@@ -308,7 +311,7 @@ func TestCursorWithDateTimeField_SameYearDifferentDates(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -317,7 +320,7 @@ func TestCursorWithDateTimeField_SameYearDifferentDates(t *testing.T) {
 			// Page 2: remaining docs (Jun, Sep), verify fine-grained chronological order
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {

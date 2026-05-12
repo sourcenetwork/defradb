@@ -20,6 +20,9 @@ import (
 func TestCursorWithFirstAfter_CursorsAreNonEmptyStrings(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -55,12 +58,15 @@ func TestCursorWithFirstAfter_CursorsAreNonEmptyStrings(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithFirstAfter_AfterNullStartsFromBeginning(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -96,12 +102,15 @@ func TestCursorWithFirstAfter_AfterNullStartsFromBeginning(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithFirstAfter_HasPrevFalseOnFirstPage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -136,12 +145,15 @@ func TestCursorWithFirstAfter_HasPrevFalseOnFirstPage(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithFirstAfter_CursorsEncodeIndexKeyValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -175,5 +187,5 @@ func TestCursorWithFirstAfter_CursorsEncodeIndexKeyValues(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

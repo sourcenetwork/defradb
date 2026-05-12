@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"context"
 	"errors"
 	"slices"
 
@@ -291,7 +292,7 @@ func (n *cursorNode) beforeCursorBoundarySurvives() (bool, error) {
 	}
 	seekKey.Offset = 0
 	if scan.index.Value().Unique {
-		appendDocIDToNilUniqueIndexKey(seekKey, n.beforePayload.DocID)
+		appendDocIDToNilUniqueIndexKey(n.p.ctx, seekKey, n.beforePayload.DocID)
 	}
 
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
@@ -302,8 +303,18 @@ func (n *cursorNode) beforeCursorBoundarySurvives() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if len(val) > 0 && string(val) != n.beforePayload.DocID {
-		return false, nil
+	if len(val) > 0 {
+		entryDocShortID, err := keys.DecodeDocShortID(val)
+		if err != nil {
+			return false, err
+		}
+		beforeDocShortID, found, err := id.GetDocShortID(n.p.ctx, seekKey.CollectionShortID, n.beforePayload.DocID)
+		if err != nil || !found {
+			return false, err
+		}
+		if entryDocShortID != beforeDocShortID {
+			return false, nil
+		}
 	}
 
 	return n.beforeCursorDocMatches(scan)
@@ -315,8 +326,13 @@ func (n *cursorNode) beforeCursorDocMatches(scan *scanNode) (bool, error) {
 		return false, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, scan.col.Version().CollectionID)
+	shortID, err := id.GetCollectionShortID(n.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
+		return false, err
+	}
+
+	docShortID, found, err := id.GetDocShortID(n.p.ctx, shortID, docID.String())
+	if err != nil || !found {
 		return false, err
 	}
 
@@ -343,7 +359,7 @@ func (n *cursorNode) beforeCursorDocMatches(scan *scanNode) (bool, error) {
 
 	err = f.Start(n.p.ctx, keys.DataStoreKey{
 		CollectionShortID: shortID,
-		DocID:             docID.String(),
+		DocShortID:        docShortID,
 	})
 	if err != nil {
 		return false, err
@@ -356,14 +372,19 @@ func (n *cursorNode) beforeCursorDocMatches(scan *scanNode) (bool, error) {
 	return doc != nil, nil
 }
 
-func appendDocIDToNilUniqueIndexKey(key *keys.IndexDataStoreKey, docID string) {
+// appendDocIDToNilUniqueIndexKey embeds the document's short ID in the key, matching how
+// unique index entries with nil field values are stored (see makeUniqueKeyValueRecord).
+func appendDocIDToNilUniqueIndexKey(ctx context.Context, key *keys.IndexDataStoreKey, docID string) {
 	for _, field := range key.Fields {
 		if field.Value.IsNil() {
-			key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(docID)})
+			docShortID, found, err := id.GetDocShortID(ctx, key.CollectionShortID, docID)
+			if err == nil && found {
+				key.DocShortID = docShortID
+			}
 			return
 		}
 	}
-}
+	}
 
 func (n *cursorNode) initBackwardBuffer(buf []core.Doc) bool {
 	n.backwardBuffer = buf

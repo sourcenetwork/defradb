@@ -20,6 +20,9 @@ import (
 func TestCursorWithLast_ReturnsLastNItems(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -57,12 +60,15 @@ func TestCursorWithLast_ReturnsLastNItems(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLast_ReturnsAllWhenFewerExist(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			&action.Request{
@@ -97,12 +103,15 @@ func TestCursorWithLast_ReturnsAllWhenFewerExist(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLast_ReturnsPageInfoWithHasPrevTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -140,12 +149,15 @@ func TestCursorWithLast_ReturnsPageInfoWithHasPrevTrue(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLast_ReturnsPageInfoWithHasPrevFalse(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			&action.Request{
@@ -180,5 +192,5 @@ func TestCursorWithLast_ReturnsPageInfoWithHasPrevFalse(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

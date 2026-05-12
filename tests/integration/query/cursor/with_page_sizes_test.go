@@ -22,6 +22,9 @@ import (
 func TestCursorWithPageSize_SingleItemPage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -58,7 +61,7 @@ func TestCursorWithPageSize_SingleItemPage(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithPageSize_LargeFirstFewerDocs verifies first: 100 with only
@@ -66,6 +69,9 @@ func TestCursorWithPageSize_SingleItemPage(t *testing.T) {
 func TestCursorWithPageSize_LargeFirstFewerDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "User01", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "User02", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "User03", "age": 35}`},
@@ -112,7 +118,7 @@ func TestCursorWithPageSize_LargeFirstFewerDocs(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithPageSize_FirstEqualsDocCount verifies first: N where N equals
@@ -120,6 +126,9 @@ func TestCursorWithPageSize_LargeFirstFewerDocs(t *testing.T) {
 func TestCursorWithPageSize_FirstEqualsDocCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -156,7 +165,7 @@ func TestCursorWithPageSize_FirstEqualsDocCount(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithPageSize_FirstExceedsDocCount verifies first: N where N exceeds
@@ -164,6 +173,9 @@ func TestCursorWithPageSize_FirstEqualsDocCount(t *testing.T) {
 func TestCursorWithPageSize_FirstExceedsDocCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -196,7 +208,7 @@ func TestCursorWithPageSize_FirstExceedsDocCount(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithPageSize_ZeroFirst verifies first: 0 returns zero results
@@ -204,6 +216,9 @@ func TestCursorWithPageSize_FirstExceedsDocCount(t *testing.T) {
 func TestCursorWithPageSize_ZeroFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -232,5 +247,5 @@ func TestCursorWithPageSize_ZeroFirst(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

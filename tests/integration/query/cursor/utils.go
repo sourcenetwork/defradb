@@ -70,3 +70,11 @@ func extractUsers(usersRaw any) []map[string]any {
 		return nil
 	}
 }
+
+func appendCursorUsers(docs *[]map[string]any) action.ResultAsserter {
+	return testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+		cursor := result["_cursor"].(map[string]any)
+		*docs = append(*docs, extractUsers(cursor["User"])...)
+		return true, ""
+	})
+}

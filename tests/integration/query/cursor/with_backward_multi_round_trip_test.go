@@ -21,8 +21,14 @@ import (
 )
 
 func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
+	p1Start := testUtils.NewCapturedCursor()
+	p1End := testUtils.NewCapturedCursor()
+	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -56,8 +62,8 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     true,
 							"hasPrev":     false,
-							"startCursor": testUtils.CaptureCursor("p1Start"),
-							"endCursor":   testUtils.CaptureCursor("p1End"),
+							"startCursor": p1Start,
+							"endCursor":   p1End,
 						},
 					},
 				},
@@ -66,7 +72,7 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 			// Forward page 2: next 3 after p1End -> [40, 50, 60]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("p1End"),
+					"cursor": p1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -92,7 +98,7 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     false,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("p2Start"),
+							"startCursor": p2Start,
 							"endCursor":   testUtils.ValidCursor(),
 						},
 					},
@@ -102,7 +108,7 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 			// Backward from p2Start: last 2 before age 40 -> [20, 30]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("p2Start"),
+					"cursor": p2Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -131,12 +137,18 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
+	fEnd := testUtils.NewCapturedCursor()
+	f2Start := testUtils.NewCapturedCursor()
+	f2End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -168,7 +180,7 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("fEnd"),
+							"endCursor": fEnd,
 						},
 					},
 				},
@@ -177,7 +189,7 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 			// Forward page 2: first 2 after fEnd -> [30, 40]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("fEnd"),
+					"cursor": fEnd,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -202,8 +214,8 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     true,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("f2Start"),
-							"endCursor":   testUtils.CaptureCursor("f2End"),
+							"startCursor": f2Start,
+							"endCursor":   f2End,
 						},
 					},
 				},
@@ -212,7 +224,7 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 			// Backward: last 2 before f2Start (age 30) -> [10, 20]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("f2Start"),
+					"cursor": f2Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -241,14 +253,19 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
+	b1Start := testUtils.NewCapturedCursor()
+	b2Start := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
@@ -286,7 +303,7 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     false,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("b1Start"),
+							"startCursor": b1Start,
 						},
 					},
 				},
@@ -295,7 +312,7 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 			// Backward page 2: last 2 before b1Start -> [30, 40]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("b1Start"),
+					"cursor": b1Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -326,7 +343,7 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     true,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("b2Start"),
+							"startCursor": b2Start,
 						},
 					},
 				},
@@ -335,7 +352,7 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 			// Backward page 3: last 2 before b2Start -> [10, 20], hasPrev=false
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("b2Start"),
+					"cursor": b2Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -381,5 +398,5 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

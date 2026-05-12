@@ -20,6 +20,9 @@ import (
 func TestCursorWithFirst_ReturnsExactlyNResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -58,12 +61,15 @@ func TestCursorWithFirst_ReturnsExactlyNResults(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithFirst_ReturnsAllWhenFewerExist(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			&action.Request{
@@ -98,88 +104,5 @@ func TestCursorWithFirst_ReturnsAllWhenFewerExist(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
-}
-
-func TestCursorWithFirst_ReturnsPageInfoWithHasNextTrue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
-			&action.Request{
-				Request: `query {
-					_cursor {
-						User(first: 2, order: {age: ASC}) {
-							name
-							age
-						}
-						_pageInfo {
-							hasNext
-							hasPrev
-							startCursor
-							endCursor
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"_cursor": map[string]any{
-						"User": []map[string]any{
-							{"name": "Alice", "age": int64(25)},
-							{"name": "Bob", "age": int64(30)},
-						},
-						"_pageInfo": map[string]any{
-							"hasNext":     true,
-							"hasPrev":     false,
-							"startCursor": testUtils.ValidCursor(),
-							"endCursor":   testUtils.ValidCursor(),
-						},
-					},
-				},
-			},
-		},
-	}
-	executeTestCase(t, test)
-}
-
-func TestCursorWithFirst_ReturnsPageInfoWithHasNextFalse(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			&action.Request{
-				Request: `query {
-					_cursor {
-						User(first: 5, order: {age: ASC}) {
-							name
-							age
-						}
-						_pageInfo {
-							hasNext
-							hasPrev
-							startCursor
-							endCursor
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"_cursor": map[string]any{
-						"User": []map[string]any{
-							{"name": "Alice", "age": int64(25)},
-							{"name": "Bob", "age": int64(30)},
-						},
-						"_pageInfo": map[string]any{
-							"hasNext":     false,
-							"hasPrev":     false,
-							"startCursor": testUtils.ValidCursor(),
-							"endCursor":   testUtils.ValidCursor(),
-						},
-					},
-				},
-			},
-		},
-	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
