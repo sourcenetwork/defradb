@@ -26,24 +26,6 @@ var userCollectionGQLSchema = `
 	}
 `
 
-func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			SupportedMutationTypes: test.SupportedMutationTypes,
-			SupportedClientTypes:   test.SupportedClientTypes,
-			Actions: append(
-				[]any{
-					&action.AddCollection{
-						SDL: userCollectionGQLSchema,
-					},
-				},
-				test.Actions...,
-			),
-		},
-	)
-}
-
 // makeExplainQuery wraps a query with @explain(type: execute) for index verification.
 func makeExplainQuery(req string) string {
 	ind := strings.Index(req, "query")
