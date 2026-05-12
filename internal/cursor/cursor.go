@@ -17,9 +17,8 @@ import (
 
 // CursorPayload holds the data encoded into a cursor token.
 type CursorPayload struct {
-	DocID     string         `json:"d"`
-	Keys      map[string]any `json:"k,omitempty"`
-	Direction string         `json:"o"`
+	DocID string         `json:"d"`
+	Keys  map[string]any `json:"k,omitempty"`
 }
 
 // Encode serializes a CursorPayload into an opaque base64url string.
