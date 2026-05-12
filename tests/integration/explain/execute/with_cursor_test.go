@@ -18,8 +18,8 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var userSchemaWithIndex = &action.AddSchema{
-	Schema: `
+var userSchemaWithIndex = &action.AddCollection{
+	SDL: `
 		type User {
 			name: String
 			age: Int @index
@@ -27,8 +27,8 @@ var userSchemaWithIndex = &action.AddSchema{
 	`,
 }
 
-func createUserDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func createUserDocuments() []*action.AddDoc {
+	return []*action.AddDoc{
 		{
 			CollectionID: 0,
 			Doc:          `{"name": "Alice", "age": 25}`,

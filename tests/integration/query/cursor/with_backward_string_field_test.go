@@ -29,14 +29,14 @@ var userWithBackwardStringIndexSchema = `
 func TestCursorBackwardWithStringField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardStringIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardStringIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -73,14 +73,14 @@ func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
 	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardStringIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardStringIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 
 			// Forward page 1: first 3 -> [Addo, Andy, Chris]
 			&action.Request{

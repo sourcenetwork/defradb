@@ -36,17 +36,17 @@ func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -64,7 +64,7 @@ func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -88,17 +88,17 @@ func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -116,7 +116,7 @@ func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -139,19 +139,19 @@ func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -169,7 +169,7 @@ func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
@@ -183,17 +183,17 @@ func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
 func TestCursorWithIndexDirection_CompositeIndexMismatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age"}]) {
 						name: String
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
 			&action.Request{
 				Request: `query {
 							_cursor {
@@ -233,19 +233,19 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			// Page 1: first 2 in DESC order
 			&action.Request{
 				Request: req,
@@ -265,7 +265,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 			// Explain: verify page 1 uses index
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 			// Page 2: next 2
 			&action.Request{
@@ -349,19 +349,19 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index(direction: DESC)
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			// Page 1: first 2 in ASC order
 			&action.Request{
 				Request: req,
@@ -381,7 +381,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 			// Explain: verify page 1 uses index
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 			// Page 2: next 2
 			&action.Request{

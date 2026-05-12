@@ -32,14 +32,14 @@ var userWithDateTimeIndexSchema = `
 func TestCursorWithDateTimeField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithDateTimeIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -81,14 +81,14 @@ func TestCursorWithDateTimeField_MultiRoundTrip(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithDateTimeIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
 
 			// Page 1: first 2 docs (2000, 2001)
 			&action.Request{
@@ -234,14 +234,14 @@ func TestCursorWithDateTimeField_IndexUsage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithDateTimeIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -259,7 +259,7 @@ func TestCursorWithDateTimeField_IndexUsage(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
@@ -272,14 +272,14 @@ func TestCursorWithDateTimeField_SameYearDifferentDates(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithDateTimeIndexSchema,
 			},
 			// All born in 2000 but different months/days
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2000-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2000-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2000-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2000-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2000-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2000-09-25T00:00:00-00:00"}`},
 
 			// Page 1: first 2 docs (Jan, Mar)
 			&action.Request{

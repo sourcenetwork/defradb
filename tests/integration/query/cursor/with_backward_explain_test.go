@@ -22,12 +22,12 @@ import (
 func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 
 			&action.Request{
 				Request: `query {
@@ -118,12 +118,12 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 
 			&action.Request{
 				Request: req,
@@ -143,7 +143,7 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -167,14 +167,14 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 50}`},
 
 			&action.Request{
 				Request: `query {
@@ -239,7 +239,7 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 						}
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}

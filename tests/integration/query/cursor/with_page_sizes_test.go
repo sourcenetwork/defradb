@@ -22,14 +22,14 @@ import (
 func TestCursorWithPageSize_SingleItemPage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -69,19 +69,19 @@ func TestCursorWithPageSize_SingleItemPage(t *testing.T) {
 func TestCursorWithPageSize_LargeFirstFewerDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "User01", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "User02", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "User03", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "User04", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "User05", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "User06", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "User07", "age": 55}`},
-			testUtils.CreateDoc{Doc: `{"name": "User08", "age": 60}`},
-			testUtils.CreateDoc{Doc: `{"name": "User09", "age": 65}`},
-			testUtils.CreateDoc{Doc: `{"name": "User10", "age": 70}`},
+			&action.AddDoc{Doc: `{"name": "User01", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "User02", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "User03", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "User04", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "User05", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "User06", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "User07", "age": 55}`},
+			&action.AddDoc{Doc: `{"name": "User08", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "User09", "age": 65}`},
+			&action.AddDoc{Doc: `{"name": "User10", "age": 70}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -126,14 +126,14 @@ func TestCursorWithPageSize_LargeFirstFewerDocs(t *testing.T) {
 func TestCursorWithPageSize_FirstEqualsDocCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -173,12 +173,12 @@ func TestCursorWithPageSize_FirstEqualsDocCount(t *testing.T) {
 func TestCursorWithPageSize_FirstExceedsDocCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -216,12 +216,12 @@ func TestCursorWithPageSize_FirstExceedsDocCount(t *testing.T) {
 func TestCursorWithPageSize_ZeroFirst(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 			&action.Request{
 				Request: `query {
 					_cursor {

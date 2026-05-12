@@ -29,14 +29,14 @@ var userWithBackwardFloatIndexSchema = `
 func TestCursorBackwardWithFloatField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardFloatIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardFloatIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "score": 1.5}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "score": 2.7}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "score": 3.9}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "score": 5.1}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "score": 6.3}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "score": 1.5}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "score": 2.7}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "score": 3.9}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "score": 5.1}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "score": 6.3}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -73,14 +73,14 @@ func TestCursorBackwardWithFloatField_MultiRoundTrip(t *testing.T) {
 	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardFloatIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardFloatIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "score": 1.5}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "score": 2.7}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "score": 3.9}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "score": 5.1}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "score": 6.3}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "score": 1.5}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "score": 2.7}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "score": 3.9}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "score": 5.1}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "score": 6.3}`},
 
 			// Forward page 1: first 3 -> [Addo/1.5, Andy/2.7, Chris/3.9]
 			&action.Request{
