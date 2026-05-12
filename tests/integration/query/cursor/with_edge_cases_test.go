@@ -24,8 +24,8 @@ import (
 func TestCursorEdgeCase_EmptyCollectionReturnsEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
 			&action.Request{
 				Request: `query {
@@ -63,12 +63,12 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 
 			&action.Request{
 				Request: `query {
@@ -140,10 +140,10 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 func TestCursorEdgeCase_MalformedBase64ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -169,10 +169,10 @@ func TestCursorEdgeCase_InvalidJSONStructureReturnsError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: fmt.Sprintf(`query {
 					_cursor {
@@ -198,10 +198,10 @@ func TestCursorEdgeCase_MissingDocIDInCursorReturnsError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: fmt.Sprintf(`query {
 					_cursor {
@@ -226,12 +226,12 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 	bobCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 
 			&action.Request{
 				Request: `query {
@@ -301,14 +301,14 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 func TestCursorEdgeCase_DeletedResultDocExcludedFromResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 
 			testUtils.DeleteDoc{
 				CollectionID: 0,
@@ -352,12 +352,12 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 	aliceCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 
 			&action.Request{
 				Request: `query {
@@ -433,14 +433,14 @@ func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
 	eveCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 
 			&action.Request{
 				Request: `query {

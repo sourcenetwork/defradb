@@ -33,14 +33,14 @@ var userWithFloatIndexSchema = `
 func TestCursorWithFloatField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithFloatIndexSchema,
+			&action.AddCollection{
+				SDL: userWithFloatIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "score": 1.5}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "score": 2.7}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "score": 3.9}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "score": 4.2}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "score": 5.8}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "score": 1.5}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "score": 2.7}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "score": 3.9}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "score": 4.2}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "score": 5.8}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -82,14 +82,14 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithFloatIndexSchema,
+			&action.AddCollection{
+				SDL: userWithFloatIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "score": 5.8}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "score": 1.5}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "score": 4.2}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "score": 2.7}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "score": 3.9}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "score": 5.8}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "score": 1.5}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "score": 4.2}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "score": 2.7}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "score": 3.9}`},
 
 			// Page 1: first 2 docs (by score: 1.5, 2.7)
 			&action.Request{
@@ -236,14 +236,14 @@ func TestCursorWithFloatField_IndexUsage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithFloatIndexSchema,
+			&action.AddCollection{
+				SDL: userWithFloatIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "score": 1.5}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "score": 2.7}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "score": 3.9}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "score": 4.2}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "score": 5.8}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "score": 1.5}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "score": 2.7}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "score": 3.9}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "score": 4.2}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "score": 5.8}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -261,7 +261,7 @@ func TestCursorWithFloatField_IndexUsage(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}

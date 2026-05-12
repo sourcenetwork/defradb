@@ -29,14 +29,14 @@ var userWithBackwardDateTimeIndexSchema = `
 func TestCursorBackwardWithDateTimeField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardDateTimeIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -73,14 +73,14 @@ func TestCursorBackwardWithDateTimeField_MultiRoundTrip(t *testing.T) {
 	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithBackwardDateTimeIndexSchema,
+			&action.AddCollection{
+				SDL: userWithBackwardDateTimeIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "birthday": "2000-01-15T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "birthday": "2001-03-20T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "birthday": "2002-06-10T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "birthday": "2003-09-25T00:00:00-00:00"}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "birthday": "2004-12-01T00:00:00-00:00"}`},
 
 			// Forward page 1: first 3 -> [Addo/2000, Andy/2001, Chris/2002]
 			&action.Request{

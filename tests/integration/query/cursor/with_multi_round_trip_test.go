@@ -27,16 +27,16 @@ func TestCursorMultiRoundTrip_FullDatasetTraversal(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
-			testUtils.CreateDoc{Doc: `{"name": "Shahzad", "age": 70}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "Shahzad", "age": 70}`},
 
 			// Page 1: first 3 docs (ages 10, 20, 30)
 			&action.Request{
@@ -163,14 +163,14 @@ func TestCursorMultiRoundTrip_TwoPages(t *testing.T) {
 	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 15}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 55}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 15}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 55}`},
 
 			// Page 1: first 3 docs (ages 15, 25, 35)
 			&action.Request{
@@ -244,15 +244,15 @@ func TestCursorMultiRoundTrip_ExactPageBoundary(t *testing.T) {
 	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
 
 			// Page 1: first 3 docs (ages 10, 20, 30)
 			&action.Request{
@@ -330,19 +330,19 @@ func TestCursorMultiRoundTrip_VariablePageSizes(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
-			testUtils.CreateDoc{Doc: `{"name": "Shahzad", "age": 70}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bruno", "age": 80}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 90}`},
-			testUtils.CreateDoc{Doc: `{"name": "Roy", "age": 100}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "Shahzad", "age": 70}`},
+			&action.AddDoc{Doc: `{"name": "Bruno", "age": 80}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 90}`},
+			&action.AddDoc{Doc: `{"name": "Roy", "age": 100}`},
 
 			// Page 1: first 3 (ages 10, 20, 30)
 			&action.Request{
@@ -486,13 +486,13 @@ func TestCursorMultiRoundTrip_SingleDocPerPage(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
 
 			// Page 1: first 1 (age 10)
 			&action.Request{
@@ -665,16 +665,16 @@ func TestCursorMultiRoundTrip_FilteredSubset(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 15}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 55}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 65}`},
-			testUtils.CreateDoc{Doc: `{"name": "Shahzad", "age": 75}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 15}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 55}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 65}`},
+			&action.AddDoc{Doc: `{"name": "Shahzad", "age": 75}`},
 
 			// Page 1: first 2 with filter age >= 40 (ages 45, 55)
 			&action.Request{
@@ -773,19 +773,19 @@ func TestCursorMultiRoundTrip_FilteredFewResults(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
-			testUtils.CreateDoc{Doc: `{"name": "Shahzad", "age": 70}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bruno", "age": 80}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 90}`},
-			testUtils.CreateDoc{Doc: `{"name": "Roy", "age": 100}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "Shahzad", "age": 70}`},
+			&action.AddDoc{Doc: `{"name": "Bruno", "age": 80}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 90}`},
+			&action.AddDoc{Doc: `{"name": "Roy", "age": 100}`},
 
 			// Page 1: first 2 with filter age >= 80 (ages 80, 90)
 			&action.Request{
@@ -883,14 +883,14 @@ func TestCursorMultiRoundTrip_FilterInUsesCursorBoundary(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "A", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "B", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "C", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "D", "age": 55}`},
-			testUtils.CreateDoc{Doc: `{"name": "E", "age": 65}`},
+			&action.AddDoc{Doc: `{"name": "A", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "B", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "C", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "D", "age": 55}`},
+			&action.AddDoc{Doc: `{"name": "E", "age": 65}`},
 
 			&action.Request{
 				Request: `query {

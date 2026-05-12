@@ -20,13 +20,13 @@ import (
 func TestCursorWithGroupBy_ReturnsGroupedResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {

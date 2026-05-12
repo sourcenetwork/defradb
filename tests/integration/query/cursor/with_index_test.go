@@ -33,14 +33,14 @@ func TestCursorWithIndex_UsesIndexWhenOrderOnIndexedField(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -81,14 +81,14 @@ func TestCursorWithIndex_FallsBackToNaiveWithoutOrder(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 			&action.Request{
 				Request:  explainReq,
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -118,7 +118,7 @@ func TestCursorWithIndex_RejectsOrderWithoutIndex(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request:       req,
 				ExpectedError: "no supporting index for cursor order field",
@@ -141,14 +141,14 @@ func TestCursorWithIndex_IndexPathReturnsSortedResults(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -188,12 +188,12 @@ func TestCursorWithIndex_DESCOrderSucceeds(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{

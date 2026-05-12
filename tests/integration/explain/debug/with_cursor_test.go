@@ -34,8 +34,8 @@ var cursorPattern = dataMap{
 	},
 }
 
-var userSchemaWithIndex = &action.AddSchema{
-	Schema: `
+var userSchemaWithIndex = &action.AddCollection{
+	SDL: `
 		type User {
 			name: String
 			age: Int @index

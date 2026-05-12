@@ -25,14 +25,14 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 
 			// Step 1: Forward query to get first 3 items, capture endCursor
 			&action.Request{
@@ -143,14 +143,14 @@ func TestCursorWithLastBefore_BeforeCursorAtFirstItem(t *testing.T) {
 	firstItemCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 
 			// Capture startCursor from a full query (points to first item, age 25)
 			&action.Request{
@@ -221,14 +221,14 @@ func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
 	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 45}`},
 
 			// Forward first:3, capture endCursor (points to age 35)
 			&action.Request{
@@ -306,14 +306,14 @@ func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
 	legacyEnd := newDocIDOnlyCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Alice", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Bob", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Carol", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Dave", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Eve", "age": 50}`},
 
 			&action.Request{
 				Request: `query {

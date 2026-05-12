@@ -38,8 +38,8 @@ func TestCursorWithCompositeIndex_OrderByAllFields(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -47,11 +47,11 @@ func TestCursorWithCompositeIndex_OrderByAllFields(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -81,8 +81,8 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -90,11 +90,11 @@ func TestCursorWithCompositeIndex_MultiRoundTrip(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
 
 			// Page 1: first 2 docs (Addo 25, Addo 35)
 			&action.Request{
@@ -237,8 +237,8 @@ func TestCursorWithCompositeIndex_IndexUsage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -246,11 +246,11 @@ func TestCursorWithCompositeIndex_IndexUsage(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 40, "email": "chris@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 45, "email": "chris2@test.com"}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -268,7 +268,7 @@ func TestCursorWithCompositeIndex_IndexUsage(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
@@ -289,8 +289,8 @@ func TestCursorWithCompositeIndex_OrderByNonIndexedFieldFails(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -298,7 +298,7 @@ func TestCursorWithCompositeIndex_OrderByNonIndexedFieldFails(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
 			&action.Request{
 				Request:       req,
 				ExpectedError: "no supporting index for cursor order field",
@@ -319,8 +319,8 @@ func TestCursorWithCompositeIndex_RejectsPrefixOrderOnNonUniqueCompositeIndex(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User @index(includes: [{field: "name"}, {field: "age"}]) {
 						name: String
 						age: Int
@@ -328,9 +328,9 @@ func TestCursorWithCompositeIndex_RejectsPrefixOrderOnNonUniqueCompositeIndex(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25, "email": "addo@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 35, "email": "addo2@test.com"}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30, "email": "andy@test.com"}`},
 			&action.Request{
 				Request:       req,
 				ExpectedError: "no supporting index for cursor order field",

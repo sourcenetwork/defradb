@@ -26,15 +26,15 @@ func TestCursorBackwardMultiRoundTrip_ForwardThenBackward(t *testing.T) {
 	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
 
 			// Forward page 1: first 3 -> [10, 20, 30]
 			&action.Request{
@@ -146,15 +146,15 @@ func TestCursorBackwardMultiRoundTrip_BackwardThenForward(t *testing.T) {
 	f2End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
 
 			// Forward page 1: first 2 -> [10, 20]
 			&action.Request{
@@ -263,15 +263,15 @@ func TestCursorBackwardMultiRoundTrip_FullBackwardTraversal(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userCollectionGQLSchema,
+			&action.AddCollection{
+				SDL: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "John", "age": 10}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 20}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Keenan", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 50}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 60}`},
+			&action.AddDoc{Doc: `{"name": "John", "age": 10}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 20}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Keenan", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 50}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 60}`},
 
 			// Backward page 1: last 2 -> [50, 60]
 			&action.Request{

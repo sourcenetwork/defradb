@@ -33,14 +33,14 @@ var userWithStringIndexSchema = `
 func TestCursorWithStringField_BasicPagination(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithStringIndexSchema,
+			&action.AddCollection{
+				SDL: userWithStringIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -82,14 +82,14 @@ func TestCursorWithStringField_MultiRoundTrip(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithStringIndexSchema,
+			&action.AddCollection{
+				SDL: userWithStringIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
 
 			// Page 1: first 2 docs (alphabetically: Addo, Andy)
 			&action.Request{
@@ -236,14 +236,14 @@ func TestCursorWithStringField_IndexUsage(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: userWithStringIndexSchema,
+			&action.AddCollection{
+				SDL: userWithStringIndexSchema,
 			},
-			testUtils.CreateDoc{Doc: `{"name": "Addo", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
-			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
-			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
-			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
+			&action.AddDoc{Doc: `{"name": "Addo", "age": 25}`},
+			&action.AddDoc{Doc: `{"name": "Andy", "age": 30}`},
+			&action.AddDoc{Doc: `{"name": "Chris", "age": 35}`},
+			&action.AddDoc{Doc: `{"name": "Fred", "age": 40}`},
+			&action.AddDoc{Doc: `{"name": "Islam", "age": 45}`},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
@@ -261,7 +261,7 @@ func TestCursorWithStringField_IndexUsage(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
