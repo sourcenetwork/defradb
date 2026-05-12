@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"testing"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -286,9 +288,8 @@ type validCursor struct {
 
 // cursorPayload mirrors the cursor.CursorPayload structure for decoding.
 type cursorPayload struct {
-	DocID     string         `json:"d"`
-	Keys      map[string]any `json:"k,omitempty"`
-	Direction string         `json:"o"`
+	DocID string         `json:"d"`
+	Keys  map[string]any `json:"k,omitempty"`
 }
 
 var _ gomega.OmegaMatcher = (*validCursor)(nil)
@@ -341,29 +342,23 @@ func (m *validCursor) Match(actual any) (bool, error) {
 		return false, nil
 	}
 
-	// Validate expected key fields if specified
-	if len(m.expectedKeyFields) > 0 {
-		for _, field := range m.expectedKeyFields {
-			if _, exists := payload.Keys[field]; !exists {
-				m.lastError = fmt.Sprintf("missing expected key field %q", field)
-				return false, nil
-			}
+	for _, field := range m.expectedKeyFields {
+		if _, exists := payload.Keys[field]; !exists {
+			m.lastError = fmt.Sprintf("missing expected key field %q", field)
+			return false, nil
 		}
 	}
 
-	// Validate expected key-value pairs if specified
-	if len(m.expectedKeys) > 0 {
-		for key, expectedValue := range m.expectedKeys {
-			actualValue, exists := payload.Keys[key]
-			if !exists {
-				m.lastError = fmt.Sprintf("missing expected key %q", key)
-				return false, nil
-			}
-			if !keysEqual(expectedValue, actualValue) {
-				m.lastError = fmt.Sprintf("key %q: expected %v (%T), got %v (%T)",
-					key, expectedValue, expectedValue, actualValue, actualValue)
-				return false, nil
-			}
+	for key, expectedValue := range m.expectedKeys {
+		actualValue, exists := payload.Keys[key]
+		if !exists {
+			m.lastError = fmt.Sprintf("missing expected key %q", key)
+			return false, nil
+		}
+		if !keysEqual(expectedValue, actualValue) {
+			m.lastError = fmt.Sprintf("key %q: expected %v (%T), got %v (%T)",
+				key, expectedValue, expectedValue, actualValue, actualValue)
+			return false, nil
 		}
 	}
 
@@ -399,46 +394,72 @@ func (m *validCursor) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected value NOT to be a valid cursor, but it was: %v", actual)
 }
 
-// CapturedVar is a type alias for state.CapturedVar for convenience.
-type CapturedVar = state.CapturedVar
-
-// CaptureCursor returns a matcher that validates and captures cursor values.
-func CaptureCursor(name string) *captureCursor {
-	return &captureCursor{
-		name:        name,
+// NewCapturedCursor returns a matcher that validates and captures cursor values per node.
+// The returned handle can be used directly as a request variable in a subsequent action.
+func NewCapturedCursor() *CapturedCursor {
+	return &CapturedCursor{
 		validCursor: ValidCursor(),
+		cursors:     map[int]string{},
 	}
 }
 
-type captureCursor struct {
-	testStateMatcher
-	name        string
-	validCursor *validCursor
+// CapturedCursor is a matcher and request variable resolver that stores cursor
+// values per node.
+type CapturedCursor struct {
+	validCursor   *validCursor
+	cursors       map[int]string
+	currentNodeID int
 }
 
-var _ TestStateMatcher = (*captureCursor)(nil)
-var _ StatefulMatcher = (*captureCursor)(nil)
+var _ action.CurrentNodeMatcher = (*CapturedCursor)(nil)
+var _ action.VariableResolver = (*CapturedCursor)(nil)
+var _ StatefulMatcher = (*CapturedCursor)(nil)
 
-func (m *captureCursor) Match(actual any) (bool, error) {
+func (m *CapturedCursor) SetCurrentNodeID(nodeID int) {
+	m.currentNodeID = nodeID
+}
+
+func (m *CapturedCursor) WithKeys(keys map[string]any) *CapturedCursor {
+	m.validCursor.WithKeys(keys)
+	return m
+}
+
+func (m *CapturedCursor) WithKeyFields(fields ...string) *CapturedCursor {
+	m.validCursor.WithKeyFields(fields...)
+	return m
+}
+
+func (m *CapturedCursor) Match(actual any) (bool, error) {
 	ok, err := m.validCursor.Match(actual)
 	if !ok || err != nil {
 		return ok, err
 	}
 
-	if m.s != nil {
-		str, _ := actual.(string)
-		m.s.SetCapturedVariable(m.name, str)
+	str, _ := actual.(string)
+	if m.cursors == nil {
+		m.cursors = map[int]string{}
 	}
+	m.cursors[m.currentNodeID] = str
 	return true, nil
 }
 
-func (m *captureCursor) ResetMatcherState() {}
+func (m *CapturedCursor) ResolveVariable(t testing.TB, nodeID int) any {
+	cursor, ok := m.cursors[nodeID]
+	if !ok {
+		t.Fatalf("captured cursor not found for node %d", nodeID)
+	}
+	return cursor
+}
 
-func (m *captureCursor) FailureMessage(actual any) string {
+func (m *CapturedCursor) ResetMatcherState() {
+	m.cursors = map[int]string{}
+}
+
+func (m *CapturedCursor) FailureMessage(actual any) string {
 	return m.validCursor.FailureMessage(actual)
 }
 
-func (m *captureCursor) NegatedFailureMessage(actual any) string {
+func (m *CapturedCursor) NegatedFailureMessage(actual any) string {
 	return m.validCursor.NegatedFailureMessage(actual)
 }
 

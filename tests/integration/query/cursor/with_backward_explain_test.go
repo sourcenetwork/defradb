@@ -22,6 +22,9 @@ import (
 func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -97,7 +100,7 @@ func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
@@ -115,6 +118,9 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -141,10 +147,11 @@ func TestCursorBackwardExplain_ExecuteShowsIndexFetches(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.T) {
+	end := testUtils.NewCapturedCursor()
 	req := `query($cursor: String) {
 		_cursor {
 			User(last: 2, before: $cursor, order: {age: ASC}) {
@@ -160,6 +167,9 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
@@ -188,7 +198,7 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 							{"name": "Eve", "age": int64(50)},
 						},
 						"_pageInfo": map[string]any{
-							"endCursor": testUtils.CaptureCursor("end"),
+							"endCursor": end,
 						},
 					},
 				},
@@ -196,7 +206,7 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("end"),
+					"cursor": end,
 				}),
 				Request: req,
 				Results: map[string]any{
@@ -215,7 +225,7 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("end"),
+					"cursor": end,
 				}),
 				Request: `query($cursor: String) @explain(type: execute) {
 					_cursor {
@@ -234,5 +244,5 @@ func TestCursorBackwardExplain_ExecuteUsesReverseSeekForBeforeCursor(t *testing.
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

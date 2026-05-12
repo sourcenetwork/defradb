@@ -17,21 +17,20 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCursorWithAlias_UsesInnerAliasInResponse(t *testing.T) {
+func TestCursorWithGroupBy_ReturnsGroupedResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
-			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
+			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
-
+			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 45}`},
 			&action.Request{
 				Request: `query {
 					_cursor {
-						users: User(first: 2, order: {age: ASC}) {
-							name
+						User(first: 10, groupBy: [age]) {
 							age
 						}
 						_pageInfo {
@@ -42,19 +41,20 @@ func TestCursorWithAlias_UsesInnerAliasInResponse(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"_cursor": map[string]any{
-						"users": []map[string]any{
-							{"name": "Alice", "age": int64(25)},
-							{"name": "Bob", "age": int64(30)},
+						"User": []map[string]any{
+							{"age": int64(25)},
+							{"age": int64(35)},
+							{"age": int64(45)},
 						},
 						"_pageInfo": map[string]any{
-							"hasNext": true,
+							"hasNext": false,
 							"hasPrev": false,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
-
 	testUtils.ExecuteTestCase(t, test)
 }

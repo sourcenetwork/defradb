@@ -33,6 +33,9 @@ func TestCursorWithIndex_UsesIndexWhenOrderOnIndexedField(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -59,7 +62,7 @@ func TestCursorWithIndex_UsesIndexWhenOrderOnIndexedField(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithIndex_FallsBackToNaiveWithoutOrder verifies naive iteration
@@ -78,6 +81,9 @@ func TestCursorWithIndex_FallsBackToNaiveWithoutOrder(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -89,7 +95,7 @@ func TestCursorWithIndex_FallsBackToNaiveWithoutOrder(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithIndex_RejectsOrderWithoutIndex verifies that ordering on
@@ -135,6 +141,9 @@ func TestCursorWithIndex_IndexPathReturnsSortedResults(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
 			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -160,7 +169,7 @@ func TestCursorWithIndex_IndexPathReturnsSortedResults(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestCursorWithIndex_DESCOrderSucceeds verifies that DESC order
@@ -179,6 +188,9 @@ func TestCursorWithIndex_DESCOrderSucceeds(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -199,5 +211,5 @@ func TestCursorWithIndex_DESCOrderSucceeds(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

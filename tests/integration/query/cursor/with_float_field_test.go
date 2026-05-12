@@ -76,6 +76,8 @@ func TestCursorWithFloatField_BasicPagination(t *testing.T) {
 // TestCursorWithFloatField_MultiRoundTrip verifies that multi-page cursor pagination
 // traverses all documents exactly once and maintains numeric order on Float field.
 func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	page2End := testUtils.NewCapturedCursor()
 	var allDocs []map[string]any
 
 	test := testUtils.TestCase{
@@ -119,7 +121,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -128,7 +130,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 			// Page 2: next 2 docs (by score: 3.9, 4.2)
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -158,7 +160,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   true,
-							"endCursor": testUtils.CaptureCursor("page2End"),
+							"endCursor": page2End,
 						},
 					},
 				},
@@ -167,7 +169,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 			// Page 3: final page (score: 5.8), verify global properties
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page2End"),
+					"cursor": page2End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {

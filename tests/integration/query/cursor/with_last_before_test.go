@@ -21,8 +21,13 @@ import (
 )
 
 func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
+	p1End := testUtils.NewCapturedCursor()
+	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -54,7 +59,7 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("p1End"),
+							"endCursor": p1End,
 						},
 					},
 				},
@@ -63,7 +68,7 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 			// Step 2: Forward query from p1End to get remaining, capture startCursor
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("p1End"),
+					"cursor": p1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -87,7 +92,7 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     false,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("p2Start"),
+							"startCursor": p2Start,
 						},
 					},
 				},
@@ -98,7 +103,7 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 			// the 2 items immediately before age 40 in the dataset.
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("p2Start"),
+					"cursor": p2Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -131,12 +136,16 @@ func TestCursorWithLastBefore_ReturnsItemsBeforeCursor(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLastBefore_BeforeCursorAtFirstItem(t *testing.T) {
+	firstItemCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -170,7 +179,7 @@ func TestCursorWithLastBefore_BeforeCursorAtFirstItem(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     false,
 							"hasPrev":     false,
-							"startCursor": testUtils.CaptureCursor("firstItemCursor"),
+							"startCursor": firstItemCursor,
 						},
 					},
 				},
@@ -179,7 +188,7 @@ func TestCursorWithLastBefore_BeforeCursorAtFirstItem(t *testing.T) {
 			// Backward query before the first item: should return empty
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("firstItemCursor"),
+					"cursor": firstItemCursor,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -205,12 +214,16 @@ func TestCursorWithLastBefore_BeforeCursorAtFirstItem(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -242,7 +255,7 @@ func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -253,7 +266,7 @@ func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
 			// Requesting 10 but only 2 available.
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -286,12 +299,16 @@ func TestCursorWithLastBefore_ReturnsFewerWhenNotEnough(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
+	legacyEnd := newDocIDOnlyCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 10}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 20}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 30}`},
@@ -320,7 +337,7 @@ func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
 							{"name": "Eve", "age": int64(50)},
 						},
 						"_pageInfo": map[string]any{
-							"endCursor": captureDocIDOnlyCursor("legacyEnd"),
+							"endCursor": legacyEnd,
 						},
 					},
 				},
@@ -328,7 +345,7 @@ func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("legacyEnd"),
+					"cursor": legacyEnd,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -357,27 +374,31 @@ func TestCursorWithLastBefore_DocIDOnlyCursorFallsBackToDrain(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
-func captureDocIDOnlyCursor(name string) *docIDOnlyCursorCapture {
-	return &docIDOnlyCursorCapture{name: name}
+func newDocIDOnlyCapturedCursor() *docIDOnlyCursorCapture {
+	return &docIDOnlyCursorCapture{
+		cursors: map[int]string{},
+	}
 }
 
 type docIDOnlyCursorCapture struct {
-	s           testUtils.TestState
-	name        string
-	failureText string
+	currentNodeID int
+	cursors       map[int]string
+	failureText   string
 }
 
-var _ testUtils.TestStateMatcher = (*docIDOnlyCursorCapture)(nil)
+var _ action.CurrentNodeMatcher = (*docIDOnlyCursorCapture)(nil)
+var _ action.VariableResolver = (*docIDOnlyCursorCapture)(nil)
 var _ testUtils.StatefulMatcher = (*docIDOnlyCursorCapture)(nil)
 
-func (m *docIDOnlyCursorCapture) SetTestState(s testUtils.TestState) {
-	m.s = s
+func (m *docIDOnlyCursorCapture) SetCurrentNodeID(nodeID int) {
+	m.currentNodeID = nodeID
 }
 
 func (m *docIDOnlyCursorCapture) ResetMatcherState() {
+	m.cursors = map[int]string{}
 	m.failureText = ""
 }
 
@@ -395,15 +416,25 @@ func (m *docIDOnlyCursorCapture) Match(actual any) (bool, error) {
 	}
 
 	legacyCursor, err := internalCursor.Encode(internalCursor.CursorPayload{
-		DocID:     payload.DocID,
-		Direction: payload.Direction,
+		DocID: payload.DocID,
 	})
 	if err != nil {
 		return false, err
 	}
 
-	m.s.SetCapturedVariable(m.name, legacyCursor)
+	if m.cursors == nil {
+		m.cursors = map[int]string{}
+	}
+	m.cursors[m.currentNodeID] = legacyCursor
 	return true, nil
+}
+
+func (m *docIDOnlyCursorCapture) ResolveVariable(t testing.TB, nodeID int) any {
+	cursor, ok := m.cursors[nodeID]
+	if !ok {
+		t.Fatalf("captured docID-only cursor not found for node %d", nodeID)
+	}
+	return cursor
 }
 
 func (m *docIDOnlyCursorCapture) FailureMessage(actual any) string {

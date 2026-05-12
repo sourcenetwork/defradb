@@ -60,8 +60,12 @@ func TestCursorEdgeCase_EmptyCollectionReturnsEmptyArray(t *testing.T) {
 }
 
 func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -92,7 +96,7 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 							"hasNext":     false,
 							"hasPrev":     false,
 							"startCursor": testUtils.ValidCursor(),
-							"endCursor":   testUtils.CaptureCursor("page1End"),
+							"endCursor":   page1End,
 						},
 					},
 				},
@@ -100,7 +104,7 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -130,12 +134,15 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_MalformedBase64ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: `query {
@@ -154,7 +161,7 @@ func TestCursorEdgeCase_MalformedBase64ReturnsError(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_InvalidJSONStructureReturnsError(t *testing.T) {
@@ -162,6 +169,9 @@ func TestCursorEdgeCase_InvalidJSONStructureReturnsError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: fmt.Sprintf(`query {
@@ -180,14 +190,17 @@ func TestCursorEdgeCase_InvalidJSONStructureReturnsError(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_MissingDocIDInCursorReturnsError(t *testing.T) {
-	missingDocID := base64.StdEncoding.EncodeToString([]byte(`{"k":{"age":25},"o":""}`))
+	missingDocID := base64.StdEncoding.EncodeToString([]byte(`{"k":{"age":25}}`))
 
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			&action.Request{
 				Request: fmt.Sprintf(`query {
@@ -206,12 +219,16 @@ func TestCursorEdgeCase_MissingDocIDInCursorReturnsError(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
+	bobCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -237,7 +254,7 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("bobCursor"),
+							"endCursor": bobCursor,
 						},
 					},
 				},
@@ -250,7 +267,7 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("bobCursor"),
+					"cursor": bobCursor,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -278,12 +295,15 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_DeletedResultDocExcludedFromResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -325,12 +345,16 @@ func TestCursorEdgeCase_DeletedResultDocExcludedFromResults(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
+	aliceCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -355,7 +379,7 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("aliceCursor"),
+							"endCursor": aliceCursor,
 						},
 					},
 				},
@@ -372,7 +396,7 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("aliceCursor"),
+					"cursor": aliceCursor,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -402,12 +426,16 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
+	eveCursor := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddSchema{
+				Schema: userCollectionGQLSchema,
+			},
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
@@ -436,7 +464,7 @@ func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
 							{"name": "Eve", "age": int64(45)},
 						},
 						"_pageInfo": map[string]any{
-							"endCursor": testUtils.CaptureCursor("eveCursor"),
+							"endCursor": eveCursor,
 						},
 					},
 				},
@@ -449,7 +477,7 @@ func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
 
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("eveCursor"),
+					"cursor": eveCursor,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -482,5 +510,5 @@ func TestCursorEdgeCase_DeletedBeforeCursorAtEndHasNoNextPage(t *testing.T) {
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

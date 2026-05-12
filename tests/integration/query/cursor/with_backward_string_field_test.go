@@ -69,6 +69,8 @@ func TestCursorBackwardWithStringField_BasicPagination(t *testing.T) {
 }
 
 func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
+	page1End := testUtils.NewCapturedCursor()
+	p2Start := testUtils.NewCapturedCursor()
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -105,7 +107,7 @@ func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
 							"hasPrev":   false,
-							"endCursor": testUtils.CaptureCursor("page1End"),
+							"endCursor": page1End,
 						},
 					},
 				},
@@ -114,7 +116,7 @@ func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
 			// Forward page 2: first 2 after page1End -> [Fred, Islam]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("page1End"),
+					"cursor": page1End,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {
@@ -138,7 +140,7 @@ func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
 						"_pageInfo": map[string]any{
 							"hasNext":     false,
 							"hasPrev":     true,
-							"startCursor": testUtils.CaptureCursor("p2Start"),
+							"startCursor": p2Start,
 						},
 					},
 				},
@@ -147,7 +149,7 @@ func TestCursorBackwardWithStringField_MultiRoundTrip(t *testing.T) {
 			// Backward: last 2 before p2Start -> [Andy, Chris]
 			&action.Request{
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("p2Start"),
+					"cursor": p2Start,
 				}),
 				Request: `query($cursor: String) {
 					_cursor {

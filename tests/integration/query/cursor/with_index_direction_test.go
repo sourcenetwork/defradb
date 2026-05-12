@@ -217,6 +217,8 @@ func TestCursorWithIndexDirection_CompositeIndexMismatch(t *testing.T) {
 // cursor pagination works correctly when querying DESC on an ASC index.
 // 5 documents, page size 2: page 1 (45, 40), page 2 (35, 30), page 3 (25).
 func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
+	cursor1 := testUtils.NewCapturedCursor()
+	cursor2 := testUtils.NewCapturedCursor()
 	req := `query {
 		_cursor {
 			User(first: 2, order: {age: DESC}) {
@@ -255,7 +257,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("cursor1"),
+							"endCursor": cursor1,
 						},
 					},
 				},
@@ -280,7 +282,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 					}
 				}`,
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("cursor1"),
+					"cursor": cursor1,
 				}),
 				Results: map[string]any{
 					"_cursor": map[string]any{
@@ -290,7 +292,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("cursor2"),
+							"endCursor": cursor2,
 						},
 					},
 				},
@@ -309,7 +311,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 					}
 				}`,
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("cursor2"),
+					"cursor": cursor2,
 				}),
 				Results: map[string]any{
 					"_cursor": map[string]any{
@@ -331,6 +333,8 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 // cursor pagination works correctly when querying ASC on a DESC index.
 // 5 documents, page size 2: page 1 (25, 30), page 2 (35, 40), page 3 (45).
 func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
+	cursor1 := testUtils.NewCapturedCursor()
+	cursor2 := testUtils.NewCapturedCursor()
 	req := `query {
 		_cursor {
 			User(first: 2, order: {age: ASC}) {
@@ -369,7 +373,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("cursor1"),
+							"endCursor": cursor1,
 						},
 					},
 				},
@@ -394,7 +398,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 					}
 				}`,
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("cursor1"),
+					"cursor": cursor1,
 				}),
 				Results: map[string]any{
 					"_cursor": map[string]any{
@@ -404,7 +408,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 						},
 						"_pageInfo": map[string]any{
 							"hasNext":   true,
-							"endCursor": testUtils.CaptureCursor("cursor2"),
+							"endCursor": cursor2,
 						},
 					},
 				},
@@ -423,7 +427,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 					}
 				}`,
 				Variables: immutable.Some(map[string]any{
-					"cursor": testUtils.CapturedVar("cursor2"),
+					"cursor": cursor2,
 				}),
 				Results: map[string]any{
 					"_cursor": map[string]any{
