@@ -906,7 +906,11 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Value: graphQLRequest,
 	}
 	postGraphQL.AddResponse(200, graphQLResponse)
-	postGraphQL.Responses.Set("400", errorResponse)
+	postGraphQL.Responses.Set("400", &openapi3.ResponseRef{
+		Value: openapi3.NewResponse().
+			WithDescription("GraphQL error").
+			WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema)),
+	})
 
 	graphQLQueryParam := openapi3.NewQueryParameter("query").
 		WithSchema(openapi3.NewStringSchema())
@@ -917,7 +921,11 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	getGraphQL.Tags = []string{"graphql"}
 	getGraphQL.AddParameter(graphQLQueryParam)
 	getGraphQL.AddResponse(200, graphQLResponse)
-	getGraphQL.Responses.Set("400", errorResponse)
+	getGraphQL.Responses.Set("400", &openapi3.ResponseRef{
+		Value: openapi3.NewResponse().
+			WithDescription("GraphQL error").
+			WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema)),
+	})
 
 	debugDump := openapi3.NewOperation()
 	debugDump.Description = "Dump database"
