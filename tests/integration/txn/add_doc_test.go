@@ -326,13 +326,6 @@ func TestTxn_AddManyDocs_WithoutCommit_EmptyResults(t *testing.T) {
 // that the document never becomes visible. See GH issue #4475.
 func TestTxn_AddDoc_WithDiscard_NeverVisible(t *testing.T) {
 	test := testUtils.TestCase{
-		// LevelDB does not support concurrent transactions
-		// todo: https://github.com/sourcenetwork/defradb/issues/4442
-		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
-			testUtils.BadgerFileType,
-			testUtils.BadgerIMType,
-			testUtils.DefraIMType,
-		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
