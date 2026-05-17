@@ -282,19 +282,134 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 				`,
 			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John"
-				}`,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+				},
 			},
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"]
+							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreihufziq5m2i6sgw2ls45uratin7eudhjplfg23qtj2lv6g6knevha"]
 						) {
 						name
 					}
 				}`,
-				ExpectedError: "querying by multiple cids is not yet supported",
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				// Query with duplicated cids for the same doc
+				Request: `query {
+					Users (
+							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					// The cids/results are deduplicated, in the same way that providing multiple docIDs are
+					// e.g. TestQueryWithDocIDsFilter_DuplicateDocIDs
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.UpdateDoc{
+				Doc: `{
+					"name": "Johnnn"
+				}`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
+			},
+			&action.Request{
+				// Query with the cid for the initial version of `John`, and the updated version.
+				Request: `query {
+					Users (
+							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreiecis4aqmvr4effzlb74cwflphkykfnibpdnnftdyp6o2cneqy57q"]
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Johnnn",
+						},
+					},
+				},
 			},
 		},
 	}
