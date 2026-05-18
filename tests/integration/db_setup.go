@@ -154,7 +154,7 @@ func setupNode(
 		return nil, err
 	}
 
-	c, err := setupClient(s, nodeObj, identity)
+	c, err := setupClient(s, nodeObj, identity, s.CurrentSetupNodeID, testCase.EnableSigning, path)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())

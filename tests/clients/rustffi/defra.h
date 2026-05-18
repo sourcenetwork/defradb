@@ -682,6 +682,16 @@ struct FfiResult block_verify_signature(uintptr_t node_ptr,
                                         const char *block_cid,
                                         const char *identity_did);
 
+/*
+ Verify the signature of a block using an existing transaction's blockstore view.
+
+ This allows signature verification to see uncommitted blocks created in the same
+ transaction while preserving isolation from other transactions.
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
 struct FfiResult block_verify_signature_in_txn(uintptr_t node_ptr,
                                                const char *txn_id,
                                                const char *key_type,
