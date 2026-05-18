@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -25,6 +26,27 @@ type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
 	CheckCIDFilter(cid string) bool
 	CheckDocIDFilter(docID string) bool
+}
+
+// runSubscriptionSelection is the selection-evaluation step extracted as a
+// package-level var so tests can swap it for a stub. Production code must
+// not reassign it outside tests.
+var runSubscriptionSelection = func(
+	ctx context.Context,
+	db *DB,
+	sel request.Selection,
+) (map[string]any, error) {
+	p := planner.New(
+		ctx,
+		identity.FromContext(ctx),
+		db.nodeACP,
+		db.documentACP,
+		db,
+		db.p2p,
+		db.getLensStore(ctx),
+		db.collectionRepository,
+	)
+	return p.RunSelection(ctx, sel)
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -45,6 +67,21 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	}
 	resCh := make(chan client.GQLResult)
 	go func() {
+		// Guard against panics inside the selection-evaluation path
+		// (planner / fetcher / merge). Without this, a panic on any
+		// single subscription — including transient bugs such as an
+		// unclosed iterator triggered by a merge-state error — would
+		// take down the whole process, killing every other client's
+		// subscriptions and in-flight requests at the same time.
+		defer func() {
+			if r := recover(); r != nil {
+				log.ErrorContext(
+					ctx,
+					"panic in subscription handler",
+					corelog.Any("panic", r),
+				)
+			}
+		}()
 		defer func() {
 			db.events.Unsubscribe(sub)
 			close(resCh)
@@ -78,19 +115,9 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			ctx := InitContext(ctx, txn)
 
-			p := planner.New(
-				ctx,
-				identity.FromContext(ctx),
-				db.nodeACP,
-				db.documentACP,
-				db,
-				db.p2p,
-				db.getLensStore(ctx),
-				db.collectionRepository,
-			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
-			result, err := p.RunSelection(ctx, s)
+			result, err := runSubscriptionSelection(ctx, db, s)
 			if err == nil && len(result) == 0 {
 				txn.Discard()
 				continue // Don't send anything back to the client if the request yields an empty dataset.

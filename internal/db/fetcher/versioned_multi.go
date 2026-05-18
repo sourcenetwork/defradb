@@ -121,12 +121,21 @@ func (f *MultiVersioned) Start(ctx context.Context, prefixes ...keys.Walkable) e
 			return err
 		}
 
+		// Track the child immediately so that any resources it opened
+		// during Init (e.g. the in-memory `vf.root` store) and any
+		// resources it opens during Start (which may partially succeed
+		// before erroring) get released by Close(). Without this, a
+		// Start failure leaves an orphaned VersionedFetcher whose
+		// internal state — including badger iterators opened on the
+		// parent txn via the planner/fetcher path — cannot be
+		// reclaimed, which causes badger's Txn.Discard to panic with
+		// "Unclosed iterator at time of Txn.Discard".
+		f.children[i] = child
+
 		err = child.Start(ctx, prefix)
 		if err != nil {
 			return err
 		}
-
-		f.children[i] = child
 	}
 
 	f.currentChild = 0
@@ -150,6 +159,20 @@ func (f *MultiVersioned) FetchNext(ctx context.Context) (EncodedDocument, ExecIn
 	}
 
 	return doc, execInfo, nil
+}
+
+// NumTrackedChildrenForTest returns the number of non-nil child fetchers
+// currently tracked by this MultiVersioned. Test-only accessor used to
+// assert that children whose Init succeeded are reachable via Close,
+// regardless of whether their subsequent Start succeeded.
+func (f *MultiVersioned) NumTrackedChildrenForTest() int {
+	n := 0
+	for _, c := range f.children {
+		if c != nil {
+			n++
+		}
+	}
+	return n
 }
 
 func (f *MultiVersioned) Close() error {
