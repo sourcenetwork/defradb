@@ -24,6 +24,7 @@ const (
 	errEmptyCollectionSDL           string = "collection definition cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
+	errStoreEncryptionKey           string = "failed to store encryption key"
 )
 
 var (
@@ -91,4 +92,8 @@ func NewErrMissingRequiredFlag(flag string) error {
 
 func NewErrMissingRequiredParameter(paramName string) error {
 	return errors.New(fmt.Sprintf(errMissingRequiredParameter, paramName))
+}
+
+func NewErrStoreEncryptionKey(inner error) error {
+	return errors.Wrap(errStoreEncryptionKey, inner)
 }

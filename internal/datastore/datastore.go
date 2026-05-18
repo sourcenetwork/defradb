@@ -34,6 +34,10 @@ func newDatastore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet) *datasto
 	}
 }
 
+func NewUnsafeDatastore(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
+	return namespace.Wrap(rootstore, []byte{dataStoreKey})
+}
+
 func (s *datastore) Get(ctx context.Context, key Key) ([]byte, error) {
 	s.collectionRLock(ctx, key)
 

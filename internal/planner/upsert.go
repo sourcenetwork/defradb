@@ -64,7 +64,7 @@ func (n *upsertNode) Next() (bool, error) {
 			}
 			for k, v := range n.updateInput {
 				if err := doc.Set(n.p.ctx, k, v); err != nil {
-					return false, err
+					return false, NewErrSetDocField(err, k)
 				}
 			}
 			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
@@ -106,6 +106,11 @@ func (n *upsertNode) Next() (bool, error) {
 			// This is cheaper than building two seperate plans.
 			err := n.p.walkAndReplacePlan(n.source, n.origScanNode, n.valuesNode)
 			if err != nil {
+				return false, err
+			}
+			// The original scanNode is now orphaned (replaced by valuesNode in the plan tree).
+			// Close it to release its fetcher's iterator, otherwise it leaks.
+			if err := n.origScanNode.Close(); err != nil {
 				return false, err
 			}
 		}

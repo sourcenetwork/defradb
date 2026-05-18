@@ -35,6 +35,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/immutable"
 )
@@ -44,7 +45,7 @@ var _ client.Collection = (*Collection)(nil)
 type Collection struct {
 	def client.CollectionVersion
 	w   *CWrapper
-	txn immutable.Option[client.Txn]
+	txn immutable.Option[datastore.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {

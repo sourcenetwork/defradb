@@ -28,12 +28,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) addCollections(
@@ -42,7 +39,7 @@ func (db *DB) addCollections(
 ) ([]client.CollectionVersion, error) {
 	returnDescriptions := make([]client.CollectionVersion, 0, len(parseResults))
 
-	existingVersions, err := description.GetActiveCollections(ctx)
+	existingVersions, err := description.GetActiveCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +54,7 @@ func (db *DB) addCollections(
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections, existingVersions)
+	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +84,12 @@ func (db *DB) addCollections(
 			def.Definition.Indexes = append(def.Definition.Indexes, desc)
 		}
 
-		err = description.SaveCollection(ctx, def.Definition)
+		err = description.SaveCollection(ctx, db.collectionRepository, def.Definition)
 		if err != nil {
 			return nil, err
 		}
 
-		txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+		txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
 		col, err := db.newCollection(def.Definition, txnOpt)
 		if err != nil {
@@ -105,7 +102,7 @@ func (db *DB) addCollections(
 			}
 		}
 
-		result, err := description.GetCollectionByID(ctx, def.Definition.VersionID)
+		result, err := description.GetCollectionByID(ctx, db.collectionRepository, def.Definition.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +142,7 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
-	existingCols, err := description.GetCollections(ctx)
+	existingCols, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return err
 	}
@@ -222,15 +219,9 @@ existingVersionLoop:
 	}
 
 	for key, col := range newColsByID {
-		previousCol := existingColsByName[col.Name]
-
-		previousFieldNames := make(map[string]struct{}, len(previousCol.Fields))
-		for _, field := range previousCol.Fields {
-			previousFieldNames[field.FieldID] = struct{}{}
-		}
-
 		for i, field := range col.Fields {
-			if _, existed := previousFieldNames[field.FieldID]; !existed && field.Typ == client.NONE_CRDT {
+			// Object fields don't recieve a crdt, so exclude those from this check
+			if field.FieldID == "" && !field.Kind.IsObject() && field.Typ == client.NONE_CRDT {
 				// If no CRDT Type has been provided to a new field, default to LWW_REGISTER.
 				// If the field existed before it might have been explicitly cleared by the user, in which
 				// case it is up to the validation logic to error or not.
@@ -244,7 +235,7 @@ existingVersionLoop:
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections, existingCols)
+	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
@@ -258,18 +249,23 @@ existingVersionLoop:
 			}
 		}
 
-		// If an existing collection is not present in the new collection set,
-		// it must have mutated into a new collection version.
-		// The original still needs to exist and must be validated against.
-		// It may also be mutated later in this function.
+		// If an existing collection is not present in the new collection set, it has either
+		// been mutated into a new version (a replacement with the same CollectionID exists) or
+		// explicitly removed by the patch (no replacement). For the mutation case we re-add the
+		// original as inactive so it can be validated against and saved alongside the new
+		// version. For the removal case we leave it out so validation sees the deletion.
 		if isMissing {
+			var hasReplacement bool
 			for _, newCol := range newCollections {
 				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
 					existingCol.IsActive = false
+					hasReplacement = true
 					break
 				}
 			}
-			newCollections = append(newCollections, existingCol)
+			if hasReplacement {
+				newCollections = append(newCollections, existingCol)
+			}
 		}
 	}
 
@@ -334,14 +330,14 @@ existingVersionLoop:
 			continue
 		}
 
-		err := description.SaveCollection(ctx, col)
+		err := description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
 			return err
 		}
 
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
-				txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
+				txnOpt := datastore.CtxTryGetTxnOption(ctx)
 				colObj, err := db.newCollection(col, txnOpt)
 				if err != nil {
 					return err
@@ -555,12 +551,12 @@ func (db *DB) setActiveCollectionVersion(
 	if versionID == "" {
 		return ErrCollectionVersionIDEmpty
 	}
-	col, err := description.GetCollectionByID(ctx, versionID)
+	col, err := description.GetCollectionByID(ctx, db.collectionRepository, versionID)
 	if err != nil {
 		return err
 	}
 
-	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, col.CollectionID)
+	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, col.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -575,7 +571,7 @@ func (db *DB) setActiveCollectionVersion(
 			}
 
 			col.IsActive = true
-			err = description.SaveCollection(ctx, col)
+			err = description.SaveCollection(ctx, db.collectionRepository, col)
 			if err != nil {
 				return err
 			}
@@ -590,7 +586,7 @@ func (db *DB) setActiveCollectionVersion(
 		}
 
 		col.IsActive = false
-		err = description.SaveCollection(ctx, col)
+		err = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
 			return err
 		}
@@ -623,7 +619,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	return description.HasMigrations(ctx, newActiveCol.CollectionID, newActiveCol.VersionID)
+	return description.HasMigrations(ctx, db.collectionRepository, newActiveCol.CollectionID, newActiveCol.VersionID)
 }
 
 func (db *DB) deleteCollectionVersions(
@@ -670,24 +666,12 @@ func (db *DB) deleteCollectionVersion(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) error {
-	hasDocs, err := collectionHasDocuments(ctx, version)
-	if err != nil {
-		return err
-	}
-	if hasDocs {
-		// If the collection contains any documents, we do not allow deletion of any version in the
-		// collection - they must first delete the documents locally, and then delete the collection.
-		//
-		// This is thought to be much safer than allowing document deletion along with the collection.
-		return NewErrCannotDeleteCollectionWithDocs(version.Name, version.VersionID)
-	}
-
-	err = validateCollectionDoesNotHaveHigherVersion(ctx, version)
+	err := db.validateCollectionDoesNotHaveHigherVersion(ctx, version)
 	if err != nil {
 		return err
 	}
 
-	err = description.DeleteCollection(ctx, db.lockSet, version)
+	err = description.DeleteCollection(ctx, db.collectionRepository, version)
 	if err != nil {
 		return err
 	}
@@ -700,53 +684,11 @@ func (db *DB) deleteCollectionVersion(
 	return nil
 }
 
-func collectionHasDocuments(
-	ctx context.Context,
-	version client.CollectionVersion,
-) (bool, error) {
-	if !version.IsMaterialized {
-		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
-		// state was properly disposed of (it should have been).
-		return false, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
-	if err != nil {
-		return false, err
-	}
-
-	var prefixKey keys.Key
-	if version.Query.HasValue() {
-		prefixKey = keys.NewViewCacheColPrefix(shortID)
-	} else {
-		prefixKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
-		}
-	}
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefixKey.ToDS(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return false, errors.Join(err, iter.Close())
-	}
-
-	hasValue, err := iter.Next()
-	if err != nil {
-		return false, errors.Join(err, iter.Close())
-	}
-
-	return hasValue, iter.Close()
-}
-
-func validateCollectionDoesNotHaveHigherVersion(
+func (db *DB) validateCollectionDoesNotHaveHigherVersion(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) error {
-	allVersions, err := description.GetCollectionsByCollectionID(ctx, version.CollectionID)
+	allVersions, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, version.CollectionID)
 	if err != nil {
 		return err
 	}

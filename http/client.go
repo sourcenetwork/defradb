@@ -74,26 +74,6 @@ func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
-func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	query := url.Values{}
-	if readOnly {
-		query.Add("read_only", "true")
-	}
-
-	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
-	methodURL.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var txRes CreateTxResponse
-	if err := c.http.requestJson(req, &txRes); err != nil {
-		return nil, err
-	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
-}
-
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.apiURL.JoinPath("backup", "import")
 
@@ -180,6 +160,30 @@ func (c *Client) PatchCollection(
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("collections")
+	q := methodURL.Query()
+	q.Set("name", strings.Join(names, ","))
+	if opt.ActiveOnly {
+		q.Set("active-only", "true")
+	}
+	methodURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}

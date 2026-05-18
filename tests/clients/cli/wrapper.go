@@ -423,6 +423,24 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	args := []string{"client", "collection", "delete"}
+
+	opt := utils.NewOptions(opts...)
+	if opt.ActiveOnly {
+		args = append(args, "--active-only")
+	}
+	args = append(args, strings.Join(names, ","))
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
@@ -739,29 +757,6 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "new"}
-	if readOnly {
-		args = append(args, "--read-only")
-	}
-
-	data, err := w.cmd.execute(context.Background(), args)
-	if err != nil {
-		return nil, err
-	}
-	var res http.CreateTxResponse
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
-}
-
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "new"}
-	args = append(args, "--concurrent")
-
 	if readOnly {
 		args = append(args, "--read-only")
 	}

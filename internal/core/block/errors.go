@@ -40,6 +40,22 @@ const (
 	errFailedToGetNextQResult             = "failed to get next query result"
 	errCouldNotGetEncKey                  = "could not get encryption key"
 	errUnsupportedKeyForSigning           = "unsupported key type for signing"
+	errDetermineBlockEncryption    string = "failed to determine block encryption"
+	errEncryptBlock                string = "failed to encrypt block"
+	errSignBlock                   string = "failed to sign block"
+	errStoreBlock                  string = "failed to store block"
+	errProcessBlock                string = "failed to process block"
+	errMarshalBlock                string = "failed to marshal block"
+	errGetEncryptionKey            string = "failed to get or generate encryption key"
+	errStoreEncryptionBlock        string = "failed to store encryption block"
+	errDecodePreviousBlock         string = "failed to decode previous block"
+	errDecodeEncryptionBlock       string = "failed to decode encryption block"
+	errEncryptBlockData            string = "failed to encrypt block data"
+	errWritingHead                 string = "failed to write head"
+	errCheckingIfIsHead            string = "failed to check if CID is head"
+	errDeletingHead                string = "failed to delete head"
+	errListingHeads                string = "failed to list heads"
+	errParsingHeadKey              string = "failed to parse head key"
 )
 
 // Errors returnable from this package.
@@ -157,4 +173,68 @@ func NewErrUnsupportedKeyForSigning(keyType crypto.KeyType) error {
 
 func NewErrMarkingAsMerged(cid cid.Cid, inner error) error {
 	return errors.WithStack(errors.Join(ErrMarkingAsMerged, inner), errors.NewKV("Cid", cid))
+}
+
+func NewErrDetermineBlockEncryption(inner error) error {
+	return errors.Wrap(errDetermineBlockEncryption, inner)
+}
+
+func NewErrEncryptBlock(inner error) error {
+	return errors.Wrap(errEncryptBlock, inner)
+}
+
+func NewErrSignBlock(inner error) error {
+	return errors.Wrap(errSignBlock, inner)
+}
+
+func NewErrStoreBlock(inner error) error {
+	return errors.Wrap(errStoreBlock, inner)
+}
+
+func NewErrProcessBlock(inner error) error {
+	return errors.Wrap(errProcessBlock, inner)
+}
+
+func NewErrMarshalBlock(inner error) error {
+	return errors.Wrap(errMarshalBlock, inner)
+}
+
+func NewErrGetEncryptionKey(inner error) error {
+	return errors.Wrap(errGetEncryptionKey, inner)
+}
+
+func NewErrStoreEncryptionBlock(inner error) error {
+	return errors.Wrap(errStoreEncryptionBlock, inner)
+}
+
+func NewErrDecodePreviousBlock(inner error) error {
+	return errors.Wrap(errDecodePreviousBlock, inner)
+}
+
+func NewErrDecodeEncryptionBlock(inner error) error {
+	return errors.Wrap(errDecodeEncryptionBlock, inner)
+}
+
+func NewErrEncryptBlockData(inner error) error {
+	return errors.Wrap(errEncryptBlockData, inner)
+}
+
+func NewErrWritingHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errWritingHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrCheckingIfIsHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errCheckingIfIsHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrDeletingHead(c cid.Cid, inner error) error {
+	return errors.Wrap(errDeletingHead, inner, errors.NewKV("CID", c))
+}
+
+func NewErrListingHeads(inner error) error {
+	return errors.Wrap(errListingHeads, inner)
+}
+
+func NewErrParsingHeadKey(inner error) error {
+	return errors.Wrap(errParsingHeadKey, inner)
 }

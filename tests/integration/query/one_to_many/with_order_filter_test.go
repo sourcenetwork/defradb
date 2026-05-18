@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingOnChild(
@@ -102,8 +101,6 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 
 func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChild(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -147,7 +144,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 			},
 			&action.Request{
 				Request: `query {
-					Author(filter: {published: {rating: {_gt: 4.1}}}) {
+					Author(filter: {published: {rating: {_gt: 4.1}}}, order: {age: ASC}) {
 						name
 						age
 						published(order: {rating: DESC}) {

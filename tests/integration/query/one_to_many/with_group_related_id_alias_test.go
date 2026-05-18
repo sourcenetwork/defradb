@@ -849,7 +849,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 						}
 					}
 				}`,
-				ExpectedError: "invalid field value to groupBy. Field: published",
+				ExpectedError: "cannot group by array or object field. Field: published",
 			},
 		},
 	}

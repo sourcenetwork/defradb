@@ -202,7 +202,12 @@ func (n *selectNode) Close() error {
 // checkForMigrations checks if there are any migrations registered for the given collection.
 // This is used to determine if the filter should be kept in selectNode for post-lens application.
 func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
-	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+	return description.HasMigrations(
+		n.planner.ctx,
+		n.planner.collectionRepository,
+		col.Version().CollectionID,
+		col.Version().VersionID,
+	)
 }
 
 func (n *selectNode) simpleExplain() (map[string]any, error) {
@@ -337,13 +342,18 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
-		result := selectIndex(selectIndexOptions{
-			collection: origScan.col,
-			filter:     origScan.filter,
-			ordering:   origScan.ordering,
-			docMapping: origScan.documentMapping,
-		})
-		origScan.index = result.index
+		// The VersionedFetcher (used when CIDs are present) operates on a temporary
+		// in-memory store that doesn't contain index data, so secondary index
+		// selection must be skipped for CID-based queries.
+		if !n.selectReq.Cids.HasValue() {
+			result := selectIndex(selectIndexOptions{
+				collection: origScan.col,
+				filter:     origScan.filter,
+				ordering:   origScan.ordering,
+				docMapping: origScan.documentMapping,
+			})
+			origScan.index = result.index
+		}
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 

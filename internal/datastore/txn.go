@@ -82,9 +82,13 @@ type Txn interface {
 type BasicTxn struct {
 	*Multistore
 
-	txn corekv.Txn
-	id  uint64
-	ts  time.Time // timestamp
+	// The raw underlying txn.
+	//
+	// This must be the exact concrete type that corekv expects, as it casts to the concrete type when
+	// fetching it from the context.
+	underlyingTxn corekv.Txn
+	id            uint64
+	ts            time.Time // timestamp
 
 	successFns []func()
 	errorFns   []func()
@@ -107,16 +111,21 @@ func NewTxnFrom(
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
+
 	return &BasicTxn{
-		Multistore: multistore,
-		txn:        rootTxn,
-		id:         id,
-		ts:         time.Now(),
+		Multistore:    multistore,
+		underlyingTxn: rootTxn,
+		id:            id,
+		ts:            time.Now(),
 	}
 }
 
+// The raw underlying txn.
+//
+// This must be the exact concrete type that corekv expects, as it casts to the concrete type when
+// fetching it from the context.
 func (t *BasicTxn) Txn() corekv.Txn {
-	return t.txn
+	return t.underlyingTxn
 }
 
 func (t *BasicTxn) ID() uint64 {
@@ -131,7 +140,7 @@ func (t *BasicTxn) Commit() error {
 	var fns []func()
 	var asyncFns []func()
 
-	err := t.txn.Commit()
+	err := t.underlyingTxn.Commit()
 	if err != nil {
 		fns = t.errorFns
 		asyncFns = t.errorAsyncFns
@@ -150,7 +159,7 @@ func (t *BasicTxn) Commit() error {
 }
 
 func (t *BasicTxn) Discard() {
-	t.txn.Discard()
+	t.underlyingTxn.Discard()
 
 	for _, fn := range t.discardAsyncFns {
 		go fn()
@@ -210,15 +219,15 @@ func CtxTryGetClientTxn(ctx context.Context) (client.Txn, bool) {
 	return txn, ok
 }
 
-// CtxTryGetClientTxnOption returns a immutable.Option[client.Txn] which wraps the
+// CtxTryGetTxnOption returns a immutable.Option[Txn] which wraps the
 // transaction present inside a context, if it exists, or None if it does not.
-func CtxTryGetClientTxnOption(ctx context.Context) immutable.Option[client.Txn] {
-	txn, gotTxn := CtxTryGetClientTxn(ctx)
-	var txnOpt immutable.Option[client.Txn]
+func CtxTryGetTxnOption(ctx context.Context) immutable.Option[Txn] {
+	txn, gotTxn := CtxTryGetTxn(ctx)
+	var txnOpt immutable.Option[Txn]
 	if gotTxn {
 		txnOpt = immutable.Some(txn)
 	} else {
-		txnOpt = immutable.None[client.Txn]()
+		txnOpt = immutable.None[Txn]()
 	}
 	return txnOpt
 }

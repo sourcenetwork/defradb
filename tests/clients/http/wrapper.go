@@ -292,6 +292,14 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	return w.client.DeleteCollection(ctx, names, opts...)
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
@@ -373,18 +381,6 @@ func (w *Wrapper) ExecRequest(
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	clientTxn, err := w.client.NewTxn(readOnly)
-	if err != nil {
-		return nil, err
-	}
-	serverTxn, err := w.handler.Transaction(clientTxn.ID())
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, serverTxn}, nil
-}
-
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	clientTxn, err := w.client.NewConcurrentTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}

@@ -98,10 +98,6 @@ func (s *definitionState) getCollection(
 		}
 
 		for _, col := range s.collections {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}
@@ -240,10 +236,20 @@ func validateRelationPointsToValidKind(
 				continue
 			}
 
-			_, ok := newState.getCollection(col, field.Kind)
-			if !ok {
-				errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
+			if _, ok := newState.getCollection(col, field.Kind); ok {
+				continue
 			}
+
+			// The kind cannot be resolved in the new state. If it could be resolved in the
+			// old state then the patch is removing a collection that another field still
+			// references; surface that with a more specific error so the caller knows what
+			// they need to remove or repoint first.
+			if removed, wasPresent := oldState.getCollection(col, field.Kind); wasPresent {
+				errs = append(errs, NewErrRemoveReferencedCollectionFromField(removed.Name, col.Name, field.Name))
+				continue
+			}
+
+			errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
 		}
 	}
 
@@ -1163,7 +1169,7 @@ func validateVersionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "VersionID", col.VersionID))
 			continue
 		}
 
@@ -1197,7 +1203,7 @@ func validateCollectionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "CollectionID", col.CollectionID))
 			continue
 		}
 

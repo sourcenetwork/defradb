@@ -44,7 +44,7 @@ func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIden
 	}
 
 	fullIdent, ok := ident.Value().(identity.FullIdentity)
-	if !ok {
+	if !ok || fullIdent.PrivateKey() == nil {
 		return immutable.None[identity.FullIdentity]()
 	}
 

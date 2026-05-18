@@ -13,9 +13,8 @@ defradb client tx new [flags]
 ### Options
 
 ```
-      --concurrent   Transaction is concurrent
-  -h, --help         help for new
-      --read-only    Transaction is read only
+  -h, --help        help for new
+      --read-only   Transaction is read only
 ```
 
 ### Options inherited from parent commands

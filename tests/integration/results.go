@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	"github.com/stretchr/testify/assert"
@@ -234,6 +235,39 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
+}
+
+// ValidCID returns a matcher that passes if the actual value is a string
+// that parses as a valid CID.
+//
+// Use this instead of hard-coding a specific CID string in test results
+// when the test's intent is "a CID is returned", not "this exact CID is
+// returned". Hard-coded CIDs over-specify the test and break whenever
+// something changes block bytes (e.g. enabling signing via the
+// [multiplier.SignedDocs] test multiplier).
+func ValidCID() *validCID {
+	return &validCID{}
+}
+
+type validCID struct{}
+
+func (m *validCID) Match(actual any) (bool, error) {
+	s, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a CID string, got %T", actual)
+	}
+	if _, err := cid.Decode(s); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (m *validCID) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be a valid CID string", actual)
+}
+
+func (m *validCID) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a valid CID string", actual)
 }
 
 // areResultsAnyOf returns true if any of the expected results are of equal value.

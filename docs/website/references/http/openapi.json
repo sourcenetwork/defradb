@@ -673,9 +673,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -710,9 +707,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -745,9 +739,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -765,9 +756,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -785,9 +773,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -822,9 +807,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -857,9 +839,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -884,9 +863,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -914,9 +890,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -944,9 +917,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -992,9 +962,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1029,8 +996,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1076,8 +1043,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1086,6 +1053,38 @@
             }
         },
         "/collections": {
+            "delete": {
+                "description": "Delete one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names. By default every version of each named collection is deleted; set 'active-only=true' to delete only the active head version and keep earlier versions intact.",
+                "operationId": "delete_collection",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "active-only",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "describe_collection",
@@ -1146,9 +1145,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1173,9 +1169,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1210,9 +1203,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1239,9 +1229,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1272,9 +1259,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1309,9 +1293,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1357,9 +1338,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1403,9 +1381,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1453,8 +1428,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1492,8 +1467,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1536,8 +1511,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1573,8 +1548,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1613,9 +1588,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1660,8 +1632,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1700,8 +1672,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1740,9 +1712,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1787,8 +1756,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1826,8 +1795,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1856,9 +1825,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1876,9 +1842,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1909,9 +1872,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1962,9 +1922,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2013,9 +1970,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2045,9 +1999,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2080,9 +2031,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2107,9 +2055,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2137,9 +2082,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2170,9 +2112,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2198,9 +2137,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2229,9 +2165,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2270,9 +2203,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2314,9 +2244,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2333,9 +2260,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2366,9 +2290,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2394,9 +2315,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2425,9 +2343,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2472,9 +2387,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2498,9 +2410,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2528,9 +2437,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2556,9 +2462,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2584,9 +2487,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2602,11 +2502,8 @@
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
-                    "400": {
+                    "403": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 }
             }
@@ -2639,47 +2536,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "transaction"
-                ]
-            }
-        },
-        "/tx/concurrent": {
-            "post": {
-                "description": "Create a new concurrent transaction",
-                "operationId": "new_concurrent_transaction",
-                "parameters": [
-                    {
-                        "description": "Read only transaction",
-                        "in": "query",
-                        "name": "read_only",
-                        "schema": {
-                            "default": false,
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/create_tx"
-                                }
-                            }
-                        },
-                        "description": "Transaction info"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2709,8 +2565,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2738,8 +2594,11 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2784,9 +2643,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2838,9 +2694,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [

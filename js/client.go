@@ -41,6 +41,7 @@ func (c *Client) JSValue() js.Value {
 	return js.ValueOf(map[string]any{
 		"addCollection":              goji.Async(c.addCollection),
 		"patchCollection":            goji.Async(c.patchCollection),
+		"deleteCollection":           goji.Async(c.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(c.setActiveCollectionVersion),
 		"addView":                    goji.Async(c.addView),
 		"refreshViews":               goji.Async(c.refreshViews),
@@ -63,7 +64,6 @@ func (c *Client) JSValue() js.Value {
 		"deleteNACActorRelationship": goji.Async(c.deleteNACActorRelationship),
 		"getNodeIdentity":            goji.Async(c.getNodeIdentity),
 		"newTxn":                     goji.Async(c.newTxn),
-		"newConcurrentTxn":           goji.Async(c.newConcurrentTxn),
 		"verifySignature":            goji.Async(c.verifySignature),
 		"close":                      goji.Async(c.close),
 	})

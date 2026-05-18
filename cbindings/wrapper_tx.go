@@ -54,7 +54,6 @@ func (txn *Transaction) StartTS() time.Time {
 
 func (txn *Transaction) Commit() error {
 	res := ConvertAndFreeCResult(C.CommitTransaction(C.uintptr_t(txn.handle)))
-	txnHandleMap.Delete(txn.ID())
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
@@ -63,7 +62,6 @@ func (txn *Transaction) Commit() error {
 
 func (txn *Transaction) Discard() {
 	C.DiscardTransaction(C.uintptr_t(txn.handle))
-	txnHandleMap.Delete(txn.ID())
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -131,6 +129,15 @@ func (txn *Transaction) PatchCollection(
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
+}
+
+func (txn *Transaction) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.DeleteCollection(ctx, names, opts...)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(

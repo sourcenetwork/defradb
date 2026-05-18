@@ -14,6 +14,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"reflect"
@@ -45,7 +46,7 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
-	_ "github.com/sourcenetwork/defradb/tests/multiplier"
+	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -306,10 +307,23 @@ func executeTestCase(
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	loadCollectionVersions(s)
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, testCase, i, testCase.Actions[i])
+	}
+
+	// In the source phase of the change detector, persist the in-memory test
+	// state slices that templates depend on so the assert phase can resolve
+	// {{.CollectionVersionID<N>}} to the bytes the source side produced. See
+	// https://github.com/sourcenetwork/defradb/issues/4752 and the
+	// `change_detector` package for details.
+	if changeDetector.Enabled && changeDetector.SetupOnly {
+		err := changeDetector.WriteTestState(s.T, changeDetector.TestState{
+			CollectionVersions: s.CollectionVersions,
+		})
+		require.NoError(s.T, err)
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -420,9 +434,6 @@ func performAction(
 	case DeleteDoc:
 		deleteDoc(s, action)
 
-	case UpdateDoc:
-		updateDoc(s, action)
-
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
@@ -443,9 +454,6 @@ func performAction(
 
 	case ImportBackup:
 		importBackup(s, action)
-
-	case CommitTransaction:
-		commitTransaction(s, action)
 
 	case IntrospectionRequest:
 		assertIntrospectionResults(s, action)
@@ -748,6 +756,31 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	for i, idx := range actionIndices {
 		testCase.Actions[idx] = modified[i]
 	}
+
+	applyTestCaseLevelMultipliers(testCase, multiplier.Get())
+}
+
+// applyTestCaseLevelMultipliers mutates TestCase fields based on the given
+// comma-separated list of active multiplier names.
+//
+// Multipliers registered with testo can only modify actions via the
+// [multiplier.Multiplier] interface. Some multipliers need to flip
+// TestCase-level configuration instead (e.g. [SignedDocs] sets
+// [TestCase.EnableSigning]). Each case below is a documented exception that
+// cannot be expressed via action rewriting.
+//
+// The hook only upgrades values; it never downgrades. Tests that already
+// configure the flag explicitly are unaffected.
+//
+// activeNames is passed in rather than read from testo's package-level state
+// so this function is directly unit-testable.
+func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
+	for _, name := range strings.Split(activeNames, ",") {
+		switch strings.TrimSpace(name) {
+		case defraMultiplier.SignedDocs:
+			testCase.EnableSigning = true
+		}
+	}
 }
 
 // getActionRange returns the index of the first action to be run, and the last.
@@ -791,7 +824,7 @@ ActionLoop:
 			}
 			continue
 
-		case UpdateDoc:
+		case *action.UpdateDoc:
 			if concreteAction.TransactionID.HasValue() {
 				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
 			}
@@ -800,7 +833,7 @@ ActionLoop:
 		case Restart:
 			continue
 
-		case CommitTransaction:
+		case *action.CommitTransaction:
 			// If transaction is commited, remove it from the set we are tracking
 			delete(transactionIDset, concreteAction.TransactionID)
 			continue
@@ -958,6 +991,92 @@ func refreshTokens(
 			s.Identities[identKey] = identHolder
 		}
 	}
+}
+
+// loadCollectionVersions populates s.CollectionVersions so that
+// {{.CollectionVersionID<N>}} templates can be resolved against the same
+// strings the source side produced under the change detector.
+//
+// Falls back to seedCollectionVersionsFromState when the sidecar file is
+// missing, which happens with source branches that pre-date this mechanism
+// or tests without a setup phase.
+func loadCollectionVersions(s *state.State) {
+	if changeDetector.Enabled && !changeDetector.SetupOnly {
+		state, err := changeDetector.ReadTestState(s.T)
+		if err == nil {
+			s.CollectionVersions = state.CollectionVersions
+			return
+		}
+		if !errors.Is(err, fs.ErrNotExist) {
+			require.NoError(s.T, err)
+		}
+	}
+	seedCollectionVersionsFromState(s)
+}
+
+// seedCollectionVersionsFromState populates s.CollectionVersions by walking
+// the collection version history present in the on-disk database. It is the
+// fallback used by loadCollectionVersions when no source-phase sidecar file
+// is available — for example when the change detector source branch
+// pre-dates the sidecar mechanism, or the test has no setup phase.
+//
+// Versions are walked from oldest to newest via the PreviousVersion chain so
+// the indexing matches the order in which they were created.
+func seedCollectionVersionsFromState(s *state.State) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	node := s.Nodes[0]
+
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(0), 0)
+	getOpts := options.GetCollections().SetGetInactive(true)
+	if identOption.HasValue() {
+		getOpts.SetIdentity(identOption.Value())
+	}
+	allCols, err := node.GetCollections(s.Ctx, getOpts)
+	require.NoError(s.T, err)
+
+	colsByVersionID := make(map[string]client.Collection, len(allCols))
+	for _, col := range allCols {
+		colsByVersionID[col.Version().VersionID] = col
+	}
+
+	// For each active collection (canonical order in node.Collections), walk back
+	// the PreviousVersion chain to root, then append from root forward.
+	for _, active := range node.Collections {
+		if active == nil {
+			continue
+		}
+
+		var chain []string
+		current := active.Version()
+		for {
+			chain = append(chain, current.VersionID)
+			if !current.PreviousVersion.HasValue() {
+				break
+			}
+			prevID := current.PreviousVersion.Value().SourceCollectionID
+			prev, ok := colsByVersionID[prevID]
+			if !ok {
+				break
+			}
+			current = prev.Version()
+		}
+
+		for i := len(chain) - 1; i >= 0; i-- {
+			appendCollectionVersionID(s, chain[i])
+		}
+	}
+}
+
+// appendCollectionVersionID appends a collection version ID to s.CollectionVersions
+// if it is not already present.
+func appendCollectionVersionID(s *state.State, versionID string) {
+	if slices.Contains(s.CollectionVersions, versionID) {
+		return
+	}
+	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -1226,7 +1345,7 @@ func deleteDoc(
 
 		nodeID := nodeIDs[index]
 
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocument()
@@ -1255,197 +1374,6 @@ func deleteDoc(
 	}
 }
 
-// updateDoc updates a document using the chosen [state.ActiveMutationType].
-// Handles multi-node mutations with node-local transactions, and waits for update events safely.
-func updateDoc(
-	s *state.State,
-	a UpdateDoc,
-) {
-	var mutation func(
-		*state.State,
-		UpdateDoc,
-		client.TxnStore,
-		int,
-		client.Collection,
-		immutable.Option[client.Txn],
-	) error
-
-	switch state.ActiveMutationType {
-	case state.CollectionSaveMutationType:
-		mutation = updateDocViaColSave
-	case state.CollectionNamedMutationType:
-		mutation = updateDocViaColUpdate
-	case state.GQLRequestMutationType:
-		mutation = updateDocViaGQL
-	default:
-		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
-	var expectedErrorRaised bool
-	doNotWaitForUpdate := false
-	var err error
-
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-
-		txnOption := immutable.None[client.Txn]()
-		if a.TransactionID.HasValue() {
-			txn, err := s.GetTransaction(node, a.TransactionID)
-			require.NoError(s.T, err)
-			txnOption = immutable.Some(txn)
-			doNotWaitForUpdate = true // if using txn, we skip local update wait
-		}
-
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
-		collection := collections[a.CollectionID]
-
-		err = withRetryOnNode(node, func() error {
-			return mutation(s, a, node, nodeID, collection, txnOption)
-		})
-
-		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
-
-	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
-		waitForUpdateEvents(
-			s,
-			a.NodeID,
-			a.CollectionID,
-			getEventsForUpdateDoc(s, a),
-			immutable.None[state.Identity](),
-		)
-	}
-}
-
-func updateDocViaColSave(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	if txn.HasValue() {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	saveOpts := options.SaveDocument()
-	if identOption.HasValue() {
-		saveOpts.SetIdentity(identOption.Value())
-	}
-	return collection.SaveDocument(ctx, doc, saveOpts)
-}
-
-func updateDocViaColUpdate(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	if txn.HasValue() {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	updateOpts := options.UpdateDocument()
-	if identOption.HasValue() {
-		updateOpts.SetIdentity(identOption.Value())
-	}
-	return collection.UpdateDocument(ctx, doc, updateOpts)
-}
-
-func updateDocViaGQL(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-	txn immutable.Option[client.Txn],
-) error {
-	ctx := s.Ctx
-	hadTxn := txn.HasValue()
-	if hadTxn {
-		ctx = db.InitContext(s.Ctx, txn.Value())
-	}
-
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	input, err := jsonToGQL(action.Doc)
-	require.NoError(s.T, err)
-
-	request := fmt.Sprintf(
-		`mutation {
-			update_%s(docID: "%s", input: %s) {
-				_docID
-			}
-		}`,
-		collection.Name(),
-		docID.String(),
-		input,
-	)
-
-	reqOption := options.ExecRequest()
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	if identOption.HasValue() {
-		reqOption.SetIdentity(identOption.Value())
-	}
-
-	var result *client.RequestResult
-	if hadTxn {
-		result = txn.Value().ExecRequest(ctx, request, reqOption)
-	} else {
-		result = node.ExecRequest(ctx, request, reqOption)
-	}
-	if len(result.GQL.Errors) > 0 {
-		return result.GQL.Errors[0]
-	}
-	return nil
-}
-
 // updateWithFilter updates the set of matched documents.
 func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var res *client.UpdateResult
@@ -1470,7 +1398,7 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		}
 
 		nodeID := nodeIDs[index]
-		collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
@@ -1521,7 +1449,7 @@ func newEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -1585,7 +1513,7 @@ func listEncryptedIndexes(
 			txnOption = immutable.Some(txn)
 		}
 
-		var collections = action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		var collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(
@@ -1675,7 +1603,7 @@ func deleteEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.GetCanonicallyOrderedCollections(s, node, txnOption)
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -1814,26 +1742,6 @@ func getTransaction(
 	}
 
 	return s.Txns[transactionID]
-}
-
-// commitTransaction commits the given transaction.
-//
-// Will panic if the given transaction does not exist. Discards the transaction if
-// an error is returned on commit.
-func commitTransaction(
-	s *state.State,
-	a CommitTransaction,
-) {
-	err := s.Txns[a.TransactionID].Commit()
-	if err != nil {
-		s.Txns[a.TransactionID].Discard()
-	}
-
-	action.RefreshCollections(s)
-
-	expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected

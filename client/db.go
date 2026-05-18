@@ -36,12 +36,6 @@ type TxnStore interface {
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
 	NewTxn(readOnly bool) (Txn, error)
-
-	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
-	//
-	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
-	// can safely operate on it concurrently.
-	NewConcurrentTxn(readOnly bool) (Txn, error)
 }
 
 type Store interface {
@@ -209,6 +203,23 @@ type Store interface {
 		patch string,
 		migration immutable.Option[model.Lens],
 		opts ...options.Enumerable[options.PatchCollectionOptions],
+	) error
+
+	// DeleteCollection deletes the active versions of the collections with the given names.
+	//
+	// All names are removed atomically in a single patch; if any removal leaves the schema
+	// in an invalid state (e.g. one of the remaining collections still references a deleted
+	// one via a relation) the entire operation is rolled back.
+	//
+	// Only the latest (head) version of each named collection is deleted per call. If a
+	// collection has multiple versions, earlier versions must be deleted separately after
+	// each head is removed.
+	//
+	// It will error if any named collection contains documents - they must be deleted first.
+	DeleteCollection(
+		ctx context.Context,
+		names []string,
+		opts ...options.Enumerable[options.DeleteCollectionOptions],
 	) error
 
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all

@@ -331,6 +331,21 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	namesVal, err := goji.MarshalJS(names)
+	if err != nil {
+		return err
+	}
+	_, err = execute(ctx, w.value, "deleteCollection", namesVal, opt.ActiveOnly)
+	return err
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
@@ -555,20 +570,6 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	res, err := execute(context.Background(), w.value, "newTxn", readOnly)
-	if err != nil {
-		return nil, err
-	}
-	client := res[0]
-	id := uint64(client.Get("id").Int())
-	txn, err := w.client.Transaction(id)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, txn}, nil
-}
-
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	res, err := execute(context.Background(), w.value, "newConcurrentTxn", readOnly)
 	if err != nil {
 		return nil, err
 	}
