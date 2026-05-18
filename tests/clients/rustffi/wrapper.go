@@ -2899,7 +2899,7 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 	switch f := filter.(type) {
 	case string:
 		if f == "" {
-			return nil, fmt.Errorf("invalid filter")
+			return nil, fmt.Errorf("filter cannot be empty")
 		}
 		// String filters may be in relaxed JSON/GQL format (unquoted keys).
 		// Try parsing as JSON first; if that fails, use as-is (GQL format).
