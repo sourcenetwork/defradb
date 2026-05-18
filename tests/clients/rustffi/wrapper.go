@@ -975,6 +975,41 @@ func (w *Wrapper) PatchCollection(
 	return w.patchCollection(identityDID, patch, migration)
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	patch, err := buildDeleteCollectionPatch(
+		names,
+		opt.ActiveOnly,
+		func(name string) (client.Collection, error) {
+			getOpts := options.GetCollectionByName()
+			if ident.HasValue() {
+				getOpts.SetIdentity(ident.Value())
+			}
+			return w.GetCollectionByName(ctx, client.CollectionName(name), getOpts)
+		},
+		func(collectionID string) ([]client.Collection, error) {
+			getOpts := options.GetCollections().
+				SetCollectionID(collectionID).
+				SetGetInactive(true)
+			if ident.HasValue() {
+				getOpts.SetIdentity(ident.Value())
+			}
+			return w.GetCollections(ctx, getOpts)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return w.patchCollection(identityDIDFromOption(ident), patch, immutable.None[lensmodel.Lens]())
+}
+
 func (w *Wrapper) patchCollection(
 	identityDID string,
 	patch string,
@@ -1088,6 +1123,9 @@ func (w *Wrapper) patchCollection(
 	if err != nil {
 		return err
 	}
+	if err := w.validateCollectionRemovals(identityDID, removeVersionIDs); err != nil {
+		return err
+	}
 
 	// Build a set of version IDs being deleted, so we can skip mods targeting them.
 	// In Go's global dict model, if an entry is both modified and removed, the remove wins.
@@ -1189,6 +1227,178 @@ func (w *Wrapper) applyPatchGroups(
 		}
 	}
 	return nil
+}
+
+func buildDeleteCollectionPatch(
+	names []string,
+	activeOnly bool,
+	getByName func(string) (client.Collection, error),
+	getByCollectionID func(string) ([]client.Collection, error),
+) (string, error) {
+	if len(names) == 0 {
+		return "", client.ErrCollectionNameRequired
+	}
+
+	seen := make(map[string]struct{}, len(names))
+	ops := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		col, err := getByName(name)
+		if err != nil {
+			return "", err
+		}
+
+		if activeOnly {
+			ops = append(ops, deleteCollectionPatchOp(col.VersionID()))
+			continue
+		}
+
+		versions, err := getByCollectionID(col.CollectionID())
+		if err != nil {
+			return "", err
+		}
+		for _, version := range versions {
+			ops = append(ops, deleteCollectionPatchOp(version.VersionID()))
+		}
+	}
+
+	return "[" + strings.Join(ops, ",") + "]", nil
+}
+
+func deleteCollectionPatchOp(versionID string) string {
+	return fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, versionID)
+}
+
+func (w *Wrapper) collectionVersions(identityDID string) ([]client.CollectionVersion, error) {
+	collectionsJSON, err := w.node.GetCollections(identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	var versions []client.CollectionVersion
+	if err := json.Unmarshal([]byte(collectionsJSON), &versions); err != nil {
+		return nil, fmt.Errorf("failed to parse collections: %w", err)
+	}
+	return versions, nil
+}
+
+func (w *Wrapper) validateCollectionRemovals(identityDID string, removeVersionIDs []string) error {
+	if len(removeVersionIDs) == 0 {
+		return nil
+	}
+
+	collections, err := w.collectionVersions(identityDID)
+	if err != nil {
+		return err
+	}
+
+	removed := make(map[string]struct{}, len(removeVersionIDs))
+	for _, versionID := range removeVersionIDs {
+		removed[versionID] = struct{}{}
+	}
+
+	remaining := make([]client.CollectionVersion, 0, len(collections))
+	for _, collection := range collections {
+		if _, ok := removed[collection.VersionID]; ok {
+			continue
+		}
+		remaining = append(remaining, collection)
+	}
+
+	oldState := newCollectionDefinitionState(collections)
+	newState := newCollectionDefinitionState(remaining)
+	for _, collection := range remaining {
+		for _, field := range collection.Fields {
+			if !field.Kind.IsObject() {
+				continue
+			}
+			if _, ok := newState.getCollection(collection, field.Kind); ok {
+				continue
+			}
+			if _, ok := oldState.getCollection(collection, field.Kind); ok {
+				return fmt.Errorf("cannot remove a collection while another field references it")
+			}
+		}
+	}
+
+	return nil
+}
+
+type collectionDefinitionState struct {
+	collections              []client.CollectionVersion
+	collectionsByID          map[string]client.CollectionVersion
+	activeCollectionsByName  map[string]client.CollectionVersion
+	activeCollectionsByColID map[string]client.CollectionVersion
+}
+
+func newCollectionDefinitionState(collections []client.CollectionVersion) collectionDefinitionState {
+	state := collectionDefinitionState{
+		collections:              collections,
+		collectionsByID:          map[string]client.CollectionVersion{},
+		activeCollectionsByName:  map[string]client.CollectionVersion{},
+		activeCollectionsByColID: map[string]client.CollectionVersion{},
+	}
+
+	for _, collection := range collections {
+		if collection.IsActive {
+			state.activeCollectionsByName[collection.Name] = collection
+			state.activeCollectionsByColID[collection.CollectionID] = collection
+		}
+		if collection.VersionID != "" {
+			state.collectionsByID[collection.VersionID] = collection
+		}
+	}
+
+	return state
+}
+
+func (s collectionDefinitionState) getCollection(
+	host client.CollectionVersion,
+	kind client.FieldKind,
+) (client.CollectionVersion, bool) {
+	switch typedKind := kind.(type) {
+	case *client.NamedKind:
+		if collection, ok := s.activeCollectionsByName[typedKind.Name]; ok {
+			return collection, true
+		}
+		for _, collection := range s.collections {
+			if collection.Name == typedKind.Name {
+				return collection, true
+			}
+		}
+	case *client.CollectionKind:
+		if collection, ok := s.activeCollectionsByColID[typedKind.CollectionID]; ok {
+			return collection, true
+		}
+		collection, ok := s.collectionsByID[typedKind.CollectionID]
+		return collection, ok
+	case *client.SelfKind:
+		if typedKind.RelativeID == "" {
+			return host, true
+		}
+		if !host.CollectionSet.HasValue() {
+			return client.CollectionVersion{}, false
+		}
+		hostSet := host.CollectionSet.Value()
+		for _, collection := range s.collections {
+			if !collection.CollectionSet.HasValue() {
+				continue
+			}
+			collectionSet := collection.CollectionSet.Value()
+			if collectionSet.CollectionSetID != hostSet.CollectionSetID {
+				continue
+			}
+			if fmt.Sprint(collectionSet.RelativeID) == typedKind.RelativeID {
+				return collection, true
+			}
+		}
+	}
+
+	return client.CollectionVersion{}, false
 }
 
 // resolveRemoveTargets resolves collection names or version IDs to version IDs.
@@ -2064,6 +2274,46 @@ func (t *TxnWrapper) PatchCollection(
 		identityDID: identityDIDFromOption(opt.GetIdentity()),
 		patch:       patch,
 		migration:   migration,
+	})
+	return nil
+}
+
+func (t *TxnWrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	patch, err := buildDeleteCollectionPatch(
+		names,
+		opt.ActiveOnly,
+		func(name string) (client.Collection, error) {
+			getOpts := options.GetCollectionByName()
+			if ident.HasValue() {
+				getOpts.SetIdentity(ident.Value())
+			}
+			return t.GetCollectionByName(ctx, client.CollectionName(name), getOpts)
+		},
+		func(collectionID string) ([]client.Collection, error) {
+			getOpts := options.GetCollections().
+				SetCollectionID(collectionID).
+				SetGetInactive(true)
+			if ident.HasValue() {
+				getOpts.SetIdentity(ident.Value())
+			}
+			return t.GetCollections(ctx, getOpts)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
+		identityDID: identityDIDFromOption(ident),
+		patch:       patch,
+		migration:   immutable.None[lensmodel.Lens](),
 	})
 	return nil
 }
