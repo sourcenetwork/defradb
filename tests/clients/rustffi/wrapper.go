@@ -141,8 +141,9 @@ type Wrapper struct {
 }
 
 type rustFFIP2PRegistryEntry struct {
-	w     *Wrapper
-	addrs []string
+	w           *Wrapper
+	addrs       []string
+	identityDID string
 }
 
 type rustFFIP2PRegistry struct {
@@ -228,6 +229,11 @@ func (r *rustFFIP2PRegistry) registerLocked(w *Wrapper, addrs []string) []string
 		entry := r.entries[peerID]
 		if w != nil {
 			entry.w = w
+			if w.nodeIdentityRaw != nil {
+				entry.identityDID = w.nodeIdentityRaw.DID
+			} else {
+				entry.identityDID = ""
+			}
 		}
 		entry.addrs = mergeAddrs(entry.addrs, peerAddrs)
 		r.entries[peerID] = entry
@@ -264,7 +270,7 @@ func (r *rustFFIP2PRegistry) unregister(w *Wrapper) {
 	}
 }
 
-func (r *rustFFIP2PRegistry) meshTargets(w *Wrapper, sourceAddrs []string, targetAddrs []string) []rustFFIP2PRegistryEntry {
+func (r *rustFFIP2PRegistry) meshComponent(w *Wrapper, sourceAddrs []string, targetAddrs []string) []rustFFIP2PRegistryEntry {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -280,19 +286,20 @@ func (r *rustFFIP2PRegistry) meshTargets(w *Wrapper, sourceAddrs []string, targe
 	}
 
 	sourceRoot := r.find(sourcePeerID)
-	targets := make([]rustFFIP2PRegistryEntry, 0)
+	component := make([]rustFFIP2PRegistryEntry, 0)
 	for peerID, entry := range r.entries {
-		if peerID == sourcePeerID || entry.w == nil || len(entry.addrs) == 0 {
+		if entry.w == nil || len(entry.addrs) == 0 {
 			continue
 		}
 		if r.find(peerID) == sourceRoot {
-			targets = append(targets, rustFFIP2PRegistryEntry{
-				w:     entry.w,
-				addrs: append([]string(nil), entry.addrs...),
+			component = append(component, rustFFIP2PRegistryEntry{
+				w:           entry.w,
+				addrs:       append([]string(nil), entry.addrs...),
+				identityDID: entry.identityDID,
 			})
 		}
 	}
-	return targets
+	return component
 }
 
 // SourceHubConfig holds SourceHub connection info for Rust FFI nodes.
@@ -2025,9 +2032,18 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 
 	if sourceAddrs, err := w.node.P2PPeerInfo(identityDID); err == nil {
 		globalRustFFIP2PRegistry.register(w, sourceAddrs)
-		for _, target := range globalRustFFIP2PRegistry.meshTargets(w, sourceAddrs, addresses) {
-			for _, addr := range target.addrs {
-				_ = w.node.P2PConnect(identityDID, addr)
+		component := globalRustFFIP2PRegistry.meshComponent(w, sourceAddrs, addresses)
+		for _, source := range component {
+			if source.w == nil || source.w.node == nil {
+				continue
+			}
+			for _, target := range component {
+				if source.w == target.w {
+					continue
+				}
+				for _, addr := range target.addrs {
+					_ = source.w.node.P2PConnect(source.identityDID, addr)
+				}
 			}
 		}
 	}
