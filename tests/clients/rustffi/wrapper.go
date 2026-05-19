@@ -1417,6 +1417,10 @@ func (w *Wrapper) resolveRemoveTargets(identityDID string, targets []string) ([]
 		}
 		// Not a collection name — check if it looks like a version ID (CID).
 		if strings.HasPrefix(target, "bafyrei") || strings.HasPrefix(target, "bafkrei") {
+			if mapped, ok := w.resolveMissingViewVersionTarget(identityDID, target); ok {
+				versionIDs = append(versionIDs, mapped)
+				continue
+			}
 			versionIDs = append(versionIDs, target)
 			continue
 		}
@@ -1424,6 +1428,30 @@ func (w *Wrapper) resolveRemoveTargets(identityDID string, targets []string) ([]
 		return nil, fmt.Errorf("unable to remove nonexistent key")
 	}
 	return versionIDs, nil
+}
+
+func (w *Wrapper) resolveMissingViewVersionTarget(identityDID string, target string) (string, bool) {
+	collections, err := w.collectionVersions(identityDID)
+	if err != nil {
+		return "", false
+	}
+
+	for _, collection := range collections {
+		if collection.VersionID == target {
+			return target, true
+		}
+	}
+
+	candidates := make([]string, 0, 1)
+	for _, collection := range collections {
+		if collection.IsActive && collection.Query.HasValue() && collection.VersionID != "" {
+			candidates = append(candidates, collection.VersionID)
+		}
+	}
+	if len(candidates) != 1 {
+		return "", false
+	}
+	return candidates[0], true
 }
 
 // resolveToVersionID resolves a collection name to its active version ID,
@@ -2270,8 +2298,12 @@ func (t *TxnWrapper) PatchCollection(
 	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	if err := t.validateImmediatePatchCollection(ctx, identityDID, patch); err != nil {
+		return err
+	}
 	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
-		identityDID: identityDIDFromOption(opt.GetIdentity()),
+		identityDID: identityDID,
 		patch:       patch,
 		migration:   migration,
 	})
@@ -2316,6 +2348,107 @@ func (t *TxnWrapper) DeleteCollection(
 		migration:   immutable.None[lensmodel.Lens](),
 	})
 	return nil
+}
+
+func (t *TxnWrapper) rawCollectionsInTxn(identityDID string) ([]client.CollectionVersion, error) {
+	responseJSON, err := t.wrapper.node.GetCollectionsInTxn(t.txn.id, identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	var versions []client.CollectionVersion
+	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
+		return nil, fmt.Errorf("failed to parse collections: %w", err)
+	}
+	return versions, nil
+}
+
+func (t *TxnWrapper) validateImmediatePatchCollection(
+	ctx context.Context,
+	identityDID string,
+	patch string,
+) error {
+	removeTargets, err := collectionLevelRemoveTargets(patch)
+	if err != nil || len(removeTargets) == 0 {
+		return err
+	}
+
+	txnVersions, err := t.rawCollectionsInTxn(identityDID)
+	if err != nil {
+		return err
+	}
+
+	for _, target := range removeTargets {
+		version, ok := findCollectionVersion(txnVersions, target)
+		if !ok {
+			continue
+		}
+		hasDocs, err := t.collectionHasDocumentsInTxn(ctx, version.Name)
+		if err != nil {
+			continue
+		}
+		if hasDocs {
+			return fmt.Errorf("cannot delete a collection that has documents")
+		}
+	}
+
+	return nil
+}
+
+func (t *TxnWrapper) collectionHasDocumentsInTxn(ctx context.Context, collectionName string) (bool, error) {
+	result := t.ExecRequest(ctx, fmt.Sprintf("query { %s { _docID } }", collectionName))
+	if len(result.GQL.Errors) > 0 {
+		return false, result.GQL.Errors[0]
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return false, nil
+	}
+	items, ok := data[collectionName].([]any)
+	return ok && len(items) > 0, nil
+}
+
+func collectionLevelRemoveTargets(patch string) ([]string, error) {
+	type patchOp struct {
+		Op   string `json:"op"`
+		Path string `json:"path"`
+	}
+
+	var ops []patchOp
+	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
+		return nil, err
+	}
+
+	targets := make([]string, 0)
+	for _, op := range ops {
+		if op.Op != "remove" {
+			continue
+		}
+		target := strings.TrimPrefix(op.Path, "/")
+		if target == "" || strings.Contains(target, "/") {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	return targets, nil
+}
+
+func findCollectionVersion(
+	versions []client.CollectionVersion,
+	nameOrVersionID string,
+) (client.CollectionVersion, bool) {
+	for _, version := range versions {
+		if version.VersionID == nameOrVersionID {
+			return version, true
+		}
+	}
+	for _, version := range versions {
+		if version.Name == nameOrVersionID && version.IsActive {
+			return version, true
+		}
+	}
+	return client.CollectionVersion{}, false
 }
 
 func (t *TxnWrapper) ListIndexes(
