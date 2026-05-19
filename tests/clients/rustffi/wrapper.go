@@ -2039,6 +2039,7 @@ type TxnWrapper struct {
 	stagedRefreshes         []stagedRefreshViews
 	stagedIndexOps          []stagedIndexOp
 	stagedEncryptedIndexOps []stagedEncryptedIndexOp
+	stagedInactiveVersions  map[string]struct{}
 }
 
 type stagedPatchCollection struct {
@@ -2253,6 +2254,7 @@ func (t *TxnWrapper) GetCollections(
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse collections: %w", err)
 	}
+	t.applyStagedCollectionState(versions)
 
 	// Apply filters
 	includeInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
@@ -2302,6 +2304,7 @@ func (t *TxnWrapper) PatchCollection(
 	if err := t.validateImmediatePatchCollection(ctx, identityDID, patch); err != nil {
 		return err
 	}
+	t.recordStagedCollectionState(identityDID, patch)
 	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
 		identityDID: identityDID,
 		patch:       patch,
@@ -2361,6 +2364,57 @@ func (t *TxnWrapper) rawCollectionsInTxn(identityDID string) ([]client.Collectio
 		return nil, fmt.Errorf("failed to parse collections: %w", err)
 	}
 	return versions, nil
+}
+
+func (t *TxnWrapper) applyStagedCollectionState(versions []client.CollectionVersion) {
+	if len(t.stagedInactiveVersions) == 0 {
+		return
+	}
+	for i := range versions {
+		if _, ok := t.stagedInactiveVersions[versions[i].VersionID]; ok {
+			versions[i].IsActive = false
+		}
+	}
+}
+
+func (t *TxnWrapper) recordStagedCollectionState(identityDID string, patch string) {
+	type patchOp struct {
+		Op    string          `json:"op"`
+		Path  string          `json:"path"`
+		Value json.RawMessage `json:"value"`
+	}
+
+	var ops []patchOp
+	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
+		return
+	}
+
+	var txnVersions []client.CollectionVersion
+	for _, op := range ops {
+		if op.Op != "replace" || !strings.HasSuffix(op.Path, "/IsActive") {
+			continue
+		}
+		var isActive bool
+		if err := json.Unmarshal(op.Value, &isActive); err != nil || isActive {
+			continue
+		}
+		if txnVersions == nil {
+			var err error
+			txnVersions, err = t.rawCollectionsInTxn(identityDID)
+			if err != nil {
+				return
+			}
+		}
+		target := strings.TrimPrefix(strings.TrimSuffix(op.Path, "/IsActive"), "/")
+		version, ok := findCollectionVersion(txnVersions, target)
+		if !ok {
+			continue
+		}
+		if t.stagedInactiveVersions == nil {
+			t.stagedInactiveVersions = make(map[string]struct{})
+		}
+		t.stagedInactiveVersions[version.VersionID] = struct{}{}
+	}
 }
 
 func (t *TxnWrapper) validateImmediatePatchCollection(
