@@ -140,6 +140,161 @@ type Wrapper struct {
 	nodeIdentityRaw *identity.PublicRawIdentity // Cached node identity (with PublicKey) for GetNodeIdentity
 }
 
+type rustFFIP2PRegistryEntry struct {
+	w     *Wrapper
+	addrs []string
+}
+
+type rustFFIP2PRegistry struct {
+	mu      sync.Mutex
+	entries map[string]rustFFIP2PRegistryEntry
+	parent  map[string]string
+}
+
+var globalRustFFIP2PRegistry = &rustFFIP2PRegistry{
+	entries: make(map[string]rustFFIP2PRegistryEntry),
+	parent:  make(map[string]string),
+}
+
+func peerIDFromP2PAddr(addr string) (string, bool) {
+	parts := strings.Split(addr, "/p2p/")
+	if len(parts) < 2 {
+		return "", false
+	}
+	peerID := parts[len(parts)-1]
+	if index := strings.Index(peerID, "/"); index >= 0 {
+		peerID = peerID[:index]
+	}
+	return peerID, peerID != ""
+}
+
+func addrsByPeerID(addrs []string) map[string][]string {
+	result := make(map[string][]string)
+	for _, addr := range addrs {
+		peerID, ok := peerIDFromP2PAddr(addr)
+		if !ok {
+			continue
+		}
+		result[peerID] = append(result[peerID], addr)
+	}
+	return result
+}
+
+func mergeAddrs(existing []string, additions []string) []string {
+	seen := make(map[string]struct{}, len(existing)+len(additions))
+	result := make([]string, 0, len(existing)+len(additions))
+	for _, addr := range existing {
+		if _, ok := seen[addr]; ok {
+			continue
+		}
+		seen[addr] = struct{}{}
+		result = append(result, addr)
+	}
+	for _, addr := range additions {
+		if _, ok := seen[addr]; ok {
+			continue
+		}
+		seen[addr] = struct{}{}
+		result = append(result, addr)
+	}
+	return result
+}
+
+func (r *rustFFIP2PRegistry) find(peerID string) string {
+	parent, ok := r.parent[peerID]
+	if !ok {
+		r.parent[peerID] = peerID
+		return peerID
+	}
+	if parent == peerID {
+		return peerID
+	}
+	root := r.find(parent)
+	r.parent[peerID] = root
+	return root
+}
+
+func (r *rustFFIP2PRegistry) union(left string, right string) {
+	leftRoot := r.find(left)
+	rightRoot := r.find(right)
+	if leftRoot != rightRoot {
+		r.parent[rightRoot] = leftRoot
+	}
+}
+
+func (r *rustFFIP2PRegistry) registerLocked(w *Wrapper, addrs []string) []string {
+	peerIDs := make([]string, 0, 1)
+	for peerID, peerAddrs := range addrsByPeerID(addrs) {
+		entry := r.entries[peerID]
+		if w != nil {
+			entry.w = w
+		}
+		entry.addrs = mergeAddrs(entry.addrs, peerAddrs)
+		r.entries[peerID] = entry
+		r.find(peerID)
+		peerIDs = append(peerIDs, peerID)
+	}
+	sort.Strings(peerIDs)
+	return peerIDs
+}
+
+func (r *rustFFIP2PRegistry) register(w *Wrapper, addrs []string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.registerLocked(w, addrs)
+}
+
+func (r *rustFFIP2PRegistry) unregister(w *Wrapper) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for peerID, entry := range r.entries {
+		if entry.w == w {
+			delete(r.entries, peerID)
+			delete(r.parent, peerID)
+		}
+	}
+	for peerID, parent := range r.parent {
+		if _, ok := r.entries[peerID]; !ok {
+			delete(r.parent, peerID)
+			continue
+		}
+		if _, ok := r.entries[parent]; !ok {
+			r.parent[peerID] = peerID
+		}
+	}
+}
+
+func (r *rustFFIP2PRegistry) meshTargets(w *Wrapper, sourceAddrs []string, targetAddrs []string) []rustFFIP2PRegistryEntry {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	sourcePeerIDs := r.registerLocked(w, sourceAddrs)
+	targetPeerIDs := r.registerLocked(nil, targetAddrs)
+	if len(sourcePeerIDs) == 0 {
+		return nil
+	}
+
+	sourcePeerID := sourcePeerIDs[0]
+	for _, targetPeerID := range targetPeerIDs {
+		r.union(sourcePeerID, targetPeerID)
+	}
+
+	sourceRoot := r.find(sourcePeerID)
+	targets := make([]rustFFIP2PRegistryEntry, 0)
+	for peerID, entry := range r.entries {
+		if peerID == sourcePeerID || entry.w == nil || len(entry.addrs) == 0 {
+			continue
+		}
+		if r.find(peerID) == sourceRoot {
+			targets = append(targets, rustFFIP2PRegistryEntry{
+				w:     entry.w,
+				addrs: append([]string(nil), entry.addrs...),
+			})
+		}
+	}
+	return targets
+}
+
 // SourceHubConfig holds SourceHub connection info for Rust FFI nodes.
 type SourceHubConfig struct {
 	GRPCAddress     string
@@ -538,6 +693,7 @@ func (w *Wrapper) Close() {
 		w.stopMergePoller = nil
 	}
 	if w.node != nil {
+		globalRustFFIP2PRegistry.unregister(w)
 		_ = w.node.Close()
 		w.node = nil
 	}
@@ -1847,6 +2003,7 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[optio
 		// Return empty addresses when P2P is not enabled
 		return []string{}, nil
 	}
+	globalRustFFIP2PRegistry.register(w, addrs)
 	return addrs, nil
 }
 
@@ -1863,6 +2020,15 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	for _, addr := range addresses {
 		if err := w.node.P2PConnect(identityDID, addr); err != nil {
 			return err
+		}
+	}
+
+	if sourceAddrs, err := w.node.P2PPeerInfo(identityDID); err == nil {
+		globalRustFFIP2PRegistry.register(w, sourceAddrs)
+		for _, target := range globalRustFFIP2PRegistry.meshTargets(w, sourceAddrs, addresses) {
+			for _, addr := range target.addrs {
+				_ = w.node.P2PConnect(identityDID, addr)
+			}
 		}
 	}
 
