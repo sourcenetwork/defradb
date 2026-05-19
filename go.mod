@@ -50,7 +50,7 @@ require (
 	github.com/sourcenetwork/corekv/namespace v0.3.1
 	github.com/sourcenetwork/corelog v0.0.9
 	github.com/sourcenetwork/go-p2p v0.1.9
-	github.com/sourcenetwork/goji v0.0.9
+	github.com/sourcenetwork/goji v0.0.10
 	github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.10.0
