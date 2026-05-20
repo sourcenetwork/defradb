@@ -557,6 +557,68 @@ func (c *collection) validateRelationDocIDs(ctx context.Context, doc *client.Doc
 	return nil
 }
 
+// validateMergeRelationDocIDs is the P2P-merge variant of validateRelationDocIDs.
+// It performs the same checks but treats a missing target document as a skip rather
+// than an error, because the referenced document may simply not have arrived yet.
+func (c *collection) validateMergeRelationDocIDs(ctx context.Context, doc *client.Document) error {
+	for field, value := range doc.Values() {
+		fieldName := field.Name()
+		fd, ok := c.Version().GetFieldByName(fieldName)
+		if !ok || fd.Kind != client.FieldKind_DocID || !fd.IsPrimary {
+			continue
+		}
+
+		docIDStr, ok := value.Value().(string)
+		if !ok || docIDStr == "" {
+			continue
+		}
+
+		targetDocID, err := client.NewDocIDFromString(docIDStr)
+		if err != nil {
+			continue
+		}
+
+		objFieldName, ok := request.ToRelatedObjectName(fieldName)
+		if !ok {
+			continue
+		}
+
+		objFd, ok := c.Version().GetFieldByName(objFieldName)
+		if !ok {
+			continue
+		}
+
+		targetColVersion, found, err := description.GetRelatedCollection(
+			ctx, c.db.collectionRepository, c.Version(), objFd.Kind,
+		)
+		if err != nil || !found {
+			continue
+		}
+
+		var targetCol *collection
+		if targetColVersion.VersionID == c.Version().VersionID {
+			targetCol = c
+		} else {
+			targetCol, err = c.db.newCollection(targetColVersion, immutable.None[datastore.Txn]())
+			if err != nil {
+				continue
+			}
+		}
+
+		primaryKey, err := targetCol.getPrimaryKeyFromDocID(ctx, targetDocID)
+		if err != nil {
+			continue
+		}
+
+		exists, err := targetCol.docExistsAndNotDeleted(ctx, primaryKey)
+		if err != nil || !exists {
+			// Skip: the referenced doc may not have arrived yet via P2P.
+			continue
+		}
+	}
+	return nil
+}
+
 // save saves the document state. save MUST not be called outside the `c.add`
 // and `c.update` methods as we wrap the acp logic within those methods. Calling
 // save elsewhere could cause the omission of acp checks.

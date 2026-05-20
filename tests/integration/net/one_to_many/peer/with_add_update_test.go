@@ -128,3 +128,84 @@ func TestP2POneToManyPeerWithAddUpdateLinkingSyncedDocToUnsyncedDoc(t *testing.T
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestP2POneToManyPeerWithAddUpdateRelationValidation_NoError asserts that a P2P merge
+// for a document whose relation target is present locally succeeds without error.
+func TestP2POneToManyPeerWithAddUpdateRelationValidation_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Author {
+						Name: String
+						Books: [Book]
+					}
+					type Book {
+						Name: String
+						Author: Author
+					}
+				`,
+			},
+			&action.AddDoc{
+				// Create Saadi on all nodes
+				CollectionID: 0,
+				Doc: `{
+					"Name": "Saadi"
+				}`,
+			},
+			&action.AddDoc{
+				// Create Gulistan on all nodes
+				CollectionID: 1,
+				Doc: `{
+					"Name": "Gulistan"
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.AddDocumentSubscription{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(1, 0),
+				},
+			},
+			&action.UpdateDoc{
+				// Link Gulistan to Saadi on node 0; Saadi already exists on node 1
+				// so the merged relation on node 1 can be validated successfully.
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				DocID:        0,
+				Doc: `{
+					"_AuthorID": "bae-9ace7ed9-8229-5d2f-9e30-ffd5d2c84406"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Book {
+						Name
+						Author {
+							Name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"Name": "Gulistan",
+							"Author": map[string]any{
+								"Name": "Saadi",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

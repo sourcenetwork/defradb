@@ -116,6 +116,10 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
+	if err = mp.validateMergedRelationDocIDs(ctx); err != nil {
+		return err
+	}
+
 	for docID, oldDoc := range mp.docIDs {
 		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
@@ -273,6 +277,28 @@ func (mp *mergeProcessor) loadComposites(
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
+	}
+	return nil
+}
+
+// validateMergedRelationDocIDs checks relation DocID fields on all documents that were
+// merged in this transaction. Unlike the mutation-path validation, this is lenient:
+// if the target document is not yet present locally (it may arrive via a later P2P merge),
+// validation is skipped rather than rejected. A hard error is only returned when the
+// collection metadata lookup itself fails.
+func (mp *mergeProcessor) validateMergedRelationDocIDs(ctx context.Context) error {
+	for docID := range mp.docIDs {
+		doc, err := mp.col.GetDocument(ctx, docID)
+		if err != nil {
+			if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+				continue
+			}
+			return err
+		}
+
+		if err = mp.col.validateMergeRelationDocIDs(ctx, doc); err != nil {
+			return err
+		}
 	}
 	return nil
 }
