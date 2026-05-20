@@ -22,6 +22,15 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// Publishers
+				CollectionID: 2,
+				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
+				Doc: `{
+						"name": "Manning Early Access Program (MEAP)",
+						"address": "Online"
+					}`,
+			},
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -40,15 +49,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						"age": 48,
 						"verified": true,
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
-					}`,
-			},
-			&action.AddDoc{
-				// Publishers
-				CollectionID: 2,
-				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
-				Doc: `{
-						"name": "Manning Early Access Program (MEAP)",
-						"address": "Online"
 					}`,
 			},
 			&action.Request{
@@ -75,6 +75,15 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// Publishers
+				CollectionID: 2,
+				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
+				Doc: `{
+						"name": "Manning Early Access Program (MEAP)",
+						"address": "Online"
+					}`,
+			},
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -93,15 +102,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 						"age": 48,
 						"verified": true,
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
-					}`,
-			},
-			&action.AddDoc{
-				// Publishers
-				CollectionID: 2,
-				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
-				Doc: `{
-						"name": "Manning Early Access Program (MEAP)",
-						"address": "Online"
 					}`,
 			},
 			&action.Request{
@@ -128,6 +128,15 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// Publishers
+				CollectionID: 2,
+				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
+				Doc: `{
+						"name": "Manning Early Access Program (MEAP)",
+						"address": "Online"
+					}`,
+			},
+			&action.AddDoc{
 				// Books
 				CollectionID: 0,
 				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
@@ -146,15 +155,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"age": 48,
 						"verified": true,
 						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
-					}`,
-			},
-			&action.AddDoc{
-				// Publishers
-				CollectionID: 2,
-				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
-				Doc: `{
-						"name": "Manning Early Access Program (MEAP)",
-						"address": "Online"
 					}`,
 			},
 			&action.AddDoc{

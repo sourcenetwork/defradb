@@ -22,9 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
-func TestMutationUpdateOneToOneNoChild(t *testing.T) {
+func TestMutationUpdateOneToOne_WithNonExistentRelation_Error(t *testing.T) {
 	unknownID := "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 
 	test := testUtils.TestCase{
@@ -36,8 +34,9 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 				}`,
 			},
 			&action.UpdateDoc{
-				CollectionID: 1,
-				DocID:        0,
+				CollectionID:  1,
+				DocID:         0,
+				ExpectedError: "relation target document not found",
 				Doc: fmt.Sprintf(
 					`{
 						"_publishedID": "%s"
@@ -45,24 +44,11 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					unknownID,
 				),
 			},
-			&action.Request{
-				Request: `query {
-						Author {
-							name
-						}
-					}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name": "John Grisham",
-						},
-					},
-				},
-			},
 		},
 	}
 	executeTestCase(t, test)
 }
+
 
 func TestMutationUpdateOneToOne(t *testing.T) {
 	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"

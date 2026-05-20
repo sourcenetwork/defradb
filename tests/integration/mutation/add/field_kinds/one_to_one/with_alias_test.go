@@ -43,9 +43,7 @@ func TestMutationAddOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
-func TestMutationAddOneToOne_UseAliasWithNonExistingRelationPrimarySide_AddedDoc(t *testing.T) {
+func TestMutationAddOneToOne_UseAliasWithNonExistingRelationPrimarySide_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -54,20 +52,7 @@ func TestMutationAddOneToOne_UseAliasWithNonExistingRelationPrimarySide_AddedDoc
 					"name": "John Grisham",
 					"published": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Author {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name": "John Grisham",
-						},
-					},
-				},
+				ExpectedError: "relation target document not found",
 			},
 		},
 	}

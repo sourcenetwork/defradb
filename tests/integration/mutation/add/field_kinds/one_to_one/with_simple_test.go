@@ -43,9 +43,7 @@ func TestMutationAddOneToOne_WithInvalidField_Error(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
-func TestMutationAddOneToOneNoChild(t *testing.T) {
+func TestMutationAddOneToOne_WithNonExistentRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -54,20 +52,30 @@ func TestMutationAddOneToOneNoChild(t *testing.T) {
 					"name": "John Grisham",
 					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
+				ExpectedError: "relation target document not found",
 			},
-			&action.Request{
-				Request: `query {
-					Author {
-						name
-					}
+		},
+	}
+	executeTestCase(t, test)
+}
+
+func TestMutationAddOneToOne_WithWrongTypeRelation_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
 				}`,
-				Results: map[string]any{
-					"Author": []map[string]any{
-						{
-							"name": "John Grisham",
-						},
-					},
+			},
+			// Add an Author doc using the other Author's docID as _publishedID (wrong type)
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":         "Jane Doe",
+					"_publishedID": testUtils.NewDocIndex(1, 0),
 				},
+				ExpectedError: "relation target document not found",
 			},
 		},
 	}

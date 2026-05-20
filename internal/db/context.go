@@ -21,6 +21,20 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
+type contextSkipRelationValidationKey struct{}
+
+// skipRelationValidationContext returns a context that skips relation DocID
+// validation during document saves. Used by backup import, which restores a
+// known-consistent state whose cross-collection references may not yet exist.
+func skipRelationValidationContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextSkipRelationValidationKey{}, true)
+}
+
+func shouldSkipRelationValidation(ctx context.Context) bool {
+	v, _ := ctx.Value(contextSkipRelationValidationKey{}).(bool)
+	return v
+}
+
 // InitContext returns a new context with all caches initialized and linked to
 // the given transaction.
 //

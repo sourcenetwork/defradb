@@ -64,9 +64,7 @@ func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationSingleSide_N
 	executeTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
-func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationManySide_AddedDoc(t *testing.T) {
+func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationManySide_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -75,20 +73,7 @@ func TestMutationAddOneToMany_AliasedRelationNameNonExistingRelationManySide_Add
 					"name": "Painted House",
 					"author": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Book {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name": "Painted House",
-						},
-					},
-				},
+				ExpectedError: "relation target document not found",
 			},
 		},
 	}

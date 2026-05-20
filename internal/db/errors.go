@@ -132,6 +132,7 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errRelationTargetNotFound              string = "relation target document not found"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -440,6 +441,15 @@ func NewErrRelationNameNotUnique(name string, relationName string) error {
 		errRelationNameNotUnique,
 		errors.NewKV("Field", name),
 		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrRelationTargetNotFound(fieldName, docID, targetCollection string) error {
+	return errors.New(
+		errRelationTargetNotFound,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
+		errors.NewKV("TargetCollection", targetCollection),
 	)
 }
 
