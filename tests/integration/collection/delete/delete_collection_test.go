@@ -578,3 +578,295 @@ func TestDeleteCollection_Default_MultipleCollectionsWithMultipleVersions_Remove
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Adding a collection with the same name after a default delete creates a
+// fresh collection (a new CollectionID), not a resurrection of the previous one.
+func TestDeleteCollection_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users"},
+			},
+			// Re-add with a different shape.
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			// Querying email must work - proves the collection was cleanly reset.
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			// And the old field should not exist.
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Multi-name delete must clean the collection-definition and field-definition
+// heads for every name in the list, not just one. After deleting Users + Books
+// in a single call, both names must be reusable for fresh collections - if
+// either name's heads were left stale, the corresponding `AddCollection` would
+// error.
+func TestDeleteCollection_MultiName_ThenAddSameNames_AreFreshCollections(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Books {
+						title: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users", "Books"},
+			},
+			// Re-add both names with different shapes.
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+					type Books {
+						isbn: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Books {
+						isbn
+					}
+				}`,
+				Results: map[string]any{
+					"Books": []map[string]any{},
+				},
+			},
+			// Old fields must not exist on either re-added collection.
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+			&action.Request{
+				Request: `query {
+					Books {
+						title
+					}
+				}`,
+				ExpectedError: `Cannot query field "title" on type "Books".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// ActiveOnly delete on a single-version collection removes the only version,
+// so the headstore-cleanup gate fires (no surviving versions for this name).
+// The same-name re-add must therefore work, exactly as in the default-delete
+func TestDeleteCollection_ActiveOnly_SingleVersion_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				ActiveOnly: true,
+				Names:      []string{"Users"},
+			},
+			// Re-add with a different shape.
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// A multi-version collection (Add + PatchCollection) gets default-deleted,
+// removing every version; the same-name re-add must then work. This exercises
+// the gate's "wait until the last version is gone" behaviour - the per-version
+// loop in deleteCollectionVersions must NOT clean heads on the first iteration
+// (when v1 is gone but v2 still exists), and MUST clean them on the last.
+func TestDeleteCollection_PatchedThenDefaultDeleted_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			// Creates v2 active, v1 inactive.
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "age", "Kind": "Int"} }
+					]
+				`,
+			},
+			// Default delete removes both v1 and v2.
+			&action.DeleteCollection{
+				Names: []string{"Users"},
+			},
+			// Re-add with a different shape - none of the prior fields should leak.
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						age
+					}
+				}`,
+				ExpectedError: `Cannot query field "age" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Re-adding the same shape after a delete so the new collection's blocks land
+// at the exact same CIDs as the deleted collection's blocks. If the headstore
+// had any stale entry pointing at those CIDs, the `AddCollection` path would
+// either trip on it or silently accept the stale heads as valid which might
+// give the new collection an unrelated history.
+func TestDeleteCollection_ThenAddSameShape_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users"},
+			},
+			// Re-add with the EXACT same shape.
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			// The new collection must be writable, and a query must return only
+			// the doc we just added, no carry-over from the previous instance.
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Alice",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Alice"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
