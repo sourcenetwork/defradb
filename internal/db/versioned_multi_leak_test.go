@@ -87,11 +87,14 @@ func TestMultiVersioned_Start_OnChildStartError_TracksChildForClose(t *testing.T
 
 	ctx = InitContext(ctx, txn)
 
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+
 	f := &fetcher.MultiVersioned{}
 	err = f.Init(
 		ctx,
 		immutable.None[acpIdentity.Identity](),
-		txn.(*Txn).BasicTxn,
+		dbTxn.BasicTxn,
 		db.nodeACP,
 		immutable.None[dac.DocumentACP](),
 		immutable.None[client.IndexDescription](),
@@ -151,6 +154,8 @@ func authorBlockWithUnknownField(
 		fieldBlock.GenerateNode(),
 	)
 	require.NoError(t, err)
+	fieldCidLink, ok := fieldLink.(cidlink.Link)
+	require.True(t, ok)
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
@@ -160,7 +165,7 @@ func authorBlockWithUnknownField(
 			Status:              1,
 		}),
 		[]coreblock.DAGLink{
-			{Name: unknownField, Link: fieldLink.(cidlink.Link)},
+			{Name: unknownField, Link: fieldCidLink},
 		},
 	)
 	compositeLink, err := lsys.Store(
@@ -170,5 +175,7 @@ func authorBlockWithUnknownField(
 	)
 	require.NoError(t, err)
 
-	return compositeLink.(cidlink.Link)
+	compositeCidLink, ok := compositeLink.(cidlink.Link)
+	require.True(t, ok)
+	return compositeCidLink
 }

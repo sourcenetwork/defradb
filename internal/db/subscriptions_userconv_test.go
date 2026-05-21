@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // Join collection with two foreign-key relations.
@@ -62,8 +64,8 @@ func TestSubscription_UserConversationLocalWrite_DeliversEvent(t *testing.T) {
 	}`)
 	require.Empty(t, convRes.GQL.Errors)
 
-	userDocID := userRes.GQL.Data.(map[string]any)["add_User"].([]map[string]any)[0]["_docID"].(string)
-	convDocID := convRes.GQL.Data.(map[string]any)["add_Conversation"].([]map[string]any)[0]["_docID"].(string)
+	userDocID := docIDFromMutation(t, userRes, "add_User")
+	convDocID := docIDFromMutation(t, convRes, "add_Conversation")
 
 	sub := db.ExecRequest(ctx, `subscription {
 		UserConversation {
@@ -93,4 +95,18 @@ func TestSubscription_UserConversationLocalWrite_DeliversEvent(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("no event delivered within 1s")
 	}
+}
+
+// docIDFromMutation extracts the `_docID` of the first returned doc
+// from an add_X mutation result.
+func docIDFromMutation(t *testing.T, res *client.RequestResult, opName string) string {
+	t.Helper()
+	data, ok := res.GQL.Data.(map[string]any)
+	require.True(t, ok, "mutation data should be a map")
+	docs, ok := data[opName].([]map[string]any)
+	require.True(t, ok, "mutation %q should return a doc slice", opName)
+	require.NotEmpty(t, docs)
+	id, ok := docs[0]["_docID"].(string)
+	require.True(t, ok, "_docID should be a string")
+	return id
 }
