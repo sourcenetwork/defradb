@@ -853,3 +853,99 @@ func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Removing a collection via PatchCollection and re-adding the same name with a
+// different shape must produce a fresh collection. This mirrors the equivalent
+// DeleteCollection test and verifies the patch-driven removal path also clears
+// the collection-definition and field-definition heads on its way out.
+func TestColVersionUpdateRemoveCollection_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Re-add with the EXACT same shape after a patch-driven removal. The CIDs of
+// the collection-definition and field-definition blocks are derived
+// deterministically from the definition itself, so the new blocks land at the
+// exact same CIDs as the deleted ones. Without head cleanup this would error
+func TestColVersionUpdateRemoveCollection_ThenAddSameShape_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Alice",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Alice"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
