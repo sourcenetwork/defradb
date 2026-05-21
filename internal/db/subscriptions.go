@@ -30,14 +30,12 @@ type subscriptionSelector interface {
 	CheckDocIDFilter(docID string) bool
 }
 
-// runSubscriptionSelection is the selection-evaluation step extracted as a
-// package-level var so tests can swap it for a stub. Production code must
-// not reassign it outside tests.
-var runSubscriptionSelection = func(
-	ctx context.Context,
-	db *DB,
-	sel request.Selection,
-) (map[string]any, error) {
+// subscriptionSelectionFn evaluates a single subscription event's
+// selection. Injected into processEvent so tests can substitute a
+// stub without touching package-level state.
+type subscriptionSelectionFn func(ctx context.Context, db *DB, sel request.Selection) (map[string]any, error)
+
+func runSubscriptionSelection(ctx context.Context, db *DB, sel request.Selection) (map[string]any, error) {
 	p := planner.New(
 		ctx,
 		identity.FromContext(ctx),
@@ -90,7 +88,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				}
 			}
 
-			processEvent(ctx, db, subRequest, evt, resCh)
+			processEvent(ctx, db, subRequest, evt, resCh, runSubscriptionSelection)
 		}
 	}()
 
@@ -107,6 +105,7 @@ func processEvent(
 	subRequest subscriptionSelector,
 	evt event.Update,
 	resCh chan<- client.GQLResult,
+	selectFn subscriptionSelectionFn,
 ) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -136,7 +135,7 @@ func processEvent(
 
 	s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
-	result, err := runSubscriptionSelection(ctx, db, s)
+	result, err := selectFn(ctx, db, s)
 	if err == nil && len(result) == 0 {
 		txn.Discard()
 		return // Don't send anything back to the client if the request yields an empty dataset.

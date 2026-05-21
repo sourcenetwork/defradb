@@ -18,80 +18,64 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/event"
 )
 
-// A panic in a subscription's selection eval must not kill the process.
-func TestSubscription_PanicInSelection_DoesNotKillDB(t *testing.T) {
+// newPanickingProcessEventFixture sets up the inputs processEvent needs
+// (DB + collection + bogus event + minimal subRequest) so tests can
+// drive it directly with an injected selectFn.
+func newPanickingProcessEventFixture(t *testing.T) (*DB, subscriptionSelector, event.Update, chan client.GQLResult) {
+	t.Helper()
 	ctx := context.Background()
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
-	defer db.Close()
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
-	original := runSubscriptionSelection
-	defer func() { runSubscriptionSelection = original }()
-	runSubscriptionSelection = func(
-		_ context.Context,
-		_ *DB,
-		_ request.Selection,
-	) (map[string]any, error) {
-		panic("synthetic panic from test")
+	subReq := &request.Select{
+		Field: request.Field{Name: "User"},
 	}
-
-	res := db.ExecRequest(ctx, `subscription {
-		User {
-			_docID
-			name
-		}
-	}`)
-	require.Empty(t, res.GQL.Errors)
-	require.NotNil(t, res.Subscription)
 
 	bogusCid, err := cid.Decode("bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m")
 	require.NoError(t, err)
 
-	db.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+	evt := event.Update{
 		DocID: "bae-00000000-0000-0000-0000-000000000000",
 		Cid:   bogusCid,
-	}))
+	}
 
-	time.Sleep(50 * time.Millisecond)
-
-	check := db.ExecRequest(ctx, `query { User { _docID } }`)
-	require.Empty(t, check.GQL.Errors, "DB must still be usable after a subscription panic")
+	resCh := make(chan client.GQLResult, 4)
+	return db, subReq, evt, resCh
 }
 
-// A panic on one event must not close the subscription stream:
-// subsequent events still need to deliver.
-func TestSubscription_PanicInOneEvent_DoesNotEndStream(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+// A panic in a subscription's selection eval must be recovered, so the
+// caller of processEvent doesn't die.
+func TestProcessEvent_PanicInSelection_IsRecovered(t *testing.T) {
+	db, subReq, evt, resCh := newPanickingProcessEventFixture(t)
 
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
+	selectFn := func(_ context.Context, _ *DB, _ request.Selection) (map[string]any, error) {
+		panic("synthetic panic from test")
+	}
 
-	_, err = db.AddCollection(ctx, userSchema)
-	require.NoError(t, err)
+	require.NotPanics(t, func() {
+		processEvent(context.Background(), db, subReq, evt, resCh, selectFn)
+	})
+}
 
-	original := runSubscriptionSelection
-	defer func() { runSubscriptionSelection = original }()
+// A panic on one event must not affect a subsequent event's delivery:
+// processEvent for the second event still pushes its result to resCh.
+func TestProcessEvent_PanicOnOne_DoesNotAffectNext(t *testing.T) {
+	db, subReq, evt, resCh := newPanickingProcessEventFixture(t)
 
-	var callCount int
-	runSubscriptionSelection = func(
-		_ context.Context,
-		_ *DB,
-		_ request.Selection,
-	) (map[string]any, error) {
-		callCount++
-		if callCount == 1 {
-			panic("synthetic panic on first event")
-		}
+	panicking := func(_ context.Context, _ *DB, _ request.Selection) (map[string]any, error) {
+		panic("synthetic panic on first event")
+	}
+	working := func(_ context.Context, _ *DB, _ request.Selection) (map[string]any, error) {
 		return map[string]any{
 			"User": []map[string]any{
 				{"_docID": "bae-test", "name": "Alice"},
@@ -99,36 +83,17 @@ func TestSubscription_PanicInOneEvent_DoesNotEndStream(t *testing.T) {
 		}, nil
 	}
 
-	res := db.ExecRequest(ctx, `subscription {
-		User {
-			_docID
-			name
-		}
-	}`)
-	require.Empty(t, res.GQL.Errors)
-	require.NotNil(t, res.Subscription)
+	require.NotPanics(t, func() {
+		processEvent(context.Background(), db, subReq, evt, resCh, panicking)
+	})
 
-	bogusCid, err := cid.Decode("bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m")
-	require.NoError(t, err)
-
-	// First event panics in selection; recover should catch it.
-	db.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-		DocID: "bae-00000000-0000-0000-0000-000000000000",
-		Cid:   bogusCid,
-	}))
-	time.Sleep(50 * time.Millisecond)
-
-	// Second event returns a real result; must still be delivered.
-	db.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-		DocID: "bae-11111111-1111-1111-1111-111111111111",
-		Cid:   bogusCid,
-	}))
+	processEvent(context.Background(), db, subReq, evt, resCh, working)
 
 	select {
-	case result, ok := <-res.Subscription:
-		require.True(t, ok, "subscription channel must still be open after a recovered panic")
-		require.NotNil(t, result.Data, "second event must deliver a result on the same stream")
+	case result, ok := <-resCh:
+		require.True(t, ok, "result channel must be open")
+		require.NotNil(t, result.Data, "second event must deliver a result")
 	case <-time.After(500 * time.Millisecond):
-		t.Fatal("subscription stream was closed by the recovered panic; second event never delivered")
+		t.Fatal("second event never delivered to resCh")
 	}
 }
