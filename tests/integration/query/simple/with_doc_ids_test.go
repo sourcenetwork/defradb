@@ -75,6 +75,37 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryWithDocIDsFilter_DuplicateDocIDs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+			},
+			&action.Request{
+				Request: `query {
+						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+							Name
+							Age
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
