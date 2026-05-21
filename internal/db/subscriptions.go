@@ -12,8 +12,10 @@ package db
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/sourcenetwork/corelog"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -67,21 +69,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	}
 	resCh := make(chan client.GQLResult)
 	go func() {
-		// Guard against panics inside the selection-evaluation path
-		// (planner / fetcher / merge). Without this, a panic on any
-		// single subscription — including transient bugs such as an
-		// unclosed iterator triggered by a merge-state error — would
-		// take down the whole process, killing every other client's
-		// subscriptions and in-flight requests at the same time.
-		defer func() {
-			if r := recover(); r != nil {
-				log.ErrorContext(
-					ctx,
-					"panic in subscription handler",
-					corelog.Any("panic", r),
-				)
-			}
-		}()
 		defer func() {
 			db.events.Unsubscribe(sub)
 			close(resCh)
@@ -102,69 +89,97 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-			// Skip events that do not pass the subscription's docID and cid filters
-			// This is an optimization to avoid running the selection planner and
-			// related query logic when we know the event will not be relevant to the subscription.
-			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
-				continue
-			}
-			txn, err := db.NewTxn(false)
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to create transaction for subscription", err)
-				continue
-			}
-			ctx := InitContext(ctx, txn)
 
-			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
-
-			result, err := runSubscriptionSelection(ctx, db, s)
-			if err == nil && len(result) == 0 {
-				txn.Discard()
-				continue // Don't send anything back to the client if the request yields an empty dataset.
-			}
-
-			res := client.GQLResult{}
-
-			// This approach will only support return types that are []map[string]any
-			// (ie docs) for results. So top level aggregates, or other top level fields
-			// that we would want to add to subscriptions that don't return
-			// docs currently will not work.
-			for op, data := range result {
-				resultSlice, ok := data.([]map[string]any)
-				if !ok {
-					res.Errors = append(res.Errors, ErrBadDocsResultType)
-				}
-
-				if len(resultSlice) == 0 {
-					delete(result, op)
-				}
-			}
-
-			// now that weve filtered empty result sets, lets recheck
-			if len(result) == 0 {
-				txn.Discard()
-				continue
-			}
-
-			// ignore incorrect CID for DocID error. This is specific to
-			// subscription API. Only the DocID is externally configurable for
-			// this API, but the CID comes from the event, which means theres a
-			// high likely hood of CID/DocID mismatch, so we need to ignore it
-			// to falsely report errors to the subscription.
-			if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
-				res.Errors = append(res.Errors, err)
-			}
-			res.Data = result
-
-			select {
-			case <-ctx.Done():
-				txn.Discard()
-				return // context cancelled
-			case resCh <- res:
-				txn.Discard()
-			}
+			processEvent(ctx, db, subRequest, evt, resCh)
 		}
 	}()
 
 	return resCh, nil
+}
+
+// processEvent runs the selection for a single subscription event
+// and pushes the result to resCh. A panic in the selection path is
+// recovered and logged so a single bad event does not close the
+// subscription stream.
+func processEvent(
+	ctx context.Context,
+	db *DB,
+	subRequest subscriptionSelector,
+	evt event.Update,
+	resCh chan<- client.GQLResult,
+) {
+	defer func() {
+		if r := recover(); r != nil {
+			stack := make([]byte, 64*1024)
+			n := runtime.Stack(stack, false)
+			log.ErrorContext(
+				ctx,
+				"panic in subscription handler",
+				corelog.Any("panic", r),
+				corelog.String("stack", string(stack[:n])),
+			)
+		}
+	}()
+
+	// Skip events that do not pass the subscription's docID and cid filters
+	// This is an optimization to avoid running the selection planner and
+	// related query logic when we know the event will not be relevant to the subscription.
+	if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
+		return
+	}
+	txn, err := db.NewTxn(false)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to create transaction for subscription", err)
+		return
+	}
+	ctx = InitContext(ctx, txn)
+
+	s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
+
+	result, err := runSubscriptionSelection(ctx, db, s)
+	if err == nil && len(result) == 0 {
+		txn.Discard()
+		return // Don't send anything back to the client if the request yields an empty dataset.
+	}
+
+	res := client.GQLResult{}
+
+	// This approach will only support return types that are []map[string]any
+	// (ie docs) for results. So top level aggregates, or other top level fields
+	// that we would want to add to subscriptions that don't return
+	// docs currently will not work.
+	for op, data := range result {
+		resultSlice, ok := data.([]map[string]any)
+		if !ok {
+			res.Errors = append(res.Errors, ErrBadDocsResultType)
+		}
+
+		if len(resultSlice) == 0 {
+			delete(result, op)
+		}
+	}
+
+	// now that weve filtered empty result sets, lets recheck
+	if len(result) == 0 {
+		txn.Discard()
+		return
+	}
+
+	// ignore incorrect CID for DocID error. This is specific to
+	// subscription API. Only the DocID is externally configurable for
+	// this API, but the CID comes from the event, which means theres a
+	// high likely hood of CID/DocID mismatch, so we need to ignore it
+	// to falsely report errors to the subscription.
+	if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
+		res.Errors = append(res.Errors, err)
+	}
+	res.Data = result
+
+	select {
+	case <-ctx.Done():
+		txn.Discard()
+		return // context cancelled
+	case resCh <- res:
+		txn.Discard()
+	}
 }

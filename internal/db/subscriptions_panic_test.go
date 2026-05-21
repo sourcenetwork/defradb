@@ -22,12 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 )
 
-// A panic anywhere inside the selection-evaluation path of a subscription
-// must not bring down the whole process — otherwise one bad subscription
-// takes every other client's subscriptions and in-flight requests with
-// it. The handler's goroutine has a recover() guarding that. This test
-// swaps in a selection function that panics on every event, drives an
-// event through, and confirms the DB is still usable afterwards.
+// A panic in a subscription's selection eval must not kill the process.
 func TestSubscription_PanicInSelection_DoesNotKillDB(t *testing.T) {
 	ctx := context.Background()
 
@@ -38,8 +33,6 @@ func TestSubscription_PanicInSelection_DoesNotKillDB(t *testing.T) {
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
 
-	// Replace the selection step with one that always panics. Restore
-	// the original on test exit so we don't poison sibling tests.
 	original := runSubscriptionSelection
 	defer func() { runSubscriptionSelection = original }()
 	runSubscriptionSelection = func(
@@ -59,10 +52,6 @@ func TestSubscription_PanicInSelection_DoesNotKillDB(t *testing.T) {
 	require.Empty(t, res.GQL.Errors)
 	require.NotNil(t, res.Subscription)
 
-	// Fire an event the subscription will pass through its docID/cid
-	// filters and hand to the (now-panicking) selection step. A docID
-	// of "" matches the subscription's default filter, and any valid
-	// CID works since we never reach the planner.
 	bogusCid, err := cid.Decode("bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m")
 	require.NoError(t, err)
 
@@ -71,13 +60,75 @@ func TestSubscription_PanicInSelection_DoesNotKillDB(t *testing.T) {
 		Cid:   bogusCid,
 	}))
 
-	// Give the goroutine a beat to handle the event. If the recover
-	// isn't there, the test binary dies here with exit code 2 and the
-	// `require` below never runs.
 	time.Sleep(50 * time.Millisecond)
 
-	// The DB must still be alive. Run an unrelated query through the
-	// same instance and confirm it returns cleanly.
 	check := db.ExecRequest(ctx, `query { User { _docID } }`)
 	require.Empty(t, check.GQL.Errors, "DB must still be usable after a subscription panic")
+}
+
+// A panic on one event must not close the subscription stream:
+// subsequent events still need to deliver.
+func TestSubscription_PanicInOneEvent_DoesNotEndStream(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	original := runSubscriptionSelection
+	defer func() { runSubscriptionSelection = original }()
+
+	var callCount int
+	runSubscriptionSelection = func(
+		_ context.Context,
+		_ *DB,
+		_ request.Selection,
+	) (map[string]any, error) {
+		callCount++
+		if callCount == 1 {
+			panic("synthetic panic on first event")
+		}
+		return map[string]any{
+			"User": []map[string]any{
+				{"_docID": "bae-test", "name": "Alice"},
+			},
+		}, nil
+	}
+
+	res := db.ExecRequest(ctx, `subscription {
+		User {
+			_docID
+			name
+		}
+	}`)
+	require.Empty(t, res.GQL.Errors)
+	require.NotNil(t, res.Subscription)
+
+	bogusCid, err := cid.Decode("bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m")
+	require.NoError(t, err)
+
+	// First event panics in selection; recover should catch it.
+	db.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+		DocID: "bae-00000000-0000-0000-0000-000000000000",
+		Cid:   bogusCid,
+	}))
+	time.Sleep(50 * time.Millisecond)
+
+	// Second event returns a real result; must still be delivered.
+	db.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+		DocID: "bae-11111111-1111-1111-1111-111111111111",
+		Cid:   bogusCid,
+	}))
+
+	select {
+	case result, ok := <-res.Subscription:
+		require.True(t, ok, "subscription channel must still be open after a recovered panic")
+		require.NotNil(t, result.Data, "second event must deliver a result on the same stream")
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("subscription stream was closed by the recovered panic; second event never delivered")
+	}
 }
