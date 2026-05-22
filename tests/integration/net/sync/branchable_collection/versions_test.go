@@ -114,7 +114,8 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				NodeID: immutable.Some(0),
+				NodeID:            immutable.Some(0),
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name
@@ -147,7 +148,8 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 				},
 			},
 			&action.Request{
-				NodeID: immutable.Some(1),
+				NodeID:            immutable.Some(1),
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name

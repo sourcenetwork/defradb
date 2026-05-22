@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -36,7 +37,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 
 	delta := &crdt.LWWDelta{
 		Data:                fieldVal,
-		DocID:               []byte(docID),
+		DocID:               []byte(id.NewGenesisDocID(docID)),
 		FieldName:           fieldName,
 		CollectionVersionID: collectionVersionID,
 		Priority:            1,
@@ -110,7 +111,6 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -339,7 +339,6 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -486,7 +485,6 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
