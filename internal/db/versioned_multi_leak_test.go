@@ -83,7 +83,6 @@ func TestMultiVersioned_Start_OnChildStartError_TracksChildForClose(t *testing.T
 	// handler opens per event.
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
-	defer txn.Discard()
 
 	ctx = InitContext(ctx, txn)
 
@@ -112,18 +111,15 @@ func TestMultiVersioned_Start_OnChildStartError_TracksChildForClose(t *testing.T
 	startErr := f.Start(ctx, prefix)
 	require.Error(t, startErr, "Start should fail when the delta names a field the schema doesn't have")
 
-	// This is the whole point of the test. Init succeeded, so the child
-	// has resources to release; Close needs to be able to find it.
-	require.Equal(
-		t,
-		1,
-		f.NumTrackedChildrenForTest(),
-		"child must be tracked after a Start failure so Close can release it",
-	)
-
+	// The production invariant: even when Start fails mid-way, Close must
+	// release every iterator the children opened on txn so the parent
+	// Discard does not panic with "Unclosed iterator at time of Txn.Discard".
 	require.NotPanics(t, func() {
 		_ = f.Close()
 	})
+	require.NotPanics(t, func() {
+		txn.Discard()
+	}, "txn.Discard must not panic after Close — proves no iterator was left open on the parent txn")
 }
 
 // Writes a field-delta block naming the given (unknown) field plus a

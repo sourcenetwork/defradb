@@ -161,20 +161,6 @@ func (f *MultiVersioned) FetchNext(ctx context.Context) (EncodedDocument, ExecIn
 	return doc, execInfo, nil
 }
 
-// NumTrackedChildrenForTest returns the number of non-nil child fetchers
-// currently tracked by this MultiVersioned. Test-only accessor used to
-// assert that children whose Init succeeded are reachable via Close,
-// regardless of whether their subsequent Start succeeded.
-func (f *MultiVersioned) NumTrackedChildrenForTest() int {
-	n := 0
-	for _, c := range f.children {
-		if c != nil {
-			n++
-		}
-	}
-	return n
-}
-
 func (f *MultiVersioned) Close() error {
 	errs := []error{}
 	for _, child := range f.children {
