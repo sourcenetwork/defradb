@@ -2145,11 +2145,12 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
+		cid := replace(s, i, action.Cid)
 
 		if hadTxn {
-			err = txn.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+			err = txn.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
 		} else {
-			err = node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+			err = node.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
 		}
 
 		if action.ExpectedError != "" {
