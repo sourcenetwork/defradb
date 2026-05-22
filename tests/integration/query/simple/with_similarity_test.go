@@ -350,12 +350,12 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "Bob",
-							"sim":  float64(3),
-						},
-						{
 							"name": "John",
 							"sim":  float64(10),
+						},
+						{
+							"name": "Bob",
+							"sim":  float64(3),
 						},
 					},
 				},

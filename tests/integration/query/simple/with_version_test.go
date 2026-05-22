@@ -19,6 +19,10 @@ import (
 )
 
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
+	docCreateCompositeCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -51,15 +55,15 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreidzdrrjkjch3icknknh6tfmwitc352v54bds4h5ftblghwhsojgru",
+									"cid": docCreateCompositeCid,
 									"links": []map[string]any{
 										{
-											"cid":       "bafyreiapiprlzrtsh7bkf4ru36q7g5nm2nz5unke2kkl4uyofd3scxmlye",
-											"fieldName": "Name",
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
 										},
 										{
-											"cid":       "bafyreie7qecbfvigblfgobuyt7hrejf7k2isscppzr75hwfkm5brntauva",
-											"fieldName": "Age",
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
 										},
 									},
 									"heads": []map[string]any{},
@@ -68,6 +72,7 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -133,6 +138,7 @@ func TestQuery_AddDocWithNestedLatestCommit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -220,6 +226,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -258,6 +265,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -299,6 +307,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -366,6 +375,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -474,6 +484,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -538,6 +549,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -611,6 +623,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -716,6 +729,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

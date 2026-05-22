@@ -60,7 +60,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "{{.CID0_0_0}}"
 						) {
 						name
 					}
@@ -92,12 +92,12 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist"
 						) {
 						name
 					}
 				}`,
-				ExpectedError: "seek failed: (version fetcher) failed to get block in blockstore: ipld: could not find",
+				ExpectedError: "failed to get block in blockstore: ipld: could not find",
 			},
 		},
 	}
@@ -128,7 +128,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "{{.CID0_0_0}}"
 						) {
 						name
 					}
@@ -212,7 +212,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"
+						cid: "{{.CID0_0_1}}"
 						showDeleted: true
 					){
 						name
@@ -233,7 +233,6 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestQuerySimple_ListOfOneCID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -252,7 +251,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+							cid: ["{{.CID0_0_0}}"]
 						) {
 						name
 					}
@@ -299,7 +298,7 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreihufziq5m2i6sgw2ls45uratin7eudhjplfg23qtj2lv6g6knevha"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_1_0}}"]
 						) {
 						name
 					}
@@ -345,7 +344,7 @@ func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 				// Query with duplicated cids for the same doc
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_0_0}}"]
 						) {
 						name
 					}
@@ -395,7 +394,7 @@ func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
 				// Query with the cid for the initial version of `John`, and the updated version.
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreiecis4aqmvr4effzlb74cwflphkykfnibpdnnftdyp6o2cneqy57q"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_0_1}}"]
 						) {
 						name
 					}

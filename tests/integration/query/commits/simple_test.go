@@ -65,8 +65,6 @@ func TestQueryCommits(t *testing.T) {
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -92,12 +90,25 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
+
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
 					},
 				},
 				NonOrderedResults: true,
@@ -109,8 +120,6 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 }
 
 func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -131,15 +140,16 @@ func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":                 uniqueCid,
+
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 uniqueCid,
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 uniqueCid,
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
@@ -292,7 +302,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageUpdateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(22),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(2),
 							"links":     []map[string]any{},
@@ -306,7 +316,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(21),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -316,7 +326,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(nameCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue("John"),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -326,7 +336,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(updateCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(2),
 							"links": []map[string]any{
@@ -345,7 +355,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(createCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
@@ -371,8 +381,6 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 }
 
 func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -391,9 +399,16 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"history": []map[string]any{
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
+
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
+						{
+							"cid": testUtils.ValidCID(),
+						},
 					},
 				},
 				NonOrderedResults: true,

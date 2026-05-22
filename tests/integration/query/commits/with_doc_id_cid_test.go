@@ -72,7 +72,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Request: ` {
 						_commits(
 							docID: "bae-not-this-doc",
-							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
+							cid: "bafyreiambhplrupbc4fd54ew7p2eyas66zsdoqjxt2opanphh3uxqcfmem"
 						) {
 							cid
 						}
@@ -90,9 +90,6 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 
 func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		// Result CIDs are hardcoded because template placeholders are not
-		// resolved inside Request.Results.
-		// See https://github.com/sourcenetwork/defradb/issues/4745.
 		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -113,8 +110,8 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 			&action.Request{
 				Request: ` {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
+							docID: "{{.DocID0_0}}",
+							cid: "{{.CID0_0_1}}"
 						) {
 							cid
 						}
@@ -122,7 +119,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -135,9 +132,6 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 	test := testUtils.TestCase{
-		// Result CIDs are hardcoded because template placeholders are not
-		// resolved inside Request.Results.
-		// See https://github.com/sourcenetwork/defradb/issues/4745.
 		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -160,8 +154,8 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 			&action.Request{
 				Request: ` {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							docID: "{{.DocID0_0}}",
+							cid: "{{.CID0_0_1}}",
 							depth: 5
 						) {
 							cid
@@ -170,10 +164,10 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},

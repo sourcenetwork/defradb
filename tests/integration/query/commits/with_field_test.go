@@ -39,6 +39,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+
 							"cid": testUtils.ValidCID(),
 						},
 					},
@@ -97,6 +98,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+
 							"cid": testUtils.ValidCID(),
 						},
 					},
@@ -131,6 +133,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *test
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+
 							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
@@ -178,9 +181,6 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 
 func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	test := testUtils.TestCase{
-		// Result CIDs are hardcoded because template placeholders are not
-		// resolved inside Request.Results.
-		// See https://github.com/sourcenetwork/defradb/issues/4745.
 		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -194,8 +194,9 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "age"}},
-							cid: "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q"
+
+							filter: {fieldName: {_eq: "age"}}, 
+							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid
 						}
@@ -203,7 +204,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -216,6 +217,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 
 func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -228,8 +230,9 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "name"}},
-							cid: "{{.CID0_0_0}}"
+
+							filter: {fieldName: {_eq: "name"}}, 
+							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid
 						}
@@ -246,6 +249,7 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 
 func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -258,8 +262,9 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "NOT_A_FIELD"}},
-							cid: "{{.CID0_0_0}}"
+
+							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 
+							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid
 						}

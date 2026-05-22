@@ -16,15 +16,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 	test := testUtils.TestCase{
-		// The collection-level commit CID is hardcoded in this test, and no
-		// template placeholder exists for it yet.
-		// See https://github.com/sourcenetwork/defradb/issues/4744.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -43,7 +38,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: "bafyreignwrgxxwvuijnrjssobtd4qdzjdho2u2myumzthtcuukoo4txxjy"
+							cid: "{{.CollectionCID0_0}}"
 						) {
 							cid
 							docID
@@ -53,7 +48,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreignwrgxxwvuijnrjssobtd4qdzjdho2u2myumzthtcuukoo4txxjy",
+							"cid": testUtils.ValidCID(),
 							// Extra params are used to verify this is a collection level cid
 							"docID":     nil,
 							"fieldName": nil,
