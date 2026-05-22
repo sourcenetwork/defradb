@@ -216,31 +216,50 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			return nil
 		}
 		splitString := strings.Split(string(iter.Key()), "/")
-		docID := splitString[len(splitString)-1]
-		err = p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
+		storageDocID := splitString[len(splitString)-1]
+		publicDocID, found, err := id.GetPublicDocIDFromStore(
+			ctx,
+			p.db.Multistore().Systemstore(),
+			shortID,
+			storageDocID,
+		)
 		if err != nil {
-			return NewErrPushDocHeads(err, docID)
+			return err
+		}
+		if !found {
+			publicDocID = storageDocID
+		}
+
+		err = p.pushHeadsForDoc(ctx, storageDocID, publicDocID, col.CollectionID(), peerID)
+		if err != nil {
+			return NewErrPushDocHeads(err, publicDocID)
 		}
 	}
 }
 
 // pushHeadsForDoc gets the all the head blocks for a given docID and pushes them
 // to the given peer.
-func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, peerID string) error {
-	heads, err := p.getHeads(ctx, docID)
+func (p *P2P) pushHeadsForDoc(
+	ctx context.Context,
+	storageDocID string,
+	publicDocID string,
+	collectionID string,
+	peerID string,
+) error {
+	heads, err := p.getHeads(ctx, storageDocID)
 	if err != nil {
 		return err
 	}
 	for _, head := range heads {
 		rawblock, err := head.block.Marshal()
 		if err != nil {
-			return NewErrMarshalBlock(err, docID, head.cid.String())
+			return NewErrMarshalBlock(err, publicDocID, head.cid.String())
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
-			DocID:        docID,
+			DocID:        publicDocID,
 			CID:          head.cid.Bytes(),
 			CollectionID: collectionID,
 			Creator:      p.host.ID(),
@@ -251,9 +270,9 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
-				corelog.Any("DocID", docID),
+				corelog.Any("DocID", publicDocID),
 			)
-			err := p.handleReplicatorFailure(ctx, peerID, docID)
+			err := p.handleReplicatorFailure(ctx, peerID, publicDocID)
 			if err != nil {
 				return err
 			}
@@ -770,6 +789,14 @@ type head struct {
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
 	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
+
+	shortDocID, found, err := id.GetNodeShortDocIDFromStore(ctx, p.db.Multistore().Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		docID = shortDocID
+	}
 
 	prefix := keys.HeadstoreDocKey{
 		DocID:   docID,

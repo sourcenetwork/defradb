@@ -39,6 +39,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -417,18 +418,30 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-		ctx,
-		identFunc,
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
-	)
+	docIDs, err := p.publicDocIDsForBlock(ctx, cols[0], c, block, "")
 	if err != nil {
-		log.ErrorE("Failed to check access", err)
+		log.ErrorE("Failed to resolve block doc IDs", err)
 		return false
+	}
+
+	var peerHasAccess bool
+	for _, docID := range docIDs {
+		peerHasAccess, err = acpDB.CheckDocAccessWithIdentityFunc(
+			ctx,
+			identFunc,
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			acpTypes.DocumentReadPerm,
+			docID,
+		)
+		if err != nil {
+			log.ErrorE("Failed to check access", err)
+			return false
+		}
+		if peerHasAccess {
+			break
+		}
 	}
 
 	return peerHasAccess
@@ -439,7 +452,13 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
+func (p *P2P) trySelfHasAccess(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	collectionID string,
+	docID string,
+) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
@@ -466,22 +485,91 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-		ctx,
-		func() immutable.Option[identity.Identity] {
-			return immutable.Some(identity.FromDID(ident.Value().DID))
-		},
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
-	)
+	docIDs, err := p.publicDocIDsForBlock(ctx, cols[0], blockCID, block, docID)
 	if err != nil {
 		return false, err
 	}
 
+	var peerHasAccess bool
+	for _, docID := range docIDs {
+		peerHasAccess, err = acpDB.CheckDocAccessWithIdentityFunc(
+			ctx,
+			func() immutable.Option[identity.Identity] {
+				return immutable.Some(identity.FromDID(ident.Value().DID))
+			},
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			acpTypes.DocumentReadPerm,
+			docID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if peerHasAccess {
+			break
+		}
+	}
+
 	return peerHasAccess, nil
+}
+
+func (p *P2P) publicDocIDsForBlock(
+	ctx context.Context,
+	col client.Collection,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	docID string,
+) ([]string, error) {
+	if docID != "" {
+		return []string{docID}, nil
+	}
+
+	rawDocID := string(block.Delta.GetDocID())
+	if rawDocID == "" || id.IsGenesisDocID(rawDocID) {
+		if block.Delta.IsComposite() {
+			return []string{client.NewDocIDV0(blockCID).String()}, nil
+		}
+		if block.Delta.IsField() {
+			collectionShortID, err := id.GetUncachedShortCollectionID(
+				ctx,
+				col.Version().CollectionID,
+				p.db.Multistore().Systemstore(),
+			)
+			if err != nil {
+				return nil, err
+			}
+			return id.GetPublicDocIDsForGenesisFieldFromStore(
+				ctx,
+				p.db.Multistore().Systemstore(),
+				collectionShortID,
+				blockCID,
+			)
+		}
+		return []string{""}, nil
+	}
+
+	collectionShortID, err := id.GetUncachedShortCollectionID(
+		ctx,
+		col.Version().CollectionID,
+		p.db.Multistore().Systemstore(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	publicDocID, found, err := id.GetPublicDocIDFromStore(
+		ctx,
+		p.db.Multistore().Systemstore(),
+		collectionShortID,
+		rawDocID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return []string{publicDocID}, nil
+	}
+	return []string{rawDocID}, nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -550,7 +638,7 @@ func (p *P2P) processPushlogRequest(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 		if err != nil {
 			return err
 		}

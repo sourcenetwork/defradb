@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -305,6 +306,15 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
+	requestedDocID := docID
+	shortDocID, found, err := id.GetNodeShortDocIDFromStore(p.ctx, p.db.Multistore().Systemstore(), docID)
+	if err != nil {
+		return docSyncItem{}, err
+	}
+	if found {
+		docID = shortDocID
+	}
+
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
@@ -324,7 +334,7 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	result := docSyncItem{
-		DocID: docID,
+		DocID: requestedDocID,
 		Heads: make([][]byte, 0, len(cids)),
 	}
 

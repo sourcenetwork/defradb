@@ -66,6 +66,7 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 type LWW struct {
 	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
+	deltaDocID          string
 	collectionVersionID string
 	fieldName           string
 }
@@ -84,9 +85,14 @@ func NewLWW(
 	return &LWW{
 		key:                 key,
 		store:               store,
+		deltaDocID:          key.DocShortID,
 		collectionVersionID: collectionVersionID,
 		fieldName:           fieldName,
 	}
+}
+
+func (l *LWW) SetDeltaDocID(docID string) {
+	l.deltaDocID = docID
 }
 
 func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
@@ -102,7 +108,7 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 
 	return &LWWDelta{
 		Data:                bytes,
-		DocID:               []byte(l.key.DocID),
+		DocID:               []byte(l.deltaDocID),
 		FieldName:           l.fieldName,
 		CollectionVersionID: l.collectionVersionID,
 	}, nil
@@ -122,32 +128,32 @@ func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 }
 
 func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := getPriority(ctx, l.store, l.key)
-	if err != nil {
-		return NewErrFailedToGetPriority(err)
-	}
-
-	// if the current priority is higher ignore put
-	// else if the current value is lexicographically
-	// greater than the new then ignore
 	key := l.key.WithValueFlag()
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return NewErrGetRegisterStatus(err, l.key.DocID, l.fieldName)
-	}
-	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
-		key = key.WithDeletedFlag()
-	}
-	if priority < curPrio {
-		return nil
-	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key)
+
+	if !IsNewDocCreateMode(ctx) {
+		curPrio, err := getPriority(ctx, l.store, l.key)
 		if err != nil {
-			return NewErrGetRegisterValue(err, l.key.DocID, l.fieldName)
+			return NewErrFailedToGetPriority(err)
 		}
 
-		if bytes.Compare(curValue, val) >= 0 {
+		marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
+		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+			return NewErrGetRegisterStatus(err, l.key.DocShortID, l.fieldName)
+		}
+		if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+			key = key.WithDeletedFlag()
+		}
+		if priority < curPrio {
 			return nil
+		} else if priority == curPrio {
+			curValue, err := l.store.Get(ctx, key)
+			if err != nil {
+				return NewErrGetRegisterValue(err, l.key.DocShortID, l.fieldName)
+			}
+
+			if bytes.Compare(curValue, val) >= 0 {
+				return nil
+			}
 		}
 	}
 
@@ -156,13 +162,11 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = l.store.Delete(ctx, key)
-		if err != nil {
-			return NewErrDeleteRegisterValue(err, l.key.DocID, l.fieldName)
+		if err := l.store.Delete(ctx, key); err != nil {
+			return NewErrDeleteRegisterValue(err, l.key.DocShortID, l.fieldName)
 		}
 	} else {
-		err = l.store.Set(ctx, key, val)
-		if err != nil {
+		if err := l.store.Set(ctx, key, val); err != nil {
 			return NewErrFailedToStoreValue(err)
 		}
 	}

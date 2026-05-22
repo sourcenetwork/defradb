@@ -19,11 +19,13 @@ import (
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -75,24 +77,41 @@ func (db *DB) VerifySignature(
 	}
 
 	if db.documentACP.HasValue() {
-		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID, opt.Identity)
+		getCollectionsOpt := options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID())
+		if opt.Identity.HasValue() {
+			getCollectionsOpt = getCollectionsOpt.SetIdentity(opt.Identity.Value())
+		}
+		collections, err := db.GetCollections(ctx, getCollectionsOpt)
+		if err != nil {
+			return err
+		}
+		if len(collections) == 0 {
+			return ErrMissingPermission
+		}
+		collection := collections[0]
+
+		docIDs, err := db.publicDocIDsForSignatureBlock(ctx, parsedCid, block, collection)
 		if err != nil {
 			return err
 		}
 
-		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			ctx,
-			opt.Identity,
-			db.nodeACP,
-			db.documentACP.Value(),
-			collection,
-			acpTypes.DocumentReadPerm,
-			docID,
-		)
-
-		if err != nil {
-			return err
+		var hasPerm bool
+		for _, docID := range docIDs {
+			hasPerm, err = acpDB.CheckAccessOfDocOnCollectionWithACP(
+				ctx,
+				opt.Identity,
+				db.nodeACP,
+				db.documentACP.Value(),
+				collection,
+				acpTypes.DocumentReadPerm,
+				docID,
+			)
+			if err != nil {
+				return err
+			}
+			if hasPerm {
+				break
+			}
 		}
 
 		if !hasPerm {
@@ -102,4 +121,70 @@ func (db *DB) VerifySignature(
 
 	_, err = coreblock.VerifyBlockSignatureWithKey(block, &linkSys, pubKey)
 	return err
+}
+
+// publicDocIDsForSignatureBlock resolves the public DocIDs that ACP may check for a signed block.
+func (db *DB) publicDocIDsForSignatureBlock(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	collection client.Collection,
+) ([]string, error) {
+	docID := string(block.Delta.GetDocID())
+	if docID == "" || id.IsGenesisDocID(docID) {
+		if block.Delta.IsComposite() {
+			return []string{client.NewDocIDV0(blockCID).String()}, nil
+		}
+		if block.Delta.IsField() {
+			return db.publicDocIDsForGenesisField(ctx, blockCID, collection)
+		}
+		return []string{""}, nil
+	}
+
+	shortID, err := id.GetUncachedShortCollectionID(
+		ctx,
+		collection.Version().CollectionID,
+		datastore.SystemstoreFrom(db.rootstore),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDocID, found, err := id.GetPublicDocIDFromStore(
+		ctx,
+		datastore.SystemstoreFrom(db.rootstore),
+		shortID,
+		docID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return []string{publicDocID}, nil
+	}
+	return []string{docID}, nil
+}
+
+// publicDocIDsForGenesisField resolves public DocIDs for a genesis field block from the field-CID index.
+func (db *DB) publicDocIDsForGenesisField(
+	ctx context.Context,
+	fieldCID cid.Cid,
+	collection client.Collection,
+) ([]string, error) {
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	collectionShortID, err := id.GetUncachedShortCollectionID(
+		ctx,
+		collection.Version().CollectionID,
+		systemstore,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return id.GetPublicDocIDsForGenesisFieldFromStore(
+		ctx,
+		systemstore,
+		collectionShortID,
+		fieldCID,
+	)
 }

@@ -115,7 +115,7 @@ func (c *collection) get(
 	// construct target DS key from DocID.
 	targetKey := keys.DataStoreKey{
 		CollectionShortID: shortID,
-		DocID:             primaryKey.DocID,
+		DocShortID:        primaryKey.DocShortID,
 	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)

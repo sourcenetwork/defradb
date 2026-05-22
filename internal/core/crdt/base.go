@@ -21,6 +21,17 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+type newDocCreateModeKey struct{}
+
+func ContextWithNewDocCreateMode(ctx context.Context) context.Context {
+	return context.WithValue(ctx, newDocCreateModeKey{}, true)
+}
+
+func IsNewDocCreateMode(ctx context.Context) bool {
+	v, _ := ctx.Value(newDocCreateModeKey{}).(bool)
+	return v
+}
+
 func setPriority(
 	ctx context.Context,
 	store datastore.Keyedstore,

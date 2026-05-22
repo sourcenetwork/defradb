@@ -183,7 +183,7 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	}
 
 	// pass the doc key as a reference through the prefixes interface
-	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
+	prefixes := []keys.Walkable{keys.DataStoreKey{DocShortID: key}}
 	plan.Prefixes(prefixes)
 	err := plan.Init()
 	if err != nil {

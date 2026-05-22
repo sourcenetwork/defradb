@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -83,6 +84,9 @@ type DB struct {
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
+
+	// Local sequence for short document IDs used in datastore keys.
+	docIDSequence atomic.Uint64
 
 	// The identity of the current node.
 	nodeIdentity immutable.Option[identity.Identity]
@@ -236,6 +240,24 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	publicDocID := docID
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	collectionShortID, err := id.GetUncachedShortCollectionID(
+		ctx,
+		collection.Version().CollectionID,
+		systemstore,
+	)
+	if err != nil {
+		return err
+	}
+	shortDocID, found, err := id.GetShortDocIDFromStore(ctx, systemstore, collectionShortID, docID)
+	if err != nil {
+		return err
+	}
+	if found {
+		docID = shortDocID
+	}
+
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
@@ -256,7 +278,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 
 		updateEvent := event.Update{
-			DocID:        docID,
+			DocID:        publicDocID,
 			Cid:          headsIterator.CurrentCid(),
 			CollectionID: collection.Version().CollectionID,
 			Block:        headsIterator.CurrentRawBlock(),
@@ -323,6 +345,10 @@ func (db *DB) initialize(ctx context.Context) error {
 			return err
 		}
 
+		if err := db.seedDocIDSequence(ctx); err != nil {
+			return err
+		}
+
 		err = db.getLensStore(ctx).Reload(ctx)
 		if err != nil {
 			return err
@@ -336,6 +362,10 @@ func (db *DB) initialize(ctx context.Context) error {
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
+		return err
+	}
+
+	if err := db.seedDocIDSequence(ctx); err != nil {
 		return err
 	}
 

@@ -145,6 +145,11 @@ func (n *selectNode) Kind() string {
 }
 
 func (n *selectNode) Init() error {
+	filter, err := filterWithDocIDAliases(n.planner.ctx, n.collection, n.documentMapping, n.filter)
+	if err != nil {
+		return err
+	}
+	n.filter = filter
 	return n.source.Init()
 }
 
@@ -327,9 +332,16 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
 
 			for i, docID := range n.selectReq.DocIDs.Value() {
+				shortDocID, found, err := id.ResolveShortDocID(n.planner.ctx, shortID, docID)
+				if err != nil {
+					return nil, nil, err
+				}
+				if found {
+					docID = shortDocID
+				}
 				prefixes[i] = keys.DataStoreKey{
 					CollectionShortID: shortID,
-					DocID:             docID,
+					DocShortID:        docID,
 				}
 			}
 			origScan.Prefixes(prefixes)

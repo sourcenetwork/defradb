@@ -26,6 +26,10 @@ type FieldLevelCRDT interface {
 	Delta(ctx context.Context, data *DocField) (Delta, error)
 }
 
+type DeltaDocIDSetter interface {
+	SetDeltaDocID(docID string)
+}
+
 func FieldLevelCRDTWithStore(
 	store datastore.Keyedstore,
 	collectionVersionID string,

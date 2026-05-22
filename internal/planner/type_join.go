@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -463,10 +465,17 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
+	shortDocID, found, err := id.GetShortDocID(scan.p.ctx, shortID, docID)
+	if err != nil {
+		return immutable.None[core.Doc](), err
+	}
+	if found {
+		docID = shortDocID
+	}
 
 	dsKey := keys.DataStoreKey{
 		CollectionShortID: shortID,
-		DocID:             docID,
+		DocShortID:        docID,
 	}
 
 	prefixes := []keys.Walkable{dsKey}
@@ -490,6 +499,33 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	}
 
 	return immutable.Some(node.Value()), nil
+}
+
+func resolveDocIDAliasForCollection(ctx context.Context, col client.Collection, docID string) (string, error) {
+	if docID == "" {
+		return docID, nil
+	}
+
+	shortDocID, found, err := id.GetNodeShortDocID(ctx, docID)
+	if err != nil {
+		return "", err
+	}
+	if !found {
+		return docID, nil
+	}
+
+	collectionShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+	if err != nil {
+		return "", err
+	}
+	publicDocID, found, err := id.GetPublicDocID(ctx, collectionShortID, shortDocID)
+	if err != nil {
+		return "", err
+	}
+	if !found {
+		return docID, nil
+	}
+	return publicDocID, nil
 }
 
 // joinIterationState holds the mutable state that changes during iteration.
@@ -683,8 +719,11 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	docFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-		r.targetSecondaryDoc.GetID())
+	targetDocIDs, err := docIDFilterValues(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
+	if err != nil {
+		return nil, err
+	}
+	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), targetDocIDs)
 
 	// When the join is inverted, the parent becomes the primary (second) side.
 	// Its scan may still hold scalar filter conditions (e.g., rating > 4.5) that
@@ -919,6 +958,14 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 			return true, nil
 		}
 		return join.Next()
+	}
+	var err error
+	secondScan := getNode[*scanNode](secondSide.plan)
+	if secondScan != nil {
+		secondaryDocID, err = resolveDocIDAliasForCollection(secondScan.p.ctx, secondSide.col, secondaryDocID)
+	}
+	if err != nil {
+		return false, err
 	}
 
 	if secondSide.isParent {

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -29,18 +30,20 @@ import (
 // indexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type indexFetcher struct {
-	ctx           context.Context
-	txn           datastore.Txn
-	col           client.Collection
-	indexFilter   *mapper.Filter
-	mapping       *core.DocumentMapping
-	indexedFields []client.CollectionFieldDescription
-	fieldsByID    map[uint32]client.CollectionFieldDescription
-	indexDesc     client.IndexDescription
-	indexIter     indexIterator
-	currentDocID  immutable.Option[string]
-	execInfo      *ExecInfo
-	ordering      []mapper.OrderCondition
+	ctx               context.Context
+	txn               datastore.Txn
+	col               client.Collection
+	indexFilter       *mapper.Filter
+	mapping           *core.DocumentMapping
+	indexedFields     []client.CollectionFieldDescription
+	fieldsByID        map[uint32]client.CollectionFieldDescription
+	indexDesc         client.IndexDescription
+	indexIter         indexIterator
+	currentDocID      immutable.Option[string]
+	currentShortDocID immutable.Option[string]
+	collectionShortID uint32
+	execInfo          *ExecInfo
+	ordering          []mapper.OrderCondition
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -65,15 +68,21 @@ func newIndexFetcher(
 		return nil, nil
 	}
 
+	collectionShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	f := &indexFetcher{
-		ctx:        ctx,
-		txn:        txn,
-		col:        col,
-		mapping:    docMapper,
-		indexDesc:  indexDesc,
-		fieldsByID: fieldsByID,
-		execInfo:   execInfo,
-		ordering:   ordering,
+		ctx:               ctx,
+		txn:               txn,
+		col:               col,
+		mapping:           docMapper,
+		indexDesc:         indexDesc,
+		fieldsByID:        fieldsByID,
+		collectionShortID: collectionShortID,
+		execInfo:          execInfo,
+		ordering:          ordering,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
@@ -87,6 +96,13 @@ func newIndexFetcher(
 	}
 
 	for _, indexedField := range f.indexDesc.Fields {
+		if indexedField.Name == request.DocIDFieldName {
+			f.indexedFields = append(f.indexedFields, client.CollectionFieldDescription{
+				Name: indexedField.Name,
+				Kind: client.FieldKind_DocID,
+			})
+			continue
+		}
 		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
@@ -104,6 +120,7 @@ func newIndexFetcher(
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	f.currentDocID = immutable.None[string]()
+	f.currentShortDocID = immutable.None[string]()
 
 	res, err := f.indexIter.Next()
 	if err != nil {
@@ -119,11 +136,22 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	if f.indexDesc.Unique && !hasNilField {
-		f.currentDocID = immutable.Some(string(res.value))
+		shortDocID := string(res.value)
+		docID, err := f.publicDocID(shortDocID)
+		if err != nil {
+			return immutable.None[string](), err
+		}
+		f.currentDocID = immutable.Some(docID)
+		f.currentShortDocID = immutable.Some(shortDocID)
 	} else {
 		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-		if str, ok := lastVal.String(); ok {
-			f.currentDocID = immutable.Some(str)
+		if shortDocID, ok := lastVal.String(); ok {
+			docID, err := f.publicDocID(shortDocID)
+			if err != nil {
+				return immutable.None[string](), err
+			}
+			f.currentDocID = immutable.Some(docID)
+			f.currentShortDocID = immutable.Some(shortDocID)
 		} else {
 			f.currentDocID = immutable.None[string]()
 		}
@@ -131,19 +159,40 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	return f.currentDocID, nil
 }
 
+func (f *indexFetcher) publicDocID(docID string) (string, error) {
+	publicDocID, found, err := id.GetPublicDocID(f.ctx, f.collectionShortID, docID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return publicDocID, nil
+	}
+	return docID, nil
+}
+
 func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if !f.currentDocID.HasValue() {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
-	if err != nil {
-		return immutable.None[EncodedDocument](), err
+	docID := ""
+	if f.currentShortDocID.HasValue() {
+		docID = f.currentShortDocID.Value()
+	} else {
+		var err error
+		docID = f.currentDocID.Value()
+		shortDocID, found, err := id.GetShortDocID(f.ctx, f.collectionShortID, docID)
+		if err != nil {
+			return immutable.None[EncodedDocument](), err
+		}
+		if found {
+			docID = shortDocID
+		}
 	}
 
 	prefix := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             f.currentDocID.Value(),
+		CollectionShortID: f.collectionShortID,
+		DocShortID:        docID,
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)

@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -45,10 +46,14 @@ type dagScanNode struct {
 	fetcher        fetcher.HeadFetcher
 	fetcherStarted bool
 	prefix         immutable.Option[keys.HeadstoreKey]
+	prefixErr      error
 	commitSelect   *mapper.CommitSelect
 
 	linksScanNodes []*dagScanNode
 	headsScanNodes []*dagScanNode
+
+	activePublicDocID  immutable.Option[string]
+	activeStorageDocID immutable.Option[string]
 
 	execInfo dagScanExecInfo
 }
@@ -99,12 +104,17 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
+	if n.prefixErr != nil {
+		return n.prefixErr
+	}
+
 	if !n.prefix.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-			// todo - for now we just take the first docID and ignore the rest, an error
-			// should be thrown in the parser anyway if the user provides more than one.
-			// https://github.com/sourcenetwork/defradb/issues/4302
-			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocIDs.Value()[0])
+			docID, err := n.getHeadstoreDocID(n.commitSelect.DocIDs.Value()[0])
+			if err != nil {
+				return err
+			}
+			key := keys.HeadstoreDocKey{}.WithDocID(docID)
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
@@ -132,18 +142,37 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 		return
 	}
 
-	for _, prefix := range prefixes {
-		var start keys.HeadstoreDocKey
-		switch s := prefix.(type) {
-		case keys.DataStoreKey:
-			start = s.ToHeadStoreKey()
-		case keys.HeadstoreDocKey:
-			start = s
-		}
+	var start keys.HeadstoreDocKey
+	switch s := prefixes[0].(type) {
+	case keys.DataStoreKey:
+		start = s.ToHeadStoreKey()
+	case keys.HeadstoreDocKey:
+		start = s
+	}
 
-		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
+	docID, err := n.getHeadstoreDocID(start.DocID)
+	if err != nil {
+		n.prefixErr = err
 		return
 	}
+	n.prefixErr = nil
+	start.DocID = docID
+
+	n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
+}
+
+func (n *dagScanNode) getHeadstoreDocID(docID string) (string, error) {
+	if docID == "" {
+		return docID, nil
+	}
+	shortDocID, found, err := id.GetNodeShortDocID(n.planner.ctx, docID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return shortDocID, nil
+	}
+	return docID, nil
 }
 
 func (n *dagScanNode) Close() error {
@@ -219,6 +248,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		currentCid = cid
+		n.setActiveDocIDFromCurrentHead()
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
 	} else {
@@ -254,8 +284,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// the collection has no policy or the doc is public.
 	// - Collection-level deltas (e.g. schema changes) carry no docID and
 	// are not DAC-gated, only doc-level deltas need an access check.
-	docIDBytes := dagBlock.Delta.GetDocID()
-	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+	if n.planner.documentACP.HasValue() && !dagBlock.Delta.IsCollection() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
 		cols, err := n.planner.db.GetCollections(
@@ -269,6 +298,14 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
+		docID, hasDocID, err := n.publicCommitDocID(dagBlock, *currentCid, cols[0].Version().CollectionID)
+		if err != nil {
+			return false, err
+		}
+		if !hasDocID {
+			return false, client.ErrMalformedDocID
+		}
+
 		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			n.planner.ctx,
 			n.planner.identity,
@@ -276,7 +313,7 @@ func (n *dagScanNode) Next() (bool, error) {
 			n.planner.documentACP.Value(),
 			cols[0],
 			acpTypes.DocumentReadPerm,
-			string(docIDBytes),
+			docID,
 		)
 		if err != nil {
 			return false, err
@@ -429,12 +466,15 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
-	docID := block.Delta.GetDocID()
-	if docID != nil {
+	docIDStr, hasDocID, err := n.publicCommitDocID(block, link.Cid, cols[0].Version().CollectionID)
+	if err != nil {
+		return core.Doc{}, err
+	}
+	if hasDocID {
 		n.commitSelect.DocumentMapping.SetFirstOfName(
 			&commit,
 			request.DocIDArgName,
-			string(docID),
+			docIDStr,
 		)
 	}
 
@@ -478,6 +518,9 @@ func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, co
 		// reset linkScanNode
 		dagScanNodes[i].reset()
 		dagScanNodes[i].queuedCids = links
+		if parentDocID, ok := n.commitSelect.FirstOfName(*commit, request.DocIDArgName).(string); ok && parentDocID != "" {
+			dagScanNodes[i].activePublicDocID = immutable.Some(parentDocID)
+		}
 		links := make([]core.Doc, 0)
 		for {
 			next, err := dagScanNodes[i].Next()
@@ -541,4 +584,81 @@ func (n *dagScanNode) reset() {
 	n.queuedCids = make([]*cid.Cid, 0)
 	n.depthVisited = 0
 	n.currentValue = core.Doc{}
+	n.prefixErr = nil
+	n.activePublicDocID = immutable.None[string]()
+	n.activeStorageDocID = immutable.None[string]()
+}
+
+func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
+	n.activePublicDocID = immutable.None[string]()
+	n.activeStorageDocID = immutable.None[string]()
+
+	currentKey := n.fetcher.CurrentKey()
+	if !currentKey.HasValue() {
+		return
+	}
+
+	docKey, ok := currentKey.Value().(keys.HeadstoreDocKey)
+	if !ok {
+		return
+	}
+	n.activeStorageDocID = immutable.Some(docKey.DocID)
+}
+
+func (n *dagScanNode) publicCommitDocID(
+	block *coreblock.Block,
+	blockCID cid.Cid,
+	collectionID string,
+) (string, bool, error) {
+	rawDocID := string(block.Delta.GetDocID())
+	if rawDocID != "" && !id.IsGenesisDocID(rawDocID) {
+		publicDocID, err := n.publicDocIDForStoredDocID(collectionID, rawDocID)
+		if err != nil {
+			return "", false, err
+		}
+		n.activePublicDocID = immutable.Some(publicDocID)
+		return publicDocID, true, nil
+	}
+
+	if block.Delta.IsCollection() {
+		return "", false, nil
+	}
+
+	if block.Delta.IsComposite() {
+		publicDocID := client.NewDocIDV0(blockCID).String()
+		n.activePublicDocID = immutable.Some(publicDocID)
+		return publicDocID, true, nil
+	}
+
+	if n.activePublicDocID.HasValue() {
+		return n.activePublicDocID.Value(), true, nil
+	}
+	if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
+		return n.commitSelect.DocIDs.Value()[0], true, nil
+	}
+	if n.activeStorageDocID.HasValue() {
+		publicDocID, err := n.publicDocIDForStoredDocID(collectionID, n.activeStorageDocID.Value())
+		if err != nil {
+			return "", false, err
+		}
+		n.activePublicDocID = immutable.Some(publicDocID)
+		return publicDocID, true, nil
+	}
+
+	return "", true, nil
+}
+
+func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID string) (string, error) {
+	collectionShortID, err := id.GetShortCollectionID(n.planner.ctx, collectionID)
+	if err != nil {
+		return "", err
+	}
+	publicDocID, found, err := id.GetPublicDocID(n.planner.ctx, collectionShortID, docID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return publicDocID, nil
+	}
+	return docID, nil
 }

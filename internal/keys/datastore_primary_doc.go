@@ -22,7 +22,7 @@ const (
 
 type PrimaryDataStoreKey struct {
 	CollectionShortID uint32
-	DocID             string
+	DocShortID        string
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)
@@ -31,7 +31,7 @@ var _ CollectionedKey = PrimaryDataStoreKey{}
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionShortID: k.CollectionShortID,
-		DocID:             k.DocID,
+		DocShortID:        k.DocShortID,
 	}
 }
 
@@ -50,8 +50,8 @@ func (k PrimaryDataStoreKey) ToString() string {
 		result = result + "/" + fmt.Sprint(k.CollectionShortID)
 	}
 	result = result + PRIMARY_KEY
-	if k.DocID != "" {
-		result = result + "/" + k.DocID
+	if k.DocShortID != "" {
+		result = result + "/" + k.DocShortID
 	}
 
 	return result

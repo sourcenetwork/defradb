@@ -68,6 +68,15 @@ func newPrefixFetcher(
 	} else {
 		uniquePrefixes := make(map[keys.DataStoreKey]struct{}, len(prefixes))
 		for _, prefix := range prefixes {
+			if prefix.DocShortID != "" {
+				shortDocID, found, err := id.ResolveShortDocID(ctx, prefix.CollectionShortID, prefix.DocShortID)
+				if err != nil {
+					return nil, err
+				}
+				if found {
+					prefix.DocShortID = shortDocID
+				}
+			}
 			// Deduplicate the prefixes to make sure that any given document is only yielded
 			// once.
 			uniquePrefixes[prefix] = struct{}{}

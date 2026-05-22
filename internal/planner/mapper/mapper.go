@@ -35,6 +35,7 @@ const (
 
 var (
 	FilterEqOp = &Operator{Operation: connor.EqualOp}
+	FilterInOp = &Operator{Operation: connor.InOp}
 )
 
 // SelectionType is the type of selection.

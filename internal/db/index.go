@@ -213,16 +213,34 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 
-	if appendDocID {
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
-	}
-
 	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
+	if appendDocID {
+		shortDocID, err := index.getShortDocIDForIndex(ctx, shortID, doc)
+		if err != nil {
+			return keys.IndexDataStoreKey{}, err
+		}
+		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(shortDocID)})
+	}
 
 	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
+}
+
+func (index *collectionBaseIndex) getShortDocIDForIndex(
+	ctx context.Context,
+	collectionShortID uint32,
+	doc *client.Document,
+) (string, error) {
+	shortDocID, found, err := id.GetShortDocID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return shortDocID, nil
+	}
+	return doc.ID().String(), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -421,7 +439,7 @@ func (index *collectionUniqueIndex) Save(
 	doc *client.Document,
 ) error {
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		return addNewUniqueKey(ctx, doc, key, index.fieldsDescs)
+		return addNewUniqueKey(ctx, doc, key, index.fieldsDescs, index)
 	})
 }
 
@@ -445,13 +463,13 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	doc *client.Document,
+	shortDocID string,
 ) (keys.IndexDataStoreKey, []byte, error) {
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
+		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(shortDocID)})
 		return key, []byte{}, nil
 	} else {
-		return key, []byte(doc.ID().String()), nil
+		return key, []byte(shortDocID), nil
 	}
 }
 
@@ -481,10 +499,19 @@ func addNewUniqueKey(
 	doc *client.Document,
 	key keys.IndexDataStoreKey,
 	fieldsDescs []client.CollectionFieldDescription,
+	index *collectionUniqueIndex,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	shortDocID, err := index.getShortDocIDForIndex(ctx, shortID, doc)
+	if err != nil {
+		return err
+	}
+	key, val, err := makeUniqueKeyValueRecord(key, shortDocID)
 	if err != nil {
 		return err
 	}
@@ -504,8 +531,16 @@ func (index *collectionUniqueIndex) Delete(
 	doc *client.Document,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
+	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	shortDocID, err := index.getShortDocIDForIndex(ctx, shortID, doc)
+	if err != nil {
+		return err
+	}
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		key, _, err := makeUniqueKeyValueRecord(key, doc)
+		key, _, err := makeUniqueKeyValueRecord(key, shortDocID)
 		if err != nil {
 			return err
 		}

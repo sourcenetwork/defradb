@@ -109,14 +109,9 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		primaryKey, err := c.getPrimaryKeyFromDocIDString(ctx, docID)
 		if err != nil {
 			return nil, err
-		}
-
-		primaryKey := keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
@@ -138,6 +133,11 @@ func (c *collection) applyDelete(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) error {
+	publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
+	if err != nil {
+		return err
+	}
+
 	// Must also have read permission to delete, inorder to check if document exists.
 	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
@@ -147,14 +147,14 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
+		return NewErrDocumentDeleted(publicDocID)
 	}
 
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
 		acpTypes.DocumentDeletePerm,
-		primaryKey.DocID,
+		publicDocID,
 	)
 
 	if err != nil {
@@ -180,6 +180,7 @@ func (c *collection) applyDelete(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+	merkleCRDT.SetDeltaDocID(publicDocID)
 
 	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
@@ -188,7 +189,7 @@ func (c *collection) applyDelete(
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{
-		DocID:        primaryKey.DocID,
+		DocID:        publicDocID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        b,

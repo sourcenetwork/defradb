@@ -11,6 +11,10 @@
 package planner
 
 import (
+	"context"
+	"maps"
+
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -65,6 +69,10 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filter)
+	if err != nil {
+		return err
+	}
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
@@ -75,7 +83,7 @@ func (n *scanNode) Init() error {
 		n.index,
 		n.col,
 		n.fields,
-		n.filter,
+		filter,
 		n.ordering,
 		n.slct.DocumentMapping,
 		n.showDeleted,
@@ -83,6 +91,234 @@ func (n *scanNode) Init() error {
 		return err
 	}
 	return n.initScan()
+}
+
+func filterWithDocIDAliases(
+	ctx context.Context,
+	col client.Collection,
+	mapping *core.DocumentMapping,
+	filter *mapper.Filter,
+) (*mapper.Filter, error) {
+	if filter == nil {
+		return nil, nil
+	}
+
+	conditions, changed, err := expandDocIDAliasesInConditions(ctx, col, mapping, filter.Conditions)
+	if err != nil {
+		return nil, err
+	}
+	if !changed {
+		return filter, nil
+	}
+
+	result := mapper.NewFilter()
+	result.Conditions = conditions
+	result.ExternalConditions = make(map[string]any, len(filter.ExternalConditions))
+	maps.Copy(result.ExternalConditions, filter.ExternalConditions)
+	return result, nil
+}
+
+func expandDocIDAliasesInConditions(
+	ctx context.Context,
+	col client.Collection,
+	mapping *core.DocumentMapping,
+	conditions map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, bool, error) {
+	result := make(map[connor.FilterKey]any, len(conditions))
+	var changed bool
+	for key, value := range conditions {
+		switch typedKey := key.(type) {
+		case *mapper.PropertyIndex:
+			opMap, ok := value.(map[connor.FilterKey]any)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			if isDocIDFilterField(col, mapping, typedKey.Index) {
+				expandedOpMap, opChanged, err := expandDocIDAliasesInOpMap(ctx, opMap)
+				if err != nil {
+					return nil, false, err
+				}
+				changed = changed || opChanged
+				result[key] = expandedOpMap
+				continue
+			}
+
+			childMapping := mapping
+			if mapping != nil && typedKey.Index < len(mapping.ChildMappings) &&
+				mapping.ChildMappings[typedKey.Index] != nil {
+				childMapping = mapping.ChildMappings[typedKey.Index]
+			}
+			expandedConditions, conditionsChanged, err := expandDocIDAliasesInConditions(ctx, col, childMapping, opMap)
+			if err != nil {
+				return nil, false, err
+			}
+			changed = changed || conditionsChanged
+			result[key] = expandedConditions
+
+		case *mapper.Operator:
+			switch typedValue := value.(type) {
+			case map[connor.FilterKey]any:
+				expandedConditions, conditionsChanged, err := expandDocIDAliasesInConditions(ctx, col, mapping, typedValue)
+				if err != nil {
+					return nil, false, err
+				}
+				changed = changed || conditionsChanged
+				result[key] = expandedConditions
+			case []any:
+				expandedList := make([]any, len(typedValue))
+				var listChanged bool
+				for i, item := range typedValue {
+					itemMap, ok := item.(map[connor.FilterKey]any)
+					if !ok {
+						expandedList[i] = item
+						continue
+					}
+					expandedItem, itemChanged, err := expandDocIDAliasesInConditions(ctx, col, mapping, itemMap)
+					if err != nil {
+						return nil, false, err
+					}
+					listChanged = listChanged || itemChanged
+					expandedList[i] = expandedItem
+				}
+				changed = changed || listChanged
+				result[key] = expandedList
+			default:
+				result[key] = value
+			}
+
+		default:
+			result[key] = value
+		}
+	}
+	return result, changed, nil
+}
+
+func expandDocIDAliasesInOpMap(
+	ctx context.Context,
+	opMap map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, bool, error) {
+	result := make(map[connor.FilterKey]any, len(opMap))
+	var changed bool
+	for key, value := range opMap {
+		op, ok := key.(*mapper.Operator)
+		if !ok {
+			result[key] = value
+			continue
+		}
+
+		switch op.Operation {
+		case connor.EqualOp:
+			docID, ok := value.(string)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			values, err := docIDFilterValues(ctx, docID)
+			if err != nil {
+				return nil, false, err
+			}
+			if len(values) > 1 {
+				result[mapper.FilterInOp] = values
+				changed = true
+			} else {
+				result[key] = value
+			}
+		case connor.InOp:
+			values, ok := value.([]any)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			expandedValues, err := expandDocIDAliasValues(ctx, values)
+			if err != nil {
+				return nil, false, err
+			}
+			result[key] = expandedValues
+			changed = len(expandedValues) != len(values)
+		default:
+			result[key] = value
+		}
+	}
+	return result, changed, nil
+}
+
+func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, error) {
+	expandedValues := make([]any, 0, len(values))
+	seenStrings := map[string]struct{}{}
+	for _, value := range values {
+		docID, ok := value.(string)
+		if !ok {
+			expandedValues = append(expandedValues, value)
+			continue
+		}
+		aliases, err := docIDFilterValues(ctx, docID)
+		if err != nil {
+			return nil, err
+		}
+		for _, alias := range aliases {
+			aliasString, ok := alias.(string)
+			if !ok {
+				expandedValues = append(expandedValues, alias)
+				continue
+			}
+			if _, exists := seenStrings[aliasString]; exists {
+				continue
+			}
+			seenStrings[aliasString] = struct{}{}
+			expandedValues = append(expandedValues, alias)
+		}
+	}
+	return expandedValues, nil
+}
+
+func isDocIDFilterField(col client.Collection, mapping *core.DocumentMapping, fieldIndex int) bool {
+	if col == nil || mapping == nil {
+		return false
+	}
+	fieldName, ok := mapping.TryToFindNameFromIndex(fieldIndex)
+	if !ok {
+		return false
+	}
+	if fieldName == request.DocIDFieldName {
+		return true
+	}
+	fieldDef, ok := col.Version().GetFieldByName(fieldName)
+	return ok && fieldDef.Kind == client.FieldKind_DocID
+}
+
+func docIDFilterValues(ctx context.Context, docID string) ([]any, error) {
+	values := []any{docID}
+	if docID == "" {
+		return values, nil
+	}
+
+	shortDocID, found, err := id.GetNodeShortDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return values, nil
+	}
+
+	aliases, err := id.GetNodeDocIDAliasesForShortDocID(
+		ctx,
+		datastore.CtxMustGetTxn(ctx).Systemstore(),
+		shortDocID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := map[string]struct{}{docID: {}}
+	for _, alias := range aliases {
+		if _, ok := seen[alias]; ok {
+			continue
+		}
+		seen[alias] = struct{}{}
+		values = append(values, alias)
+	}
+	return values, nil
 }
 
 func (n *scanNode) initCollection(col client.Collection) error {

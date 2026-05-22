@@ -11,11 +11,16 @@
 package keys
 
 import (
+	"math"
+
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
+
+// DocIDIndexID is reserved for the internal public DocID to short doc ID index.
+const DocIDIndexID = math.MaxUint32
 
 // IndexedField contains information necessary for storing a single
 // value of a field in an index.

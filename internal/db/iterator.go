@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -63,6 +64,13 @@ func NewHeadBlocksIteratorFromTxn(
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
+	shortDocID, found, err := id.GetNodeShortDocIDFromStore(ctx, txn.Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		docID = shortDocID
+	}
 	return NewHeadBlocksIterator(
 		ctx,
 		txn.Headstore(),

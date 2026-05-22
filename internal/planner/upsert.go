@@ -139,10 +139,17 @@ func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersio
 	}
 
 	prefixes := make([]keys.Walkable, len(ids))
-	for i, id := range ids {
+	for i, docID := range ids {
+		shortDocID, found, err := id.GetShortDocID(n.p.ctx, shortID, docID)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			docID = shortDocID
+		}
 		prefixes[i] = keys.DataStoreKey{
 			CollectionShortID: shortID,
-			DocID:             id,
+			DocShortID:        docID,
 		}
 	}
 	return prefixes, nil

@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -139,6 +140,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	}
 
 	keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
+	deletedDocIDs := make(map[string]struct{})
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
@@ -182,9 +184,25 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		// Because the datastore read-locks are only ever released when the transaction closes,
 		// we do not need to worry about timing or order-of-operation issues, *unless* we change
 		// when the datastore read-locks are released.
-		err = c.hardDeleteDocumentBlocks(ctx, key.DocID)
-		if err != nil {
-			return err
+		if key.DocShortID != "" {
+			if _, done := deletedDocIDs[key.DocShortID]; !done {
+				publicDocID, found, err := id.GetPublicDocID(ctx, colShortID, key.DocShortID)
+				if err != nil {
+					return err
+				}
+				if !found {
+					publicDocID = key.DocShortID
+				}
+
+				err = c.hardDeleteDocumentBlocks(ctx, key.DocShortID)
+				if err != nil {
+					return err
+				}
+				if err := c.deleteDocIDMappings(ctx, colShortID, key.DocShortID, publicDocID); err != nil {
+					return err
+				}
+				deletedDocIDs[key.DocShortID] = struct{}{}
+			}
 		}
 	}
 
@@ -329,6 +347,70 @@ func (c *collection) hardDeleteDocumentBlocks(
 		return c.hardDeleteDocumentBlocks(ctx, docID)
 	}
 
+	return nil
+}
+
+func (c *collection) deleteDocIDMappings(
+	ctx context.Context,
+	collectionShortID uint32,
+	shortDocID string,
+	publicDocID string,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	systemstore := txn.Systemstore()
+
+	if publicDocID == "" {
+		var found bool
+		var err error
+		publicDocID, found, err = id.GetPublicDocID(ctx, collectionShortID, shortDocID)
+		if err != nil {
+			return err
+		}
+		if !found {
+			publicDocID = shortDocID
+		}
+	}
+
+	shortToPublicKey := keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes()
+	if err := deleteRawKeyIfExists(ctx, systemstore, shortToPublicKey); err != nil {
+		return err
+	}
+	publicToShortKey := keys.NewDocIDToShortIDKey(collectionShortID, publicDocID).Bytes()
+	if err := deleteRawKeyIfExists(ctx, systemstore, publicToShortKey); err != nil {
+		return err
+	}
+	if err := deleteRawKeyIfExists(ctx, systemstore, keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes()); err != nil {
+		return err
+	}
+	if err := id.DeleteNodeDocIDAliasesForShortDocID(ctx, systemstore, shortDocID); err != nil {
+		return err
+	}
+	if err := id.DeleteGenesisFieldDocIDMappings(ctx, systemstore, collectionShortID, publicDocID); err != nil {
+		return err
+	}
+
+	docIDIndexKey := keys.NewIndexDataStoreKey(
+		collectionShortID,
+		keys.DocIDIndexID,
+		[]keys.IndexedField{
+			{Value: client.NewNormalString(publicDocID)},
+			{Value: client.NewNormalString(shortDocID)},
+		},
+	)
+	return deleteDatastoreKeyIfExists(ctx, txn.Datastore(), &docIDIndexKey)
+}
+
+func deleteRawKeyIfExists(ctx context.Context, store corekv.ReaderWriter, key []byte) error {
+	if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return err
+	}
+	return nil
+}
+
+func deleteDatastoreKeyIfExists(ctx context.Context, store datastore.Keyedstore, key keys.Key) error {
+	if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return err
+	}
 	return nil
 }
 

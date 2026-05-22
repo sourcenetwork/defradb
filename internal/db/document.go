@@ -95,9 +95,26 @@ func (c *collection) getAllDocIDsChan(
 			}
 
 			splitString := strings.Split(string(iter.Key()), "/")
-			rawDocID := splitString[len(splitString)-1]
+			shortDocID := splitString[len(splitString)-1]
 
-			docID, err := client.NewDocIDFromString(rawDocID)
+			publicDocID, found, err := id.GetPublicDocIDFromStore(
+				ctx,
+				c.db.Multistore().Systemstore(),
+				shortID,
+				shortDocID,
+			)
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
+			}
+			if !found {
+				publicDocID = shortDocID
+			}
+
+			docID, err := client.NewDocIDFromString(publicDocID)
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{
@@ -203,27 +220,6 @@ func (c *collection) AddManyDocuments(
 	return txn.Commit()
 }
 
-func (c *collection) getDocIDAndPrimaryKeyFromDoc(
-	ctx context.Context,
-	doc *client.Document,
-) (client.DocID, keys.PrimaryDataStoreKey, error) {
-	docID, err := doc.GenerateDocID()
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	if primaryKey.DocID != doc.ID().String() {
-		return client.DocID{}, keys.PrimaryDataStoreKey{},
-			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
-	}
-	return docID, primaryKey, nil
-}
-
 func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
@@ -232,44 +228,6 @@ func (c *collection) add(
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
 		return err
-	}
-
-	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return NewErrDocumentAlreadyExists(primaryKey.DocID)
-	}
-	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
-	}
-
-	// write value object marker if we have an empty doc
-	if len(doc.Values()) == 0 {
-		txn := datastore.CtxMustGetTxn(ctx)
-
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-
-		valueKey := keys.DataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             docID.String(),
-			InstanceType:      keys.ValueKey,
-		}
-
-		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
-		if err != nil {
-			return NewErrStoreDocMarker(err, docID.String())
-		}
 	}
 
 	ctx = setContextDocEncryption(ctx, opt)
@@ -339,7 +297,11 @@ func (c *collection) UpdateDocument(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
+		publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
+		if err != nil {
+			return err
+		}
+		return NewErrDocumentDeleted(publicDocID)
 	}
 
 	err = c.update(ctx, doc)
@@ -510,14 +472,37 @@ func (c *collection) save(
 		return err
 	}
 
-	// New batch transaction/store (optional/todo)
-	// Ensute/Set doc object marker
-	// Loop through doc values
-	//	=> 		instantiate MerkleCRDT objects
-	//	=> 		Set/Publish new CRDT values
-	primaryKey := keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             doc.ID().String(),
+	var primaryKey keys.PrimaryDataStoreKey
+	if isAdd {
+		primaryKey = keys.PrimaryDataStoreKey{
+			CollectionShortID: shortID,
+			DocShortID:        c.db.nextShortDocID(),
+		}
+	} else {
+		primaryKey, err = c.getPrimaryKeyFromDocID(ctx, doc.ID())
+		if err != nil {
+			return err
+		}
+	}
+
+	if isAdd && len(doc.Values()) == 0 {
+		valueKey := keys.DataStoreKey{
+			CollectionShortID: shortID,
+			DocShortID:        primaryKey.DocShortID,
+			InstanceType:      keys.ValueKey,
+		}
+		if err := txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker}); err != nil {
+			return err
+		}
+	}
+
+	deltaDocID := ""
+	legacyCreateDocID := ""
+	if !isAdd {
+		deltaDocID = doc.ID().String()
+	} else {
+		legacyCreateDocID = doc.ID().String()
+		deltaDocID = id.NewGenesisDocID(legacyCreateDocID)
 	}
 
 	links := make([]coreblock.DAGLink, 0)
@@ -539,7 +524,7 @@ func (c *collection) save(
 			}
 			fieldKey := keys.DataStoreKey{
 				CollectionShortID: shortID,
-				DocID:             primaryKey.DocID,
+				DocShortID:        primaryKey.DocShortID,
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
 
@@ -558,8 +543,11 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
+			if deltaSetter, ok := merkleCRDT.(crdt.DeltaDocIDSetter); ok {
+				deltaSetter.SetDeltaDocID(deltaDocID)
+			}
 
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocID, k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocShortID, k, val))
 			if err != nil {
 				return err
 			}
@@ -578,15 +566,47 @@ func (c *collection) save(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
+	merkleCRDT.SetDeltaDocID(deltaDocID)
 
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	addCtx := ctx
+	if isAdd {
+		addCtx = crdt.ContextWithNewDocCreateMode(addCtx)
+	}
+	link, headNode, err := coreblock.AddDelta(addCtx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
 
+	updateDocID := doc.ID().String()
+	if isAdd {
+		docID := client.NewDocIDV0(link.Cid)
+		shortDocID, found, err := id.GetShortDocID(ctx, shortID, docID.String())
+		if err != nil {
+			return err
+		}
+		if found && shortDocID != primaryKey.DocShortID {
+			return NewErrDocumentAlreadyExists(docID.String())
+		}
+		if err := id.SetDocIDMapping(ctx, shortID, primaryKey.DocShortID, docID.String()); err != nil {
+			return err
+		}
+		if legacyCreateDocID != "" && legacyCreateDocID != docID.String() {
+			if err := id.SetDocIDAlias(ctx, primaryKey.DocShortID, legacyCreateDocID); err != nil {
+				return err
+			}
+		}
+		for _, link := range links {
+			if err := id.SetGenesisFieldDocIDMapping(ctx, shortID, link.Cid, docID.String()); err != nil {
+				return err
+			}
+		}
+		client.SetDocumentIDFromCID(doc, link.Cid)
+		updateDocID = docID.String()
+	}
+
 	// publish an update event when the txn succeeds
 	updateEvent := event.Update{
-		DocID:        doc.ID().String(),
+		DocID:        updateDocID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
@@ -733,10 +753,15 @@ func (c *collection) exists(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
+	publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
+	if err != nil {
+		return false, false, err
+	}
+
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		primaryKey.DocID,
+		publicDocID,
 	)
 	if err != nil {
 		return false, false, err
@@ -749,7 +774,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, primaryKey.DocID)
+		return false, false, NewErrGetDocStatus(err, primaryKey.DocShortID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -762,13 +787,42 @@ func (c *collection) getPrimaryKeyFromDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (keys.PrimaryDataStoreKey, error) {
+	return c.getPrimaryKeyFromDocIDString(ctx, docID.String())
+}
+
+func (c *collection) getPrimaryKeyFromDocIDString(
+	ctx context.Context,
+	docID string,
+) (keys.PrimaryDataStoreKey, error) {
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
 	}
 
+	shortDocID, found, err := id.ResolveShortDocID(ctx, shortID, docID)
+	if err != nil {
+		return keys.PrimaryDataStoreKey{}, err
+	}
+	if found {
+		docID = shortDocID
+	}
+
 	return keys.PrimaryDataStoreKey{
 		CollectionShortID: shortID,
-		DocID:             docID.String(),
+		DocShortID:        docID,
 	}, nil
+}
+
+func (c *collection) getPublicDocIDFromPrimaryKey(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+) (string, error) {
+	docID, found, err := id.GetPublicDocID(ctx, primaryKey.CollectionShortID, primaryKey.DocShortID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return docID, nil
+	}
+	return primaryKey.DocShortID, nil
 }

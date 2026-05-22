@@ -77,6 +77,7 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 type DocComposite struct {
 	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
+	deltaDocID          string
 	collectionVersionID string
 }
 
@@ -92,8 +93,13 @@ func NewDocComposite(
 	return &DocComposite{
 		store:               store,
 		key:                 key,
+		deltaDocID:          key.DocShortID,
 		collectionVersionID: collectionVersionID,
 	}
+}
+
+func (m *DocComposite) SetDeltaDocID(docID string) {
+	m.deltaDocID = docID
 }
 
 func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
@@ -103,7 +109,7 @@ func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 // DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.key.DocID),
+		DocID:               []byte(m.deltaDocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Deleted,
 	}
@@ -112,7 +118,7 @@ func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 // Delta the value of the composite CRDT to DAG.
 func (m *DocComposite) Delta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.key.DocID),
+		DocID:               []byte(m.deltaDocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Active,
 	}
@@ -130,19 +136,26 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	if dagDelta.Status.IsDeleted() {
 		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
-			return NewErrSetDocAsDeleted(err, m.key.DocID)
+			return NewErrSetDocAsDeleted(err, m.key.DocShortID)
 		}
 		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
+	}
+
+	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+	if IsNewDocCreateMode(ctx) {
+		if err := m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID)); err != nil {
+			return err
+		}
+		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.ObjectMarker})
 	}
 
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
-	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
-		return NewErrGetDocMarker(err, m.key.DocID)
+		return NewErrGetDocMarker(err, m.key.DocShortID)
 	}
 
 	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
@@ -151,7 +164,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 
 	err = m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
 	if err != nil {
-		return NewErrSetDocVersion(err, m.key.DocID)
+		return NewErrSetDocVersion(err, m.key.DocShortID)
 	}
 
 	if !hasObjectMarker {
@@ -167,7 +180,7 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		Prefix: key,
 	})
 	if err != nil {
-		return NewErrCreateDeleteIter(err, m.key.DocID)
+		return NewErrCreateDeleteIter(err, m.key.DocShortID)
 	}
 
 	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
@@ -210,11 +223,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	for _, item := range kvArray {
 		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
-			return NewErrSetDeletedFlag(err, m.key.DocID, string(item.key.Bytes()))
+			return NewErrSetDeletedFlag(err, m.key.DocShortID, string(item.key.Bytes()))
 		}
 		err = m.store.Delete(ctx, item.key)
 		if err != nil {
-			return NewErrDeleteFieldValue(err, m.key.DocID, string(item.key.Bytes()))
+			return NewErrDeleteFieldValue(err, m.key.DocShortID, string(item.key.Bytes()))
 		}
 	}
 

@@ -37,7 +37,7 @@ const (
 type DataStoreKey struct {
 	CollectionShortID uint32
 	InstanceType      InstanceType
-	DocID             string
+	DocShortID        string
 	FieldID           string
 }
 
@@ -48,7 +48,7 @@ var _ CollectionedKey = DataStoreKey{}
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /[CollectionRootId]/[InstanceType]/[DocID]/[FieldId]
+// /[CollectionRootId]/[InstanceType]/[DocShortID]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) (DataStoreKey, error) {
@@ -65,7 +65,7 @@ func MustNewDataStoreKey(key string) DataStoreKey {
 
 func DataStoreKeyFromDocID(docID client.DocID) DataStoreKey {
 	return DataStoreKey{
-		DocID: docID.String(),
+		DocShortID: docID.String(),
 	}
 }
 
@@ -95,13 +95,13 @@ func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
 
 func (k DataStoreKey) WithDocID(docID string) DataStoreKey {
 	newKey := k
-	newKey.DocID = docID
+	newKey.DocShortID = docID
 	return newKey
 }
 
 func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	newKey := k
-	newKey.DocID = key.DocID
+	newKey.DocShortID = key.DocShortID
 	newKey.FieldID = key.FieldID
 	newKey.InstanceType = key.InstanceType
 	return newKey
@@ -115,7 +115,7 @@ func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 
 func (k DataStoreKey) ToHeadStoreKey() HeadstoreDocKey {
 	return HeadstoreDocKey{
-		DocID:   k.DocID,
+		DocID:   k.DocShortID,
 		FieldID: k.FieldID,
 	}
 }
@@ -141,8 +141,8 @@ func (k DataStoreKey) PrettyPrint() string {
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
 	}
-	if k.DocID != "" {
-		result = result + "/" + k.DocID
+	if k.DocShortID != "" {
+		result = result + "/" + k.DocShortID
 	}
 	if k.FieldID != "" {
 		result = result + "/" + k.FieldID
@@ -153,7 +153,7 @@ func (k DataStoreKey) PrettyPrint() string {
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
 	return k.CollectionShortID == other.CollectionShortID &&
-		k.DocID == other.DocID &&
+		k.DocShortID == other.DocShortID &&
 		k.FieldID == other.FieldID &&
 		k.InstanceType == other.InstanceType
 }
@@ -161,7 +161,7 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	return PrimaryDataStoreKey{
 		CollectionShortID: k.CollectionShortID,
-		DocID:             k.DocID,
+		DocShortID:        k.DocShortID,
 	}
 }
 
@@ -175,8 +175,8 @@ func (k DataStoreKey) PrefixEnd() Walkable {
 		newKey.FieldID = string(bytesPrefixEnd([]byte(k.FieldID)))
 		return newKey
 	}
-	if k.DocID != "" {
-		newKey.DocID = string(bytesPrefixEnd([]byte(k.DocID)))
+	if k.DocShortID != "" {
+		newKey.DocShortID = string(bytesPrefixEnd([]byte(k.DocShortID)))
 		return newKey
 	}
 	if k.InstanceType != "" {
@@ -242,14 +242,20 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 		data = data[1:]
 	}
 
-	const docKeyLength int = 40
-	var docID string
-	if len(data) > docKeyLength {
+	var docShortID string
+	if len(data) > 0 {
 		if data[0] == '/' {
 			data = data[1:]
 		}
-		docID = string(data[:docKeyLength])
-		data = data[docKeyLength:]
+		docShortIDEnd := len(data)
+		for i, b := range data {
+			if b == '/' {
+				docShortIDEnd = i
+				break
+			}
+		}
+		docShortID = string(data[:docShortIDEnd])
+		data = data[docShortIDEnd:]
 	}
 
 	var fieldID string
@@ -265,7 +271,7 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 	return DataStoreKey{
 		CollectionShortID: uint32(colRootID),
 		InstanceType:      (instanceType),
-		DocID:             docID,
+		DocShortID:        docShortID,
 		FieldID:           fieldID,
 	}, nil
 }
@@ -283,9 +289,9 @@ func EncodeDataStoreKey(key *DataStoreKey) []byte {
 		result = append(result, []byte(string(key.InstanceType))...)
 	}
 
-	if key.DocID != "" {
+	if key.DocShortID != "" {
 		result = append(result, '/')
-		result = append(result, []byte(key.DocID)...)
+		result = append(result, []byte(key.DocShortID)...)
 	}
 
 	if key.FieldID != "" {

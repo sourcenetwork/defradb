@@ -357,87 +357,152 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid) error {
-	// get node
-	block, err := vf.getDAGBlock(c)
-	if err != nil {
-		return err
-	}
-
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
-	var mcrdt crdt.ReplicatedData
-	switch {
-	case block.Delta.IsCollection():
-		mcrdt = crdt.NewCollection(
-			vf.col.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		)
-
-	case block.Delta.IsComposite():
-		mcrdt = crdt.NewDocComposite(
-			vf.store.Datastore(),
-			block.Delta.GetCollectionVersionID(),
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
-			},
-		)
-
-	default:
-		field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
-		if !ok {
-			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
-		}
-
-		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
-		if err != nil {
-			return err
-		}
-
-		mcrdt, err = crdt.FieldLevelCRDTWithStore(
-			vf.store.Datastore(),
-			block.Delta.GetCollectionVersionID(),
-			field.Typ,
-			field.Kind,
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(fieldShortID),
-			},
-			field.Name,
-		)
-		if err != nil {
-			return err
-		}
+	type mergeItem struct {
+		cid              cid.Cid
+		createShortDocID string
 	}
 
-	err = coreblock.ProcessBlock(
-		vf.ctx,
-		mcrdt,
-		block,
-		cidlink.Link{
-			Cid: c,
-		},
-	)
-	if err != nil {
-		return err
-	}
+	stack := make([]mergeItem, 0, 64)
+	stack = append(stack, mergeItem{cid: c})
 
-	// Handle subgraphs. We range over `Links` only (not `Heads``) because the trunk is already accounted for
-	// by the initial caller or `merge`. Including `Heads` would result in unnecessary recursion and possible
-	// wrong final value for the fields.
-	for _, l := range block.Links {
-		err = vf.merge(l.Cid)
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		block, err := vf.getDAGBlock(current.cid)
 		if err != nil {
 			return err
+		}
+
+		docID, err := vf.storageDocIDForDelta(
+			shortID,
+			string(block.Delta.GetDocID()),
+			current.cid,
+			current.createShortDocID,
+		)
+		if err != nil {
+			return err
+		}
+
+		var mcrdt crdt.ReplicatedData
+		switch {
+		case block.Delta.IsCollection():
+			mcrdt = crdt.NewCollection(
+				vf.col.Version().VersionID,
+				keys.NewHeadstoreColKey(shortID),
+			)
+
+		case block.Delta.IsComposite():
+			mcrdt = crdt.NewDocComposite(
+				vf.store.Datastore(),
+				block.Delta.GetCollectionVersionID(),
+				keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocShortID:        docID,
+					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				},
+			)
+
+		default:
+			field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
+			if !ok {
+				return client.NewErrFieldNotExist(block.Delta.GetFieldName())
+			}
+
+			fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
+			if err != nil {
+				return err
+			}
+
+			mcrdt, err = crdt.FieldLevelCRDTWithStore(
+				vf.store.Datastore(),
+				block.Delta.GetCollectionVersionID(),
+				field.Typ,
+				field.Kind,
+				keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocShortID:        docID,
+					FieldID:           fmt.Sprint(fieldShortID),
+				},
+				field.Name,
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = coreblock.ProcessBlock(
+			vf.ctx,
+			mcrdt,
+			block,
+			cidlink.Link{
+				Cid: current.cid,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		childCreateShortDocID := current.createShortDocID
+		if block.Delta.IsComposite() &&
+			(len(block.Delta.GetDocID()) == 0 || id.IsGenesisDocID(string(block.Delta.GetDocID()))) {
+			childCreateShortDocID = docID
+		}
+		for i := len(block.Links) - 1; i >= 0; i-- {
+			stack = append(stack, mergeItem{
+				cid:              block.Links[i].Cid,
+				createShortDocID: childCreateShortDocID,
+			})
 		}
 	}
 
 	return nil
+}
+
+func (vf *VersionedFetcher) storageDocIDForDelta(
+	collectionShortID uint32,
+	rawDocID string,
+	blockCID cid.Cid,
+	createShortDocID string,
+) (string, error) {
+	if rawDocID == "" || id.IsGenesisDocID(rawDocID) {
+		if createShortDocID != "" {
+			return createShortDocID, nil
+		}
+
+		publicDocID := client.NewDocIDV0(blockCID).String()
+		shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
+		if err != nil {
+			return "", err
+		}
+		if found {
+			return shortDocID, nil
+		}
+		return publicDocID, nil
+	}
+
+	if _, found, err := id.GetPublicDocID(vf.ctx, collectionShortID, rawDocID); err != nil {
+		return "", err
+	} else if found {
+		return rawDocID, nil
+	}
+
+	if _, err := client.NewDocIDFromString(rawDocID); err != nil {
+		return rawDocID, nil
+	}
+	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, rawDocID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return shortDocID, nil
+	}
+	return rawDocID, nil
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

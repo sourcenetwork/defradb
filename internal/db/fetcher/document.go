@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -27,6 +28,8 @@ import (
 //
 // It does not filter the data in any way.
 type documentFetcher struct {
+	ctx context.Context
+
 	// The set of fields to fetch, mapped by field ID.
 	fieldsByID map[uint32]client.CollectionFieldDescription
 	// The status to assign fetched documents.
@@ -82,6 +85,7 @@ func newDocumentFetcher(
 	}
 
 	return &documentFetcher{
+		ctx:        ctx,
 		fieldsByID: fieldsByID,
 		iter:       iter,
 		status:     status,
@@ -98,13 +102,18 @@ type keyValue struct {
 
 func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	if f.nextKV.HasValue() {
-		docID := f.nextKV.Value().Key.DocID
-		f.currentKV = f.nextKV.Value()
-
+		kv := f.nextKV.Value()
 		f.nextKV = immutable.None[keyValue]()
-		f.execInfo.DocsFetched++
 
-		return immutable.Some(docID), nil
+		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != "" {
+			f.currentKV = kv
+			f.execInfo.DocsFetched++
+			docID, err := f.publicDocID(kv.Key.CollectionShortID, kv.Key.DocShortID)
+			if err != nil {
+				return immutable.None[string](), err
+			}
+			return immutable.Some(docID), nil
+		}
 	}
 
 	for {
@@ -119,6 +128,9 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
 		if err != nil {
 			return immutable.None[string](), NewErrParseDocumentKey(err)
+		}
+		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == "" {
+			continue
 		}
 
 		var value []byte
@@ -135,23 +147,35 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 			Value: value,
 		}
 
-		if dsKey.DocID != previousKV.Key.DocID {
+		if dsKey.DocShortID != previousKV.Key.DocShortID {
 			break
 		}
 	}
 
 	f.execInfo.DocsFetched++
 
-	return immutable.Some(f.currentKV.Key.DocID), nil
+	docID, err := f.publicDocID(f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	if err != nil {
+		return immutable.None[string](), err
+	}
+	return immutable.Some(docID), nil
 }
 
 func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
+	if f.currentKV.Key.CollectionShortID == 0 || f.currentKV.Key.DocShortID == "" {
+		return immutable.None[EncodedDocument](), nil
+	}
+
 	doc := encodedDocument{}
-	doc.id = []byte(f.currentKV.Key.DocID)
+	docID, err := f.publicDocID(f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	if err != nil {
+		return immutable.None[EncodedDocument](), err
+	}
+	doc.id = []byte(docID)
 	doc.status = f.status
 	doc.properties = map[client.CollectionFieldDescription]*encProperty{}
 
-	err := f.appendKV(&doc, f.currentKV)
+	err = f.appendKV(&doc, f.currentKV)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}
@@ -169,6 +193,9 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 		if err != nil {
 			return immutable.None[EncodedDocument](), NewErrParseFieldKey(err)
 		}
+		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == "" {
+			continue
+		}
 
 		var value []byte
 		if !f.keysOnly {
@@ -183,7 +210,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 			Value: value,
 		}
 
-		if dsKey.DocID != f.currentKV.Key.DocID {
+		if dsKey.DocShortID != f.currentKV.Key.DocShortID {
 			f.nextKV = immutable.Some(kv)
 			break
 		}
@@ -197,14 +224,28 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	return immutable.Some[EncodedDocument](&doc), nil
 }
 
+func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID string) (string, error) {
+	docID, found, err := id.GetPublicDocID(f.ctx, collectionShortID, shortDocID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return docID, nil
+	}
+	return shortDocID, nil
+}
+
 func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
 		doc.collectionVersionID = string(kv.Value)
 		return nil
 	}
 
-	// we have to skip the object marker
-	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) {
+	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) ||
+		bytes.Equal(kv.Value, []byte{base.DeletedObjectMarker}) {
+		return nil
+	}
+	if kv.Key.FieldID == "" {
 		return nil
 	}
 
