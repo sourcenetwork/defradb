@@ -35,7 +35,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					"numbers": [27, 28]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"numbers": [22, 23]
 				}`,
@@ -81,7 +81,7 @@ func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 					"numbers": [27, 28]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"numbers": [27, 28, 29]
 				}`,

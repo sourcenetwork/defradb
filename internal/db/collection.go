@@ -34,7 +34,7 @@ type collection struct {
 	def            client.CollectionVersion
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
-	txn            immutable.Option[client.Txn]
+	txn            immutable.Option[datastore.Txn]
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -44,7 +44,7 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[client.Txn]) (*collection, error) {
+func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[datastore.Txn]) (*collection, error) {
 	col := &collection{
 		db:  db,
 		def: desc,
@@ -197,11 +197,11 @@ func (db *DB) getCollections(
 
 		// In the case that the txn was ephemeral, we will not save a reference to it
 		// attached to the collection.
-		var txnOpt immutable.Option[client.Txn]
+		var txnOpt immutable.Option[datastore.Txn]
 		if txnIsEphemeral {
-			txnOpt = immutable.None[client.Txn]()
+			txnOpt = immutable.None[datastore.Txn]()
 		} else {
-			txnOpt = datastore.CtxTryGetClientTxnOption(ctx)
+			txnOpt = datastore.CtxTryGetTxnOption(ctx)
 		}
 		collection, err := db.newCollection(col, txnOpt)
 		if err != nil {
@@ -253,7 +253,7 @@ func getTxnAndSetCtxForCollection(ctx context.Context, c *collection) (context.C
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if !hadTxn && c.txn.HasValue() {
 		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
+		txn = c.txn.Value()
 		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
 	return ctx, txn, hadTxn

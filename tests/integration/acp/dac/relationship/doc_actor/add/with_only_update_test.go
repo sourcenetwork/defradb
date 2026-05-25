@@ -114,7 +114,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
@@ -144,7 +144,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can now update.

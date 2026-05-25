@@ -43,7 +43,7 @@ func TestTxn_SetActiveCollectionVersion_WithCommit_Succeeds(t *testing.T) {
 				TransactionID: immutable.Some(1),
 				VersionID:     "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

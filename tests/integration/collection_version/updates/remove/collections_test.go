@@ -658,12 +658,145 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// Removing a single collection via patch fails when another collection holds a relation
+// reference to it. The schema rebuild cannot resolve the dangling reference and aborts
+// the transaction, leaving both collections intact.
+func TestColVersionUpdateRemoveCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Users" }
+					]
+				`,
+				ExpectedError: "cannot remove a collection while another field references it",
+			},
+			// Transaction rolled back: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Same as above but removing the other side of the bidirectional relation.
+func TestColVersionUpdateRemoveCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Books" }
+					]
+				`,
+				ExpectedError: "cannot remove a collection while another field references it",
+			},
+			// Transaction rolled back: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// A single patch with both remove ops succeeds because the net result has no dangling
+// references. This is the escape hatch for deleting circularly-related collections.
+func TestColVersionUpdateRemoveBothRelatedCollections_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Users" },
+						{ "op": "remove", "path": "/Books" }
+					]
+				`,
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// The other client types return different errors when occasionally executing the `CreateDoc`
 			// action.
 			state.GoClientType,
+		}),
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
 		}),
 		Actions: []any{
 			&action.AddCollection{
@@ -713,6 +846,102 @@ func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Removing a collection via PatchCollection and re-adding the same name with a
+// different shape must produce a fresh collection. This mirrors the equivalent
+// DeleteCollection test and verifies the patch-driven removal path also clears
+// the collection-definition and field-definition heads on its way out.
+func TestColVersionUpdateRemoveCollection_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Re-add with the EXACT same shape after a patch-driven removal. The CIDs of
+// the collection-definition and field-definition blocks are derived
+// deterministically from the definition itself, so the new blocks land at the
+// exact same CIDs as the deleted ones. Without head cleanup this would error
+func TestColVersionUpdateRemoveCollection_ThenAddSameShape_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Alice",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Alice"},
+					},
 				},
 			},
 		},

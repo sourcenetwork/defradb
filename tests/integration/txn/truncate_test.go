@@ -41,7 +41,7 @@ func TestCollectionTruncate_WithCommit_Succeeds(t *testing.T) {
 				CollectionIndex: 0,
 				TransactionID:   immutable.Some(1),
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

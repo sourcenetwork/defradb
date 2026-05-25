@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -133,6 +134,45 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 		err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
 	} else {
 		err = txn.PatchCollection(ctx, message.Patch, message.Migration, opt)
+	}
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *storeHandler) DeleteCollection(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	ctx := req.Context()
+
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
+	var names []string
+	if joined := req.URL.Query().Get("name"); joined != "" {
+		names = strings.Split(joined, ",")
+	}
+
+	var activeOnly bool
+	if raw := req.URL.Query().Get("active-only"); raw != "" {
+		parsed, err := strconv.ParseBool(raw)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		activeOnly = parsed
+	}
+
+	opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(ctx))
+	opt.SetActiveOnly(activeOnly)
+
+	// If there is an explicit transaction, use it. Otherwise use the db.
+	var err error
+	if !hadTxn {
+		err = db.DeleteCollection(ctx, names, opt)
+	} else {
+		err = txn.DeleteCollection(ctx, names, opt)
 	}
 	if err != nil {
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
@@ -801,6 +841,23 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
+	deleteCollection := openapi3.NewOperation()
+	deleteCollection.OperationID = "delete_collection"
+	deleteCollection.Description = "Delete one or more collections. " +
+		"The 'name' query parameter accepts a comma-separated (CSV) list of collection names. " +
+		"By default every version of each named collection is deleted; set 'active-only=true' " +
+		"to delete only the active head version and keep earlier versions intact."
+	deleteCollection.Tags = []string{"collection"}
+	deleteCollection.AddParameter(openapi3.NewQueryParameter("name").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema()))
+	deleteCollection.AddParameter(openapi3.NewQueryParameter("active-only").
+		WithRequired(false).
+		WithSchema(openapi3.NewBoolSchema()))
+	deleteCollection.Responses = openapi3.NewResponses()
+	deleteCollection.Responses.Set("200", successResponse)
+	deleteCollection.Responses.Set("400", errorResponse)
+
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
 		collectionSchema,
@@ -983,6 +1040,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/import", http.MethodPost, importBackup, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, describeCollection, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
+	router.AddRoute("/collections", http.MethodDelete, deleteCollection, h.DeleteCollection)
 	router.AddRoute("/collections/indexes", http.MethodGet, listIndexes, h.ListIndexes)
 	router.AddRoute("/encrypted-indexes", http.MethodGet, listEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)

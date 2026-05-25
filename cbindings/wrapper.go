@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -30,6 +30,7 @@ extern Result VerifyBlockSignature(uintptr_t nodePtr, char* keyType, char* publi
 uintptr_t identity);
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result PatchCollection(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
+extern Result DeleteCollection(uintptr_t nodePtr, char* name, int activeOnly, uintptr_t identityPtr);
 extern Result NewIdentity(char* keyType);
 extern void FreeIdentity(uintptr_t identityPtr);
 extern Result GetNodeIdentity(uintptr_t nodePtr);
@@ -77,7 +78,6 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
@@ -94,8 +94,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
-
-var txnHandleMap = sync.Map{} // map[client.Txn]cgo.Handle
 
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
@@ -695,6 +693,32 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
+func (w *CWrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	cNames := C.CString(strings.Join(names, ","))
+	defer C.free(unsafe.Pointer(cNames))
+	defer C.FreeIdentity(cIdentity)
+
+	cActiveOnly := C.int(0)
+	if opt.ActiveOnly {
+		cActiveOnly = 1
+	}
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cNames, cActiveOnly, cIdentity))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+
+	return nil
+}
+
 func (w *CWrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
@@ -898,11 +922,6 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
-	if hadTxn {
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	}
-
 	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
@@ -923,12 +942,7 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
-	var txnOpt immutable.Option[client.Txn]
-	if hadTxn {
-		txnOpt = immutable.Some(txn)
-	} else {
-		txnOpt = immutable.None[client.Txn]()
-	}
+	txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
@@ -1060,7 +1074,6 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	handle := cgo.Handle(res.txnPtr)
 	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, dsTxn, handle}
-	txnHandleMap.Store(retTxn.tx.ID(), handle)
 	return retTxn, nil
 }
 
