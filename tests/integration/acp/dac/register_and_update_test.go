@@ -78,7 +78,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -174,7 +174,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -269,7 +269,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -372,7 +372,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -475,7 +475,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -581,7 +581,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -685,7 +685,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),

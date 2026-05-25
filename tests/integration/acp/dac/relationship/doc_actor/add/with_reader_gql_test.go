@@ -115,7 +115,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
+			&action.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -167,7 +167,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // But this actor still can't update.
+			&action.UpdateDoc{ // But this actor still can't update.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),

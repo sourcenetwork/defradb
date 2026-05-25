@@ -46,7 +46,7 @@ func TestTxn_NewIndex_WithCommit_Succeeds(t *testing.T) {
 				IndexName:     "some_index",
 				FieldName:     "name",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{
@@ -143,7 +143,7 @@ func TestTxn_NewIndex_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 				IndexName:     "some_index",
 				FieldName:     "name",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{

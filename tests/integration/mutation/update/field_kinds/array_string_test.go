@@ -35,7 +35,7 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"preferredStrings": null
 				}`,
@@ -79,7 +79,7 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"preferredStrings": []
 				}`,
@@ -123,7 +123,7 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"preferredStrings": ["zeroth", "the previous", "the first", "null string"]
 				}`,
@@ -167,7 +167,7 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"preferredStrings": ["", "the first"]
 				}`,
@@ -211,7 +211,7 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"preferredStrings": ["", "the previous", "the first", "empty string", "blank string", "hitchi"]
 				}`,

@@ -292,6 +292,14 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	return w.client.DeleteCollection(ctx, names, opts...)
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,

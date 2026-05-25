@@ -49,7 +49,7 @@ func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T)
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `{
 					"age": 23

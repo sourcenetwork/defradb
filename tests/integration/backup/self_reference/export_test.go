@@ -53,7 +53,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-1635f80b-612a-5378-a185-cad7a3018354"}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,
