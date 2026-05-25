@@ -553,6 +553,16 @@ func (c *collection) validateRelationDocIDs(ctx context.Context, doc *client.Doc
 		if !exists {
 			return NewErrRelationTargetNotFound(fieldName, docIDStr, targetColName)
 		}
+
+		// ACP: the caller must also be able to read the target document.
+		// We return the same "not found" error to avoid leaking existence of private documents.
+		hasAccess, err := targetCol.checkAccessOfDocWithACP(ctx, acpTypes.DocumentReadPerm, docIDStr)
+		if err != nil {
+			return err
+		}
+		if !hasAccess {
+			return NewErrRelationTargetNotFound(fieldName, docIDStr, targetColName)
+		}
 	}
 	return nil
 }

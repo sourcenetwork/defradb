@@ -100,18 +100,10 @@ func getSetupEmployeeCompanyActions() []any {
 		},
 		&action.AddDoc{
 			CollectionID: 0,
-			DocMap: map[string]any{
-				"name":    "PubEmp in PrivateCompany",
-				"salary":  20000,
-				"company": testUtils.NewDocIndex(1, 1),
-			},
-		},
-		&action.AddDoc{
-			CollectionID: 0,
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PubCompany",
-				"salary":  30000,
+				"salary":  20000,
 				"company": testUtils.NewDocIndex(1, 0),
 			},
 		},
@@ -120,7 +112,7 @@ func getSetupEmployeeCompanyActions() []any {
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
 				"name":    "PrivateEmp in PrivateCompany",
-				"salary":  40000,
+				"salary":  30000,
 				"company": testUtils.NewDocIndex(1, 1),
 			},
 		},

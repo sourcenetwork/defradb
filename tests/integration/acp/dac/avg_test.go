@@ -31,8 +31,8 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					// 2 public employees, 1 with salary 10k, 1 with salary 20k
-					"AVG": int(15000),
+					// 1 public employee with salary 10k
+					"AVG": float64(10000),
 				},
 			},
 		},
@@ -55,8 +55,8 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					// 4 employees with salaries 10k, 20k, 30k, 40k
-					"AVG": int(25000),
+					// 3 employees with salaries 10k, 20k, 30k
+					"AVG": float64(20000),
 				},
 			},
 		},
@@ -79,8 +79,8 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					// 2 public employees, 1 with salary 10k, 1 with salary 20k
-					"AVG": int(15000),
+					// 1 public employee with salary 10k
+					"AVG": float64(10000),
 				},
 			},
 		},
