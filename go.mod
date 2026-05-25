@@ -41,7 +41,7 @@ require (
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.8.1
-	github.com/sourcenetwork/corekv v0.3.1
+	github.com/sourcenetwork/corekv v0.3.2
 	github.com/sourcenetwork/corekv/badger v0.3.1
 	github.com/sourcenetwork/corekv/blockstore v0.3.1
 	github.com/sourcenetwork/corekv/chunk v0.3.1
