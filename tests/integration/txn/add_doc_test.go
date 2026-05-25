@@ -41,7 +41,7 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -138,7 +138,7 @@ func TestTxn_AddDoc_InsideTxnWithAddCollection_WithCommit_Succeeds(t *testing.T)
 					"age": 27
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

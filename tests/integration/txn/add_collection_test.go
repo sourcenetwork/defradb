@@ -37,7 +37,7 @@ func TestTxn_AddCollection_WithCommit_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.GetCollections{

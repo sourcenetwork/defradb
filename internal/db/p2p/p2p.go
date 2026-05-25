@@ -229,10 +229,10 @@ func New(
 				eventHandler: p.peerEventHandler,
 			},
 			datastore.EncstoreFrom(db.Rootstore()),
-			db.NodeACP(),
+			db.NodeACP,
 			db.DocumentACP(),
 			collectionRetriever,
-			nodeIdentity.Value().DID(),
+			nodeIdentity,
 		)
 		if err != nil {
 			return nil, err
@@ -444,19 +444,23 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	cols, err := p.db.GetCollections(
-		ctx,
-		options.GetCollections().SetCollectionID(collectionID),
-	)
+	ident, err := p.db.GetNodeIdentity(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// The collection lookup is a local operation on this node — authorise it
+	// as the node itself so NAC sees a known identity rather than "anonymous".
+	getColOpts := options.GetCollections().SetCollectionID(collectionID)
+	if ident.HasValue() {
+		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
+	}
+	cols, err := p.db.GetCollections(ctx, getColOpts)
 	if err != nil {
 		return false, err
 	}
 	if len(cols) == 0 {
 		return false, client.ErrCollectionNotFound
-	}
-	ident, err := p.db.GetNodeIdentity(ctx)
-	if err != nil {
-		return false, err
 	}
 	if !ident.HasValue() {
 		return true, nil

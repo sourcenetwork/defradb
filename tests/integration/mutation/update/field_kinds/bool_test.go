@@ -33,7 +33,7 @@ func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"valid": true
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"valid": null
 				}`,
