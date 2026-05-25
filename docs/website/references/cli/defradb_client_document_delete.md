@@ -21,7 +21,7 @@ delete by docID with identity:
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 delete by filter:  
-  defradb client document delete --collection-name User --filter '{ "_gte": { "points": 100 } }'
+  defradb client document delete --collection-name User --filter '{ "_geq": { "points": 100 } }'
 ```
 
 ### Options

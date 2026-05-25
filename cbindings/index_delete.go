@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,33 +19,22 @@ import "C"
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/crypto"
+	defraOpts "github.com/sourcenetwork/defradb/client/options"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export VerifyBlockSignature
-func VerifyBlockSignature(nodePtr C.uintptr_t,
-	keyType *C.char,
-	publicKey *C.char,
-	cid *C.char,
-	identityPtr C.uintptr_t,
-) C.Result {
+//export DeleteIndex
+func DeleteIndex(nodePtr C.uintptr_t,
+	indexName *C.char,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	keyTypeStr := C.GoString(keyType)
-	pubKeyStr := C.GoString(publicKey)
-	cryptoKeyType := crypto.KeyTypeSecp256k1
-	if keyTypeStr != "" {
-		cryptoKeyType = crypto.KeyType(keyTypeStr)
-	}
-	pubKey, err := crypto.PublicKeyFromString(cryptoKeyType, pubKeyStr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
+
+	collectionName := C.GoString(options.name)
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -54,10 +43,16 @@ func VerifyBlockSignature(nodePtr C.uintptr_t,
 
 	ctx = attachTxnFromPointer(nodePtr, ctx)
 
-	verifyOpt := options.WithIdentity(options.VerifySignature(), iIdentity.FromContext(ctx))
-	err = store.VerifySignature(ctx, C.GoString(cid), pubKey, verifyOpt)
+	ident := iIdentity.FromContext(ctx)
+	col, err := store.GetCollectionByName(ctx, collectionName,
+		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	return returnC(returnGoC(0, "", "Block's signature verified."))
+	err = col.DeleteIndex(ctx, C.GoString(indexName),
+		defraOpts.WithIdentity(defraOpts.DeleteCollectionIndex(), ident))
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", ""))
 }

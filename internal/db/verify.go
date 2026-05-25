@@ -76,7 +76,7 @@ func (db *DB) VerifySignature(
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).WithIdentity(opt.Identity).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID, opt.Identity)
 		if err != nil {
 			return err
 		}

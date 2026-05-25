@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -17,20 +17,21 @@ package cbindings
 import "C"
 
 import (
-	"github.com/sourcenetwork/defradb/version"
+	"runtime/cgo"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
-//export GetVersion
-func GetVersion(flagFull C.int, flagJSON C.int) C.Result {
-	dv, err := version.NewDefraVersion()
+//export CommitTransaction
+func CommitTransaction(txnPtr C.uintptr_t) C.Result {
+	h := cgo.Handle(txnPtr)
+	defer h.Delete()
+	txn := h.Value().(client.Txn) //nolint:forcetypeassert
+
+	err := txn.Commit()
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	if flagJSON != 0 {
-		return returnC(marshalJSONToGoCResult(dv))
-	}
-	if flagFull != 0 {
-		return returnC(returnGoC(0, "", dv.StringFull()))
-	}
-	return returnC(returnGoC(0, "", dv.String()))
+
+	return returnC(returnGoC(0, "", ""))
 }
