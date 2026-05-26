@@ -484,3 +484,8 @@ require (
 )
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
+
+// Local fix for the GraphQL lexer's byte/rune position drift when an ignored
+// token (whitespace or a # comment) contains a multi-byte UTF-8 rune. Remove
+// once the fix is merged upstream and the graphql-go pin above is bumped.
+replace github.com/sourcenetwork/graphql-go => ../graphql-go
