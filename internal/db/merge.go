@@ -23,6 +23,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 
+	"github.com/sourcenetwork/corelog"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -485,12 +487,28 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.GetDocument(ctx, docID)
+	doc, err := getDocForMerge(ctx, mp.col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return nil
 	}
 	mp.docIDs[docID] = doc
 	return nil
+}
+
+// getDocForMerge fetches a doc during inbound merge without the ACP read filter.
+// The merge ctx has no caller identity, so GetDocument would deny access and
+// return nil, silently skipping the secondary-index Save. Access was already
+// gated at the P2P boundary, so we read directly.
+func getDocForMerge(
+	ctx context.Context,
+	col *collection,
+	docID client.DocID,
+) (*client.Document, error) {
+	primaryKey, err := col.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
+	return col.getInternal(ctx, primaryKey, nil, false)
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
@@ -574,13 +592,14 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.GetDocument(ctx, docID)
+	newDoc, err := getDocForMerge(ctx, col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
 	// Both can be nil during concurrent P2P operations (e.g. delete + update)
 	// where the document was already deleted and no prior indexed state exists.
 	if oldDoc == nil && newDoc == nil {
+		log.InfoContext(ctx, "skipping index update: no document found", corelog.String("docID", docID.String()))
 		return nil
 	}
 	if oldDoc != nil && newDoc != nil {
