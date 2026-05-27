@@ -700,6 +700,10 @@ func astTypeToKind(
 ) (client.FieldKind, error) {
 	switch astTypeVal := field.Type.(type) {
 	case *ast.List:
+		if isNestedListType(astTypeVal.Type) {
+			return client.FieldKind_None, NewErrNestedListTypeNotSupported(hostObjectName, field.Name.Value)
+		}
+
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *ast.NonNull:
 			switch innerAstTypeVal.Type.(*ast.Named).Name.Value {
@@ -766,6 +770,18 @@ func astTypeToKind(
 			return client.FieldKind_None, NewErrFieldTypeNotSpecified(hostObjectName, field.Name.Value)
 		}
 		return client.FieldKind_None, NewErrTypeNotFound(field.Type.String())
+	}
+}
+
+func isNestedListType(fieldType ast.Type) bool {
+	switch typeVal := fieldType.(type) {
+	case *ast.List:
+		return true
+	case *ast.NonNull:
+		_, isList := typeVal.Type.(*ast.List)
+		return isList
+	default:
+		return false
 	}
 }
 
