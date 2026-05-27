@@ -76,7 +76,8 @@ func TestNewIdentityFromPrivateKey_EmptyKey(t *testing.T) {
 	}
 }
 
-// Test_ExportIdentityPrivateKey_InvalidPointer tests that an error is returned when an invalid identity pointer is passed to ExportIdentityPrivateKey
+// Test_ExportIdentityPrivateKey_InvalidPointer tests that an error is returned when an invalid identity
+// pointer is passed to ExportIdentityPrivateKey
 func TestExportIdentityPrivateKey_InvalidPointer(t *testing.T) {
 	result := ConvertAndFreeCResult(ExportIdentityPrivateKey(0))
 	if result.Status == 0 {
