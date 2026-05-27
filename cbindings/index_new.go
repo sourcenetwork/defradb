@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -92,80 +92,4 @@ func NewIndex(
 	}
 
 	return returnC(marshalJSONToGoCResult(descWithID))
-}
-
-//export ListIndexes
-func ListIndexes(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
-	ctx := context.Background()
-	ctx, err := contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	store, err := getStoreFromPointer(nodePtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
-	ident := iIdentity.FromContext(ctx)
-	collectionName := C.GoString(options.name)
-	switch {
-	// Get the indices associated with a given collection
-	case collectionName != "":
-		col, err := store.GetCollectionByName(ctx, collectionName,
-			defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
-		if err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		indices, err := col.ListIndexes(ctx,
-			defraOpts.WithIdentity(defraOpts.ListCollectionIndexes(), ident))
-		if err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		return returnC(marshalJSONToGoCResult(indices))
-	// Get all of the indices, because no collection was specified
-	default:
-		indices, err := store.ListIndexes(ctx,
-			defraOpts.WithIdentity(defraOpts.ListIndexes(), ident))
-		if err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		return returnC(marshalJSONToGoCResult(indices))
-	}
-}
-
-//export DeleteIndex
-func DeleteIndex(nodePtr C.uintptr_t,
-	indexName *C.char,
-	options C.CollectionOptions,
-	identityPtr C.uintptr_t) C.Result {
-	ctx := context.Background()
-	ctx, err := contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	collectionName := C.GoString(options.name)
-
-	store, err := getStoreFromPointer(nodePtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
-	ident := iIdentity.FromContext(ctx)
-	col, err := store.GetCollectionByName(ctx, collectionName,
-		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-	err = col.DeleteIndex(ctx, C.GoString(indexName),
-		defraOpts.WithIdentity(defraOpts.DeleteCollectionIndex(), ident))
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-	return returnC(returnGoC(0, "", ""))
 }
