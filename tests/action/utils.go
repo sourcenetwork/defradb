@@ -99,6 +99,15 @@ func getCanonicallyOrderedCollections(
 	node *state.NodeState,
 	txn immutable.Option[client.Txn],
 ) ([]client.Collection, error) {
+	return getCanonicallyOrderedCollectionsWithIdentity(s, node, txn, immutable.None[state.Identity]())
+}
+
+func getCanonicallyOrderedCollectionsWithIdentity(
+	s *state.State,
+	node *state.NodeState,
+	txn immutable.Option[client.Txn],
+	identity immutable.Option[state.Identity],
+) ([]client.Collection, error) {
 	var clientTxn client.Txn
 	if txn.HasValue() {
 		clientTxn = txn.Value()
@@ -113,11 +122,13 @@ func getCanonicallyOrderedCollections(
 		}
 	}
 
-	nodeIdentity := NodeIdentity(nodeID)
+	if !identity.HasValue() {
+		identity = NodeIdentity(nodeID)
+	}
 
 	newCollections := make([]client.Collection, len(s.CollectionNames))
 
-	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+	identOption := getIdentityForRequestSpecificToNode(s, identity, nodeID)
 	opts := options.GetCollections()
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())

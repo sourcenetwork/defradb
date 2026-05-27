@@ -40,7 +40,10 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 		return js.Undefined(), err
 	}
 	err = c.col.AddDocument(ctx, doc, opts...)
-	return js.Undefined(), err
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS([]string{doc.ID().String()})
 }
 
 func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.Value, error) {
@@ -67,7 +70,14 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 		docs = append(docs, doc)
 	}
 	err = c.col.AddManyDocuments(ctx, docs, opts...)
-	return js.Undefined(), err
+	if err != nil {
+		return js.Undefined(), err
+	}
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return goji.MarshalJS(docIDs)
 }
 
 // addOptionsInput represents the input structure for add options from JS.

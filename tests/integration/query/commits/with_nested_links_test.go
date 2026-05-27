@@ -12,8 +12,11 @@
 package commits
 
 import (
+	"encoding/json"
+	"strconv"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -21,18 +24,47 @@ import (
 )
 
 func commitLink(fieldName string, height uint64) gomega.OmegaMatcher {
-	return gomega.SatisfyAll(
-		gomega.HaveKeyWithValue("cid", testUtils.ValidCID()),
-		gomega.HaveKeyWithValue("fieldName", fieldName),
-		gomega.HaveKeyWithValue("height", gomega.BeNumerically("==", height)),
-	)
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return hasValidCID(actual["cid"]) &&
+			actual["fieldName"] == fieldName &&
+			heightEquals(actual["height"], height)
+	})
 }
 
 func commitHeadLink(fieldName string) gomega.OmegaMatcher {
-	return gomega.SatisfyAll(
-		gomega.HaveKeyWithValue("cid", testUtils.ValidCID()),
-		gomega.HaveKeyWithValue("fieldName", fieldName),
-	)
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return hasValidCID(actual["cid"]) && actual["fieldName"] == fieldName
+	})
+}
+
+func commitLinkWithoutCID(fieldName string, height uint64) gomega.OmegaMatcher {
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return actual["fieldName"] == fieldName && heightEquals(actual["height"], height)
+	})
+}
+
+func hasValidCID(value any) bool {
+	cidString, ok := value.(string)
+	if !ok {
+		return false
+	}
+	_, err := cid.Parse(cidString)
+	return err == nil
+}
+
+func heightEquals(value any, expected uint64) bool {
+	switch value := value.(type) {
+	case json.Number:
+		return value.String() == strconv.FormatUint(expected, 10)
+	case uint64:
+		return value == expected
+	case int64:
+		return value >= 0 && uint64(value) == expected
+	case int:
+		return value >= 0 && uint64(value) == expected
+	default:
+		return false
+	}
 }
 
 func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
@@ -130,14 +162,8 @@ func TestQueryCommits_WithSingleAddNestedLinksCompositeFilter_Succeed(t *testing
 							"height":    uint64(1),
 							"fieldName": "_C",
 							"links": gomega.ConsistOf(
-								gomega.SatisfyAll(
-									gomega.HaveKeyWithValue("height", gomega.BeNumerically("==", 1)),
-									gomega.HaveKeyWithValue("fieldName", "age"),
-								),
-								gomega.SatisfyAll(
-									gomega.HaveKeyWithValue("height", gomega.BeNumerically("==", 1)),
-									gomega.HaveKeyWithValue("fieldName", "name"),
-								),
+								commitLinkWithoutCID("age", 1),
+								commitLinkWithoutCID("name", 1),
 							),
 						},
 					},

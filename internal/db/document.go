@@ -35,6 +35,7 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 // docIDResult wraps the result of an attempt at a DocID retrieval operation.
@@ -167,6 +168,7 @@ func (c *collection) AddDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -202,6 +204,7 @@ func (c *collection) AddManyDocuments(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -256,6 +259,18 @@ func setContextDocEncryption(
 	return ctx
 }
 
+func setContextSigning(
+	ctx context.Context,
+	signingDisabled bool,
+	enableSigning immutable.Option[bool],
+) context.Context {
+	enabled := !signingDisabled
+	if enableSigning.HasValue() {
+		enabled = enableSigning.Value()
+	}
+	return coreblock.ContextWithSigning(ctx, enabled)
+}
+
 // UpdateDocument updates an existing document with the new values.
 // Any field that needs to be removed or cleared should call doc.Clear(field) before.
 // Any field that is nil/empty that hasn't called Clear will be ignored.
@@ -276,6 +291,7 @@ func (c *collection) UpdateDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -365,6 +381,7 @@ func (c *collection) SaveDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -408,6 +425,19 @@ func hasPrivateKey(ident identity.Identity) bool {
 	return false
 }
 
+func (c *collection) contextForSigning(ctx context.Context) context.Context {
+	signingCtx := ctx
+	ident := iIdentity.FromContext(signingCtx)
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
+		signingCtx = iIdentity.WithContext(signingCtx, c.db.nodeIdentity)
+	}
+
+	if enabled, ok := coreblock.SigningConfigFromContext(signingCtx); ok && enabled {
+		signingCtx = coreblock.ContextWithEnabledSigning(signingCtx)
+	}
+	return signingCtx
+}
+
 func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	encConf := encryption.GetContextConfig(ctx)
 	if !encConf.HasValue() {
@@ -449,14 +479,7 @@ func (c *collection) save(
 	}
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	ident := iIdentity.FromContext(ctx)
-	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = iIdentity.WithContext(ctx, c.db.nodeIdentity)
-	}
-
-	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
-	}
+	signingCtx := c.contextForSigning(ctx)
 
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
@@ -552,7 +575,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
+			link, _, err := coreblock.AddDelta(signingCtx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -568,7 +591,7 @@ func (c *collection) save(
 	)
 	merkleCRDT.SetDeltaDocID(deltaDocID)
 
-	addCtx := ctx
+	addCtx := signingCtx
 	if isAdd {
 		addCtx = crdt.ContextWithNewDocCreateMode(addCtx)
 	}
@@ -630,7 +653,7 @@ func (c *collection) save(
 		)
 
 		link, headNode, err := coreblock.AddDelta(
-			ctx,
+			signingCtx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,

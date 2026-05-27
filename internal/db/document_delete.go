@@ -45,6 +45,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -166,14 +167,7 @@ func (c *collection) applyDelete(
 
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
-	}
-
-	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
-	}
+	signingCtx := c.contextForSigning(ctx)
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
@@ -182,7 +176,7 @@ func (c *collection) applyDelete(
 	)
 	merkleCRDT.SetDeltaDocID(publicDocID)
 
-	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, b, err := coreblock.AddDelta(signingCtx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
@@ -210,7 +204,7 @@ func (c *collection) applyDelete(
 		)
 
 		link, headNode, err := coreblock.AddDelta(
-			ctx,
+			signingCtx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,

@@ -35,8 +35,11 @@ func (c *Collection) AddDocument(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "addDocument", docVal, makeDocAddOptions(opts))
+	res, err := execute(ctx, c.client, "addDocument", docVal, makeDocAddOptions(opts))
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS([]*client.Document{doc}, res[0]); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -62,6 +65,24 @@ func makeDocAddOptions(opts []options.Enumerable[options.AddDocumentOptions]) js
 	return optsVal
 }
 
+func setDocumentIDsFromJS(docs []*client.Document, value js.Value) error {
+	var docIDs []string
+	if err := goji.UnmarshalJS(value, &docIDs); err != nil {
+		return err
+	}
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.SetDocumentID(docs[i], docID)
+	}
+	return nil
+}
+
 func (c *Collection) AddManyDocuments(
 	ctx context.Context,
 	docs []*client.Document,
@@ -73,8 +94,11 @@ func (c *Collection) AddManyDocuments(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "addManyDocuments", docsVal, makeDocAddOptions(opts))
+	res, err := execute(ctx, c.client, "addManyDocuments", docsVal, makeDocAddOptions(opts))
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS(docs, res[0]); err != nil {
 		return err
 	}
 	for _, doc := range docs {

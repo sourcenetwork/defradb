@@ -13,6 +13,7 @@ package encryption
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/crypto"
@@ -105,9 +106,9 @@ func (m *encryptedCBORValueMatcher) SetTestState(s state.TestState) {
 }
 
 func (m *encryptedCBORValueMatcher) Match(actual any) (bool, error) {
-	actualBytes, ok := actual.([]byte)
-	if !ok {
-		return false, fmt.Errorf("expected encrypted bytes, got %T", actual)
+	actualBytes, err := commitDeltaBytes(actual)
+	if err != nil {
+		return false, err
 	}
 
 	plaintext := m.plaintext
@@ -132,9 +133,9 @@ func (m *notPlainCBORValueMatcher) SetTestState(s state.TestState) {
 }
 
 func (m *notPlainCBORValueMatcher) Match(actual any) (bool, error) {
-	actualBytes, ok := actual.([]byte)
-	if !ok {
-		return false, fmt.Errorf("expected bytes, got %T", actual)
+	actualBytes, err := commitDeltaBytes(actual)
+	if err != nil {
+		return false, err
 	}
 
 	plaintext := m.plaintext
@@ -143,6 +144,17 @@ func (m *notPlainCBORValueMatcher) Match(actual any) (bool, error) {
 		plaintext = testUtils.CBORValue(docID)
 	}
 	return !bytes.Equal(actualBytes, plaintext), nil
+}
+
+func commitDeltaBytes(actual any) ([]byte, error) {
+	switch actual := actual.(type) {
+	case []byte:
+		return actual, nil
+	case string:
+		return base64.StdEncoding.DecodeString(actual)
+	default:
+		return nil, fmt.Errorf("expected bytes, got %T", actual)
+	}
 }
 
 func (m *notPlainCBORValueMatcher) FailureMessage(actual any) string {

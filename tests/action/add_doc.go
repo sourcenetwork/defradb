@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -88,6 +89,9 @@ type AddDoc struct {
 
 	// If the given error is received, ignore the error and pretend the action succeeded.
 	IgnoreError string
+
+	// EnableSigning overrides node-level signing for this add.
+	EnableSigning immutable.Option[bool]
 }
 
 var _ Action = (*AddDoc)(nil)
@@ -136,8 +140,20 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := getCanonicallyOrderedCollectionsWithIdentity(a.s, node, txnOption, a.Identity)
 		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
+
+		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
+			err = client.ErrCollectionNotFound
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
 			}
@@ -161,6 +177,9 @@ func (a *AddDoc) Execute() {
 					collection,
 					txnOption,
 				)
+				if err == nil && txnOption.HasValue() {
+					err = recordTxnAddCIDs(a.s, nodeID, txnOption.Value(), docIDs)
+				}
 				return err
 			},
 		)
@@ -305,7 +324,7 @@ func addDocViaGQL(
 	}
 
 	key := fmt.Sprintf("add_%s", collection.Name())
-	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
+	req := fmt.Sprintf(`mutation { %s(%s) { %s } }`, key, params, request.DocIDFieldName)
 
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
@@ -335,6 +354,60 @@ func addDocViaGQL(
 	}
 
 	return docIDs, nil
+}
+
+func recordTxnAddCIDs(s *state.State, nodeIndex int, txn client.Txn, docIDs []client.DocID) error {
+	for _, docID := range docIDs {
+		result := txn.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
+			_commits(docID: $docID, order: {height: ASC}) {
+				cid
+				fieldName
+			}
+		}`, options.ExecRequest().SetVariables(map[string]any{
+			"docID": []string{docID.String()},
+		}))
+		if len(result.GQL.Errors) > 0 {
+			return result.GQL.Errors[0]
+		}
+
+		data, _ := result.GQL.Data.(map[string]any)
+		commits := ConvertToArrayOfMaps(s.T, data[request.CommitsName])
+		recordCommitCIDs(s, nodeIndex, docID.String(), commits)
+	}
+	return nil
+}
+
+func recordCommitCIDs(s *state.State, nodeIndex int, docID string, commits []map[string]any) {
+	node := s.Nodes[nodeIndex]
+
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[docID] == nil {
+		node.FieldCIDs[docID] = make(map[string][]cid.Cid)
+	}
+
+	for _, commit := range commits {
+		cidStr, ok := commit[request.CidFieldName].(string)
+		if !ok || cidStr == "" {
+			continue
+		}
+		c, err := cid.Parse(cidStr)
+		require.NoError(s.T, err)
+
+		fieldName, _ := commit[request.FieldNameName].(string)
+		if fieldName == request.CompositeFieldName {
+			node.Composites[docID] = append(node.Composites[docID], c)
+			continue
+		}
+		node.FieldCIDs[docID][fieldName] = append(node.FieldCIDs[docID][fieldName], c)
+	}
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -392,6 +465,9 @@ func makeDocSaveOptions(
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
+	}
 	return []options.Enumerable[options.SaveDocumentOptions]{opts}
 }
 
@@ -406,6 +482,9 @@ func makeDocAddOptions(
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return []options.Enumerable[options.AddDocumentOptions]{opts}
 }
