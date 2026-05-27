@@ -56,6 +56,7 @@ type CollectionRetriever interface {
 		string,
 		immutable.Option[identity.Identity],
 	) (client.Collection, error)
+	ResolvePublicDocID(context.Context, string) (string, error)
 }
 
 type pubSubService struct {
@@ -387,7 +388,12 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return true, nil
 	}
 
-	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID, s.nodeIdentity)
+	publicDocID, err := s.colRetriever.ResolvePublicDocID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
+
+	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, publicDocID, s.nodeIdentity)
 	if err != nil {
 		return false, err
 	}
@@ -399,7 +405,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,
-		docID,
+		publicDocID,
 	)
 }
 

@@ -87,6 +87,11 @@ func (docID DocID) UUID() uuid.UUID {
 	return docID.uuid
 }
 
+// CID returns the root data CID if this DocID was constructed from one.
+func (docID DocID) CID() cid.Cid {
+	return docID.cid
+}
+
 // String returns the underlying document identifier in string form.
 func (docID DocID) String() string {
 	buf := make([]byte, 1)

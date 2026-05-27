@@ -18,7 +18,7 @@ import "C"
 
 import (
 	"context"
-	"encoding/json"
+	gojson "encoding/json"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -83,6 +83,11 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
+		docIDs, err := gojson.Marshal(documentIDs(docs))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		return returnC(returnGoC(0, "", string(docIDs)))
 	} else {
 		// Single document
 		doc, err := client.NewDocFromJSON(ctx, []byte(jsonString), col.Version())
@@ -93,8 +98,20 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
+		docIDs, err := gojson.Marshal(documentIDs([]*client.Document{doc}))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		return returnC(returnGoC(0, "", string(docIDs)))
 	}
-	return returnC(returnGoC(0, "", ""))
+}
+
+func documentIDs(docs []*client.Document) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return docIDs
 }
 
 //export DeleteDocument
@@ -142,7 +159,7 @@ func DeleteDocument(nodePtr C.uintptr_t,
 		return returnC(returnGoC(0, "", ""))
 	case filter != "":
 		var filterValue any
-		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+		if err := gojson.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), ident)
@@ -150,7 +167,7 @@ func DeleteDocument(nodePtr C.uintptr_t,
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		jsonBytes, err := json.Marshal(res)
+		jsonBytes, err := gojson.Marshal(res)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -246,7 +263,7 @@ func UpdateDocument(
 	// Update by filter
 	case filter != "":
 		var filterValue any
-		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+		if err := gojson.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater,
@@ -254,7 +271,7 @@ func UpdateDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		jsonBytes, err := json.Marshal(res)
+		jsonBytes, err := gojson.Marshal(res)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

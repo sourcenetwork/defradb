@@ -13,11 +13,13 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
@@ -30,6 +32,16 @@ func NewCollectionRetriever(db *DB) collectionRetriever {
 	return collectionRetriever{
 		db: db,
 	}
+}
+
+func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID string) (string, error) {
+	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
+	if err != nil {
+		return "", err
+	}
+	defer txn.Discard()
+
+	return resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
@@ -47,6 +59,11 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 
 	defer txn.Discard()
+
+	docID, err = resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
 
 	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
 	if err != nil {
@@ -79,4 +96,13 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 
 	return cols[0], nil
+}
+
+func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, error) {
+	docID = id.UnwrapGenesisDocID(docID)
+	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docID)
+	if err != nil || !found {
+		return docID, err
+	}
+	return publicDocID, nil
 }

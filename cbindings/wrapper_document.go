@@ -92,6 +92,9 @@ func (c *Collection) AddDocument(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+	if err := setDocumentIDsFromJSON([]*client.Document{doc}, []byte(res.Value)); err != nil {
+		return err
+	}
 
 	doc.Clean()
 
@@ -157,8 +160,29 @@ func (c *Collection) AddManyDocuments(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+	if err := setDocumentIDsFromJSON(docs, []byte(res.Value)); err != nil {
+		return err
+	}
 	for _, doc := range docs {
 		doc.Clean()
+	}
+	return nil
+}
+
+func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
+	var docIDs []string
+	if err := json.Unmarshal(data, &docIDs); err != nil {
+		return err
+	}
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.SetDocumentID(docs[i], docID)
 	}
 	return nil
 }

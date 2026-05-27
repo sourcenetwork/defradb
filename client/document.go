@@ -978,9 +978,14 @@ func (doc *Document) setDocID(docID DocID) {
 	doc.id = docID
 }
 
+// SetDocumentID sets the document ID.
+func SetDocumentID(doc *Document, docID DocID) {
+	doc.setDocID(docID)
+}
+
 // SetDocumentIDFromCID sets the document ID from a composite CID.
 func SetDocumentIDFromCID(doc *Document, c cid.Cid) {
-	doc.setDocID(NewDocIDV0(c))
+	SetDocumentID(doc, NewDocIDV0(c))
 }
 
 // GenerateAndSetDocID generates the DocID and then (re)sets `doc.id`.

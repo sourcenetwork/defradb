@@ -62,7 +62,7 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
-		rw.WriteHeader(http.StatusOK)
+		responseJSON(rw, http.StatusOK, docIDStrings(docList))
 	default:
 		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
 		if err != nil {
@@ -73,8 +73,16 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
-		rw.WriteHeader(http.StatusOK)
+		responseJSON(rw, http.StatusOK, docIDStrings([]*client.Document{doc}))
 	}
+}
+
+func docIDStrings(docs []*client.Document) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return docIDs
 }
 
 func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Request) {

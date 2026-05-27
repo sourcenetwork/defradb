@@ -37,6 +37,10 @@ func IsGenesisDocID(docID string) bool {
 	return strings.HasPrefix(docID, genesisDocIDPrefix)
 }
 
+func UnwrapGenesisDocID(docID string) string {
+	return strings.TrimPrefix(docID, genesisDocIDPrefix)
+}
+
 func FormatShortDocID(seq uint64) string {
 	return fmt.Sprintf("%016x", seq)
 }

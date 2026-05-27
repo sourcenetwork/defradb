@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -761,7 +762,8 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.GetDocument(ctx, docID)
+	getDocOpts := options.WithIdentity(options.GetDocument(), iIdentity.FromContext(ctx))
+	newDoc, err := col.GetDocument(ctx, docID, getDocOpts)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}

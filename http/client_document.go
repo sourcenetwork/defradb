@@ -51,8 +51,11 @@ func (c *Collection) AddDocument(
 
 	setDocEncryptionFlagIfNeeded(req, opt)
 
-	_, err = c.http.request(req)
-	if err != nil {
+	var docIDs []string
+	if err := c.http.requestJson(req, &docIDs); err != nil {
+		return err
+	}
+	if err := setDocumentIDs(docs(doc), docIDs); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -93,13 +96,33 @@ func (c *Collection) AddManyDocuments(
 
 	setDocEncryptionFlagIfNeeded(req, opt)
 
-	_, err = c.http.request(req)
-	if err != nil {
+	var docIDs []string
+	if err := c.http.requestJson(req, &docIDs); err != nil {
 		return err
 	}
-
+	if err := setDocumentIDs(docs, docIDs); err != nil {
+		return err
+	}
 	for _, doc := range docs {
 		doc.Clean()
+	}
+	return nil
+}
+
+func docs(doc *client.Document) []*client.Document {
+	return []*client.Document{doc}
+}
+
+func setDocumentIDs(docs []*client.Document, docIDs []string) error {
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.SetDocumentID(docs[i], docID)
 	}
 	return nil
 }
