@@ -148,22 +148,30 @@ func (a *AddDoc) Execute() {
 			require.NoError(a.s.T, err)
 		}
 
-		collection := collections[a.CollectionID]
+		// If the target collection has been removed concurrently (e.g. by an
+		// async PatchCollection action), the slice entry will be nil. Surface
+		// the standard "collection not found" error instead of panicking when
+		// the mutation later attempts to dereference the collection.
+		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
+			err = client.ErrCollectionNotFound
+		} else {
+			collection := collections[a.CollectionID]
 
-		err = withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					a,
-					node,
-					nodeID,
-					collection,
-					txnOption,
-				)
-				return err
-			},
-		)
+			err = withRetryOnNode(
+				node,
+				func() error {
+					var err error
+					docIDs, err = mutation(
+						a,
+						node,
+						nodeID,
+						collection,
+						txnOption,
+					)
+					return err
+				},
+			)
+		}
 		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 		}
