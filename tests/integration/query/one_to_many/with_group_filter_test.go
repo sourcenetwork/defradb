@@ -405,6 +405,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

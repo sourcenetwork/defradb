@@ -20,7 +20,6 @@ import (
 
 func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedCommit(t *testing.T) {
 	const userDocID = "bae-32a035a1-1d5c-5a38-9637-04abfe64dd16"
-	const deviceDocID = "bae-3d4ad011-fdf2-502a-a672-9df76b4bbc51"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -67,33 +66,33 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
-							"docID":     userDocID,
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("Chris"), genesisDocID(userDocID), ""),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 						},
 						{
 							"delta":     nil,
-							"docID":     userDocID,
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
-							"docID":     deviceDocID,
+							"delta":     notPlainCBORDocID(testUtils.NewDocIndex(0, 0)),
+							"docID":     testUtils.NewDocIndex(1, 0),
 							"fieldName": "_ownerID",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
-							"docID":     deviceDocID,
+							"delta":     notPlainCBORValue(testUtils.CBORValue("Sony")),
+							"docID":     testUtils.NewDocIndex(1, 0),
 							"fieldName": "manufacturer",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue("Walkman"), deviceDocID, ""),
-							"docID":     deviceDocID,
+							"delta":     notPlainCBORValue(testUtils.CBORValue("Walkman")),
+							"docID":     testUtils.NewDocIndex(1, 0),
 							"fieldName": "model",
 						},
 						{
 							"delta":     nil,
-							"docID":     deviceDocID,
+							"docID":     testUtils.NewDocIndex(1, 0),
 							"fieldName": "_C",
 						},
 					},

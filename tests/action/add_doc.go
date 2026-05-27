@@ -202,7 +202,10 @@ func addDocViaColSave(
 		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
 
-	docs, err := parseAddDocs(ctx, a, collection)
+	action := *a
+	action.Doc = replace(a.s, nodeIndex, a.Doc)
+
+	docs, err := parseAddDocs(ctx, &action, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +235,10 @@ func addDocViaColAdd(
 		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
 
-	docs, err := parseAddDocs(ctx, a, collection)
+	action := *a
+	action.Doc = replace(a.s, nodeIndex, a.Doc)
+
+	docs, err := parseAddDocs(ctx, &action, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -280,11 +286,11 @@ func addDocViaGQL(
 		input, err = valueToGQL(a.DocMap)
 	} else if client.IsJSONArray([]byte(a.Doc)) {
 		var docMaps []map[string]any
-		err = json.Unmarshal([]byte(a.Doc), &docMaps)
+		err = json.Unmarshal([]byte(replace(a.s, nodeIndex, a.Doc)), &docMaps)
 		require.NoError(a.s.T, err)
 		input, err = arrayToGQL(docMaps)
 	} else {
-		input, err = jsonToGQL(a.Doc)
+		input, err = jsonToGQL(replace(a.s, nodeIndex, a.Doc))
 	}
 	require.NoError(a.s.T, err)
 

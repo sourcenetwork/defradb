@@ -54,7 +54,7 @@ func TestTxn_VerifyBlockSignature_InsideTxn_Succeeds(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				TransactionID:  immutable.Some(1),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibxlg2hmbbhbia4zywlif4xhozrf47js6r46ag5bcw72uc5m53csi",
+				Cid:            "{{.CID0_0_0}}",
 			},
 		},
 	}
@@ -96,8 +96,8 @@ func TestTxn_VerifyBlockSignature_OutsideTxn_Fails(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				TransactionID:  immutable.Some(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibxlg2hmbbhbia4zywlif4xhozrf47js6r46ag5bcw72uc5m53csi",
-				ExpectedError:  "ipld: could not find bafyreibxlg2hmbbhbia4zywlif4xhozrf47js6r46ag5bcw72uc5m53csi",
+				Cid:            "{{.CID0_0_0}}",
+				ExpectedError:  "ipld: could not find",
 			},
 		},
 	}

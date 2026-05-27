@@ -65,7 +65,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
+	bookID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -213,7 +213,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
+	bookID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{

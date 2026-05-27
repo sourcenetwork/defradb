@@ -51,13 +51,13 @@ func TestTxn_AddDoc_WithCommit_Succeeds(t *testing.T) {
 							_docID
 							name
 							age
+							}
 						}
-					}
-				`,
+					`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -148,13 +148,13 @@ func TestTxn_AddDoc_InsideTxnWithAddCollection_WithCommit_Succeeds(t *testing.T)
 							_docID
 							name
 							age
+							}
 						}
-					}
-				`,
+					`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"age":    int64(27),
 						},

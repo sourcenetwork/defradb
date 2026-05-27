@@ -94,7 +94,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 							"COUNT": 4,
 							"published": []map[string]any{
 								{
-									"name": "The Pelican Brief",
+									"name": "A Time for Mercy",
 								},
 								{
 									"name": "The Firm",

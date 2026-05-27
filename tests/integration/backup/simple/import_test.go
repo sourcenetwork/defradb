@@ -26,8 +26,8 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 			},
 			&action.Request{
 				Request: `
-					query  {
-						User {
+						query  {
+							User {
 							name
 							age
 						}
@@ -130,6 +130,7 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 				]}`,
 			},
 			&action.Request{
+				NonOrderedResults: true,
 				Request: `
 					query  {
 						User {

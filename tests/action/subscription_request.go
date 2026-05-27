@@ -52,9 +52,10 @@ var _ Stateful = (*SubscriptionRequest)(nil)
 func (a *SubscriptionRequest) Execute() {
 	subscriptionAssert := make(chan func())
 
-	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, node := range nodes {
-		result := node.ExecRequest(a.s.Ctx, a.Request)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		result := node.ExecRequest(a.s.Ctx, replace(a.s, nodeID, a.Request))
 		if assertErrors(a.s.T, result.GQL.Errors, a.ExpectedError) {
 			return
 		}
@@ -79,7 +80,7 @@ func (a *SubscriptionRequest) Execute() {
 						r,
 						a.ExpectedError,
 						nil,
-						0,
+						nodeID,
 						true,
 					)
 

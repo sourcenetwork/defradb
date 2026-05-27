@@ -78,7 +78,7 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 							"COUNT": 2,
 							"published": []map[string]any{
 								{
-									"name": "A Time for Mercy",
+									"name": "Painted House",
 								},
 							},
 						},
@@ -169,7 +169,7 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 							"COUNT": 2,
 							"published": []map[string]any{
 								{
-									"name": "A Time for Mercy",
+									"name": "Painted House",
 								},
 							},
 						},

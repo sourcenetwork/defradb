@@ -25,6 +25,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -235,6 +236,31 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
+}
+
+func ValidDocID() *validDocID {
+	return &validDocID{}
+}
+
+type validDocID struct{}
+
+func (m *validDocID) Match(actual any) (bool, error) {
+	s, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	if _, err := client.NewDocIDFromString(s); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (m *validDocID) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be a valid document ID string", actual)
+}
+
+func (m *validDocID) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a valid document ID string", actual)
 }
 
 // ValidCID returns a matcher that passes if the actual value is a string

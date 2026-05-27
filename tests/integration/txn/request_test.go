@@ -23,6 +23,7 @@ import (
 // This test runs Request inside of a transaction, and illustrates that committing the transaction
 // results in the mutation adding a document to the database.
 func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
+	docID := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -47,7 +48,7 @@ func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"add_Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": docID,
 						},
 					},
 				},
@@ -68,7 +69,7 @@ func TestTxn_Request_WithCommit_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": docID,
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -115,7 +116,7 @@ func TestTxn_Request_WithoutCommit_EmptyResults(t *testing.T) {
 				Results: map[string]any{
 					"add_Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},

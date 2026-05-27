@@ -36,8 +36,11 @@ func (c *Collection) AddDocument(
 	args = append(args, document)
 	args = appendTxnArg(args, c.txn)
 
-	_, err = c.cmd.execute(ctx, args)
+	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJSON([]*client.Document{doc}, data); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -62,12 +65,33 @@ func (c *Collection) AddManyDocuments(
 	args = append(args, "["+strings.Join(docStrings, ",")+"]")
 	args = appendTxnArg(args, c.txn)
 
-	_, err := c.cmd.execute(ctx, args)
+	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJSON(docs, data); err != nil {
 		return err
 	}
 	for _, doc := range docs {
 		doc.Clean()
+	}
+	return nil
+}
+
+func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
+	var docIDs []string
+	if err := json.Unmarshal(data, &docIDs); err != nil {
+		return err
+	}
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.SetDocumentID(docs[i], docID)
 	}
 	return nil
 }

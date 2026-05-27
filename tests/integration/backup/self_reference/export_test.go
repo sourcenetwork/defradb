@@ -34,7 +34,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
-				ExpectedContent: `{"User":[{"_docID":"bae-1635f80b-612a-5378-a185-cad7a3018354","_docIDNew":"bae-1635f80b-612a-5378-a185-cad7a3018354","age":30,"name":"John"},{"_bossID":"bae-1635f80b-612a-5378-a185-cad7a3018354","_docID":"bae-692a9178-a258-5224-990f-9ad703a2bbea","_docIDNew":"bae-692a9178-a258-5224-990f-9ad703a2bbea","age":31,"name":"Bob"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"{{.DocID0_0}}","_docIDNew":"bae-1635f80b-612a-5378-a185-cad7a3018354","age":30,"name":"John"},{"_bossID":"bae-1635f80b-612a-5378-a185-cad7a3018354","_docID":"{{.DocID0_1}}","_docIDNew":"bae-692a9178-a258-5224-990f-9ad703a2bbea","age":31,"name":"Bob"}]}`,
 			},
 		},
 	}
@@ -59,7 +59,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.ExportBackup{
-				ExpectedContent: `{"User":[{"_docID":"bae-1635f80b-612a-5378-a185-cad7a3018354","_docIDNew":"bae-32c15b83-186c-565f-be06-caa21431c38b","age":31,"name":"John"},{"_bossID":"bae-32c15b83-186c-565f-be06-caa21431c38b","_docID":"bae-692a9178-a258-5224-990f-9ad703a2bbea","_docIDNew":"bae-69f87811-246f-5203-ae83-ff043c6fce10","age":31,"name":"Bob"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"{{.DocID0_0}}","_docIDNew":"bae-32c15b83-186c-565f-be06-caa21431c38b","age":31,"name":"John"},{"_bossID":"bae-32c15b83-186c-565f-be06-caa21431c38b","_docID":"{{.DocID0_1}}","_docIDNew":"bae-69f87811-246f-5203-ae83-ff043c6fce10","age":31,"name":"Bob"}]}`,
 			},
 		},
 	}

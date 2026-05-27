@@ -382,7 +382,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name":         "John Grisham",
-							"_publishedID": "bae-ffa6fd8c-8fd7-5da1-81d5-481bb4efd3c6",
+							"_publishedID": "{{.DocID0_0}}",
 						},
 					},
 				},
@@ -433,7 +433,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
+							"_authorID": "{{.DocID1_0}}",
 						},
 					},
 				},

@@ -1634,8 +1634,8 @@ func exportBackup(
 
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
 		opt := options.BasicExport().
 			SetFormat(action.Config.Format).
 			SetPretty(action.Config.Pretty).
@@ -1648,7 +1648,7 @@ func exportBackup(
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 
 		if !expectedErrorRaised {
-			assertBackupContent(s.T, action.ExpectedContent, action.Config.Filepath)
+			assertBackupContent(s.T, replace(s, nodeIDs[i], action.ExpectedContent), action.Config.Filepath)
 		}
 	}
 

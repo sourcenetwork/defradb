@@ -80,7 +80,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"SUM":  9.100000000000001,
+							"SUM":  8.7,
 						},
 						{
 							"name": "Cornelia Funke",

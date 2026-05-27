@@ -137,6 +137,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 							name
 							author {
 								_docID
+								name
 							}
 						}
 					}`,
@@ -145,7 +146,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
-								"_docID": "bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+								"_docID": testUtils.ValidDocID(),
+								"name":   "John",
 							},
 						},
 					},

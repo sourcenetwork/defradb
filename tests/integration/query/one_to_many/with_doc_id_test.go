@@ -50,7 +50,7 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 					Author {
 						name
 						published (
-								docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+								docID: "{{.DocID0_0}}"
 							) {
 							name
 						}

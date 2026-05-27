@@ -77,8 +77,8 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 							"name": "John Grisham",
 							"published": []map[string]any{
 								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
+									"name":   "Painted House",
+									"rating": 4.9,
 								},
 							},
 						},
@@ -164,8 +164,8 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 							"name": "John Grisham",
 							"p1": []map[string]any{
 								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
+									"name":   "Painted House",
+									"rating": 4.9,
 								},
 							},
 							"p2": []map[string]any{

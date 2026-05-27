@@ -61,34 +61,34 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":       "bafyreiagmkic4btj532gyc7kcf2h24toepdz6gwbqwnmlc2inueku7vlqi",
-							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
-							"docID":     john21DocID,
+							"cid":       testUtils.ValidCID(),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), genesisDocID(john21DocID), ""),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreihnbwvr4yay445skacvd26o25w2vnuqdtorfiw62pniogipawz5sm",
-							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
-							"docID":     john21DocID,
+							"cid":       testUtils.ValidCID(),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), genesisDocID(john21DocID), ""),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreig4u7rsynyozwdt7dqyux7rq6epl3g7bljackbzhkyqbnipn5beua",
+							"cid":       testUtils.ValidCID(),
 							"delta":     nil,
-							"docID":     john21DocID,
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":       "bafyreihnbwvr4yay445skacvd26o25w2vnuqdtorfiw62pniogipawz5sm",
+									"cid":       testUtils.ValidCID(),
 									"fieldName": "name",
 								},
 								{
-									"cid":       "bafyreiagmkic4btj532gyc7kcf2h24toepdz6gwbqwnmlc2inueku7vlqi",
+									"cid":       testUtils.ValidCID(),
 									"fieldName": "age",
 								},
 							},

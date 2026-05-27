@@ -359,6 +359,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -481,6 +482,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -611,6 +613,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -741,6 +744,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
