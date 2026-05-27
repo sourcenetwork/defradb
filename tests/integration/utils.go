@@ -763,7 +763,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 func hasActiveMultiplier(activeNames string, name defraMultiplier.Name) bool {
 	for _, activeName := range strings.Split(activeNames, ",") {
-		if strings.TrimSpace(activeName) == string(name) {
+		if strings.TrimSpace(activeName) == name {
 			return true
 		}
 	}

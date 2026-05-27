@@ -708,6 +708,7 @@ func (c *collection) DeleteDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

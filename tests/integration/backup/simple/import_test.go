@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestBackupImport_Simple_NoError(t *testing.T) {
@@ -75,6 +76,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

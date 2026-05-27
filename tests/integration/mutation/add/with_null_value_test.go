@@ -14,12 +14,20 @@ package add
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationAdd_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			// Collection.Save treats the second create as an update.
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
