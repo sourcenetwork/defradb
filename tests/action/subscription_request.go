@@ -17,6 +17,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // subscriptionTimeout is the maximum time to wait for subscription results to be returned.
@@ -31,6 +33,17 @@ type SubscriptionRequest struct {
 
 	// NodeID is the node ID (index) of the node in which to subscribe to.
 	NodeID immutable.Option[int]
+
+	// The identity of the subscriber. Optional.
+	//
+	// If an Identity is not provided the subscription can only yield public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then the subscription
+	// will only yield private document(s) that this Identity is permitted to read.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[state.Identity]
 
 	// The subscription request to submit.
 	Request string
@@ -52,9 +65,15 @@ var _ Stateful = (*SubscriptionRequest)(nil)
 func (a *SubscriptionRequest) Execute() {
 	subscriptionAssert := make(chan func())
 
-	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, node := range nodes {
-		result := node.ExecRequest(a.s.Ctx, a.Request)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for index, node := range nodes {
+		reqOption := options.ExecRequest()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIDs[index])
+		if identOption.HasValue() {
+			reqOption.SetIdentity(identOption.Value())
+		}
+
+		result := node.ExecRequest(a.s.Ctx, a.Request, reqOption)
 		if assertErrors(a.s.T, result.GQL.Errors, a.ExpectedError) {
 			return
 		}
