@@ -35,7 +35,7 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": null
 				}`,
@@ -79,7 +79,7 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": []
 				}`,
@@ -123,7 +123,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": [8, 5, 3, 2, 1]
 				}`,
@@ -167,7 +167,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": [-1, 2, -3, 5, -8]
 				}`,
@@ -211,7 +211,7 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": [1, 2, 3]
 				}`,
@@ -255,7 +255,7 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 					"favouriteIntegers": [1, 2, 3, 5, 8]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": [1, 2, 3, 5, 8, 13, 21]
 				}`,

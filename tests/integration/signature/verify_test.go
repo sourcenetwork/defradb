@@ -42,7 +42,7 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"age": 23
 				}`,

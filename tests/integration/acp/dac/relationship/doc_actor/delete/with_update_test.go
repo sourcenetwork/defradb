@@ -109,7 +109,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can update.
@@ -178,7 +178,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -310,7 +310,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can update.
@@ -379,7 +379,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),

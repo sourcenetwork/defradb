@@ -24,18 +24,16 @@ func MakeKeyringCommand(ctx context.Context) *cobra.Command {
 Generate, add, get, and list private keys.
 
 The following keys are loaded from the keyring on start:
-	peer-key: Ed25519 private key (required)
-	encryption-key: AES-128, AES-192, or AES-256 key (optional)
 
-To randomly generate the required keys, run the following command:
-	defradb keyring new
-
-To import externally generated keys, run the following command:
-	defradb keyring add <name> <private-key-hex>
-
-To learn more about the available options:
-	defradb keyring --help
+- peer-key: Ed25519 key (required)
+- encryption-key: AES-128, AES-192, or AES-256 key (optional)
 `,
 	}
+
+	EmbedCLIExample(ctx, cmd, "Randomly generate the required keys",
+		"defradb keyring new")
+	EmbedCLIExample(ctx, cmd, "Import externally generated keys",
+		"defradb keyring add <name> <private-key-hex>")
+
 	return cmd
 }
