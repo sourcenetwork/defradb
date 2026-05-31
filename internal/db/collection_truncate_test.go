@@ -44,7 +44,8 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 
 	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
-	dbTxn := txn.(*Txn)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
@@ -80,7 +81,8 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	txn, err = db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard()
-	dbTxn = txn.(*Txn)
+	dbTxn, ok = txn.(*Txn)
+	require.True(t, ok)
 	txnCtx = InitContext(ctx, dbTxn)
 
 	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
