@@ -29,6 +29,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const userSchema = `
@@ -90,6 +91,75 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *testing.T) {
+	ctx := context.Background()
+
+	sourceDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer sourceDB.Close()
+	targetDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer targetDB.Close()
+
+	_, err = sourceDB.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	_, err = targetDB.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	sourceCol, err := sourceDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	targetCol, err := targetDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	sourceDB.docIDSequence.Store(100)
+	targetDB.docIDSequence.Store(200)
+
+	sourceDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"John","age":30}`), sourceCol.Version())
+	require.NoError(t, err)
+	err = sourceCol.AddDocument(ctx, sourceDoc)
+	require.NoError(t, err)
+
+	copyDAGBlocks(t, ctx, sourceDB, targetDB, sourceDoc.Head())
+
+	err = targetDB.executeMerge(ctx, targetCol.(*collection), event.Merge{
+		DocID:        sourceDoc.ID().String(),
+		Cid:          sourceDoc.Head(),
+		CollectionID: targetCol.CollectionID(),
+	})
+	require.NoError(t, err)
+
+	mergedDoc, err := targetCol.GetDocument(ctx, sourceDoc.ID())
+	require.NoError(t, err)
+	docMap, err := mergedDoc.ToMap()
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"_docID": sourceDoc.ID().String(),
+		"name":   "John",
+		"age":    int64(30),
+	}, docMap)
+
+	compositeBlock := loadTestBlock(t, ctx, sourceDB, sourceDoc.Head())
+	require.NotEmpty(t, compositeBlock.Links)
+	fieldCID := compositeBlock.Links[0].Cid
+
+	txn, err := targetDB.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn := txn.(*Txn)
+	txnCtx := InitContext(ctx, dbTxn)
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, targetCol.CollectionID())
+	require.NoError(t, err)
+
+	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, sourceDoc.ID().String())
+	require.NoError(t, err)
+	require.True(t, found)
+	require.NotEqual(t, sourceDoc.ID().String(), shortDocID)
+
+	docIDs, err := id.GetPublicDocIDsForGenesisFieldFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
+	require.NoError(t, err)
+	require.Equal(t, []string{sourceDoc.ID().String()}, docIDs)
+}
+
 func TestMerge_DualBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
@@ -144,6 +214,35 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	}
 
 	require.Equal(t, expectedDocMap, docMap)
+}
+
+func copyDAGBlocks(t *testing.T, ctx context.Context, sourceDB *DB, targetDB *DB, root cid.Cid) {
+	t.Helper()
+
+	sourceStore := datastore.BlockstoreFrom(sourceDB.rootstore, sourceDB.blockStoreChunkSize)
+	targetStore := datastore.BlockstoreFrom(targetDB.rootstore, targetDB.blockStoreChunkSize)
+	seen := make(map[cid.Cid]struct{})
+
+	var copyBlock func(cid.Cid)
+	copyBlock = func(blockCID cid.Cid) {
+		if _, ok := seen[blockCID]; ok {
+			return
+		}
+		seen[blockCID] = struct{}{}
+
+		rawBlock, err := sourceStore.Get(ctx, blockCID)
+		require.NoError(t, err)
+		err = targetStore.Put(ctx, rawBlock)
+		require.NoError(t, err)
+
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
+		require.NoError(t, err)
+		for _, link := range block.AllLinks() {
+			copyBlock(link.Cid)
+		}
+	}
+
+	copyBlock(root)
 }
 
 // This test is not something we can reproduce in with integration tests.
