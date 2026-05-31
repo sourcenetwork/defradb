@@ -607,8 +607,21 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		if found && shortDocID != primaryKey.DocShortID {
-			return NewErrDocumentAlreadyExists(docID.String())
+		if found {
+			existingKey := keys.PrimaryDataStoreKey{
+				CollectionShortID: shortID,
+				DocShortID:        shortDocID,
+			}
+			exists, isDeleted, err := c.exists(ctx, existingKey)
+			if err != nil {
+				return err
+			}
+			if isDeleted {
+				return NewErrDocumentDeleted(docID.String())
+			}
+			if exists || shortDocID != primaryKey.DocShortID {
+				return NewErrDocumentAlreadyExists(docID.String())
+			}
 		}
 		if err := id.SetDocIDMapping(ctx, shortID, primaryKey.DocShortID, docID.String()); err != nil {
 			return err
