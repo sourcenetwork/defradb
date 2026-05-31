@@ -244,11 +244,13 @@ func (c *collection) add(
 	if err != nil {
 		return err
 	}
-	if exists {
-		return NewErrDocumentAlreadyExists(primaryKey.DocID)
-	}
+	// isDeleted is checked before exists because a tombstoned doc
+	// still satisfies exists, and the deleted error is more informative.
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
+	}
+	if exists {
+		return NewErrDocumentAlreadyExists(primaryKey.DocID)
 	}
 
 	// write value object marker if we have an empty doc
