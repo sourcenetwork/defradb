@@ -25,12 +25,13 @@ import (
 // subscriptionTimeout is the maximum time to wait for subscription results to be returned.
 const subscriptionTimeout = 1 * time.Second
 
-// emptyResultsGrace is how long we keep listening after all actions have run
-// when the test expects no events. Subscription delivery is asynchronous, so
-// an event triggered by the last action can still be in flight when actions
-// finish — without this small wait we'd assert "nothing arrived" before
-// giving the pipeline a chance to deliver it.
-const emptyResultsGrace = 100 * time.Millisecond
+// postActionsGrace is how long we keep listening after all expected events
+// have been collected (or, for the empty-expected case, after all actions
+// have run). Subscription delivery is asynchronous, so an event triggered
+// by the last action can still be in flight when actions finish — without
+// this small wait we'd stop reading too early and miss unexpected extra
+// events, letting tests pass that should have failed.
+const postActionsGrace = 50 * time.Millisecond
 
 // SubscriptionRequest represents a subscription request.
 //
@@ -100,6 +101,12 @@ func (a *SubscriptionRequest) Execute() {
 					)
 					return
 				}
+				require.Len(
+					a.s.T,
+					results,
+					len(a.Results),
+					"subscription yielded a different number of events than expected",
+				)
 				for i, r := range a.Results {
 					// This assert should be executed from the main test routine
 					// so that failures will be properly handled.
@@ -127,14 +134,14 @@ func (a *SubscriptionRequest) Execute() {
 //
 //   - expected == nil: the test doesn't care what the stream delivers (e.g.
 //     the close-while-subscribed test). Return immediately with no events.
-//   - len(expected) == 0: the test cares — it's asserting nothing arrives —
-//     so we have to actually listen, otherwise the assertion is vacuous and
-//     the test passes even when a regression delivers events. Listen until
-//     all actions have run, then drain for a short grace window to catch
-//     events that were in flight when the last action finished. Any event
-//     received is returned so the caller can fail the assertion.
-//   - len(expected) > 0: collect that many events, each with a per-event
-//     timeout.
+//   - len(expected) == 0: the test is asserting nothing arrives, so we have
+//     to actually listen — otherwise the assertion is vacuous and the test
+//     passes even when a regression delivers events. Listen until all
+//     actions have run, then keep listening for a short grace window to
+//     catch trailing events.
+//   - len(expected) > 0: collect that many events with a per-event timeout,
+//     then keep listening for a grace window so over-delivery (more events
+//     than expected) fails the assertion instead of being silently dropped.
 func collectSubscriptionResults(
 	sub <-chan client.GQLResult,
 	expected []map[string]any,
@@ -154,23 +161,25 @@ func collectSubscriptionResults(
 				done = true
 			}
 		}
-		graceTimer := time.NewTimer(emptyResultsGrace)
-		for {
-			select {
-			case s := <-sub:
-				results = append(results, &s)
-			case <-graceTimer.C:
-				return results
-			}
-		}
 	default:
 		for len(results) < len(expected) {
 			select {
 			case s := <-sub:
 				results = append(results, &s)
 			case <-time.After(subscriptionTimeout):
+				return results
 			}
 		}
-		return results
+	}
+
+	graceTimer := time.NewTimer(postActionsGrace)
+	defer graceTimer.Stop()
+	for {
+		select {
+		case s := <-sub:
+			results = append(results, &s)
+		case <-graceTimer.C:
+			return results
+		}
 	}
 }

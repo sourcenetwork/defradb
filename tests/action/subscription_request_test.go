@@ -52,6 +52,30 @@ func TestCollectSubscriptionResults_EmptyExpected_NoEventDelivered(t *testing.T)
 	require.Empty(t, got, "no events expected, none delivered — collector must return nothing")
 }
 
+// When the test expects N events but more are delivered, the collector must
+// capture the extra ones during the grace window so the caller's length check
+// fails. Without this, over-delivery would be silently dropped and the test
+// would pass on a buggy subscription that yields too many events.
+func TestCollectSubscriptionResults_PositiveExpected_CapturesOverDelivery(t *testing.T) {
+	sub := make(chan client.GQLResult, 3)
+	actionsDone := make(chan struct{})
+	close(actionsDone)
+
+	sub <- client.GQLResult{Data: "a"}
+	sub <- client.GQLResult{Data: "b"}
+	sub <- client.GQLResult{Data: "extra"}
+
+	// Caller expects two results; the collector must capture all three so the
+	// length mismatch is visible.
+	got := collectSubscriptionResults(
+		sub,
+		[]map[string]any{{}, {}},
+		actionsDone,
+	)
+
+	require.Len(t, got, 3, "extra events delivered after the expected count must be captured")
+}
+
 // nil expected means the test doesn't care about the stream (e.g. the
 // close-while-subscribed test). The collector must return immediately without
 // blocking on the channel or the actions-done signal.
@@ -67,7 +91,7 @@ func TestCollectSubscriptionResults_NilExpected_ReturnsImmediately(t *testing.T)
 	select {
 	case got := <-done:
 		require.Empty(t, got)
-	case <-time.After(emptyResultsGrace * 5):
+	case <-time.After(postActionsGrace * 5):
 		t.Fatal("collector blocked when expected results were nil")
 	}
 }
