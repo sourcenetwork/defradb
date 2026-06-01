@@ -50,11 +50,11 @@ type GoNodeInitOptions struct {
 	BadgerEncryptionKey []byte
 
 	// DB options
-	EnableSigning            int
-	SearchableEncryptionKey  []byte
-	P2PBlockSyncTimeoutMs    int64
-	LensPoolSize             int
-	ChunkSize                int
+	EnableSigning           int
+	SearchableEncryptionKey []byte
+	P2PBlockSyncTimeoutMs   int64
+	LensPoolSize            int
+	ChunkSize               int
 
 	// P2P options
 	EnablePubSub              int
