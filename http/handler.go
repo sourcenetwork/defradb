@@ -95,13 +95,13 @@ func NewHandler(db DB) (*Handler, error) {
 	}
 	txs := &sync.Map{}
 	mux := chi.NewMux()
-	// Normalize trailing slashes so `/collections` and `/collections/` resolve to the
-	// same resource instead of the latter missing chi's router and returning a bare 404.
-	// RedirectSlashes sends a 301 to the slashless URL. Registered before any routes so
-	// every HTTP route on this handler is normalized consistently.
-	// NOTE: A 301 lets some clients, e.g. Go's http.Client, downgrade a non-GET method to
-	//       GET when following it; clients that build slashless URLs never hit it.
-	mux.Use(middleware.RedirectSlashes)
+	// Normalize trailing slashes so that, for example, `/collections` and
+	// `/collections/` resolve to the same route instead of the latter missing
+	// chi's router and returning a bare 404. StripSlashes rewrites the routing
+	// path in place (no redirect), preserving the request method and body.
+	// It is registered before any routes so every HTTP route on this handler
+	// is normalized consistently.
+	mux.Use(middleware.StripSlashes)
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),

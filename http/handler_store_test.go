@@ -12,6 +12,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -24,8 +25,8 @@ import (
 )
 
 // chi treats `collections` and `collections/` as separate routes, so without
-// normalization the trailing-slash form 404s. RedirectSlashes sends a 301 to the
-// slashless canonical URL (query preserved); verify the GET (describe) endpoint does so.
+// normalization the trailing-slash form 404s. Verify StripSlashes routes both to the
+// same handler.
 func TestHandler_GetCollectionWithTrailingSlash(t *testing.T) {
 	cdb := setupDatabase(t)
 
@@ -37,25 +38,34 @@ func TestHandler_GetCollectionWithTrailingSlash(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
-	require.Equal(t, http.StatusMovedPermanently, res.StatusCode)
-	require.Equal(t, "/api/v1/collections?name=User", res.Header.Get("Location"))
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(body))
 }
 
-// Same trailing-slash redirect as the GET case, on the delete endpoint. The 301 is
-// method-agnostic; whether the followed request stays a DELETE is up to the client.
+// Trailing-slash normalization for the collection delete endpoint; see the GET case.
 func TestHandler_DeleteCollectionWithTrailingSlash(t *testing.T) {
 	cdb := setupDatabase(t)
+
+	// delete refuses a collection with documents, so use an empty one
+	_, err := cdb.AddCollection(context.Background(), `type Author {
+		name: String
+	}`)
+	require.NoError(t, err)
 
 	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodDelete, "http://localhost:9181/api/v1/collections/?name=Book", nil)
+	req := httptest.NewRequest(http.MethodDelete, "http://localhost:9181/api/v1/collections/?name=Author", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
-	require.Equal(t, http.StatusMovedPermanently, res.StatusCode)
-	require.Equal(t, "/api/v1/collections?name=Book", res.Header.Get("Location"))
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(body))
 }
 
 func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
