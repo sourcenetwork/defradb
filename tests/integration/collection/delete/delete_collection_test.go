@@ -1158,6 +1158,19 @@ func TestDeleteCollection_ActiveOnly_FollowedBySetActive_RestoresQueries(t *test
 				ActiveOnly: true,
 				Names:      []string{"Users"},
 			},
+			// The delete only removed the active head; v1 must remain, inactive.
+			// Asserted here so a dropped-v1 regression is caught at the delete step.
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						VersionID:      usersV1,
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+				},
+			},
 			&action.Request{
 				Request: `query {
 					Users {
@@ -1245,6 +1258,34 @@ func TestDeleteCollection_UnrelatedCollectionWithMultipleVersions_PreservedAfter
 				}`,
 				Results: map[string]any{
 					"Books": []map[string]any{},
+				},
+			},
+			// The active query above only proves v3 (the active head) survived; this
+			// proves the two inactive earlier versions survived the delete too.
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("Books").SetGetInactive(true),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       false,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreibb6jablg4srs2juy5u7uuitiee23toxgqei33i63yh6qfhdju3c4",
+						}),
+					},
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreie67mjmn6k2zvfhsoudrnlagfoe256t7egpxubkehpb3dkdqn6s5y",
+						}),
+					},
 				},
 			},
 		},
