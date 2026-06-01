@@ -794,55 +794,35 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 		return startIndex, endIndex
 	}
 
+	// A test that leaves a transaction open cannot be run by the change detector:
+	// uncommitted writes are never persisted, so the setup and assert phases would
+	// operate on different data. Any action can run inside a transaction - not just
+	// the mutation actions that delimit the setup phase below - so this is checked
+	// across every action, independently of where they are split.
+	if hasOpenTransaction(testCase.Actions) {
+		t.Skipf("skipping test with open transaction(s)")
+	}
+
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
-	// Track the transaction IDs as they are used, in a set
-	transactionIDset := make(map[int]struct{})
-
 ActionLoop:
 	for i := range testCase.Actions {
-		switch concreteAction := testCase.Actions[i].(type) {
+		switch testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case *action.AddDoc:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case *action.UpdateDoc:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case Restart:
-			continue
-
-		case *action.CommitTransaction:
-			// If transaction is commited, remove it from the set we are tracking
-			delete(transactionIDset, concreteAction.TransactionID)
+		// Mutation actions form the setup phase; Restart and CommitTransaction are
+		// permitted to interleave with them without ending it.
+		case *action.AddCollection, *action.AddDoc, *action.UpdateDoc, Restart, *action.CommitTransaction:
 			continue
 
 		default:
 			firstNonSetupIndex = i
 			break ActionLoop
 		}
-	}
-
-	// If length is not 0, there was a transaction used that was not committed
-	if len(transactionIDset) > 0 {
-		t.Skipf("skipping test with open transaction(s)")
 	}
 
 	if changeDetector.SetupOnly {
@@ -868,6 +848,48 @@ ActionLoop:
 	}
 
 	return startIndex, endIndex
+}
+
+// hasOpenTransaction reports whether the actions open a transaction that is never
+// committed. Any action may run inside a transaction via an optional TransactionID
+// field; a CommitTransaction closes the one it names.
+func hasOpenTransaction(actions []any) bool {
+	open := make(map[int]struct{})
+	for _, a := range actions {
+		if commit, ok := a.(*action.CommitTransaction); ok {
+			delete(open, commit.TransactionID)
+			continue
+		}
+		if id, ok := actionTransactionID(a); ok {
+			open[id] = struct{}{}
+		}
+	}
+	return len(open) > 0
+}
+
+// actionTransactionID returns the transaction an action runs in, read from its
+// optional `TransactionID immutable.Option[int]` field if it has one. Reflection
+// keeps this correct for every such action; an exhaustive type switch would
+// silently miss any action added later - the gap this guards against.
+func actionTransactionID(a any) (int, bool) {
+	v := reflect.ValueOf(a)
+	for v.Kind() == reflect.Pointer {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return 0, false
+	}
+
+	field := v.FieldByName("TransactionID")
+	if !field.IsValid() {
+		return 0, false
+	}
+
+	txnID, ok := field.Interface().(immutable.Option[int])
+	if !ok || !txnID.HasValue() {
+		return 0, false
+	}
+	return txnID.Value(), true
 }
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
