@@ -23,6 +23,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// chi treats `collections` and `collections/` as separate routes, so without
+// normalization the trailing-slash form 404s. RedirectSlashes sends a 301 to the
+// slashless canonical URL (query preserved); verify the GET (describe) endpoint does so.
+func TestHandler_GetCollectionWithTrailingSlash(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost:9181/api/v1/collections/?name=User", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	require.Equal(t, http.StatusMovedPermanently, res.StatusCode)
+	require.Equal(t, "/api/v1/collections?name=User", res.Header.Get("Location"))
+}
+
+// Same trailing-slash redirect as the GET case, on the delete endpoint. The 301 is
+// method-agnostic; whether the followed request stays a DELETE is up to the client.
+func TestHandler_DeleteCollectionWithTrailingSlash(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "http://localhost:9181/api/v1/collections/?name=Book", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	require.Equal(t, http.StatusMovedPermanently, res.StatusCode)
+	require.Equal(t, "/api/v1/collections?name=Book", res.Header.Get("Location"))
+}
+
 func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	cdb := setupDatabase(t)
 
