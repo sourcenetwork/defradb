@@ -12,6 +12,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -22,6 +23,50 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// chi treats `collections` and `collections/` as separate routes, so without
+// normalization the trailing-slash form 404s. Verify StripSlashes routes both to the
+// same handler.
+func TestHandler_GetCollectionWithTrailingSlash(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost:9181/api/v1/collections/?name=User", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(body))
+}
+
+// Trailing-slash normalization for the collection delete endpoint; see the GET case.
+func TestHandler_DeleteCollectionWithTrailingSlash(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	// delete refuses a collection with documents, so use an empty one
+	_, err := cdb.AddCollection(context.Background(), `type Author {
+		name: String
+	}`)
+	require.NoError(t, err)
+
+	handler, err := NewHandler(cdb)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "http://localhost:9181/api/v1/collections/?name=Author", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(body))
+}
 
 func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	cdb := setupDatabase(t)
