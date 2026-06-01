@@ -228,7 +228,9 @@ func TestDeleteCollection_WithTransaction_Succeeds(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDeleteCollection_WithTransactionWithoutCommit_CollectionStillExists(t *testing.T) {
+// Deleting multiple collections inside a transaction that is never committed must
+// leave all of them intact.
+func TestDeleteCollection_MultipleCollections_WithTransactionWithoutCommit_StillExist(t *testing.T) {
 	test := testUtils.TestCase{
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
