@@ -98,6 +98,22 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 	if err != nil {
 		return GoNodeInitOptions{}, err
 	}
+
+	var badgerEncryptionKey []byte
+	if cOptions.badgerEncryptionKey != nil && cOptions.badgerEncryptionKeyLen > 0 {
+		badgerEncryptionKey = C.GoBytes(unsafe.Pointer(cOptions.badgerEncryptionKey), cOptions.badgerEncryptionKeyLen)
+	}
+
+	var searchableEncryptionKey []byte
+	if cOptions.searchableEncryptionKey != nil && cOptions.searchableEncryptionKeyLen > 0 {
+		searchableEncryptionKey = C.GoBytes(unsafe.Pointer(cOptions.searchableEncryptionKey), cOptions.searchableEncryptionKeyLen)
+	}
+
+	var p2pPrivateKey []byte
+	if cOptions.p2pPrivateKey != nil && cOptions.p2pPrivateKeyLen > 0 {
+		p2pPrivateKey = C.GoBytes(unsafe.Pointer(cOptions.p2pPrivateKey), cOptions.p2pPrivateKeyLen)
+	}
+
 	return GoNodeInitOptions{
 		DbPath:                   C.GoString(cOptions.dbPath),
 		ListeningAddresses:       C.GoString(cOptions.listeningAddresses),
@@ -109,6 +125,31 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 		DisableAPI:               int(cOptions.disableAPI),
 		MaxTransactionRetries:    int(cOptions.maxTransactionRetries),
 		EnableNodeACP:            int(cOptions.enableNodeACP),
+		StoreType:                C.GoString(cOptions.storeType),
+		BadgerFileSize:           int64(cOptions.badgerFileSize),
+		BadgerEncryptionKey:      badgerEncryptionKey,
+		EnableSigning:            int(cOptions.enableSigning),
+		SearchableEncryptionKey:  searchableEncryptionKey,
+		P2PBlockSyncTimeoutMs:    int64(cOptions.p2pBlockSyncTimeoutMs),
+		LensPoolSize:             int(cOptions.lensPoolSize),
+		ChunkSize:                int(cOptions.chunkSize),
+		EnablePubSub:             int(cOptions.enablePubSub),
+		EnableRelay:              int(cOptions.enableRelay),
+		EnableClearBackoffOnRetry: int(cOptions.enableClearBackoffOnRetry),
+		P2PPrivateKey:            p2pPrivateKey,
+		HTTPAddress:              C.GoString(cOptions.httpAddress),
+		HTTPAllowedOrigins:       C.GoString(cOptions.httpAllowedOrigins),
+		TLSCertPath:              C.GoString(cOptions.tlsCertPath),
+		TLSKeyPath:               C.GoString(cOptions.tlsKeyPath),
+		HTTPReadTimeoutMs:        int64(cOptions.httpReadTimeoutMs),
+		HTTPWriteTimeoutMs:       int64(cOptions.httpWriteTimeoutMs),
+		HTTPIdleTimeoutMs:        int64(cOptions.httpIdleTimeoutMs),
+		DocumentACPType:          C.GoString(cOptions.documentACPType),
+		DocumentACPPath:          C.GoString(cOptions.documentACPPath),
+		SourceHubChainID:         C.GoString(cOptions.sourceHubChainID),
+		SourceHubGRPCAddress:     C.GoString(cOptions.sourceHubGRPCAddress),
+		SourceHubCometRPCAddress: C.GoString(cOptions.sourceHubCometRPCAddress),
+		NodeACPPath:              C.GoString(cOptions.nodeACPPath),
 	}, nil
 }
 
