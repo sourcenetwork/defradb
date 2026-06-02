@@ -445,11 +445,6 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 			return err
 		}
 
-		err = blockstore.DeleteBlock(ctx, currentBlockCid)
-		if err != nil {
-			return err
-		}
-
 		decodedBlock, err := coreblock.GetFromBytes(currentBlock.RawData())
 		if err != nil {
 			return err
@@ -480,6 +475,14 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		// The deletion of the parent block should be done after deleting its children - this way if
+		// deleting a child errors, the index provided by the parent is preserved, and the
+		// truncate can be resumed later.
+		err = blockstore.DeleteBlock(ctx, currentBlockCid)
+		if err != nil {
+			return err
 		}
 	}
 
