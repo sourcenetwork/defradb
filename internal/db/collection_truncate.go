@@ -415,76 +415,138 @@ func (c *collection) hardDeleteCollectionBlocks(
 // a block with this cid is found.
 //
 // If the block is not found, it will not error.
-func deleteBlocks(ctx context.Context, head cid.Cid) error {
+func deleteBlocks(ctx context.Context, currentCid cid.Cid) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 	blockstore := txn.Blockstore()
 
-	toDelete := map[cid.Cid]struct{}{
-		head: {},
+	type block struct {
+		id    cid.Cid
+		block *coreblock.Block
 	}
-	for len(toDelete) != 0 {
-		var currentBlockCid cid.Cid
-		for v := range toDelete {
-			// Pop the first key off of the `toDelete` set.
-			currentBlockCid = v
-			delete(toDelete, currentBlockCid)
-			break
+
+	coreBlock, isFound, err := getBlock(ctx, blockstore, currentCid)
+	if err != nil {
+		return err
+	}
+	if !isFound {
+		return nil
+	}
+
+	toDelete := []*block{
+		{
+			id:    currentCid,
+			block: coreBlock,
+		},
+	}
+
+	i := -1
+	isReversed := false
+	increment := func() bool {
+		if isReversed {
+			i--
+		} else {
+			i++
 		}
 
-		currentBlock, err := blockstore.Get(ctx, currentBlockCid)
-		if errors.Is(err, ipld.ErrNotFound{}) {
-			// We are looping through the links in a simple way that may result in us
-			// attempting to delete blocks we have already deleted, this can include
-			// blocks deleted by walking the dag pointed-to from another headstore key
-			// (another call to `deleteBlocks`).
-			//
-			// If we encounter such a block, we can skip over the error and continue.
+		if !isReversed && i == len(toDelete) {
+			// if we have reached the end of the set, reverse direction - the children are now
+			// gaurenteed to be deleted before their parents.
+			isReversed = true
+			i--
+			return true
+		}
+
+		if i == -1 && isReversed {
+			// we only need to iterate through twice, once in either direction, once we have finished
+			// iterating in reverse, all blocks should have been deleted.
+			return false
+		}
+
+		return true
+	}
+
+	for increment() {
+		currentBlock := toDelete[i]
+
+		if currentBlock.block == nil {
+			coreBlock, isFound, err := getBlock(ctx, blockstore, currentBlock.id)
+			if err != nil {
+				return err
+			}
+			if !isFound {
+				continue
+			}
+
+			currentBlock.block = coreBlock
+		}
+
+		if currentBlock.block.Encryption != nil {
+			err := blockstore.DeleteBlock(ctx, currentBlock.block.Encryption.Cid)
+			if err != nil {
+				return err
+			}
+		}
+
+		if currentBlock.block.Signature != nil {
+			err := blockstore.DeleteBlock(ctx, currentBlock.block.Signature.Cid)
+			if err != nil {
+				return err
+			}
+		}
+
+		if isReversed {
+			// If we are now iterating in reverse order, all the children of this block should
+			// have been deleted, and we are now free to delete this block.
+			err := blockstore.DeleteBlock(ctx, currentBlock.id)
+			if err != nil {
+				return err
+			}
 			continue
-		}
-		if err != nil {
-			return err
-		}
-
-		decodedBlock, err := coreblock.GetFromBytes(currentBlock.RawData())
-		if err != nil {
-			return err
 		}
 
 		switch {
-		case decodedBlock.Delta.IsField():
-			// At the time of writing, field blocks do not have any links besides Encryption and Signature,
-			// that will not already be linked to by other DAGs being deleted, so we have decided that the
-			// compute that we will save by not trying to `Get` them is worth the risk of potentially missing
-			// blocks in the future should this change.
+		case currentBlock.block.Delta.IsField():
+			// If this block is a field block, we can delete it immediately after blocks such
+			// as encryption and signature are deleted.  Whilst it may have children, these
+			// children will be referenced by the composite commit, which will only be deleted
+			// after all of *its* children, meaning nothing will be orphaned if an error is thrown
+			// at some point during the truncate.
+			err := blockstore.DeleteBlock(ctx, currentBlock.id)
+			if err != nil {
+				return err
+			}
 
 		default:
-			for _, link := range decodedBlock.AllLinks() {
-				toDelete[link.Cid] = struct{}{}
+			for _, link := range currentBlock.block.AllLinks() {
+				toDelete = append(toDelete, &block{
+					id: link.Cid,
+				})
 			}
-		}
-
-		if decodedBlock.Encryption != nil {
-			err = blockstore.DeleteBlock(ctx, decodedBlock.Encryption.Cid)
-			if err != nil {
-				return err
-			}
-		}
-
-		if decodedBlock.Signature != nil {
-			err = blockstore.DeleteBlock(ctx, decodedBlock.Signature.Cid)
-			if err != nil {
-				return err
-			}
-		}
-
-		// The deletion of the parent block should be done after deleting its children - this way if
-		// deleting a child errors, the index provided by the parent is preserved, and the
-		// truncate can be resumed later.
-		err = blockstore.DeleteBlock(ctx, currentBlockCid)
-		if err != nil {
-			return err
 		}
 	}
 
 	return nil
+}
+
+func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {
+	rawBlock, err := blockstore.Get(ctx, id)
+	if errors.Is(err, ipld.ErrNotFound{}) {
+		// We are looping through the links in a simple way that may result in us
+		// attempting to delete blocks we have already deleted, this can include
+		// blocks deleted by walking the dag pointed-to from another headstore key
+		// (another call to `deleteBlocks`).
+		//
+		// If we encounter such a block, we can skip over the error and continue.
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+
+	decodedBlock, err := coreblock.GetFromBytes(rawBlock.RawData())
+	if err != nil {
+		return nil, false, err
+	}
+
+	return decodedBlock, true, nil
 }
