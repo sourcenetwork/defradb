@@ -316,17 +316,21 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			// Not all store implementations support mutations whilst iterating, so whilst it would
-			// be simpler and probably more efficient to delete whilst iterating, it would not work
-			// with all supported corekv store implementations.
-			err := headstore.Delete(ctx, key.Bytes())
-			if err != nil {
-				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
-			}
-
 			err = deleteBlocks(ctx, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
+			}
+
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			//
+			// The deletion of the headstore key should be done after deleting the blocks - this way if
+			// deleting a block errors, the index provided by the headstore key is preserved, and the
+			// truncate can be resumed later.
+			err := headstore.Delete(ctx, key.Bytes())
+			if err != nil {
+				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 			}
 		}
 	}
@@ -385,17 +389,21 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			// Not all store implementations support mutations whilst iterating, so whilst it would
-			// be simpler and probably more efficient to delete whilst iterating, it would not work
-			// with all supported corekv store implementations.
-			err := headstore.Delete(ctx, key.Bytes())
-			if err != nil {
-				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
-			}
-
 			err = deleteBlocks(ctx, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
+			}
+
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			//
+			// The deletion of the headstore key should be done after deleting the blocks - this way if
+			// deleting a block errors, the index provided by the headstore key is preserved, and the
+			// truncate can be resumed later.
+			err := headstore.Delete(ctx, key.Bytes())
+			if err != nil {
+				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
 			}
 		}
 	}
