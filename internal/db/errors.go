@@ -125,6 +125,7 @@ const (
 	errNACIsAlreadyEnabled                 string = "node acp is already enabled"
 	errNACIsNotConfigured                  string = "node acp is not configured"
 	errRelationNameEmpty                   string = "relation name cannot be empty"
+	errRelationNameNotUnique               string = "relation name is not unique within collection"
 	errInvalidCID                          string = "invalid CID"
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
@@ -247,6 +248,7 @@ var (
 	ErrNACIsNotConfigured                        = errors.New(errNACIsNotConfigured)
 	ErrNACRelationshipOperationRequiresIdentity  = errors.New("node acp relationship operation requires identity")
 	ErrRelationNameEmpty                         = errors.New(errRelationNameEmpty)
+	ErrRelationNameNotUnique                     = errors.New(errRelationNameNotUnique)
 	ErrInvalidCID                                = errors.New(errInvalidCID)
 	ErrUnknownCID                                = errors.New(errUnknownCID)
 	ErrNoP2P                                     = errors.New("no p2p system configured")
@@ -428,6 +430,14 @@ func NewErrRelationNameEmpty(name string) error {
 	return errors.New(
 		errRelationNameEmpty,
 		errors.NewKV("Field", name),
+	)
+}
+
+func NewErrRelationNameNotUnique(name string, relationName string) error {
+	return errors.New(
+		errRelationNameNotUnique,
+		errors.NewKV("Field", name),
+		errors.NewKV("RelationName", relationName),
 	)
 }
 

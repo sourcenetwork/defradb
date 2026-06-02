@@ -797,41 +797,16 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
-	// Track the transaction IDs as they are used, in a set
-	transactionIDset := make(map[int]struct{})
-
 ActionLoop:
 	for i := range testCase.Actions {
-		switch concreteAction := testCase.Actions[i].(type) {
+		switch testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case *action.AddDoc:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case *action.UpdateDoc:
-			if concreteAction.TransactionID.HasValue() {
-				transactionIDset[concreteAction.TransactionID.Value()] = struct{}{}
-			}
-			continue
-
-		case Restart:
-			continue
-
-		case *action.CommitTransaction:
-			// If transaction is commited, remove it from the set we are tracking
-			delete(transactionIDset, concreteAction.TransactionID)
+		// Setup-phase actions, anything else ends the setup phase.
+		case *action.AddCollection, *action.AddDoc, *action.UpdateDoc, Restart, *action.CommitTransaction:
 			continue
 
 		default:
@@ -840,34 +815,101 @@ ActionLoop:
 		}
 	}
 
-	// If length is not 0, there was a transaction used that was not committed
-	if len(transactionIDset) > 0 {
-		t.Skipf("skipping test with open transaction(s)")
+	// setupEnd is the index of the last setup-phase action; the assert phase runs the rest.
+	setupEnd := endIndex
+	if setupCompleteIndex > -1 {
+		setupEnd = setupCompleteIndex
+	} else if firstNonSetupIndex > -1 {
+		// -1: this index starts the assert phase
+		setupEnd = firstNonSetupIndex - 1
+	}
+
+	// The phases run as separate processes sharing only committed data, so a
+	// transaction that is never committed or spans the split would leave them with
+	// different data. Skip such tests (any action can open a transaction).
+	if hasUnsplittableTransaction(testCase.Actions, setupEnd) {
+		t.Skipf("skipping test with transaction(s) not committed within a single change-detector phase")
 	}
 
 	if changeDetector.SetupOnly {
-		if setupCompleteIndex > -1 {
-			endIndex = setupCompleteIndex
-		} else if firstNonSetupIndex > -1 {
-			// -1 to exclude this index
-			endIndex = firstNonSetupIndex - 1
-		}
+		endIndex = setupEnd
+	} else if setupCompleteIndex > -1 || firstNonSetupIndex > -1 {
+		startIndex = setupEnd + 1
 	} else {
-		if setupCompleteIndex > -1 {
-			// +1 to exclude the SetupComplete action
-			startIndex = setupCompleteIndex + 1
-		} else if firstNonSetupIndex > -1 {
-			// We must not set this to -1 :)
-			startIndex = firstNonSetupIndex
-		} else {
-			// if we don't have any non-mutation actions and the change detector is enabled
-			// skip this test as we will not gain anything from running (change detector would
-			// run an identical profile to a normal test run)
-			t.Skipf("no actions to execute")
-		}
+		// if we don't have any non-mutation actions and the change detector is enabled
+		// skip this test as we will not gain anything from running (change detector would
+		// run an identical profile to a normal test run)
+		t.Skipf("no actions to execute")
 	}
 
 	return startIndex, endIndex
+}
+
+// hasUnsplittableTransaction reports whether any transaction cannot be contained in
+// a single change-detector phase: one never committed, or touched on both sides of
+// setupEnd (the index of the last setup-phase action).
+func hasUnsplittableTransaction(actions []any, setupEnd int) bool {
+	type txnUsage struct {
+		inSetup   bool
+		inAssert  bool
+		committed bool
+	}
+	usage := make(map[int]*txnUsage)
+
+	touch := func(id, actionIndex int) *txnUsage {
+		u, ok := usage[id]
+		if !ok {
+			u = &txnUsage{}
+			usage[id] = u
+		}
+		if actionIndex <= setupEnd {
+			u.inSetup = true
+		} else {
+			u.inAssert = true
+		}
+		return u
+	}
+
+	for i, a := range actions {
+		// CommitTransaction has a plain int ID, so it is matched directly here.
+		if commit, ok := a.(*action.CommitTransaction); ok {
+			touch(commit.TransactionID, i).committed = true
+			continue
+		}
+		if id, ok := actionTransactionID(a); ok {
+			touch(id, i)
+		}
+	}
+
+	for _, u := range usage {
+		if !u.committed || (u.inSetup && u.inAssert) {
+			return true
+		}
+	}
+	return false
+}
+
+// actionTransactionID reads an action's optional TransactionID field by reflection,
+// so every action that can run in a transaction is covered.
+func actionTransactionID(a any) (int, bool) {
+	v := reflect.ValueOf(a)
+	for v.Kind() == reflect.Pointer {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return 0, false
+	}
+
+	field := v.FieldByName("TransactionID")
+	if !field.IsValid() {
+		return 0, false
+	}
+
+	txnID, ok := field.Interface().(immutable.Option[int])
+	if !ok || !txnID.HasValue() {
+		return 0, false
+	}
+	return txnID.Value(), true
 }
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.

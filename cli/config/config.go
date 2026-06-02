@@ -107,7 +107,7 @@ var ConfigDefaults = map[string]any{
 	"datastore.nosigning":               false,
 	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.document.type":                 "none",
+	"acp.document.type":                 "local",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 
