@@ -794,15 +794,6 @@ func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 		return startIndex, endIndex
 	}
 
-	// A test that leaves a transaction open cannot be run by the change detector:
-	// uncommitted writes are never persisted, so the setup and assert phases would
-	// operate on different data. Any action can run inside a transaction - not just
-	// the mutation actions that delimit the setup phase below - so this is checked
-	// across every action, independently of where they are split.
-	if hasOpenTransaction(testCase.Actions) {
-		t.Skipf("skipping test with open transaction(s)")
-	}
-
 	setupCompleteIndex := -1
 	firstNonSetupIndex := -1
 
@@ -814,8 +805,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		// Mutation actions form the setup phase; Restart and CommitTransaction are
-		// permitted to interleave with them without ending it.
+		// Setup-phase actions, anything else ends the setup phase.
 		case *action.AddCollection, *action.AddDoc, *action.UpdateDoc, Restart, *action.CommitTransaction:
 			continue
 
@@ -825,52 +815,82 @@ ActionLoop:
 		}
 	}
 
+	// setupEnd is the index of the last setup-phase action; the assert phase runs the rest.
+	setupEnd := endIndex
+	if setupCompleteIndex > -1 {
+		setupEnd = setupCompleteIndex
+	} else if firstNonSetupIndex > -1 {
+		// -1: this index starts the assert phase
+		setupEnd = firstNonSetupIndex - 1
+	}
+
+	// The phases run as separate processes sharing only committed data, so a
+	// transaction that is never committed or spans the split would leave them with
+	// different data. Skip such tests (any action can open a transaction).
+	if hasUnsplittableTransaction(testCase.Actions, setupEnd) {
+		t.Skipf("skipping test with transaction(s) not committed within a single change-detector phase")
+	}
+
 	if changeDetector.SetupOnly {
-		if setupCompleteIndex > -1 {
-			endIndex = setupCompleteIndex
-		} else if firstNonSetupIndex > -1 {
-			// -1 to exclude this index
-			endIndex = firstNonSetupIndex - 1
-		}
+		endIndex = setupEnd
+	} else if setupCompleteIndex > -1 || firstNonSetupIndex > -1 {
+		startIndex = setupEnd + 1
 	} else {
-		if setupCompleteIndex > -1 {
-			// +1 to exclude the SetupComplete action
-			startIndex = setupCompleteIndex + 1
-		} else if firstNonSetupIndex > -1 {
-			// We must not set this to -1 :)
-			startIndex = firstNonSetupIndex
-		} else {
-			// if we don't have any non-mutation actions and the change detector is enabled
-			// skip this test as we will not gain anything from running (change detector would
-			// run an identical profile to a normal test run)
-			t.Skipf("no actions to execute")
-		}
+		// if we don't have any non-mutation actions and the change detector is enabled
+		// skip this test as we will not gain anything from running (change detector would
+		// run an identical profile to a normal test run)
+		t.Skipf("no actions to execute")
 	}
 
 	return startIndex, endIndex
 }
 
-// hasOpenTransaction reports whether the actions open a transaction that is never
-// committed. Any action may run inside a transaction via an optional TransactionID
-// field; a CommitTransaction closes the one it names.
-func hasOpenTransaction(actions []any) bool {
-	open := make(map[int]struct{})
-	for _, a := range actions {
+// hasUnsplittableTransaction reports whether any transaction cannot be contained in
+// a single change-detector phase: one never committed, or touched on both sides of
+// setupEnd (the index of the last setup-phase action).
+func hasUnsplittableTransaction(actions []any, setupEnd int) bool {
+	type txnUsage struct {
+		inSetup   bool
+		inAssert  bool
+		committed bool
+	}
+	usage := make(map[int]*txnUsage)
+
+	touch := func(id, actionIndex int) *txnUsage {
+		u, ok := usage[id]
+		if !ok {
+			u = &txnUsage{}
+			usage[id] = u
+		}
+		if actionIndex <= setupEnd {
+			u.inSetup = true
+		} else {
+			u.inAssert = true
+		}
+		return u
+	}
+
+	for i, a := range actions {
+		// CommitTransaction has a plain int ID, so it is matched directly here.
 		if commit, ok := a.(*action.CommitTransaction); ok {
-			delete(open, commit.TransactionID)
+			touch(commit.TransactionID, i).committed = true
 			continue
 		}
 		if id, ok := actionTransactionID(a); ok {
-			open[id] = struct{}{}
+			touch(id, i)
 		}
 	}
-	return len(open) > 0
+
+	for _, u := range usage {
+		if !u.committed || (u.inSetup && u.inAssert) {
+			return true
+		}
+	}
+	return false
 }
 
-// actionTransactionID returns the transaction an action runs in, read from its
-// optional `TransactionID immutable.Option[int]` field if it has one. Reflection
-// keeps this correct for every such action; an exhaustive type switch would
-// silently miss any action added later - the gap this guards against.
+// actionTransactionID reads an action's optional TransactionID field by reflection,
+// so every action that can run in a transaction is covered.
 func actionTransactionID(a any) (int, bool) {
 	v := reflect.ValueOf(a)
 	for v.Kind() == reflect.Pointer {
