@@ -63,7 +63,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/valyala/fastjson v1.6.10
 	github.com/vito/go-sse v1.1.3
-	github.com/wundergraph/graphql-go-tools/v2 v2.1.0
+	github.com/wundergraph/graphql-go-tools/v2 v2.4.1
 	github.com/zalando/go-keyring v0.2.8
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.68.0
 	go.opentelemetry.io/otel v1.43.0
