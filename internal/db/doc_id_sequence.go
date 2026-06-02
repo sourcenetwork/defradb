@@ -21,10 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+// nextShortDocID returns the next local storage ID.
 func (db *DB) nextShortDocID() string {
 	return id.FormatShortDocID(db.docIDSequence.Add(1))
 }
 
+// seedDocIDSequence restores the counter from stored primary keys.
 func (db *DB) seedDocIDSequence(ctx context.Context) error {
 	cols, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {

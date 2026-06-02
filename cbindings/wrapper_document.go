@@ -89,9 +89,11 @@ func (c *Collection) AddDocument(
 		cIdentity,
 	))
 
+	// Failed C calls do not carry doc IDs.
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+	// Apply IDs returned by the C add call.
 	if err := setDocumentIDsFromJSON([]*client.Document{doc}, []byte(res.Value)); err != nil {
 		return err
 	}
@@ -157,9 +159,11 @@ func (c *Collection) AddManyDocuments(
 		cIdentity,
 	))
 
+	// Failed C calls do not carry doc IDs.
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+	// Apply IDs returned by the C add call.
 	if err := setDocumentIDsFromJSON(docs, []byte(res.Value)); err != nil {
 		return err
 	}
@@ -169,6 +173,7 @@ func (c *Collection) AddManyDocuments(
 	return nil
 }
 
+// setDocumentIDsFromJSON copies returned IDs onto caller docs.
 func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
 	var docIDs []string
 	if err := json.Unmarshal(data, &docIDs); err != nil {

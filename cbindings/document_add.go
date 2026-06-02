@@ -106,6 +106,7 @@ func AddDocument(
 	}
 }
 
+// documentIDs returns IDs for the wrapper call.
 func documentIDs(docs []*client.Document) []string {
 	docIDs := make([]string, len(docs))
 	for i, doc := range docs {
