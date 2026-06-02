@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -158,6 +159,102 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	docIDs, err := id.GetPublicDocIDsForGenesisFieldFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{sourceDoc.ID().String()}, docIDs)
+}
+
+func TestMergeResolveBlockDocID(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	c, ok := col.(*collection)
+	require.True(t, ok)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	mp, err := db.newMergeProcessor(txnCtx, c)
+	require.NoError(t, err)
+
+	genesisCID := blocks.NewBlock([]byte("genesis composite")).Cid()
+	genesisPublicDocID := client.NewDocIDV0(genesisCID).String()
+	publicDocID, shortDocID, err := mp.resolveBlockDocID(txnCtx, collectionShortID, "", true, genesisCID)
+	require.NoError(t, err)
+	require.Equal(t, genesisPublicDocID, publicDocID)
+	require.NotEmpty(t, shortDocID)
+	require.NotEqual(t, publicDocID, shortDocID)
+
+	fieldPublicDocID, fieldShortDocID, err := mp.resolveBlockDocID(txnCtx, collectionShortID, "", false, cid.Undef)
+	require.NoError(t, err)
+	require.Equal(t, genesisPublicDocID, fieldPublicDocID)
+	require.Equal(t, shortDocID, fieldShortDocID)
+
+	updatePublicDocID, updateShortDocID, err := mp.resolveBlockDocID(
+		txnCtx,
+		collectionShortID,
+		genesisPublicDocID,
+		false,
+		cid.Undef,
+	)
+	require.NoError(t, err)
+	require.Equal(t, genesisPublicDocID, updatePublicDocID)
+	require.Equal(t, shortDocID, updateShortDocID)
+
+	foreignShortDocID := "foreign-short-doc"
+	foreignCID := blocks.NewBlock([]byte("foreign composite")).Cid()
+	foreignPublicDocID := client.NewDocIDV0(foreignCID).String()
+	publicDocID, shortDocID, err = mp.resolveBlockDocID(
+		txnCtx,
+		collectionShortID,
+		foreignShortDocID,
+		true,
+		foreignCID,
+	)
+	require.NoError(t, err)
+	require.Equal(t, foreignPublicDocID, publicDocID)
+	require.NotEmpty(t, shortDocID)
+
+	fieldPublicDocID, fieldShortDocID, err = mp.resolveBlockDocID(
+		txnCtx,
+		collectionShortID,
+		foreignShortDocID,
+		false,
+		cid.Undef,
+	)
+	require.NoError(t, err)
+	require.Equal(t, foreignPublicDocID, fieldPublicDocID)
+	require.Equal(t, shortDocID, fieldShortDocID)
+
+	const existingShortDocID = "000000000000002a"
+	existingPublicDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
+	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingShortDocID, existingPublicDocID))
+
+	publicDocID, shortDocID, err = mp.resolveBlockDocID(
+		txnCtx,
+		collectionShortID,
+		existingShortDocID,
+		false,
+		cid.Undef,
+	)
+	require.NoError(t, err)
+	require.Equal(t, existingPublicDocID, publicDocID)
+	require.Equal(t, existingShortDocID, shortDocID)
+
+	_, _, err = mp.resolveBlockDocID(txnCtx, collectionShortID, "unknown-short-doc", false, cid.Undef)
+	require.ErrorIs(t, err, client.ErrMalformedDocID)
 }
 
 func TestMerge_DualBranch_NoError(t *testing.T) {
