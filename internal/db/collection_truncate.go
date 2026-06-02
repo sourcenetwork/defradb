@@ -130,66 +130,65 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 
 	ds := txn.Datastore()
 
-	iter, err := ds.Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefix,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateTruncateIterator(err)
-	}
-
-	keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
-	for i := 0; i < hardDeleteChunkSize; i++ {
-		hasNext, err := iter.Next()
+	for hasMore {
+		iter, err := ds.Iterator(ctx, datastore.IterOptions{
+			Prefix:   prefix,
+			KeysOnly: true,
+		})
 		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			hasMore = false
-			break
+			return NewErrCreateTruncateIterator(err)
 		}
 
-		key, err := keys.NewDataStoreKey(string(iter.Key()))
-		if err != nil {
-			return errors.Join(err, iter.Close())
+		keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
+
+		for i := 0; i < hardDeleteChunkSize; i++ {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !hasNext {
+				hasMore = false
+				break
+			}
+
+			key, err := keys.NewDataStoreKey(string(iter.Key()))
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+
+			keysToDelete = append(keysToDelete, key)
 		}
 
-		keysToDelete = append(keysToDelete, key)
-	}
-
-	err = iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		// Not all store implementations support mutations whilst iterating, so whilst it would
-		// be simpler and probably more efficient to delete whilst iterating, it would not work
-		// with all supported corekv store implementations.
-		err := ds.Delete(ctx, key)
-		if err != nil {
-			return NewErrTruncateDatastoreKey(err, key.ToString())
-		}
-
-		// Headstore keys are implicitly protected by the lockset on the datastore, as
-		// any document-head writes are done in the same transaction as the datastore-document
-		// writes.
-		//
-		// Because the datastore read-locks are only ever released when the transaction closes,
-		// we do not need to worry about timing or order-of-operation issues, *unless* we change
-		// when the datastore read-locks are released.
-		err = c.hardDeleteDocumentBlocks(ctx, key.DocID)
+		err = iter.Close()
 		if err != nil {
 			return err
 		}
-	}
 
-	if hasMore {
-		return c.hardDeleteDocKeysAndHeadstore(ctx, colShortID)
+		for _, key := range keysToDelete {
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			err := ds.Delete(ctx, key)
+			if err != nil {
+				return NewErrTruncateDatastoreKey(err, key.ToString())
+			}
+
+			// Headstore keys are implicitly protected by the lockset on the datastore, as
+			// any document-head writes are done in the same transaction as the datastore-document
+			// writes.
+			//
+			// Because the datastore read-locks are only ever released when the transaction closes,
+			// we do not need to worry about timing or order-of-operation issues, *unless* we change
+			// when the datastore read-locks are released.
+			err = c.hardDeleteDocumentBlocks(ctx, key.DocID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -201,63 +200,62 @@ func (c *collection) hardDeleteDatastorePrefix(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefix,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateTruncateIterator(err)
-	}
-
-	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
-	for i := 0; i < hardDeleteChunkSize; i++ {
-		hasNext, err := iter.Next()
+	for hasMore {
+		iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+			Prefix:   prefix,
+			KeysOnly: true,
+		})
 		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			hasMore = false
-			break
+			return NewErrCreateTruncateIterator(err)
 		}
 
-		keysToDelete = append(keysToDelete, iter.Key())
-	}
+		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
 
-	err = iter.Close()
-	if err != nil {
-		return err
-	}
+		for i := 0; i < hardDeleteChunkSize; i++ {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !hasNext {
+				hasMore = false
+				break
+			}
 
-	type unsafestore interface {
-		Unsafe() corekv.ReaderWriter
-	}
-	datastore, _ := txn.Datastore().(unsafestore)
+			keysToDelete = append(keysToDelete, iter.Key())
+		}
 
-	// This `Unsafe` call is not technically required, it just allows us to
-	// write this function using the `keys.Key` interface and call `Delete`
-	// using an untyped key.
-	//
-	// Bypassing the lock system here is a safe side-effect, as this function
-	// is only ever called within the context of a collection level write lock -
-	// attempting to obtain a read lock would essentially be a no-op anyway.
-	underlyingStore := datastore.Unsafe()
-
-	for _, key := range keysToDelete {
-		// Not all store implementations support mutations whilst iterating, so whilst it would
-		// be simpler and probably more efficient to delete whilst iterating, it would not work
-		// with all supported corekv store implementations.
-		err := underlyingStore.Delete(ctx, key)
+		err = iter.Close()
 		if err != nil {
-			return NewErrTruncateDatastoreKey(err, string(key))
+			return err
 		}
-	}
 
-	if hasMore {
-		return c.hardDeleteDatastorePrefix(ctx, prefix)
+		type unsafestore interface {
+			Unsafe() corekv.ReaderWriter
+		}
+		datastore, _ := txn.Datastore().(unsafestore)
+
+		// This `Unsafe` call is not technically required, it just allows us to
+		// write this function using the `keys.Key` interface and call `Delete`
+		// using an untyped key.
+		//
+		// Bypassing the lock system here is a safe side-effect, as this function
+		// is only ever called within the context of a collection level write lock -
+		// attempting to obtain a read lock would essentially be a no-op anyway.
+		underlyingStore := datastore.Unsafe()
+
+		for _, key := range keysToDelete {
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			err := underlyingStore.Delete(ctx, key)
+			if err != nil {
+				return NewErrTruncateDatastoreKey(err, string(key))
+			}
+		}
 	}
 
 	return nil
@@ -270,63 +268,63 @@ func (c *collection) hardDeleteDocumentBlocks(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	headstore := txn.Headstore()
-	prefix := keys.HeadstoreDocKey{
-		DocID: docID,
-	}
 
-	iter, err := headstore.Iterator(ctx, corekv.IterOptions{
-		Prefix:   prefix.Bytes(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateTruncateIterator(err)
-	}
-
-	keysToDelete := make([]keys.HeadstoreDocKey, 0, hardDeleteChunkSize)
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
-	for i := 0; i < hardDeleteChunkSize; i++ {
-		hasNext, err := iter.Next()
+	for hasMore {
+		prefix := keys.HeadstoreDocKey{
+			DocID: docID,
+		}
+
+		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
+			Prefix:   prefix.Bytes(),
+			KeysOnly: true,
+		})
 		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			hasMore = false
-			break
+			return NewErrCreateTruncateIterator(err)
 		}
 
-		key, err := keys.NewHeadstoreDocKey(string(iter.Key()))
+		keysToDelete := make([]keys.HeadstoreDocKey, 0, hardDeleteChunkSize)
+
+		for i := 0; i < hardDeleteChunkSize; i++ {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !hasNext {
+				hasMore = false
+				break
+			}
+
+			key, err := keys.NewHeadstoreDocKey(string(iter.Key()))
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+
+			keysToDelete = append(keysToDelete, key)
+		}
+
+		err = iter.Close()
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return err
 		}
 
-		keysToDelete = append(keysToDelete, key)
-	}
+		for _, key := range keysToDelete {
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			err := headstore.Delete(ctx, key.Bytes())
+			if err != nil {
+				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
+			}
 
-	err = iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		// Not all store implementations support mutations whilst iterating, so whilst it would
-		// be simpler and probably more efficient to delete whilst iterating, it would not work
-		// with all supported corekv store implementations.
-		err := headstore.Delete(ctx, key.Bytes())
-		if err != nil {
-			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
+			err = deleteBlocks(ctx, key.Cid)
+			if err != nil {
+				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
+			}
 		}
-
-		err = deleteBlocks(ctx, key.Cid)
-		if err != nil {
-			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
-		}
-	}
-
-	if hasMore {
-		return c.hardDeleteDocumentBlocks(ctx, docID)
 	}
 
 	return nil
@@ -339,63 +337,63 @@ func (c *collection) hardDeleteCollectionBlocks(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	headstore := txn.Headstore()
-	prefix := keys.HeadstoreColKey{
-		CollectionShortID: shortID,
-	}
 
-	iter, err := headstore.Iterator(ctx, corekv.IterOptions{
-		Prefix:   prefix.Bytes(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateTruncateIterator(err)
-	}
-
-	keysToDelete := make([]keys.HeadstoreColKey, 0, hardDeleteChunkSize)
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
-	for i := 0; i < hardDeleteChunkSize; i++ {
-		hasNext, err := iter.Next()
+	for hasMore {
+		prefix := keys.HeadstoreColKey{
+			CollectionShortID: shortID,
+		}
+
+		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
+			Prefix:   prefix.Bytes(),
+			KeysOnly: true,
+		})
 		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			hasMore = false
-			break
+			return NewErrCreateTruncateIterator(err)
 		}
 
-		key, err := keys.NewHeadstoreColKeyFromString(string(iter.Key()))
+		keysToDelete := make([]keys.HeadstoreColKey, 0, hardDeleteChunkSize)
+
+		for i := 0; i < hardDeleteChunkSize; i++ {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !hasNext {
+				hasMore = false
+				break
+			}
+
+			key, err := keys.NewHeadstoreColKeyFromString(string(iter.Key()))
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+
+			keysToDelete = append(keysToDelete, key)
+		}
+
+		err = iter.Close()
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return err
 		}
 
-		keysToDelete = append(keysToDelete, key)
-	}
+		for _, key := range keysToDelete {
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			err := headstore.Delete(ctx, key.Bytes())
+			if err != nil {
+				return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
+			}
 
-	err = iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		// Not all store implementations support mutations whilst iterating, so whilst it would
-		// be simpler and probably more efficient to delete whilst iterating, it would not work
-		// with all supported corekv store implementations.
-		err := headstore.Delete(ctx, key.Bytes())
-		if err != nil {
-			return NewErrTruncateHeadstoreKey(err, string(key.Bytes()))
+			err = deleteBlocks(ctx, key.Cid)
+			if err != nil {
+				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
+			}
 		}
-
-		err = deleteBlocks(ctx, key.Cid)
-		if err != nil {
-			return NewErrTruncateDeleteBlocks(err, key.Cid.String())
-		}
-	}
-
-	if hasMore {
-		return c.hardDeleteCollectionBlocks(ctx, shortID)
 	}
 
 	return nil
