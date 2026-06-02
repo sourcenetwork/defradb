@@ -113,3 +113,127 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
 	require.Error(t, err)
 }
+
+func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	c, ok := col.(*collection)
+	require.True(t, ok)
+
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc))
+
+	publicDocID := doc.ID().String()
+	compositeBlock := loadTestBlock(t, ctx, db, doc.Head())
+	require.NotEmpty(t, compositeBlock.Links)
+	genesisFieldCID := compositeBlock.Links[0].Cid
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	require.NoError(t, err)
+	require.True(t, found)
+
+	const legacyDocID = "bae-legacy-doc"
+	require.NoError(t, id.SetDocIDAlias(txnCtx, shortDocID, legacyDocID))
+
+	require.NoError(t, c.deleteDocIDMappings(txnCtx, collectionShortID, shortDocID, ""))
+
+	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+	_, found, err = id.GetPublicDocID(txnCtx, collectionShortID, shortDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+	_, found, err = id.GetNodeShortDocID(txnCtx, publicDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+	_, found, err = id.GetNodeShortDocID(txnCtx, legacyDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	docIDs, err := id.GetPublicDocIDsForGenesisFieldFromStore(
+		txnCtx,
+		dbTxn.Systemstore(),
+		collectionShortID,
+		genesisFieldCID,
+	)
+	require.NoError(t, err)
+	require.Empty(t, docIDs)
+
+	docIDIndexKey := keys.NewIndexDataStoreKey(
+		collectionShortID,
+		keys.DocIDIndexID,
+		[]keys.IndexedField{
+			{Value: client.NewNormalString(publicDocID)},
+			{Value: client.NewNormalString(shortDocID)},
+		},
+	)
+	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
+	require.Error(t, err)
+}
+
+func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	c, ok := col.(*collection)
+	require.True(t, ok)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	key := keys.DataStoreKey{
+		CollectionShortID: collectionShortID,
+		InstanceType:      keys.ValueKey,
+		DocShortID:        "legacy-doc",
+		FieldID:           "1",
+	}
+	require.NoError(t, dbTxn.Datastore().Set(txnCtx, key, []byte("value")))
+	require.NoError(t, txn.Commit())
+
+	txn, err = db.NewTxn(false)
+	require.NoError(t, err)
+	dbTxn, ok = txn.(*Txn)
+	require.True(t, ok)
+	txnCtx = InitContext(ctx, dbTxn)
+	require.NoError(t, c.hardDeleteDocKeysAndHeadstore(txnCtx, collectionShortID))
+	require.NoError(t, txn.Commit())
+
+	txn, err = db.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok = txn.(*Txn)
+	require.True(t, ok)
+	txnCtx = InitContext(ctx, dbTxn)
+	hasValue, err := dbTxn.Datastore().Has(txnCtx, key)
+	require.NoError(t, err)
+	require.False(t, hasValue)
+}
