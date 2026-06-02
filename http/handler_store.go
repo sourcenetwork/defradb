@@ -679,6 +679,15 @@ func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, identity)
 }
 
+func (h *storeHandler) GetNodeOptions(rw http.ResponseWriter, req *http.Request) {
+	out, err := mustGetContextNodeOptions(req).SanitizedMap()
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, out)
+}
+
 func (h *storeHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -1054,4 +1063,14 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
+
+	nodeOptions := openapi3.NewOperation()
+	nodeOptions.OperationID = "get_node_options"
+	nodeOptions.Description = "Get node configuration options"
+	nodeOptions.Tags = []string{"node"}
+	nodeOptions.Responses = openapi3.NewResponses()
+	nodeOptions.Responses.Set("200", successResponse)
+	nodeOptions.Responses.Set("400", errorResponse)
+
+	router.AddRoute("/node/options", http.MethodGet, nodeOptions, h.GetNodeOptions)
 }

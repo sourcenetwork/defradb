@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 const (
@@ -40,6 +41,8 @@ var (
 	colContextKey = contextKey("col")
 	// ctxContextKey is the context key for the server context.
 	ctxContextKey = contextKey("ctx")
+	// nodeOptsContextKey is the context key for the node options.
+	nodeOptsContextKey = contextKey("nodeOpts")
 )
 
 // mustGetContextClientCollection returns the client collection from the http request context or panics.
@@ -61,6 +64,13 @@ func mustGetContextSyncMap(req *http.Request) *sync.Map {
 // This should only be called from functions within the http package.
 func mustGetContextClientDB(req *http.Request) DB {
 	return req.Context().Value(dbContextKey).(DB) //nolint:forcetypeassert
+}
+
+// mustGetContextNodeOptions returns the node options from the http request context or panics.
+//
+// This should only be called from functions within the http package.
+func mustGetContextNodeOptions(req *http.Request) *options.NodeOptions {
+	return req.Context().Value(nodeOptsContextKey).(*options.NodeOptions) //nolint:forcetypeassert
 }
 
 // mustGetDataStoreTxn returns the datastore transaction or panics.

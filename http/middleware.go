@@ -44,12 +44,15 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.TxnStore, txs *sync.Map) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.TxnStore, txs *sync.Map, nodeOpts *options.NodeOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
+			if nodeOpts != nil {
+				ctx = context.WithValue(ctx, nodeOptsContextKey, nodeOpts)
+			}
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}

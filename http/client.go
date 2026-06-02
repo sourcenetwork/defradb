@@ -593,6 +593,20 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	return err
 }
 
+func (c *Client) GetNodeOptions(ctx context.Context) (*options.NodeOptions, error) {
+	methodURL := c.http.apiURL.JoinPath("node", "options")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var opts options.NodeOptions
+	if err := c.http.requestJson(req, &opts); err != nil {
+		return nil, err
+	}
+	return &opts, nil
+}
+
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	methodURL := c.http.apiURL.JoinPath("node", "identity")
 

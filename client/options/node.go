@@ -11,6 +11,7 @@
 package options
 
 import (
+	"encoding/json"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -191,6 +192,36 @@ type NodeDBOptions struct {
 	LensPoolSize int
 	// ChunkSize is the chunk size for the blockstore.
 	ChunkSize immutable.Option[int]
+}
+
+// SanitizedMap returns the options as a generic map with sensitive fields replaced
+// by "<redacted>" to indicate their presence without exposing their values.
+func (opts *NodeOptions) SanitizedMap() (map[string]any, error) {
+	data, err := json.Marshal(opts)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0)
+	censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0)
+	censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0)
+	censorField(out, "DB", "Identity", opts.DB.Identity.HasValue())
+	censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue())
+	return out, nil
+}
+
+func censorField(m map[string]any, parent, field string, present bool) {
+	if !present {
+		return
+	}
+	sub, ok := m[parent].(map[string]any)
+	if !ok {
+		return
+	}
+	sub[field] = "<redacted>"
 }
 
 // nodeSubBuilder provides parent linkage, forwarding, and Node() navigation
