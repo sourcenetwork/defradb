@@ -169,14 +169,6 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		}
 
 		for _, key := range keysToDelete {
-			// Not all store implementations support mutations whilst iterating, so whilst it would
-			// be simpler and probably more efficient to delete whilst iterating, it would not work
-			// with all supported corekv store implementations.
-			err := ds.Delete(ctx, key)
-			if err != nil {
-				return NewErrTruncateDatastoreKey(err, key.ToString())
-			}
-
 			// Headstore keys are implicitly protected by the lockset on the datastore, as
 			// any document-head writes are done in the same transaction as the datastore-document
 			// writes.
@@ -187,6 +179,18 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 			err = c.hardDeleteDocumentBlocks(ctx, key.DocID)
 			if err != nil {
 				return err
+			}
+
+			// Not all store implementations support mutations whilst iterating, so whilst it would
+			// be simpler and probably more efficient to delete whilst iterating, it would not work
+			// with all supported corekv store implementations.
+			//
+			// The deletion of the datastore key should be done after deleting the blocks - this way if
+			// deleting a block errors, the index provided by the datastore key is preserved, and the
+			// truncate can be resumed later.
+			err := ds.Delete(ctx, key)
+			if err != nil {
+				return NewErrTruncateDatastoreKey(err, key.ToString())
 			}
 		}
 	}
