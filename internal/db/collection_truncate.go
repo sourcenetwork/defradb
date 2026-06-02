@@ -72,6 +72,15 @@ func (c *collection) truncate(
 	txn := datastore.CtxMustGetTxn(ctx)
 	c.db.lockSet.CollectionLock(txn, shortID)
 
+	// The following operations must be performed without a transaction, due to store-level
+	// transaction size limits.  This lack of protection means that they must be performed
+	// in the order that will never result in orphaned key-values, so that a reattempt at the
+	// truncate can eventually clear all store key-values within the collection.
+	//
+	// It is not possible to use inner transactions to protect the deletion of individual
+	// documents as some stores such as leveldb do not support the opening of multiple transactions
+	// at the same time.
+
 	err = c.hardDeleteDocKeysAndHeadstore(ctx, shortID)
 	if err != nil {
 		return err
@@ -122,13 +131,11 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ctx context.Context,
 	colShortID uint32,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	prefix := keys.DataStoreKey{
 		CollectionShortID: colShortID,
 	}
 
-	ds := txn.Datastore()
+	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
@@ -202,14 +209,14 @@ func (c *collection) hardDeleteDatastorePrefix(
 	ctx context.Context,
 	prefix keys.Key,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
+	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
 	for hasMore {
-		iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		iter, err := ds.Iterator(ctx, datastore.IterOptions{
 			Prefix:   prefix,
 			KeysOnly: true,
 		})
@@ -240,7 +247,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		type unsafestore interface {
 			Unsafe() corekv.ReaderWriter
 		}
-		datastore, _ := txn.Datastore().(unsafestore)
+		datastore, _ := ds.(unsafestore)
 
 		// This `Unsafe` call is not technically required, it just allows us to
 		// write this function using the `keys.Key` interface and call `Delete`
@@ -269,9 +276,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	docID string,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	headstore := txn.Headstore()
+	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
@@ -316,7 +321,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = deleteBlocks(ctx, key.Cid)
+			err = c.deleteBlocks(ctx, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -342,9 +347,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 	ctx context.Context,
 	shortID uint32,
 ) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	headstore := txn.Headstore()
+	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
@@ -389,7 +392,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = deleteBlocks(ctx, key.Cid)
+			err = c.deleteBlocks(ctx, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -415,9 +418,8 @@ func (c *collection) hardDeleteCollectionBlocks(
 // a block with this cid is found.
 //
 // If the block is not found, it will not error.
-func deleteBlocks(ctx context.Context, currentCid cid.Cid) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-	blockstore := txn.Blockstore()
+func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error {
+	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
 	type block struct {
 		id    cid.Cid
