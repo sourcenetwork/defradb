@@ -44,7 +44,7 @@ jobs:
       - name: Build Debian package
         run: |
           chmod +x tools/scripts/build-c-shared-linux.sh
-          make build-c-shared-linux MAKE_DEB=1
+          make build-c-shared-linux::deb
       - name: Install Debian package
         run: sudo dpkg -i build/libdefradb_*.deb
       - name: Compile C test program
