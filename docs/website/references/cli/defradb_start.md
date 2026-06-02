@@ -18,7 +18,7 @@ defradb start [flags]
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data
                                            - generates temporary node identity if one doesn't exist in the keyring
-      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub) (default "none")
+      --document-acp-type string          Specify the document acp engine to use (supported: none, local (default), source-hub) (default "local")
   -h, --help                              help for start
   -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
