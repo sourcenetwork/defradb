@@ -40,13 +40,9 @@ The named collections must not contain any documents. Delete all documents first
 before deleting the collection.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var names []string
-			for name := range strings.SplitSeq(args[0], ",") {
-				name = strings.TrimSpace(name)
-				if name == "" {
-					continue
-				}
-				names = append(names, name)
+			names := strings.Split(args[0], ",")
+			for i, name := range names {
+				names[i] = strings.TrimSpace(name)
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
