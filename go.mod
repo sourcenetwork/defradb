@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/cosmos/cosmos-sdk v0.53.5
+	github.com/cosmos/cosmos-sdk v0.54.3
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
 	github.com/dgraph-io/badger/v4 v4.9.1
@@ -87,12 +87,13 @@ require (
 	cloud.google.com/go/iam v1.9.0 // indirect
 	cloud.google.com/go/monitoring v1.27.0 // indirect
 	cloud.google.com/go/storage v1.62.1 // indirect
-	cosmossdk.io/api v0.9.2 // indirect
-	cosmossdk.io/collections v1.3.1 // indirect
-	cosmossdk.io/core v0.11.3 // indirect
+	cosmossdk.io/api v1.0.0 // indirect
+	cosmossdk.io/collections v1.4.0 // indirect
+	cosmossdk.io/core v1.1.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
-	cosmossdk.io/errors v1.0.2 // indirect
+	cosmossdk.io/errors v1.1.0 // indirect
 	cosmossdk.io/log v1.6.1 // indirect
+	cosmossdk.io/log/v2 v2.1.0 // indirect
 	cosmossdk.io/math v1.5.3 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
 	cosmossdk.io/store v1.1.2 // indirect
@@ -114,6 +115,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NathanBaulch/protoc-gen-cobra v1.2.1 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
+	github.com/RoaringBitmap/roaring/v2 v2.18.0 // indirect
 	github.com/TBD54566975/ssi-sdk v0.0.4-alpha // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -161,32 +163,33 @@ require (
 	github.com/clipperhouse/displaywidth v0.9.0 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.5.0 // indirect
-	github.com/cloudflare/circl v1.4.0 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
-	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cockroachdb/errors v1.13.0 // indirect
 	github.com/cockroachdb/fifo v0.0.0-20240816210425-c5d0cb0b6fc0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506 // indirect
 	github.com/cockroachdb/pebble v1.1.5 // indirect
 	github.com/cockroachdb/redact v1.1.8 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20250429170803-42689b6311bb // indirect
-	github.com/cometbft/cometbft v0.38.21 // indirect
-	github.com/cometbft/cometbft-db v0.14.1 // indirect
+	github.com/cometbft/cometbft v0.39.3 // indirect
+	github.com/cometbft/cometbft-db v0.14.3 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
+	github.com/cosmos/btree v1.0.0 // indirect
 	github.com/cosmos/cosmos-db v1.1.3 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
+	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/iavl v1.2.4 // indirect
+	github.com/cosmos/iavl v1.2.8 // indirect
 	github.com/cosmos/ibc-go/modules/capability v1.0.1 // indirect
 	github.com/cosmos/ibc-go/v10 v10.1.1 // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.16.0 // indirect
+	github.com/cosmos/ledger-cosmos-go v1.0.0 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
@@ -342,6 +345,7 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mr-tron/base58 v1.3.0 // indirect
+	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
@@ -420,6 +424,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/supranational/blst v0.3.16 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tendermint/tendermint v0.35.9 // indirect
@@ -443,11 +448,28 @@ require (
 	github.com/zondax/ledger-go v1.0.1 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+	go.opentelemetry.io/contrib/bridges/otelslog v0.18.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.43.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/host v0.68.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0 // indirect
+	go.opentelemetry.io/contrib/otelconf v0.23.0 // indirect
+	go.opentelemetry.io/contrib/propagators/autoprop v0.68.0 // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.43.0 // indirect
+	go.opentelemetry.io/contrib/propagators/b3 v1.43.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.43.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.19.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.19.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.43.0 // indirect
+	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.19.0 // indirect
+	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.43.0 // indirect
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.43.0 // indirect
+	go.opentelemetry.io/otel/log v0.19.0 // indirect
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v0.19.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/fx v1.24.0 // indirect
