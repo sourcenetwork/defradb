@@ -69,7 +69,7 @@ func (c CRDT) GetDelta() Delta {
 		return c.CounterDelta
 	case c.CollectionDelta != nil:
 		return c.CollectionDelta
-	case c.CollectionDelta != nil:
+	case c.CollectionSetDelta != nil:
 		return c.CollectionSetDelta
 	case c.CollectionDefinitionDelta != nil:
 		return c.CollectionDefinitionDelta
