@@ -169,6 +169,7 @@ var globalValidators = []definitionValidator{
 	validateTypeSupported,
 	validateTypeAndKindCompatible,
 	validateFieldNotDuplicated,
+	validateRelationNameUnique,
 	validateSelfReferences,
 	validateCollectionMaterialized,
 	validateMaterializedHasNoPolicy,
@@ -909,6 +910,64 @@ func validateFieldNotDuplicated(
 				errs = append(errs, NewErrDuplicateField(field.Name))
 			}
 			fieldNames[field.Name] = struct{}{}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateRelationNameUnique(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		// Track fields per relation name: [relationName] -> list of (fieldName, isPrimary)
+		type fieldInfo struct {
+			name      string
+			isPrimary bool
+		}
+		relationFields := map[string][]fieldInfo{}
+
+		for _, field := range col.Fields {
+			if !field.RelationName.HasValue() {
+				continue
+			}
+
+			if field.Kind == client.FieldKind_DocID {
+				continue
+			}
+
+			relationName := field.RelationName.Value()
+			relationFields[relationName] = append(relationFields[relationName], fieldInfo{
+				name:      field.Name,
+				isPrimary: field.IsPrimary,
+			})
+		}
+
+		for relationName, fields := range relationFields {
+			if len(fields) <= 1 {
+				continue
+			}
+
+			// Check if this is a legitimate self-relation pair:
+			// exactly one primary field and one or more secondary fields sharing the same relation name.
+			primaryCount := 0
+			for _, f := range fields {
+				if f.isPrimary {
+					primaryCount++
+				}
+			}
+
+			if primaryCount == 1 && len(fields) == 2 {
+				// This is a valid primary/secondary self-relation pair, skip.
+				continue
+			}
+
+			// Otherwise, it's a conflict.
+			errs = append(errs, NewErrRelationNameNotUnique(fields[0].name, relationName))
 		}
 	}
 
