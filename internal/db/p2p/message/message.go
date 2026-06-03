@@ -31,8 +31,9 @@ const messageVersion = "/defradb/0.0.1"
 // P2P streams. libp2p does not enforce a per-message limit for custom
 // protocols, so without this cap a peer can stream an arbitrarily large
 // body and io.ReadAll will allocate up to the receiver's entire memory
-// budget before cbor.Unmarshal even runs (#4718). Matches the 16 MiB cap
-// used by the Rust reimplementation in crates/p2p/src/codec.rs.
+// budget before cbor.Unmarshal even runs (#4718). Frames larger than this
+// are rejected with ErrMessageTooLarge. Matches the 16 MiB cap used by the
+// Rust reimplementation in crates/p2p/src/codec.rs.
 const maxMessageSize = 16 * 1024 * 1024
 
 // Message is the interface that protocol messages need to implement
@@ -90,14 +91,18 @@ type proto interface {
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
-	// Cap the read at maxMessageSize. io.LimitReader returns io.EOF as
-	// soon as the limit is hit, so a peer that streams more than the cap
-	// simply has its body truncated; cbor.Unmarshal below then fails on
-	// the partial frame and we surface that as an error. This prevents
-	// an OOM DoS via io.ReadAll on an unbounded libp2p stream (#4718).
-	b, err := io.ReadAll(io.LimitReader(stream, maxMessageSize))
+	// Cap the read at maxMessageSize. We read one byte past the cap so we
+	// can distinguish a message that exactly fits from one that overflows:
+	// if the body is longer than maxMessageSize we reject it with
+	// ErrMessageTooLarge rather than handing a truncated frame to
+	// cbor.Unmarshal. This prevents an OOM DoS via io.ReadAll on an
+	// unbounded libp2p stream (#4718).
+	b, err := io.ReadAll(io.LimitReader(stream, maxMessageSize+1))
 	if err != nil {
 		return err
+	}
+	if len(b) > maxMessageSize {
+		return ErrMessageTooLarge
 	}
 
 	err = cbor.Unmarshal(b, m)
