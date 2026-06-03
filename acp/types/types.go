@@ -100,6 +100,7 @@ const (
 	NodeListEncryptedIndexPerm
 	NodeListAllEncryptedIndexPerm
 	NodeConnectP2PPeerPerm
+	NodeDisconnectP2PPeerPerm
 	NodeGetP2PPeerInfoPerm
 	NodeGetP2PActivePeersPerm
 	NodeAddP2PReplicatorPerm
@@ -154,6 +155,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"list-encrypted-index",
 	"list-all-encrypted-index",
 	"connect-p2p-peer",
+	"disconnect-p2p-peer",
 	"get-p2p-peer-info",
 	"get-p2p-active-peers",
 	"add-p2p-replicator",
@@ -247,6 +249,8 @@ resources:
     expr: admin
 
   - name: connect-p2p-peer
+    expr: admin
+  - name: disconnect-p2p-peer
     expr: admin
   - name: get-p2p-peer-info
     expr: admin

@@ -100,6 +100,28 @@ func (c *Client) Connect(
 	return err
 }
 
+func (c *Client) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
+
+	body, err := json.Marshal(addresses)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) AddReplicator(
 	ctx context.Context,
 	addresses []string,

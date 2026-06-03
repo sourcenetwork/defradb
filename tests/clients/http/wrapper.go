@@ -83,6 +83,14 @@ func (w *Wrapper) Connect(
 	return w.client.Connect(ctx, addresses, opts...)
 }
 
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	return w.client.Disconnect(ctx, addresses, opts...)
+}
+
 func (w *Wrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,

@@ -58,6 +58,26 @@ type ConnectPeers struct {
 	ExpectedError string
 }
 
+// DisconnectPeers disconnects two nodes from each other.
+type DisconnectPeers struct {
+	// SourceNodeID is the node ID (index) of the node initiating the disconnect.
+	SourceNodeID int
+
+	// TargetNodeID is the node ID (index) of the node to disconnect from.
+	TargetNodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
@@ -122,6 +142,35 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(10 * time.Millisecond)
+}
+
+// disconnectPeers disconnects a source node from a target node.
+func disconnectPeers(
+	s *state.State,
+	cfg DisconnectPeers,
+) {
+	sourceNode := s.Nodes[cfg.SourceNodeID]
+	targetNode := s.Nodes[cfg.TargetNodeID]
+
+	targetOpts := options.PeerInfo()
+	targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.TargetNodeID), cfg.TargetNodeID)
+	if targetIdent.HasValue() {
+		targetOpts.SetIdentity(targetIdent.Value())
+	}
+
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
+	require.NoError(s.T, err)
+
+	opt := options.WithIdentity(options.Disconnect(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+
+	err = sourceNode.Disconnect(s.Ctx, targetAddresses, opt)
+
+	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
+
+	delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, cfg.TargetNodeID)
+	delete(s.Nodes[cfg.TargetNodeID].P2P.Connections, cfg.SourceNodeID)
 }
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.

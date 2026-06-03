@@ -65,6 +65,26 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (h *p2pHandler) Disconnect(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	ctx := req.Context()
+
+	var addresses []string
+	if err := requestJSON(req, &addresses); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	opt := options.WithIdentity(options.Disconnect(), identity.FromContext(ctx))
+
+	err := db.Disconnect(ctx, addresses, opt)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *p2pHandler) AddReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
@@ -389,6 +409,13 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	connect.Responses.Set("200", successResponse)
 	connect.Responses.Set("400", errorResponse)
 
+	disconnect := openapi3.NewOperation()
+	disconnect.OperationID = "disconnect"
+	disconnect.Tags = []string{"p2p"}
+	disconnect.Responses = openapi3.NewResponses()
+	disconnect.Responses.Set("200", successResponse)
+	disconnect.Responses.Set("400", errorResponse)
+
 	listReplicatorsSchema := openapi3.NewArraySchema()
 	listReplicatorsSchema.Items = replicatorSchema
 	listReplicatorsResponse := openapi3.NewResponse().
@@ -585,6 +612,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
 	router.AddRoute("/p2p/active-peers", http.MethodGet, activePeers, h.ActivePeers)
 	router.AddRoute("/p2p/connect", http.MethodPost, connect, h.Connect)
+	router.AddRoute("/p2p/connect", http.MethodDelete, disconnect, h.Disconnect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, listReplicators, h.ListReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, addReplicator, h.AddReplicator)
 	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)
