@@ -199,12 +199,16 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.PublishToTopic(ctx, pubsubTopic, data, true)
+	// Cancel signals the go-p2p relay goroutine to stop; without it, it would
+	// block forever on its unbuffered send once we return after the first valid reply.
+	pubCtx, cancel := context.WithCancel(ctx)
+	respChan, err := s.pubsub.PublishToTopic(pubCtx, pubsubTopic, data, true)
 	if err != nil {
+		cancel()
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
 
-	go s.handleFetchEncryptionKeyResponses(ctx, respChan, req, ephPrivKey, result)
+	go s.handleFetchEncryptionKeyResponses(pubCtx, cancel, respChan, req, ephPrivKey, result)
 
 	return nil
 }
@@ -219,11 +223,13 @@ type fetchEncryptionKeyReply struct {
 // a non-empty Blocks list, or the deadline fires.
 func (s *pubSubService) handleFetchEncryptionKeyResponses(
 	ctx context.Context,
+	cancelPublish context.CancelFunc,
 	respChan <-chan client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
 ) {
+	defer cancelPublish()
 	defer close(result)
 
 	waitCtx := ctx
