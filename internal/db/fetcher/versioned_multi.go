@@ -102,7 +102,17 @@ func (f *MultiVersioned) Start(ctx context.Context, prefixes ...keys.Walkable) e
 	f.children = make([]*VersionedFetcher, len(uniquePrefixes))
 
 	for i, prefix := range uniquePrefixes {
+		// Track the child before Init so any resources it allocates while
+		// initialising (e.g. the in-memory `vf.root` store, the system-store
+		// iterator copied into it) — and any further resources Start opens
+		// before erroring — get released by Close(). Without this, a partial
+		// failure leaves an orphaned VersionedFetcher whose internal state,
+		// including badger iterators opened on the parent txn via the
+		// planner/fetcher path, cannot be reclaimed, which causes badger's
+		// Txn.Discard to panic with "Unclosed iterator at time of Txn.Discard".
 		child := &VersionedFetcher{}
+		f.children[i] = child
+
 		err := child.Init(
 			f.ctx,
 			f.identity,
@@ -120,17 +130,6 @@ func (f *MultiVersioned) Start(ctx context.Context, prefixes ...keys.Walkable) e
 		if err != nil {
 			return err
 		}
-
-		// Track the child immediately so that any resources it opened
-		// during Init (e.g. the in-memory `vf.root` store) and any
-		// resources it opens during Start (which may partially succeed
-		// before erroring) get released by Close(). Without this, a
-		// Start failure leaves an orphaned VersionedFetcher whose
-		// internal state — including badger iterators opened on the
-		// parent txn via the planner/fetcher path — cannot be
-		// reclaimed, which causes badger's Txn.Discard to panic with
-		// "Unclosed iterator at time of Txn.Discard".
-		f.children[i] = child
 
 		err = child.Start(ctx, prefix)
 		if err != nil {
