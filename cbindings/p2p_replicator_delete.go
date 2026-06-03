@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,29 +20,32 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client/options"
-	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export AddCollection
-func AddCollection(nodePtr C.uintptr_t, sdl *C.char, identityPtr C.uintptr_t) C.Result {
+//export DeleteP2PReplicator
+func DeleteP2PReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
-	store, err := getStoreFromPointer(nodePtr)
+	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
 	ctx = attachTxnFromPointer(nodePtr, ctx)
 
-	opt := options.WithIdentity(options.AddCollection(), iIdentity.FromContext(ctx))
-	collectionVersions, err := store.AddCollection(ctx, C.GoString(sdl), opt)
+	delRepOpt := options.WithIdentity(
+		options.DeleteReplicator().SetCollectionNames(colArgs),
+		acpIdentity.FromContext(ctx),
+	)
+	err = node.DB.DeleteReplicator(ctx, C.GoString(id), delRepOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	return returnC(marshalJSONToGoCResult(collectionVersions))
+	return returnC(returnGoC(0, "", ""))
 }

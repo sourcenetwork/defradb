@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,26 +18,7 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
-
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/crypto"
 )
-
-//export NewIdentity
-func NewIdentity(keyType *C.char) C.NewIdentityResult {
-	// Default key type, if left blank, is Secp256k1
-	cryptoKeyType := crypto.KeyTypeSecp256k1
-	keyTypeStr := C.GoString(keyType)
-	if keyTypeStr != "" {
-		cryptoKeyType = crypto.KeyType(keyTypeStr)
-	}
-	newIdentity, err := identity.Generate(cryptoKeyType)
-	if err != nil {
-		return returnNewIdentityResultC(1, err.Error(), nil)
-	}
-	return returnNewIdentityResultC(0, "", newIdentity)
-}
 
 //export GetNodeIdentity
 func GetNodeIdentity(nodePtr C.uintptr_t) C.Result {
@@ -55,12 +36,4 @@ func GetNodeIdentity(nodePtr C.uintptr_t) C.Result {
 		return returnC(marshalJSONToGoCResult(identity.Value()))
 	}
 	return returnC(returnGoC(0, "", "Node has no identity assigned to it."))
-}
-
-//export FreeIdentity
-func FreeIdentity(identityPtr C.uintptr_t) {
-	_, err := getIdentityFromPointer(identityPtr)
-	if err == nil && identityPtr != 0 {
-		cgo.Handle(identityPtr).Delete()
-	}
 }

@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,35 +20,7 @@ import (
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
-
-//export CreateTransaction
-func CreateTransaction(nodePtr C.uintptr_t, isReadOnly C.int) C.NewTxnResult {
-	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node) //nolint:forcetypeassert
-
-	tx, err := n.DB.NewTxn(isReadOnly != 0)
-	if err != nil {
-		return returnNewTxnResultC(1, err.Error(), nil)
-	}
-
-	return returnNewTxnResultC(0, "", tx)
-}
-
-//export CommitTransaction
-func CommitTransaction(txnPtr C.uintptr_t) C.Result {
-	h := cgo.Handle(txnPtr)
-	defer h.Delete()
-	txn := h.Value().(client.Txn) //nolint:forcetypeassert
-
-	err := txn.Commit()
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	return returnC(returnGoC(0, "", ""))
-}
 
 //export DiscardTransaction
 func DiscardTransaction(txnPtr C.uintptr_t) {
