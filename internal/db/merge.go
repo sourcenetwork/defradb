@@ -489,7 +489,7 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	}
 	doc, err := getDocForMerge(ctx, mp.col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return nil
+		return err
 	}
 	mp.docIDs[docID] = doc
 	return nil

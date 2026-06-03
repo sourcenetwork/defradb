@@ -170,7 +170,7 @@ func TestACP_P2P_NonCreatorUpdatesIndexedFieldOnPeerNode_Succeeds(t *testing.T) 
 // Control for the test above: same scenario without @index. Confirms
 // the "non-creator updates on peer node" path itself was fine; the
 // indexed-vs-not difference is what the indexed test is exercising.
-// Also closes a coverage gap — no existing P2P DAC test had a
+// Also closes a coverage gap - no existing P2P DAC test had a
 // non-creator UpdateDoc on the receiving node.
 func TestACP_P2P_NonCreatorUpdatesNonIndexedFieldOnPeerNode_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
