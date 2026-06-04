@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 )
 
 var log = corelog.NewLogger("cli")
@@ -30,7 +29,7 @@ type CLI interface {
 	client.TxnStore
 	client.P2P
 	Purge(ctx context.Context) error
-	GetNodeOptions(ctx context.Context) (*options.NodeOptions, error)
+	GetNodeOptions(ctx context.Context) (map[string]any, error)
 }
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
