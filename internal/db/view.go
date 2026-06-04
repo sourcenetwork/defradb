@@ -116,11 +116,19 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		return err
 	}
 
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	for _, col := range cols {
 		if !col.IsMaterialized {
 			// We only care about materialized views here, so skip any that aren't
 			continue
 		}
+
+		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+		db.lockSet.CollectionLock(txn, shortID)
 
 		// Clearing and then constructing is a bit inefficient, but it should do for now.
 		// Long term we probably want to update inline as much as possible to avoid unnessecarily
