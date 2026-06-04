@@ -62,6 +62,7 @@ var ConfigFlags = map[string]string{
 	"peers":                      "net.peers",
 	"p2paddr":                    "net.p2paddresses",
 	"no-p2p":                     "net.p2pdisabled",
+	"relay":                      "net.relay",
 	"allowed-origins":            "api.allowed-origins",
 	"pubkeypath":                 "api.pubkeypath",
 	"privkeypath":                "api.privkeypath",
