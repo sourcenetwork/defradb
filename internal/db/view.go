@@ -130,10 +130,15 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		}
 		db.lockSet.CollectionLock(txn, shortID)
 
+		colObject, err := db.newCollection(col, immutable.Some(txn))
+		if err != nil {
+			return err
+		}
+
 		// Clearing and then constructing is a bit inefficient, but it should do for now.
 		// Long term we probably want to update inline as much as possible to avoid unnessecarily
 		// moving/adding/deleting keys in storage
-		err := db.clearViewCache(ctx, col)
+		err = colObject.truncate(ctx)
 		if err != nil {
 			return err
 		}
@@ -259,45 +264,6 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 	}
 
 	return nil
-}
-
-func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
-	if err != nil {
-		return err
-	}
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   keys.NewViewCacheColPrefix(shortID),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateViewCacheIterator(err)
-	}
-
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
-		if err != nil {
-			return errors.Join(NewErrParseViewCacheKey(err), iter.Close())
-		}
-
-		err = txn.Datastore().Delete(ctx, key)
-		if err != nil {
-			return errors.Join(NewErrDeleteViewCacheItem(err), iter.Close())
-		}
-	}
-
-	return iter.Close()
 }
 
 func (db *DB) generateMaximalSelectFromCollection(

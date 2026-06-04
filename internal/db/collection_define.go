@@ -358,7 +358,15 @@ existingVersionLoop:
 				// If the collection is being de-materialized - delete any cached values.
 				// Leaving them around will not break anything, but it would be a waste of
 				// storage space.
-				err := db.clearViewCache(ctx, col)
+
+				txn := datastore.CtxTryGetTxnOption(ctx)
+
+				colObject, err := db.newCollection(col, txn)
+				if err != nil {
+					return err
+				}
+
+				err = colObject.truncate(ctx)
 				if err != nil {
 					return err
 				}
