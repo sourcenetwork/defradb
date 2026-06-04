@@ -854,6 +854,43 @@ func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// Adding a document to a collection that was removed by an earlier PatchCollection
+// must surface "collection not found" rather than dereferencing a nil collection.
+// This is the deterministic version of the ConcurrentWrite race: the canonically
+// ordered collections slice carries a nil slot for the removed name, and the
+// collection-save path must not be handed that nil.
+func TestColVersionUpdateRemoveCollections_AddDocToRemovedCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "remove",
+							"path": "/Users"
+						}
+					]
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+				ExpectedError: "collection not found",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // Removing a collection via PatchCollection and re-adding the same name with a
 // different shape must produce a fresh collection. This mirrors the equivalent
 // DeleteCollection test and verifies the patch-driven removal path also clears
