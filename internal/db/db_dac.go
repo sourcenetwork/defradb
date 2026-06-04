@@ -47,6 +47,7 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "DAC state purged")
 	return nil
 }
 
@@ -60,7 +61,7 @@ func (db *DB) AddDACPolicy(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACPolicyAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddDACPolicyPerm); err != nil {
 		return client.AddPolicyResult{}, err
 	}
 
@@ -93,7 +94,7 @@ func (db *DB) AddDACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddDACRelationPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -149,7 +150,7 @@ func (db *DB) DeleteDACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteDACRelationPerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 

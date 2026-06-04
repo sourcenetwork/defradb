@@ -19,8 +19,8 @@ import (
 func MakeLensCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "lens",
-		Short: "Interact with the schema migration system of a running DefraDB instance",
-		Long:  `Make set or look for existing schema migrations on a DefraDB node.`,
+		Short: "Interact with the collection migration system of a running DefraDB instance",
+		Long:  `Make set or look for existing collection migrations on a DefraDB node.`,
 	}
 
 	return cmd

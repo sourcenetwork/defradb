@@ -1,24 +1,25 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -99,8 +100,14 @@ func (a *Request) Execute() {
 nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := a.getTransaction(node)
-		ctx := db.InitContext(a.s.Ctx, txn)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		hadTxn := a.TransactionID.HasValue()
+		var txn client.Txn
+		var err error
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
 
 		reqOption := options.ExecRequest()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
@@ -111,7 +118,7 @@ nodeLoop:
 			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			reqOption.SetVariables(a.Variables.Value())
+			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
@@ -122,7 +129,13 @@ nodeLoop:
 		}
 
 		request := replace(a.s, nodeID, a.Request)
-		result := node.ExecRequest(ctx, request, reqOption)
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var result *client.RequestResult
+		if hadTxn {
+			result = txn.ExecRequest(a.s.Ctx, request, reqOption)
+		} else {
+			result = node.ExecRequest(a.s.Ctx, request, reqOption)
+		}
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,
@@ -138,28 +151,19 @@ nodeLoop:
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
-// getTransaction returns the transaction for this request, creating one if needed.
-func (a *Request) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	if a.s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
+// resolveVariables resolves any DocIndex values in the variables map to their
+// corresponding document ID strings.
+func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+	resolved := make(map[string]any, len(vars))
+	for k, v := range vars {
+		if index, ok := v.(DocIndex); ok {
+			s.DocIDsLock.RLock()
+			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			s.DocIDsLock.RUnlock()
+			resolved[k] = docID.String()
+		} else {
+			resolved[k] = v
 		}
-
-		a.s.Txns[transactionID] = txn
 	}
-
-	return a.s.Txns[transactionID]
+	return resolved
 }

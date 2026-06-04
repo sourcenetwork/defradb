@@ -1,0 +1,339 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
+package test_acp_nac
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
+)
+
+func TestNAC_ReEnableNotConfiguredBefore_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.ReEnableNAC{
+				ExpectedError: "node acp is not configured",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableNotConfiguredBeforeWithIdentity_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.ReEnableNAC{
+				Identity:      testUtils.ClientIdentity(1),
+				ExpectedError: "node acp is not configured",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithNoIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.ReEnableNAC{
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeReEnableNACPerm),
+			},
+
+			testUtils.GetNACStatus{ // Still disabled
+				ExpectedStatus: client.NACDisabledTemporarily,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithWrongIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.ReEnableNAC{
+				Identity:      testUtils.ClientIdentity(2),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeReEnableNACPerm),
+			},
+
+			testUtils.GetNACStatus{ // Still disabled
+				ExpectedStatus: client.NACDisabledTemporarily,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithValidIdentityWhenTemporarilyDisabled_NACReEnabled(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.GetNACStatus{ // NAC was successfully re-enabled so this won't work
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetNACStatusPerm),
+			},
+
+			testUtils.GetNACStatus{ // This works and shows that nac is enabled.
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithNoIdentityWhenAlreadyEnabled_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.ReEnableNAC{ // NAC is already enabled before.
+				ExpectedError: "node acp is already enabled",
+			},
+
+			testUtils.GetNACStatus{
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithWrongIdentityWhenAlreadyEnabled_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.ReEnableNAC{ // NAC is already enabled before.
+				Identity:      testUtils.ClientIdentity(2),
+				ExpectedError: "node acp is already enabled",
+			},
+
+			testUtils.GetNACStatus{
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableWithValidIdentityWhenAlreadyEnabled_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.ReEnableNAC{ // NAC is already enabled before.
+				Identity:      testUtils.ClientIdentity(1),
+				ExpectedError: "node acp is already enabled",
+			},
+
+			testUtils.GetNACStatus{
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableSuccessfullyThenRestartWithNoArgs_RemainsReEnabled(t *testing.T) {
+	test := testUtils.TestCase{
+
+		SupportedDatabaseTypes: immutable.Some(
+			[]state.DatabaseType{
+				// This test only supports file type databases since it requires the ability to
+				// stop and start a node without losing data.
+				testUtils.BadgerFileType,
+			},
+		),
+
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			// Restart with no explicit args this time, (should still start, with nac enabled).
+			testUtils.Restart{},
+
+			testUtils.GetNACStatus{ // Remains enabled even after restart.
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+
+			// Can not do this as nac is enabled.
+			testUtils.GetNACStatus{
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetNACStatusPerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableSuccessfullyThenRestartWithStartArgs_RemainsReEnabled(t *testing.T) {
+	test := testUtils.TestCase{
+
+		SupportedDatabaseTypes: immutable.Some(
+			[]state.DatabaseType{
+				// This test only supports file type databases since it requires the ability to
+				// stop and start a node without losing data.
+				testUtils.BadgerFileType,
+			},
+		),
+
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.ReEnableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.GetNACStatus{ // Remains enabled even after restart.
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+
+			// Can not do this as nac is enabled.
+			testUtils.GetNACStatus{
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetNACStatusPerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_ReEnableTemporarilyDisabledNACAfterRestart_ReEnabledSuccessfully(t *testing.T) {
+	test := testUtils.TestCase{
+
+		SupportedDatabaseTypes: immutable.Some(
+			[]state.DatabaseType{
+				// This test only supports file type databases since it requires the ability to
+				// stop and start a node without losing data.
+				testUtils.BadgerFileType,
+			},
+		),
+
+		Actions: []any{
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			testUtils.DisableNAC{
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.Restart{},
+
+			testUtils.GetNACStatus{ // Remains disabled ofcourse even after restart.
+				ExpectedStatus: client.NACDisabledTemporarily,
+			},
+
+			testUtils.ReEnableNAC{ // Successfully re-enabled again, even after restart.
+				Identity: testUtils.ClientIdentity(1),
+			},
+
+			testUtils.GetNACStatus{ // This should then not work.
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetNACStatusPerm),
+			},
+
+			// This will work and show the status.
+			testUtils.GetNACStatus{
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

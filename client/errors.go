@@ -52,10 +52,8 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
-)
-
-var (
-	errNotFound string = corekv.ErrNotFound.Error()
+	errDocumentJSONParseFailed               string = "failed to parse document JSON"
+	errSetDocFieldValue                      string = "failed to set document field value"
 )
 
 // Errors returnable from this package.
@@ -92,7 +90,6 @@ var (
 	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
-	ErrNotFound                              = errors.New(errNotFound)
 	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
 	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
 	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
@@ -100,6 +97,9 @@ var (
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrOperationRequiresDeveloperMode        = errors.New(errOperationRequiresDeveloperMode)
+	ErrIndexNameRequired                     = errors.New("index name is required")
+	ErrCollectionNameRequired                = errors.New("collection name is required")
+	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -179,10 +179,10 @@ func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) er
 	)
 }
 
-func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
+func NewErrCollectionNotFoundForRoot(collectionRoot string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaRoot", schemaRoot),
+		errors.NewKV("CollectionRoot", collectionRoot),
 	)
 }
 
@@ -269,8 +269,8 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
 }
 
-func NewErrNotFound(kv errors.KV) error {
-	return errors.New(errNotFound, kv)
+func NewErrSetDocFieldValue(inner error, field string) error {
+	return errors.Wrap(errSetDocFieldValue, inner, errors.NewKV("Field", field))
 }
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
@@ -282,4 +282,8 @@ func NewErrOperationRequiresDeveloperMode(operationName string) error {
 		errOperationRequiresDeveloperMode,
 		errors.NewKV("Operation", operationName),
 	)
+}
+
+func NewErrDocumentJSONParseFailed(inner error) error {
+	return errors.Wrap(errDocumentJSONParseFailed, inner)
 }

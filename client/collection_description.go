@@ -64,9 +64,9 @@ type CollectionVersion struct {
 
 	// Fields contains the fields local to the node within this Collection.
 	//
-	// Most fields defined here will also be present on the [SchemaDescription]. A notable
+	// Most fields defined here will also be present on the global collection definition. A notable
 	// exception to this are the fields of the (optional) secondary side of a relation
-	// which are local only, and will not be present on the [SchemaDescription].
+	// which are local only, and will not be present on the global definition.
 	Fields []CollectionFieldDescription
 
 	// Indexes contains the secondary indexes that this Collection has.
@@ -181,7 +181,7 @@ type QuerySource struct {
 // Data against all collection instances in a CollectionSource chain will be returned as-if
 // from the same dataset when queried.  Lens transforms may be applied between instances.
 //
-// Typically these are used to link together multiple schema versions into the same dataset.
+// Typically these are used to link together multiple collection versions into the same dataset.
 type CollectionSource struct {
 	// SourceCollectionID is the local identifier of the source [CollectionVersion] from which to
 	// share data.
@@ -237,7 +237,7 @@ func (col CollectionVersion) Equal(other CollectionVersion) bool {
 type VectorEmbeddingDescription struct {
 	// FieldName is the name of the field on the collection that this embedding description applies to.
 	FieldName string
-	// Fields are the fields in the parent schema that will be used as the basis of the
+	// Fields are the fields in the parent collection definition that will be used as the basis of the
 	// vector generation.
 	Fields []string
 	// Model is the LLM of the provider to use for generating the embeddings.
@@ -249,7 +249,7 @@ type VectorEmbeddingDescription struct {
 	// (Optional) Template is the local path of the template to use with the
 	// field values to form the content to send to the model.
 	//
-	// For example, with the following schema,
+	// For example, with the following collection definition,
 	// ```
 	// type User {
 	//   name: String

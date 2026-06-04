@@ -36,7 +36,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
 		viewQuery := col.Version().Query.Value().Query
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &viewQuery)
+		m, err := mapper.ToSelect(p.ctx, p.db, p.collectionRepository, mapper.ObjectSelection, &viewQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +115,7 @@ func convertBetweenMaps(srcMap *core.DocumentMapping, dstMap *core.DocumentMappi
 	for underlyingName, srcIndexes := range srcMap.IndexesByName {
 		for _, srcIndex := range srcIndexes {
 			if srcIndex >= len(src.Fields) {
-				// Several system fields are not included in schema only types, and there is a mismatch somewhere
+				// Several system fields are not included in embedded-only types, and there is a mismatch somewhere
 				// that means we have to handle them here with a continue
 				continue
 			}
@@ -204,7 +204,7 @@ func (n *cachedViewFetcher) Init() error {
 		Prefix: keys.NewViewCacheColPrefix(shortID),
 	})
 	if err != nil {
-		return err
+		return NewErrRefreshView(err)
 	}
 
 	n.queryResults = iter

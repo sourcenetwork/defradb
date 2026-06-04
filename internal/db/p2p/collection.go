@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -58,7 +59,7 @@ func (p *P2P) AddP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -107,7 +108,7 @@ func (p *P2P) DeleteP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -137,7 +138,7 @@ func (p *P2P) ListP2PCollections(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PCollections(err)
 	}
 
 	collectionNames := []string{}
@@ -164,7 +165,7 @@ func (p *P2P) ListP2PCollections(
 			return nil, err
 		}
 		if len(storeCol) == 0 {
-			return nil, client.NewErrCollectionNotFoundForSchema(key.CollectionID)
+			return nil, client.NewErrCollectionNotFoundForRoot(key.CollectionID)
 		}
 		collectionNames = append(collectionNames, storeCol[0].Name())
 	}
@@ -181,7 +182,7 @@ func (p *P2P) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllP2PCollections(err)
 	}
 
 	collectionIDs := []string{}
@@ -216,5 +217,6 @@ func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "Loaded P2P collections", corelog.Int("Count", len(collectionIDs)))
 	return nil
 }

@@ -1,35 +1,45 @@
 ## defradb client collection delete
 
-Delete documents by docID or filter.
+Delete collections
 
 ### Synopsis
 
-Delete documents by docID or filter and lists the number of documents deleted.
+Delete one or more collections by name.
+
+A single name, or a comma-separated list of names, may be provided. All named
+collections are removed atomically in a single operation. This can be used to
+delete collections that reference each other via relations, since deleting them
+one at a time would leave a dangling reference and be rolled back.
+
+By default, every version of each named collection is deleted (active head and
+all earlier versions). Pass --active-only to delete only the latest (head) version
+and keep earlier versions intact.
+
+The named collections must not contain any documents. Delete all documents first
+before deleting the collection.
 
 ```
-defradb client collection delete [-i --identity] [--filter <filter> --docID <docID>] [flags]
+defradb client collection delete [collectionNames] [flags]
 ```
 
 ### Examples
 
 ```
-delete by docID:  
-  defradb client collection delete  --name User --docID bae-123
+delete every version of a single collection:  
+  defradb client collection delete Users
 
-delete by docID with identity:  
-  defradb client collection delete --name User --docID bae-123 \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+delete every version of multiple collections in one call (this can be used to delete collections that reference each other via relations):  
+  defradb client collection delete Users,Books
 
-delete by filter:  
-  defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
+delete only the active head version, keeping earlier versions:  
+  defradb client collection delete --active-only Users
 ```
 
 ### Options
 
 ```
-      --docID string    Document ID
-      --filter string   Document filter
-  -h, --help            help for delete
+      --active-only   Delete only the active head version of each named collection (default deletes every version)
+  -h, --help          help for delete
 ```
 
 ### Options inherited from parent commands

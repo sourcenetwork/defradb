@@ -92,7 +92,7 @@ func (db *DB) addView(
 		return nil, err
 	}
 
-	err = db.loadSchema(ctx)
+	err = db.loadCollectionDefinitions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 }
 
 func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions) ([]client.CollectionVersion, error) {
-	cols, err := db.getCollections(ctx, opts)
+	cols, err := db.getCollections(ctx, opts, true)
 	if err != nil {
 		return nil, err
 	}
@@ -168,18 +168,19 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		db,
 		db.p2p,
 		db.getLensStore(ctx),
+		db.collectionRepository,
 	)
 
 	// temporarily disable the cache in order to query without using it
 	col.IsMaterialized = false
-	err = description.SaveCollection(ctx, col)
+	err = description.SaveCollection(ctx, db.collectionRepository, col)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.IsMaterialized = true
-		defErr = description.SaveCollection(ctx, col)
+		defErr = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -240,7 +241,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
 		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
 		if err != nil {
-			return err
+			return NewErrStoreViewCacheItem(err)
 		}
 
 		hasValue, err = source.Next()
@@ -265,7 +266,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 		KeysOnly: true,
 	})
 	if err != nil {
-		return err
+		return NewErrCreateViewCacheIterator(err)
 	}
 
 	for {
@@ -279,12 +280,12 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 
 		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrParseViewCacheKey(err), iter.Close())
 		}
 
 		err = txn.Datastore().Delete(ctx, key)
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrDeleteViewCacheItem(err), iter.Close())
 		}
 	}
 
@@ -301,7 +302,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	// of collision.
 	identifier := col.Name + "__-" + fieldName.Value()
 	if _, ok := typesHit[identifier]; ok {
-		// If this identifier is already in the set, the schema must be circular and we should return
+		// If this identifier is already in the set, the collection type must be circular and we should return
 		return nil, nil
 	}
 	typesHit[identifier] = struct{}{}
@@ -309,7 +310,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	childRequests := []request.Selection{}
 	for _, field := range col.Fields {
 		if field.RelationName.HasValue() && field.Kind.IsObject() {
-			relatedCol, _, err := description.GetRelatedCollection(ctx, col, field.Kind)
+			relatedCol, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col, field.Kind)
 			if err != nil {
 				return nil, err
 			}
@@ -325,7 +326,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 			}
 
 			if innerSelect != nil {
-				// innerSelect may be nil if a circular relationship is defined in the schema and we have already
+				// innerSelect may be nil if a circular relationship is defined in the collection type and we have already
 				// added this field
 				childRequests = append(childRequests, innerSelect)
 			}

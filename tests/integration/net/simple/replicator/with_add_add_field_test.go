@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package replicator
 
@@ -19,20 +20,20 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly add a doc on
+				// Patch the collection on the node that we will directly add a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -73,20 +74,20 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToOlderSchemaVersion(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we sync docs to
+				// Patch the collection on the node that we sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
@@ -126,20 +127,20 @@ func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToNewerSchemaVersion(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
+func TestP2POneToOneReplicatorAddWithNewFieldSyncsDocsToUpdatedCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
 			&action.PatchCollection{
-				// Patch the schema on all nodes
+				// Patch the collection on all nodes
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }

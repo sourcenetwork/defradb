@@ -1,0 +1,65 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
+package test_acp_nac_relation_admin
+
+import (
+	"testing"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestNAC_AdminRelation_CanReEnableNAC(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			testUtils.DisableNAC{Identity: testUtils.ClientIdentity(1)},
+
+			// This user, can not perform this gated operation yet.
+			testUtils.ReEnableNAC{
+				Identity:      testUtils.ClientIdentity(2),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeReEnableNACPerm),
+			},
+
+			// Grant access to user, but for that we need to temporarily re-enable and
+			// then disable nac using the admin owner, because relationship add/delete
+			// operations require node acp to be enabled.
+			testUtils.ReEnableNAC{Identity: testUtils.ClientIdentity(1)},
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+			testUtils.DisableNAC{Identity: testUtils.ClientIdentity(1)},
+
+			// This user, can now perform this gated operation.
+			testUtils.ReEnableNAC{Identity: testUtils.ClientIdentity(2)},
+
+			// Check if it worked, using the admin owner.
+			testUtils.GetNACStatus{
+				Identity:       testUtils.ClientIdentity(1),
+				ExpectedStatus: client.NACEnabled,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

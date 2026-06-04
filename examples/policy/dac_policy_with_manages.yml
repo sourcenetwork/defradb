@@ -1,5 +1,5 @@
 # The below policy contains a valid document acp resource interface that can be linked to a collection
-# object during the schema add command to have access control enabled for documents of that collection.
+# object during the collection add command to have access control enabled for documents of that collection.
 #
 # This policy specifically has the manages attribute defined under admin relation which gives admin
 # of a resource, the ability to add/remove relationships with `reader` relation name.

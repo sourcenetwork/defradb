@@ -56,6 +56,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "NAC state purged")
 	return nil
 }
 
@@ -85,11 +86,12 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[option
 
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACReEnablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeReEnableNACPerm); err != nil {
 		return err
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACEnabled
+	log.InfoContext(ctx, "Re-enabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 
@@ -117,11 +119,12 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Enumerable[options
 	opt := utils.NewOptions(opts...)
 
 	// Check if this request is authorized to disable node access control.
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACDisablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDisableNACPerm); err != nil {
 		return err
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACDisabledTemporarily
+	log.InfoContext(ctx, "Disabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 
@@ -134,7 +137,7 @@ func (db *DB) GetNACStatus(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACStatusPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetNACStatusPerm); err != nil {
 		return client.NACStatusResult{}, err
 	}
 
@@ -154,7 +157,7 @@ func (db *DB) AddNACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeAddNACRelationPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -174,7 +177,7 @@ func (db *DB) DeleteNACActorRelationship(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDeleteNACRelationPerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
@@ -286,7 +289,7 @@ func (db *DB) checkNodeAccess(
 	// For nac specific operations, the node acp setup must be configured.
 	if permissionNeeded.IsForNACOperation() &&
 		db.nodeACP.NodeACPDesc.Status == client.NACNotConfigured &&
-		permissionNeeded != acpTypes.NodeNACStatusPerm {
+		permissionNeeded != acpTypes.NodeGetNACStatusPerm {
 		return ErrNACIsNotConfigured
 	}
 
@@ -322,7 +325,7 @@ func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 	isNACEnabledInStartCmd := db.nodeACP.EnabledInConfig
 	wasSetupBefore, err := txn.Systemstore().Has(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrCheckNACState(err)
 	}
 
 	iden := iIdentity.FromContext(ctx)
@@ -399,6 +402,7 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.nodeACP.NodeACP.ResetState(ctx)
@@ -408,12 +412,12 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 
 	err = txn.Systemstore().Delete(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrDeleteNACState(err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	// Update state, only when commit is successful.
@@ -426,21 +430,22 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	nodeDescBytes, err := json.Marshal(db.nodeACP.NodeACPDesc)
 	if err != nil {
-		return err
+		return NewErrMarshalNACState(err)
 	}
 
 	err = txn.Systemstore().Set(ctx, keys.NewNodeACPKey().Bytes(), nodeDescBytes)
 	if err != nil {
-		return err
+		return NewErrStoreNACState(err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	return nil

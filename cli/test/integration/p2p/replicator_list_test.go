@@ -27,8 +27,8 @@ var (
 func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -36,11 +36,11 @@ func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testi
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
-			&action.P2PReplicatorList{
+			&action.ListP2PReplicators{
 				Expected: immutable.Some([]client.Replicator{
 					{
 						ID:            peerIDs[0],
@@ -58,8 +58,8 @@ func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testi
 func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -71,11 +71,11 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorList{
+			&action.ListP2PReplicators{
 				Expected: immutable.Some([]client.Replicator{
 					{
 						ID:            peerIDs[0],
@@ -93,8 +93,8 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *
 func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldReturnOneCollection(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -106,15 +106,15 @@ func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldRet
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID:      peerIDs[0],
 				Collections: []string{"Order"},
 			},
-			&action.P2PReplicatorList{
+			&action.ListP2PReplicators{
 				Expected: immutable.Some([]client.Replicator{
 					{
 						ID:            peerIDs[0],
@@ -132,8 +132,8 @@ func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldRet
 func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -145,11 +145,11 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorList{
+			&action.ListP2PReplicators{
 				Expected: immutable.Some([]client.Replicator{
 					{
 						ID:            peerIDs[1],
@@ -172,8 +172,8 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(
 func TestReplicatorGetAll_WithMultiplePeersAndDeleteOfPeer_ShouldReturnOnePeer(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -185,14 +185,14 @@ func TestReplicatorGetAll_WithMultiplePeersAndDeleteOfPeer_ShouldReturnOnePeer(t
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
-			&action.P2PReplicatorDelete{
+			&action.DeleteP2PReplicator{
 				PeerID: peerIDs[0],
 			},
-			&action.P2PReplicatorList{
+			&action.ListP2PReplicators{
 				Expected: immutable.Some([]client.Replicator{
 					{
 						ID:            peerIDs[1],

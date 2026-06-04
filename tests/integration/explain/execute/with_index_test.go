@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package test_explain_execute
 
@@ -22,8 +23,8 @@ func TestExecuteExplainWithIndexOnFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -88,8 +89,8 @@ func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String
 						age: Int @index
@@ -151,12 +152,133 @@ func TestExecuteExplainWithIndexOnOrder(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
+func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book2",
+					"rating": 3,
+				},
+			},
+
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Publisher1",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Publisher2",
+					"book": testUtils.NewDocIndex(0, 1),
+				},
+			},
+
+			&action.ExplainRequest{
+				// @exhaustive required for orphanNode in plan
+				Request: `query @explain(type: execute) @exhaustive {
+					Publisher(order: {book: {rating: DESC}}) {
+						name
+					}
+				}`,
+
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(3),
+										"filterMatches": uint64(2),
+										"typeIndexJoin": dataMap{
+											"iterations": uint64(3),
+											"sequenceNode": []dataMap{
+												{
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(4),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(4),
+																"indexFetches": uint64(2),
+															},
+														},
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(3),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(3),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(4),
+																		"indexFetches": uint64(2),
+																	},
+																},
+															},
+														},
+													},
+												},
+												{
+													"orphanNode": dataMap{
+														"iterations":   uint64(1),
+														"docFetches":   uint64(0),
+														"fieldFetches": uint64(0),
+														"indexFetches": uint64(0),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
 func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Author {
 						name: String
 						published: [Book]

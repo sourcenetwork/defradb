@@ -1,17 +1,20 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package commits
 
 import (
 	"testing"
+
+	"github.com/onsi/gomega"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -45,6 +48,8 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocID(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -63,15 +68,9 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-						},
-						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-						},
-						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-						},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
+						{"cid": uniqueCid},
 					},
 				},
 				NonOrderedResults: true,
@@ -83,6 +82,10 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -109,24 +112,24 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":   "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid":   gomega.And(ageCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid":   "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 							"links": []map[string]any{
 								{
-									"cid":       "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+									"cid":       ageCreateCid,
 									"fieldName": "age",
 								},
 								{
-									"cid":       "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+									"cid":       nameCreateCid,
 									"fieldName": "name",
 								},
 							},
@@ -143,6 +146,8 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -153,7 +158,7 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -169,26 +174,11 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
-							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(1)},
+						{"cid": uniqueCid, "height": int64(2)},
+						{"cid": uniqueCid, "height": int64(1)},
 					},
 				},
 				NonOrderedResults: true,
@@ -203,6 +193,12 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
 func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewSameValue()
+	ageUpdateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -213,7 +209,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -236,47 +232,43 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":   "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid":   gomega.And(ageUpdateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{
-								{
-									"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-								},
+								{"cid": ageCreateCid},
 							},
 						},
 						{
-							"cid":   "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid":   gomega.And(ageCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid":   "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid": uniqueCid,
 							"links": []map[string]any{
 								{
-									"cid":       "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+									"cid":       ageUpdateCid,
 									"fieldName": "age",
 								},
 							},
 							"heads": []map[string]any{
-								{
-									"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-								},
+								{"cid": createCompositeCid},
 							},
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": gomega.And(createCompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid":       "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+									"cid":       ageCreateCid,
 									"fieldName": "age",
 								},
 								{
-									"cid":       "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+									"cid":       nameCreateCid,
 									"fieldName": "name",
 								},
 							},

@@ -62,7 +62,7 @@ func TestVersionJSON(t *testing.T) {
 		"commit": "",
 		"commitDate": "",
 		"go": "",
-		"httpAPI": "v0",
+		"httpAPI": "v1",
 		"docIDVersions": "1",
 		"netProtocol": "/defra/0.0.1"
 	}`)
@@ -83,7 +83,7 @@ func TestVersionJSONFull(t *testing.T) {
 		"commit": "",
 		"commitDate": "",
 		"go": "",
-		"httpAPI": "v0",
+		"httpAPI": "v1",
 		"docIDVersions": "1",
 		"netProtocol": "/defra/0.0.1"
 	}`)

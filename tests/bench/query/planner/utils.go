@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package planner
 
@@ -15,24 +16,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
-	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
-	"github.com/sourcenetwork/defradb/internal/se"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
-
-type p2pWrapper struct{}
-
-func (w *p2pWrapper) QueryDocIDsWithSETags(context.Context, string, []se.FieldValueQuery) ([]string, error) {
-	return []string{}, nil
-}
 
 func runQueryParserBench(
 	b *testing.B,
@@ -58,60 +48,11 @@ func runQueryParserBench(
 	return nil
 }
 
-func runMakePlanBench(
-	b *testing.B,
-	ctx context.Context,
-	fixture fixtures.Generator,
-	query string,
-) error {
-	d, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
-	if err != nil {
-		return err
-	}
-	defer d.Close()
-
-	parser, err := buildParser(ctx, fixture)
-	if err != nil {
-		return err
-	}
-
-	ast, _ := parser.BuildRequestAST(ctx, query)
-	q, errs := parser.Parse(ctx, ast, &client.GQLOptions{})
-	if len(errs) > 0 {
-		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		planner := planner.New(
-			ctx,
-			acpIdentity.None,
-			acpDB.NACInfo{},
-			dac.NoDocumentACP,
-			d,
-			&p2pWrapper{},
-			nil,
-		)
-		plan, err := planner.MakePlan(q)
-		if err != nil {
-			return errors.Wrap("failed to make plan", err)
-		}
-
-		err = plan.Init()
-		if err != nil {
-			return errors.Wrap("failed to init plan", err)
-		}
-	}
-	b.StopTimer()
-	return nil
-}
-
 func buildParser(
 	ctx context.Context,
 	fixture fixtures.Generator,
 ) (core.Parser, error) {
-	schema, err := benchutils.ConstructSchema(fixture)
+	sdl, err := benchutils.ConstructSDL(fixture)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +62,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionVersions, err := parser.ParseSDL(ctx, schema)
+	collectionVersions, err := parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}

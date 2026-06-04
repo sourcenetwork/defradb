@@ -72,7 +72,7 @@ query {
 }
 ```
 
-The above example shows how to query for the additional `_version` field that is generated automatically for each added schema type. The `_version` has the same execution as `_commits`.
+The above example shows how to query for the additional `_version` field that is generated automatically for each added collection type. The `_version` has the same execution as `_commits`.
 
 `_version` returns an array of `Commits` types because the `HEAD` of the MerkleDAG can point to more than one DAG node. This is caused by two concurrent updates to the DAG at the same height. The DAG usually has a single head. However, it can also have multiple heads.
 

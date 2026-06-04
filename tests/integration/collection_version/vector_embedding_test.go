@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package collection_version
 
@@ -17,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name_v: [String!] @embedding
 					}
@@ -34,11 +35,11 @@ func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name_v: [Int!] @embedding
 					}
@@ -50,11 +51,11 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name_v: [Float!] @embedding
 					}
@@ -67,11 +68,11 @@ func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name_v: [Float64!] @embedding
 					}
@@ -84,11 +85,11 @@ func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name_v: [Float32] @embedding
 					}
@@ -101,11 +102,11 @@ func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
+func TestCollectionVersion_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						name_v: [Float32!] @embedding(fields: ["name"], provider: "ollama", model: "nomic-embed-text",  url: "http://localhost:11434/api")
@@ -118,11 +119,11 @@ func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						name_v: [Float32!] @embedding(fields: ["name", "about"])
@@ -136,11 +137,11 @@ func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						custom: JSON
@@ -155,11 +156,11 @@ func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -173,11 +174,11 @@ func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -191,11 +192,11 @@ func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String
@@ -209,11 +210,11 @@ func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchema_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
+func TestCollectionVersion_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 						about: String

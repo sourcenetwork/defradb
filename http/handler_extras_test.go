@@ -25,7 +25,7 @@ func TestPurgeDevModeTrue(t *testing.T) {
 
 	IsDevMode = true
 
-	url := "http://localhost:9181/api/v0/purge"
+	url := "http://localhost:9181/api/purge"
 
 	req := httptest.NewRequest(http.MethodPost, url, nil)
 	rec := httptest.NewRecorder()
@@ -49,7 +49,7 @@ func TestPurgeDevModeFalse(t *testing.T) {
 
 	IsDevMode = false
 
-	url := "http://localhost:9181/api/v0/purge"
+	url := "http://localhost:9181/api/purge"
 
 	req := httptest.NewRequest(http.MethodPost, url, nil)
 	rec := httptest.NewRecorder()
@@ -59,5 +59,5 @@ func TestPurgeDevModeFalse(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
-	require.Equal(t, 400, res.StatusCode)
+	require.Equal(t, 403, res.StatusCode)
 }

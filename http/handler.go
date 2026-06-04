@@ -19,14 +19,22 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 // IsDevMode is a global variable for the development mode flag
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
 var IsDevMode bool = false
 
-// Version is the identifier for the current API version.
-var Version string = "v0"
+const (
+	// VersionV0 is the identifier for the v0 API version.
+	//
+	// This is left in for backwards compatibility as we
+	// transition to v1 and should be removed in v2.
+	VersionV0 string = "v0"
+	// Version is the identifier for the v1 API version.
+	Version string = "v1"
+)
 
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
@@ -87,12 +95,23 @@ func NewHandler(db DB) (*Handler, error) {
 	}
 	txs := &sync.Map{}
 	mux := chi.NewMux()
-	mux.Route("/api/"+Version, func(r chi.Router) {
+	// Normalize trailing slashes so that, for example, `/collections` and
+	// `/collections/` resolve to the same route instead of the latter missing
+	// chi's router and returning a bare 404. StripSlashes rewrites the routing
+	// path in place (no redirect), preserving the request method and body.
+	// It is registered before any routes so every HTTP route on this handler
+	// is normalized consistently.
+	mux.Use(middleware.StripSlashes)
+	mux.Route("/api", func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
+		// This is left in for backwards compatibility as we
+		// transition to v1 and should be removed in v2.
+		r.Mount("/"+VersionV0, router)
+		r.Mount("/"+Version, router)
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {

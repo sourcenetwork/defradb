@@ -11,6 +11,8 @@
 package http
 
 import (
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 
@@ -22,16 +24,16 @@ import (
 var openApiSchemas = map[string]any{
 	"error":                                    &errorResponse{},
 	"create_tx":                                &CreateTxResponse{},
-	"collection_update":                        &CollectionUpdateRequest{},
-	"collection_delete":                        &CollectionDeleteRequest{},
-	"peer_info":                                &client.PeerInfo{},
-	"graphql_request":                          &GraphQLRequest{},
+	"update_collection":                        &UpdateCollectionRequest{},
+	"delete_collection":                        &DeleteCollectionRequest{},
+	"get_peer_info":                            &client.PeerInfo{},
+	"request_graphql":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
-	"index_add":                                &client.IndexAddRequest{},
+	"new_index":                                &client.NewIndexRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
-	"encrypted_index_add":                      &client.EncryptedIndexDescription{},
+	"new_encrypted_index":                      &client.EncryptedIndexDescription{},
 	"delete_result":                            &client.DeleteResult{},
 	"update_result":                            &client.UpdateResult{},
 	"lens_config":                              &client.LensConfig{},
@@ -42,14 +44,14 @@ var openApiSchemas = map[string]any{
 	"ccip_response":                            &CCIPResponse{},
 	"patch_collection_request":                 &patchCollectionRequest{},
 	"add_view_request":                         &addViewRequest{},
-	"acp_policy_add_result":                    &client.AddPolicyResult{},
-	"acp_relationship_add_result":              &client.AddActorRelationshipResult{},
-	"acp_relationship_delete_result":           &client.DeleteActorRelationshipResult{},
-	"acp_node_status_result":                   &client.NACStatusResult{},
-	"acp_node_relationship_add_request":        &addNACActorRelationshipRequest{},
-	"acp_node_relationship_delete_request":     &deleteNACActorRelationshipRequest{},
-	"acp_document_relationship_add_request":    &addDACActorRelationshipRequest{},
-	"acp_document_relationship_delete_request": &deleteDACActorRelationshipRequest{},
+	"add_acp_policy_result":                    &client.AddPolicyResult{},
+	"add_acp_relationship_result":              &client.AddActorRelationshipResult{},
+	"delete_acp_relationship_result":           &client.DeleteActorRelationshipResult{},
+	"get_acp_node_status_result":               &client.NACStatusResult{},
+	"add_acp_node_relationship_request":        &addNACActorRelationshipRequest{},
+	"delete_acp_node_relationship_request":     &deleteNACActorRelationshipRequest{},
+	"add_acp_document_relationship_request":    &addDACActorRelationshipRequest{},
+	"delete_acp_document_relationship_request": &deleteDACActorRelationshipRequest{},
 	"identity":                                 &identity.PublicRawIdentity{},
 	"set_migration":                            &SetMigrationResponse{},
 	"add_lens_request":                         &AddLensRequest{},
@@ -110,13 +112,21 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
 			Title:   "DefraDB API",
-			Version: "0",
+			Version: strings.TrimPrefix(Version, "v"),
 		},
 		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
-				Description: "Local DefraDB instance",
-				URL:         "/api/v0",
+				Description: "DefraDB latest version",
+				URL:         "/api",
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 0",
+				URL:         "/api/" + VersionV0,
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 1",
+				URL:         "/api/" + Version,
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{
@@ -131,12 +141,12 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		},
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
-				Name:        "schema",
-				Description: "Upload GQL schemas to add collections",
+				Name:        "collection",
+				Description: "Add, describe, patch, and manage collections",
 			},
 			&openapi3.Tag{
-				Name:        "collection",
-				Description: "Add, remove, or update documents",
+				Name:        "document",
+				Description: "Add, get, update, or delete documents",
 			},
 			&openapi3.Tag{
 				Name:        "view",
@@ -144,7 +154,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "index",
-				Description: "Add, update, or remove indexes",
+				Description: "Make, update, or remove indexes",
 			},
 			&openapi3.Tag{
 				Name:        "lens",

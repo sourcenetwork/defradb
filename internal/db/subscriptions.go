@@ -73,7 +73,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			txn, err := db.NewTxn(false)
 			if err != nil {
-				log.ErrorContext(ctx, err.Error())
+				log.ErrorContextE(ctx, "Failed to create transaction for subscription", err)
 				continue
 			}
 			ctx := InitContext(ctx, txn)
@@ -86,6 +86,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				db,
 				db.p2p,
 				db.getLensStore(ctx),
+				db.collectionRepository,
 			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 

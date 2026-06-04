@@ -12,8 +12,6 @@ package planner
 
 import (
 	"math"
-	"slices"
-	"strings"
 
 	cid "github.com/ipfs/go-cid"
 
@@ -204,7 +202,12 @@ func (n *selectNode) Close() error {
 // checkForMigrations checks if there are any migrations registered for the given collection.
 // This is used to determine if the filter should be kept in selectNode for post-lens application.
 func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
-	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+	return description.HasMigrations(
+		n.planner.ctx,
+		n.planner.collectionRepository,
+		col.Version().CollectionID,
+		col.Version().VersionID,
+	)
 }
 
 func (n *selectNode) simpleExplain() (map[string]any, error) {
@@ -339,91 +342,22 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
-		origScan.index = findIndexByFilteringField(origScan)
-		if !origScan.index.HasValue() {
-			// if we can not use index for filtering, try to use index for ordering
-			origScan.index = findIndexByOrderingField(origScan)
+		// The VersionedFetcher (used when CIDs are present) operates on a temporary
+		// in-memory store that doesn't contain index data, so secondary index
+		// selection must be skipped for CID-based queries.
+		if !n.selectReq.Cids.HasValue() {
+			result := selectIndex(selectIndexOptions{
+				collection: origScan.col,
+				filter:     origScan.filter,
+				ordering:   origScan.ordering,
+				docMapping: origScan.documentMapping,
+			})
+			origScan.index = result.index
 		}
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 
 	return aggregates, similarity, nil
-}
-
-func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	var indexCandidates []client.IndexDescription
-
-	if scanNode.filter != nil {
-		col := scanNode.col.Version()
-		conditions := scanNode.filter.ExternalConditions
-		filter.TraverseFields(conditions, func(path []string, val any) bool {
-			for _, field := range scanNode.col.Version().Fields {
-				if field.Name != path[0] {
-					continue
-				}
-				indexes := col.GetIndexesOnField(field.Name)
-				if len(indexes) > 0 {
-					indexCandidates = append(indexCandidates, indexes...)
-					return true
-				}
-			}
-			return true
-		})
-	}
-
-	if len(indexCandidates) == 0 {
-		return immutable.None[client.IndexDescription]()
-	}
-
-	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-	// we return the first found index. We will optimize it later.
-	// https://github.com/sourcenetwork/defradb/issues/2680
-	return immutable.Some(indexCandidates[0])
-}
-
-func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if len(scanNode.ordering) > 0 {
-		col := scanNode.col.Version()
-
-		fieldNames := []string{}
-		mapping := scanNode.documentMapping
-		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
-			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
-			if !found {
-				return immutable.None[client.IndexDescription]()
-			}
-
-			fieldNames = append(fieldNames, fieldName)
-			if fieldIndex < len(mapping.ChildMappings) {
-				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
-					mapping = childMapping
-				}
-			}
-		}
-
-		indexes := col.GetIndexesOnField(fieldNames[0])
-		if len(indexes) > 0 {
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
-}
-
-func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
-	for _, field := range col.Version().Fields {
-		if field.Name != fieldName {
-			continue
-		}
-		indexes := col.Version().GetIndexesOnField(field.Name)
-		if len(indexes) > 0 {
-			// At the moment we just take the first index, but later we want to run some kind of analysis to
-			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
@@ -485,7 +419,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
+			} else if n.collection == nil || !n.collection.Version().Query.HasValue() {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
@@ -534,6 +468,15 @@ func (p *Planner) SelectFromSource(
 	fromCollection bool,
 	collection client.Collection,
 ) (planNode, error) {
+	return p.SelectTopNodeFromSource(selectReq, source, fromCollection, collection)
+}
+
+func (p *Planner) SelectTopNodeFromSource(
+	selectReq *mapper.Select,
+	source planNode,
+	fromCollection bool,
+	collection client.Collection,
+) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:    p,
 		source:     source,
@@ -632,6 +575,10 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	if selectReq.IsEncrypted {
 		return p.SelectEncrypted(selectReq)
 	}
+	return p.SelectTopNode(selectReq)
+}
+
+func (p *Planner) SelectTopNode(selectReq *mapper.Select) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,

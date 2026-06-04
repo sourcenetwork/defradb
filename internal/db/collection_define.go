@@ -21,6 +21,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -28,11 +29,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -42,7 +41,7 @@ func (db *DB) addCollections(
 ) ([]client.CollectionVersion, error) {
 	returnDescriptions := make([]client.CollectionVersion, 0, len(parseResults))
 
-	existingVersions, err := description.GetActiveCollections(ctx)
+	existingVersions, err := description.GetActiveCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +56,7 @@ func (db *DB) addCollections(
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections, existingVersions)
+	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -78,21 +77,23 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
-		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.AddIndexes))
-		for _, addIndex := range def.AddIndexes {
-			desc, err := processAddIndexRequest(ctx, def.Definition, addIndex)
+		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.NewIndexes))
+		for _, newIndex := range def.NewIndexes {
+			desc, err := processNewIndexRequest(ctx, def.Definition, newIndex)
 			if err != nil {
 				return nil, err
 			}
 			def.Definition.Indexes = append(def.Definition.Indexes, desc)
 		}
 
-		err = description.SaveCollection(ctx, def.Definition)
+		err = description.SaveCollection(ctx, db.collectionRepository, def.Definition)
 		if err != nil {
 			return nil, err
 		}
 
-		col, err := db.newCollection(def.Definition)
+		txnOpt := datastore.CtxTryGetTxnOption(ctx)
+
+		col, err := db.newCollection(def.Definition, txnOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +104,7 @@ func (db *DB) addCollections(
 			}
 		}
 
-		result, err := description.GetCollectionByID(ctx, def.Definition.VersionID)
+		result, err := description.GetCollectionByID(ctx, db.collectionRepository, def.Definition.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +144,7 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
-	existingCols, err := description.GetCollections(ctx)
+	existingCols, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return err
 	}
@@ -220,15 +221,9 @@ existingVersionLoop:
 	}
 
 	for key, col := range newColsByID {
-		previousCol := existingColsByName[col.Name]
-
-		previousFieldNames := make(map[string]struct{}, len(previousCol.Fields))
-		for _, field := range previousCol.Fields {
-			previousFieldNames[field.FieldID] = struct{}{}
-		}
-
 		for i, field := range col.Fields {
-			if _, existed := previousFieldNames[field.FieldID]; !existed && field.Typ == client.NONE_CRDT {
+			// Object fields don't recieve a crdt, so exclude those from this check
+			if field.FieldID == "" && !field.Kind.IsObject() && field.Typ == client.NONE_CRDT {
 				// If no CRDT Type has been provided to a new field, default to LWW_REGISTER.
 				// If the field existed before it might have been explicitly cleared by the user, in which
 				// case it is up to the validation logic to error or not.
@@ -242,7 +237,7 @@ existingVersionLoop:
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections, existingCols)
+	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
@@ -256,18 +251,23 @@ existingVersionLoop:
 			}
 		}
 
-		// If an existing collection is not present in the new collection set,
-		// it must have mutated into a new collection version.
-		// The original still needs to exist and must be validated against.
-		// It may also be mutated later in this function.
+		// If an existing collection is not present in the new collection set, it has either
+		// been mutated into a new version (a replacement with the same CollectionID exists) or
+		// explicitly removed by the patch (no replacement). For the mutation case we re-add the
+		// original as inactive so it can be validated against and saved alongside the new
+		// version. For the removal case we leave it out so validation sees the deletion.
 		if isMissing {
+			var hasReplacement bool
 			for _, newCol := range newCollections {
 				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
 					existingCol.IsActive = false
+					hasReplacement = true
 					break
 				}
 			}
-			newCollections = append(newCollections, existingCol)
+			if hasReplacement {
+				newCollections = append(newCollections, existingCol)
+			}
 		}
 	}
 
@@ -332,19 +332,20 @@ existingVersionLoop:
 			continue
 		}
 
-		err := description.SaveCollection(ctx, col)
+		err := description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
 			return err
 		}
 
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
-				colObj, err := db.newCollection(col)
+				txnOpt := datastore.CtxTryGetTxnOption(ctx)
+				colObj, err := db.newCollection(col, txnOpt)
 				if err != nil {
 					return err
 				}
 				for _, indexReq := range indexReqs {
-					if _, err := colObj.addIndex(ctx, indexReq); err != nil {
+					if _, err := colObj.newIndex(ctx, indexReq); err != nil {
 						return err
 					}
 				}
@@ -384,7 +385,7 @@ existingVersionLoop:
 		}
 	}
 
-	return db.loadSchema(ctx)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 const (
@@ -402,11 +403,11 @@ func substituteCollectionPatch(
 	patch jsonpatch.Patch,
 	collectionsByName map[string]client.CollectionVersion,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesBySchema := make(map[string]map[string]int, len(collectionsByName))
-	for schemaName, schema := range collectionsByName {
-		fieldIndexesByName := make(map[string]int, len(schema.Fields))
-		fieldIndexesBySchema[schemaName] = fieldIndexesByName
-		for i, field := range schema.Fields {
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
+	for collectionName, collection := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(collection.Fields))
+		fieldIndexesByCollection[collectionName] = fieldIndexesByName
+		for i, field := range collection.Fields {
 			fieldIndexesByName[field.Name] = i
 		}
 	}
@@ -451,7 +452,7 @@ func substituteCollectionPatch(
 
 					desc := collectionsByName[splitPath[collectionNamePathIndex]]
 					var index string
-					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
@@ -460,7 +461,7 @@ func substituteCollectionPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
@@ -517,13 +518,13 @@ func substituteCollectionPatch(
 	return patch, nil
 }
 
-// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
+// isFieldOrInner returns true if the given path points to a CollectionFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
 	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a SchemaFieldDescription.
+// isField returns true if the given path points to a CollectionFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
@@ -538,13 +539,13 @@ func containsLetter(s string) bool {
 	return false
 }
 
-// SetActiveCollectionVersion activates all collection versions with the given schema version, and deactivates all
-// those without it (if they share the same schema root).
+// SetActiveCollectionVersion activates all collection versions with the given collection version, and deactivates all
+// those without it (if they share the same collection root).
 //
-// This will affect all operations interacting with the schema where a schema version is not explicitly
+// This will affect all operations interacting with the collection where a collection version is not explicitly
 // provided.  This includes GQL queries and Collection operations.
 //
-// It will return an error if the provided schema version ID does not exist.
+// It will return an error if the provided collection version ID does not exist.
 func (db *DB) setActiveCollectionVersion(
 	ctx context.Context,
 	versionID string,
@@ -552,12 +553,12 @@ func (db *DB) setActiveCollectionVersion(
 	if versionID == "" {
 		return ErrCollectionVersionIDEmpty
 	}
-	col, err := description.GetCollectionByID(ctx, versionID)
+	col, err := description.GetCollectionByID(ctx, db.collectionRepository, versionID)
 	if err != nil {
 		return err
 	}
 
-	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, col.CollectionID)
+	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, col.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -572,7 +573,7 @@ func (db *DB) setActiveCollectionVersion(
 			}
 
 			col.IsActive = true
-			err = description.SaveCollection(ctx, col)
+			err = description.SaveCollection(ctx, db.collectionRepository, col)
 			if err != nil {
 				return err
 			}
@@ -587,7 +588,7 @@ func (db *DB) setActiveCollectionVersion(
 		}
 
 		col.IsActive = false
-		err = description.SaveCollection(ctx, col)
+		err = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
 			return err
 		}
@@ -607,8 +608,8 @@ func (db *DB) setActiveCollectionVersion(
 		}
 	}
 
-	// Load the schema into the clients (e.g. GQL)
-	return db.loadSchema(ctx)
+	// Load the collection definitions into the clients (e.g. GQL)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
@@ -620,7 +621,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	return description.HasMigrations(ctx, newActiveCol.CollectionID, newActiveCol.VersionID)
+	return description.HasMigrations(ctx, db.collectionRepository, newActiveCol.CollectionID, newActiveCol.VersionID)
 }
 
 func (db *DB) deleteCollectionVersions(
@@ -667,24 +668,12 @@ func (db *DB) deleteCollectionVersion(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) error {
-	hasDocs, err := collectionHasDocuments(ctx, version)
-	if err != nil {
-		return err
-	}
-	if hasDocs {
-		// If the collection contains any documents, we do not allow deletion of any version in the
-		// collection - they must first delete the documents locally, and then delete the collection.
-		//
-		// This is thought to be much safer than allowing document deletion along with the collection.
-		return NewErrCannotDeleteCollectionWithDocs(version.Name, version.VersionID)
-	}
-
-	err = validateCollectionDoesNotHaveHigherVersion(ctx, version)
+	err := db.validateCollectionDoesNotHaveHigherVersion(ctx, version)
 	if err != nil {
 		return err
 	}
 
-	err = description.DeleteCollection(ctx, db.lockSet, version)
+	err = description.DeleteCollection(ctx, db.collectionRepository, version)
 	if err != nil {
 		return err
 	}
@@ -694,56 +683,14 @@ func (db *DB) deleteCollectionVersion(
 		return err
 	}
 
-	return nil
+	return deleteCollectionDefinitionHeads(ctx, version)
 }
 
-func collectionHasDocuments(
-	ctx context.Context,
-	version client.CollectionVersion,
-) (bool, error) {
-	if !version.IsMaterialized {
-		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
-		// state was properly disposed of (it should have been).
-		return false, nil
-	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
-	if err != nil {
-		return false, err
-	}
-
-	var prefixKey keys.Key
-	if version.Query.HasValue() {
-		prefixKey = keys.NewViewCacheColPrefix(shortID)
-	} else {
-		prefixKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
-		}
-	}
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefixKey.ToDS(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return false, errors.Join(err, iter.Close())
-	}
-
-	hasValue, err := iter.Next()
-	if err != nil {
-		return false, errors.Join(err, iter.Close())
-	}
-
-	return hasValue, iter.Close()
-}
-
-func validateCollectionDoesNotHaveHigherVersion(
+func (db *DB) validateCollectionDoesNotHaveHigherVersion(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) error {
-	allVersions, err := description.GetCollectionsByCollectionID(ctx, version.CollectionID)
+	allVersions, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, version.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -795,6 +742,73 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// deleteCollectionDefinitionHeads removes the collection-definition and
+// field-definition CRDT heads owned by this exact version - one head per
+// field that has a FieldID, plus the collection-level head keyed by the
+// version's VersionID.
+//
+// We construct the keys directly from the version object rather than scanning
+// the headstore by collection name: the keys we want to remove are fully
+// determined by the data we already hold (CollectionName, FieldName, FieldID,
+// VersionID), so the query and the wider scan it implied are both avoidable.
+// A no-op delete - i.e. the head currently points at some other version's
+// CID because the version we're processing is not the current tip - is the
+// right outcome here: the surviving version still owns that head and we must
+// not touch it.
+func deleteCollectionDefinitionHeads(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	headstore := txn.Headstore()
+
+	for _, field := range version.Fields {
+		if field.FieldID == "" {
+			// Secondary / object-only fields have no backing block and so no head.
+			continue
+		}
+		fieldCid, err := cid.Parse(field.FieldID)
+		if err != nil {
+			return err
+		}
+		key := keys.HeadstoreFieldDefinition{
+			CollectionName: version.Name,
+			FieldName:      field.Name,
+			Cid:            fieldCid,
+		}
+		if err := deleteHeadIfPresent(ctx, headstore, key.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	versionCid, err := cid.Parse(version.VersionID)
+	if err != nil {
+		return err
+	}
+	colKey := keys.HeadstoreCollectionDefinition{
+		CollectionName: version.Name,
+		Cid:            versionCid,
+	}
+	return deleteHeadIfPresent(ctx, headstore, colKey.Bytes())
+}
+
+// deleteHeadIfPresent removes the head key if it exists.
+// Note: we gate on `Has` rather than rely on a silent no-op.
+func deleteHeadIfPresent(
+	ctx context.Context,
+	headstore corekv.ReaderWriter,
+	key []byte,
+) error {
+	has, err := headstore.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return nil
+	}
+	return headstore.Delete(ctx, key)
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
@@ -873,7 +887,7 @@ func finalizeRelations(
 
 			if isOneToOne && field.IsPrimary {
 				newIndex, err := ensureOneToOneUniqueIndex(
-					newCollections[i].AddIndexes,
+					newCollections[i].NewIndexes,
 					nil,
 					newCol.Definition.Name,
 					field.Name,
@@ -882,7 +896,7 @@ func finalizeRelations(
 					return err
 				}
 				if newIndex != nil {
-					newCollections[i].AddIndexes = append(newCollections[i].AddIndexes, *newIndex)
+					newCollections[i].NewIndexes = append(newCollections[i].NewIndexes, *newIndex)
 				}
 			}
 		}
@@ -910,11 +924,11 @@ func isOneToOneRelation(
 
 // findIndexWithFirstField checks if an index exists where the given field is the first field.
 func findIndexWithFirstField(
-	addIndexes []client.IndexAddRequest,
+	newIndexes []client.NewIndexRequest,
 	existingIndexes []client.IndexDescription,
 	fieldName string,
 ) (isUnique bool, found bool) {
-	for _, index := range addIndexes {
+	for _, index := range newIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
 			return index.Unique, true
 		}
@@ -931,18 +945,18 @@ func findIndexWithFirstField(
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
 // If no user-defined index exists, it adds one automatically.
 func ensureOneToOneUniqueIndex(
-	addIndexes []client.IndexAddRequest,
+	newIndexes []client.NewIndexRequest,
 	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
-) (newIndex *client.IndexAddRequest, err error) {
+) (newIndex *client.NewIndexRequest, err error) {
 	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
 	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
-	isUnique, hasIndex := findIndexWithFirstField(addIndexes, existingIndexes, idFieldName)
+	isUnique, hasIndex := findIndexWithFirstField(newIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
-		isUnique, hasIndex = findIndexWithFirstField(addIndexes, existingIndexes, relationFieldName)
+		isUnique, hasIndex = findIndexWithFirstField(newIndexes, existingIndexes, relationFieldName)
 	}
 
 	if hasIndex {
@@ -953,7 +967,7 @@ func ensureOneToOneUniqueIndex(
 	}
 
 	// No user-defined index exists, add one automatically
-	return &client.IndexAddRequest{
+	return &client.NewIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
 	}, nil
@@ -961,12 +975,12 @@ func ensureOneToOneUniqueIndex(
 
 // getOneToOneIndexRequestsForPatch returns index add requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
-// standard schema creation flow that calls finalizeRelations.
-// Returns a map of collectionName -> []IndexAddRequest for indexes that need to be added.
+// standard collection creation flow that calls finalizeRelations.
+// Returns a map of collectionName -> []NewIndexRequest for indexes that need to be added.
 func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
-) (map[string][]client.IndexAddRequest, error) {
+) (map[string][]client.NewIndexRequest, error) {
 	allColsByName := make(map[string]client.CollectionVersion)
 	maps.Copy(allColsByName, existingColsByName)
 
@@ -974,7 +988,7 @@ func getOneToOneIndexRequestsForPatch(
 		allColsByName[col.Name] = col
 	}
 
-	result := make(map[string][]client.IndexAddRequest)
+	result := make(map[string][]client.NewIndexRequest)
 
 	for _, col := range newColsByID {
 		existingCol := existingColsByName[col.Name]

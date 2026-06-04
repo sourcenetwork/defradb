@@ -38,20 +38,6 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
-func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
-	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
-
-	tx, err := db.NewConcurrentTxn(readOnly)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	txs.Store(tx.ID(), tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
-}
-
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
@@ -62,14 +48,14 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.Load(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
 	err = dsTxn.Commit()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	txs.Delete(txID)
@@ -86,7 +72,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
@@ -136,25 +122,27 @@ func (h *txHandler) bindRoutes(router *Router) {
 		WithSchema(openapi3.NewInt64Schema())
 
 	txnCommit := openapi3.NewOperation()
-	txnCommit.OperationID = "transaction_commit"
+	txnCommit.OperationID = "commit_transaction"
 	txnCommit.Description = "Commit a transaction"
 	txnCommit.Tags = []string{"transaction"}
 	txnCommit.AddParameter(txnIdPathParam)
 	txnCommit.Responses = openapi3.NewResponses()
 	txnCommit.Responses.Set("200", successResponse)
 	txnCommit.Responses.Set("400", errorResponse)
+	txnCommit.Responses.Set("404", errorResponse)
+	txnCommit.Responses.Set("409", errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
-	txnDiscard.OperationID = "transaction_discard"
+	txnDiscard.OperationID = "discard_transaction"
 	txnDiscard.Description = "Discard a transaction"
 	txnDiscard.Tags = []string{"transaction"}
 	txnDiscard.AddParameter(txnIdPathParam)
 	txnDiscard.Responses = openapi3.NewResponses()
 	txnDiscard.Responses.Set("200", successResponse)
 	txnDiscard.Responses.Set("400", errorResponse)
+	txnDiscard.Responses.Set("404", errorResponse)
 
 	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
-	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
 	router.AddRoute("/tx/{id}", http.MethodPost, txnCommit, h.Commit)
 	router.AddRoute("/tx/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }

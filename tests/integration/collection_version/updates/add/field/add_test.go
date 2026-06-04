@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package field
 
@@ -17,11 +18,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldWithAdd(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -63,11 +64,11 @@ func TestSchemaUpdatesAddFieldWithAdd(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldWithAddAfterSchemaUpdate(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String
 					}
@@ -116,6 +117,51 @@ func TestSchemaUpdatesAddFieldWithAddAfterSchemaUpdate(t *testing.T) {
 					},
 				},
 				NonOrderedResults: true,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test covers a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
+// it only occurred when adding a field to a collection that already has a secondary relationship.
+// The bug has been fixed, but the test remains as coverage of this case is important.
+func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelationship(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						publisher: Publisher @primary
+					}
+
+					type Publisher {
+						book: Book
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{"op":"add","path":"/Publisher/Fields/-","value":{"Name":"name","Kind":"String"}}]`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Publisher {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"name": "Penguin Books",
+						},
+					},
+				},
 			},
 		},
 	}

@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -23,8 +24,8 @@ import (
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
-	NonExistentCollectionID         int    = -1
-	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+	NonExistentCollectionID   int    = -1
+	NonExistentCollectionRoot string = "NonExistentCollectionRoot"
 )
 
 // AddCollectionSubscription sets up a subscription on the given node to the given collection.
@@ -111,7 +112,7 @@ func addCollectionSubscription(
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 
@@ -147,7 +148,7 @@ func deleteCollectionSubscription(
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
 

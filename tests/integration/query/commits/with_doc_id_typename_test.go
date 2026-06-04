@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package commits
 
@@ -18,6 +19,8 @@ import (
 )
 
 func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -37,18 +40,9 @@ func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid":        "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"__typename": "Commit",
-						},
-						{
-							"cid":        "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"__typename": "Commit",
-						},
-						{
-							"cid":        "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"__typename": "Commit",
-						},
+						{"cid": uniqueCid, "__typename": "Commit"},
+						{"cid": uniqueCid, "__typename": "Commit"},
+						{"cid": uniqueCid, "__typename": "Commit"},
 					},
 				},
 				NonOrderedResults: true,

@@ -36,12 +36,6 @@ type TxnStore interface {
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
 	NewTxn(readOnly bool) (Txn, error)
-
-	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
-	//
-	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
-	// can safely operate on it concurrently.
-	NewConcurrentTxn(readOnly bool) (Txn, error)
 }
 
 type Store interface {
@@ -173,15 +167,15 @@ type Store interface {
 		opts ...options.Enumerable[options.VerifySignatureOptions],
 	) error
 
-	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
+	// AddCollection takes the provided GQL SDL and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//
-	// All schema types provided must not exist prior to calling this, and they may not reference existing
-	// types previously defined.
-	AddSchema(
+	// All collection types provided must not exist prior to calling this, and they may not reference
+	// existing types previously defined.
+	AddCollection(
 		ctx context.Context,
 		sdl string,
-		opts ...options.Enumerable[options.AddSchemaOptions],
+		opts ...options.Enumerable[options.AddCollectionOptions],
 	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
@@ -211,6 +205,23 @@ type Store interface {
 		opts ...options.Enumerable[options.PatchCollectionOptions],
 	) error
 
+	// DeleteCollection deletes the active versions of the collections with the given names.
+	//
+	// All names are removed atomically in a single patch; if any removal leaves the schema
+	// in an invalid state (e.g. one of the remaining collections still references a deleted
+	// one via a relation) the entire operation is rolled back.
+	//
+	// Only the latest (head) version of each named collection is deleted per call. If a
+	// collection has multiple versions, earlier versions must be deleted separately after
+	// each head is removed.
+	//
+	// It will error if any named collection contains documents - they must be deleted first.
+	DeleteCollection(
+		ctx context.Context,
+		names []string,
+		opts ...options.Enumerable[options.DeleteCollectionOptions],
+	) error
+
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
 	// those share the same CollectionID as the activated CollectionVersion.
 	//
@@ -237,7 +248,7 @@ type Store interface {
 	//
 	//
 	// A GQL SDL that matches its output type must also be provided.  There can only be one `type` declaration,
-	// any nested objects must be declared as embedded/schema-only types using the `interface` keyword.
+	// any nested objects must be declared as embedded-only types using the `interface` keyword.
 	// Relations must only be specified on the parent side of the relationship.  For example:
 	//
 	// type AuthorView {
@@ -316,7 +327,7 @@ type Store interface {
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
 	//
-	// Inactive collections are not returned by default unless a specific schema version ID
+	// Inactive collections are not returned by default unless a specific collection version ID
 	// is provided.
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls

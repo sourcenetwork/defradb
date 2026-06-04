@@ -40,7 +40,7 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	return &httpClient{
 		client:  http.DefaultClient,
 		baseURL: baseURL,
-		apiURL:  baseURL.JoinPath("/api/v0"),
+		apiURL:  baseURL.JoinPath("/api/" + Version),
 	}, nil
 }
 

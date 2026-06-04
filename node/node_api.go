@@ -40,10 +40,17 @@ func (n *Node) startAPI(ctx context.Context) error {
 	}
 	log.InfoContext(ctx,
 		fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.server.Address(), http.PlaygroundEnabled))
-	log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/v0/graphql", n.server.Address()))
+	log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/graphql", n.server.Address()))
 	go func() {
 		if err := n.server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
 			log.ErrorContextE(ctx, "HTTP server stopped", err)
+			// Surface the error once so the CLI / embedding application
+			// can trigger shutdown instead of waiting on a signal for
+			// a process that is already half-dead. #4735.
+			select {
+			case n.apiErrCh <- err:
+			default:
+			}
 		}
 	}()
 	n.APIURL = n.server.Address()

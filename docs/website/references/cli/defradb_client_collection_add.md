@@ -1,58 +1,46 @@
 ## defradb client collection add
 
-Add a new document.
+Add new collection
 
 ### Synopsis
 
-Add a new document.
-		
-Options:
-	-i, --identity 
-		Marks the document as private and set the identity as the owner. The access to the document
-		and permissions are controlled by ACP (Access Control Policy).
+Add new collection.
 
-	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
-		symmetric key for encryption using AES-GCM.
-	
-	--encrypt-fields
-		Comma-separated list of fields to encrypt. If set, DefraDB will encrypt only the specified fields
-		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
-		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
-		will be encrypted with the same key.
-		
+Collection type with a '@policy(id:".." resource: "..")' linked will only be accepted if:
+  - ACP is available (i.e. ACP is not disabled).
+  - The specified resource adheres to the document resource interface (DRI).
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client collection add [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
+defradb client collection add [sdl] [flags]
 ```
 
 ### Examples
 
 ```
-Add from string1:  
-  defradb client collection add --name User '{ "name": "Bob" }'
+add from an argument string:  
+  defradb client collection add 'type Foo { ... }'
 
-Add from string, with identity:  
-  defradb client collection add --name User '{ "name": "Bob" }' \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+add from file:  
+  defradb client collection add -f schema.graphql
 
-Add multiple from string:  
-  defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
+add from multiple files:  
+  defradb client collection add -f schema1.graphql -f schema2.graphql
 
-Add from file:  
-  defradb client collection add --name User -f document.json
+add from multiple files (comma-separated):  
+  defradb client collection add -f schema1.graphql,schema2.graphql
 
-Add from stdin:  
-  cat document.json | defradb client collection add --name User -
+add from stdin:  
+  cat schema.graphql | defradb client collection add -
 ```
 
 ### Options
 
 ```
-  -e, --encrypt                  Flag to enable encryption of the document
-      --encrypt-fields strings   Comma-separated list of fields to encrypt
-  -f, --file string              File containing document(s)
-  -h, --help                     help for add
+  -f, --file strings   File to load a collection definition from
+  -h, --help           help for add
 ```
 
 ### Options inherited from parent commands

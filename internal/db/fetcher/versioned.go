@@ -139,7 +139,7 @@ func (vf *VersionedFetcher) Init(
 	// such as collection definitions and short-ids are available.
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrCreateVersionIterator(err)
 	}
 	dst := datastore.SystemstoreFrom(root)
 	for {
@@ -159,7 +159,7 @@ func (vf *VersionedFetcher) Init(
 
 		err = dst.Set(ctx, iter.Key(), value)
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrCopyVersionedData(err), iter.Close())
 		}
 	}
 	err = iter.Close()
@@ -452,8 +452,13 @@ func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 
 // Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
-	if err := vf.root.Close(); err != nil {
-		return err
+	// vf.root may be nil if Init failed (or was never called) before
+	// allocating it. Close is reachable in that state through the
+	// MultiVersioned cleanup path that tracks children eagerly.
+	if vf.root != nil {
+		if err := vf.root.Close(); err != nil {
+			return err
+		}
 	}
 
 	if vf.Fetcher != nil {

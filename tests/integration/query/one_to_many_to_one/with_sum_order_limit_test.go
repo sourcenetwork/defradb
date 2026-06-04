@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package one_to_many_to_one
 
@@ -15,13 +16,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
@@ -71,15 +69,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
@@ -127,15 +127,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
@@ -170,15 +172,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})

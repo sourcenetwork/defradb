@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -146,11 +146,26 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 	return ch
 }
 
-func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
-	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
-		if h, ok := txnHandleMap.Load(txn); ok {
-			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
-		}
+// getNodeOrTxnHandle is a helper function that gets a node or transaction handle from a context
+func getNodeOrTxnHandle(nodeHandle cgo.Handle, ctx context.Context) C.uintptr_t {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if !hadTxn {
+		return C.uintptr_t(nodeHandle)
 	}
-	return C.uintptr_t(h)
+
+	ctxn, ok := txn.(*Transaction)
+	if !ok {
+		return C.uintptr_t(nodeHandle)
+	}
+
+	return C.uintptr_t(ctxn.handle)
+}
+
+// setCtxTxnFromCollection is a helper function that checks if a collection has a transaction
+// attached to it, and if so, attaches it to the context
+func setCtxTxnFromCollection(ctx context.Context, c *Collection) context.Context {
+	if c.txn.HasValue() {
+		return datastore.CtxSetTxn(ctx, c.txn.Value())
+	}
+	return ctx
 }

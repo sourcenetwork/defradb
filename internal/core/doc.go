@@ -310,3 +310,28 @@ func (m *DocumentMapping) TryToFindIndexFromRenderKey(key string) (int, bool) {
 	}
 	return -1, false
 }
+
+// DocFromClient creates a core.Doc from a client.Document using the provided DocumentMapping.
+//
+// The mapping is used to determine the correct field indices for each field in the document.
+// Fields that are not found in the mapping are skipped.
+func DocFromClient(clientDoc *client.Document, mapping *DocumentMapping) (Doc, error) {
+	doc := mapping.NewDoc()
+	doc.SetID(clientDoc.ID().String())
+
+	for fieldName, indexes := range mapping.IndexesByName {
+		if len(indexes) == 0 {
+			continue
+		}
+
+		val, err := clientDoc.Get(fieldName)
+		if err != nil {
+			// Field not set in the document, skip it
+			continue
+		}
+
+		doc.Fields[indexes[0]] = val
+	}
+
+	return doc, nil
+}

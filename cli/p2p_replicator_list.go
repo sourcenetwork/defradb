@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeP2PReplicatorListCommand(ctx context.Context) *cobra.Command {
@@ -25,7 +28,8 @@ A replicator synchronizes one or all collection(s) from this instance to another
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			reps, err := cliClient.ListReplicators(cmd.Context())
+			opt := options.WithIdentity(options.ListReplicators(), identity.FromContext(cmd.Context()))
+			reps, err := cliClient.ListReplicators(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

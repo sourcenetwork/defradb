@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package commits
 
@@ -15,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsWithField(t *testing.T) {
@@ -37,7 +39,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -95,7 +97,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -129,7 +131,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *test
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":                 "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
@@ -176,6 +178,10 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 
 func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -188,7 +194,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "age"}}, 
+							filter: {fieldName: {_eq: "age"}},
 							cid: "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q"
 						) {
 							cid
@@ -222,8 +228,8 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "name"}}, 
-							cid: "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q"
+							filter: {fieldName: {_eq: "name"}},
+							cid: "{{.CID0_0_0}}"
 						) {
 							cid
 						}
@@ -252,8 +258,8 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits (
-							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 
-							cid: "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q"
+							filter: {fieldName: {_eq: "NOT_A_FIELD"}},
+							cid: "{{.CID0_0_0}}"
 						) {
 							cid
 						}

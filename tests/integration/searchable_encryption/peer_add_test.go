@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package searchable_encryption
 
@@ -21,7 +22,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
+func TestEncryptedIndexNewPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -29,8 +30,8 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int @encryptedIndex
@@ -55,7 +56,7 @@ func TestEncryptedIndexAddPeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
+func TestEncryptedIndexNewPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -63,15 +64,15 @@ func TestEncryptedIndexAddPeer_AfterAddRequest_ShouldGenerateGQL(t *testing.T) {
 			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						name: String 
 						age: Int
 					}
 				`,
 			},
-			testUtils.AddEncryptedIndex{
+			testUtils.NewEncryptedIndex{
 				FieldName: "age",
 			},
 			&action.Request{

@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -20,6 +22,8 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -43,6 +47,7 @@ func (db *DB) ExecRequest(
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
+
 	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
@@ -75,7 +80,7 @@ func (db *DB) GetCollectionByName(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -83,6 +88,7 @@ func (db *DB) GetCollectionByName(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
@@ -93,22 +99,26 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeGetCollectionPerm); err != nil {
 		return nil, err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	var err error
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.getCollections(ctx, opt)
+	return db.getCollections(ctx, opt, !hadTxn)
 }
 
 // ListIndexes gets all the indexes in the database.
@@ -121,7 +131,7 @@ func (db *DB) ListIndexes(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeListIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -129,6 +139,7 @@ func (db *DB) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listIndexDescriptions(ctx)
@@ -144,7 +155,7 @@ func (db *DB) ListAllEncryptedIndexes(
 
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListAllPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListAllEncryptedIndexPerm); err != nil {
 		return nil, err
 	}
 
@@ -152,27 +163,28 @@ func (db *DB) ListAllEncryptedIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
-// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// AddCollection takes the provided GQL SDL and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
-// All schema types provided must not exist prior to calling this, and they may not reference existing
-// types previously defined.
-func (db *DB) AddSchema(
+// All collection types provided must not exist prior to calling this, and they may not
+// reference existing types previously defined.
+func (db *DB) AddCollection(
 	ctx context.Context,
-	schemaString string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return nil, err
 	}
 
@@ -180,9 +192,10 @@ func (db *DB) AddSchema(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	cols, err := db.addSchema(ctx, schemaString)
+	cols, err := db.addCollection(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +206,7 @@ func (db *DB) AddSchema(
 	return cols, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -201,7 +214,7 @@ func (db *DB) AddSchema(
 // individual operations defined in the patch do not need to result in a valid state, only the net result
 // of the full patch.
 //
-// The collections (including the schema version ID) will only be updated if any changes have actually
+// The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
 
@@ -216,7 +229,7 @@ func (db *DB) PatchCollection(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -224,6 +237,7 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.patchCollection(ctx, patchString, migration)
@@ -232,6 +246,73 @@ func (db *DB) PatchCollection(
 	}
 
 	return txn.Commit()
+}
+
+func (db *DB) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
+		return err
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+
+	defer txn.Discard()
+
+	err = db.deleteCollection(ctx, names, opt.ActiveOnly)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
+func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) error {
+	if len(names) == 0 {
+		return client.ErrCollectionNameRequired
+	}
+
+	seen := make(map[string]struct{}, len(names))
+	ops := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		col, err := db.getCollectionByName(ctx, name)
+		if err != nil {
+			return err
+		}
+
+		if activeOnly {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+			continue
+		}
+
+		allVersions, err := description.GetCollectionsByCollectionID(
+			ctx, db.collectionRepository, col.Version().CollectionID,
+		)
+		if err != nil {
+			return err
+		}
+		for _, v := range allVersions {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
+		}
+	}
+
+	patch := "[" + strings.Join(ops, ",") + "]"
+	return db.patchCollection(ctx, patch, immutable.None[model.Lens]())
 }
 
 func (db *DB) SetActiveCollectionVersion(
@@ -244,7 +325,7 @@ func (db *DB) SetActiveCollectionVersion(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
 		return err
 	}
 
@@ -252,6 +333,7 @@ func (db *DB) SetActiveCollectionVersion(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
@@ -273,7 +355,7 @@ func (db *DB) SetMigration(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeMigrationSetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSetMigrationPerm); err != nil {
 		return "", err
 	}
 
@@ -307,7 +389,7 @@ func (db *DB) AddLens(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeAddLensPerm); err != nil {
 		return "", err
 	}
 
@@ -315,6 +397,7 @@ func (db *DB) AddLens(
 	if err != nil {
 		return "", err
 	}
+
 	defer txn.Discard()
 
 	lensID, err := db.addLens(ctx, lens)
@@ -340,7 +423,7 @@ func (db *DB) ListLenses(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeListLensPerm); err != nil {
 		return nil, err
 	}
 
@@ -348,9 +431,15 @@ func (db *DB) ListLenses(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.listLenses(ctx)
+	lenses, err := db.listLenses(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lenses, nil
 }
 
 func (db *DB) AddView(
@@ -364,7 +453,7 @@ func (db *DB) AddView(
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeAddViewPerm); err != nil {
 		return nil, err
 	}
 
@@ -395,7 +484,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewRefreshPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeRefreshViewPerm); err != nil {
 		return err
 	}
 
@@ -405,6 +494,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opt)

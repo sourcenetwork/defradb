@@ -1,11 +1,11 @@
 ## defradb client lens set
 
-Set a schema migration within DefraDB
+Set a collection migration within DefraDB
 
 ### Synopsis
 
-Set a migration from a source schema version to a destination schema version for
-all collections that are on the given source schema version within the local DefraDB node.
+Set a migration from a source collection version to a destination collection version for
+all collections that are on the given source collection version within the local DefraDB node.
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
@@ -20,10 +20,10 @@ set from an argument string:
   defradb client lens set bae123 bae456 '{"lenses": [...'
 
 set from file:  
-  defradb client lens set bae123 bae456 -f schema_migration.lens
+  defradb client lens set bae123 bae456 -f collection_migration.lens
 
 add from stdin:  
-  cat schema_migration.lens | defradb client lens set bae123 bae456 -
+  cat collection_migration.lens | defradb client lens set bae123 bae456 -
 ```
 
 ### Options
@@ -57,5 +57,5 @@ add from stdin:
 
 ### SEE ALSO
 
-* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the collection migration system of a running DefraDB instance
 

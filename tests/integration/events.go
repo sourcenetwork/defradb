@@ -1,12 +1,13 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -47,7 +48,10 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 
 	// all previous documents should be merged on the subscriber node
 	for key, val := range s.Nodes[cfg.SourceNodeID].P2P.ActualDAGHeads {
-		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = val.CID
+		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = append(
+			s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key],
+			state.ExpectedHead{CID: val.CID, SourceNodeID: cfg.SourceNodeID},
+		)
 	}
 
 	// update node connections and replicators
@@ -147,7 +151,9 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -201,10 +207,20 @@ func waitForUpdateEvents(
 	}
 }
 
-// waitForMergeEvents waits for all expected heads to be merged to all nodes.
-//
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
+//
+// Source-aware tracking handles two distinct cases:
+//
+//   - Linear chains (same source): Multiple updates from the same source node form a DAG chain
+//     where later CIDs include earlier CIDs as ancestors. When the latest CID is merged, all
+//     its ancestors are merged too. We only need to wait for the latest CID per source per key.
+//
+//   - Concurrent branches (different sources): CIDs from different source nodes are concurrent
+//     branches — neither subsumes the other. Each needs its own merge event.
+//
+// During pending set construction, for each (key, source) pair we keep only the latest CID
+// (last appended), since earlier CIDs from the same source are ancestors subsumed by the latest.
 func waitForMergeEvents(s *state.State, action WaitForSync) {
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
@@ -212,23 +228,44 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue // node is closed
 		}
 
-		expect := node.P2P.ExpectedDAGHeads
-
-		// remove any heads that are already merged
-		// up to the expected head
-		for key, val := range node.P2P.ActualDAGHeads {
-			if head, ok := expect[key]; ok && head.String() == val.CID.String() {
-				delete(expect, key)
+		// Build pending set keeping only the latest CID per (key, source) pair.
+		// Heads are appended in order, so the last head from each source is the latest.
+		// Earlier CIDs from the same source are ancestors that will be merged
+		// automatically when the latest CID's DAG is synced.
+		// key → sourceNodeID → latest CID
+		latestPerSource := make(map[string]map[int]cid.Cid)
+		for key, heads := range node.P2P.ExpectedDAGHeads {
+			for _, head := range heads {
+				if latestPerSource[key] == nil {
+					latestPerSource[key] = make(map[int]cid.Cid)
+				}
+				latestPerSource[key][head.SourceNodeID] = head.CID
 			}
 		}
 
-		// wait for all expected heads to be merged
-		//
-		// the order of merges does not matter as we only
-		// expect the latest head to eventually be merged
-		//
-		// unexpected merge events are ignored
-		for len(expect) > 0 {
+		pending := make(map[string]map[cid.Cid]struct{})
+		for key, sourceMap := range latestPerSource {
+			for _, latestCID := range sourceMap {
+				if actual, ok := node.P2P.ActualDAGHeads[key]; ok && actual.CID == latestCID {
+					continue
+				}
+				if pending[key] == nil {
+					pending[key] = make(map[cid.Cid]struct{})
+				}
+				pending[key][latestCID] = struct{}{}
+			}
+		}
+
+		// Clear consumed expectations so that subsequent WaitForSync
+		// calls don't re-wait for already-consumed CIDs.
+		node.P2P.ExpectedDAGHeads = make(map[string][]state.ExpectedHead)
+
+		totalPending := 0
+		for _, cidSet := range pending {
+			totalPending += len(cidSet)
+		}
+
+		for totalPending > 0 {
 			var evt event.MergeComplete
 			select {
 			case msg, ok := <-node.Event.Merge.Message():
@@ -241,12 +278,27 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
-			head, ok := expect[getMergeEventKey(evt.Merge)]
-			if ok && head.String() == evt.Merge.Cid.String() {
-				delete(expect, getMergeEventKey(evt.Merge))
-			}
-			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
+			key := getMergeEventKey(evt.Merge)
+			node.P2P.ActualDAGHeads[key] = state.DocHeadState{
 				CID: evt.Merge.Cid,
+			}
+
+			cidSet, keyPending := pending[key]
+			if !keyPending {
+				continue
+			}
+
+			if _, expected := cidSet[evt.Merge.Cid]; !expected {
+				// This is an intermediate merge (e.g., an ancestor CID that was merged
+				// as part of syncing a later CID). Just consume it.
+				continue
+			}
+
+			delete(cidSet, evt.Merge.Cid)
+			totalPending--
+
+			if len(cidSet) == 0 {
+				delete(pending, key)
 			}
 		}
 	}
@@ -331,15 +383,21 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
+		)
 	}
 
-	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+	updateConnectedNodes(s, nodeID, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
 }
 
-// updateConnectedNodes updates the expected document heads of connected nodes
+// updateConnectedNodes updates the expected document heads of connected nodes.
+// originNodeID is the node that authored the update and stays constant through recursion.
+// nodeID is the current node being visited in the connection graph traversal.
 func updateConnectedNodes(
 	s *state.State,
+	originNodeID int,
 	nodeID int,
 	nodesCovered map[int]struct{},
 	ident immutable.Option[state.Identity],
@@ -364,30 +422,20 @@ func updateConnectedNodes(
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 
-		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
-	}
-}
-
-// getEventsForUpdateDoc returns a map of docIDs that should be
-// published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	docMap := make(map[string]any)
-	err := json.Unmarshal([]byte(action.Doc), &docMap)
-	require.NoError(s.T, err)
-
-	return map[string]struct{}{
-		docID.String(): {},
+		updateConnectedNodes(s, originNodeID, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 
@@ -418,7 +466,7 @@ func getEventsForUpdateWithFilter(
 // getUpdateEventKey gets the identifier to which this event is scoped to.
 //
 // For example, if this is scoped to a document, the document ID will be
-// returned.  If it is scoped to a schema, the schema root will be returned.
+// returned.  If it is scoped to a collection, the collection root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
 		return evt.CollectionID
@@ -430,7 +478,7 @@ func getUpdateEventKey(evt event.Update) string {
 // getMergeEventKey gets the identifier to which this event is scoped to.
 //
 // For example, if this is scoped to a document, the document ID will be
-// returned.  If it is scoped to a schema, the schema root will be returned.
+// returned.  If it is scoped to a collection, the collection root will be returned.
 func getMergeEventKey(evt event.Merge) string {
 	if evt.DocID == "" {
 		return evt.CollectionID

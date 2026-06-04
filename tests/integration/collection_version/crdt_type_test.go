@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package collection_version
 
@@ -19,14 +20,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestSchemaAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Int @crdt(type: pncounter)
 					}
@@ -56,14 +57,14 @@ func TestSchemaAdd_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Float @crdt(type: pncounter)
 					}
@@ -93,14 +94,14 @@ func TestSchemaAdd_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
+func TestCollectionAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: String @crdt(type: pncounter)
 					}
@@ -113,14 +114,14 @@ func TestSchemaAdd_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
+func TestCollectionAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Int @crdt(type: "invalid")
 					}
@@ -133,11 +134,14 @@ func TestSchemaAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Int @crdt(type: pcounter)
 					}
@@ -167,11 +171,14 @@ func TestSchemaAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Float @crdt(type: pcounter)
 					}
@@ -201,11 +208,14 @@ func TestSchemaAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Float64 @crdt(type: pcounter)
 					}
@@ -235,11 +245,14 @@ func TestSchemaAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
+func TestCollectionAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: Float32 @crdt(type: pcounter)
 					}
@@ -269,11 +282,11 @@ func TestSchemaAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaAdd_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
+func TestCollectionAdd_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						points: String @crdt(type: pcounter)
 					}

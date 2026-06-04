@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package one_to_one
 
@@ -34,7 +35,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -80,7 +81,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -159,7 +160,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -195,7 +196,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -235,7 +236,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -279,7 +280,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -322,7 +323,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -357,7 +358,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -367,6 +368,54 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 					invalidBookID,
 				),
 				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubID + "\"",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestMutationUpdateOneToOne_WithGQLRequest_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			&action.Request{
+				Request: `
+					mutation($docID: [ID!], $bookID: ID) {
+						update_Author(docID: $docID, input: {
+							_publishedID: $bookID
+						}) {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Variables: immutable.Some(map[string]any{
+					"docID":  testUtils.NewDocIndex(1, 0),
+					"bookID": testUtils.NewDocIndex(0, 0),
+				}),
+				Results: map[string]any{
+					"update_Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"published": map[string]any{
+								"name": "Painted House",
+							},
+						},
+					},
+				},
 			},
 		},
 	}

@@ -54,8 +54,8 @@ func (n *deleteNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	deleteOpts := options.WithIdentity(options.CollectionDelete(), n.p.identity)
-	_, err = n.collection.Delete(
+	deleteOpts := options.WithIdentity(options.DeleteDocument(), n.p.identity)
+	_, err = n.collection.DeleteDocument(
 		n.p.ctx,
 		docID,
 		deleteOpts,

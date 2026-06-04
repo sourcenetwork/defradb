@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
@@ -59,9 +58,9 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
-	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
+	dstCol, err := description.GetCollectionByID(ctx, db.collectionRepository, cfg.DestinationCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			dstFound = false
 		} else {
 			return "", err
@@ -69,9 +68,9 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	srcFound := true
-	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
+	sourceCol, err := description.GetCollectionByID(ctx, db.collectionRepository, cfg.SourceCollectionVersionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			srcFound = false
 		} else {
 			return "", err
@@ -86,7 +85,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 			IsPlaceholder:  true,
 		}
 
-		err = description.SaveCollection(ctx, sourceCol)
+		err = description.SaveCollection(ctx, db.collectionRepository, sourceCol)
 		if err != nil {
 			return "", err
 		}
@@ -117,7 +116,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		Transform:          immutable.Some(id),
 	})
 
-	err = description.SaveCollection(ctx, dstCol)
+	err = description.SaveCollection(ctx, db.collectionRepository, dstCol)
 	if err != nil {
 		return "", err
 	}
@@ -150,9 +149,9 @@ func (db *DB) shouldReindexAfterMigration(
 		return true, dstCol, nil
 	}
 
-	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
+	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, dstCol.CollectionID)
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
+		if errors.Is(err, client.ErrCollectionNotFound) {
 			return false, client.CollectionVersion{}, nil
 		}
 		return false, client.CollectionVersion{}, err
@@ -160,6 +159,7 @@ func (db *DB) shouldReindexAfterMigration(
 
 	history, err := description.GetTargetedCollectionHistory(
 		ctx,
+		db.collectionRepository,
 		activeCol.CollectionID,
 		activeCol.VersionID,
 	)

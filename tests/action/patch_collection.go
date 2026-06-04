@@ -1,20 +1,27 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
 import (
+	"fmt"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -44,6 +51,14 @@ type PatchCollection struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
+
+	// Skip this test if the following error is returned when executing this action.
+	//
+	// This should only be used for rare, known, unrecoverable errors.
+	SkipTestOnError error
 }
 
 var _ Action = (*PatchCollection)(nil)
@@ -65,12 +80,38 @@ func (a *PatchCollection) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			err = txn.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		} else {
+			err = node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
+		}
+
+		if a.SkipTestOnError != nil && err != nil && errors.Is(err, a.SkipTestOnError) {
+			a.s.SkipTest = fmt.Sprintf("known error: %s", err.Error())
+			return
+		}
+
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+
+		// Track any new collection versions created by the patch so that tests
+		// can reference them via {{.CollectionVersionID<N>}} templates.
+		for _, node := range a.s.Nodes {
+			for _, col := range node.Collections {
+				if col != nil {
+					appendCollectionVersion(a.s, col.Version().VersionID)
+				}
+			}
+		}
+	}
 }

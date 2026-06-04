@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -17,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -44,12 +46,17 @@ type ListLenses struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*ListLenses)(nil)
 var _ Stateful = (*ListLenses)(nil)
 
 func (a *ListLenses) Execute() {
+	var err error
+
 	if a.ExpectedError != "" && a.ExpectedLenses != nil {
 		a.s.T.Fatalf("ExpectedError and ExpectedLenses cannot both be set")
 	}
@@ -64,7 +71,16 @@ func (a *ListLenses) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		lenses, err := node.ListLenses(a.s.Ctx, opts)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var lenses map[string]model.Lens
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			lenses, err = txn.ListLenses(a.s.Ctx, opts)
+		} else {
+			lenses, err = node.ListLenses(a.s.Ctx, opts)
+		}
 
 		if a.ExpectedError != "" {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

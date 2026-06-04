@@ -62,7 +62,7 @@ func (h *blockHandler) verifySignature(w http.ResponseWriter, r *http.Request) {
 	opt := options.WithIdentity(options.VerifySignature(), identity.FromContext(r.Context()))
 	err = db.VerifySignature(r.Context(), cid, pubKey, opt)
 	if err != nil {
-		responseJSON(w, http.StatusBadRequest, errorResponse{err})
+		responseJSON(w, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 

@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -67,6 +68,16 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	},
 }
 
+// replace resolves template placeholders like {{.CollectionVersionID0}} in the input string.
+func replace(s *state.State, nodeId int, input string) string {
+	if !strings.Contains(input, "{{") {
+		return input
+	}
+
+	replacements := replaceMap(s, nodeId, []string{input})
+	return replacements[input]
+}
+
 func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string {
 	templateData := map[string]string{}
 	for _, datasetGenerator := range templateDataGenerators {
@@ -77,7 +88,7 @@ func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string
 
 	result := make(map[string]string, len(inputSet))
 	for _, input := range inputSet {
-		// WARNING - This does not respect the full Go-replace syntax, at the momement it is a
+		// WARNING - This does not respect the full Go-replace syntax, at the moment it is a
 		// very simple/lightweight key-lookup.  We may want to change this in the future.
 
 		inputID := strings.TrimPrefix(input, "{{.")

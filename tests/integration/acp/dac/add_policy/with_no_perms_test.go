@@ -1,12 +1,13 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package test_acp_dac_add_policy
 
@@ -17,11 +18,11 @@ import (
 )
 
 // Note: Eventhough this file shows we can load a policy, that has no permissions. It is important
-// to know that DRI always has a set of permissions it requires. Therefore when a schema is loaded,
-// and it has policyID and resource defined on the collection, then before we accept that schema
+// to know that DRI always has a set of permissions it requires. Therefore when a collection is added,
+// and it has policyID and resource defined on the collection, then before we accept that collection
 // the validation occurs.
-// Inotherwords, we do not allow a non-DRI compliant policy to be specified on a collection schema, if
-// it is the schema would be rejected. However we register the policy with acp even if
+// Inotherwords, we do not allow a non-DRI compliant policy to be specified on a collection, if
+// it is the collection would be rejected. However we register the policy with acp even if
 // the policy is not DRI compliant.
 
 func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {

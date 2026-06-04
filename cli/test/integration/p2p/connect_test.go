@@ -35,7 +35,7 @@ var (
 func TestConnect_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.P2PConnect{
+			&action.ConnectP2P{
 				Addresses:   []string{addressWithInvalidPeerID},
 				ExpectError: "invalid value \"invalid-peer-id\" for protocol p2",
 			},
@@ -48,7 +48,7 @@ func TestConnect_WithInvalidPeerID_ShouldFail(t *testing.T) {
 func TestConnect_WithInvalidIP_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.P2PConnect{
+			&action.ConnectP2P{
 				Addresses:   []string{addressWithInvalidIP},
 				ExpectError: "invalid value \"999.999.999.999\" for protocol ip4",
 			},
@@ -66,7 +66,7 @@ func TestConnect_WithInvalidIP_ShouldFail(t *testing.T) {
 func TestConnect_WithSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.P2PConnect{
+			&action.ConnectP2P{
 				Addresses:   []string{addresses[0]},
 				ExpectError: "connect: connection refused",
 			},
@@ -84,7 +84,7 @@ func TestConnect_WithSinglePeer_ShouldSucceed(t *testing.T) {
 func TestConnect_WithMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.P2PConnect{
+			&action.ConnectP2P{
 				Addresses:   addresses,
 				ExpectError: "connect: connection refused",
 			},

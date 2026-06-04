@@ -29,7 +29,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -48,10 +48,10 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -60,7 +60,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Add(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -119,7 +119,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -139,10 +139,10 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -151,7 +151,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Add(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -210,7 +210,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -230,10 +230,10 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -242,7 +242,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Add(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -283,7 +283,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 		book: [Book]
@@ -304,10 +304,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 31}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Book")
@@ -321,15 +321,15 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	doc4, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Game of chains", "author": "`+doc1ID+`"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Add(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
-	err = col2.Add(ctx, doc4)
+	err = col2.AddDocument(ctx, doc4)
 	require.NoError(t, err)
 
 	err = doc1.Set(ctx, "age", 31)
 	require.NoError(t, err)
 
-	err = col1.Update(ctx, doc1)
+	err = col1.UpdateDocument(ctx, doc1)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -389,7 +389,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -409,10 +409,10 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc1)
+	err = col1.AddDocument(ctx, doc1)
 	require.NoError(t, err)
 
-	err = col1.Add(ctx, doc2)
+	err = col1.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
@@ -421,7 +421,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
-	err = col2.Add(ctx, doc3)
+	err = col2.AddDocument(ctx, doc3)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(true)
@@ -470,7 +470,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -529,7 +529,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key1, err := client.NewDocIDFromString(addressID)
 	require.NoError(t, err)
-	_, err = col1.Get(ctx, key1)
+	_, err = col1.GetDocument(ctx, key1)
 	require.NoError(t, err)
 
 	col2, err = db.getCollectionByName(ctx, "User")
@@ -537,12 +537,12 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key2, err := client.NewDocIDFromString(bobID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key2)
+	_, err = col2.GetDocument(ctx, key2)
 	require.NoError(t, err)
 
 	key3, err := client.NewDocIDFromString(johnID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key3)
+	_, err = col2.GetDocument(ctx, key3)
 	require.NoError(t, err)
 }
 
@@ -552,7 +552,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -588,7 +588,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -624,7 +624,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}
@@ -661,7 +661,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	_, err = db.AddSchema(ctx, `type User {
+	_, err = db.AddCollection(ctx, `type User {
 		name: String
 		age: Int
 	}

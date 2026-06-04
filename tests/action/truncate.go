@@ -1,16 +1,20 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
 import (
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -37,23 +41,41 @@ type Truncate struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*Truncate)(nil)
 var _ Stateful = (*Truncate)(nil)
 
 func (a *Truncate) Execute() {
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index := range nodes {
-		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionIndex]
+	hadTxn := a.TransactionID.HasValue()
 
-		opts := options.CollectionTruncate()
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			var err error
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		nodeID := nodeIDs[index]
+		var collections []client.Collection
+		var err error
+		collections = MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collection := collections[a.CollectionIndex]
+
+		opts := options.TruncateCollection()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := collection.Truncate(a.s.Ctx, opts)
+		err = collection.Truncate(a.s.Ctx, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

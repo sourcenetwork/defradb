@@ -123,9 +123,9 @@ start:
 client\:dump:
 	./build/defradb client dump
 
-.PHONY: client\:add-schema
-client\:add-schema:
-	./build/defradb client schema add -f examples/schema/bookauthpub.graphql
+.PHONY: client\:collection-add
+client\:collection-add:
+	./build/defradb client collection add -f examples/collection/bookauthpub.graphql
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
@@ -403,7 +403,9 @@ validate\:circleci:
 .PHONY: lint
 lint:
 	golangci-lint config verify --config=tools/configs/golangci.yaml
+	golangci-lint config verify --config=tools/configs/golangci-tests.yaml
 	golangci-lint run --config=tools/configs/golangci.yaml
+	golangci-lint run --config=tools/configs/golangci-tests.yaml ./tests/...
 	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix
@@ -459,10 +461,18 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 
-.PHONY build-c-shared-linux:
-build-c-shared-linux:
-	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+.PHONY: build-c-static-windows
+build-c-static-windows:
+	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
+	
+.PHONY: build-c-shared-linux build-c-shared-linux-deb
 
+build-c-shared-linux:
+	@MAKE_DEB=0 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+build-c-shared-linux\:deb:
+	@MAKE_DEB=1 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/
 # The minimum supported API level is 21, which is the default.

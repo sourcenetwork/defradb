@@ -2634,3 +2634,7 @@ directive @encryptedIndex(
     "The type of searchable encryption (currently only 'equality' is supported)."
     type: String = "equality"
 ) on FIELD_DEFINITION
+
+
+"@exhaustive signals that complete/exhaustive results are desired even at performance cost."
+directive @exhaustive on QUERY

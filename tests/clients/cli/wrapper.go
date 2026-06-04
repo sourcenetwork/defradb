@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package cli
 
@@ -32,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
@@ -375,13 +377,13 @@ func (w *Wrapper) BasicExport(
 	return err
 }
 
-func (w *Wrapper) AddSchema(
+func (w *Wrapper) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
-	args := []string{"client", "schema", "add"}
-	args = append(args, schema)
+	args := []string{"client", "collection", "add"}
+	args = append(args, sdl)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
@@ -415,6 +417,24 @@ func (w *Wrapper) PatchCollection(
 	}
 
 	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	args := []string{"client", "collection", "delete"}
+
+	opt := utils.NewOptions(opts...)
+	if opt.ActiveOnly {
+		args = append(args, "--active-only")
+	}
+	args = append(args, strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -582,6 +602,8 @@ func (w *Wrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
@@ -606,9 +628,17 @@ func (w *Wrapper) GetCollections(
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		txnOpt = immutable.Some(txn)
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	cols := make([]client.Collection, len(colDesc))
 	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
+		cols[i] = &Collection{w.cmd, v, txnOpt}
 	}
 	return cols, err
 }
@@ -726,30 +756,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 }
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "create"}
-	if readOnly {
-		args = append(args, "--read-only")
-	}
-
-	data, err := w.cmd.execute(context.Background(), args)
-	if err != nil {
-		return nil, err
-	}
-	var res http.CreateTxResponse
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
-}
-
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "create"}
-	args = append(args, "--concurrent")
-
+	args := []string{"client", "tx", "new"}
 	if readOnly {
 		args = append(args, "--read-only")
 	}

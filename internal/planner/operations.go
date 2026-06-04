@@ -40,6 +40,7 @@ var (
 	_ planNode = (*similarityNode)(nil)
 
 	_ MultiNode = (*parallelNode)(nil)
+	_ MultiNode = (*sequenceNode)(nil)
 	_ MultiNode = (*topLevelNode)(nil)
 	_ MultiNode = (*operationNode)(nil)
 )

@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -14,11 +15,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // AddView is an action that will add a new View.
@@ -50,6 +53,9 @@ type AddView struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddView)(nil)
@@ -110,7 +116,18 @@ func (a *AddView) Execute() {
 			transformCID := replace(a.s, nodeID, a.TransformCID.Value())
 			opts.SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var results []client.CollectionVersion
+		var err error
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			results, err = txn.AddView(a.s.Ctx, a.Query, sdl, opts)
+		} else {
+			results, err = node.AddView(a.s.Ctx, a.Query, sdl, opts)
+		}
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
@@ -121,5 +138,7 @@ func (a *AddView) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(a.s)
+	if !a.TransactionID.HasValue() {
+		RefreshCollections(a.s)
+	}
 }

@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,66 +12,60 @@ package cli
 
 import (
 	"context"
+	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
-	var argDocID string
-	var filter string
+	var activeOnly bool
 	var cmd = &cobra.Command{
-		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
-		Short: "Delete documents by docID or filter.",
-		Long:  `Delete documents by docID or filter and lists the number of documents deleted.`,
+		Use:   "delete [collectionNames]",
+		Short: "Delete collections",
+		Long: `Delete one or more collections by name.
+
+A single name, or a comma-separated list of names, may be provided. All named
+collections are removed atomically in a single operation. This can be used to
+delete collections that reference each other via relations, since deleting them
+one at a time would leave a dangling reference and be rolled back.
+
+By default, every version of each named collection is deleted (active head and
+all earlier versions). Pass --active-only to delete only the latest (head) version
+and keep earlier versions intact.
+
+The named collections must not contain any documents. Delete all documents first
+before deleting the collection.`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetContextCollection(cmd)
-			if !ok {
-				return cmd.Usage()
+			names := strings.Split(args[0], ",")
+			for i, name := range names {
+				names[i] = strings.TrimSpace(name)
 			}
 
-			ctx := cmd.Context()
+			cliClient := mustGetContextCLIClient(cmd)
 
-			switch {
-			case argDocID != "":
-				docID, err := client.NewDocIDFromString(argDocID)
-				if err != nil {
-					return err
-				}
-
-				deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
-
-				_, err = col.Delete(ctx, docID, deleteOpt)
-				return err
-			case filter != "":
-				deleteWithFilterOpt := options.WithIdentity(
-					options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
-
-				res, err := col.DeleteWithFilter(ctx, filter, deleteWithFilterOpt)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, res)
-			default:
-				return ErrNoDocIDOrFilter
-			}
+			opt := options.WithIdentity(options.DeleteCollection(), identity.FromContext(cmd.Context()))
+			opt.SetActiveOnly(activeOnly)
+			return cliClient.DeleteCollection(cmd.Context(), names, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "delete by docID",
-		`defradb client collection delete  --name User --docID bae-123`)
+	cmd.Flags().BoolVar(&activeOnly, "active-only", false,
+		"Delete only the active head version of each named collection (default deletes every version)")
 
-	EmbedCLIExample(ctx, cmd, "delete by docID with identity",
-		`defradb client collection delete --name User --docID bae-123 \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
+	EmbedCLIExample(ctx, cmd, "delete every version of a single collection",
+		`defradb client collection delete Users`)
 
-	EmbedCLIExample(ctx, cmd, "delete by filter",
-		`defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'`)
+	EmbedCLIExample(ctx, cmd,
+		"delete every version of multiple collections in one call (this can be used to delete collections "+
+			"that reference each other via relations)",
+		`defradb client collection delete Users,Books`)
 
-	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
-	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	EmbedCLIExample(ctx, cmd, "delete only the active head version, keeping earlier versions",
+		`defradb client collection delete --active-only Users`)
+
 	return cmd
 }

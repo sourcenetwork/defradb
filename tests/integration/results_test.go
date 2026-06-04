@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -206,4 +207,48 @@ func TestSameValueMatcher_ResetState_ShouldReset(t *testing.T) {
 	got, err = matcher.Match(2)
 	assert.NoError(t, err)
 	assert.True(t, got)
+}
+
+func TestValidCID_WithValidCIDString_Matches(t *testing.T) {
+	matcher := ValidCID()
+
+	got, err := matcher.Match("bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey")
+
+	assert.NoError(t, err)
+	assert.True(t, got)
+}
+
+func TestValidCID_WithDifferentValidCIDString_Matches(t *testing.T) {
+	matcher := ValidCID()
+
+	got, err := matcher.Match("bafyreiezbmxih5ds6nw3z3txmeqlpwarqkcgr7ozywcolqethunrgw6svq")
+
+	assert.NoError(t, err)
+	assert.True(t, got)
+}
+
+func TestValidCID_WithInvalidString_DoesNotMatch(t *testing.T) {
+	matcher := ValidCID()
+
+	got, err := matcher.Match("not-a-cid")
+
+	assert.NoError(t, err)
+	assert.False(t, got)
+}
+
+func TestValidCID_WithEmptyString_DoesNotMatch(t *testing.T) {
+	matcher := ValidCID()
+
+	got, err := matcher.Match("")
+
+	assert.NoError(t, err)
+	assert.False(t, got)
+}
+
+func TestValidCID_WithNonStringValue_Errors(t *testing.T) {
+	matcher := ValidCID()
+
+	_, err := matcher.Match(42)
+
+	assert.Error(t, err)
 }

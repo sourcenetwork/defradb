@@ -36,7 +36,7 @@ type P2P interface {
 	Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error
 
 	// AddReplicator adds a replicator to the persisted list or adds
-	// schemas if the replicator already exists.
+	// collections if the replicator already exists.
 	AddReplicator(
 		ctx context.Context,
 		addresses []string,
@@ -44,7 +44,7 @@ type P2P interface {
 	) error
 
 	// DeleteReplicator deletes a replicator from the persisted list
-	// or specific schemas if they are specified.
+	// or specific collections if they are specified.
 	DeleteReplicator(
 		ctx context.Context,
 		id string,
@@ -52,7 +52,7 @@ type P2P interface {
 	) error
 
 	// ListReplicators returns the full list of replicators with their
-	// subscribed schemas.
+	// subscribed collections.
 	ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]Replicator, error)
 
 	// AddP2PCollections adds the given collections to the P2P system and

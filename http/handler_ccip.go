@@ -65,7 +65,7 @@ func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	}
 	resultJSON, err := json.Marshal(result.GQL)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	resultHex := "0x" + hex.EncodeToString(resultJSON)
@@ -92,13 +92,14 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 
 	ccipPost := openapi3.NewOperation()
 	ccipPost.Description = "CCIP POST endpoint"
-	ccipPost.OperationID = "ccip_post"
+	ccipPost.OperationID = "post_ccip"
 	ccipPost.Tags = []string{"ccip"}
 	ccipPost.RequestBody = &openapi3.RequestBodyRef{
 		Value: ccipRequest,
 	}
 	ccipPost.AddResponse(200, ccipResponse)
 	ccipPost.Responses.Set("400", errorResponse)
+	ccipPost.Responses.Set("500", errorResponse)
 
 	dataPathParam := openapi3.NewPathParameter("data").
 		WithDescription("Hex encoded request data").
@@ -110,12 +111,13 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 
 	ccipGet := openapi3.NewOperation()
 	ccipGet.Description = "CCIP GET endpoint"
-	ccipGet.OperationID = "ccip_get"
+	ccipGet.OperationID = "get_ccip"
 	ccipGet.Tags = []string{"ccip"}
 	ccipGet.AddParameter(dataPathParam)
 	ccipGet.AddParameter(senderPathParam)
 	ccipGet.AddResponse(200, ccipResponse)
 	ccipGet.Responses.Set("400", errorResponse)
+	ccipGet.Responses.Set("500", errorResponse)
 
 	router.AddRoute("/ccip/{sender}/{data}", http.MethodGet, ccipGet, h.ExecCCIP)
 	router.AddRoute("/ccip", http.MethodPost, ccipPost, h.ExecCCIP)

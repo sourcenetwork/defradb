@@ -204,7 +204,7 @@ func (s *testSetup) createMockCollectionWithDocument(ctx context.Context) *clien
 
 	// Setup Get method with default return
 	doc, err := client.NewDocFromMap(ctx, map[string]any{"age": 21}, mockCollection.Version())
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
+	mockCollection.EXPECT().GetDocument(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
 
 	return mockCollection
 }

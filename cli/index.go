@@ -20,7 +20,7 @@ func MakeIndexCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "index",
 		Short: "Manage collections' indexes of a running DefraDB instance",
-		Long:  `Manage (add, delete, or list) collection indexes on a DefraDB node.`,
+		Long:  `Manage (new, delete, or list) collection indexes on a DefraDB node.`,
 	}
 
 	return cmd

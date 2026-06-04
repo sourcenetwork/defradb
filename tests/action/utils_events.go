@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -17,9 +18,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 // eventTimeout is the amount of time to wait
@@ -49,7 +51,8 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -113,6 +116,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			collectionID = i
 		}
 	}
+
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()
@@ -133,15 +137,21 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
+		)
 	}
 
-	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+	updateConnectedNodes(s, nodeID, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
 }
 
-// updateConnectedNodes updates the expected document heads of connected nodes
+// updateConnectedNodes updates the expected document heads of connected nodes.
+// originNodeID is the node that authored the update and stays constant through recursion.
+// nodeID is the current node being visited in the connection graph traversal.
 func updateConnectedNodes(
 	s *state.State,
+	originNodeID int,
 	nodeID int,
 	nodesCovered map[int]struct{},
 	ident immutable.Option[state.Identity],
@@ -166,21 +176,27 @@ func updateConnectedNodes(
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 
-		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
+		updateConnectedNodes(s, originNodeID, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 
 // getUpdateEventKey gets the identifier to which this event is scoped to.
 //
 // For example, if this is scoped to a document, the document ID will be
-// returned.  If it is scoped to a schema, the schema root will be returned.
+// returned.  If it is scoped to a collection, the collection root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
 		return evt.CollectionID

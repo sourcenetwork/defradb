@@ -30,7 +30,7 @@ func MakeTxCommitCommand(ctx context.Context) *cobra.Command {
 
 			id, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return err
+				return NewErrParsingArgument("id", err)
 			}
 			tx, err := http.NewTransaction(cfg.GetString("api.address"), id)
 			if err != nil {

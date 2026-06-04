@@ -28,10 +28,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const pubsubTopic = "encryption"
@@ -51,18 +51,28 @@ type PubSubServer interface {
 }
 
 type CollectionRetriever interface {
-	RetrieveCollectionFromDocID(context.Context, string) (client.Collection, error)
+	RetrieveCollectionFromDocID(
+		context.Context,
+		string,
+		immutable.Option[identity.Identity],
+	) (client.Collection, error)
 }
 
 type pubSubService struct {
-	ctx          context.Context
-	peerID       string
-	pubsub       PubSubServer
-	encStore     *ipldEncStorage
-	nodeACP      acpDB.NACInfo
+	ctx      context.Context
+	peerID   string
+	pubsub   PubSubServer
+	encStore *ipldEncStorage
+	// nodeACP returns the current NAC state. It is a getter rather than a captured
+	// value because NAC may be initialised AFTER the KMS service is constructed
+	nodeACP      func() acpDB.NACInfo
 	documentACP  immutable.Option[dac.DocumentACP]
 	colRetriever CollectionRetriever
-	nodeDID      string
+	// nodeIdentity is this node's own identity. Used to authorize node-internal
+	// operations (e.g. NAC-gated collection lookups while answering KMS key
+	// requests). It is NOT the requester's identity, that travels on the wire
+	// in fetchEncryptionKeyRequest.Identity and is consulted for DAC.
+	nodeIdentity immutable.Option[identity.Identity]
 }
 
 var _ Service = (*pubSubService)(nil)
@@ -88,10 +98,10 @@ func NewPubSubService(
 	peerID string,
 	pubsub PubSubServer,
 	encstore datastore.Blockstore,
-	nodeACP acpDB.NACInfo,
+	nodeACP func() acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
-	nodeDID string,
+	nodeIdentity immutable.Option[identity.Identity],
 ) (*pubSubService, error) {
 	s := &pubSubService{
 		ctx:          ctx,
@@ -101,7 +111,7 @@ func NewPubSubService(
 		nodeACP:      nodeACP,
 		documentACP:  documentACP,
 		colRetriever: colRetriever,
-		nodeDID:      nodeDID,
+		nodeIdentity: nodeIdentity,
 	}
 	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
 	if err != nil {
@@ -135,11 +145,22 @@ func (s *pubSubService) handleRequestFromPeer(peerID string, topic string, msg [
 }
 
 func (s *pubSubService) prepareFetchEncryptionKeyRequest(
+	ctx context.Context,
 	cids []cidlink.Link,
 	ephemeralPublicKey []byte,
 ) (*fetchEncryptionKeyRequest, error) {
+	// Prefer the caller's identity from ctx; fall back to the node identity
+	// for paths that don't carry a user identity (e.g. gossip-triggered fetches).
+	ident := iIdentity.FromContext(ctx)
+	if !ident.HasValue() {
+		ident = s.nodeIdentity
+	}
+	var didBytes []byte
+	if ident.HasValue() {
+		didBytes = []byte(ident.Value().DID())
+	}
 	req := &fetchEncryptionKeyRequest{
-		Identity:           []byte(s.nodeDID),
+		Identity:           didBytes,
 		EphemeralPublicKey: ephemeralPublicKey,
 	}
 
@@ -163,7 +184,7 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 	}
 
 	ephPubKeyBytes := ephPrivKey.PublicKey().Bytes()
-	req, err := s.prepareFetchEncryptionKeyRequest(cids, ephPubKeyBytes)
+	req, err := s.prepareFetchEncryptionKeyRequest(ctx, cids, ephPubKeyBytes)
 	if err != nil {
 		return err
 	}
@@ -302,6 +323,11 @@ func (s *pubSubService) getEncryptionKeysLocally(
 	ctx context.Context,
 	req *fetchEncryptionKeyRequest,
 ) ([][]byte, error) {
+	var actorIdentity immutable.Option[identity.Identity]
+	if len(req.Identity) > 0 {
+		actorIdentity = immutable.Some(identity.FromDID(string(req.Identity)))
+	}
+
 	blocks := make([][]byte, 0, len(req.Links))
 	for _, link := range req.Links {
 		encBlock, err := s.encStore.get(ctx, link)
@@ -314,12 +340,29 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		hasPerm, err := s.doesIdentityHaveDocPermission(ctx, string(req.Identity), encBlock)
-		if err != nil {
-			return nil, err
-		}
-		if !hasPerm {
-			continue
+		docID := string(encBlock.DocID)
+		if docID != "" {
+			// Doc-scoped block: gate on per-doc DAC.
+			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+			if err != nil {
+				return nil, err
+			}
+			if !hasPerm {
+				continue
+			}
+		} else {
+			// Collection-scoped block (e.g. a `@branchable` collection's own head).
+			// The block doesn't carry a CollectionID, so we can't run a per-collection
+			// DAC check. Fall back to a node-level NAC gate: if the requester has no
+			// authorized access on this node, refuse to serve. When NAC is not enabled
+			// this is a no-op, preserving existing behaviour.
+			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
+			if err != nil {
+				return nil, err
+			}
+			if !hasNodeAccess {
+				continue
+			}
 		}
 
 		encBlockBytes, err := encBlock.Marshal()
@@ -332,30 +375,62 @@ func (s *pubSubService) getEncryptionKeysLocally(
 	return blocks, nil
 }
 
+// doesIdentityHaveDocPermission asks whether actorIdentity may read docID.
+// The collection lookup runs as the node itself (NAC), the DAC check runs as
+// the requester. docID must be non-empty.
 func (s *pubSubService) doesIdentityHaveDocPermission(
 	ctx context.Context,
-	actorIdentity string,
-	entBlock *coreblock.Encryption,
+	actorIdentity immutable.Option[identity.Identity],
+	docID string,
 ) (bool, error) {
 	if !s.documentACP.HasValue() {
 		return true, nil
 	}
 
-	docID := string(entBlock.DocID)
-	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID)
+	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID, s.nodeIdentity)
 	if err != nil {
 		return false, err
 	}
 
 	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.FromDID(actorIdentity)),
-		s.nodeACP,
+		actorIdentity,
+		s.nodeACP(),
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,
 		docID,
 	)
+}
+
+// doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to
+// perform a read on this node, used as a fallback gate for encryption blocks
+// that have no DocID (e.g. a `@branchable` collection's own head, where there
+// is no per-doc ACL to consult). Returns true unconditionally when NAC is not
+// enabled.
+func (s *pubSubService) doesIdentityHaveNodeReadAccess(
+	ctx context.Context,
+	actorIdentity immutable.Option[identity.Identity],
+) (bool, error) {
+	var actorDID string
+	if actorIdentity.HasValue() {
+		actorDID = actorIdentity.Value().DID()
+	}
+
+	err := acpDB.CheckNodeOperationAccess(
+		ctx,
+		actorDID,
+		s.nodeACP(),
+		acpTypes.NodeReadDocumentPerm,
+		acpTypes.NodeACPObject,
+	)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
+		return false, nil
+	}
+	return false, err
 }
 
 func encodeToBase64(data []byte) []byte {

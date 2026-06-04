@@ -47,7 +47,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 
 	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
-	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
+	url := "http://localhost:9181/api/ccip/" + path.Join(sender, data)
 
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
@@ -86,7 +86,7 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 
 	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
-	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
+	url := "http://localhost:9181/api/ccip/" + path.Join(sender, data)
 
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 
 	data := "invalid_hex_data"
 	sender := "0x0000000000000000000000000000000000000000"
-	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
+	url := "http://localhost:9181/api/ccip/" + path.Join(sender, data)
 
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -167,7 +167,7 @@ func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -181,7 +181,7 @@ func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
 func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", nil)
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/ccip", nil)
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -203,7 +203,7 @@ func setupDatabase(t *testing.T) DB {
 	cdb, err := db.NewDB(ctx, store, adminInfo)
 	require.NoError(t, err)
 
-	_, err = cdb.AddSchema(ctx, `type User {
+	_, err = cdb.AddCollection(ctx, `type User {
 		name: String
 	}`)
 	require.NoError(t, err)
@@ -214,13 +214,13 @@ func setupDatabase(t *testing.T) DB {
 	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Add(ctx, doc)
+	err = col.AddDocument(ctx, doc)
 	require.NoError(t, err)
 
 	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
-	err = col.Add(ctx, doc2)
+	err = col.AddDocument(ctx, doc2)
 	require.NoError(t, err)
 
 	return cdb

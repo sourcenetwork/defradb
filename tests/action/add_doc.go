@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
@@ -81,17 +82,31 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	hadTxn := a.TransactionID.HasValue()
+
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*AddDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(
+		*AddDoc,
+		client.TxnStore,
+		int,
+		client.Collection,
+		immutable.Option[client.Txn],
+	) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = addDocViaColSave
@@ -107,10 +122,35 @@ func (a *AddDoc) Execute() {
 	var docIDs []client.DocID
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		var err error
+		a.DoNotWaitForEvent = true
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		require.NoError(a.s.T, err)
+		txnOption = immutable.Some(txn)
+	}
+
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
-		err := withRetryOnNode(
+		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
+
+		collection := collections[a.CollectionID]
+
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error
@@ -119,11 +159,14 @@ func (a *AddDoc) Execute() {
 					node,
 					nodeID,
 					collection,
+					txnOption,
 				)
 				return err
 			},
 		)
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
@@ -141,7 +184,8 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
+	// If there was an explicit transaction, then we will not be waiting for update events.
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -151,26 +195,28 @@ func addDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
 		return nil, err
 	}
+
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
+		err := collection.SaveDocument(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
+
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -179,13 +225,12 @@ func addDocViaColAdd(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseAddDocs(ctx, a, collection)
 	if err != nil {
@@ -194,13 +239,13 @@ func addDocViaColAdd(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.AddMany(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
+		err := collection.AddManyDocuments(ctx, docs, makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Add(ctx, docs[0], makeDocAddOptions(a.s, a, nodeIndex)...)
+		err := collection.AddDocument(ctx, docs[0], makeDocAddOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -210,6 +255,7 @@ func addDocViaColAdd(
 	for i, doc := range docs {
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -218,7 +264,13 @@ func addDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
+
 	var input string
 
 	paramName := request.Input
@@ -249,20 +301,18 @@ func addDocViaGQL(
 	key := fmt.Sprintf("add_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
-
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
 	if identOption.HasValue() {
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(ctx, req, reqOption)
+	var result *client.RequestResult
+	if txn.HasValue() {
+		result = txn.Value().ExecRequest(ctx, req, reqOption)
+	} else {
+		result = node.ExecRequest(ctx, req, reqOption)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -328,28 +378,28 @@ func makeDocSaveOptions(
 	s *state.State,
 	action *AddDoc,
 	nodeIndex int,
-) []options.Enumerable[options.CollectionSaveOptions] {
-	opts := options.CollectionSave().
+) []options.Enumerable[options.SaveDocumentOptions] {
+	opts := options.SaveDocument().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Enumerable[options.CollectionSaveOptions]{opts}
+	return []options.Enumerable[options.SaveDocumentOptions]{opts}
 }
 
 func makeDocAddOptions(
 	s *state.State,
 	action *AddDoc,
 	nodeIndex int,
-) []options.Enumerable[options.CollectionAddOptions] {
-	opts := options.CollectionAdd().
+) []options.Enumerable[options.AddDocumentOptions] {
+	opts := options.AddDocument().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Enumerable[options.CollectionAddOptions]{opts}
+	return []options.Enumerable[options.AddDocumentOptions]{opts}
 }

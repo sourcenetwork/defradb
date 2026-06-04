@@ -35,9 +35,11 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
+	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeVerifySignaturePerm); err != nil {
 		return err
 	}
 
@@ -46,7 +48,14 @@ func (db *DB) VerifySignature(
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	// If we have a transaction, we will use it to set the blockstore. Otherwise, we will use the db.
+	var blockStore *bsadapter.Adapter
+	if hadTxn {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(txn.Rootstore(), db.blockStoreChunkSize)}
+	} else {
+		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+	}
+
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true
@@ -67,7 +76,7 @@ func (db *DB) VerifySignature(
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).WithIdentity(opt.Identity).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID, opt.Identity)
 		if err != nil {
 			return err
 		}

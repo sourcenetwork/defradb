@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -200,7 +201,8 @@ func syncDocs(s *state.State, action SyncDocs) {
 		s.DocIDsLock.RUnlock()
 	}
 
-	collectionName := s.Nodes[action.NodeID].Collections[action.CollectionID].Name()
+	collections := node.Collections
+	collectionName := collections[action.CollectionID].Name()
 
 	syncOpts := options.SyncDocuments()
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID)
@@ -229,7 +231,10 @@ func syncDocs(s *state.State, action SyncDocs) {
 		for i, docInd := range action.DocIDs {
 			nodeID := action.SourceNodes[i]
 			docID := s.DocIDs[action.CollectionID][docInd].String()
-			node.P2P.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID
+			node.P2P.ExpectedDAGHeads[docID] = append(
+				node.P2P.ExpectedDAGHeads[docID],
+				state.ExpectedHead{CID: s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID, SourceNodeID: nodeID},
+			)
 		}
 		s.DocIDsLock.RUnlock()
 	}

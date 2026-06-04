@@ -38,6 +38,6 @@ Create, commit, and discard DefraDB transactions
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client tx commit](defradb_client_tx_commit.md)	 - Commit a DefraDB transaction.
-* [defradb client tx create](defradb_client_tx_create.md)	 - Create a new DefraDB transaction.
 * [defradb client tx discard](defradb_client_tx_discard.md)	 - Discard a DefraDB transaction.
+* [defradb client tx new](defradb_client_tx_new.md)	 - Create a new DefraDB transaction.
 

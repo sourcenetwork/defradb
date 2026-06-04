@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,23 +15,21 @@ import (
 )
 
 const (
-	errNegativeReplicatorTime       = "negative time intervals are not allowed for replicator retries"
-	errAmbiguousCollection          = "more than one collection matches the given criteria"
-	errNoMatchingCollection         = "no collection matches the given criteria"
-	errNoDocIDOrFilter              = "operation requires a DocID or filter"
-	errInvalidAscensionOrder        = "invalid ascension order: expected ASC or DESC"
-	errInvalidIndexFieldDescription = "invalid or malformed field description"
-	errInvalidSubscriptionID        = "invalid subscription ID"
-	errGettingSubscription          = "could not retrieve subscription"
-	errInvalidCGOHandle             = "invalid handle"
+	errNegativeReplicatorTime           = "negative time intervals are not allowed for replicator retries"
+	errAmbiguousCollection              = "more than one collection matches the given criteria"
+	errNoDocIDOrFilter                  = "operation requires a DocID or filter"
+	errInvalidAscensionOrder            = "invalid ascension order: expected ASC or DESC"
+	errInvalidIndexFieldDescription     = "invalid or malformed field description"
+	errInvalidSubscriptionID            = "invalid subscription ID"
+	errGettingSubscription              = "could not retrieve subscription"
+	errInvalidCGOHandle                 = "invalid handle"
+	errIdentiityIsNil                   = "identity is nil"
+	errIdentityDoesNotContainPrivateKey = "identity does not contain a private key"
+	errInvalidPrivateKeyLength          = "private key must be 32 bytes"
 )
 
 func NewErrAmbiguousCollection() error {
 	return errors.New(errAmbiguousCollection)
-}
-
-func NewErrNoMatchingCollection() error {
-	return errors.New(errNoMatchingCollection)
 }
 
 func NewErrInvalidIndexFieldDescription(field string) error {

@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package peer_test
 
@@ -27,8 +28,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -52,7 +53,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -87,8 +88,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -112,7 +113,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the second node only, and allow the value to sync
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -146,8 +147,8 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -177,14 +178,14 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node to 60
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the second node to 45
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -219,8 +220,8 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			// This last node is not marked for peer sync
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -244,7 +245,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node to 60
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -312,8 +313,8 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 			// This node is unmapped, updates applied to this node should
 			// not be synced to the other nodes.
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -331,7 +332,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the third (unmapped) node to 60
 				NodeID: immutable.Some(2),
 				Doc: `{
@@ -398,8 +399,8 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -429,37 +430,37 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Age": 61
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Age": 62
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 45
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 46
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 47
@@ -493,8 +494,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -523,7 +524,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 					"Age": 31
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  1,
 				Doc: `{
@@ -562,8 +563,8 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 						Age: Int
@@ -592,7 +593,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 31
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 60
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -600,7 +601,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 61
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -608,7 +609,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 61
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 62
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -616,7 +617,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 62
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update Fred to 60
 				NodeID: immutable.Some(0),
 				DocID:  1,
@@ -624,7 +625,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 60
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 45 on second node
 				NodeID: immutable.Some(1),
 				DocID:  0,
@@ -632,7 +633,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 45
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 46 on second node
 				NodeID: immutable.Some(1),
 				DocID:  0,
@@ -640,7 +641,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					"Age": 46
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John to 47 on second node
 				NodeID: immutable.Some(1),
 				DocID:  0,

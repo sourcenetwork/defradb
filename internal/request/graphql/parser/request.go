@@ -109,6 +109,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error) {
 	// Set the default states of the directives if they aren't found and no error(s) occur.
 	explainDirective := immutable.None[request.ExplainType]()
+	exhaustive := false
 
 	// Iterate through all directives and ensure that the directive we find are validated.
 	// - Note: the location we don't need to worry about as the schema takes care of it, as when
@@ -128,10 +129,15 @@ func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error)
 			}
 			explainDirective = parsedExplainDirective
 		}
+
+		if astDirective.Name.Value == request.ExhaustiveLabel {
+			exhaustive = true
+		}
 	}
 
 	return request.Directives{
 		ExplainType: explainDirective,
+		Exhaustive:  exhaustive,
 	}, nil
 }
 

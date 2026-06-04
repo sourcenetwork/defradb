@@ -35,7 +35,7 @@ defined with the --secret-file flag.`,
 			}
 			keyBytes, err := hex.DecodeString(args[1])
 			if err != nil {
-				return err
+				return NewErrParsingArgument("private-key-hex", err)
 			}
 			return keyring.Set(args[0], keyBytes)
 		},

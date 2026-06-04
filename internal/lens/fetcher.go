@@ -38,9 +38,10 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/1589
 
 type lensedFetcher struct {
-	source fetcher.Fetcher
-	store  store.Store
-	lens   Lens
+	source               fetcher.Fetcher
+	store                store.Store
+	lens                 Lens
+	collectionRepository *description.CollectionRepository
 
 	txn datastore.Txn
 
@@ -59,10 +60,15 @@ var _ fetcher.Fetcher = (*lensedFetcher)(nil)
 
 // NewFetcher returns a new fetcher that will migrate any documents from the given
 // source Fetcher as they are are yielded.
-func NewFetcher(source fetcher.Fetcher, store store.Store) fetcher.Fetcher {
+func NewFetcher(
+	source fetcher.Fetcher,
+	store store.Store,
+	collectionRepository *description.CollectionRepository,
+) fetcher.Fetcher {
 	return &lensedFetcher{
-		source: source,
-		store:  store,
+		source:               source,
+		store:                store,
+		collectionRepository: collectionRepository,
 	}
 }
 
@@ -93,8 +99,12 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := description.GetTargetedCollectionHistory(ctx, f.col.Version().CollectionID,
-		f.col.Version().VersionID)
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		f.collectionRepository,
+		f.col.Version().CollectionID,
+		f.col.Version().VersionID,
+	)
 	if err != nil {
 		return err
 	}
@@ -167,8 +177,8 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 		var resultDoc fetcher.EncodedDocument
 
 		if !f.hasMigrations || doc.CollectionVersionID() == f.targetVersionID {
-			// If there are no migrations registered for this schema, or if the document is already
-			// at the target schema version, no migration is required.
+			// If there are no migrations registered for this collection, or if the document is already
+			// at the target collection version, no migration is required.
 			resultDoc = doc
 		} else {
 			sourceLensDoc, err := encodedDocToLensDoc(doc)
@@ -356,14 +366,14 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 
 		err = txn.Datastore().Set(ctx, fieldKey, bytes)
 		if err != nil {
-			return err
+			return NewErrStoreLensField(err, fieldName)
 		}
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	err = txn.Datastore().Set(ctx, versionKey, []byte(f.targetVersionID))
 	if err != nil {
-		return err
+		return NewErrStoreLensVersion(err)
 	}
 
 	return nil

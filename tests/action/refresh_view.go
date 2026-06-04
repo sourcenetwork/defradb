@@ -1,21 +1,24 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
@@ -40,6 +43,9 @@ type RefreshViews struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*RefreshViews)(nil)
@@ -64,7 +70,16 @@ func (a *RefreshViews) Execute() {
 		}
 		allOpts = append(allOpts, identOpts)
 
-		err := node.RefreshViews(a.s.Ctx, allOpts...)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			err = txn.RefreshViews(a.s.Ctx, allOpts...)
+		} else {
+			err = node.RefreshViews(a.s.Ctx, allOpts...)
+		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

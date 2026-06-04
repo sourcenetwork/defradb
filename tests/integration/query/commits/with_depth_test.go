@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package commits
 
@@ -18,6 +19,8 @@ import (
 )
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -37,16 +40,17 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -55,6 +59,8 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -65,7 +71,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -83,20 +89,21 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							// "Age" field head
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid":    uniqueCid,
 							"height": int64(2),
 						},
 						{
 							// "Name" field head (unchanged from create)
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":    uniqueCid,
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid":    uniqueCid,
 							"height": int64(2),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -105,6 +112,8 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -115,14 +124,14 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -140,31 +149,32 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							// Composite head
-							"cid":    "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
+							"cid":    uniqueCid,
 							"height": int64(3),
 						},
 						{
 							// Composite head -1
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid":    uniqueCid,
 							"height": int64(2),
 						},
 						{
 							// "Name" field head (unchanged from create)
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":    uniqueCid,
 							"height": int64(1),
 						},
 						{
 							// "Age" field head
-							"cid":    "bafyreicbj6l6nnv6mlkjfhbc4ij36coaui7bejn7zbtxvhdl23d2w6qm5i",
+							"cid":    uniqueCid,
 							"height": int64(3),
 						},
 						{
 							// "Age" field head -1
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid":    uniqueCid,
 							"height": int64(2),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -173,6 +183,8 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -199,25 +211,26 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreih7o3naieknvmnjplfbfvrrmaeyudx54orzzffhg5dbwkwsdmjr3u",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreieyvpdttowod7inmoqx3mg4tjfpphunm26ntcn5oftphult56uz4q",
+							"cid": uniqueCid,
 						},
 						{
-							"cid": "bafyreifjq3stc6gtax4g7kvijab4shvv6qt4yvqv45k2k5ldu7ljhse6ya",
+							"cid": uniqueCid,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -235,10 +248,10 @@ func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{"age": 22}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{"age": 23}`,
 			},
 			&action.Request{

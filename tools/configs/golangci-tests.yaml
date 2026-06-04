@@ -1,0 +1,37 @@
+# Defines the configuration version.
+# The only possible value is "2".
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - goheader
+  settings:
+    goheader:
+      values:
+        const:
+          # Define here const type values in format k:v.
+          AGPLv3: GNU Affero General Public License v3
+          BSL: Business Source License 1.1
+        regexp:
+          # Define here regexp type values.
+          ANY-YEAR: (20\d\d)
+
+      # The template used for checking.
+      # Put here copyright header template for source code files.
+      # Note: {{ YEAR }} is a builtin value that returns the year relative to the current machine time.
+      # Default: ""
+      template: |-
+        Copyright {{ ANY-YEAR }} Democratized Data Foundation
+
+        This file is part of the DefraDB test suite.
+
+        The DefraDB test suite is licensed under either:
+
+          (1) {{ AGPLv3 }}
+          (2) {{ BSL }}
+
+        See tests/LICENSE for details.
+
+run:
+  tests: true

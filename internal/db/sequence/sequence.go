@@ -50,7 +50,7 @@ func (seq *Sequence) Get(ctx context.Context) (uint64, error) {
 
 	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
-		return 0, err
+		return 0, NewErrGetSequenceValue(err, string(seq.key.Bytes()))
 	}
 	num := binary.BigEndian.Uint64(val)
 	seq.val = num
@@ -63,7 +63,7 @@ func (seq *Sequence) Update(ctx context.Context) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
 	if err := txn.Systemstore().Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
-		return err
+		return NewErrUpdateSequenceValue(err, string(seq.key.Bytes()))
 	}
 
 	return nil

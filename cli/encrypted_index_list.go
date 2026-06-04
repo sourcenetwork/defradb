@@ -39,7 +39,7 @@ Otherwise, all encrypted indexes in the database will be shown.`,
 				if err != nil {
 					return err
 				}
-				listOpt := options.WithIdentity(options.CollectionListEncryptedIndexes(), iIdentity.FromContext(cmd.Context()))
+				listOpt := options.WithIdentity(options.ListCollectionEncryptedIndexes(), iIdentity.FromContext(cmd.Context()))
 				indexes, err := col.ListEncryptedIndexes(cmd.Context(), listOpt)
 				if err != nil {
 					return err

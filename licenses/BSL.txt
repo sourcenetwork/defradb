@@ -7,28 +7,28 @@ Parameters
 Licensor:                   Democratized Data (D2) Foundation
 
 
-Licensed Work:              DefraDB v0.20.0
-                            The Licensed Work is (c) 2025 D2 Foundation.
+Licensed Work:              DefraDB v1.0.0-rc1
+                            The Licensed Work is (c) 2026 D2 Foundation.
 
 
-Additional Use Grant:       You may only use the Licensed Work for the 
-                            following conditions
-                            
-                            For an application that is connected  to the 
-                            SourceHub mainnet or another protocol connected 
-                            to the SourceHub by way of the Inter-Blockchain
-                            Communication (IBC) protocol. 
+Additional Use Grant:       You may use the Licensed Work in a production 
+                            environment in applications you own and operate, 
+                            provided such use is not in connection with the 
+                            operation or provision of a Managed Service.
 
-                            A non-profit project in both a production and
-                            pre-production state.
+                            “Managed Services” means providing access to or 
+                            use of the functionality of the Licensed Work as 
+                            part of a community-hosted, cloud-based, or 
+                            network-accessible service which is offered to 
+                            third parties, or assisting any third party with 
+                            the foregoing. This includes any scenario where 
+                            you operate or install the Licensed Work on 
+                            behalf of, or for the benefit of, third parties 
+                            to enable them to access the Licensed Work or its 
+                            functionality on their internal or external 
+                            network.
 
-                            A for-profit project in a pre-production state
-                            only.
-
-                            
-
-
-Change Date:                2029-10-31
+Change Date:                2030-03-04
 
 
 Change License:             Apache License, Version 2.0

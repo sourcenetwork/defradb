@@ -23,7 +23,7 @@ func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T)
 	assert.NoError(t, err)
 
 	_, err = db.GetCollectionByName(ctx, "doesNotExist")
-	assert.EqualError(t, err, "key not found")
+	assert.EqualError(t, err, "collection not found")
 }
 
 func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {

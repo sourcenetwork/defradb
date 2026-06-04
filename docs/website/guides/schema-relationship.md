@@ -31,7 +31,7 @@ However, there are some shortcomings in how Defra handles these relationships. T
 
 When it comes to a one-to-many relationship, there is no primary side, i.e., the developer has no option of choosing which side is primary or  secondary. In this relationship type, the “many” type is the primary, and the “one” type is the secondary. Therefore, in the example of "author" to "books", if one "author" has many "books”, the book type holds the reference to the foreign key of the author type. This allows DefraDB to keep single fields on the respective type, otherwise "author" will have an array of values, thereby complicating the structure and breaking the normalization mechanism of databases.
 
-Note: When adding related types, the developer must add both types or all related types at the same time, i.e., define all the types within the Schema Definition Language (SDL), and send them as a single schema add operation, or the database will not understand the correlated types.
+Note: When adding related types, the developer must add both types or all related types at the same time, i.e., define all the types within the Schema Definition Language (SDL), and send them as a single collection add operation, or the database will not understand the correlated types.
 
 With respect to filtering on related types, for both one-to-one and one-to-many relationships, the developer can filter on parent objects, which have different semantics than filtering on the child objects or the related object. Filtering on the parent object only returns the parent object if the related type matches the filter. However, filtering on the related type returns the parent regardless, but it won't return the related sub-type unless it matches the filter. For example, if we ask for authors that have books in a certain genre, it will only return authors with those sub-values for the books. If we apply a filter to the sub-type, it will return all the authors, but only return the books that match that filter.
 
@@ -168,7 +168,7 @@ type Book {
 
 
 ```bash
-defradb client schema add -f schema.graphql
+defradb client collection add -f schema.graphql
 ```
 
 2. Create Documents - In this step, first the "one" type from the one-to-many type needs to be created. Therefore, in the above-mentioned example, a blank author type will be created. Once "author" is created, then the related books published by the author will be created. 

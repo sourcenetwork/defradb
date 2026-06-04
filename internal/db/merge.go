@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -41,11 +40,6 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to execute merge",
-			err,
-			corelog.Any("Event", evt))
 		return err
 	}
 
@@ -81,8 +75,9 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return NewErrCreateMergeTxn(err, dagMerge.DocID, dagMerge.Cid.String())
 	}
+
 	defer txn.Discard()
 
 	var key keys.HeadstoreKey
@@ -94,7 +89,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	} else {
 		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 		if err != nil {
-			return err
+			return NewErrGetShortIDForMerge(err, col.Version().CollectionID)
 		}
 
 		key = keys.NewHeadstoreColKey(shortID)
@@ -102,7 +97,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	mt, err := getHeadsAsMergeTarget(ctx, key)
 	if err != nil {
-		return err
+		return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
 	}
 
 	mp, err := db.newMergeProcessor(ctx, col)
@@ -112,18 +107,18 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 	if err != nil {
-		return err
+		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
 	err = mp.mergeComposites(ctx)
 	if err != nil {
-		return err
+		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
 		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
-			return err
+			return NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
 
@@ -239,12 +234,12 @@ func (mp *mergeProcessor) loadComposites(
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
-		return err
+		return NewErrLoadBlockForMerge(err, blockCid.String())
 	}
 
 	block, err := coreblock.GetFromNode(nd)
 	if err != nil {
-		return err
+		return NewErrDecodeBlockForMerge(err, blockCid.String())
 	}
 
 	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
@@ -255,7 +250,7 @@ func (mp *mergeProcessor) loadComposites(
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
 			if err != nil {
-				return err
+				return NewErrLoadParentComposite(err, head.Cid.String())
 			}
 		}
 	} else {
@@ -264,12 +259,12 @@ func (mp *mergeProcessor) loadComposites(
 			for _, link := range b.Heads {
 				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
 				if err != nil {
-					return err
+					return NewErrLoadMergeTargetBlock(err, link.String())
 				}
 
 				childBlock, err := coreblock.GetFromNode(nd)
 				if err != nil {
-					return err
+					return NewErrDecodeMergeTargetBlock(err, link.String())
 				}
 
 				newMT.heads[link.Cid] = childBlock
@@ -286,11 +281,11 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
-			return err
+			return NewErrGenerateMergeLink(err)
 		}
 		err = mp.processBlock(ctx, block, link)
 		if err != nil {
-			return err
+			return NewErrProcessBlockMerge(err, link.String())
 		}
 	}
 
@@ -303,10 +298,14 @@ func (mp *mergeProcessor) loadEncryptionBlock(
 ) (*coreblock.Encryption, error) {
 	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
 	if err != nil {
-		return nil, err
+		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
 	}
 
-	return coreblock.GetEncryptionBlockFromNode(nd)
+	enc, err := coreblock.GetEncryptionBlockFromNode(nd)
+	if err != nil {
+		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
+	}
+	return enc, nil
 }
 
 // processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
@@ -346,40 +345,40 @@ func (mp *mergeProcessor) processBlock(
 ) error {
 	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
 	if err != nil {
-		return err
+		return NewErrProcessEncryptedBlock(err, blockLink.String())
 	}
 
 	if canRead {
 		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
-			return err
+			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
 		// If the CRDT is nil, it means the field is not part
-		// of the schema and we can safely ignore it.
+		// of the collection definition and we can safely ignore it.
 		if crdt == nil {
 			return nil
 		}
 
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
-			return err
+			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
 	}
 
 	for _, link := range dagBlock.Links {
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
-			return err
+			return NewErrLoadChildBlock(err, link.Link.String())
 		}
 
 		childBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return NewErrDecodeChildBlock(err, link.Link.String())
 		}
 
 		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
-			return err
+			return NewErrProcessChildBlock(err, link.Link.String())
 		}
 	}
 
@@ -415,14 +414,14 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {
 	case crdtUnion.IsComposite():
 		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
 		if err != nil {
-			return nil, err
+			return nil, NewErrParseDocIDMerge(err, string(crdtUnion.GetDocID()))
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
@@ -446,7 +445,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 	default:
 		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
 		if err != nil {
-			return nil, err
+			return nil, NewErrParseDocIDMerge(err, string(crdtUnion.GetDocID()))
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
@@ -456,13 +455,13 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the schema, we can safely ignore it.
+			// If the field is not part of the collection definition, we can safely ignore it.
 			return nil, nil
 		}
 
 		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
 		if err != nil {
-			return nil, err
+			return nil, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
@@ -486,7 +485,7 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.Get(ctx, docID)
+	doc, err := mp.col.GetDocument(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return nil
 	}
@@ -504,14 +503,15 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 	cols, err := db.getCollections(
 		ctx,
 		utils.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
+		true,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
+		return nil, client.NewErrCollectionNotFoundForRoot(collectionID)
 	}
-	// We currently only support one active collection per root schema
+	// We currently only support one active collection per collection root
 	// so it is safe to return the first one.
 	return cols[0].(*collection), nil
 }
@@ -522,7 +522,7 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 	cids, err := getHeads(ctx, key)
 
 	if err != nil {
-		return mergeTarget{}, err
+		return mergeTarget{}, NewErrGetHeadsForMerge(err, string(key.Bytes()))
 	}
 
 	mt := newMergeTarget()
@@ -557,12 +557,12 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 	txn := datastore.CtxMustGetTxn(ctx)
 	b, err := txn.Blockstore().Get(ctx, cid)
 	if err != nil {
-		return nil, err
+		return nil, NewErrLoadBlockFromStore(err, cid.String())
 	}
 
 	block, err := coreblock.GetFromBytes(b.RawData())
 	if err != nil {
-		return nil, err
+		return nil, NewErrDecodeBlockFromStore(err, cid.String())
 	}
 
 	return block, nil
@@ -574,14 +574,19 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.Get(ctx, docID)
+	newDoc, err := col.GetDocument(ctx, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
+	}
+	// Both can be nil during concurrent P2P operations (e.g. delete + update)
+	// where the document was already deleted and no prior indexed state exists.
+	if oldDoc == nil && newDoc == nil {
+		return nil
 	}
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)
 	} else if oldDoc == nil {
-		return col.indexNewDoc(ctx, newDoc)
+		return col.addDocToIndex(ctx, newDoc)
 	} else {
 		return col.deleteIndexedDoc(ctx, oldDoc)
 	}

@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package replicator
 
@@ -19,13 +20,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *testing.T) {
+func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -41,7 +42,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will update the doc on
+				// Patch the collection on the node that we will update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -49,14 +50,14 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the new field on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Email": "imnotyourbuddyguy@source.ca"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the existing field on the first node only, and allow the value to sync
 				// We need to make sure any errors caused by the first update do not break the sync
 				NodeID: immutable.Some(0),
@@ -104,13 +105,13 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						Name: String
 					}
@@ -126,7 +127,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 				TargetNodeID: 1,
 			},
 			&action.PatchCollection{
-				// Patch the schema on the node that we will directly update the doc on
+				// Patch the collection on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -134,7 +135,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the new field and existing field on the first node only, and allow the values to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

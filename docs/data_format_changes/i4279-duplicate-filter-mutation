@@ -1,0 +1,1 @@
+Removed a previous behavior that ran filters twice on mutations causing incorrect results to be returned

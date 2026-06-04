@@ -1,24 +1,26 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
 import (
 	"os"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 const (
@@ -63,8 +65,10 @@ func configureMigration(
 	s *state.State,
 	action ConfigureMigration,
 ) {
-	var lensID string
+	action.SourceCollectionVersionID = replace(s, 0, action.SourceCollectionVersionID)
+	action.DestinationCollectionVersionID = replace(s, 0, action.DestinationCollectionVersionID)
 
+	var lensID string
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
@@ -75,10 +79,22 @@ func configureMigration(
 			migrationOpts.SetIdentity(identOption.Value())
 		}
 
-		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			var err error
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
+		}
+
 		ctx := db.InitContext(s.Ctx, txn)
 		var err error
-		lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		if hadTxn {
+			lensID, err = txn.SetMigration(ctx, action.LensConfig, migrationOpts)
+		} else {
+			lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
+		}
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -88,6 +104,6 @@ func configureMigration(
 
 	// After setting migration the collection's Version.Previous.Value().Transform should be set.
 	// that's why we need to refresh collections, so that the in-memory collection versions are updated.
-	// Originally was added for [AddIndex] to be able to index docs with migrated values.
+	// Originally was added for [NewIndex] to be able to index docs with migrated values.
 	refreshCollections(s, action.TransactionID, immutable.None[state.Identity]())
 }

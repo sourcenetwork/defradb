@@ -34,7 +34,7 @@ func canDACBypass(
 		ctx,
 		identity,
 		nodeACP,
-		acpTypes.NodeDACBypassPerm,
+		acpTypes.NodeBypassDACPerm,
 		acpTypes.NodeACPObject,
 	)
 

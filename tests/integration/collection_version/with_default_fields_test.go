@@ -1,12 +1,13 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package collection_version
 
@@ -22,8 +23,8 @@ import (
 func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: true)
 						created: DateTime @default(dateTime: "2000-07-23T03:00:00.000Z")
@@ -99,8 +100,8 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						active: Boolean @default(bool: invalid)
 					}
@@ -116,8 +117,8 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						active: Boolean @default(int: 10)
 					}
@@ -133,8 +134,8 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users {
 						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
 					}
@@ -150,8 +151,8 @@ func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *te
 func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						friend: User @default(string: "Bob")
 					}
@@ -167,8 +168,8 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type User {
 						names: [String] @default(string: "Bob")
 					}

@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package migrations
 
@@ -23,9 +24,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// Migrations need to be able to be registered for unknown schema ids, so they
+// Migrations need to be able to be registered for unknown collection version ids, so they
 // may migrate to/from them if recieved by the P2P system.
-func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
+func TestCollectionMigrationDoesNotErrorGivenUnknownCollectionRoots(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -68,7 +69,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
+func TestCollectionMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -140,7 +141,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
+func TestCollectionMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.ConfigureMigration{
@@ -208,14 +209,14 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-func TestSchemaMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
+func TestCollectionMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
 	version1 := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
 	version3 := "bafyreih3uwvq6u5yqt65os3u5jdrrmy6gfi7wjq3vwvnm45jhjodbablhe"
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Users { }
 				`,
 			},

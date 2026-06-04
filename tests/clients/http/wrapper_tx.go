@@ -1,12 +1,13 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package http
 
@@ -102,13 +103,13 @@ func (txn *Transaction) VerifySignature(
 	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(
+func (txn *Transaction) AddCollection(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.AddSchema(ctx, sdl, opts...)
+	return txn.Wrapper.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(
@@ -119,6 +120,15 @@ func (txn *Transaction) PatchCollection(
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.PatchCollection(ctx, patch, migration, opts...)
+}
+
+func (txn *Transaction) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteCollection(ctx, names, opts...)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(

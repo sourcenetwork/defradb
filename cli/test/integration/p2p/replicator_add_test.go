@@ -20,8 +20,8 @@ import (
 func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -29,7 +29,7 @@ func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"Order"}, // Non-existent collection
 				ExpectError: "failed to get collections for replicator",
@@ -43,8 +43,8 @@ func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -52,7 +52,7 @@ func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addressWithInvalidPeerID},
 				Collections: []string{"User"},
 				ExpectError: "invalid value \"invalid-peer-id\" for protocol p2",
@@ -66,8 +66,8 @@ func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -75,7 +75,7 @@ func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addressWithInvalidIP},
 				Collections: []string{"User"},
 				ExpectError: "invalid value \"999.999.999.999\" for protocol ip4",
@@ -89,8 +89,8 @@ func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -98,7 +98,7 @@ func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testin
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -111,8 +111,8 @@ func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testin
 func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -124,7 +124,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
@@ -137,8 +137,8 @@ func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *tes
 func TestReplicatorSet_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.SchemaAdd{
-				InlineSchema: `
+			&action.AddCollection{
+				InlineSDL: `
 					type User {
 						name: String
 						age: Int
@@ -150,7 +150,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *
 					}
 				`,
 			},
-			&action.P2PReplicatorAdd{
+			&action.AddP2PReplicator{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},

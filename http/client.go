@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/immutable"
@@ -60,26 +61,6 @@ func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	methodURL := c.http.apiURL.JoinPath("tx")
-	methodURL.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var txRes CreateTxResponse
-	if err := c.http.requestJson(req, &txRes); err != nil {
-		return nil, err
-	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
-}
-
-func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	query := url.Values{}
-	if readOnly {
-		query.Add("read_only", "true")
-	}
-
-	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
@@ -136,17 +117,17 @@ func (c *Client) BasicExport(
 	return err
 }
 
-func (c *Client) AddSchema(
+func (c *Client) AddCollection(
 	ctx context.Context,
-	schema string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	sdl string,
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	methodURL := c.http.apiURL.JoinPath("schema")
+	methodURL := c.http.apiURL.JoinPath("collections")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(sdl))
 	if err != nil {
 		return nil, err
 	}
@@ -179,6 +160,30 @@ func (c *Client) PatchCollection(
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("collections")
+	q := methodURL.Query()
+	q.Set("name", strings.Join(names, ","))
+	if opt.ActiveOnly {
+		q.Set("active-only", "true")
+	}
+	methodURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -375,6 +380,9 @@ func (c *Client) GetCollections(
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
+	// If there is an explicit transaction, we need to get it to attach to the collection
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if opt.CollectionName.HasValue() {
@@ -400,8 +408,16 @@ func (c *Client) GetCollections(
 		return nil, err
 	}
 	collections := make([]client.Collection, len(descriptions))
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		txnOpt = immutable.Some(txn)
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
+		collections[i] = &Collection{c.http, d, txnOpt}
 	}
 	return collections, nil
 }

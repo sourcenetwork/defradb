@@ -74,11 +74,6 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeLensListCommand(ctx),
 	)
 
-	schema := MakeSchemaCommand(ctx)
-	schema.AddCommand(
-		MakeSchemaAddCommand(ctx),
-	)
-
 	acp_node_relationship := MakeNodeACPRelationshipCommand(ctx)
 	acp_node_relationship.AddCommand(
 		MakeNodeACPRelationshipAddCommand(ctx),
@@ -124,14 +119,14 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	index := MakeIndexCommand(ctx)
 	index.AddCommand(
-		MakeIndexAddCommand(ctx),
+		MakeIndexNewCommand(ctx),
 		MakeIndexDeleteCommand(ctx),
 		MakeIndexListCommand(ctx),
 	)
 
 	encrypted_index := MakeEncryptedIndexCommand(ctx)
 	encrypted_index.AddCommand(
-		MakeEncryptedIndexAddCommand(ctx),
+		MakeEncryptedIndexNewCommand(ctx),
 		MakeEncryptedIndexDeleteCommand(ctx),
 		MakeEncryptedIndexListCommand(ctx),
 	)
@@ -144,21 +139,27 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	tx := MakeTxCommand(ctx)
 	tx.AddCommand(
-		MakeTxCreateCommand(ctx),
+		MakeTxNewCommand(ctx),
 		MakeTxCommitCommand(ctx),
 		MakeTxDiscardCommand(ctx),
 	)
 
 	collection := MakeCollectionCommand(ctx)
 	collection.AddCommand(
-		MakeCollectionGetCommand(ctx),
-		MakeCollectionDeleteCommand(ctx),
-		MakeCollectionUpdateCommand(ctx),
 		MakeCollectionAddCommand(ctx),
+		MakeCollectionDeleteCommand(ctx),
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
 		MakeCollectionTruncateCommand(ctx),
+	)
+
+	document := MakeDocumentCommand(ctx)
+	document.AddCommand(
+		MakeDocumentAddCommand(ctx),
+		MakeDocumentGetCommand(ctx),
+		MakeDocumentUpdateCommand(ctx),
+		MakeDocumentDeleteCommand(ctx),
 	)
 
 	block := MakeBlockCommand(ctx)
@@ -172,7 +173,6 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeDumpCommand(ctx),
 		MakeRequestCommand(ctx),
 		MakeNodeIdentityCommand(ctx),
-		schema,
 		acp,
 		view,
 		index,
@@ -181,6 +181,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		backup,
 		tx,
 		collection,
+		document,
 		lens,
 		block,
 	)

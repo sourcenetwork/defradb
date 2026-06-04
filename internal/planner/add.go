@@ -46,7 +46,7 @@ type addNode struct {
 
 	execInfo addExecInfo
 
-	addOptions []options.Enumerable[options.CollectionAddOptions]
+	addOptions []options.Enumerable[options.AddDocumentOptions]
 }
 
 type addExecInfo struct {
@@ -100,7 +100,7 @@ func (n *addNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	if !n.didAdd {
-		err := n.collection.AddMany(n.p.ctx, n.docs, n.addOptions...)
+		err := n.collection.AddManyDocuments(n.p.ctx, n.docs, n.addOptions...)
 		if err != nil {
 			return false, err
 		}
@@ -167,9 +167,9 @@ func (p *Planner) AddDocs(parsed *mapper.Mutation) (planNode, error) {
 		input:     parsed.AddInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		addOptions: []options.Enumerable[options.CollectionAddOptions]{
+		addOptions: []options.Enumerable[options.AddDocumentOptions]{
 			options.WithIdentity(
-				options.CollectionAdd().
+				options.AddDocument().
 					SetEncryptDoc(parsed.Encrypt).
 					SetEncryptedFields(parsed.EncryptFields),
 				p.identity,

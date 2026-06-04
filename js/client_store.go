@@ -24,18 +24,24 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-func (c *Client) addSchema(this js.Value, args []js.Value) (js.Value, error) {
-	schema, err := stringArg(args, 0, "schema")
+func (c *Client) addCollection(this js.Value, args []js.Value) (js.Value, error) {
+	sdl, err := stringArg(args, 0, "sdl")
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddSchema()
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	opt := options.AddCollection()
 	setOptIdentity(opt, args, 1)
-	cols, err := c.node.DB.AddSchema(ctx, schema, opt)
+	cols, err := store.AddCollection(ctx, sdl, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -51,13 +57,45 @@ func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, erro
 	if err := structArg(args, 1, "lens", &migration); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.PatchCollection()
 	setOptIdentity(opt, args, 2)
-	err = c.node.DB.PatchCollection(ctx, patch, migration, opt)
+	err = store.PatchCollection(ctx, patch, migration, opt)
+	return js.Undefined(), err
+}
+
+func (c *Client) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	var names []string
+	if err := structArg(args, 0, "names", &names); err != nil {
+		return js.Undefined(), err
+	}
+	activeOnly, err := boolArg(args, 1, "activeOnly")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	opt := options.DeleteCollection()
+	setOptIdentity(opt, args, 2)
+	opt.SetActiveOnly(activeOnly)
+	err = store.DeleteCollection(ctx, names, opt)
 	return js.Undefined(), err
 }
 
@@ -66,13 +104,19 @@ func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.SetActiveCollectionVersion()
 	setOptIdentity(opt, args, 1)
-	err = c.node.DB.SetActiveCollectionVersion(ctx, version, opt)
+	err = store.SetActiveCollectionVersion(ctx, version, opt)
 	return js.Undefined(), err
 }
 
@@ -89,16 +133,22 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 	if err := structArg(args, 2, "transformCID", &transformCID); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, c.txns)
+	ctx, err := contextArg(args, 3)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 3, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opts := options.AddView()
 	setOptIdentity(opts, args, 3)
 	if transformCID.HasValue() {
 		opts.SetTransformCID(transformCID.Value())
 	}
-	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, opts)
+	cols, err := store.AddView(ctx, gqlQuery, sdl, opts)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -118,13 +168,19 @@ func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) 
 	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
 	setOptIdentity(opt, args, 1)
-	err = c.node.DB.RefreshViews(ctx, opt)
+	err = store.RefreshViews(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -133,13 +189,19 @@ func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) 
 	if err := structArg(args, 0, "config", &config); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.SetMigration()
 	setOptIdentity(opt, args, 1)
-	lensID, err := c.node.DB.SetMigration(ctx, config, opt)
+	lensID, err := store.SetMigration(ctx, config, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -151,13 +213,19 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 	if err := structArg(args, 0, "lens", &lens); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.AddLens()
 	setOptIdentity(opt, args, 1)
-	lensID, err := c.node.DB.AddLens(ctx, lens, opt)
+	lensID, err := store.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -165,13 +233,19 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 }
 
 func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.ListLenses()
 	setOptIdentity(opt, args, 0)
-	lenses, err := c.node.DB.ListLenses(ctx, opt)
+	lenses, err := store.ListLenses(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -183,17 +257,23 @@ func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.GetCollectionByName()
 	setOptIdentity(opt, args, 1)
-	col, err := c.node.DB.GetCollectionByName(ctx, name, opt)
+	col, err := store.GetCollectionByName(ctx, name, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return newCollection(col, c.txns), nil
+	return newCollection(col), nil
 }
 
 func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error) {
@@ -201,19 +281,25 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 	if err := structArg(args, 0, "options", &input); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+	ctx, err := contextArg(args, 1)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
 	setOptIdentity(opt, args, 1)
-	cols, err := c.node.DB.GetCollections(ctx, opt)
+	cols, err := store.GetCollections(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	wrappers := make([]any, len(cols))
 	for i, col := range cols {
-		wrappers[i] = newCollection(col, c.txns)
+		wrappers[i] = newCollection(col)
 	}
 	return js.ValueOf(wrappers), nil
 }
@@ -237,13 +323,19 @@ func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions)
 }
 
 func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.ListIndexes()
 	setOptIdentity(opt, args, 0)
-	indexes, err := c.node.DB.ListIndexes(ctx, opt)
+	indexes, err := store.ListIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -251,13 +343,19 @@ func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 }
 
 func (c *Client) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0, c.txns)
+	ctx, err := contextArg(args, 0)
 	if err != nil {
 		return js.Undefined(), err
 	}
+
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
 	opt := options.ListAllEncryptedIndexes()
 	setOptIdentity(opt, args, 0)
-	indexes, err := c.node.DB.ListAllEncryptedIndexes(ctx, opt)
+	indexes, err := store.ListAllEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -285,7 +383,12 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 			opt.SetVariables(variablesMap)
 		}
 	}
-	ctx, err := contextArg(args, 2, c.txns)
+	ctx, err := contextArg(args, 2)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -293,7 +396,7 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 		opt = options.ExecRequest()
 	}
 	setOptIdentity(opt, args, 2)
-	res := c.node.DB.ExecRequest(ctx, request, opt)
+	res := store.ExecRequest(ctx, request, opt)
 	gql, err := goji.MarshalJS(res.GQL)
 	if err != nil {
 		return js.Undefined(), err

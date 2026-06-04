@@ -124,13 +124,13 @@ func (txn *Transaction) VerifySignature(
 	return txn.Client.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(
+func (txn *Transaction) AddCollection(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Enumerable[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddSchema(ctx, sdl, opts...)
+	return txn.Client.AddCollection(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(
@@ -141,6 +141,15 @@ func (txn *Transaction) PatchCollection(
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.PatchCollection(ctx, patch, migration, opts...)
+}
+
+func (txn *Transaction) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.DeleteCollection(ctx, names, opts...)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(

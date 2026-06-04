@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -89,6 +90,13 @@ type TestCase struct {
 	// The test will be skipped if the current active set of multipliers
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
+
+	// FlakeRetries specifies the number of times a flaky test should be retried
+	// if it fails. If a test succeeds on any attempt, it is considered passed.
+	// A value of 0 (default) means no retries - the test runs once as normal.
+	// A value of N means the test will be attempted up to N+1 times total
+	// (1 initial + N retries).
+	FlakeRetries uint
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -104,7 +112,7 @@ type KMS struct {
 // setup is complete so that it may split actions across database code-versions.
 //
 // If a SetupComplete action is not provided the change detector will split before
-// the first item that is neither a SchemaUpdate, AddDoc or UpdateDoc action.
+// the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
 // ConfigureNode allows the explicit configuration of new Defra nodes.
@@ -184,6 +192,9 @@ type SetActiveCollectionVersion struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // DocIndex represents a relation field value, it allows relation fields to be set without worrying
@@ -197,7 +208,7 @@ type SetActiveCollectionVersion struct {
 // This is a type alias for backward compatibility.
 type DocIndex = action.DocIndex
 
-// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
+// NewDocIndex creates a new [DocIndex] instance allowing relation fields to be referenced without worrying
 // about the specific document id.
 func NewDocIndex(collectionIndex int, index int) DocIndex {
 	return DocIndex{
@@ -240,51 +251,9 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
-}
 
-// UpdateDoc will attempt to update the given document using the set [state.MutationType].
-type UpdateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
-	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only update public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then
-	// can also update private document(s) that are owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection in which this document exists.
-	CollectionID int
-
-	// The index-identifier of the document within the collection.  This is based on
-	// the order in which it was created, not the ordering of the document within the
-	// database.
-	DocID int
-
-	// The document update, in JSON string format. Will only update the properties
-	// provided.
-	Doc string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-
-	// Skip waiting for an update event on the local event bus.
-	//
-	// This should only be used for tests that do not correctly
-	// publish an update event to the local event bus.
-	SkipLocalUpdateEvent bool
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateWithFilter will update the set of documents that match the given filter.
@@ -327,14 +296,17 @@ type UpdateWithFilter struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
-// AddEncryptedIndex will attempt to add the given encrypted index to the given collection
+// NewEncryptedIndex will attempt to make a new encrypted index on the given collection
 // using the collection api.
-type AddEncryptedIndex struct {
-	// NodeID may hold the ID (index) of a node to add the encrypted index to.
+type NewEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to make the new encrypted index on.
 	//
-	// If a value is not provided the index will be added to all nodes.
+	// If a value is not provided the index will be made on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -342,13 +314,13 @@ type AddEncryptedIndex struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection to which this index should be added.
+	// The collection on which this index should be made.
 	CollectionID int
 
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The type of the index to add.
+	// The type of new index to make.
 	Type string
 
 	// Any error expected from the action. Optional.
@@ -356,6 +328,9 @@ type AddEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListEncryptedIndexes will attempt to list encrypted index from the given collection
@@ -382,6 +357,9 @@ type ListEncryptedIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
@@ -430,6 +408,9 @@ type DeleteEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -500,18 +481,6 @@ type AddPredefinedDocs struct {
 	Docs predefined.DocsList
 }
 
-// TransactionCommit represents a commit request for a transaction of the given id.
-type TransactionCommit struct {
-	// Used to identify the transaction to commit.
-	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 type IntrospectionRequest struct {
 	// NodeID is the node ID (index) of the node in which to introspect.
 	NodeID immutable.Option[int]
@@ -559,8 +528,8 @@ type ClientIntrospectionRequest struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupExport struct {
+// ExportBackup will attempt to export data from the datastore using the db api.
+type ExportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup export will be done for all the nodes.
@@ -580,8 +549,8 @@ type BackupExport struct {
 	ExpectedError string
 }
 
-// BackupExport will attempt to export data from the datastore using the db api.
-type BackupImport struct {
+// ImportBackup will attempt to import data into the datastore using the db API.
+type ImportBackup struct {
 	// NodeID may hold the ID (index) of a node to generate the backup from.
 	//
 	// If a value is not provided the backup import will be done for all the nodes.
@@ -641,6 +610,9 @@ type VerifyBlockSignature struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // SyncDocs will synchronize documents from the network via P2P.

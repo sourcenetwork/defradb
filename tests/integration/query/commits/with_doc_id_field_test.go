@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package commits
 
@@ -91,7 +92,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", 
+							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							filter: {fieldName: {_eq: "age"}}
 						) {
 							cid
@@ -99,9 +100,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-						},
+						{"cid": testUtils.ValidCID()},
 					},
 				},
 			},
@@ -125,7 +124,7 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", 
+							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							filter: {fieldName: {_eq: "_C"}}
 						) {
 							cid
@@ -133,9 +132,7 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-						},
+						{"cid": testUtils.ValidCID()},
 					},
 				},
 			},

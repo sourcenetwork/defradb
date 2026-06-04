@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -17,107 +17,83 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeCollectionAddCommand(ctx context.Context) *cobra.Command {
-	var file string
-	var shouldEncryptDoc bool
-	var encryptedFields []string
+	var sdlFiles []string
 	var cmd = &cobra.Command{
-		Use:   "add [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
-		Short: "Add a new document.",
-		Long: `Add a new document.
-		
-Options:
-	-i, --identity 
-		Marks the document as private and set the identity as the owner. The access to the document
-		and permissions are controlled by ACP (Access Control Policy).
+		Use:   "add [sdl]",
+		Short: "Add new collection",
+		Long: `Add new collection.
 
-	-e, --encrypt
-		Encrypt flag specified if the document needs to be encrypted. If set, DefraDB will generate a
-		symmetric key for encryption using AES-GCM.
-	
-	--encrypt-fields
-		Comma-separated list of fields to encrypt. If set, DefraDB will encrypt only the specified fields
-		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
-		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
-		will be encrypted with the same key.
-		`,
-		Args: cobra.RangeArgs(0, 1),
+Collection type with a '@policy(id:".." resource: "..")' linked will only be accepted if:
+  - ACP is available (i.e. ACP is not disabled).
+  - The specified resource adheres to the document resource interface (DRI).
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var docData []byte
+			cli := mustGetContextCLIClient(cmd)
+
+			var combinedSDL string
 			switch {
-			case file != "":
-				data, err := os.ReadFile(file)
-				if err != nil {
-					return err
+			case len(sdlFiles) > 0:
+				// Read collection definitions from files and concatenate them
+				for _, sdlFile := range sdlFiles {
+					data, err := os.ReadFile(sdlFile)
+					if err != nil {
+						return NewErrFailedToReadCollectionFile(sdlFile, err)
+					}
+					combinedSDL += string(data) + "\n"
 				}
-				docData = data
-			case len(args) == 1 && args[0] == "-":
+
+			case len(args) > 0 && args[0] == "-":
+				// Read collection definition from stdin
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrFailedToReadCollectionFromStdin(err)
 				}
-				docData = data
-			case len(args) == 1:
-				docData = []byte(args[0])
+				combinedSDL += string(data) + "\n"
+
+			case len(args) > 0:
+				// Read collection definition from argument string
+				combinedSDL += args[0] + "\n"
+
 			default:
-				return ErrNoDocOrFile
+				return ErrEmptyCollectionSDL
 			}
 
-			col, ok := tryGetContextCollection(cmd)
-			if !ok {
-				return cmd.Usage()
-			}
-
-			ctx := cmd.Context()
-
-			addOpt := options.WithIdentity(
-				options.CollectionAdd().
-					SetEncryptDoc(shouldEncryptDoc).
-					SetEncryptedFields(encryptedFields),
-				identity.FromContext(ctx),
-			)
-
-			if client.IsJSONArray(docData) {
-				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
-				if err != nil {
-					return err
-				}
-				return col.AddMany(ctx, docs, addOpt)
-			}
-
-			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
+			opt := options.WithIdentity(options.AddCollection(), identity.FromContext(cmd.Context()))
+			// Process the combined SDL
+			cols, err := cli.AddCollection(cmd.Context(), combinedSDL, opt)
 			if err != nil {
+				return NewErrFailedToAddCollection(err)
+			}
+			if err := writeJSON(cmd, cols); err != nil {
 				return err
 			}
-			return col.Add(cmd.Context(), doc, addOpt)
+
+			return nil
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Add from string1",
-		`defradb client collection add --name User '{ "name": "Bob" }'`)
+	EmbedCLIExample(ctx, cmd, "add from an argument string",
+		`defradb client collection add 'type Foo { ... }'`)
 
-	EmbedCLIExample(ctx, cmd, "Add from string, with identity",
-		`defradb client collection add --name User '{ "name": "Bob" }' \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
+	EmbedCLIExample(ctx, cmd, "add from file",
+		`defradb client collection add -f schema.graphql`)
 
-	EmbedCLIExample(ctx, cmd, "Add multiple from string",
-		`defradb client collection add --name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
+	EmbedCLIExample(ctx, cmd, "add from multiple files",
+		`defradb client collection add -f schema1.graphql -f schema2.graphql`)
 
-	EmbedCLIExample(ctx, cmd, "Add from file",
-		`defradb client collection add --name User -f document.json`)
+	EmbedCLIExample(ctx, cmd, "add from multiple files (comma-separated)",
+		`defradb client collection add -f schema1.graphql,schema2.graphql`)
 
-	EmbedCLIExample(ctx, cmd, "Add from stdin",
-		`cat document.json | defradb client collection add --name User -`)
+	EmbedCLIExample(ctx, cmd, "add from stdin",
+		`cat schema.graphql | defradb client collection add -`)
 
-	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
-		"Flag to enable encryption of the document")
-	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
-		"Comma-separated list of fields to encrypt")
-	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	cmd.Flags().StringSliceVarP(&sdlFiles, "file", "f", []string{}, "File to load a collection definition from")
 	return cmd
 }

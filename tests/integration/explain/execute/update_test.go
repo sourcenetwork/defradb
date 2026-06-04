@@ -1,12 +1,13 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package test_explain_execute
 
@@ -48,18 +49,24 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
-								"updateNode": dataMap{
-									"iterations": uint64(3),
-									"updates":    uint64(2),
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"iterations":    uint64(6),
-											"filterMatches": uint64(4),
-											"scanNode": dataMap{
-												"iterations":   uint64(6),
-												"docFetches":   uint64(4),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(3),
+										"filterMatches": uint64(2),
+										"updateNode": dataMap{
+											"iterations": uint64(3),
+											"updates":    uint64(2),
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"iterations":    uint64(3),
+													"filterMatches": uint64(2),
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
 											},
 										},
 									},
@@ -106,18 +113,24 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 						"planExecutions":   uint64(2),
 						"operationNode": []dataMap{
 							{
-								"updateNode": dataMap{
-									"iterations": uint64(2),
-									"updates":    uint64(1),
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"iterations":    uint64(4),
-											"filterMatches": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(4),
-												"docFetches":   uint64(4),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(2),
+										"filterMatches": uint64(1),
+										"updateNode": dataMap{
+											"iterations": uint64(2),
+											"updates":    uint64(1),
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"iterations":    uint64(2),
+													"filterMatches": uint64(1),
+													"scanNode": dataMap{
+														"iterations":   uint64(2),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
 											},
 										},
 									},

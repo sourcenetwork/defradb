@@ -1,12 +1,13 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package tests
 
@@ -65,29 +66,6 @@ type DeleteReplicator struct {
 	//
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// ListReplicators gets the configured replicators for the given node and compares them against the
-// expected results.
-// TODO: Test ListReplicators with and without NAC.
-// https://github.com/sourcenetwork/defradb/issues/4109
-type ListReplicators struct {
-	// NodeID is the node ID (index) of the node in which to get the replicators for.
-	NodeID int
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
-	ExpectedTargetNodeIDs []int
 
 	// Any error expected from the action. Optional.
 	//

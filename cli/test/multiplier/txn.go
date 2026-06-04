@@ -30,7 +30,7 @@ func init() {
 //   - Creating a new new transaction immediately after the last [action.StartCli] action.
 //   - Scoping any following actions that implement the [action.AugmentedAction] interface to the
 //     new transaction.
-//   - Creating a [action.TxCommit] action to commit the transaction.
+//   - Creating a [action.CommitTx] action to commit the transaction.
 //   - Duplicating the original read actions occuring after the last write action to re-execute them
 //     outside of the transaction scope following commit.
 //
@@ -56,10 +56,10 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 		case *action.StartCli:
 			lastStartIndex = i
 
-		case *action.SchemaAdd:
+		case *action.AddCollection:
 			lastWriteIndex = i
 
-		case *action.TxCreate:
+		case *action.CreateTx:
 			// If the action set already contains txns we should not adjust it
 			return source
 		}
@@ -71,7 +71,7 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 		switch a.(type) {
 		case *action.StartCli:
 			result = append(result, a)
-			result = append(result, &action.TxCreate{})
+			result = append(result, &action.CreateTx{})
 
 		default:
 			if augmentedAction, ok := a.(action.AugmentedAction); ok && i > lastStartIndex {
@@ -82,7 +82,7 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 		}
 	}
 
-	result = append(result, &action.TxCommit{})
+	result = append(result, &action.CommitTx{})
 
 	for i, a := range source {
 		if i <= lastStartIndex {
@@ -97,7 +97,7 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 		// Append orginal, read-only actions that occured after the last write action,
 		// after the transaction has been commited.  This allows the automatic coverage
 		// of whether or not the transaction-state has been persisted.
-		case *action.CollectionDescribe:
+		case *action.DescribeCollection:
 			result = append(result, a)
 		}
 	}

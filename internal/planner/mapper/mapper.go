@@ -53,16 +53,18 @@ const (
 func ToOperation(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	operationRequest *request.OperationDefinition,
 ) (*Operation, error) {
 	operation := &Operation{
 		DocumentMapping: core.NewDocumentMapping(),
+		Exhaustive:      operationRequest.Directives.Exhaustive,
 	}
 
 	for i, s := range operationRequest.Selections {
 		switch t := s.(type) {
 		case *request.CommitSelect:
-			s, err := toCommitSelect(ctx, store, t, i)
+			s, err := toCommitSelect(ctx, store, collectionRepository, t, i)
 			if err != nil {
 				return nil, err
 			}
@@ -70,7 +72,7 @@ func ToOperation(
 			operation.addSelection(i, t.Field, s.Select)
 
 		case *request.Select:
-			s, err := toSelect(ctx, store, ObjectSelection, i, t, "")
+			s, err := toSelect(ctx, store, collectionRepository, ObjectSelection, i, t, "")
 			if err != nil {
 				return nil, err
 			}
@@ -78,7 +80,7 @@ func ToOperation(
 			operation.addSelection(i, t.Field, *s)
 
 		case *request.ObjectMutation:
-			m, err := toMutation(ctx, store, t, i)
+			m, err := toMutation(ctx, store, collectionRepository, t, i)
 			if err != nil {
 				return nil, err
 			}
@@ -100,11 +102,12 @@ func ToOperation(
 func ToSelect(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 ) (*Select, error) {
 	// the top-level select will always have index=0, and no parent collection name
-	return toSelect(ctx, store, rootSelectType, 0, selectRequest, "")
+	return toSelect(ctx, store, collectionRepository, rootSelectType, 0, selectRequest, "")
 }
 
 // toSelect converts the given [parser.Select] into a [Select].
@@ -114,6 +117,7 @@ func ToSelect(
 func toSelect(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	thisIndex int,
 	selectRequest *request.Select,
@@ -129,7 +133,13 @@ func toSelect(
 		rootSelectType = EncryptedSearchSelection
 	}
 
-	collectionName, err := getCollectionName(ctx, rootSelectType, selectRequest, parentCollectionName)
+	collectionName, err := getCollectionName(
+		ctx,
+		collectionRepository,
+		rootSelectType,
+		selectRequest,
+		parentCollectionName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +149,22 @@ func toSelect(
 		return nil, err
 	}
 
-	fields, aggregates, err := getRequestables(ctx, rootSelectType, selectRequest, mapping, collectionName, store)
+	fields, aggregates, err := getRequestables(
+		ctx,
+		collectionRepository,
+		rootSelectType,
+		selectRequest,
+		mapping,
+		collectionName,
+		store,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
 	filterDependencies, err := resolveFilterDependencies(
-		ctx, store, rootSelectType, collectionName, selectRequest.Filter, mapping, fields)
+		ctx, store, collectionRepository, rootSelectType, collectionName, selectRequest.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +172,7 @@ func toSelect(
 
 	// Resolve order dependencies that may have been missed due to not being rendered.
 	err = resolveOrderDependencies(
-		ctx, store, rootSelectType, collectionName, selectRequest.OrderBy, mapping, &fields)
+		ctx, store, collectionRepository, rootSelectType, collectionName, selectRequest.OrderBy, mapping, &fields)
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +180,7 @@ func toSelect(
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
 		ctx,
+		collectionRepository,
 		rootSelectType,
 		aggregates,
 		fields,
@@ -179,6 +198,7 @@ func toSelect(
 		fields, err = resolveSecondaryRelationIDs(
 			ctx,
 			store,
+			collectionRepository,
 			rootSelectType,
 			collectionName,
 			definition,
@@ -237,6 +257,7 @@ func toSelect(
 func resolveOrderDependencies(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	descName string,
 	source immutable.Option[request.OrderBy],
@@ -270,6 +291,7 @@ outer:
 				innerSelect, err := resolveChildOrder(
 					ctx,
 					store,
+					collectionRepository,
 					rootSelectType,
 					descName,
 					joinField,
@@ -293,7 +315,16 @@ outer:
 				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
-				innerSelect, err := resolveChildOrder(ctx, store, rootSelectType, descName, joinField, mapping, existingFields)
+				innerSelect, err := resolveChildOrder(
+					ctx,
+					store,
+					collectionRepository,
+					rootSelectType,
+					descName,
+					joinField,
+					mapping,
+					existingFields,
+				)
 				if err != nil {
 					return err
 				}
@@ -320,6 +351,7 @@ outer:
 func resolveChildOrder(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	descName string,
 	orderChildField string,
@@ -338,7 +370,7 @@ func resolveChildOrder(
 				Name: orderChildField,
 			},
 		}
-		innerSelect, err := toSelect(ctx, store, rootSelectType, index, &dummyJoinFieldSelect, descName)
+		innerSelect, err := toSelect(ctx, store, collectionRepository, rootSelectType, index, &dummyJoinFieldSelect, descName)
 		if err != nil {
 			return nil, err
 		}
@@ -368,6 +400,7 @@ func resolveChildOrder(
 // updated with any new fields/aggregates.
 func resolveAggregates(
 	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
@@ -466,7 +499,13 @@ func resolveAggregates(
 					collectionName = ""
 				}
 
-				childCollectionName, err := getCollectionName(ctx, rootSelectType, hostSelectRequest, collectionName)
+				childCollectionName, err := getCollectionName(
+					ctx,
+					collectionRepository,
+					rootSelectType,
+					hostSelectRequest,
+					collectionName,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -480,6 +519,7 @@ func resolveAggregates(
 
 				childFields, _, err := getRequestables(
 					ctx,
+					collectionRepository,
 					rootSelectType,
 					hostSelectRequest,
 					childMapping,
@@ -491,7 +531,7 @@ func resolveAggregates(
 				}
 
 				err = resolveOrderDependencies(
-					ctx, store, rootSelectType, childCollectionName, target.order, childMapping, &childFields)
+					ctx, store, collectionRepository, rootSelectType, childCollectionName, target.order, childMapping, &childFields)
 				if err != nil {
 					return nil, err
 				}
@@ -502,6 +542,7 @@ func resolveAggregates(
 				filterDependencies, err := resolveFilterDependencies(
 					ctx,
 					store,
+					collectionRepository,
 					rootSelectType,
 					childCollectionName,
 					target.filter,
@@ -791,6 +832,7 @@ func appendIfNotExists(
 // consumed mapping data.
 func getRequestables(
 	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
@@ -817,7 +859,7 @@ func getRequestables(
 		case *request.Select:
 			index := mapping.GetNextIndex()
 
-			innerSelect, err := toSelect(ctx, store, rootSelectType, index, f, collectionName)
+			innerSelect, err := toSelect(ctx, store, collectionRepository, rootSelectType, index, f, collectionName)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -832,7 +874,7 @@ func getRequestables(
 			mapping.Add(index, f.Name)
 		case *request.CommitSelect:
 			index := mapping.GetNextIndex()
-			innerSelect, err := toCommitSelect(ctx, store, f, index)
+			innerSelect, err := toCommitSelect(ctx, store, collectionRepository, f, index)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -917,6 +959,7 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 // if this is a commit request.
 func getCollectionName(
 	ctx context.Context,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	parentCollectionName string,
@@ -934,14 +977,19 @@ func getCollectionName(
 	}
 
 	if parentCollectionName != "" {
-		parentCollection, err := description.GetCollectionByName(ctx, parentCollectionName)
+		parentCollection, err := description.GetCollectionByName(ctx, collectionRepository, parentCollectionName)
 		if err != nil {
 			return "", err
 		}
 
 		hostFieldDesc, parentHasField := parentCollection.GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
-			def, found, err := description.GetRelatedCollection(ctx, parentCollection, hostFieldDesc.Kind)
+			def, found, err := description.GetRelatedCollection(
+				ctx,
+				collectionRepository,
+				parentCollection,
+				hostFieldDesc.Kind,
+			)
 			if !found {
 				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
 			}
@@ -989,7 +1037,7 @@ func getTopLevelInfo(
 
 		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 
-		// Map all fields from schema into the map as they are fetched automatically
+		// Map all fields from collection into the map as they are fetched automatically
 		for _, f := range collection.Version().Fields {
 			if f.RelationName.HasValue() && f.Kind.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
@@ -1034,6 +1082,7 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source immutable.Option[request.Filter],
@@ -1047,6 +1096,7 @@ func resolveFilterDependencies(
 	return resolveInnerFilterDependencies(
 		ctx,
 		store,
+		collectionRepository,
 		rootSelectType,
 		parentCollectionName,
 		source.Value().Conditions,
@@ -1059,6 +1109,7 @@ func resolveFilterDependencies(
 func resolveInnerFilterDependencies(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source map[string]any,
@@ -1084,6 +1135,7 @@ func resolveInnerFilterDependencies(
 				innerFields, err := resolveInnerFilterDependencies(
 					ctx,
 					store,
+					collectionRepository,
 					rootSelectType,
 					parentCollectionName,
 					innerFilter.(map[string]any),
@@ -1107,6 +1159,7 @@ func resolveInnerFilterDependencies(
 			innerFields, err := resolveInnerFilterDependencies(
 				ctx,
 				store,
+				collectionRepository,
 				rootSelectType,
 				parentCollectionName,
 				notFilter,
@@ -1151,7 +1204,15 @@ func resolveInnerFilterDependencies(
 			}
 		} else {
 			var err error
-			childSelect, err = constructEmptyJoin(ctx, store, rootSelectType, parentCollectionName, mapping, key)
+			childSelect, err = constructEmptyJoin(
+				ctx,
+				store,
+				collectionRepository,
+				rootSelectType,
+				parentCollectionName,
+				mapping,
+				key,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -1168,7 +1229,13 @@ func resolveInnerFilterDependencies(
 		}
 
 		dummyParsed := &request.Select{Field: request.Field{Name: key}}
-		childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
+		childCollectionName, err := getCollectionName(
+			ctx,
+			collectionRepository,
+			rootSelectType,
+			dummyParsed,
+			parentCollectionName,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -1176,6 +1243,7 @@ func resolveInnerFilterDependencies(
 		childFields, err := resolveInnerFilterDependencies(
 			ctx,
 			store,
+			collectionRepository,
 			rootSelectType,
 			childCollectionName,
 			childFilter,
@@ -1197,6 +1265,7 @@ func resolveInnerFilterDependencies(
 func constructEmptyJoin(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
@@ -1210,7 +1279,13 @@ func constructEmptyJoin(
 		},
 	}
 
-	childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
+	childCollectionName, err := getCollectionName(
+		ctx,
+		collectionRepository,
+		rootSelectType,
+		dummyParsed,
+		parentCollectionName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1244,9 +1319,10 @@ func constructEmptyJoin(
 func resolveSecondaryRelationIDs(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.CollectionVersion,
+	colDef client.CollectionVersion,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -1258,7 +1334,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := schema.GetFieldByName(existingField.Name)
+		fieldDesc, descFound := colDef.GetFieldByName(existingField.Name)
 		if !descFound {
 			continue
 		}
@@ -1285,6 +1361,7 @@ func resolveSecondaryRelationIDs(
 			join, err := constructEmptyJoin(
 				ctx,
 				store,
+				collectionRepository,
 				rootSelectType,
 				collectionName,
 				mapping,
@@ -1308,9 +1385,10 @@ func resolveSecondaryRelationIDs(
 func ToCommitSelect(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
-	return toCommitSelect(ctx, store, selectRequest, 0)
+	return toCommitSelect(ctx, store, collectionRepository, selectRequest, 0)
 }
 
 // toCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
@@ -1320,10 +1398,19 @@ func ToCommitSelect(
 func toCommitSelect(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	selectRequest *request.CommitSelect,
 	thisIndex int,
 ) (*CommitSelect, error) {
-	underlyingSelect, err := toSelect(ctx, store, CommitSelection, thisIndex, selectRequest.ToSelect(), "")
+	underlyingSelect, err := toSelect(
+		ctx,
+		store,
+		collectionRepository,
+		CommitSelection,
+		thisIndex,
+		selectRequest.ToSelect(),
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1340,9 +1427,10 @@ func toCommitSelect(
 func ToMutation(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	mutationRequest *request.ObjectMutation,
 ) (*Mutation, error) {
-	return toMutation(ctx, store, mutationRequest, 0)
+	return toMutation(ctx, store, collectionRepository, mutationRequest, 0)
 }
 
 // toMutation converts the given [request.Mutation] into a [Mutation].
@@ -1352,10 +1440,19 @@ func ToMutation(
 func toMutation(
 	ctx context.Context,
 	store client.TxnStore,
+	collectionRepository *description.CollectionRepository,
 	mutationRequest *request.ObjectMutation,
 	thisIndex int,
 ) (*Mutation, error) {
-	underlyingSelect, err := toSelect(ctx, store, ObjectSelection, thisIndex, mutationRequest.ToSelect(), "")
+	underlyingSelect, err := toSelect(
+		ctx,
+		store,
+		collectionRepository,
+		ObjectSelection,
+		thisIndex,
+		mutationRequest.ToSelect(),
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
