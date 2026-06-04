@@ -171,8 +171,6 @@ func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions)
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) (err error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	p := planner.New(
 		ctx,
 		identity.FromContext(ctx),
@@ -234,6 +232,8 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		return err
 	}
 
+	ds := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize).Datastore()
+
 	// View items are currently keyed by their index, starting at 1.
 	// The order in which results are returned must be consistent with the results of the
 	// underlying query/transform.
@@ -252,7 +252,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		}
 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
-		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
+		err = ds.Set(ctx, itemKey, serializedItem)
 		if err != nil {
 			return NewErrStoreViewCacheItem(err)
 		}
