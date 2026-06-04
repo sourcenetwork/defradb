@@ -353,25 +353,7 @@ existingVersionLoop:
 			}
 		}
 
-		if colExists {
-			if existingCol.IsMaterialized && !col.IsMaterialized {
-				// If the collection is being de-materialized - delete any cached values.
-				// Leaving them around will not break anything, but it would be a waste of
-				// storage space.
-
-				txn := datastore.CtxTryGetTxnOption(ctx)
-
-				colObject, err := db.newCollection(col, txn)
-				if err != nil {
-					return err
-				}
-
-				err = colObject.truncate(ctx)
-				if err != nil {
-					return err
-				}
-			}
-		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
+		if !colExists && col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
