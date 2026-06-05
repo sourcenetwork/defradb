@@ -21,299 +21,219 @@ import (
 func TestQueryInlineArrayWithNonNillableBooleans_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { flags: [Boolean!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"likedIndexes": null
-				}`,
+				Doc: `{"flags": null}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						likedIndexes
-					}
-				}`,
+				Request: `query { Users { flags } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":         "John",
-							"likedIndexes": nil,
-						},
+						{"flags": nil},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableBooleans_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { flags: [Boolean!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"likedIndexes": [true, false, true]
-				}`,
+				Doc: `{"flags": [true, false, true]}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						likedIndexes
-					}
-				}`,
+				Request: `query { Users { flags } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":         "John",
-							"likedIndexes": []bool{true, false, true},
-						},
+						{"flags": []bool{true, false, true}},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableInts_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { scores: [Int!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteIntegers": null
-				}`,
+				Doc: `{"scores": null}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteIntegers
-					}
-				}`,
+				Request: `query { Users { scores } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteIntegers": nil,
-						},
+						{"scores": nil},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableInts_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { scores: [Int!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteIntegers": [1, 2, 3]
-				}`,
+				Doc: `{"scores": [1, 2, 3]}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteIntegers
-					}
-				}`,
+				Request: `query { Users { scores } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteIntegers": []int64{1, 2, 3},
-						},
+						{"scores": []int64{1, 2, 3}},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableFloat64s_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { ratings: [Float64!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteFloat64s": null
-				}`,
+				Doc: `{"ratings": null}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteFloat64s
-					}
-				}`,
+				Request: `query { Users { ratings } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteFloat64s": nil,
-						},
+						{"ratings": nil},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableFloat64s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { ratings: [Float64!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteFloat64s": [1.1, 2.2, 3.3]
-				}`,
+				Doc: `{"ratings": [1.1, 2.2, 3.3]}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteFloat64s
-					}
-				}`,
+				Request: `query { Users { ratings } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteFloat64s": []float64{1.1, 2.2, 3.3},
-						},
+						{"ratings": []float64{1.1, 2.2, 3.3}},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableFloat32s_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { weights: [Float32!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteFloat32s": null
-				}`,
+				Doc: `{"weights": null}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteFloat32s
-					}
-				}`,
+				Request: `query { Users { weights } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteFloat32s": nil,
-						},
+						{"weights": nil},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableFloat32s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { weights: [Float32!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteFloat32s": [1.1, 2.2, 3.3]
-				}`,
+				Doc: `{"weights": [1.1, 2.2, 3.3]}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						favouriteFloat32s
-					}
-				}`,
+				Request: `query { Users { weights } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":              "John",
-							"favouriteFloat32s": []float32{1.1, 2.2, 3.3},
-						},
+						{"weights": []float32{1.1, 2.2, 3.3}},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableStrings_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { tags: [String!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"preferredStrings": null
-				}`,
+				Doc: `{"tags": null}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						preferredStrings
-					}
-				}`,
+				Request: `query { Users { tags } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":             "John",
-							"preferredStrings": nil,
-						},
+						{"tags": nil},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNonNillableStrings_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { tags: [String!] }`,
+			},
 			&action.AddDoc{
-				Doc: `{
-					"name": "John",
-					"preferredStrings": ["one", "two", "three"]
-				}`,
+				Doc: `{"tags": ["one", "two", "three"]}`,
 			},
 			&action.Request{
-				Request: `query {
-					Users {
-						name
-						preferredStrings
-					}
-				}`,
+				Request: `query { Users { tags } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"name":             "John",
-							"preferredStrings": []string{"one", "two", "three"},
-						},
+						{"tags": []string{"one", "two", "three"}},
 					},
 				},
 			},
 		},
 	}
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

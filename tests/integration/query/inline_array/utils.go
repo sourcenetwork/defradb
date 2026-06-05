@@ -27,10 +27,6 @@ var userCollectionGQLSchema = (`
 		testScores: [Int]
 		favouriteFloats: [Float!]
 		pageRatings: [Float]
-		favouriteFloat64s: [Float64!]
-		pageRatings64: [Float64]
-		favouriteFloat32s: [Float32!]
-		pageRatings32: [Float32]
 		preferredStrings: [String!]
 		pageHeaders: [String]
 	}
