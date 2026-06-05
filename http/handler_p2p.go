@@ -612,7 +612,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
 	router.AddRoute("/p2p/active-peers", http.MethodGet, activePeers, h.ActivePeers)
 	router.AddRoute("/p2p/connect", http.MethodPost, connect, h.Connect)
-	router.AddRoute("/p2p/connect", http.MethodDelete, disconnect, h.Disconnect)
+	router.AddRoute("/p2p/disconnect", http.MethodPost, disconnect, h.Disconnect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, listReplicators, h.ListReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, addReplicator, h.AddReplicator)
 	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)

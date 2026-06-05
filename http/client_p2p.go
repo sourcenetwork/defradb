@@ -108,13 +108,13 @@ func (c *Client) Disconnect(
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
+	methodURL := c.http.apiURL.JoinPath("p2p", "disconnect")
 
 	body, err := json.Marshal(addresses)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
