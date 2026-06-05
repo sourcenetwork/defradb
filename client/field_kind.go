@@ -95,16 +95,26 @@ func (k ScalarKind) String() string {
 	switch k {
 	case FieldKind_DocID:
 		return "ID"
+	case FieldKind_BOOL:
+		return "Boolean!"
 	case FieldKind_NILLABLE_BOOL:
 		return "Boolean"
+	case FieldKind_INT:
+		return "Int!"
 	case FieldKind_NILLABLE_INT:
 		return "Int"
 	case FieldKind_NILLABLE_DATETIME:
 		return "DateTime"
+	case FieldKind_FLOAT64:
+		return "Float64!"
 	case FieldKind_NILLABLE_FLOAT64:
 		return "Float64"
+	case FieldKind_FLOAT32:
+		return "Float32!"
 	case FieldKind_NILLABLE_FLOAT32:
 		return "Float32"
+	case FieldKind_STRING:
+		return "String!"
 	case FieldKind_NILLABLE_STRING:
 		return "String"
 	case FieldKind_NILLABLE_BLOB:
@@ -117,7 +127,12 @@ func (k ScalarKind) String() string {
 }
 
 func (k ScalarKind) IsNillable() bool {
-	return true
+	switch k {
+	case FieldKind_BOOL, FieldKind_INT, FieldKind_FLOAT64, FieldKind_FLOAT32, FieldKind_STRING:
+		return false
+	default:
+		return true
+	}
 }
 
 func (k ScalarKind) IsObject() bool {
@@ -172,23 +187,23 @@ func (k ScalarArrayKind) SubKind() ScalarKind {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return FieldKind_NILLABLE_BOOL
 	case FieldKind_BOOL_ARRAY:
-		return FieldKind_NILLABLE_BOOL
+		return FieldKind_BOOL
 	case FieldKind_NILLABLE_INT_ARRAY:
 		return FieldKind_NILLABLE_INT
 	case FieldKind_INT_ARRAY:
-		return FieldKind_NILLABLE_INT
+		return FieldKind_INT
 	case FieldKind_NILLABLE_FLOAT64_ARRAY:
 		return FieldKind_NILLABLE_FLOAT64
 	case FieldKind_FLOAT64_ARRAY:
-		return FieldKind_NILLABLE_FLOAT64
+		return FieldKind_FLOAT64
 	case FieldKind_NILLABLE_FLOAT32_ARRAY:
 		return FieldKind_NILLABLE_FLOAT32
 	case FieldKind_FLOAT32_ARRAY:
-		return FieldKind_NILLABLE_FLOAT32
+		return FieldKind_FLOAT32
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return FieldKind_NILLABLE_STRING
 	case FieldKind_STRING_ARRAY:
-		return FieldKind_NILLABLE_STRING
+		return FieldKind_STRING
 	default:
 		return FieldKind_None
 	}
@@ -296,7 +311,7 @@ const (
 	FieldKind_STRING_ARRAY           ScalarArrayKind = 12
 	FieldKind_NILLABLE_BLOB          ScalarKind      = 13
 	FieldKind_NILLABLE_JSON          ScalarKind      = 14
-	_                                ScalarKind      = 15 // safe to repurpose (was never used)
+	FieldKind_BOOL                   ScalarKind      = 15 // non-nillable element type for [Boolean!]
 	_                                ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
 	_                                ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
 	FieldKind_NILLABLE_BOOL_ARRAY    ScalarArrayKind = 18
@@ -304,6 +319,10 @@ const (
 	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
 	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
+	FieldKind_INT                    ScalarKind      = 23 // non-nillable element type for [Int!]
+	FieldKind_FLOAT64                ScalarKind      = 24 // non-nillable element type for [Float64!]
+	FieldKind_FLOAT32                ScalarKind      = 25 // non-nillable element type for [Float32!]
+	FieldKind_STRING                 ScalarKind      = 26 // non-nillable element type for [String!]
 	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
 )
 
@@ -317,9 +336,11 @@ const (
 var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"ID":                 FieldKind_DocID,
 	"Boolean":            FieldKind_NILLABLE_BOOL,
+	"Boolean!":           FieldKind_BOOL,
 	"[Boolean]":          FieldKind_NILLABLE_BOOL_ARRAY,
 	"[Boolean!]":         FieldKind_BOOL_ARRAY,
 	"Int":                FieldKind_NILLABLE_INT,
+	"Int!":               FieldKind_INT,
 	"[Int]":              FieldKind_NILLABLE_INT_ARRAY,
 	"[Int!]":             FieldKind_INT_ARRAY,
 	"DateTime":           FieldKind_NILLABLE_DATETIME,
@@ -327,12 +348,15 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[Float]":            FieldKind_NILLABLE_FLOAT64_ARRAY,
 	"[Float!]":           FieldKind_FLOAT64_ARRAY,
 	"Float64":            FieldKind_NILLABLE_FLOAT64,
+	"Float64!":           FieldKind_FLOAT64,
 	"[Float64]":          FieldKind_NILLABLE_FLOAT64_ARRAY,
 	"[Float64!]":         FieldKind_FLOAT64_ARRAY,
 	"Float32":            FieldKind_NILLABLE_FLOAT32,
+	"Float32!":           FieldKind_FLOAT32,
 	"[Float32]":          FieldKind_NILLABLE_FLOAT32_ARRAY,
 	"[Float32!]":         FieldKind_FLOAT32_ARRAY,
 	"String":             FieldKind_NILLABLE_STRING,
+	"String!":            FieldKind_STRING,
 	"[String]":           FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":          FieldKind_STRING_ARRAY,
 	"Blob":               FieldKind_NILLABLE_BLOB,
