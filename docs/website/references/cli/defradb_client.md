@@ -48,6 +48,7 @@ Execute queries, add collections, obtain node info, etc.
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 * [defradb client lens](defradb_client_lens.md)	 - Interact with the collection migration system of a running DefraDB instance
 * [defradb client node-identity](defradb_client_node-identity.md)	 - Get the public information about the node's identity
+* [defradb client node-options](defradb_client_node-options.md)	 - Get the node's configuration options as JSON
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client purge](defradb_client_purge.md)	 - Delete all persisted data and restart
 * [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request

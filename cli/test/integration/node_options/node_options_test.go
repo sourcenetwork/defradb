@@ -23,7 +23,6 @@ import (
 // Two sets with different values confirm that results are not coincidentally equal to defaults.
 //
 // Note: DB.LensRuntime is always "wazero" here so as to allow the tests to run on Windows.
-// Note also: TLS paths are not tested because we would need genuine TLS certs to test using them.
 
 // testIdentityKeyHex is a valid secp256k1 private key used across CLI command examples.
 const testIdentityKeyHex = "e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac"
