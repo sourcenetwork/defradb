@@ -311,7 +311,7 @@ const (
 	FieldKind_STRING_ARRAY           ScalarArrayKind = 12
 	FieldKind_NILLABLE_BLOB          ScalarKind      = 13
 	FieldKind_NILLABLE_JSON          ScalarKind      = 14
-	FieldKind_BOOL                   ScalarKind      = 15 // non-nillable element type for [Boolean!]
+	FieldKind_BOOL                   ScalarKind      = 15 // Repurposed 2026-06-05, was never used
 	_                                ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
 	_                                ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
 	FieldKind_NILLABLE_BOOL_ARRAY    ScalarArrayKind = 18
@@ -319,10 +319,10 @@ const (
 	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
 	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
-	FieldKind_INT                    ScalarKind      = 23 // non-nillable element type for [Int!]
-	FieldKind_FLOAT64                ScalarKind      = 24 // non-nillable element type for [Float64!]
-	FieldKind_FLOAT32                ScalarKind      = 25 // non-nillable element type for [Float32!]
-	FieldKind_STRING                 ScalarKind      = 26 // non-nillable element type for [String!]
+	FieldKind_INT                    ScalarKind      = 23
+	FieldKind_FLOAT64                ScalarKind      = 24
+	FieldKind_FLOAT32                ScalarKind      = 25
+	FieldKind_STRING                 ScalarKind      = 26
 	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
 )
 
