@@ -22,7 +22,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSyncColVersion_WithNonNullableBoolArray(t *testing.T) {
+func TestSyncColVersion_WithNonNillableBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -73,7 +73,7 @@ func TestSyncColVersion_WithNonNullableBoolArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSyncColVersion_WithNonNullableIntArray(t *testing.T) {
+func TestSyncColVersion_WithNonNillableIntArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -124,7 +124,7 @@ func TestSyncColVersion_WithNonNullableIntArray(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSyncColVersion_WithNonNullableFloat64Array(t *testing.T) {
+func TestSyncColVersion_WithNonNillableFloat64Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -175,7 +175,7 @@ func TestSyncColVersion_WithNonNullableFloat64Array(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSyncColVersion_WithNonNullableFloat32Array(t *testing.T) {
+func TestSyncColVersion_WithNonNillableFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -226,7 +226,7 @@ func TestSyncColVersion_WithNonNullableFloat32Array(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSyncColVersion_WithNonNullableStringArray(t *testing.T) {
+func TestSyncColVersion_WithNonNillableStringArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
