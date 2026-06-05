@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineArrayWithNonNullableBooleans_Null(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableBooleans_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -48,7 +48,7 @@ func TestQueryInlineArrayWithNonNullableBooleans_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableBooleans_NotEmpty(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableBooleans_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -78,7 +78,7 @@ func TestQueryInlineArrayWithNonNullableBooleans_NotEmpty(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableInts_Null(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableInts_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -108,7 +108,7 @@ func TestQueryInlineArrayWithNonNullableInts_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableInts_NotEmpty(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableInts_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -138,7 +138,7 @@ func TestQueryInlineArrayWithNonNullableInts_NotEmpty(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableFloat64s_Null(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableFloat64s_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -168,7 +168,7 @@ func TestQueryInlineArrayWithNonNullableFloat64s_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableFloat64s_NotEmpty(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableFloat64s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -198,7 +198,7 @@ func TestQueryInlineArrayWithNonNullableFloat64s_NotEmpty(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableFloat32s_Null(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableFloat32s_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -228,7 +228,7 @@ func TestQueryInlineArrayWithNonNullableFloat32s_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableFloat32s_NotEmpty(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableFloat32s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -258,7 +258,7 @@ func TestQueryInlineArrayWithNonNullableFloat32s_NotEmpty(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableStrings_Null(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableStrings_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -288,7 +288,7 @@ func TestQueryInlineArrayWithNonNullableStrings_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithNonNullableStrings_NotEmpty(t *testing.T) {
+func TestQueryInlineArrayWithNonNillableStrings_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
