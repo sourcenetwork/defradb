@@ -58,13 +58,13 @@ type ConnectPeers struct {
 	ExpectedError string
 }
 
-// DisconnectPeers disconnects two nodes from each other.
+// DisconnectPeers disconnects a source node from one or more target nodes.
 type DisconnectPeers struct {
 	// SourceNodeID is the node ID (index) of the node initiating the disconnect.
 	SourceNodeID int
 
-	// TargetNodeID is the node ID (index) of the node to disconnect from.
-	TargetNodeID int
+	// TargetNodeIDs are the node IDs (indexes) of the nodes to disconnect from.
+	TargetNodeIDs []int
 
 	// The identity of this request. Optional.
 	//
@@ -144,33 +144,38 @@ func connectPeers(
 	time.Sleep(10 * time.Millisecond)
 }
 
-// disconnectPeers disconnects a source node from a target node.
+// disconnectPeers disconnects a source node from one or more target nodes.
 func disconnectPeers(
 	s *state.State,
 	cfg DisconnectPeers,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
-	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetOpts := options.PeerInfo()
-	targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.TargetNodeID), cfg.TargetNodeID)
-	if targetIdent.HasValue() {
-		targetOpts.SetIdentity(targetIdent.Value())
+	var allTargetAddresses []string
+	for _, targetNodeID := range cfg.TargetNodeIDs {
+		targetNode := s.Nodes[targetNodeID]
+		targetOpts := options.PeerInfo()
+		targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
+		if targetIdent.HasValue() {
+			targetOpts.SetIdentity(targetIdent.Value())
+		}
+		addrs, err := targetNode.PeerInfo(s.Ctx, targetOpts)
+		require.NoError(s.T, err)
+		allTargetAddresses = append(allTargetAddresses, addrs...)
 	}
-
-	targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
-	require.NoError(s.T, err)
 
 	opt := options.WithIdentity(options.Disconnect(),
 		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
 
-	err = sourceNode.Disconnect(s.Ctx, targetAddresses, opt)
+	err := sourceNode.Disconnect(s.Ctx, allTargetAddresses, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
 
-	delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, cfg.TargetNodeID)
-	delete(s.Nodes[cfg.TargetNodeID].P2P.Connections, cfg.SourceNodeID)
+	for _, targetNodeID := range cfg.TargetNodeIDs {
+		delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, targetNodeID)
+		delete(s.Nodes[targetNodeID].P2P.Connections, cfg.SourceNodeID)
+	}
 }
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.

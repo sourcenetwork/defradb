@@ -49,7 +49,7 @@ func TestNAC_GatesDisconnectP2PPeer_AuthorizedIdentity_AllowAccess(t *testing.T)
 			testUtils.DisconnectPeers{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
-				TargetNodeID: 0,
+				TargetNodeIDs: []int{0},
 			},
 		},
 	}
