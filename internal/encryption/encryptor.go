@@ -14,8 +14,7 @@ import (
 	"context"
 	"crypto/rand"
 	"io"
-	"os"
-	"strings"
+	"testing"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -181,12 +180,8 @@ func ShouldEncryptIndividualField(ctx context.Context, fieldName immutable.Optio
 }
 
 func init() {
-	arg := os.Args[0]
 	// If the binary is a test binary, use a deterministic nonce.
-	// TODO: We should try to find a better way to detect this https://github.com/sourcenetwork/defradb/issues/2801
-	if strings.HasSuffix(arg, ".test") ||
-		strings.Contains(arg, "/defradb/tests/") ||
-		strings.Contains(arg, "/__debug_bin") {
+	if testing.Testing() {
 		generateEncryptionKeyFunc = generateTestEncryptionKey
 	}
 }
