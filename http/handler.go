@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 // IsDevMode is a global variable for the development mode flag
@@ -94,6 +95,13 @@ func NewHandler(db DB) (*Handler, error) {
 	}
 	txs := &sync.Map{}
 	mux := chi.NewMux()
+	// Normalize trailing slashes so that, for example, `/collections` and
+	// `/collections/` resolve to the same route instead of the latter missing
+	// chi's router and returning a bare 404. StripSlashes rewrites the routing
+	// path in place (no redirect), preserving the request method and body.
+	// It is registered before any routes so every HTTP route on this handler
+	// is normalized consistently.
+	mux.Use(middleware.StripSlashes)
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs),

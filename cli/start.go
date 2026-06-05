@@ -245,6 +245,9 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
 
+			case err := <-n.APIError():
+				log.ErrorContextE(cmd.Context(), "API server exited unexpectedly; shutting down", err)
+
 			case <-signalCh:
 				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
@@ -343,7 +346,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(config.ConfigFlags["document-acp-type"]),
-		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
+		"Specify the document acp engine to use (supported: none, local (default), source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),
