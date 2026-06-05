@@ -161,3 +161,24 @@ func TestAuth_TokenWithoutAudience_ReturnsBareForbidden(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, status)
 	require.Equal(t, "forbidden", body)
 }
+
+// TestAuth_MalformedToken_ReturnsBareForbidden covers the FromToken-failure branch:
+// a bearer value that isn't a parseable JWT is rejected before VerifyAuthToken is even
+// reached, and likewise collapses to the bare "forbidden" body. Together with the
+// audience/missing-aud cases above this means every distinguishable auth-failure cause
+// produces the same opaque response.
+func TestAuth_MalformedToken_ReturnsBareForbidden(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	// Not a JWT at all — FromToken's jwt.Parse will fail before any audience check.
+	status, body := doAuthedPost(
+		t,
+		cdb,
+		"http://localhost:9181/api/v1/collections",
+		"not-a-jwt",
+		`type Author { name: String }`,
+	)
+
+	require.Equal(t, http.StatusForbidden, status)
+	require.Equal(t, "forbidden", body)
+}
