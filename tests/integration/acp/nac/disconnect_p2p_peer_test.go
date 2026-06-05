@@ -71,7 +71,7 @@ func TestNAC_GatesDisconnectP2PPeer_NoIdentity_NotAuthorizedError(t *testing.T) 
 			testUtils.DisconnectPeers{
 				Identity:      testUtils.NoIdentity(),
 				SourceNodeID:  1,
-				TargetNodeID:  0,
+				TargetNodeIDs: []int{0},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDisconnectP2PPeerPerm),
 			},
 		},
@@ -94,7 +94,7 @@ func TestNAC_GatesDisconnectP2PPeer_WrongIdentity_NotAuthorizedError(t *testing.
 			testUtils.DisconnectPeers{
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
-				TargetNodeID:  0,
+				TargetNodeIDs: []int{0},
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDisconnectP2PPeerPerm),
 			},
 		},
