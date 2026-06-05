@@ -51,7 +51,7 @@ require (
 	github.com/sourcenetwork/corelog v0.0.9
 	github.com/sourcenetwork/go-p2p v0.1.9
 	github.com/sourcenetwork/goji v0.0.10
-	github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40
+	github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.10.0
 	github.com/sourcenetwork/sourcehub v0.4.1-0.20260128164915-1bce44032618
@@ -484,8 +484,3 @@ require (
 )
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
-
-// Local fix for the GraphQL lexer's byte/rune position drift when an ignored
-// token (whitespace or a # comment) contains a multi-byte UTF-8 rune. Remove
-// once the fix is merged upstream and the graphql-go pin above is bumped.
-replace github.com/sourcenetwork/graphql-go => ../graphql-go
