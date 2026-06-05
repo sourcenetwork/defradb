@@ -93,7 +93,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
 				SetPath(cfg.GetString("datastore.badger.path")).
-				SetBadgerInMemory(inMem)
+				SetBadgerInMemory(inMem).
+				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
@@ -101,7 +102,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			opts.P2P().
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
-				SetEnableRelay(cfg.GetBool("net.relayEnabled")).
+				SetEnableRelay(cfg.GetBool("net.relay")).
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
 			opts.HTTP().
 				SetAddress(cfg.GetString("api.address")).
@@ -283,6 +284,16 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"no-p2p",
 		cfg.GetBool(config.ConfigFlags["no-p2p"]),
 		"Disable the peer-to-peer network synchronization system",
+	)
+	cmd.PersistentFlags().Bool(
+		"pubsub",
+		cfg.GetBool(config.ConfigFlags["pubsub"]),
+		"Enable the pubsub system",
+	)
+	cmd.PersistentFlags().Bool(
+		"relay",
+		cfg.GetBool(config.ConfigFlags["relay"]),
+		"Enable the relay node",
 	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",

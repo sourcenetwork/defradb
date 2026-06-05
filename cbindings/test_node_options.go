@@ -178,7 +178,8 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	opts.replicatorRetryIntervals = retryIntervals
 	opts.searchableEncryptionKey = (*C.uint8_t)(cSearchKeyA)
 	opts.searchableEncryptionKeyLen = C.int(len(searchKeyA))
-	// P2P (stored but not used because DisableP2P = 1)
+	// P2P
+	// The following are stored but not used because P2P is disabled
 	opts.enablePubSub = 1
 	opts.enableRelay = 1
 	opts.enableClearBackoffOnRetry = 1
@@ -186,7 +187,8 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	opts.peers = bootstrapPeers
 	opts.p2pPrivateKey = (*C.uint8_t)(cP2PKeyA)
 	opts.p2pPrivateKeyLen = C.int(len(p2pKeyA))
-	// HTTP (stored but not used because DisableAPI = 1)
+	// HTTP
+	// The following are stored but not used because API is disabled
 	opts.httpAddress = httpAddr
 	opts.httpAllowedOrigins = allowedOrigins
 	opts.tlsCertPath = certPath
@@ -305,7 +307,7 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 	opts.maxTransactionRetries = C.int(14)
 	opts.p2pBlockSyncTimeoutMs = C.int64_t(8000)
 	opts.lensPoolSize = C.int(6)
-	opts.chunkSize = C.int(256) // not overridden because BadgerInMemory is false
+	opts.chunkSize = C.int(256)
 	opts.replicatorRetryIntervals = retryIntervals
 	// searchableEncryptionKey intentionally not set, so is nil in the output (vs "<redacted>" in set A)
 	// P2P flags are intentionally not set, and will all default to false (vs true in set A)
