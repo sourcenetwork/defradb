@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -44,6 +45,12 @@ func TestNAC_GatesDisconnectP2PPeer_AuthorizedIdentity_AllowAccess(t *testing.T)
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,
+			},
+
+			&action.ActivePeers{
+				NodeID:   1,
+				Identity: testUtils.ClientIdentity(1),
+				Expected: []string{"{{.Peer0_Address0}}"},
 			},
 
 			testUtils.DisconnectPeers{

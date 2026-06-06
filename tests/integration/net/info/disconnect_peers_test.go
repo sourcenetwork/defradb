@@ -14,6 +14,7 @@ package info
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,6 +26,10 @@ func TestNetInfoDisconnectSinglePeer(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
+			},
+			&action.ActivePeers{
+				NodeID:   0,
+				Expected: []string{"{{.Peer1_Address0}}"},
 			},
 			testUtils.DisconnectPeers{
 				SourceNodeID:  1,
@@ -49,6 +54,10 @@ func TestNetInfoDisconnectMultiplePeers(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
+			},
+			&action.ActivePeers{
+				NodeID:   1,
+				Expected: []string{"{{.Peer0_Address0}}", "{{.Peer2_Address0}}"},
 			},
 			testUtils.DisconnectPeers{
 				SourceNodeID:  1,
