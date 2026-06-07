@@ -26,23 +26,23 @@ import (
 var documentACPConstructors = map[options.NodeDocumentACPType]func(
 	context.Context,
 	*options.NodeDocumentACPOptions,
-) (immutable.Option[dac.DocumentACP], error){
-	options.NodeNoDocumentACPType: func(
-		ctx context.Context,
-		a *options.NodeDocumentACPOptions,
-	) (immutable.Option[dac.DocumentACP], error) {
-		return dac.NoDocumentACP, nil
-	},
-}
+) (immutable.Option[dac.DocumentACP], error){}
 
 // NewDocumentACP returns a new ACP module with the given options.
+//
+// Document ACP is always enabled and can not be disabled; an unspecified type
+// defaults to the local implementation.
 func NewDocumentACP(
 	ctx context.Context,
 	opts *options.NodeDocumentACPOptions,
 ) (immutable.Option[dac.DocumentACP], error) {
-	acpConstructor, ok := documentACPConstructors[opts.DocumentACPType]
+	acpType := opts.DocumentACPType
+	if acpType == "" {
+		acpType = options.NodeLocalDocumentACPType
+	}
+	acpConstructor, ok := documentACPConstructors[acpType]
 	if ok {
 		return acpConstructor(ctx, opts)
 	}
-	return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(opts.DocumentACPType)
+	return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(acpType)
 }

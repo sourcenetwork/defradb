@@ -32,5 +32,4 @@ func init() {
 		return immutable.Some(localDocumentACP), nil
 	}
 	documentACPConstructors[options.NodeLocalDocumentACPType] = constructor
-	documentACPConstructors[options.NodeDefaultDocumentACPType] = constructor
 }
