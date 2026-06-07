@@ -19,30 +19,21 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-// documentACPConstructors is a map of document ACP types to acp implementations.
-//
-// It is populated by the `init` functions in the implementation-specific files - this
-// allows it's population to be managed by build flags.
-var documentACPConstructors = map[options.NodeDocumentACPType]func(
-	context.Context,
-	*options.NodeDocumentACPOptions,
-) (immutable.Option[dac.DocumentACP], error){}
-
-// NewDocumentACP returns a new ACP module with the given options.
+// NewDocumentACP returns a new document ACP module for the given options.
 //
 // Document ACP is always enabled and can not be disabled; an unspecified type
-// defaults to the local implementation.
+// defaults to the local implementation. The source-hub implementation is chosen at
+// build time (see acp_dac_source_hub.go and acp_dac_source_hub_js.go).
 func NewDocumentACP(
 	ctx context.Context,
 	opts *options.NodeDocumentACPOptions,
 ) (immutable.Option[dac.DocumentACP], error) {
-	acpType := opts.DocumentACPType
-	if acpType == "" {
-		acpType = options.NodeLocalDocumentACPType
+	switch opts.DocumentACPType {
+	case "", options.NodeLocalDocumentACPType:
+		return newLocalDocumentACP(ctx, opts)
+	case options.NodeSourceHubDocumentACPType:
+		return newSourceHubDocumentACP(ctx, opts)
+	default:
+		return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(opts.DocumentACPType)
 	}
-	acpConstructor, ok := documentACPConstructors[acpType]
-	if ok {
-		return acpConstructor(ctx, opts)
-	}
-	return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(acpType)
 }

@@ -19,17 +19,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func init() {
-	constructor := func(
-		ctx context.Context,
-		opts *options.NodeDocumentACPOptions,
-	) (immutable.Option[dac.DocumentACP], error) {
-		localDocumentACP, err := dac.NewLocalDocumentACP(opts.Path)
-		if err != nil {
-			return dac.NoDocumentACP, err
-		}
-
-		return immutable.Some(localDocumentACP), nil
+func newLocalDocumentACP(
+	ctx context.Context,
+	opts *options.NodeDocumentACPOptions,
+) (immutable.Option[dac.DocumentACP], error) {
+	localDocumentACP, err := dac.NewLocalDocumentACP(opts.Path)
+	if err != nil {
+		return dac.NoDocumentACP, err
 	}
-	documentACPConstructors[options.NodeLocalDocumentACPType] = constructor
+
+	return immutable.Some(localDocumentACP), nil
 }
