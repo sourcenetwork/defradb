@@ -132,7 +132,7 @@ func (w *Wrapper) Disconnect(
 ) error {
 	args := []string{"client", "p2p", "disconnect"}
 
-	args = append(args, strings.Join(addresses, ","))
+	args = append(args, addresses...)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
