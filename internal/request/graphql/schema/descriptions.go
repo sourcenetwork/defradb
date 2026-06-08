@@ -36,12 +36,15 @@ var (
 		client.FieldKind_NILLABLE_FLOAT64:       schemaTypes.Float64,
 		client.FieldKind_FLOAT64_ARRAY:          gql.NewList(gql.NewNonNull(schemaTypes.Float64)),
 		client.FieldKind_NILLABLE_FLOAT64_ARRAY: gql.NewList(schemaTypes.Float64),
+		client.FieldKind_DATETIME:               gql.NewNonNull(gql.DateTime),
 		client.FieldKind_NILLABLE_DATETIME:      gql.DateTime,
 		client.FieldKind_STRING:                 gql.NewNonNull(gql.String),
 		client.FieldKind_NILLABLE_STRING:        gql.String,
 		client.FieldKind_STRING_ARRAY:           gql.NewList(gql.NewNonNull(gql.String)),
 		client.FieldKind_NILLABLE_STRING_ARRAY:  gql.NewList(gql.String),
+		client.FieldKind_BLOB:                   gql.NewNonNull(schemaTypes.Blob),
 		client.FieldKind_NILLABLE_BLOB:          schemaTypes.Blob,
+		client.FieldKind_JSON:                   gql.NewNonNull(schemaTypes.JSON),
 		client.FieldKind_NILLABLE_JSON:          schemaTypes.JSON,
 	}
 
@@ -63,12 +66,15 @@ var (
 		client.FieldKind_NILLABLE_FLOAT32:       client.LWW_REGISTER,
 		client.FieldKind_FLOAT32_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_FLOAT32_ARRAY: client.LWW_REGISTER,
+		client.FieldKind_DATETIME:               client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_DATETIME:      client.LWW_REGISTER,
 		client.FieldKind_STRING:                 client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING:        client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:           client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY:  client.LWW_REGISTER,
+		client.FieldKind_BLOB:                   client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_BLOB:          client.LWW_REGISTER,
+		client.FieldKind_JSON:                   client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_JSON:          client.LWW_REGISTER,
 	}
 )

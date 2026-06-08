@@ -103,6 +103,8 @@ func (k ScalarKind) String() string {
 		return "Int!"
 	case FieldKind_NILLABLE_INT:
 		return "Int"
+	case FieldKind_DATETIME:
+		return "DateTime!"
 	case FieldKind_NILLABLE_DATETIME:
 		return "DateTime"
 	case FieldKind_FLOAT64:
@@ -117,8 +119,12 @@ func (k ScalarKind) String() string {
 		return "String!"
 	case FieldKind_NILLABLE_STRING:
 		return "String"
+	case FieldKind_BLOB:
+		return "Blob!"
 	case FieldKind_NILLABLE_BLOB:
 		return "Blob"
+	case FieldKind_JSON:
+		return "JSON!"
 	case FieldKind_NILLABLE_JSON:
 		return "JSON"
 	default:
@@ -128,7 +134,8 @@ func (k ScalarKind) String() string {
 
 func (k ScalarKind) IsNillable() bool {
 	switch k {
-	case FieldKind_BOOL, FieldKind_INT, FieldKind_FLOAT64, FieldKind_FLOAT32, FieldKind_STRING:
+	case FieldKind_BOOL, FieldKind_INT, FieldKind_FLOAT64, FieldKind_FLOAT32, FieldKind_STRING,
+		FieldKind_DATETIME, FieldKind_BLOB, FieldKind_JSON:
 		return false
 	default:
 		return true
@@ -323,6 +330,9 @@ const (
 	FieldKind_FLOAT64                ScalarKind      = 24
 	FieldKind_FLOAT32                ScalarKind      = 25
 	FieldKind_STRING                 ScalarKind      = 26
+	FieldKind_DATETIME               ScalarKind      = 27
+	FieldKind_BLOB                   ScalarKind      = 28
+	FieldKind_JSON                   ScalarKind      = 29
 	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
 )
 
@@ -344,6 +354,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[Int]":              FieldKind_NILLABLE_INT_ARRAY,
 	"[Int!]":             FieldKind_INT_ARRAY,
 	"DateTime":           FieldKind_NILLABLE_DATETIME,
+	"DateTime!":          FieldKind_DATETIME,
 	"Float":              FieldKind_NILLABLE_FLOAT64,
 	"[Float]":            FieldKind_NILLABLE_FLOAT64_ARRAY,
 	"[Float!]":           FieldKind_FLOAT64_ARRAY,
@@ -360,7 +371,9 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[String]":           FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":          FieldKind_STRING_ARRAY,
 	"Blob":               FieldKind_NILLABLE_BLOB,
+	"Blob!":              FieldKind_BLOB,
 	"JSON":               FieldKind_NILLABLE_JSON,
+	"JSON!":              FieldKind_JSON,
 	request.SelfTypeName: NewSelfKind("", false),
 	fmt.Sprintf("[%s]", request.SelfTypeName): NewSelfKind("", true),
 }

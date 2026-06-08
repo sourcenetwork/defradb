@@ -237,3 +237,135 @@ func TestQueryInlineArrayWithNonNillableStrings_NotEmpty(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryNonNillableDateTime_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, createdAt: DateTime! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "createdAt": null}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, createdAt } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "createdAt": nil},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryNonNillableDateTime_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, createdAt: DateTime! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "createdAt": "2024-01-01T00:00:00Z"}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, createdAt } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "createdAt": "2024-01-01T00:00:00Z"},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryNonNillableBlob_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, avatar: Blob! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "avatar": null}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, avatar } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "avatar": nil},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryNonNillableBlob_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, avatar: Blob! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "avatar": "ff0011"}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, avatar } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "avatar": "ff0011"},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryNonNillableJSON_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, metadata: JSON! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "metadata": null}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, metadata } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "metadata": nil},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryNonNillableJSON_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String, metadata: JSON! }`,
+			},
+			&action.AddDoc{
+				Doc: `{"name": "John", "metadata": {"role": "admin"}}`,
+			},
+			&action.Request{
+				Request: `query { Users { name, metadata } }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "metadata": map[string]any{"role": "admin"}},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
