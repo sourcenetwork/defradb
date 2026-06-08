@@ -32,6 +32,7 @@ defradb start [flags]
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
+      --relay                             Enable the p2p relay
       --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
