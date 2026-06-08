@@ -39,6 +39,26 @@ func TestParallelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
 	require.True(t, c3.closeCalled)
 }
 
+// Every child of a topLevelNode must get Close() called, even when an
+// earlier child's Close returned an error. Short-circuiting would
+// strand iterators on later children's shared transaction.
+func TestTopLevelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
+	c1 := &trackingPlanNode{closeErr: errors.New("intentional close failure")}
+	c2 := &trackingPlanNode{}
+	c3 := &trackingPlanNode{}
+
+	n := &topLevelNode{
+		children: []planNode{c1, c2, c3},
+	}
+
+	err := n.Close()
+	require.Error(t, err)
+	require.ErrorContains(t, err, "intentional close failure")
+	require.True(t, c1.closeCalled, "first child Close() should be called")
+	require.True(t, c2.closeCalled, "second child Close() must still be called after first errors")
+	require.True(t, c3.closeCalled, "third child Close() must still be called after first errors")
+}
+
 // Both sides of an invertibleTypeJoin must get Close() called, even
 // when one of them errors.
 func TestInvertibleTypeJoin_Close_ClosesBothSidesEvenIfOneErrors(t *testing.T) {
