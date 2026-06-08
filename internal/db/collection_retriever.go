@@ -22,8 +22,7 @@ import (
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
 type collectionRetriever struct {
-	db    *DB
-	ident immutable.Option[identity.Identity]
+	db *DB
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
@@ -33,16 +32,14 @@ func NewCollectionRetriever(db *DB) collectionRetriever {
 	}
 }
 
-// WithIdentity sets the identity for the collectionRetriever.
-func (r collectionRetriever) WithIdentity(ident immutable.Option[identity.Identity]) collectionRetriever {
-	r.ident = ident
-	return r
-}
-
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
+// The supplied identity is forwarded to the underlying collection lookup, so
+// NAC sees the caller's identity rather than the node's. Pass `immutable.None`
+// for anonymous lookups; NAC will gate the call accordingly.
 func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
+	ident immutable.Option[identity.Identity],
 ) (client.Collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
@@ -66,11 +63,14 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 
 	opt := options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())
-	if r.ident.HasValue() {
-		opt = opt.SetIdentity(r.ident.Value())
+	if ident.HasValue() {
+		opt = opt.SetIdentity(ident.Value())
 	}
 
-	cols, _ := txn.GetCollections(ctx, opt)
+	cols, err := txn.GetCollections(ctx, opt)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(cols) == 0 {
 		return nil, client.NewErrCollectionNotFoundForCollectionVersion(

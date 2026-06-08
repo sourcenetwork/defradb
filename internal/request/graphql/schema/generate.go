@@ -511,7 +511,7 @@ func (g *Generator) buildTypes(
 				if ok {
 					ttype, ok = g.manager.schema.TypeMap()[otherDef.Name]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Kind.String())
+						return nil, NewErrTypeNotFoundOnField(otherDef.Name, collection.Name, field.Name)
 					}
 					if field.Kind.IsArray() {
 						ttype = gql.NewList(ttype)
@@ -520,7 +520,7 @@ func (g *Generator) buildTypes(
 					var ok bool
 					ttype, ok = fieldKindToGQLType[field.Kind]
 					if !ok {
-						return nil, NewErrTypeNotFound(field.Kind.String())
+						return nil, NewErrTypeNotFoundOnField(field.Kind.String(), collection.Name, field.Name)
 					}
 				}
 

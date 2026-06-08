@@ -482,8 +482,13 @@ func (vf *VersionedFetcher) getEncBlockLS() linking.LinkSystem {
 
 // Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
-	if err := vf.root.Close(); err != nil {
-		return err
+	// vf.root may be nil if Init failed (or was never called) before
+	// allocating it. Close is reachable in that state through the
+	// MultiVersioned cleanup path that tracks children eagerly.
+	if vf.root != nil {
+		if err := vf.root.Close(); err != nil {
+			return err
+		}
 	}
 
 	if vf.Fetcher != nil {

@@ -12,6 +12,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -28,6 +29,7 @@ const (
 	errAddingP2PCollection                       string = "cannot add collection ID"
 	errRemovingP2PCollection                     string = "cannot remove collection ID"
 	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection                string = "cannot remove a collection while another field references it"
 	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
 	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
 	errCannotSetVersionID                        string = "setting the VersionID is not supported"
@@ -123,6 +125,7 @@ const (
 	errNACIsAlreadyEnabled                 string = "node acp is already enabled"
 	errNACIsNotConfigured                  string = "node acp is not configured"
 	errRelationNameEmpty                   string = "relation name cannot be empty"
+	errRelationNameNotUnique               string = "relation name is not unique within collection"
 	errInvalidCID                          string = "invalid CID"
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
@@ -217,6 +220,7 @@ var (
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
 	ErrCanNotHavePolicyWithoutACP                = errors.New(errCanNotHavePolicyWithoutACP)
+	ErrRemoveReferencedCollection                = errors.New(errRemoveReferencedCollection)
 	ErrRelationMissingField                      = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                 = errors.New(errMultipleRelationPrimaries)
 	ErrP2PColHasPolicy                           = errors.New(errP2PColHasPolicy)
@@ -243,6 +247,7 @@ var (
 	ErrNACIsNotConfigured                        = errors.New(errNACIsNotConfigured)
 	ErrNACRelationshipOperationRequiresIdentity  = errors.New("node acp relationship operation requires identity")
 	ErrRelationNameEmpty                         = errors.New(errRelationNameEmpty)
+	ErrRelationNameNotUnique                     = errors.New(errRelationNameNotUnique)
 	ErrInvalidCID                                = errors.New(errInvalidCID)
 	ErrUnknownCID                                = errors.New(errUnknownCID)
 	ErrNoP2P                                     = errors.New("no p2p system configured")
@@ -355,6 +360,27 @@ func NewErrAddCollectionWithPatch(name string) error {
 	)
 }
 
+func NewErrRemoveReferencedCollection(inner error, removed []string) error {
+	return errors.Wrap(
+		errRemoveReferencedCollection,
+		inner,
+		errors.NewKV("Removed", strings.Join(removed, ",")),
+	)
+}
+
+// NewErrRemoveReferencedCollectionFromField errors when a patch removes a collection
+// that is still being referenced by a field on another collection in the post-patch
+// state. It identifies which removed collection is still in use and the host
+// collection/field doing the referencing.
+func NewErrRemoveReferencedCollectionFromField(removedName, hostCollection, hostField string) error {
+	return errors.New(
+		errRemoveReferencedCollection,
+		errors.NewKV("Removed", removedName),
+		errors.NewKV("ReferencedBy", hostCollection),
+		errors.NewKV("Field", hostField),
+	)
+}
+
 func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID string) error {
 	return errors.New(
 		errCollectionIDDoesntMatch,
@@ -403,6 +429,14 @@ func NewErrRelationNameEmpty(name string) error {
 	return errors.New(
 		errRelationNameEmpty,
 		errors.NewKV("Field", name),
+	)
+}
+
+func NewErrRelationNameNotUnique(name string, relationName string) error {
+	return errors.New(
+		errRelationNameNotUnique,
+		errors.NewKV("Field", name),
+		errors.NewKV("RelationName", relationName),
 	)
 }
 

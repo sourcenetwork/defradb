@@ -465,9 +465,13 @@ fix:
 build-c-static-windows:
 	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
 	
-.PHONY build-c-shared-linux:
+.PHONY: build-c-shared-linux build-c-shared-linux-deb
+
 build-c-shared-linux:
-	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	@MAKE_DEB=0 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+build-c-shared-linux\:deb:
+	@MAKE_DEB=1 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
 	
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/
