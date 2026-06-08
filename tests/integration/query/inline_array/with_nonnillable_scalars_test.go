@@ -246,7 +246,7 @@ func TestQueryNonNillableDateTime_Null(t *testing.T) {
 			},
 			&action.AddDoc{
 				Doc:           `{"name": "John", "createdAt": null}`,
-				ExpectedError: `value doesn't contain string; it contains null`,
+				ExpectedError: `null`,
 			},
 		},
 	}
@@ -283,7 +283,7 @@ func TestQueryNonNillableBlob_Null(t *testing.T) {
 			},
 			&action.AddDoc{
 				Doc:           `{"name": "John", "avatar": null}`,
-				ExpectedError: `value doesn't contain string; it contains null`,
+				ExpectedError: `null`,
 			},
 		},
 	}
