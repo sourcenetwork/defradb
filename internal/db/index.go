@@ -55,7 +55,15 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_NILLABLE_INT_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT32_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT64_ARRAY,
-		client.FieldKind_NILLABLE_STRING_ARRAY:
+		client.FieldKind_NILLABLE_STRING_ARRAY,
+		client.FieldKind_JSON,
+		client.FieldKind_STRING,
+		client.FieldKind_INT,
+		client.FieldKind_FLOAT32,
+		client.FieldKind_FLOAT64,
+		client.FieldKind_BOOL,
+		client.FieldKind_BLOB,
+		client.FieldKind_DATETIME:
 		return true
 	default:
 		return false

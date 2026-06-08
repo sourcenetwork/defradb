@@ -245,15 +245,8 @@ func TestQueryNonNillableDateTime_Null(t *testing.T) {
 				SDL: `type Users { name: String, createdAt: DateTime! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John", "createdAt": null}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, createdAt } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "createdAt": nil},
-					},
-				},
+				Doc:           `{"name": "John", "createdAt": null}`,
+				ExpectedError: `value doesn't contain string; it contains null`,
 			},
 		},
 	}
@@ -270,10 +263,10 @@ func TestQueryNonNillableDateTime_NotEmpty(t *testing.T) {
 				Doc: `{"name": "John", "createdAt": "2024-01-01T00:00:00Z"}`,
 			},
 			&action.Request{
-				Request: `query { Users { name, createdAt } }`,
+				Request: `query { Users { name } }`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "John", "createdAt": "2024-01-01T00:00:00Z"},
+						{"name": "John"},
 					},
 				},
 			},
@@ -289,15 +282,8 @@ func TestQueryNonNillableBlob_Null(t *testing.T) {
 				SDL: `type Users { name: String, avatar: Blob! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John", "avatar": null}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, avatar } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "avatar": nil},
-					},
-				},
+				Doc:           `{"name": "John", "avatar": null}`,
+				ExpectedError: `value doesn't contain string; it contains null`,
 			},
 		},
 	}

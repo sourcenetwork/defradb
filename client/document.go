@@ -269,7 +269,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 
 		return NewNormalString(v), nil
 
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_STRING, FieldKind_BLOB:
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -290,7 +290,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableStringArray(v), nil
 
-	case FieldKind_NILLABLE_BOOL:
+	case FieldKind_NILLABLE_BOOL, FieldKind_BOOL:
 		v, err := getBool(val)
 		if err != nil {
 			return nil, err
@@ -311,7 +311,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableBoolArray(v), nil
 
-	case FieldKind_NILLABLE_FLOAT64:
+	case FieldKind_NILLABLE_FLOAT64, FieldKind_FLOAT64:
 		v, err := getFloat64(val)
 		if err != nil {
 			return nil, err
@@ -332,7 +332,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat64Array(v), nil
 
-	case FieldKind_NILLABLE_FLOAT32:
+	case FieldKind_NILLABLE_FLOAT32, FieldKind_FLOAT32:
 		v, err := getFloat32(val)
 		if err != nil {
 			return nil, err
@@ -353,14 +353,14 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat32Array(v), nil
 
-	case FieldKind_NILLABLE_DATETIME:
+	case FieldKind_NILLABLE_DATETIME, FieldKind_DATETIME:
 		v, err := getDateTime(ctx, val)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalTime(v), nil
 
-	case FieldKind_NILLABLE_INT:
+	case FieldKind_NILLABLE_INT, FieldKind_INT:
 		v, err := getInt64(val)
 		if err != nil {
 			return nil, err
@@ -381,7 +381,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableIntArray(v), nil
 
-	case FieldKind_NILLABLE_JSON:
+	case FieldKind_NILLABLE_JSON, FieldKind_JSON:
 		v, err := NewJSON(val)
 		if err != nil {
 			return nil, err
@@ -915,6 +915,8 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableBoolArray(); ok {
 			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.Time(); ok {
+			innerValue = v.UTC().Format(time.RFC3339)
 		} else {
 			innerValue = normValue.Unwrap()
 		}
