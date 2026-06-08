@@ -28,12 +28,16 @@ func TestNetInfoDisconnectSinglePeer(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			&action.ActivePeers{
-				NodeID:   0,
-				Expected: []string{"{{.Peer1_Address0}}"},
+				NodeID:   1,
+				Expected: []string{"{{.Peer0_Address0}}"},
 			},
 			testUtils.DisconnectPeers{
 				SourceNodeID:  1,
 				TargetNodeIDs: []int{0},
+			},
+			&action.ActivePeers{
+				NodeID:   1,
+				Expected: []string{},
 			},
 		},
 	}
@@ -62,6 +66,10 @@ func TestNetInfoDisconnectMultiplePeers(t *testing.T) {
 			testUtils.DisconnectPeers{
 				SourceNodeID:  1,
 				TargetNodeIDs: []int{0, 2},
+			},
+			&action.ActivePeers{
+				NodeID:   1,
+				Expected: []string{},
 			},
 		},
 	}

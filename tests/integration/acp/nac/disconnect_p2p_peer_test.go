@@ -58,6 +58,12 @@ func TestNAC_GatesDisconnectP2PPeer_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID:  1,
 				TargetNodeIDs: []int{0},
 			},
+
+			&action.ActivePeers{
+				NodeID:   1,
+				Identity: testUtils.ClientIdentity(1),
+				Expected: []string{},
+			},
 		},
 	}
 
