@@ -23,8 +23,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// subscriptionTimeout is the maximum time to wait for subscription results to be returned.
-const subscriptionTimeout = 1 * time.Second
+// subscriptionTimeout is the max wait per event.
+//
+// Each delivered event triggers a fresh plan run inside handleSubscription so
+// the per-subscriber view can be re-evaluated. On ACP-gated collections that
+// plan does a DAC check, and under the source-hub backend the check takes time.
+const subscriptionTimeout = 5 * time.Second
 
 // postActionsGrace is how long we keep listening after all expected events
 // have been collected (or, for the empty-expected case, after all actions
