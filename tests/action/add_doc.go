@@ -148,22 +148,33 @@ func (a *AddDoc) Execute() {
 			require.NoError(a.s.T, err)
 		}
 
-		collection := collections[a.CollectionID]
+		// getCanonicallyOrderedCollections returns a nil slot for any collection
+		// name that is no longer present in the database (documented on
+		// RefreshCollections). A concurrent PatchCollection removal therefore
+		// leaves the target slot nil, which is the expected "collection absent"
+		// signal rather than a hidden failure. Surface the same not-found error
+		// the production lookup-by-name path returns so the mutation is not
+		// handed a nil collection to dereference.
+		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
+			err = client.NewErrCollectionNotFoundForName(a.s.CollectionNames[a.CollectionID])
+		} else {
+			collection := collections[a.CollectionID]
 
-		err = withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					a,
-					node,
-					nodeID,
-					collection,
-					txnOption,
-				)
-				return err
-			},
-		)
+			err = withRetryOnNode(
+				node,
+				func() error {
+					var err error
+					docIDs, err = mutation(
+						a,
+						node,
+						nodeID,
+						collection,
+						txnOption,
+					)
+					return err
+				},
+			)
+		}
 		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 		}

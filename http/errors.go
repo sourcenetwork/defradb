@@ -60,6 +60,27 @@ func (e errorResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{"error": e.Error.Error()})
 }
 
+// gqlErrorResponse is the GraphQL-over-HTTP compliant error envelope used by
+// ExecRequest handlers. Unlike errorResponse (which serialises to
+// {"error":"..."}), this marshals to
+//
+//	{"errors": [{"message": "..."}]}
+//
+// which is what GraphQL clients inspect when the request fails before the
+// resolver runs (e.g. bad JSON body, missing query field, subscription
+// framing mismatch). Without this, those clients see a non-GraphQL payload
+// and fall through to "unknown transport error" branches instead of
+// surfacing the actual cause to the user.
+type gqlErrorResponse struct {
+	Error error `json:"-"`
+}
+
+func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"errors": []map[string]any{{"message": e.Error.Error()}},
+	})
+}
+
 func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	var out map[string]any
 	if err := json.Unmarshal(data, &out); err != nil {
