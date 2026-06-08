@@ -40,6 +40,21 @@ func TestQueryInlineArrayWithNonNillableBooleans_Null(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryInlineArrayWithNonNillableBooleans_NullElement(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { flags: [Boolean!] }`,
+			},
+			&action.AddDoc{
+				Doc:           `{"flags": [true, null, false]}`,
+				ExpectedError: `null`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithNonNillableBooleans_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -78,6 +93,21 @@ func TestQueryInlineArrayWithNonNillableInts_Null(t *testing.T) {
 						{"scores": nil},
 					},
 				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithNonNillableInts_NullElement(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { scores: [Int!] }`,
+			},
+			&action.AddDoc{
+				Doc:           `{"scores": [1, null, 3]}`,
+				ExpectedError: `null`,
 			},
 		},
 	}
@@ -128,6 +158,21 @@ func TestQueryInlineArrayWithNonNillableFloat64s_Null(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryInlineArrayWithNonNillableFloat64s_NullElement(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { ratings: [Float64!] }`,
+			},
+			&action.AddDoc{
+				Doc:           `{"ratings": [1.1, null, 3.3]}`,
+				ExpectedError: `null`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithNonNillableFloat64s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -172,6 +217,21 @@ func TestQueryInlineArrayWithNonNillableFloat32s_Null(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryInlineArrayWithNonNillableFloat32s_NullElement(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { weights: [Float32!] }`,
+			},
+			&action.AddDoc{
+				Doc:           `{"weights": [1.1, null, 3.3]}`,
+				ExpectedError: `null`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithNonNillableFloat32s_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -210,6 +270,21 @@ func TestQueryInlineArrayWithNonNillableStrings_Null(t *testing.T) {
 						{"tags": nil},
 					},
 				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithNonNillableStrings_NullElement(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { tags: [String!] }`,
+			},
+			&action.AddDoc{
+				Doc:           `{"tags": ["one", null, "three"]}`,
+				ExpectedError: `null`,
 			},
 		},
 	}

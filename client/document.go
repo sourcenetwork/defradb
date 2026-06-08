@@ -518,7 +518,7 @@ func getArray[T any](
 		arr := make([]T, len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
-				continue
+				return nil, ErrNullValueForNonNillableField
 			}
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {
