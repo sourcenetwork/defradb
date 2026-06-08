@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -67,13 +68,17 @@ type parallelNode struct { // serialNode?
 	multiscan *multiScanNode
 }
 
+// applyToPlans runs `fn` on every child and joins any returned errors.
+// Every child is visited even after a failure so lifecycle calls
+// (Init / Start / Close) cannot strand resources on later siblings.
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
+	var errs []error
 	for _, plan := range p.children {
 		if err := fn(plan); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func (p *parallelNode) Kind() string {

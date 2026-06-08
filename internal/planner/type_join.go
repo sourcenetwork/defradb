@@ -576,22 +576,31 @@ func (join *invertibleTypeJoin) Init() error {
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Init()
+	if err := join.parentSide.plan.Init(); err != nil {
+		// Roll back childSide: its Init may have opened resources
+		// (e.g. iterators on the parent txn) that the outer Close
+		// would otherwise miss.
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Start() error {
 	if err := join.childSide.plan.Start(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Start()
+	if err := join.parentSide.plan.Start(); err != nil {
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Close() error {
-	if err := join.parentSide.plan.Close(); err != nil {
-		return err
-	}
-
-	return join.childSide.plan.Close()
+	// Close both sides regardless of intermediate error so resources
+	// on either side are released.
+	parentErr := join.parentSide.plan.Close()
+	childErr := join.childSide.plan.Close()
+	return errors.Join(parentErr, childErr)
 }
 
 func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {

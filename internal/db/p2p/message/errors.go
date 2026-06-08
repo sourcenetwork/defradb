@@ -21,6 +21,7 @@ var (
 	ErrPubkeyPeerIDMismatch = errors.New("pubkey mismatch peerID")
 	ErrInvalidSignature     = errors.New("invalid signature")
 	ErrResponseType         = errors.New("unexpected response type")
+	ErrMessageTooLarge      = errors.New("message exceeds maximum size")
 )
 
 func NewErrResponseType(expected, actual any) error {

@@ -152,37 +152,40 @@ func (a *AddDoc) Execute() {
 			require.NoError(a.s.T, err)
 		}
 
+		// getCanonicallyOrderedCollections returns a nil slot for any collection
+		// name that is no longer present in the database (documented on
+		// RefreshCollections). A concurrent PatchCollection removal therefore
+		// leaves the target slot nil, which is the expected "collection absent"
+		// signal rather than a hidden failure. Surface the same not-found error
+		// the production lookup-by-name path returns so the mutation is not
+		// handed a nil collection to dereference.
 		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
-			err = client.ErrCollectionNotFound
-			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
-				continue
+			if a.CollectionID < len(a.s.CollectionNames) {
+				err = client.NewErrCollectionNotFoundForName(a.s.CollectionNames[a.CollectionID])
+			} else {
+				err = client.ErrCollectionNotFound
 			}
-			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
-			if expectedErrorRaised {
-				continue
-			}
-			require.NoError(a.s.T, err)
+		} else {
+			collection := collections[a.CollectionID]
+
+			err = withRetryOnNode(
+				node,
+				func() error {
+					var err error
+					docIDs, err = mutation(
+						a,
+						node,
+						nodeID,
+						collection,
+						txnOption,
+					)
+					if err == nil && txnOption.HasValue() {
+						err = recordTxnAddCIDs(a.s, nodeID, txnOption.Value(), docIDs)
+					}
+					return err
+				},
+			)
 		}
-
-		collection := collections[a.CollectionID]
-
-		err = withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					a,
-					node,
-					nodeID,
-					collection,
-					txnOption,
-				)
-				if err == nil && txnOption.HasValue() {
-					err = recordTxnAddCIDs(a.s, nodeID, txnOption.Value(), docIDs)
-				}
-				return err
-			},
-		)
 		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 		}
