@@ -319,15 +319,8 @@ func TestQueryNonNillableJSON_Null(t *testing.T) {
 				SDL: `type Users { name: String, metadata: JSON! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John", "metadata": null}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, metadata } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "metadata": nil},
-					},
-				},
+				Doc:           `{"name": "John", "metadata": null}`,
+				ExpectedError: `null`,
 			},
 		},
 	}

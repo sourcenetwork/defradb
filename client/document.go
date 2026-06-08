@@ -233,6 +233,13 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
 			return NewNormalNil(field.Kind)
 		}
+	} else {
+		if val == nil {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
+		}
+		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
+		}
 	}
 
 	if field.Kind.IsObject() {
