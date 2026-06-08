@@ -31,7 +31,7 @@ permissions:
 # `continue --merge` publish job MUST use the same version or the merge step
 # can fail to read the split metadata (e.g. notarization artifacts).
 env:
-  GORELEASER_VERSION: "2.6.1"
+  GORELEASER_VERSION: "2.10.0"
 
 jobs:
   prepare:
