@@ -15,6 +15,7 @@ import (
 	"context"
 	"crypto/ecdh"
 	"encoding/base64"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -35,6 +36,10 @@ import (
 )
 
 const pubsubTopic = "encryption"
+
+// fetchEncryptionKeyResponseTimeout bounds the wait for a key-holding peer
+// when the request context has no deadline.
+const fetchEncryptionKeyResponseTimeout = 5 * time.Second
 
 type PubSubServer interface {
 	AddPubSubTopic(
@@ -194,14 +199,16 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.PublishToTopic(ctx, pubsubTopic, data, false)
+	// Cancel signals the go-p2p relay goroutine to stop; without it, it would
+	// block forever on its unbuffered send once we return after the first valid reply.
+	pubCtx, cancel := context.WithCancel(ctx)
+	respChan, err := s.pubsub.PublishToTopic(pubCtx, pubsubTopic, data, true)
 	if err != nil {
+		cancel()
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
 
-	go func() {
-		s.handleFetchEncryptionKeyResponse(<-respChan, req, ephPrivKey, result)
-	}()
+	go s.handleFetchEncryptionKeyResponses(pubCtx, cancel, respChan, req, ephPrivKey, result)
 
 	return nil
 }
@@ -212,20 +219,69 @@ type fetchEncryptionKeyReply struct {
 	EphemeralPublicKey []byte
 }
 
-// handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
-func (s *pubSubService) handleFetchEncryptionKeyResponse(
-	resp client.PubsubResponse,
+// handleFetchEncryptionKeyResponses consumes peer replies until one carries
+// a non-empty Blocks list, or the deadline fires.
+func (s *pubSubService) handleFetchEncryptionKeyResponses(
+	ctx context.Context,
+	cancelPublish context.CancelFunc,
+	respChan <-chan client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
 ) {
+	defer cancelPublish()
 	defer close(result)
+
+	waitCtx := ctx
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		waitCtx, cancel = context.WithTimeout(ctx, fetchEncryptionKeyResponseTimeout)
+		defer cancel()
+	}
+
+	for {
+		select {
+		case resp, ok := <-respChan:
+			if !ok {
+				result <- encryption.Result{Error: ErrNoPeerSuppliedEncryptionKey}
+				return
+			}
+			items, ok := s.tryHandleFetchEncryptionKeyResponse(resp, req, privateKey)
+			if !ok {
+				continue
+			}
+			result <- encryption.Result{Items: items}
+			return
+
+		case <-waitCtx.Done():
+			result <- encryption.Result{Error: ErrNoPeerSuppliedEncryptionKey}
+			return
+		}
+	}
+}
+
+// tryHandleFetchEncryptionKeyResponse returns (items, true) only when the
+// reply actually carried blocks. Empty, malformed, or undecryptable replies
+// return (_, false) so the caller keeps listening.
+func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
+	resp client.PubsubResponse,
+	req *fetchEncryptionKeyRequest,
+	privateKey *ecdh.PrivateKey,
+) ([]encryption.Item, bool) {
+	if resp.Err != nil {
+		log.ErrorContextE(s.ctx, "encryption key peer reply carried error", resp.Err)
+		return nil, false
+	}
 
 	var keyResp fetchEncryptionKeyReply
 	if err := cbor.Unmarshal(resp.Data, &keyResp); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal encryption key response", err)
-		result <- encryption.Result{Error: err}
-		return
+		return nil, false
+	}
+
+	if len(keyResp.Blocks) == 0 {
+		// Peer didn't have the key; keep waiting for the one that does.
+		return nil, false
 	}
 
 	resultEncItems := make([]encryption.Item, 0, len(keyResp.Blocks))
@@ -237,18 +293,14 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 			crypto.WithPubKeyBytes(keyResp.EphemeralPublicKey),
 			crypto.WithPubKeyPrepended(false),
 		)
-
 		if err != nil {
 			log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
-			result <- encryption.Result{Error: err}
-			return
+			return nil, false
 		}
 
-		_, err = s.encStore.put(context.Background(), decryptedData)
-		if err != nil {
+		if _, err := s.encStore.put(context.Background(), decryptedData); err != nil {
 			log.ErrorContextE(s.ctx, "Failed to store encryption key", err)
-			result <- encryption.Result{Error: err}
-			return
+			return nil, false
 		}
 
 		resultEncItems = append(resultEncItems, encryption.Item{
@@ -257,9 +309,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		})
 	}
 
-	result <- encryption.Result{
-		Items: resultEncItems,
-	}
+	return resultEncItems, true
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
