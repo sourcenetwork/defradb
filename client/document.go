@@ -915,8 +915,6 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableBoolArray(); ok {
 			innerValue = convertImmutable(v)
-		} else if v, ok := normValue.Time(); ok {
-			innerValue = v.UTC().Format(time.RFC3339Nano)
 		} else {
 			innerValue = normValue.Unwrap()
 		}
