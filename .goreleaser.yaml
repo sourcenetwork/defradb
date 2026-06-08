@@ -34,7 +34,7 @@ partial:
 
 notarize:
   macos:
-    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
+    - enabled: "true"
       ids:
         - defradb
       sign:
@@ -101,18 +101,12 @@ homebrew_casks:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: https://github.com/sourcenetwork/defradb
-    description: A user-centric database that prioritizes data ownership, personal privacy, and information security.
+    description: User-centric database prioritizing data ownership, privacy, and security
     license: BUSL-1.1
     skip_upload: auto
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/defradb"]
-          end
 
 release:
   target_commitish: "{{ .Commit }}"

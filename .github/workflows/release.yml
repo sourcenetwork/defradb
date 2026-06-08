@@ -27,6 +27,12 @@ permissions:
   packages: write
   issues: write
 
+# Pin the GoReleaser version in one place. The split build jobs and the
+# `continue --merge` publish job MUST use the same version or the merge step
+# can fail to read the split metadata (e.g. notarization artifacts).
+env:
+  GORELEASER_VERSION: "2.6.1"
+
 jobs:
   prepare:
     strategy:
@@ -62,7 +68,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: 2.6.1
+          version: ${{ env.GORELEASER_VERSION }}
           args: release --clean --split ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,7 +80,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: 2.6.1
+          version: ${{ env.GORELEASER_VERSION }}
           args: release --clean --split ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -170,7 +176,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: 2.3.2
+          version: ${{ env.GORELEASER_VERSION }}
           args: continue --merge
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
