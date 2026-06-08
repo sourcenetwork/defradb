@@ -81,7 +81,7 @@ archives:
 dmg:
   - id: defradb_dmg
     ids:
-      - defradb_archive
+      - defradb
     name: >-
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
