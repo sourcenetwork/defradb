@@ -21,6 +21,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) addCollections(
@@ -249,18 +251,23 @@ existingVersionLoop:
 			}
 		}
 
-		// If an existing collection is not present in the new collection set,
-		// it must have mutated into a new collection version.
-		// The original still needs to exist and must be validated against.
-		// It may also be mutated later in this function.
+		// If an existing collection is not present in the new collection set, it has either
+		// been mutated into a new version (a replacement with the same CollectionID exists) or
+		// explicitly removed by the patch (no replacement). For the mutation case we re-add the
+		// original as inactive so it can be validated against and saved alongside the new
+		// version. For the removal case we leave it out so validation sees the deletion.
 		if isMissing {
+			var hasReplacement bool
 			for _, newCol := range newCollections {
 				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
 					existingCol.IsActive = false
+					hasReplacement = true
 					break
 				}
 			}
-			newCollections = append(newCollections, existingCol)
+			if hasReplacement {
+				newCollections = append(newCollections, existingCol)
+			}
 		}
 	}
 
@@ -346,17 +353,7 @@ existingVersionLoop:
 			}
 		}
 
-		if colExists {
-			if existingCol.IsMaterialized && !col.IsMaterialized {
-				// If the collection is being de-materialized - delete any cached values.
-				// Leaving them around will not break anything, but it would be a waste of
-				// storage space.
-				err := db.clearViewCache(ctx, col)
-				if err != nil {
-					return err
-				}
-			}
-		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
+		if !colExists && col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
@@ -676,7 +673,7 @@ func (db *DB) deleteCollectionVersion(
 		return err
 	}
 
-	return nil
+	return deleteCollectionDefinitionHeads(ctx, version)
 }
 
 func (db *DB) validateCollectionDoesNotHaveHigherVersion(
@@ -735,6 +732,73 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// deleteCollectionDefinitionHeads removes the collection-definition and
+// field-definition CRDT heads owned by this exact version - one head per
+// field that has a FieldID, plus the collection-level head keyed by the
+// version's VersionID.
+//
+// We construct the keys directly from the version object rather than scanning
+// the headstore by collection name: the keys we want to remove are fully
+// determined by the data we already hold (CollectionName, FieldName, FieldID,
+// VersionID), so the query and the wider scan it implied are both avoidable.
+// A no-op delete - i.e. the head currently points at some other version's
+// CID because the version we're processing is not the current tip - is the
+// right outcome here: the surviving version still owns that head and we must
+// not touch it.
+func deleteCollectionDefinitionHeads(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	headstore := txn.Headstore()
+
+	for _, field := range version.Fields {
+		if field.FieldID == "" {
+			// Secondary / object-only fields have no backing block and so no head.
+			continue
+		}
+		fieldCid, err := cid.Parse(field.FieldID)
+		if err != nil {
+			return err
+		}
+		key := keys.HeadstoreFieldDefinition{
+			CollectionName: version.Name,
+			FieldName:      field.Name,
+			Cid:            fieldCid,
+		}
+		if err := deleteHeadIfPresent(ctx, headstore, key.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	versionCid, err := cid.Parse(version.VersionID)
+	if err != nil {
+		return err
+	}
+	colKey := keys.HeadstoreCollectionDefinition{
+		CollectionName: version.Name,
+		Cid:            versionCid,
+	}
+	return deleteHeadIfPresent(ctx, headstore, colKey.Bytes())
+}
+
+// deleteHeadIfPresent removes the head key if it exists.
+// Note: we gate on `Has` rather than rely on a silent no-op.
+func deleteHeadIfPresent(
+	ctx context.Context,
+	headstore corekv.ReaderWriter,
+	key []byte,
+) error {
+	has, err := headstore.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return nil
+	}
+	return headstore.Delete(ctx, key)
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true

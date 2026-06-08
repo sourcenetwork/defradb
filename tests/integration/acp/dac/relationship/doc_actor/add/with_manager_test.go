@@ -159,7 +159,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(3), // The other actor can not update
@@ -305,7 +305,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(3), // The other actor can update
@@ -526,7 +526,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // Manager still can't update
@@ -652,7 +652,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // Manager can't update yet.
@@ -721,7 +721,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // Manager can now update.
@@ -949,7 +949,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(3), // The other actor can not update
@@ -1087,7 +1087,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // Manager can not update.

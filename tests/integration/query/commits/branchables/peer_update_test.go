@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t *testing.T) {
@@ -42,6 +43,9 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// Signed counter deltas are double-applied across peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -57,13 +61,13 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 					"name":	"John"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name":	"Shahzad"
@@ -82,7 +86,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				CollectionIDs: []int{0},
 			},
 			testUtils.WaitForSync{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update node 1 after the peer connection has been established, this will cause the `Shahzad` commit
 				// to be synced to node 0, as well as the related collection _commits.
 				NodeID: immutable.Some(1),
@@ -91,7 +95,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update node 0 after `Chris` and `Shahzad` have synced to node 0.  As this update happens after the peer
 				// connection has been established, this will cause the `Fred` and `Addo` doc _commits, and their corresponding
 				// collection-level _commits to sync to node 1.

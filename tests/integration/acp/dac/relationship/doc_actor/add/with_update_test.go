@@ -114,7 +114,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
@@ -256,7 +256,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
@@ -286,7 +286,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can now update.
@@ -411,7 +411,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can now update.
@@ -449,7 +449,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1), // Owner can still also update (ownership not transferred)

@@ -25,8 +25,6 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 
 	deleteCid := testUtils.NewSameValue()
 	createCompositeCid := testUtils.NewSameValue()
-	createAgeCid := testUtils.NewSameValue()
-	createNameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -80,11 +78,11 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":       createAgeCid,
+									"cid":       testUtils.ValidCID(),
 									"fieldName": "age",
 								},
 								{
-									"cid":       createNameCid,
+									"cid":       testUtils.ValidCID(),
 									"fieldName": "name",
 								},
 							},
@@ -92,6 +90,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

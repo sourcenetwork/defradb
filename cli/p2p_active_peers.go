@@ -25,7 +25,7 @@ func MakeP2PActivePeersCommand(ctx context.Context) *cobra.Command {
 		Short: "Get list of active peer connections",
 		Long: `Get a list of peers that this node is currently connected to.
 
-Results are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).`,
+Results are returned in the multiaddr format (e.g. ` + "`/ip4/127.0.0.1/tcp/4001/p2p/<PeerID>`" + `).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.ActivePeers(), identity.FromContext(cmd.Context()))

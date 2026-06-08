@@ -44,7 +44,7 @@ func TestTxn_DeleteDoc_WithCommit_Succeeds(t *testing.T) {
 				CollectionID:  0,
 				DocID:         0,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -152,7 +152,7 @@ func TestTxn_DeleteDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 				CollectionID:  0,
 				DocID:         0,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

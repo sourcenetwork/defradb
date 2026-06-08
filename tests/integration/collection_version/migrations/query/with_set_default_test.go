@@ -163,11 +163,11 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigrati
 }
 
 func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAddedAt_ClearsMigrations(t *testing.T) {
-	collectionVersionID1 := "bafyreiabmrtgxy5dgotuc53gfaamuqhlzugyeetzbuv7s3x6ufmlr5ylga"
-	collectionVersionID2 := "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm"
-
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		// Switching the active version back to the original does not clear the
+		// stale doc-version stamp written during the prior reindex, so the second
+		// reindex cache-hits and the migrated values are not reset.
+		// https://github.com/sourcenetwork/defradb/issues/4736
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
@@ -195,8 +195,8 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAdded
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceCollectionVersionID:      collectionVersionID1,
-					DestinationCollectionVersionID: collectionVersionID2,
+					SourceCollectionVersionID:      "{{.CollectionVersionID0}}",
+					DestinationCollectionVersionID: "{{.CollectionVersionID1}}",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -212,7 +212,7 @@ func TestCollectionMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasAdded
 			},
 			// Set the collection version back to the original
 			testUtils.SetActiveCollectionVersion{
-				VersionID: collectionVersionID1,
+				VersionID: "{{.CollectionVersionID0}}",
 			},
 			&action.Request{
 				Request: `query {
