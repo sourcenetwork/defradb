@@ -284,7 +284,7 @@ type Store interface {
 	// when making this call.
 	//
 	// This function will lock the selected views until it completes.  Its writes are not protected by transactions,
-	// so it errors, the database may be left in a state where the view has been partially refreshed - in this case,
+	// so if it errors, the database may be left in a state where the view has been partially refreshed - in this case,
 	// it is recommeded to retry the refresh.
 	RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error
 
