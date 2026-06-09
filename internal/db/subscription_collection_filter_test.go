@@ -76,26 +76,24 @@ func TestHandleSubscription_WrongCollectionEvent_OpensNoTxn(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, authorCol.AddDocument(ctx, authorDoc))
 
-	// Capture the txn counter AFTER the mutation's own work returned.
-	// The subscription event handler runs on its own goroutine; we then
-	// wait and assert the counter has not advanced further.
+	// Capture the txn counter AFTER the mutation's own work returned. The
+	// subscription event handler runs on its own goroutine, so wait the full
+	// window for any (incorrect) response rather than an instantaneous check
+	// that could miss a slightly-delayed message.
 	mid := db.previousTxnID.Load()
-	time.Sleep(200 * time.Millisecond)
-	after := db.previousTxnID.Load()
 
-	require.Equal(t, mid, after,
-		"subscription must not open a transaction for a wrong-collection event; counter advanced from %d to %d",
-		mid, after)
-
-	// Belt-and-braces: also confirm nothing surfaces on the response channel.
 	select {
 	case got, ok := <-subCh:
 		if !ok {
 			t.Fatalf("subscription channel closed unexpectedly")
 		}
 		t.Fatalf("expected no response for wrong-collection event, got %+v", got)
-	default:
+	case <-time.After(200 * time.Millisecond):
+		// No response within the window — expected.
 	}
+
+	require.Equal(t, mid, db.previousTxnID.Load(),
+		"subscription must not open a transaction for a wrong-collection event")
 }
 
 // Control: same-collection events must still be delivered. Guards against the
