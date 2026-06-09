@@ -276,3 +276,22 @@ func TestIsJSONArray(t *testing.T) {
 		})
 	}
 }
+
+func TestSet_WithNilElementInSliceForNonNillableArray_Error(t *testing.T) {
+	ctx := context.Background()
+	boolArrayDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "flags",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_BOOL_ARRAY,
+			},
+		},
+	}
+	doc, err := NewDocFromJSON(ctx, []byte(`{}`), boolArrayDef)
+	require.NoError(t, err)
+
+	err = doc.Set(ctx, "flags", []any{true, nil, false})
+	require.ErrorContains(t, err, errNullValueForNonNillableField)
+}

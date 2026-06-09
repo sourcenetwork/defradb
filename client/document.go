@@ -529,6 +529,9 @@ func getArray[T any](
 	case []any:
 		arr := make([]T, len(val))
 		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
 			var err error
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {

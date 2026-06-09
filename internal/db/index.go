@@ -169,7 +169,7 @@ func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
 	if kind.IsArray() {
 		return &ArrayFieldGenerator{}
 	}
-	if kind == client.FieldKind_NILLABLE_JSON {
+	if kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON {
 		return &JSONFieldGenerator{}
 	}
 	return &SimpleFieldGenerator{}
