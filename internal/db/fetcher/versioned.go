@@ -16,9 +16,11 @@ import (
 	"fmt"
 
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
@@ -101,6 +103,10 @@ type VersionedFetcher struct {
 	// Transient version store
 	root  corekv.TxnStore
 	store datastore.Txn
+
+	// Link system over the txn's encryption blockstore. Used to load encryption blocks
+	// when replaying encrypted blocks during version traversal. Initialized lazily.
+	encBlockLS *linking.LinkSystem
 
 	queuedCids *list.List
 
@@ -379,6 +385,14 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
+		block, canRead, err := coreblock.ProcessEncryptedBlock(vf.ctx, vf.getEncBlockLS(), block)
+		if err != nil {
+			return NewErrDecryptVersionedBlock(err, current.cid.String())
+		}
+		if !canRead {
+			return NewErrEncryptionKeyMissing(current.cid.String())
+		}
+
 		docID, err := vf.storageDocIDForDelta(
 			shortID,
 			string(block.Delta.GetDocID()),
@@ -513,6 +527,17 @@ func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 	}
 
 	return coreblock.GetFromBytes(blk.RawData())
+}
+
+// getEncBlockLS lazily builds (and caches) a link system over the txn's encryption
+// blockstore. Used for loading encryption blocks when replaying encrypted blocks.
+func (vf *VersionedFetcher) getEncBlockLS() linking.LinkSystem {
+	if vf.encBlockLS == nil {
+		ls := cidlink.DefaultLinkSystem()
+		ls.SetReadStorage(blockstore.NewIPLDStore(vf.txn.Encstore()))
+		vf.encBlockLS = &ls
+	}
+	return *vf.encBlockLS
 }
 
 // Close closes the VersionedFetcher.

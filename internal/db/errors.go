@@ -152,7 +152,6 @@ const (
 	errLoadChildBlock         string = "failed to load child block for merge"
 	errDecodeChildBlock       string = "failed to decode child block for merge"
 	errProcessChildBlock      string = "failed to process child block for merge"
-	errLoadEncryptionBlock    string = "failed to load encryption block"
 	errGetHeadsForMerge       string = "failed to get heads for merge target"
 	errLoadBlockFromStore     string = "failed to get block from blockstore"
 	errDecodeBlockFromStore   string = "failed to decode block from bytes"
@@ -1037,10 +1036,6 @@ func NewErrDecodeChildBlock(inner error, cid string) error {
 
 func NewErrProcessChildBlock(inner error, cid string) error {
 	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
-}
-
-func NewErrLoadEncryptionBlock(inner error, cid string) error {
-	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
 }
 
 func NewErrGetHeadsForMerge(inner error, key string) error {
