@@ -51,6 +51,8 @@ const (
 	errDecodeDocField             string = "failed to decode document field"
 	errCopyVersionedData          string = "failed to copy versioned data"
 	errCreateVersionIterator      string = "failed to create version data iterator"
+	errDecryptVersionedBlock      string = "failed to decrypt block during version replay"
+	errEncryptionKeyMissing       string = "encryption key not available locally for block"
 )
 
 var (
@@ -67,7 +69,20 @@ var (
 	ErrInvalidInOperatorValue     = errors.New(errInvalidInOperatorValue)
 	ErrInvalidFilterOperator      = errors.New(errInvalidFilterOperator)
 	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)
+	ErrEncryptionKeyMissing       = errors.New(errEncryptionKeyMissing)
 )
+
+// NewErrDecryptVersionedBlock returns an error indicating that the given block could not
+// be decrypted during version replay.
+func NewErrDecryptVersionedBlock(inner error, cid string) error {
+	return errors.Wrap(errDecryptVersionedBlock, inner, errors.NewKV("Cid", cid))
+}
+
+// NewErrEncryptionKeyMissing returns an error indicating that the per-doc encryption key
+// is not available locally for the given block, so the version replay cannot decrypt it.
+func NewErrEncryptionKeyMissing(cid string) error {
+	return errors.New(errEncryptionKeyMissing, errors.NewKV("Cid", cid))
+}
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
 func NewErrFieldIdNotFound(fieldId uint32) error {

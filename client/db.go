@@ -282,6 +282,10 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
+	//
+	// This function will lock the selected views until it completes.  Its writes are not protected by transactions,
+	// so if it errors, the database may be left in a state where the view has been partially refreshed - in this case,
+	// it is recommeded to retry the refresh.
 	RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error
 
 	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
