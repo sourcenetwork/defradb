@@ -44,7 +44,7 @@ func TestParallelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
 // strand iterators on later children's shared transaction.
 func TestTopLevelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
 	c1 := &trackingPlanNode{closeErr: errors.New("intentional close failure")}
-	c2 := &trackingPlanNode{}
+	c2 := &trackingPlanNode{closeErr: errors.New("intentional second close failure")}
 	c3 := &trackingPlanNode{}
 
 	n := &topLevelNode{
@@ -54,6 +54,7 @@ func TestTopLevelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
 	err := n.Close()
 	require.Error(t, err)
 	require.ErrorContains(t, err, "intentional close failure")
+	require.ErrorContains(t, err, "intentional second close failure")
 	require.True(t, c1.closeCalled, "first child Close() should be called")
 	require.True(t, c2.closeCalled, "second child Close() must still be called after first errors")
 	require.True(t, c3.closeCalled, "third child Close() must still be called after first errors")
