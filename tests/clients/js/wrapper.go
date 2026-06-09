@@ -602,6 +602,10 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	return w.node.DB.Connect(ctx, addresses, opts...)
 }
 
+func (w *Wrapper) Disconnect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error {
+	return w.node.DB.Disconnect(ctx, addresses, opts...)
+}
+
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	res, err := execute(ctx, w.value, "getNodeIdentity")
 	if err != nil {
