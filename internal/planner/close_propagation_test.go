@@ -107,18 +107,21 @@ func TestMultiScanNode_Close_ReturnsNilAfterFailedInit(t *testing.T) {
 func TestMultiScanNode_Next_ClearsPriorErrorOnNextCycle(t *testing.T) {
 	inner := &scriptedPlanNode{
 		nextResults: []nextResult{
-			{ok: false, err: errors.New("transient")}, // cycle 1
-			{ok: true, err: nil},                      // cycle 2
+			// A non-terminal transient error (ok=true) keeps the script
+			// within the planNode.Next() contract, which forbids resuming
+			// after a terminal false.
+			{ok: true, err: errors.New("transient")}, // cycle 1
+			{ok: true, err: nil},                     // cycle 2
 		},
 	}
 	ms := &multiScanNode{planNode: inner, numReaders: 2}
 
 	ok, err := ms.Next()
 	require.ErrorContains(t, err, "transient")
-	require.False(t, ok)
+	require.True(t, ok)
 	ok, err = ms.Next()
 	require.ErrorContains(t, err, "transient")
-	require.False(t, ok)
+	require.True(t, ok)
 
 	ok, err = ms.Next()
 	require.NoError(t, err, "stale err leaked into next cycle")
