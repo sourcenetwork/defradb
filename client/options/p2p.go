@@ -74,6 +74,35 @@ func (b *ConnectOptionsBuilder) SetIdentity(id identity.Identity) *ConnectOption
 	return b
 }
 
+// DisconnectOptions contains options for Disconnect operation.
+type DisconnectOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *DisconnectOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// DisconnectOptionsBuilder is a builder for DisconnectOptions.
+type DisconnectOptionsBuilder struct {
+	enumerableBuilder[DisconnectOptions]
+}
+
+// Disconnect creates a new DisconnectOptionsBuilder instance.
+func Disconnect() *DisconnectOptionsBuilder {
+	return &DisconnectOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *DisconnectOptionsBuilder) SetIdentity(id identity.Identity) *DisconnectOptionsBuilder {
+	b.append(func(opts *DisconnectOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 type PeerInfoOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]

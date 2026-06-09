@@ -125,6 +125,22 @@ func (w *Wrapper) Connect(
 	return err
 }
 
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	args := []string{"client", "p2p", "disconnect"}
+
+	args = append(args, addresses...)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,
