@@ -32,11 +32,9 @@ func MakeKeyringNewCommand(ctx context.Context) *cobra.Command {
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
-The DEFRA_KEYRING_SECRET environment variable is used to unlock an existing
-keyring. When no value is provided on a first run the keyring is initialised
-with "secret" as its password, which should be rotated before putting the
-node into production. The value can also be supplied through a .env file in
-the working directory or at a path defined with the --secret-file flag.
+The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+This can also be done with a .env file in the working directory or at a path
+defined with the --secret-file flag.
 
 Existing keys are preserved unless --force is passed; running the command
 again without --force when a key already exists returns an error rather
