@@ -162,6 +162,12 @@ type Collection interface {
 	//
 	// This call will lock the collection, and no other read or write document operations on this collection
 	// will progress whilst this is executing.
+	//
+	// Truncate is not transactional. When called with a transaction context, the transaction is used only to
+	// scope the collection lock - the truncate effects are applied immediately.
+	//
+	// If an error is returned, the truncate may have been partially applied - because of this it is strongly
+	// suggested to call `Truncate` until it succeeds.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
 }
 
