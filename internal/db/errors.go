@@ -152,7 +152,6 @@ const (
 	errLoadChildBlock         string = "failed to load child block for merge"
 	errDecodeChildBlock       string = "failed to decode child block for merge"
 	errProcessChildBlock      string = "failed to process child block for merge"
-	errLoadEncryptionBlock    string = "failed to load encryption block"
 	errGetHeadsForMerge       string = "failed to get heads for merge target"
 	errLoadBlockFromStore     string = "failed to get block from blockstore"
 	errDecodeBlockFromStore   string = "failed to decode block from bytes"
@@ -190,6 +189,8 @@ const (
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
 	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
+	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
+		" first truncate it and then try again."
 )
 
 var (
@@ -263,6 +264,7 @@ var (
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
 	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
+	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -1036,10 +1038,6 @@ func NewErrProcessChildBlock(inner error, cid string) error {
 	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
 }
 
-func NewErrLoadEncryptionBlock(inner error, cid string) error {
-	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
-}
-
 func NewErrGetHeadsForMerge(inner error, key string) error {
 	return errors.Wrap(errGetHeadsForMerge, inner, errors.NewKV("Key", key))
 }
@@ -1156,4 +1154,12 @@ func NewErrDeleteViewCacheItem(inner error) error {
 
 func NewErrParseViewCacheKey(inner error) error {
 	return errors.Wrap(errParseViewCacheKey, inner)
+}
+
+func NewErrDematerializePopulatedView(name string, version string) error {
+	return errors.New(
+		errDematerializePopulatedView,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", version),
+	)
 }

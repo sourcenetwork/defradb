@@ -2332,6 +2332,22 @@
                 ]
             }
         },
+        "/p2p/disconnect": {
+            "post": {
+                "operationId": "disconnect",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
         "/p2p/documents": {
             "delete": {
                 "description": "Delete peer documents",

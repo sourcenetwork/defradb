@@ -66,6 +66,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeP2PInfoCommand(ctx),
 		MakeP2PActivePeersCommand(ctx),
 		MakeP2PConnectCommand(ctx),
+		MakeP2PDisconnectCommand(ctx),
 	)
 
 	lens := MakeLensCommand(ctx)

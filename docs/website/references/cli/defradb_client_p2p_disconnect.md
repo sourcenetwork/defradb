@@ -1,15 +1,29 @@
-## defradb client p2p
+## defradb client p2p disconnect
 
-Interact with the DefraDB P2P system
+Disconnect from one or more peers
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Disconnect from one or more peers with the given addresses
+
+```
+defradb client p2p disconnect <addresses...> [flags]
+```
+
+### Examples
+
+```
+Disconnect from a peer:  
+  defradb client p2p disconnect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
+
+Disconnect from multiple peers:  
+  defradb client p2p disconnect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for disconnect
 ```
 
 ### Options inherited from parent commands
@@ -36,12 +50,5 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p active-peers](defradb_client_p2p_active-peers.md)	 - Get list of active peer connections
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
-* [defradb client p2p connect](defradb_client_p2p_connect.md)	 - Connect to one or more peers
-* [defradb client p2p disconnect](defradb_client_p2p_disconnect.md)	 - Disconnect from one or more peers
-* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 
