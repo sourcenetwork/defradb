@@ -287,7 +287,6 @@ func TestCollectionVersionSimpleErrorsGivenNonNullManyRelationField(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-
 func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

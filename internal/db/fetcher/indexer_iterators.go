@@ -762,7 +762,8 @@ func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
 	hasArray := false
 	hasJSON := false
 	for i := range conditions {
-		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON || conditions[i].kind == client.FieldKind_JSON
+		isJSON := conditions[i].kind == client.FieldKind_NILLABLE_JSON || conditions[i].kind == client.FieldKind_JSON
+		hasJSON = hasJSON || isJSON
 		hasArray = hasArray || conditions[i].kind.IsArray()
 	}
 	return hasArray || hasJSON
@@ -1037,7 +1038,8 @@ func isNumericFilterValue(filterVal any) bool {
 // If the filter value is nil and path is empty, it means we are filtering for null values
 // on the entire JSON field, which can be handled as a scalar nil value.
 func isJSONFilterCondition(kind client.FieldKind, jsonPath client.JSONPath, filterVal any) bool {
-	return (kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON) && (len(jsonPath) > 0 || filterVal != nil)
+	isJSON := kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON
+	return isJSON && (len(jsonPath) > 0 || filterVal != nil)
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
