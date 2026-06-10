@@ -62,6 +62,29 @@ type CollectionIndex interface {
 	Description() IndexDescription
 }
 
+// IndexStatus describes the lifecycle state of an index.
+type IndexStatus string
+
+const (
+	// IndexStatusBuilding indicates the index entries are being backfilled from existing documents.
+	IndexStatusBuilding IndexStatus = "building"
+	// IndexStatusReady indicates the index is fully built and queryable.
+	IndexStatusReady IndexStatus = "ready"
+	// IndexStatusFailed indicates the index backfill failed; the Reason field provides details.
+	IndexStatusFailed IndexStatus = "failed"
+	// IndexStatusDropping indicates the index entries are being garbage-collected.
+	IndexStatusDropping IndexStatus = "dropping"
+)
+
+// IndexDescriptionStatus combines the static index description with its mutable runtime state.
+type IndexDescriptionStatus struct {
+	IndexDescription
+	// Status is the current lifecycle state of the index.
+	Status IndexStatus
+	// Reason is set when Status is IndexStatusFailed, providing a description of the failure.
+	Reason string
+}
+
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (col CollectionVersion) CollectIndexedFields() []CollectionFieldDescription {
 	fieldsMap := make(map[string]bool)
