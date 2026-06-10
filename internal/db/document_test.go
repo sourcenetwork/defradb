@@ -32,8 +32,10 @@ const employeeCompanySchema = `
 `
 
 // setupEmployeeCompanyDB creates an in-memory DB with the Employee/Company schema
-// and returns the two collection handles.
-func setupEmployeeCompanyDB(t *testing.T) (*DB, client.Collection, client.Collection) {
+// and returns the two collection handles. The collections are returned as
+// concrete *collection so tests can reach package-private methods without
+// repeating the type assertion at every call site.
+func setupEmployeeCompanyDB(t *testing.T) (*DB, *collection, *collection) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -49,7 +51,12 @@ func setupEmployeeCompanyDB(t *testing.T) (*DB, client.Collection, client.Collec
 	companyCol, err := db.GetCollectionByName(ctx, "Company")
 	require.NoError(t, err)
 
-	return db, empCol, companyCol
+	empColImpl, ok := empCol.(*collection)
+	require.True(t, ok)
+	companyColImpl, ok := companyCol.(*collection)
+	require.True(t, ok)
+
+	return db, empColImpl, companyColImpl
 }
 
 // --- docExistsAndNotDeleted ---
@@ -68,10 +75,10 @@ func TestDocExistsAndNotDeleted_Exists(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	primaryKey, err := companyCol.(*collection).getPrimaryKeyFromDocID(txnCtx, doc.ID())
+	primaryKey, err := companyCol.getPrimaryKeyFromDocID(txnCtx, doc.ID())
 	require.NoError(t, err)
 
-	exists, err := companyCol.(*collection).docExistsAndNotDeleted(txnCtx, primaryKey)
+	exists, err := companyCol.docExistsAndNotDeleted(txnCtx, primaryKey)
 	require.NoError(t, err)
 	require.True(t, exists)
 }
@@ -90,10 +97,10 @@ func TestDocExistsAndNotDeleted_NotFound(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	primaryKey, err := companyCol.(*collection).getPrimaryKeyFromDocID(txnCtx, phantom.ID())
+	primaryKey, err := companyCol.getPrimaryKeyFromDocID(txnCtx, phantom.ID())
 	require.NoError(t, err)
 
-	exists, err := companyCol.(*collection).docExistsAndNotDeleted(txnCtx, primaryKey)
+	exists, err := companyCol.docExistsAndNotDeleted(txnCtx, primaryKey)
 	require.NoError(t, err)
 	require.False(t, exists)
 }
@@ -115,10 +122,10 @@ func TestDocExistsAndNotDeleted_SoftDeleted(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	primaryKey, err := companyCol.(*collection).getPrimaryKeyFromDocID(txnCtx, doc.ID())
+	primaryKey, err := companyCol.getPrimaryKeyFromDocID(txnCtx, doc.ID())
 	require.NoError(t, err)
 
-	exists, err := companyCol.(*collection).docExistsAndNotDeleted(txnCtx, primaryKey)
+	exists, err := companyCol.docExistsAndNotDeleted(txnCtx, primaryKey)
 	require.NoError(t, err)
 	require.False(t, exists)
 }
@@ -143,7 +150,7 @@ func TestValidateRelationDocIDs_ValidTarget_NoError(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, empDoc)
+	err = empCol.validateRelationDocIDs(txnCtx, empDoc)
 	require.NoError(t, err)
 }
 
@@ -165,7 +172,7 @@ func TestValidateRelationDocIDs_NonExistentTarget_Error(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, empDoc)
+	err = empCol.validateRelationDocIDs(txnCtx, empDoc)
 	require.ErrorContains(t, err, "relation target document not found")
 }
 
@@ -183,7 +190,7 @@ func TestValidateRelationDocIDs_EmptyID_NoError(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, empDoc)
+	err = empCol.validateRelationDocIDs(txnCtx, empDoc)
 	require.NoError(t, err)
 }
 
@@ -207,7 +214,7 @@ func TestValidateRelationDocIDs_DeletedTarget_Error(t *testing.T) {
 	defer txn.Discard()
 	txnCtx := InitContext(ctx, txn)
 
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, empDoc)
+	err = empCol.validateRelationDocIDs(txnCtx, empDoc)
 	require.ErrorContains(t, err, "relation target document not found")
 }
 
@@ -230,7 +237,7 @@ func TestValidateRelationDocIDs_SkipContext_NoError(t *testing.T) {
 	// skipRelationValidationContext suppresses all validation — used by backup import.
 	txnCtx := InitContext(skipRelationValidationContext(ctx), txn)
 
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, empDoc)
+	err = empCol.validateRelationDocIDs(txnCtx, empDoc)
 	require.NoError(t, err)
 }
 
@@ -266,7 +273,7 @@ func TestValidateRelationDocIDs_NonDirtyField_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	// validateRelationDocIDs skips non-dirty fields, so the dangling link is not an error.
-	err = empCol.(*collection).validateRelationDocIDs(txnCtx, retrieved)
+	err = empCol.validateRelationDocIDs(txnCtx, retrieved)
 	require.NoError(t, err)
 }
 
@@ -296,7 +303,7 @@ func TestValidateMergeRelationDocIDs_ValidTarget_NoError(t *testing.T) {
 	retrieved, err := empCol.GetDocument(txnCtx, empDoc.ID())
 	require.NoError(t, err)
 
-	err = empCol.(*collection).validateMergeRelationDocIDs(txnCtx, retrieved)
+	err = empCol.validateMergeRelationDocIDs(txnCtx, retrieved)
 	require.NoError(t, err)
 }
 
@@ -326,7 +333,7 @@ func TestValidateMergeRelationDocIDs_MissingTarget_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	// Merge-path validation treats a missing target as a skip, not an error.
-	err = empCol.(*collection).validateMergeRelationDocIDs(txnCtx, retrieved)
+	err = empCol.validateMergeRelationDocIDs(txnCtx, retrieved)
 	require.NoError(t, err)
 }
 
@@ -359,6 +366,6 @@ func TestValidateMergeRelationDocIDs_DeletedTarget_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	// A soft-deleted target is treated as "not found" on the merge path — skipped, not an error.
-	err = empCol.(*collection).validateMergeRelationDocIDs(txnCtx, retrieved)
+	err = empCol.validateMergeRelationDocIDs(txnCtx, retrieved)
 	require.NoError(t, err)
 }

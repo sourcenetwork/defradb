@@ -49,7 +49,6 @@ func TestMutationUpdateOneToOne_WithNonExistentRelation_Error(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-
 func TestMutationUpdateOneToOne(t *testing.T) {
 	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 

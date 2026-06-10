@@ -620,7 +620,7 @@ func (c *collection) validateMergeRelationDocIDs(ctx context.Context, doc *clien
 			continue
 		}
 
-		exists, err := targetCol.docExistsAndNotDeleted(ctx, primaryKey)
+		exists, err := targetCol.docExistsAndNotDeleted(ctx, primaryKey) //nolint:staticcheck
 		if err != nil || !exists {
 			// Skip: the referenced doc may not have arrived yet via P2P.
 			continue

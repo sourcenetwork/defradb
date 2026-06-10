@@ -19,8 +19,9 @@ import (
 )
 
 // SDL definition order determines CollectionID:
-//   CollectionID 0 = Employee (first type in SDL)
-//   CollectionID 1 = Company  (second type in SDL)
+//
+//	CollectionID 0 = Employee (first type in SDL)
+//	CollectionID 1 = Company  (second type in SDL)
 const employeeCompanyRelationSDL = `
 	type Employee @policy(
 		id: "{{.Policy0}}",
