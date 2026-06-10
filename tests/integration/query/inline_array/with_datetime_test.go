@@ -28,19 +28,18 @@ var dateTimeArraySchema = (`
 	}
 `)
 
+// executeTestCaseDateTime adds the DateTime array schema then runs the test
+// while preserving all other TestCase fields (Description, etc.).
 func executeTestCaseDateTime(t *testing.T, test testUtils.TestCase) {
-    // Preserve all TestCase fields (Description, etc.) while adding schema
-    fullTest := testUtils.TestCase{
-        Description: test.Description,
-        Actions: append(
-            []any{
-                &action.AddSchema{
-                    Schema: dateTimeArraySchema,
-                },
+    fullTest := test // copy struct
+    fullTest.Actions = append(
+        []any{
+            &action.AddSchema{
+                Schema: dateTimeArraySchema,
             },
-            test.Actions...,
-        ),
-    }
+        },
+        test.Actions...,
+    )
 
     testUtils.ExecuteTestCase(t, fullTest)
 }

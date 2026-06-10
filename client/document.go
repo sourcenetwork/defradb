@@ -1046,19 +1046,21 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 
 		// In the case of nillable arrays of nillables, we need to convert to the underlying value.
 		var innerValue any
-		if v, ok := normValue.NillableStringArray(); ok {
-			innerValue = convertImmutable(v)
-		} else if v, ok := normValue.NillableIntArray(); ok {
-			innerValue = convertImmutable(v)
-		} else if v, ok := normValue.NillableFloat64Array(); ok {
-			innerValue = convertImmutable(v)
-		} else if v, ok := normValue.NillableFloat32Array(); ok {
-			innerValue = convertImmutable(v)
-		} else if v, ok := normValue.NillableBoolArray(); ok {
-			innerValue = convertImmutable(v)
-		} else {
-			innerValue = normValue.Unwrap()
-		}
+        if v, ok := normValue.NillableStringArray(); ok {
+            innerValue = convertImmutable(v)
+        } else if v, ok := normValue.NillableIntArray(); ok {
+            innerValue = convertImmutable(v)
+        } else if v, ok := normValue.NillableFloat64Array(); ok {
+            innerValue = convertImmutable(v)
+        } else if v, ok := normValue.NillableFloat32Array(); ok {
+            innerValue = convertImmutable(v)
+        } else if v, ok := normValue.NillableBoolArray(); ok {
+            innerValue = convertImmutable(v)
+        } else if v, ok := normValue.NillableTimeArray(); ok {  // ← Added for nillable DateTime arrays
+            innerValue = convertImmutable(v)
+        } else {
+            innerValue = normValue.Unwrap()
+        }
 		docMap[k] = innerValue
 	}
 
