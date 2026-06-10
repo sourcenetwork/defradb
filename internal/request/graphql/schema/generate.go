@@ -630,6 +630,16 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 					if !ok {
 						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
 					}
+					// Mutation inputs must be nullable even for non-nillable fields so
+					// that application code handles null validation and produces
+					// consistent error messages regardless of mutation type.
+					if nonNull, isNonNull := ttype.(*gql.NonNull); isNonNull {
+						ttype = nonNull.OfType
+					} else if list, isList := ttype.(*gql.List); isList {
+						if nonNull, isNonNull := list.OfType.(*gql.NonNull); isNonNull {
+							ttype = gql.NewList(nonNull.OfType)
+						}
+					}
 				}
 
 				fields[field.Name] = &gql.InputObjectFieldConfig{
