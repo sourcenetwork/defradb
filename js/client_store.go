@@ -197,6 +197,26 @@ func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 	return goji.MarshalJS(lenses)
 }
 
+func (c *Client) listActions(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	opt := options.ListActions()
+	setOptIdentity(opt, args, 0)
+	lenses, err := store.ListActions(ctx, opt)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(lenses)
+}
+
 func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, error) {
 	name, err := stringArg(args, 0, "name")
 	if err != nil {

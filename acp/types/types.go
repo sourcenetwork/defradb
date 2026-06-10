@@ -118,6 +118,7 @@ const (
 	NodeVerifySignaturePerm
 	NodeAddLensPerm
 	NodeListLensPerm
+	NodeListActionPerm
 	NodeRefreshViewPerm
 	NodeAddViewPerm
 	NodeSetMigrationPerm
@@ -173,6 +174,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"verify-signature",
 	"add-lens",
 	"list-lens",
+	"list-action",
 	"refresh-view",
 	"add-view",
 	"set-migration",
@@ -287,6 +289,9 @@ resources:
   - name: add-lens
     expr: admin
   - name: list-lens
+    expr: admin
+
+  - name: list-action
     expr: admin
 
   - name: refresh-view
