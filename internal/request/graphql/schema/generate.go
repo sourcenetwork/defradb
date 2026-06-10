@@ -1071,7 +1071,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			hasSumableFields := false
 			// generate basic filter operator blocks for all the sumable types
 			for _, field := range obj.Fields() {
-				if field.Type == schemaTypes.Float32 || field.Type == schemaTypes.Float64 || field.Type == gql.Int {
+				if isNumeric(field.Type) {
 					hasSumableFields = true
 					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					continue
