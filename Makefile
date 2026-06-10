@@ -175,9 +175,9 @@ deps\:modules:
 deps\:mocks:
 	go install github.com/vektra/mockery/v3@v3.5.2
 
-.PHONY: deps\:playground
-deps\:playground:
-	go generate -tags playground ./playground/...
+.PHONY: deps\:explorer
+deps\:explorer:
+	go generate -tags explorer ./explorer/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
