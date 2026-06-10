@@ -29,19 +29,20 @@ var dateTimeArraySchema = (`
 `)
 
 func executeTestCaseDateTime(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			Actions: append(
-				[]any{
-					&action.AddSchema{
-						Schema: dateTimeArraySchema,
-					},
-				},
-				test.Actions...,
-			),
-		},
-	)
+    // Preserve all TestCase fields (Description, etc.) while adding schema
+    fullTest := testUtils.TestCase{
+        Description: test.Description,
+        Actions: append(
+            []any{
+                &action.AddSchema{
+                    Schema: dateTimeArraySchema,
+                },
+            },
+            test.Actions...,
+        ),
+    }
+
+    testUtils.ExecuteTestCase(t, fullTest)
 }
 
 func TestQueryInlineArrayWithDateTime_Null(t *testing.T) {
@@ -443,17 +444,18 @@ func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.CreateDoc{
-				Doc: `{
-					"name": "Bad Date",
-					"scheduledTimes": ["not-a-date"]
-				}`,
-				ExpectedError: "cannot parse \"not-a-date\"",
-			},
-		},
-	}
+    test := testUtils.TestCase{
+        Description: "Error on malformed DateTime string in array",
+        Actions: []any{
+            &action.CreateDoc{
+                Doc: `{
+                    "name": "Bad Date",
+                    "scheduledTimes": ["not-a-date"]
+                }`,
+                ExpectedError: "cannot parse \"not-a-date\"",
+            },
+        },
+    }
 
-	executeTestCaseDateTime(t, test)
+    executeTestCaseDateTime(t, test)
 }
