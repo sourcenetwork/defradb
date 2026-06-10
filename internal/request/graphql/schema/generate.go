@@ -731,7 +731,7 @@ func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Fiel
 	topLevelCountField := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.NewNonNull(gql.Int),
+		Type:        gql.Int,
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -746,14 +746,14 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 	topLevelSumField := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.NewNonNull(gql.Float),
+		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
 
 	topLevelAverageField := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.NewNonNull(gql.Float),
+		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -811,7 +811,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.NewNonNull(gql.Int),
+		Type:        gql.Int,
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -826,7 +826,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.NewNonNull(gql.Float),
+		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -871,7 +871,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.NewNonNull(gql.Float),
+		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
 
