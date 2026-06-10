@@ -373,6 +373,9 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
+	case DisconnectPeers:
+		disconnectPeers(s, action)
+
 	case AddReplicator:
 		addReplicator(s, action)
 
