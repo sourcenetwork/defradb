@@ -20,17 +20,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestDocEncryption_BranchableSync_DivergedVersions_FailsKMSAuth reproduces #4789:
-// when each peer has its own diverged @branchable collection version and an
-// encrypted doc was created against the originating peer's local version,
-// SyncBranchableCollection fails because the receiving peer can't authorize
-// its own KMS reply — the doc's CollectionVersionID is part of the DAG bytes
-// still in flight.
-//
-// Symptom: "failed to retrieve encryption key during DAG sync: no peer
-// supplied the encryption key".
-func TestDocEncryption_BranchableSync_DivergedVersions_FailsKMSAuth(t *testing.T) {
-	t.Skip("pending https://github.com/sourcenetwork/defradb/issues/4789")
+// Reproducer for https://github.com/sourcenetwork/defradb/issues/4789:
+// KMS authorization requires the doc's CollectionVersionID to be known
+// locally, but on diverged @branchable collections that version is only
+// delivered by the sync being authorized — deadlock.
+func TestDocEncryptionBranchableSync_DivergedVersions_FailsKMSAuth(t *testing.T) {
+	t.Skip("https://github.com/sourcenetwork/defradb/issues/4789")
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
@@ -43,9 +38,8 @@ func TestDocEncryption_BranchableSync_DivergedVersions_FailsKMSAuth(t *testing.T
 					}
 				`,
 			},
-			// Diverge: each peer patches its local @branchable collection
-			// independently, producing two different CollectionVersionIDs
-			// neither side knows about.
+			// Diverge: each peer ends up with a CollectionVersionID
+			// the other doesn't know.
 			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -77,7 +71,9 @@ func TestDocEncryption_BranchableSync_DivergedVersions_FailsKMSAuth(t *testing.T
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			// Both peers sync each other's history (matches the failing test's shape).
+			// Bidirectional: a one-way sync would pass; the deadlock
+			// needs each peer requesting a key whose version only the
+			// asker knows.
 			&action.SyncBranchableCollection{
 				NodeID:       1,
 				CollectionID: 0,
