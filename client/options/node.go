@@ -44,11 +44,7 @@ const (
 type NodeDocumentACPType string
 
 const (
-	// NodeNoDocumentACPType disables the document ACP subsystem.
-	NodeNoDocumentACPType NodeDocumentACPType = "none"
-	// NodeDefaultDocumentACPType uses the default ACP implementation for this build.
-	NodeDefaultDocumentACPType NodeDocumentACPType = ""
-	// NodeLocalDocumentACPType uses the local ACP implementation.
+	// NodeLocalDocumentACPType uses the local document ACP implementation.
 	NodeLocalDocumentACPType NodeDocumentACPType = "local"
 	// NodeSourceHubDocumentACPType uses the SourceHub ACP implementation.
 	NodeSourceHubDocumentACPType NodeDocumentACPType = "source-hub"
