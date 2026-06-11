@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
