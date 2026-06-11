@@ -646,6 +646,19 @@ func (txn *Txn) Connect(
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
+func (txn *Txn) Disconnect(
+	ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
+	return txn.db.Disconnect(ctx, addresses, opts...)
+}
+
 func (txn *Txn) AddReplicator(
 	ctx context.Context,
 	addresses []string,

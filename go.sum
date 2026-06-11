@@ -1790,8 +1790,8 @@ github.com/sourcenetwork/corelog v0.0.9 h1:wpoBbvju4wYtwpolfpGo8CrUVsRI8Gz1IeaXP
 github.com/sourcenetwork/corelog v0.0.9/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
-github.com/sourcenetwork/go-p2p v0.1.9 h1:bM5FjPqBxNBQuWS4Rd7wQZqa342sD1A3M84U3Ihzee4=
-github.com/sourcenetwork/go-p2p v0.1.9/go.mod h1:blpzi38QuKtN4Kb61OUZoJI9QSuRJ9LC1WZvhmFydwY=
+github.com/sourcenetwork/go-p2p v0.1.11 h1:ddsOsw0NTbx2b55bEP6xkNmMfh8J+FY40sQnBZrBDYI=
+github.com/sourcenetwork/go-p2p v0.1.11/go.mod h1:Widw0pR4fnvMee1IDQHxde+3II6RLGo32P6N/HfO+Ws=
 github.com/sourcenetwork/goji v0.0.10 h1:PKHVSE19TQRKe6FdFWiPgKfyji4UCuPSuKf44X7aZMA=
 github.com/sourcenetwork/goji v0.0.10/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
 github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b h1:DS+7xsNq0Q7AjBRMBr13CFn55eMPaGaJC8p5TMbcxmo=
@@ -1800,8 +1800,8 @@ github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b h1:NAx
 github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
-github.com/sourcenetwork/lens/host-go v0.10.0 h1:mv7mxP3LTP6YKjyYzWBKPetEZ+o0I2kJOVHpnLNPqLI=
-github.com/sourcenetwork/lens/host-go v0.10.0/go.mod h1:LHIuko88fgxOX996hvRNuBbgdTeFIPLQO6OXj24vmsM=
+github.com/sourcenetwork/lens/host-go v0.11.0 h1:B9aNdRaYh6P5gBxhUOTUS9geyq8Pl3I/ps0w6Y4xt9k=
+github.com/sourcenetwork/lens/host-go v0.11.0/go.mod h1:LHIuko88fgxOX996hvRNuBbgdTeFIPLQO6OXj24vmsM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/raccoondb/v2 v2.0.0 h1:Gb0SjsZUbrbkHCEg7PyyNs0+2IzPxjE/BkEQnlu1nfA=
