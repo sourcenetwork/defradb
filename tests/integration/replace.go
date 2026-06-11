@@ -18,7 +18,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -41,9 +40,6 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 		for colIndex, docIndexes := range s.DocIDs {
 			for docIndex, docID := range docIndexes {
 				cids := docIDsToCIDs[docID.String()]
-				if len(cids) == 0 && docID.CID().Defined() {
-					cids = []cid.Cid{docID.CID()}
-				}
 				for cidIndex, cid := range cids {
 					templateCIDRef := "CID" +
 						// The index of the collection in the test.
