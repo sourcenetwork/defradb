@@ -19,10 +19,12 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -53,7 +55,29 @@ func (c *collection) Truncate(
 
 	defer txn.Discard()
 
+	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	c.db.lockSet.CollectionLock(txn, shortID)
+
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+
+	// Registerd using the background context, as stores rely on the closing of other contexts in order
+	// to time the flushing of writes - meaning if ctx was used to write, the status would not be readable
+	// by other threads until after the truncate has completed.
+	err = action.Register(context.Background(), multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
+	if err != nil {
+		return err
+	}
+
 	err = c.truncate(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = action.Complete(context.Background(), multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 	if err != nil {
 		return err
 	}
@@ -68,9 +92,6 @@ func (c *collection) truncate(
 	if err != nil {
 		return err
 	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-	c.db.lockSet.CollectionLock(txn, shortID)
 
 	// The following operations must be performed without a transaction, due to store-level
 	// transaction size limits.  This lack of protection means that they must be performed
