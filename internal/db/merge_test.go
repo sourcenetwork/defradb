@@ -186,7 +186,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
 
-	mp, err := db.newMergeProcessor(txnCtx, c)
+	mp, err := db.newMergeProcessor(txnCtx, c, true)
 	require.NoError(t, err)
 
 	genesisCID := blocks.NewBlock([]byte("genesis composite")).Cid()

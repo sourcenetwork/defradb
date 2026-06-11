@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -591,11 +592,19 @@ func (c *collection) save(
 	)
 	merkleCRDT.SetDeltaDocID(deltaDocID)
 
-	addCtx := signingCtx
+	var link cidlink.Link
+	var headNode []byte
 	if isAdd {
-		addCtx = crdt.ContextWithNewDocCreateMode(addCtx)
+		link, headNode, err = coreblock.AddDeltaWithMergeOptions(
+			signingCtx,
+			merkleCRDT,
+			merkleCRDT.Delta(),
+			[]crdt.MergeOption{crdt.WithNewDocCreateMode()},
+			links...,
+		)
+	} else {
+		link, headNode, err = coreblock.AddDelta(signingCtx, merkleCRDT, merkleCRDT.Delta(), links...)
 	}
-	link, headNode, err := coreblock.AddDelta(addCtx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}

@@ -133,6 +133,6 @@ func (c *CollectionDefinition) Delta(
 	}, true, nil
 }
 
-func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {
+func (c *CollectionDefinition) Merge(ctx context.Context, other Delta, _ ...MergeOption) error {
 	return nil
 }

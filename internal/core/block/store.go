@@ -54,6 +54,27 @@ func AddDelta(
 	delta crdt.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
+	return addDelta(ctx, crdtData, delta, nil, links...)
+}
+
+// AddDeltaWithMergeOptions adds a delta and applies it using the given CRDT merge options.
+func AddDeltaWithMergeOptions(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	delta crdt.Delta,
+	mergeOptions []crdt.MergeOption,
+	links ...DAGLink,
+) (cidlink.Link, []byte, error) {
+	return addDelta(ctx, crdtData, delta, mergeOptions, links...)
+}
+
+func addDelta(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	delta crdt.Delta,
+	mergeOptions []crdt.MergeOption,
+	links ...DAGLink,
+) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	headset := NewHeadSet(txn.Headstore(), crdtData.HeadstorePrefix())
@@ -98,7 +119,7 @@ func AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = ProcessBlock(ctx, crdtData, block, link)
+	err = ProcessBlock(ctx, crdtData, block, link, mergeOptions...)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -199,8 +220,9 @@ func ProcessBlock(
 	crdtData crdt.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
+	options ...crdt.MergeOption,
 ) error {
-	err := crdtData.Merge(ctx, block.Delta.GetDelta())
+	err := crdtData.Merge(ctx, block.Delta.GetDelta(), options...)
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}

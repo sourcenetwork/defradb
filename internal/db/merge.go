@@ -91,22 +91,17 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
 	}
 
-	mergeCtx := ctx
-	if len(mt.heads) == 0 {
-		mergeCtx = crdt.ContextWithNewDocCreateMode(ctx)
-	}
-
-	mp, err := db.newMergeProcessor(mergeCtx, col)
+	mp, err := db.newMergeProcessor(ctx, col, len(mt.heads) == 0)
 	if err != nil {
 		return err
 	}
 
-	err = mp.loadComposites(mergeCtx, dagMerge.Cid, mt)
+	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 	if err != nil {
 		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
-	err = mp.mergeComposites(mergeCtx)
+	err = mp.mergeComposites(ctx)
 	if err != nil {
 		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
@@ -186,6 +181,7 @@ type mergeProcessor struct {
 
 	importedDocIDs     map[string]resolvedDocID
 	currentCreateDocID *resolvedDocID
+	newDocCreateMode   bool
 }
 
 type resolvedDocID struct {
@@ -235,6 +231,7 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 func (db *DB) newMergeProcessor(
 	ctx context.Context,
 	col *collection,
+	newDocCreateMode bool,
 ) (*mergeProcessor, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
@@ -245,13 +242,14 @@ func (db *DB) newMergeProcessor(
 	encBlockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Encstore()))
 
 	return &mergeProcessor{
-		blockLS:        blockLS,
-		encBlockLS:     encBlockLS,
-		col:            col,
-		db:             db,
-		docIDs:         make(map[client.DocID]*client.Document),
-		composites:     list.New(),
-		importedDocIDs: make(map[string]resolvedDocID),
+		blockLS:          blockLS,
+		encBlockLS:       encBlockLS,
+		col:              col,
+		db:               db,
+		docIDs:           make(map[client.DocID]*client.Document),
+		composites:       list.New(),
+		importedDocIDs:   make(map[string]resolvedDocID),
+		newDocCreateMode: newDocCreateMode,
 	}, nil
 }
 
@@ -370,7 +368,8 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
+		mergeOptions := mp.mergeOptions()
+		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink, mergeOptions...)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
@@ -398,6 +397,13 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	return nil
+}
+
+func (mp *mergeProcessor) mergeOptions() []crdt.MergeOption {
+	if !mp.newDocCreateMode {
+		return nil
+	}
+	return []crdt.MergeOption{crdt.WithNewDocCreateMode()}
 }
 
 func (mp *mergeProcessor) setGenesisFieldDocIDMappings(
@@ -600,7 +606,7 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	if crdt.IsNewDocCreateMode(ctx) {
+	if mp.newDocCreateMode {
 		mp.docIDs[docID] = nil
 		return nil
 	}
