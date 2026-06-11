@@ -249,7 +249,7 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	assertNodeOptionField(t, m, float64(3000000000), "HTTP", "IdleTimeout")  // 3000 ms
 
 	// Document ACP
-	assertNodeOptionField(t, m, "none", "DocumentACP", "DocumentACPType")
+	assertNodeOptionField(t, m, "local", "DocumentACP", "DocumentACPType")
 	assertNodeOptionField(t, m, "/acp/path-a", "DocumentACP", "Path")
 	assertNodeOptionField(t, m, "chain-a", "DocumentACP", "SourceHubChainID")
 	assertNodeOptionField(t, m, "grpc-a:9090", "DocumentACP", "SourceHubGRPCAddress")

@@ -76,7 +76,7 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 					// HTTP
 					{Path: []string{"HTTP", "AllowedOrigins"}, Value: []any{"http://a.example.com"}},
 					// Document ACP
-					{Path: []string{"DocumentACP", "DocumentACPType"}, Value: "none"},
+					{Path: []string{"DocumentACP", "DocumentACPType"}, Value: "local"},
 					{Path: []string{"DocumentACP", "Path"}, Value: ""},
 					// Node ACP
 					{Path: []string{"NodeACP", "IsEnabled"}, Value: false},
