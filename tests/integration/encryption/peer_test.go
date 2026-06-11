@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/action"
