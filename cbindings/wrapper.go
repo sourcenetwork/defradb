@@ -52,6 +52,7 @@ extern Result AddP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t i
 extern Result DeleteP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PCollections(uintptr_t nodePtr, uintptr_t identity);
 extern Result ConnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
+extern Result DisconnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
 extern Result AddP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result DeleteP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PDocuments(uintptr_t nodePtr, uintptr_t identity);
@@ -1104,6 +1105,23 @@ func (w *CWrapper) Connect(
 	defer C.FreeIdentity(cIdentity)
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ConnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cPeerAddresses := C.CString(strings.Join(addresses, ","))
+	defer C.free(unsafe.Pointer(cPeerAddresses))
+	defer C.FreeIdentity(cIdentity)
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.DisconnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

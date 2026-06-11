@@ -836,7 +836,6 @@ ability to be able to disable DAC in the future (which would bypass DAC).
 on collections connected to a multi-node network, please use SourceHub ACP.
 
 The following features currently don't work with ACP, they are being actively worked on.
-- [Adding Secondary Indexes](https://github.com/sourcenetwork/defradb/issues/2365)
 - [Backing/Restoring Private Documents](https://github.com/sourcenetwork/defradb/issues/2430)
 
 The following features may have undefined/unstable behavior until they are properly tested:

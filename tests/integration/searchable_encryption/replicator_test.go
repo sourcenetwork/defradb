@@ -57,6 +57,7 @@ func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.
 					"name": "John",
 					"age": 21
 				}`,
+				IsDocEncrypted: true,
 			},
 			&action.AddDoc{
 				NodeID: immutable.Some(0),
@@ -64,6 +65,7 @@ func TestSEReplicator_IfDocAddedWhileReplicatorIsOffline_ShouldRetry(t *testing.
 					"name": "Fred",
 					"age": 22
 				}`,
+				IsDocEncrypted: true,
 			},
 			testUtils.Start{
 				NodeID: immutable.Some(1),
