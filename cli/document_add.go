@@ -90,7 +90,7 @@ Options:
 				if err := col.AddManyDocuments(ctx, docs, addOpt); err != nil {
 					return err
 				}
-				return writeJSON(cmd, documentIDs(docs))
+				return writeJSON(cmd, client.DocumentIDs(docs))
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
@@ -100,7 +100,7 @@ Options:
 			if err := col.AddDocument(cmd.Context(), doc, addOpt); err != nil {
 				return err
 			}
-			return writeJSON(cmd, documentIDs([]*client.Document{doc}))
+			return writeJSON(cmd, client.DocumentIDs([]*client.Document{doc}))
 		},
 	}
 
@@ -126,12 +126,4 @@ Options:
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	return cmd
-}
-
-func documentIDs(docs []*client.Document) []string {
-	docIDs := make([]string, len(docs))
-	for i, doc := range docs {
-		docIDs[i] = doc.ID().String()
-	}
-	return docIDs
 }

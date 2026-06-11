@@ -567,9 +567,7 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			if deltaSetter, ok := merkleCRDT.(crdt.DeltaDocIDSetter); ok {
-				deltaSetter.SetDeltaDocID(deltaDocID)
-			}
+			merkleCRDT.SetDeltaDocID(deltaDocID)
 
 			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocShortID, k, val))
 			if err != nil {
@@ -645,7 +643,7 @@ func (c *collection) save(
 				return err
 			}
 		}
-		client.SetDocumentIDFromCID(doc, link.Cid)
+		client.SetDocumentID(doc, docID)
 		updateDocID = docID.String()
 	}
 

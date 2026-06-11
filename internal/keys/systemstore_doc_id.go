@@ -16,12 +16,14 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
+// Doc ID mapping keys bridge node-local short IDs and public CID-derived DocIDs.
+// The field indexes let genesis field blocks resolve back to docs without DAG scans.
 const (
-	SHORT_ID_TO_DOC_ID      = "short"
-	DOC_ID_TO_SHORT_ID      = "public"
-	NODE_DOC_ID_INDEX       = "node"
-	GENESIS_FIELD_TO_DOC_ID = "field"
-	DOC_ID_TO_GENESIS_FIELD = "public-field"
+	SHORT_ID_TO_DOC_ID      = "s"
+	DOC_ID_TO_SHORT_ID      = "p"
+	NODE_DOC_ID_INDEX       = "n"
+	GENESIS_FIELD_TO_DOC_ID = "f"
+	DOC_ID_TO_GENESIS_FIELD = "pf"
 )
 
 type systemstoreDocIDKey struct {

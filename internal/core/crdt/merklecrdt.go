@@ -24,9 +24,6 @@ import (
 type FieldLevelCRDT interface {
 	ReplicatedData
 	Delta(ctx context.Context, data *DocField) (Delta, error)
-}
-
-type DeltaDocIDSetter interface {
 	SetDeltaDocID(docID string)
 }
 

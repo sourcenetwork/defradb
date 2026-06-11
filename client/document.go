@@ -978,14 +978,19 @@ func (doc *Document) setDocID(docID DocID) {
 	doc.id = docID
 }
 
-// SetDocumentID sets the document ID.
-func SetDocumentID(doc *Document, docID DocID) {
-	doc.setDocID(docID)
+// DocumentIDs returns IDs for docs in input order.
+func DocumentIDs(docs []*Document) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return docIDs
 }
 
-// SetDocumentIDFromCID sets the document ID from a composite CID.
-func SetDocumentIDFromCID(doc *Document, c cid.Cid) {
-	SetDocumentID(doc, NewDocIDV0(c))
+// SetDocumentID applies an ID returned by a DefraDB save operation.
+// It is intended for client adapters, not application-assigned IDs.
+func SetDocumentID(doc *Document, docID DocID) {
+	doc.setDocID(docID)
 }
 
 // GenerateAndSetDocID generates the DocID and then (re)sets `doc.id`.

@@ -71,28 +71,28 @@ func NewErrUnsupportedCounterType(valueType client.ScalarKind) error {
 	return errors.New(errUnsupportedCounterType, errors.NewKV("Type", valueType))
 }
 
-func NewErrGetRegisterStatus(inner error, docID string, field string) error {
+func NewErrGetRegisterStatus(inner error, docShortID string, field string) error {
 	return errors.Wrap(errGetRegisterStatus, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field))
 }
 
-func NewErrGetRegisterValue(inner error, docID string, field string) error {
+func NewErrGetRegisterValue(inner error, docShortID string, field string) error {
 	return errors.Wrap(errGetRegisterValue, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field))
 }
 
-func NewErrDeleteRegisterValue(inner error, docID string, field string) error {
+func NewErrDeleteRegisterValue(inner error, docShortID string, field string) error {
 	return errors.Wrap(errDeleteRegisterVal, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field))
 }
 
 func NewErrSerializeLWWValue(inner error, field string) error {
 	return errors.Wrap(errSerializeLWWValue, inner, errors.NewKV("Field", field))
 }
 
-func NewErrCheckCounterExists(inner error, docID string, field string) error {
+func NewErrCheckCounterExists(inner error, docShortID string, field string) error {
 	return errors.Wrap(errCheckCounterExists, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field))
 }
 
 func NewErrGenerateCounterNonce(inner error) error {
@@ -107,36 +107,36 @@ func NewErrGetCurrentCounterValue(inner error) error {
 	return errors.Wrap(errGetCurrentCounterValue, inner)
 }
 
-func NewErrGetCounterStatus(inner error, docID string, field string) error {
+func NewErrGetCounterStatus(inner error, docShortID string, field string) error {
 	return errors.Wrap(errGetCounterStatus, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field))
 }
 
-func NewErrIncrementCounter(inner error, docID string, field string, kind string) error {
+func NewErrIncrementCounter(inner error, docShortID string, field string, kind string) error {
 	return errors.Wrap(errIncrementCounter, inner,
-		errors.NewKV("DocID", docID), errors.NewKV("Field", field), errors.NewKV("Kind", kind))
+		errors.NewKV("DocShortID", docShortID), errors.NewKV("Field", field), errors.NewKV("Kind", kind))
 }
 
-func NewErrSetDocAsDeleted(inner error, docID string) error {
-	return errors.Wrap(errSetDocAsDeleted, inner, errors.NewKV("DocID", docID))
+func NewErrSetDocAsDeleted(inner error, docShortID string) error {
+	return errors.Wrap(errSetDocAsDeleted, inner, errors.NewKV("DocShortID", docShortID))
 }
 
-func NewErrGetDocMarker(inner error, docID string) error {
-	return errors.Wrap(errGetDocMarker, inner, errors.NewKV("DocID", docID))
+func NewErrGetDocMarker(inner error, docShortID string) error {
+	return errors.Wrap(errGetDocMarker, inner, errors.NewKV("DocShortID", docShortID))
 }
 
-func NewErrSetDocVersion(inner error, docID string) error {
-	return errors.Wrap(errSetDocVersion, inner, errors.NewKV("DocID", docID))
+func NewErrSetDocVersion(inner error, docShortID string) error {
+	return errors.Wrap(errSetDocVersion, inner, errors.NewKV("DocShortID", docShortID))
 }
 
-func NewErrCreateDeleteIter(inner error, docID string) error {
-	return errors.Wrap(errCreateDeleteIter, inner, errors.NewKV("DocID", docID))
+func NewErrCreateDeleteIter(inner error, docShortID string) error {
+	return errors.Wrap(errCreateDeleteIter, inner, errors.NewKV("DocShortID", docShortID))
 }
 
-func NewErrSetDeletedFlag(inner error, docID string, key string) error {
-	return errors.Wrap(errSetDeletedFlag, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
+func NewErrSetDeletedFlag(inner error, docShortID string, key string) error {
+	return errors.Wrap(errSetDeletedFlag, inner, errors.NewKV("DocShortID", docShortID), errors.NewKV("Key", key))
 }
 
-func NewErrDeleteFieldValue(inner error, docID string, key string) error {
-	return errors.Wrap(errDeleteFieldValue, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
+func NewErrDeleteFieldValue(inner error, docShortID string, key string) error {
+	return errors.Wrap(errDeleteFieldValue, inner, errors.NewKV("DocShortID", docShortID), errors.NewKV("Key", key))
 }

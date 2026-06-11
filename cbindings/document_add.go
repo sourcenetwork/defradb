@@ -83,7 +83,7 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		docIDs, err := gojson.Marshal(documentIDs(docs))
+		docIDs, err := gojson.Marshal(client.DocumentIDs(docs))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -98,19 +98,10 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		docIDs, err := gojson.Marshal(documentIDs([]*client.Document{doc}))
+		docIDs, err := gojson.Marshal(client.DocumentIDs([]*client.Document{doc}))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(returnGoC(0, "", string(docIDs)))
 	}
-}
-
-// documentIDs returns IDs for the wrapper call.
-func documentIDs(docs []*client.Document) []string {
-	docIDs := make([]string, len(docs))
-	for i, doc := range docs {
-		docIDs[i] = doc.ID().String()
-	}
-	return docIDs
 }

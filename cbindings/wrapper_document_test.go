@@ -33,7 +33,7 @@ func TestSetDocumentIDsFromJSON(t *testing.T) {
 
 	require.Equal(t, docIDs[0].String(), docs[0].ID().String())
 	require.Equal(t, docIDs[1].String(), docs[1].ID().String())
-	require.Equal(t, []string{docIDs[0].String(), docIDs[1].String()}, documentIDs(docs))
+	require.Equal(t, []string{docIDs[0].String(), docIDs[1].String()}, client.DocumentIDs(docs))
 }
 
 func TestSetDocumentIDsFromJSONReturnsError(t *testing.T) {
