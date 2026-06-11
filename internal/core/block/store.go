@@ -54,25 +54,24 @@ func AddDelta(
 	delta crdt.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, crdtData, delta, nil, links...)
+	return addDelta(ctx, crdtData, delta, false, links...)
 }
 
-// AddDeltaWithMergeOptions adds a delta and applies it using the given CRDT merge options.
-func AddDeltaWithMergeOptions(
+// AddDeltaForNewDocCreate applies the delta as part of a new document create.
+func AddDeltaForNewDocCreate(
 	ctx context.Context,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
-	mergeOptions []crdt.MergeOption,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, crdtData, delta, mergeOptions, links...)
+	return addDelta(ctx, crdtData, delta, true, links...)
 }
 
 func addDelta(
 	ctx context.Context,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
-	mergeOptions []crdt.MergeOption,
+	newDocCreateMode bool,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -119,7 +118,7 @@ func addDelta(
 	}
 
 	// merge the delta and update the state
-	err = ProcessBlock(ctx, crdtData, block, link, mergeOptions...)
+	err = processBlock(ctx, crdtData, block, link, newDocCreateMode)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -220,14 +219,47 @@ func ProcessBlock(
 	crdtData crdt.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
-	options ...crdt.MergeOption,
 ) error {
-	err := crdtData.Merge(ctx, block.Delta.GetDelta(), options...)
+	return processBlock(ctx, crdtData, block, blockLink, false)
+}
+
+// ProcessBlockForNewDocCreate applies a block as part of a new document create.
+func ProcessBlockForNewDocCreate(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	block *Block,
+	blockLink cidlink.Link,
+) error {
+	return processBlock(ctx, crdtData, block, blockLink, true)
+}
+
+func processBlock(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	block *Block,
+	blockLink cidlink.Link,
+	newDocCreateMode bool,
+) error {
+	err := mergeBlock(ctx, crdtData, block.Delta.GetDelta(), newDocCreateMode)
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
 	return updateHeads(ctx, crdtData, block, blockLink)
+}
+
+func mergeBlock(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	delta crdt.Delta,
+	newDocCreateMode bool,
+) error {
+	if newDocCreateMode {
+		if merger, ok := crdtData.(crdt.NewDocCreateMerger); ok {
+			return merger.MergeNewDocCreate(ctx, delta)
+		}
+	}
+	return crdtData.Merge(ctx, delta)
 }
 
 func updateHeads(

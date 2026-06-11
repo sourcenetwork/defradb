@@ -61,6 +61,6 @@ func (c *CollectionSetDefinition) Delta() *CollectionSetDelta {
 	return &CollectionSetDelta{}
 }
 
-func (c *CollectionSetDefinition) Merge(ctx context.Context, other Delta, _ ...MergeOption) error {
+func (c *CollectionSetDefinition) Merge(ctx context.Context, other Delta) error {
 	return nil
 }

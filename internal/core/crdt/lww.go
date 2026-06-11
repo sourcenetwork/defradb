@@ -72,6 +72,7 @@ type LWW struct {
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
+var _ NewDocCreateMerger = (*LWW)(nil)
 var _ ReplicatedData = (*LWW)(nil)
 
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
@@ -118,19 +119,28 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (l *LWW) Merge(ctx context.Context, delta Delta, options ...MergeOption) error {
+func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return l.setValue(ctx, d.Data, d.GetPriority(), NewMergeOptions(options...))
+	return l.setValue(ctx, d.Data, d.GetPriority(), false)
 }
 
-func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, options MergeOptions) error {
+func (l *LWW) MergeNewDocCreate(ctx context.Context, delta Delta) error {
+	d, ok := delta.(*LWWDelta)
+	if !ok {
+		return ErrMismatchedMergeType
+	}
+
+	return l.setValue(ctx, d.Data, d.GetPriority(), true)
+}
+
+func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, newDocCreateMode bool) error {
 	key := l.key.WithValueFlag()
 
-	if !options.NewDocCreateMode {
+	if !newDocCreateMode {
 		curPrio, err := getPriority(ctx, l.store, l.key)
 		if err != nil {
 			return NewErrFailedToGetPriority(err)

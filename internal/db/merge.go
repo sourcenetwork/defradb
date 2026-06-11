@@ -368,8 +368,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		mergeOptions := mp.mergeOptions()
-		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink, mergeOptions...)
+		err = mp.processCRDTBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
@@ -399,11 +398,16 @@ func (mp *mergeProcessor) processBlock(
 	return nil
 }
 
-func (mp *mergeProcessor) mergeOptions() []crdt.MergeOption {
+func (mp *mergeProcessor) processCRDTBlock(
+	ctx context.Context,
+	crdtData crdt.ReplicatedData,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+) error {
 	if !mp.newDocCreateMode {
-		return nil
+		return coreblock.ProcessBlock(ctx, crdtData, block, blockLink)
 	}
-	return []crdt.MergeOption{crdt.WithNewDocCreateMode()}
+	return coreblock.ProcessBlockForNewDocCreate(ctx, crdtData, block, blockLink)
 }
 
 func (mp *mergeProcessor) setGenesisFieldDocIDMappings(

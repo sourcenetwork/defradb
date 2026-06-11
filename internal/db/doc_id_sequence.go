@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// nextShortDocID returns the next local storage ID.
+// nextShortDocID returns the next local storage key segment.
 func (db *DB) nextShortDocID() string {
 	return id.FormatShortDocID(db.docIDSequence.Add(1))
 }

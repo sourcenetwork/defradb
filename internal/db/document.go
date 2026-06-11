@@ -593,11 +593,10 @@ func (c *collection) save(
 	var link cidlink.Link
 	var headNode []byte
 	if isAdd {
-		link, headNode, err = coreblock.AddDeltaWithMergeOptions(
+		link, headNode, err = coreblock.AddDeltaForNewDocCreate(
 			signingCtx,
 			merkleCRDT,
 			merkleCRDT.Delta(),
-			[]crdt.MergeOption{crdt.WithNewDocCreateMode()},
 			links...,
 		)
 	} else {

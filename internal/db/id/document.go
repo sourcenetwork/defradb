@@ -29,22 +29,27 @@ import (
 const shortDocIDWidth = 16
 const genesisDocIDPrefix = "genesis:"
 
+// NewGenesisDocID marks a create-time alias stored before the final CID-derived DocID exists.
 func NewGenesisDocID(docID string) string {
 	return genesisDocIDPrefix + docID
 }
 
+// IsGenesisDocID reports whether docID is a create-time alias.
 func IsGenesisDocID(docID string) bool {
 	return strings.HasPrefix(docID, genesisDocIDPrefix)
 }
 
+// UnwrapGenesisDocID removes the create-time alias marker if present.
 func UnwrapGenesisDocID(docID string) string {
 	return strings.TrimPrefix(docID, genesisDocIDPrefix)
 }
 
+// FormatShortDocID returns a zero-padded datastore key segment for a local short doc ID.
 func FormatShortDocID(seq uint64) string {
 	return fmt.Sprintf("%016x", seq)
 }
 
+// ParseShortDocID parses a datastore short doc ID segment.
 func ParseShortDocID(shortDocID string) (uint64, error) {
 	if len(shortDocID) == 0 || len(shortDocID) > shortDocIDWidth {
 		return 0, strconv.ErrSyntax

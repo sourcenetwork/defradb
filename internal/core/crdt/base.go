@@ -21,30 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// MergeOptions controls storage behavior while applying a CRDT delta.
-type MergeOptions struct {
-	NewDocCreateMode bool
-}
-
-// MergeOption configures CRDT merge behavior.
-type MergeOption func(*MergeOptions)
-
-// WithNewDocCreateMode marks a merge as applying the first composite for a new document.
-func WithNewDocCreateMode() MergeOption {
-	return func(opts *MergeOptions) {
-		opts.NewDocCreateMode = true
-	}
-}
-
-// NewMergeOptions returns the effective merge options.
-func NewMergeOptions(options ...MergeOption) MergeOptions {
-	var result MergeOptions
-	for _, option := range options {
-		option(&result)
-	}
-	return result
-}
-
 func setPriority(
 	ctx context.Context,
 	store datastore.Keyedstore,

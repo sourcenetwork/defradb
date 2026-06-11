@@ -185,6 +185,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 			// Because the datastore read-locks are only ever released when the transaction closes,
 			// we do not need to worry about timing or order-of-operation issues, *unless* we change
 			// when the datastore read-locks are released.
+			// Prefix-shaped keys do not identify a document.
 			if key.DocShortID != "" {
 				if _, done := deletedDocIDs[key.DocShortID]; !done {
 					publicDocID, found, err := id.GetPublicDocID(ctx, colShortID, key.DocShortID)

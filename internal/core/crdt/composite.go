@@ -82,6 +82,7 @@ type DocComposite struct {
 }
 
 var _ ReplicatedData = (*DocComposite)(nil)
+var _ NewDocCreateMerger = (*DocComposite)(nil)
 
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
@@ -127,7 +128,15 @@ func (m *DocComposite) Delta() *DocCompositeDelta {
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (m *DocComposite) Merge(ctx context.Context, delta Delta, options ...MergeOption) error {
+func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
+	return m.merge(ctx, delta, false)
+}
+
+func (m *DocComposite) MergeNewDocCreate(ctx context.Context, delta Delta) error {
+	return m.merge(ctx, delta, true)
+}
+
+func (m *DocComposite) merge(ctx context.Context, delta Delta, newDocCreateMode bool) error {
 	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -142,7 +151,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta, options ...MergeO
 	}
 
 	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	if NewMergeOptions(options...).NewDocCreateMode {
+	if newDocCreateMode {
 		if err := m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID)); err != nil {
 			return err
 		}

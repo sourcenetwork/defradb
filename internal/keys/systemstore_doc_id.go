@@ -16,8 +16,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-// Doc ID mapping keys bridge node-local short IDs and public CID-derived DocIDs.
-// The field indexes let genesis field blocks resolve back to docs without DAG scans.
+// Doc ID mapping keys bridge two lookup shapes:
+// collection-scoped keys preserve the short ID <-> public DocID relation, while
+// node-scoped keys handle paths that only know a public DocID. Genesis field
+// indexes are stored both ways so verification can resolve field blocks quickly
+// and document cleanup can remove those reverse indexes without scanning.
 const (
 	SHORT_ID_TO_DOC_ID      = "s"
 	DOC_ID_TO_SHORT_ID      = "p"

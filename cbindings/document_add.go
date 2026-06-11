@@ -18,7 +18,7 @@ import "C"
 
 import (
 	"context"
-	gojson "encoding/json"
+	"encoding/json"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -30,7 +30,7 @@ import (
 //export AddDocument
 func AddDocument(
 	nodePtr C.uintptr_t,
-	json *C.char,
+	jsonData *C.char,
 	isEncrypted C.int,
 	encryptedFields *C.char,
 	opts C.CollectionOptions,
@@ -72,7 +72,7 @@ func AddDocument(
 	addOpt := options.WithIdentity(options.AddDocument(), acpIdentity.FromContext(ctx))
 
 	// Determine if JSON is array or object by looking for the first character being [
-	jsonString := strings.TrimSpace(C.GoString(json))
+	jsonString := strings.TrimSpace(C.GoString(jsonData))
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
 		docs, err := client.NewDocsFromJSON(ctx, []byte(jsonString), col.Version())
@@ -83,7 +83,7 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		docIDs, err := gojson.Marshal(client.DocumentIDs(docs))
+		docIDs, err := json.Marshal(client.DocumentIDs(docs))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -98,7 +98,7 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		docIDs, err := gojson.Marshal(client.DocumentIDs([]*client.Document{doc}))
+		docIDs, err := json.Marshal(client.DocumentIDs([]*client.Document{doc}))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
