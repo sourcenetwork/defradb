@@ -642,7 +642,7 @@ func (c *collection) save(
 				return err
 			}
 		}
-		client.SetDocumentID(doc, docID)
+		client.ApplySavedDocumentID(doc, docID)
 		updateDocID = docID.String()
 	}
 

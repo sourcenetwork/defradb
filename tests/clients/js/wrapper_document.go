@@ -78,7 +78,7 @@ func setDocumentIDsFromJS(docs []*client.Document, value js.Value) error {
 		if err != nil {
 			return err
 		}
-		client.SetDocumentID(docs[i], docID)
+		client.ApplySavedDocumentID(docs[i], docID)
 	}
 	return nil
 }

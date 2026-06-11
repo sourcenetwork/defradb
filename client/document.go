@@ -987,9 +987,9 @@ func DocumentIDs(docs []*Document) []string {
 	return docIDs
 }
 
-// SetDocumentID applies an ID returned by a DefraDB save operation.
-// It is intended for client adapters, not application-assigned IDs.
-func SetDocumentID(doc *Document, docID DocID) {
+// ApplySavedDocumentID applies an ID returned by a DefraDB save operation.
+// It is exported so client adapters can keep AddDocument semantics consistent.
+func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
 }
 

@@ -122,7 +122,7 @@ func setDocumentIDs(docs []*client.Document, docIDs []string) error {
 		if err != nil {
 			return err
 		}
-		client.SetDocumentID(docs[i], docID)
+		client.ApplySavedDocumentID(docs[i], docID)
 	}
 	return nil
 }

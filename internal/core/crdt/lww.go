@@ -148,7 +148,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, newDocC
 
 		marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-			return NewErrGetRegisterStatus(err, l.key.DocShortID, l.fieldName)
+			return NewErrGetRegisterStatus(err, l.fieldName)
 		}
 		if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 			key = key.WithDeletedFlag()
@@ -158,7 +158,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, newDocC
 		} else if priority == curPrio {
 			curValue, err := l.store.Get(ctx, key)
 			if err != nil {
-				return NewErrGetRegisterValue(err, l.key.DocShortID, l.fieldName)
+				return NewErrGetRegisterValue(err, l.fieldName)
 			}
 
 			if bytes.Compare(curValue, val) >= 0 {
@@ -173,7 +173,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, newDocC
 		// consistent with what would be found if the user omitted the property on
 		// create.
 		if err := l.store.Delete(ctx, key); err != nil {
-			return NewErrDeleteRegisterValue(err, l.key.DocShortID, l.fieldName)
+			return NewErrDeleteRegisterValue(err, l.fieldName)
 		}
 	} else {
 		if err := l.store.Set(ctx, key, val); err != nil {

@@ -187,7 +187,7 @@ func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
 		if err != nil {
 			return err
 		}
-		client.SetDocumentID(docs[i], docID)
+		client.ApplySavedDocumentID(docs[i], docID)
 	}
 	return nil
 }

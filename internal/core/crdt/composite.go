@@ -82,7 +82,6 @@ type DocComposite struct {
 }
 
 var _ ReplicatedData = (*DocComposite)(nil)
-var _ NewDocCreateMerger = (*DocComposite)(nil)
 
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
@@ -129,14 +128,6 @@ func (m *DocComposite) Delta() *DocCompositeDelta {
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
-	return m.merge(ctx, delta, false)
-}
-
-func (m *DocComposite) MergeNewDocCreate(ctx context.Context, delta Delta) error {
-	return m.merge(ctx, delta, true)
-}
-
-func (m *DocComposite) merge(ctx context.Context, delta Delta, newDocCreateMode bool) error {
 	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -145,18 +136,12 @@ func (m *DocComposite) merge(ctx context.Context, delta Delta, newDocCreateMode 
 	if dagDelta.Status.IsDeleted() {
 		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
-			return NewErrSetDocAsDeleted(err, m.key.DocShortID)
+			return NewErrSetDocAsDeleted(err)
 		}
 		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
 	}
 
 	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	if newDocCreateMode {
-		if err := m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID)); err != nil {
-			return err
-		}
-		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.ObjectMarker})
-	}
 
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
@@ -164,7 +149,7 @@ func (m *DocComposite) merge(ctx context.Context, delta Delta, newDocCreateMode 
 	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
-		return NewErrGetDocMarker(err, m.key.DocShortID)
+		return NewErrGetDocMarker(err)
 	}
 
 	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
@@ -173,7 +158,7 @@ func (m *DocComposite) merge(ctx context.Context, delta Delta, newDocCreateMode 
 
 	err = m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
 	if err != nil {
-		return NewErrSetDocVersion(err, m.key.DocShortID)
+		return NewErrSetDocVersion(err)
 	}
 
 	if !hasObjectMarker {
@@ -189,7 +174,7 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		Prefix: key,
 	})
 	if err != nil {
-		return NewErrCreateDeleteIter(err, m.key.DocShortID)
+		return NewErrCreateDeleteIter(err)
 	}
 
 	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
@@ -232,11 +217,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	for _, item := range kvArray {
 		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
-			return NewErrSetDeletedFlag(err, m.key.DocShortID, string(item.key.Bytes()))
+			return NewErrSetDeletedFlag(err)
 		}
 		err = m.store.Delete(ctx, item.key)
 		if err != nil {
-			return NewErrDeleteFieldValue(err, m.key.DocShortID, string(item.key.Bytes()))
+			return NewErrDeleteFieldValue(err)
 		}
 	}
 

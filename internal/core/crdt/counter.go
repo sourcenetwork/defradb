@@ -134,7 +134,7 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	// initial dag block of a document can be reproducible.
 	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil {
-		return nil, NewErrCheckCounterExists(err, c.key.DocShortID, c.fieldName)
+		return nil, NewErrCheckCounterExists(err, c.fieldName)
 	}
 
 	var nonce int64
@@ -174,7 +174,7 @@ func (c *Counter) incrementValue(
 	key := c.key.WithValueFlag()
 	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return NewErrGetCounterStatus(err, c.key.DocShortID, c.fieldName)
+		return NewErrGetCounterStatus(err, c.fieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
@@ -186,17 +186,17 @@ func (c *Counter) incrementValue(
 	case client.FieldKind_NILLABLE_INT:
 		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.key.DocShortID, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT32:
 		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.key.DocShortID, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT64:
 		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.key.DocShortID, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
 		}
 	default:
 		return NewErrUnsupportedCounterType(c.kind)
