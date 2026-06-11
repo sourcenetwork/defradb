@@ -137,12 +137,10 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	defer C.free(unsafe.Pointer(certPath))
 	keyPath := C.CString("/tls/key-a.pem")
 	defer C.free(unsafe.Pointer(keyPath))
-	// Note: The following value will be the same for set A and set B because
-	// "none" is no longer supported here.
 	dacType := C.CString("local")
 	defer C.free(unsafe.Pointer(dacType))
-	// DocumentACPType "none" ignores the path, so any string value is safe here
-	dacPath := C.CString("/acp/path-a")
+	dacPathStr := t.TempDir()
+	dacPath := C.CString(dacPathStr)
 	defer C.free(unsafe.Pointer(dacPath))
 	chainID := C.CString("chain-a")
 	defer C.free(unsafe.Pointer(chainID))
@@ -250,7 +248,7 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 
 	// Document ACP
 	assertNodeOptionField(t, m, "local", "DocumentACP", "DocumentACPType")
-	assertNodeOptionField(t, m, "/acp/path-a", "DocumentACP", "Path")
+	assertNodeOptionField(t, m, dacPathStr, "DocumentACP", "Path")
 	assertNodeOptionField(t, m, "chain-a", "DocumentACP", "SourceHubChainID")
 	assertNodeOptionField(t, m, "grpc-a:9090", "DocumentACP", "SourceHubGRPCAddress")
 	assertNodeOptionField(t, m, "comet-a:26657", "DocumentACP", "SourceHubCometRPCAddress")
@@ -372,7 +370,7 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 	assertNodeOptionField(t, m, float64(6000000000), "HTTP", "IdleTimeout")  // 6000 ms
 
 	// Document ACP
-	// Type is not set, defaulting to "local" (vs "none" in set A)
+	// Type is not set, defaulting to "local" (vs explicit "local" in set A)
 	assertNodeOptionField(t, m, "local", "DocumentACP", "DocumentACPType")
 	assertNodeOptionField(t, m, "", "DocumentACP", "Path")
 	assertNodeOptionField(t, m, "chain-b", "DocumentACP", "SourceHubChainID")
