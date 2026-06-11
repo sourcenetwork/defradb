@@ -137,7 +137,9 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	defer C.free(unsafe.Pointer(certPath))
 	keyPath := C.CString("/tls/key-a.pem")
 	defer C.free(unsafe.Pointer(keyPath))
-	dacType := C.CString("none")
+	// Note: The following value will be the same for set A and set B because
+	// "none" is no longer supported here.
+	dacType := C.CString("local")
 	defer C.free(unsafe.Pointer(dacType))
 	// DocumentACPType "none" ignores the path, so any string value is safe here
 	dacPath := C.CString("/acp/path-a")

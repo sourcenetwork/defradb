@@ -40,7 +40,9 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 				"--p2paddr=/ip4/127.0.0.1/tcp/9171",
 				"--peers=/ip4/127.0.0.2/tcp/9172",
 				"--allowed-origins=http://a.example.com",
-				"--document-acp-type=none",
+				// Note: The following value will be the same for set A and set B because
+				// "none" is no longer supported here.
+				"--document-acp-type=local",
 				"--replicator-retry-intervals=5,10",
 				"--valuelogfilesize=1048576",
 			}),
