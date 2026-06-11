@@ -86,7 +86,6 @@ func NewLWW(
 	return &LWW{
 		key:                 key,
 		store:               store,
-		deltaDocID:          key.DocShortID,
 		collectionVersionID: collectionVersionID,
 		fieldName:           fieldName,
 	}

@@ -93,7 +93,6 @@ func NewDocComposite(
 	return &DocComposite{
 		store:               store,
 		key:                 key,
-		deltaDocID:          key.DocShortID,
 		collectionVersionID: collectionVersionID,
 	}
 }

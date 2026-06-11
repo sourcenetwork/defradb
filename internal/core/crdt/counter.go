@@ -102,7 +102,6 @@ func NewCounter(
 	return &Counter{
 		store:               store,
 		key:                 key,
-		deltaDocID:          key.DocShortID,
 		collectionVersionID: collectionVersionID,
 		fieldName:           fieldName,
 		allowDecrement:      allowDecrement,
