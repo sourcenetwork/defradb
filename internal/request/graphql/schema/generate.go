@@ -225,7 +225,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
-		case *gql.Scalar:
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[def.Name]; isAggregate {
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
