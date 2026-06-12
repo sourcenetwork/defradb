@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/identity"
@@ -130,6 +131,16 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		}
 		db.lockSet.CollectionLock(txn, shortID)
 
+		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+
+		// Registerd using the background context, as stores rely on the closing of other contexts in order
+		// to time the flushing of writes - meaning if ctx was used to write, the status would not be readable
+		// by other threads until after the refresh has completed.
+		err = action.Register(context.Background(), multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		if err != nil {
+			return err
+		}
+
 		colObject, err := db.newCollection(col, immutable.Some(txn))
 		if err != nil {
 			return err
@@ -144,6 +155,11 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		}
 
 		err = db.buildViewCache(ctx, col)
+		if err != nil {
+			return err
+		}
+
+		err = action.Complete(context.Background(), multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}
