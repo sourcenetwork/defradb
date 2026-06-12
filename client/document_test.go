@@ -295,3 +295,35 @@ func TestSet_WithNilElementInSliceForNonNillableArray_Error(t *testing.T) {
 	err = doc.Set(ctx, "flags", []any{true, nil, false})
 	require.ErrorContains(t, err, errNullValueForNonNillableField)
 }
+
+func TestNewDocFromJSON_OmittedNonNillableField_Error(t *testing.T) {
+	ctx := context.Background()
+	nonNillableDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "score",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_INT,
+			},
+		},
+	}
+	_, err := NewDocFromJSON(ctx, []byte(`{}`), nonNillableDef)
+	require.ErrorContains(t, err, errMissingRequiredField)
+}
+
+func TestNewDocFromJSON_OmittedNonNillableArrayField_NoError(t *testing.T) {
+	ctx := context.Background()
+	nillableArrayDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "scores",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_INT_ARRAY,
+			},
+		},
+	}
+	_, err := NewDocFromJSON(ctx, []byte(`{}`), nillableArrayDef)
+	require.NoError(t, err)
+}

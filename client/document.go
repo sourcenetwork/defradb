@@ -178,6 +178,9 @@ func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersio
 	if err != nil {
 		return nil, err
 	}
+	if err = doc.validateRequiredFields(); err != nil {
+		return nil, err
+	}
 	err = doc.generateAndSetDocID()
 	if err != nil {
 		return nil, err
@@ -209,6 +212,9 @@ func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersi
 		}
 		err = doc.setWithFastJSONObject(ctx, o)
 		if err != nil {
+			return nil, err
+		}
+		if err = doc.validateRequiredFields(); err != nil {
 			return nil, err
 		}
 		err = doc.generateAndSetDocID()
@@ -783,6 +789,17 @@ func (doc *Document) setDefaultValues(ctx context.Context) error {
 		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
 			return NewErrSetDocFieldValue(err, field.Name)
+		}
+	}
+	return nil
+}
+
+func (doc *Document) validateRequiredFields() error {
+	for _, field := range doc.collection.Fields {
+		if !field.Kind.IsNillable() {
+			if _, exists := doc.fields[field.Name]; !exists {
+				return NewErrMissingRequiredField(field.Name)
+			}
 		}
 	}
 	return nil

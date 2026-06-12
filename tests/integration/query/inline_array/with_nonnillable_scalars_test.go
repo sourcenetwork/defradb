@@ -541,15 +541,8 @@ func TestQueryNonNillableDateTime_Omitted(t *testing.T) {
 				SDL: `type Users { name: String, createdAt: DateTime! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John"}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, createdAt } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "createdAt": nil},
-					},
-				},
+				Doc:           `{"name": "John"}`,
+				ExpectedError: `value not provided for non-nillable field. Name: createdAt`,
 			},
 		},
 	}
@@ -563,15 +556,8 @@ func TestQueryNonNillableBlob_Omitted(t *testing.T) {
 				SDL: `type Users { name: String, avatar: Blob! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John"}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, avatar } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "avatar": nil},
-					},
-				},
+				Doc:           `{"name": "John"}`,
+				ExpectedError: `value not provided for non-nillable field. Name: avatar`,
 			},
 		},
 	}
@@ -585,15 +571,8 @@ func TestQueryNonNillableJSON_Omitted(t *testing.T) {
 				SDL: `type Users { name: String, metadata: JSON! }`,
 			},
 			&action.AddDoc{
-				Doc: `{"name": "John"}`,
-			},
-			&action.Request{
-				Request: `query { Users { name, metadata } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{"name": "John", "metadata": nil},
-					},
-				},
+				Doc:           `{"name": "John"}`,
+				ExpectedError: `value not provided for non-nillable field. Name: metadata`,
 			},
 		},
 	}
