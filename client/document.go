@@ -150,6 +150,10 @@ func NewDocFromMap(ctx context.Context, data map[string]any, collection Collecti
 		return nil, err
 	}
 
+	if err = doc.validateRequiredFields(); err != nil {
+		return nil, err
+	}
+
 	// if no DocID was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasDocID {
 		err = doc.generateAndSetDocID()

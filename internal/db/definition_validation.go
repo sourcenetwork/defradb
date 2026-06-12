@@ -1208,7 +1208,7 @@ func validateCollectionFieldDefaultValue(
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
 		_, err := client.NewDocFromMap(ctx, map[string]any{}, col)
-		if err != nil {
+		if err != nil && !errors.Is(err, client.ErrMissingRequiredField) {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}
 	}
