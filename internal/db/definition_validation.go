@@ -906,19 +906,21 @@ func validateNonNillableFieldNotAdded(
 	oldState *definitionState,
 ) error {
 	var errs []error
-	for _, newCol := range newState.activeCollectionsByName {
-		oldCol, ok := oldState.activeCollectionsByName[newCol.Name]
+	for _, newCol := range newState.activeCollectionsByColID {
+		oldCol, ok := oldState.activeCollectionsByColID[newCol.CollectionID]
 		if !ok {
 			continue
 		}
 
-		oldFieldNames := map[string]struct{}{}
+		oldFieldIDs := map[string]struct{}{}
 		for _, field := range oldCol.Fields {
-			oldFieldNames[field.Name] = struct{}{}
+			if field.FieldID != "" {
+				oldFieldIDs[field.FieldID] = struct{}{}
+			}
 		}
 
 		for _, field := range newCol.Fields {
-			if _, exists := oldFieldNames[field.Name]; !exists {
+			if _, exists := oldFieldIDs[field.FieldID]; !exists {
 				if !field.Kind.IsNillable() {
 					errs = append(errs, NewErrCannotAddNonNillableField(field.Name))
 				}
