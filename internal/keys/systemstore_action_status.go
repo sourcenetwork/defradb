@@ -29,7 +29,7 @@ type ActionStatusKey struct {
 	Action       client.Action
 }
 
-var _ Key = (*CollectionKey)(nil)
+var _ Key = (*ActionStatusKey)(nil)
 
 // Returns a formatted collection key for the system data store.
 // It assumes the id of the collection is non-empty.
