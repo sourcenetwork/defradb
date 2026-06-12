@@ -344,15 +344,12 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-		case *gql.Scalar:
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[f]; isAggregate {
 				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
 					return err
 				}
 			}
-			// @todo: check if NonNull is possible here
-			//case *gql.NonNull:
-			// get subtype
 		}
 	}
 
