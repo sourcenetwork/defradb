@@ -144,6 +144,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateFieldNotMoved,
 	validateCollectionNameNotMutated,
 	validateDematerializedViewHasNoData,
+	validateNonNillableFieldNotAdded,
 }
 
 var collectionUpdateValidators = append(
@@ -891,6 +892,36 @@ func validateFieldNotMutated(
 			// DeepEqual is temporary, as this validation is temporary
 			if exists && !reflect.DeepEqual(oldField, newField) {
 				errs = append(errs, NewErrCannotMutateField(newField.Name))
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateNonNillableFieldNotAdded(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.activeCollectionsByName {
+		oldCol, ok := oldState.activeCollectionsByName[newCol.Name]
+		if !ok {
+			continue
+		}
+
+		oldFieldNames := map[string]struct{}{}
+		for _, field := range oldCol.Fields {
+			oldFieldNames[field.Name] = struct{}{}
+		}
+
+		for _, field := range newCol.Fields {
+			if _, exists := oldFieldNames[field.Name]; !exists {
+				if !field.Kind.IsNillable() {
+					errs = append(errs, NewErrCannotAddNonNillableField(field.Name))
+				}
 			}
 		}
 	}

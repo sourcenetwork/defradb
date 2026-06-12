@@ -40,6 +40,7 @@ const (
 	errCannotMutateField                         string = "mutating an existing field is not supported"
 	errCannotMoveField                           string = "moving fields is not currently supported"
 	errCannotDeleteField                         string = "deleting an existing field is not supported"
+	errCannotAddNonNillableField                 string = "adding a non-nillable field to an existing collection is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
@@ -486,6 +487,13 @@ func NewErrCanNotEncryptBuiltinField(name string) error {
 func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCannotAddNonNillableField(name string) error {
+	return errors.New(
+		errCannotAddNonNillableField,
 		errors.NewKV("Name", name),
 	)
 }
