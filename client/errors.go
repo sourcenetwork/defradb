@@ -54,6 +54,8 @@ const (
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 	errDocumentJSONParseFailed               string = "failed to parse document JSON"
 	errSetDocFieldValue                      string = "failed to set document field value"
+	errNullValueForNonNillableField          string = "null value provided for non-nillable field"
+	errMissingRequiredField                  string = "value not provided for non-nillable field"
 )
 
 // Errors returnable from this package.
@@ -100,11 +102,25 @@ var (
 	ErrIndexNameRequired                     = errors.New("index name is required")
 	ErrCollectionNameRequired                = errors.New("collection name is required")
 	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
+	ErrNullValueForNonNillableField          = errors.New(errNullValueForNonNillableField)
+	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
 func NewErrFieldNotExist(name string) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
+}
+
+// NewErrNullValueForNonNillableField returns an error indicating that a null value was provided
+// for a field that does not support null values.
+func NewErrNullValueForNonNillableField(name string) error {
+	return errors.New(errNullValueForNonNillableField, errors.NewKV("Name", name))
+}
+
+// NewErrMissingRequiredField returns an error indicating that a required non-nillable field
+// was not provided when creating a document.
+func NewErrMissingRequiredField(name string) error {
+	return errors.New(errMissingRequiredField, errors.NewKV("Name", name))
 }
 
 // NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the

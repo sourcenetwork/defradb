@@ -266,23 +266,6 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersionSimpleErrorsGivenNonNullField(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `
-					type Users {
-						email: String!
-					}
-				`,
-				ExpectedError: "NonNull fields are not currently supported",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestCollectionVersionSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
