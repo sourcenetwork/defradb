@@ -190,7 +190,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				DocID:             0,
 				Relation:          "reader",
 			},
-			&action.Wait{Duration: 100 * time.Millisecond},
+			&action.Wait{Duration: immutable.Some(100 * time.Millisecond)},
 			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(1),
@@ -433,7 +433,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				Relation:          "reader",
 			},
 			&action.Wait{
-				Duration: 100 * time.Millisecond,
+				Duration: immutable.Some(100 * time.Millisecond),
 			},
 			&action.Request{
 				NodeID:   immutable.Some(1),

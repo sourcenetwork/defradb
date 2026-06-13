@@ -54,7 +54,7 @@ func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testin
 				FieldName:    "age",
 			},
 			&action.Wait{
-				Duration: time.Millisecond * 100,
+				Duration: immutable.Some(time.Millisecond * 100),
 			},
 			&action.Request{
 				NodeID: immutable.Some(0),
