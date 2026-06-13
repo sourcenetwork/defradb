@@ -150,6 +150,10 @@ func NewDocFromMap(ctx context.Context, data map[string]any, collection Collecti
 		return nil, err
 	}
 
+	if err = doc.validateRequiredFields(); err != nil {
+		return nil, err
+	}
+
 	// if no DocID was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasDocID {
 		err = doc.generateAndSetDocID()
@@ -176,6 +180,9 @@ func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersio
 	}
 	err = doc.SetWithJSON(ctx, obj)
 	if err != nil {
+		return nil, err
+	}
+	if err = doc.validateRequiredFields(); err != nil {
 		return nil, err
 	}
 	err = doc.generateAndSetDocID()
@@ -211,6 +218,9 @@ func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersi
 		if err != nil {
 			return nil, err
 		}
+		if err = doc.validateRequiredFields(); err != nil {
+			return nil, err
+		}
 		err = doc.generateAndSetDocID()
 		if err != nil {
 			return nil, err
@@ -232,6 +242,13 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
 			return NewNormalNil(field.Kind)
+		}
+	} else {
+		if val == nil {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
+		}
+		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
 		}
 	}
 
@@ -269,7 +286,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 
 		return NewNormalString(v), nil
 
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_STRING, FieldKind_BLOB:
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -290,7 +307,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableStringArray(v), nil
 
-	case FieldKind_NILLABLE_BOOL:
+	case FieldKind_NILLABLE_BOOL, FieldKind_BOOL:
 		v, err := getBool(val)
 		if err != nil {
 			return nil, err
@@ -311,7 +328,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableBoolArray(v), nil
 
-	case FieldKind_NILLABLE_FLOAT64:
+	case FieldKind_NILLABLE_FLOAT64, FieldKind_FLOAT64:
 		v, err := getFloat64(val)
 		if err != nil {
 			return nil, err
@@ -332,7 +349,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat64Array(v), nil
 
-	case FieldKind_NILLABLE_FLOAT32:
+	case FieldKind_NILLABLE_FLOAT32, FieldKind_FLOAT32:
 		v, err := getFloat32(val)
 		if err != nil {
 			return nil, err
@@ -353,14 +370,14 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat32Array(v), nil
 
-	case FieldKind_NILLABLE_DATETIME:
+	case FieldKind_NILLABLE_DATETIME, FieldKind_DATETIME:
 		v, err := getDateTime(ctx, val)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalTime(v), nil
 
-	case FieldKind_NILLABLE_INT:
+	case FieldKind_NILLABLE_INT, FieldKind_INT:
 		v, err := getInt64(val)
 		if err != nil {
 			return nil, err
@@ -381,7 +398,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableIntArray(v), nil
 
-	case FieldKind_NILLABLE_JSON:
+	case FieldKind_NILLABLE_JSON, FieldKind_JSON:
 		v, err := NewJSON(val)
 		if err != nil {
 			return nil, err
@@ -511,7 +528,7 @@ func getArray[T any](
 		arr := make([]T, len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
-				continue
+				return nil, ErrNullValueForNonNillableField
 			}
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {
@@ -522,6 +539,9 @@ func getArray[T any](
 	case []any:
 		arr := make([]T, len(val))
 		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
 			var err error
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {
@@ -773,6 +793,17 @@ func (doc *Document) setDefaultValues(ctx context.Context) error {
 		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
 			return NewErrSetDocFieldValue(err, field.Name)
+		}
+	}
+	return nil
+}
+
+func (doc *Document) validateRequiredFields() error {
+	for _, field := range doc.collection.Fields {
+		if !field.Kind.IsNillable() {
+			if _, exists := doc.fields[field.Name]; !exists {
+				return NewErrMissingRequiredField(field.Name)
+			}
 		}
 	}
 	return nil
