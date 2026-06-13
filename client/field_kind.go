@@ -128,6 +128,10 @@ func (k ScalarKind) IsArray() bool {
 	return false
 }
 
+func (k ScalarKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
+}
+
 func (k ScalarArrayKind) String() string {
 	switch k {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
@@ -165,6 +169,10 @@ func (k ScalarArrayKind) IsObject() bool {
 
 func (k ScalarArrayKind) IsArray() bool {
 	return true
+}
+
+func (k ScalarArrayKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
 }
 
 func (k ScalarArrayKind) SubKind() ScalarKind {
@@ -220,6 +228,10 @@ func (k *CollectionKind) IsArray() bool {
 	return k.Array
 }
 
+func (k *CollectionKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
+}
+
 func NewSelfKind(relativeID string, isArray bool) *SelfKind {
 	return &SelfKind{
 		RelativeID: relativeID,
@@ -253,6 +265,10 @@ func (k *SelfKind) IsArray() bool {
 	return k.Array
 }
 
+func (k *SelfKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
+}
+
 func NewNamedKind(name string, isArray bool) *NamedKind {
 	return &NamedKind{
 		Name:  name,
@@ -277,6 +293,10 @@ func (k *NamedKind) IsObject() bool {
 
 func (k *NamedKind) IsArray() bool {
 	return k.Array
+}
+
+func (k *NamedKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
 }
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.

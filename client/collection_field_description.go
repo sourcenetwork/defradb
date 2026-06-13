@@ -99,32 +99,3 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 
 	return nil
 }
-
-// MarshalJSON serializes the [CollectionFieldDescription] to JSON, using the string
-// representation of the [FieldKind] instead of its numeric value.
-func (f CollectionFieldDescription) MarshalJSON() ([]byte, error) {
-	var kindStr string
-	if f.Kind != nil {
-		kindStr = f.Kind.String()
-	}
-
-	return json.Marshal(&struct {
-		FieldID      string
-		Name         string
-		Kind         string
-		Typ          CType
-		RelationName immutable.Option[string]
-		IsPrimary    bool
-		DefaultValue any
-		Size         int
-	}{
-		FieldID:      f.FieldID,
-		Name:         f.Name,
-		Kind:         kindStr,
-		Typ:          f.Typ,
-		RelationName: f.RelationName,
-		IsPrimary:    f.IsPrimary,
-		DefaultValue: f.DefaultValue,
-		Size:         f.Size,
-	})
-}
