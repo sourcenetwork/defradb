@@ -75,3 +75,29 @@ func (a *Await) Execute() {
 		a.s.T.Skip(a.s.SkipTest)
 	}
 }
+
+type ActionGroup struct {
+	s *state.State
+
+	// The child actions that should be executed serially.
+	Children []Action
+}
+
+var _ Action = (*ActionGroup)(nil)
+var _ Stateful = (*ActionGroup)(nil)
+
+func (a *ActionGroup) Execute() {
+	for _, childAction := range a.Children {
+		childAction.Execute()
+	}
+}
+
+func (a *ActionGroup) SetState(s *state.State) {
+	a.s = s
+
+	for _, childAction := range a.Children {
+		if stateful, ok := childAction.(Stateful); ok {
+			stateful.SetState(s)
+		}
+	}
+}
