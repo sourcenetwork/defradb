@@ -73,6 +73,12 @@ func mustGetContextNodeOptions(req *http.Request) *options.NodeOptions {
 	return req.Context().Value(nodeOptsContextKey).(*options.NodeOptions) //nolint:forcetypeassert
 }
 
+// tryGetContextNodeOptions returns the node options from the http request context, or nil if absent.
+func tryGetContextNodeOptions(req *http.Request) *options.NodeOptions {
+	opts, _ := req.Context().Value(nodeOptsContextKey).(*options.NodeOptions)
+	return opts
+}
+
 // mustGetDataStoreTxn returns the datastore transaction or panics.
 //
 // This should only be called from functions within the http package.

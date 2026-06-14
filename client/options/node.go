@@ -12,6 +12,7 @@ package options
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -201,23 +202,34 @@ func (opts *NodeOptions) SanitizedMap() (map[string]any, error) {
 	if err := json.Unmarshal(data, &out); err != nil {
 		return nil, err
 	}
-	censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0)
-	censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0)
-	censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0)
-	censorField(out, "DB", "Identity", opts.DB.Identity.HasValue())
-	censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue())
+	if err := censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "Identity", opts.DB.Identity.HasValue()); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue()); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
-func censorField(m map[string]any, parent, field string, present bool) {
+func censorField(m map[string]any, parent, field string, present bool) error {
 	if !present {
-		return
+		return nil
 	}
 	sub, ok := m[parent].(map[string]any)
 	if !ok {
-		return
+		return fmt.Errorf("cannot redact %s.%s: parent key missing or wrong type", parent, field)
 	}
 	sub[field] = "<redacted>"
+	return nil
 }
 
 // nodeSubBuilder provides parent linkage, forwarding, and Node() navigation

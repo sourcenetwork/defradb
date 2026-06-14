@@ -2121,6 +2121,9 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [

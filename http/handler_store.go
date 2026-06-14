@@ -683,7 +683,12 @@ func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 }
 
 func (h *storeHandler) GetNodeOptions(rw http.ResponseWriter, req *http.Request) {
-	out, err := mustGetContextNodeOptions(req).SanitizedMap()
+	nodeOpts := tryGetContextNodeOptions(req)
+	if nodeOpts == nil {
+		responseJSON(rw, http.StatusNotFound, errorResponse{fmt.Errorf("node options not available")})
+		return
+	}
+	out, err := nodeOpts.SanitizedMap()
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
@@ -1082,6 +1087,8 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	nodeOptions.Responses = openapi3.NewResponses()
 	nodeOptions.Responses.Set("200", successResponse)
 	nodeOptions.Responses.Set("400", errorResponse)
+	// In the case of the response failing to be sanitized, it will be a 500 instead of a 400.
+	nodeOptions.Responses.Set("500", errorResponse)
 
 	router.AddRoute("/node/options", http.MethodGet, nodeOptions, h.GetNodeOptions)
 }
