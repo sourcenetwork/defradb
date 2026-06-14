@@ -144,6 +144,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateFieldNotMoved,
 	validateCollectionNameNotMutated,
 	validateDematerializedViewHasNoData,
+	validateNonNillableFieldNotAdded,
 }
 
 var collectionUpdateValidators = append(
@@ -898,6 +899,38 @@ func validateFieldNotMutated(
 	return errors.Join(errs...)
 }
 
+func validateNonNillableFieldNotAdded(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.activeCollectionsByColID {
+		oldCol, ok := oldState.activeCollectionsByColID[newCol.CollectionID]
+		if !ok {
+			continue
+		}
+
+		oldFieldIDs := map[string]struct{}{}
+		for _, field := range oldCol.Fields {
+			if field.FieldID != "" {
+				oldFieldIDs[field.FieldID] = struct{}{}
+			}
+		}
+
+		for _, field := range newCol.Fields {
+			if _, exists := oldFieldIDs[field.FieldID]; !exists {
+				if !field.Kind.IsNillable() {
+					errs = append(errs, NewErrCannotAddNonNillableField(field.Name))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func validateFieldNotDuplicated(
 	ctx context.Context,
 	db *DB,
@@ -1177,7 +1210,7 @@ func validateCollectionFieldDefaultValue(
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
 		_, err := client.NewDocFromMap(ctx, map[string]any{}, col)
-		if err != nil {
+		if err != nil && !errors.Is(err, client.ErrMissingRequiredField) {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}
 	}
