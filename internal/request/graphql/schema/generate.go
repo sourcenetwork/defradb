@@ -344,6 +344,8 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
+		// Here, we will check for Scalar and NonNull, because depending on the aggregate operation,
+		// it could be either. COUNT, SUM, and AVG return Int!/Float!, but MIN and MAX return Int/Float.
 		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[f]; isAggregate {
 				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
