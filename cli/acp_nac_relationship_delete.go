@@ -26,7 +26,7 @@ func MakeNodeACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "delete [-r --relation] [-a --actor] [-i --identity]",
+		Use:   "delete -r, --relation <relation> -a, --actor <actor> [-i, --identity <identity>]",
 		Short: "Delete relationship",
 		Long: `Delete relationship
 

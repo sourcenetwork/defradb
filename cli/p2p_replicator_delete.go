@@ -22,7 +22,7 @@ import (
 func MakeP2PReplicatorDeleteCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "delete [-c, --collection] <peerID>",
+		Use:   "delete [-c, --collection <collections>] <peerID>",
 		Short: "Delete replicator(s) and stop synchronization",
 		Long: `Delete replicator(s) and stop synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.`,

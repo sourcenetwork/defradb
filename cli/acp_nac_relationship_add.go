@@ -26,7 +26,7 @@ func MakeNodeACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "add [-r --relation] [-a --actor] [-i --identity]",
+		Use:   "add -r, --relation <relation> -a, --actor <actor> [-i, --identity <identity>]",
 		Short: "Add new relationship",
 		Long: `Add new relationship
 

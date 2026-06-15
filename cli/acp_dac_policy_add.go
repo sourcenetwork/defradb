@@ -25,7 +25,7 @@ func MakeDocumentACPPolicyAddCommand(ctx context.Context) *cobra.Command {
 	var policyFile string
 
 	var cmd = &cobra.Command{
-		Use:   "add [-i --identity] [policy]",
+		Use:   "add [-i, --identity <identity>] [policy]",
 		Short: "Add new policy",
 		Long: `Add new policy
 

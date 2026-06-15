@@ -22,7 +22,7 @@ import (
 
 func MakeNodeACPDisableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "disable [-i --identity]",
+		Use:   "disable [-i, --identity <identity>]",
 		Short: "Disable the node access control",
 		Long: `Disable the node access control
 

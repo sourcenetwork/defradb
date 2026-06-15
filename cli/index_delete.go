@@ -24,7 +24,7 @@ func MakeIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
-		Use:       "delete -c --collection <collection> -n --name <name>",
+		Use:       "delete -c, --collection <collection> -n, --name <name>",
 		Short:     "Delete a collection's secondary index",
 		Long:      `Delete a collection's secondary index.`,
 		ValidArgs: []string{"collection", "name"},

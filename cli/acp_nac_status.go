@@ -21,7 +21,7 @@ import (
 
 func MakeNodeACPStatusCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "status [-i --identity]",
+		Use:   "status [-i, --identity <identity>]",
 		Short: "Check the node access control status",
 		Long: `Check the node access control status
 

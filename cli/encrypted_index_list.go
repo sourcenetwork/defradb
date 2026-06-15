@@ -22,7 +22,7 @@ import (
 func MakeEncryptedIndexListCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
-		Use:   "list [-c --collection <collection>]",
+		Use:   "list [-c, --collection <collection>]",
 		Short: "Lists the encrypted indexes in the database or for a specific collection",
 		Long: `Shows the list encrypted indexes in the database or for a specific collection.
 
