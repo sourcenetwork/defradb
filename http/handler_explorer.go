@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,15 +8,22 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build playground
+//go:build explorer
 
-//go:generate powershell -ExecutionPolicy Bypass -File ../tools/scripts/download_playground.ps1
-
-package playground
+package http
 
 import (
-	"embed"
+	"io/fs"
+	"net/http"
+
+	"github.com/sourcenetwork/defradb/explorer"
 )
 
-//go:embed dist
-var Dist embed.FS
+func init() {
+	sub, err := fs.Sub(explorer.Dist, "dist")
+	if err != nil {
+		panic(err)
+	}
+	explorerHandler = http.FileServer(http.FS(sub))
+	ExplorerEnabled = true
+}
