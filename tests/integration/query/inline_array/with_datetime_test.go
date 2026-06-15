@@ -458,3 +458,75 @@ func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
 
     executeTestCaseDateTime(t, test)
 }
+
+// TestQueryInlineArrayWithDateTime_UTC_NOW tests using UTC_NOW inside a DateTime array
+// as requested in review by @ChrisBQu.
+func TestQueryInlineArrayWithDateTime_UTC_NOW(t *testing.T) {
+    test := testUtils.TestCase{
+        Description: "DateTime array with UTC_NOW value",
+        Actions: []any{
+            &action.AddSchema{
+                Schema: `type Events { name: String; times: [DateTime!] }`,
+            },
+            &action.CreateDoc{
+                Doc: `{
+                    "name": "Now Event",
+                    "times": ["UTC_NOW"]
+                }`,
+            },
+            &action.Request{
+                Request: `query { Events { name times } }`,
+                Results: map[string]any{
+                    "Events": []map[string]any{
+                        {
+                            "name": "Now Event",
+                            "times": []any{testUtils.CurrentTimestamp()},
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    executeTestCaseDateTime(t, test)
+}
+
+// TestQueryInlineArrayWithDateTime_NonNillable ensures non-nillable [DateTime!] arrays work
+// for consistency with recent changes in the codebase.
+func TestQueryInlineArrayWithDateTime_NonNillable(t *testing.T) {
+    test := testUtils.TestCase{
+        Description: "Non-nillable DateTime array ([DateTime!])",
+        Actions: []any{
+            &action.AddSchema{
+                Schema: `type Events { name: String; times: [DateTime!] }`,
+            },
+            &action.CreateDoc{
+                Doc: `{
+                    "name": "Conference",
+                    "times": ["2025-01-01T10:00:00Z", "2025-01-02T14:00:00Z"]
+                }`,
+            },
+            &action.Request{
+                Request: `query {
+                    Events {
+                        name
+                        times
+                    }
+                }`,
+                Results: map[string]any{
+                    "Events": []map[string]any{
+                        {
+                            "name": "Conference",
+                            "times": []time.Time{
+                                testUtils.MustParseTime("2025-01-01T10:00:00Z"),
+                                testUtils.MustParseTime("2025-01-02T14:00:00Z"),
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    executeTestCaseDateTime(t, test)
+}
