@@ -53,6 +53,7 @@ func (p *P2P) AddP2PCollections(
 		if len(storeCol) == 0 {
 			return client.NewErrCollectionNotFoundForName(col)
 		}
+		// De-duplicate collections by collection ID
 		for _, c := range storeCol {
 			if _, ok := seen[c.CollectionID()]; !ok {
 				seen[c.CollectionID()] = struct{}{}
@@ -110,6 +111,7 @@ func (p *P2P) DeleteP2PCollections(
 		if len(storeCol) == 0 {
 			return client.NewErrCollectionNotFoundForName(col)
 		}
+		// De-duplicate collections by collection ID
 		for _, c := range storeCol {
 			if _, ok := seen[c.CollectionID()]; !ok {
 				seen[c.CollectionID()] = struct{}{}
