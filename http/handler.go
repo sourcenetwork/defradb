@@ -37,8 +37,8 @@ const (
 	Version string = "v1"
 )
 
-// playgroundHandler is set when building with the playground build tag
-var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
+// explorerHandler is set when building with the explorer build tag
+var explorerHandler http.Handler = http.HandlerFunc(http.NotFound)
 
 func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
@@ -122,7 +122,7 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, "Healthy")
 	})
-	mux.Handle("/*", playgroundHandler)
+	mux.Handle("/*", explorerHandler)
 	return &Handler{
 		mux: mux,
 		txs: txs,
