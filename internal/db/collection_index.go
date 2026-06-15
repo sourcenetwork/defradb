@@ -511,9 +511,10 @@ func (c *collection) indexExistingDocs(
 
 // DeleteIndex removes an index from the collection.
 //
-// The index will be removed from the system store.
-//
-// All index artifacts for existing documents related the index will be removed.
+// The definition is removed and a dropping state record is written in a single
+// transaction. Index entries are then deleted in batched transactions so that no
+// single transaction exceeds the storage engine's transaction size limit. With an
+// explicit caller-provided transaction the entry GC runs inside the caller's Commit.
 func (c *collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
@@ -537,15 +538,19 @@ func (c *collection) DeleteIndex(
 
 	defer txn.Discard()
 
-	err = c.deleteIndex(ctx, indexName)
+	gc, err := c.deleteIndex(ctx, indexName)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{gc})
 }
 
-func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
+// deleteIndex stages the index deletion in the current transaction and returns a
+// deferred closure that performs the batched GC of index entries. The definition
+// is removed and a dropping state record is written in the caller's transaction;
+// the returned closure must be run after that transaction commits.
+func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(context.Context) error, error) {
 	// Locate the description by name in the version definition (source of truth).
 	// Failed indexes are excluded from c.indexes but still live in c.Version().Indexes.
 	var desc *client.IndexDescription
@@ -557,32 +562,18 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 		}
 	}
 	if desc == nil {
-		return NewErrIndexWithNameDoesNotExists(indexName)
+		return nil, NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
-	// If the index instance is present in the active slice, use it and remove it.
-	// Otherwise construct a temporary instance solely to RemoveAll the (possibly partial) entries.
-	var removeErr error
-	var foundInSlice bool
+	// Remove the active index instance so this collection handle stops maintaining it.
 	for i := range c.indexes {
 		if c.indexes[i].Name() == indexName {
-			removeErr = c.indexes[i].RemoveAll(ctx)
 			c.indexes = slices.Delete(c.indexes, i, i+1)
-			foundInSlice = true
 			break
 		}
 	}
-	if !foundInSlice {
-		tmp, err := NewCollectionIndex(c, *desc)
-		if err != nil {
-			return err
-		}
-		removeErr = tmp.RemoveAll(ctx)
-	}
-	if removeErr != nil {
-		return removeErr
-	}
 
+	// Remove the definition so the planner and writers immediately stop seeing it.
 	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))
 	copy(oldIndexes, c.Version().Indexes)
 	for i := range c.Version().Indexes {
@@ -592,17 +583,27 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 		}
 	}
 
-	err := description.SaveCollection(ctx, c.db.collectionRepository, c.def)
-	if err != nil {
+	if err := description.SaveCollection(ctx, c.db.collectionRepository, c.def); err != nil {
 		c.def.Indexes = oldIndexes
-		return err
+		return nil, err
 	}
 
-	if err := deleteIndexState(ctx, c.def.CollectionID, desc.ID); err != nil {
-		return err
+	// Record a dropping state so startup recovery can resume if the process exits
+	// before GC completes.
+	if err := setIndexState(ctx, c.def.CollectionID, desc.ID,
+		indexState{Status: client.IndexStatusDropping}); err != nil {
+		c.def.Indexes = oldIndexes
+		return nil, err
 	}
 
-	return nil
+	// Capture the information gcIndex needs; desc is a value copy.
+	defSnapshot := c.def
+	descCopy := *desc
+	gc := func(gcCtx context.Context) error {
+		return c.db.gcIndex(gcCtx, defSnapshot, descCopy)
+	}
+
+	return gc, nil
 }
 
 // ListIndexes returns all indexes for the collection.

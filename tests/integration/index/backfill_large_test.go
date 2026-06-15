@@ -9,9 +9,9 @@
 //
 // See tests/LICENSE for details.
 
-// This file guards against regression of issue #4907: creating a secondary index on a
-// collection whose existing documents exceed the storage engine's transaction size limit
-// must succeed, which requires the backfill to run in batched transactions.
+// This file guards against regression of issue #4907: creating or deleting a secondary
+// index on a collection whose existing documents exceed the storage engine's transaction
+// size limit must succeed, which requires batched transactions for both operations.
 
 package index
 
@@ -91,6 +91,76 @@ func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 	actions = append(actions, &action.Request{
 		Request:  makeExplainQuery(req),
 		Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+	})
+
+	test := testUtils.TestCase{
+		Actions: actions,
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestIndexDelete_WithManyLargeExistingDocs_ShouldSucceed is the deletion half of the
+// #4907 regression test. It creates an index over ~12.5 MB of data (250 docs × ~50 KB),
+// then deletes it. Without batched GC this would exceed the transaction size limit.
+func TestIndexDelete_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
+	const numDocs = 250
+	const valuePadLen = 50 * 1024
+
+	actions := make([]any, 0, numDocs+6)
+
+	actions = append(actions, &action.AddCollection{
+		SDL: `
+			type User {
+				name: String
+				age:  Int
+			}
+		`,
+	})
+
+	for i := 0; i < numDocs; i++ {
+		name := fmt.Sprintf("%04d", i) + strings.Repeat("a", valuePadLen)
+		doc := fmt.Sprintf(`{"name": %q, "age": %d}`, name, i)
+		actions = append(actions, &action.AddDoc{
+			Doc: doc,
+		})
+	}
+
+	actions = append(actions, &action.NewIndex{
+		IndexName: "User_name",
+		FieldName: "name",
+	})
+
+	// Delete the index — this must not exceed the transaction size limit.
+	actions = append(actions, &action.DeleteIndex{
+		IndexName: "User_name",
+	})
+
+	// Index must be gone.
+	actions = append(actions, &action.ListIndexes{
+		ExpectedIndexes: []client.IndexDescription{},
+	})
+
+	// The filtered query still returns the correct document via a full scan.
+	targetName := fmt.Sprintf("%04d", 42) + strings.Repeat("a", valuePadLen)
+	req := fmt.Sprintf(
+		`query { User(filter: {name: {_eq: %q}}) { age } }`,
+		targetName,
+	)
+
+	actions = append(actions, &action.Request{
+		Request: req,
+		Results: map[string]any{
+			"User": []map[string]any{
+				{"age": int64(42)},
+			},
+		},
+	})
+
+	// No index fetches — the planner must use a full scan now.
+	actions = append(actions, &action.Request{
+		Request:  makeExplainQuery(req),
+		Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 	})
 
 	test := testUtils.TestCase{

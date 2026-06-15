@@ -133,6 +133,7 @@ const (
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -1168,4 +1169,9 @@ func NewErrDematerializePopulatedView(name string, version string) error {
 // NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
 func NewErrIndexBackfillFailed(inner error, indexName string) error {
 	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
 }

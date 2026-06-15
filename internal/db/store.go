@@ -244,17 +244,16 @@ func (db *DB) PatchCollection(
 		return err
 	}
 
-	return commitAndRunBackfills(ctx, txn, backfills)
+	return commitAndRunDeferred(ctx, txn, backfills)
 }
 
-// commitAndRunBackfills commits the transaction and then runs each backfill function
-// sequentially. If the transaction is explicit (caller-provided), the backfills are
-// instead registered as OnSuccess callbacks so they run when the caller commits;
-// their errors cannot reach the caller and are recorded as a failed index state.
-func commitAndRunBackfills(ctx context.Context, txn *Txn, backfills []func(context.Context) error) error {
+// commitAndRunDeferred commits the transaction and then runs each deferred function
+// sequentially. If the transaction is explicit (caller-provided), the functions are
+// instead registered as OnSuccess callbacks so they run when the caller commits.
+func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
 	if txn.explicit {
-		for _, backfill := range backfills {
-			txn.OnSuccess(func() { _ = backfill(ctx) })
+		for _, fn := range deferred {
+			txn.OnSuccess(func() { _ = fn(ctx) })
 		}
 		return nil
 	}
@@ -263,8 +262,8 @@ func commitAndRunBackfills(ctx context.Context, txn *Txn, backfills []func(conte
 		return err
 	}
 
-	for _, backfill := range backfills {
-		if err := backfill(ctx); err != nil {
+	for _, fn := range deferred {
+		if err := fn(ctx); err != nil {
 			return err
 		}
 	}
@@ -297,7 +296,7 @@ func (db *DB) DeleteCollection(
 		return err
 	}
 
-	return commitAndRunBackfills(ctx, txn, backfills)
+	return commitAndRunDeferred(ctx, txn, backfills)
 }
 
 func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) ([]func(context.Context) error, error) {
