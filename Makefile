@@ -197,7 +197,8 @@ deps:
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mocks
+	$(MAKE) deps:mocks && \
+	$(MAKE) deps:explorer
 
 .PHONY: mocks
 mocks:
