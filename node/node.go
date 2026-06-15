@@ -134,6 +134,11 @@ func New(ctx context.Context, opts ...options.Enumerable[options.NodeOptions]) (
 	return &n, nil
 }
 
+// Options returns the node's resolved options.
+func (n *Node) Options() *options.NodeOptions {
+	return n.opts
+}
+
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
 	rootstore, isValueSizeLimited, err := NewStore(ctx, options.NodeStore().SetAll(n.opts.Store))
