@@ -30,7 +30,11 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.TxnStore = (*Wrapper)(nil)
+var (
+	_ client.Store    = (*Wrapper)(nil)
+	_ client.TxnStore = (*Wrapper)(nil)
+	_ client.P2P      = (*Wrapper)(nil)
+)
 
 // Wrapper implements the client.TxnStore
 // interface using the JS client.
@@ -567,7 +571,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 }
 
 func (w *Wrapper) Disconnect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error {
-	return w.node.DB.Disconnect(ctx, addresses, opts...)
+	_, err := execute(ctx, w.value, "disconnect", goji.MustMarshalJS(addresses), jsOpts(opts))
+	return err
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {

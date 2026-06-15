@@ -41,6 +41,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"discard":                    goji.Async(wrapper.discard),
 		"addCollection":              goji.Async(wrapper.addCollection),
 		"patchCollection":            goji.Async(wrapper.patchCollection),
+		"deleteCollection":           goji.Async(wrapper.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
 		"addView":                    goji.Async(wrapper.addView),
 		"refreshViews":               goji.Async(wrapper.refreshViews),
@@ -68,6 +69,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"peerInfo":                   goji.Async(wrapper.peerInfo),
 		"activePeers":                goji.Async(wrapper.activePeers),
 		"connect":                    goji.Async(wrapper.connect),
+		"disconnect":                 goji.Async(wrapper.disconnect),
 		"addReplicator":              goji.Async(wrapper.addReplicator),
 		"deleteReplicator":           goji.Async(wrapper.deleteReplicator),
 		"listReplicators":            goji.Async(wrapper.listReplicators),
@@ -124,6 +126,19 @@ func (t *transaction) patchCollection(this js.Value, args []js.Value) (js.Value,
 		return js.Undefined(), err
 	}
 	return js.Undefined(), t.txn.PatchCollection(context.Background(), patch, migration, asOpts(opt))
+}
+
+func (t *transaction) deleteCollection(this js.Value, args []js.Value) (js.Value, error) {
+	names, err := stringSliceArg(args, 0, "names")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	var opt options.DeleteCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.DeleteCollection(context.Background(), names, asOpts(opt))
 }
 
 func (t *transaction) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
@@ -533,6 +548,19 @@ func (t *transaction) connect(this js.Value, args []js.Value) (js.Value, error) 
 		return js.Undefined(), err
 	}
 	return js.Undefined(), t.txn.Connect(context.Background(), addresses, asOpts(opt))
+}
+
+func (t *transaction) disconnect(this js.Value, args []js.Value) (js.Value, error) {
+	addresses, err := stringSliceArg(args, 0, "addresses")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	var opt options.DisconnectOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), t.txn.Disconnect(context.Background(), addresses, asOpts(opt))
 }
 
 func (t *transaction) addReplicator(this js.Value, args []js.Value) (js.Value, error) {

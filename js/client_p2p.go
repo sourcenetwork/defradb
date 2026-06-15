@@ -72,6 +72,23 @@ func (c *Client) connect(this js.Value, args []js.Value) (js.Value, error) {
 	return js.Undefined(), store.Connect(context.Background(), addresses, asOpts(opt))
 }
 
+func (c *Client) disconnect(this js.Value, args []js.Value) (js.Value, error) {
+	addresses, err := stringSliceArg(args, 0, "addresses")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	optsVal := optionsValue(args, 1)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.DisconnectOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), store.Disconnect(context.Background(), addresses, asOpts(opt))
+}
+
 func (c *Client) addReplicator(this js.Value, args []js.Value) (js.Value, error) {
 	addresses, err := stringSliceArg(args, 0, "addresses")
 	if err != nil {

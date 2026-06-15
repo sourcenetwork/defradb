@@ -72,6 +72,7 @@ func (c *Client) JSValue() js.Value {
 		"peerInfo":                   goji.Async(c.peerInfo),
 		"activePeers":                goji.Async(c.activePeers),
 		"connect":                    goji.Async(c.connect),
+		"disconnect":                 goji.Async(c.disconnect),
 		"addReplicator":              goji.Async(c.addReplicator),
 		"deleteReplicator":           goji.Async(c.deleteReplicator),
 		"listReplicators":            goji.Async(c.listReplicators),

@@ -33,6 +33,9 @@ import (
 const (
 	identityFullProp = "fullIdentity"
 	identityProp     = "identity"
+
+	nodeIdentityFullProp = "fullNodeIdentity"
+	nodeIdentityProp     = "nodeIdentity"
 )
 
 // transientKeys are JS option keys that are handled out-of-band and stripped
@@ -117,14 +120,16 @@ func optionsStore(db client.Store, optsVal js.Value, txns *sync.Map) (client.Sto
 	return txn.(client.Txn), nil //nolint:forcetypeassert
 }
 
-// optionsIdentity parses the `identity` (public key hex) or `fullIdentity`
-// (private key hex) property out of the JS options object. The private key
-// takes precedence when both are present.
-func optionsIdentity(opts js.Value) (immutable.Option[acpIdentity.Identity], error) {
+// optionsIdentity parses an identity out of the JS options object from the
+// given property names: fullProp holds a private key hex (full identity) and
+// pubProp holds a public key hex. The private key takes precedence when both
+// are present. The request identity uses `fullIdentity`/`identity` while the
+// node identity uses `fullNodeIdentity`/`nodeIdentity`.
+func optionsIdentity(opts js.Value, fullProp, pubProp string) (immutable.Option[acpIdentity.Identity], error) {
 	if opts.IsUndefined() || opts.IsNull() {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
-	full := opts.Get(identityFullProp)
+	full := opts.Get(fullProp)
 	if full.Type() == js.TypeString {
 		data, err := hex.DecodeString(full.String())
 		if err != nil {
@@ -137,7 +142,7 @@ func optionsIdentity(opts js.Value) (immutable.Option[acpIdentity.Identity], err
 		}
 		return immutable.Some[acpIdentity.Identity](identity), nil
 	}
-	ident := opts.Get(identityProp)
+	ident := opts.Get(pubProp)
 	if ident.Type() != js.TypeString {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
@@ -171,7 +176,7 @@ func parseOptions[T any](optsVal js.Value, out *T) error {
 	if err := goji.UnmarshalJS(cleaned, out); err != nil {
 		return err
 	}
-	ident, err := optionsIdentity(optsVal)
+	ident, err := optionsIdentity(optsVal, identityFullProp, identityProp)
 	if err != nil {
 		return err
 	}
@@ -199,7 +204,7 @@ func parseNodeOptions(optsVal js.Value, out *options.NodeOptions) error {
 	if err := goji.UnmarshalJS(cleaned, out); err != nil {
 		return err
 	}
-	ident, err := optionsIdentity(optsVal)
+	ident, err := optionsIdentity(optsVal, nodeIdentityFullProp, nodeIdentityProp)
 	if err != nil {
 		return err
 	}

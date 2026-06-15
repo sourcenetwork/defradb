@@ -49,6 +49,7 @@ func open(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	if err := n.Start(context.Background()); err != nil {
+		_ = n.Close(context.Background())
 		return js.Undefined(), err
 	}
 	return NewClient(n).JSValue(), nil

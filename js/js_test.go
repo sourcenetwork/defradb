@@ -25,7 +25,7 @@ func TestGlobalAndOpen(t *testing.T) {
 	SetGlobal()
 
 	defradb := js.Global().Get("defradb")
-	require.Equal(t, defradb.Type(), js.TypeObject)
+	require.Equal(t, js.TypeObject, defradb.Type())
 
 	opts := map[string]any{"Store": map[string]any{"Store": "memory"}}
 	prom := defradb.Call("open", opts)
@@ -33,5 +33,5 @@ func TestGlobalAndOpen(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, res, 1)
-	assert.Equal(t, res[0].Type(), js.TypeObject)
+	assert.Equal(t, js.TypeObject, res[0].Type())
 }
