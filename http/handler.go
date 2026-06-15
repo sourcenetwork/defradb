@@ -89,17 +89,12 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db DB, nodeOpts ...*options.NodeOptions) (*Handler, error) {
+func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
 	}
 	txs := &sync.Map{}
-
-	var opts *options.NodeOptions
-	if len(nodeOpts) > 0 {
-		opts = nodeOpts[0]
-	}
 
 	mux := chi.NewMux()
 	// Normalize trailing slashes so that, for example, `/collections` and
@@ -111,7 +106,7 @@ func NewHandler(db DB, nodeOpts ...*options.NodeOptions) (*Handler, error) {
 	mux.Use(middleware.StripSlashes)
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs, opts),
+			ApiMiddleware(db, txs, nodeOpts),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
