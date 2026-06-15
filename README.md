@@ -40,7 +40,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Community](#community)
-   * [Playground](#playground)
+   * [Explorer](#explorer)
    * [Licensing](#licensing)
    * [Contributors](#contributors)
 <!--te-->
@@ -533,9 +533,9 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
 
-## Playground
+## Explorer
 
-Instructions for the playground can be found [here](./playground/README.md).
+Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 
