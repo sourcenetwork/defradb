@@ -13,10 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -32,32 +30,24 @@ func (r rawBytesKey) Bytes() []byte { return r.b }
 
 // gcIndex deletes all stored entries for the index in batched transactions so that
 // no single transaction exceeds the storage engine's transaction size limit, then
-// removes the index state record.
+// removes the index state record. The caller resolves collectionID and shortID
+// while its staging transaction is live.
 func (db *DB) gcIndex(
 	ctx context.Context,
-	def client.CollectionVersion,
-	desc client.IndexDescription,
+	collectionID string,
+	shortID uint32,
+	indexID uint32,
+	indexName string,
 ) error {
-	// Resolve the short collection ID inside a transaction, then reuse it
-	// across all GC batches (the mapping is immutable once set).
-	var shortID uint32
-	if err := db.withTxnRetries(ctx, func(txnCtx context.Context) error {
-		var resolveErr error
-		shortID, resolveErr = id.GetShortCollectionID(txnCtx, def.CollectionID)
-		return resolveErr
-	}); err != nil {
-		return NewErrIndexGCFailed(err, desc.Name)
-	}
-
 	prefixKey := &keys.IndexDataStoreKey{
 		CollectionShortID: shortID,
-		IndexID:           desc.ID,
+		IndexID:           indexID,
 	}
 
 	for {
 		n, batchErr := db.gcIndexBatch(ctx, prefixKey)
 		if batchErr != nil {
-			return NewErrIndexGCFailed(batchErr, desc.Name)
+			return NewErrIndexGCFailed(batchErr, indexName)
 		}
 		if n < indexBackfillBatchSize {
 			break
@@ -65,9 +55,9 @@ func (db *DB) gcIndex(
 	}
 
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return deleteIndexState(c, def.CollectionID, desc.ID)
+		return deleteIndexState(c, collectionID, indexID)
 	}); err != nil {
-		return NewErrIndexGCFailed(err, desc.Name)
+		return NewErrIndexGCFailed(err, indexName)
 	}
 	return nil
 }

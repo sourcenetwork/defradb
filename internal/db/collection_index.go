@@ -596,11 +596,18 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 		return nil, err
 	}
 
-	// Capture the information gcIndex needs; desc is a value copy.
-	defSnapshot := c.def
-	descCopy := *desc
+	// Resolve the short collection ID now, while the staging transaction is live,
+	// so the deferred GC needs no transaction of its own to look it up.
+	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	if err != nil {
+		c.def.Indexes = oldIndexes
+		return nil, err
+	}
+
+	collectionID := c.def.CollectionID
+	indexID := desc.ID
 	gc := func(gcCtx context.Context) error {
-		return c.db.gcIndex(gcCtx, defSnapshot, descCopy)
+		return c.db.gcIndex(gcCtx, collectionID, shortID, indexID, indexName)
 	}
 
 	return gc, nil
