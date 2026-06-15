@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -48,7 +49,9 @@ resources:
 
 func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
@@ -91,7 +94,9 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 
 func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
