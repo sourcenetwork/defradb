@@ -351,7 +351,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(config.ConfigFlags["document-acp-type"]),
-		"Specify the document acp engine to use (supported: none, local (default), source-hub)")
+		"Specify the document acp engine to use (supported: local (default), source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),
