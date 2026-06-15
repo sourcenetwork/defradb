@@ -26,7 +26,7 @@ defradb client acp node relationship add [-r --relation] [-a --actor] [-i --iden
 ### Examples
 
 ```
-Make another actor an admin user:  
+Make another actor an admin user:
   defradb client acp node relationship add \
 	--relation admin \
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \

@@ -14,10 +14,10 @@ defradb client p2p document add [docIDs] [flags]
 ### Examples
 
 ```
-add single document:  
+add single document:
   defradb client p2p document add bae123
 
-add multiple documents:  
+add multiple documents:
   defradb client p2p document add bae123,bae456
 ```
 

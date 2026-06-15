@@ -29,20 +29,20 @@ defradb client document add [-i --identity] [-e --encrypt] [--encrypt-fields] <d
 ### Examples
 
 ```
-Add from string1:  
+Add from string1:
   defradb client document add --collection-name User '{ "name": "Bob" }'
 
-Add from string, with identity:  
+Add from string, with identity:
   defradb client document add --collection-name User '{ "name": "Bob" }' \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-Add multiple from string:  
+Add multiple from string:
   defradb client document add --collection-name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 
-Add from file:  
+Add from file:
   defradb client document add --collection-name User -f document.json
 
-Add from stdin:  
+Add from stdin:
   cat document.json | defradb client document add --collection-name User -
 ```
 

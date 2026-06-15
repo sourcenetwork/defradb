@@ -22,7 +22,7 @@ defradb client acp document policy add [-i --identity] [policy] [flags]
 ### Examples
 
 ```
-Add from an argument string:  
+Add from an argument string:
   defradb client acp document policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
 	'
 	description: A Valid DefraDB Policy Interface
@@ -49,11 +49,11 @@ Add from an argument string:
 	          - actor
 	'
 
-Add from file:  
+Add from file:
   defradb client acp document policy add -f policy.yml \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-Add from stdin:  
+Add from stdin:
   cat policy.yml | defradb client acp document policy add -
 ```
 

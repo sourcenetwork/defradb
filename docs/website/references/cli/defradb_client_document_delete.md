@@ -13,14 +13,14 @@ defradb client document delete [-i --identity] [--filter <filter> --docID <docID
 ### Examples
 
 ```
-delete by docID:  
+delete by docID:
   defradb client document delete --collection-name User --docID bae-123
 
-delete by docID with identity:  
+delete by docID with identity:
   defradb client document delete --collection-name User --docID bae-123 \
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-delete by filter:  
+delete by filter:
   defradb client document delete --collection-name User --filter '{ "_geq": { "points": 100 } }'
 ```
 

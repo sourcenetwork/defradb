@@ -8,9 +8,10 @@ Create new private keys.
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
-The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+The DEFRA_KEYRING_SECRET environment variable is used to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
+defined with the --secret-file flag. If it is not set and the command is run in
+an interactive terminal, you will be prompted to enter it.
 
 WARNING: This will overwrite existing keys in the keyring.
 
@@ -21,16 +22,16 @@ defradb keyring new [flags]
 ### Examples
 
 ```
-Create new keys:  
+Create new keys:
   defradb keyring new
 
-with no encryption key:  
+with no encryption key:
   defradb keyring new --no-encryption
 
-with no peer key:  
+with no peer key:
   defradb keyring new --no-peer-key
 
-with system keyring:  
+with system keyring:
   defradb keyring new --keyring-backend system
 ```
 

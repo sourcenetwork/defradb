@@ -18,16 +18,16 @@ defradb client view refresh [flags]
 ### Examples
 
 ```
-refresh all views:  
+refresh all views:
   defradb client view refresh
 
-refresh views by name:  
+refresh views by name:
   defradb client view refresh --name UserView
 
-refresh views by collection id:  
+refresh views by collection id:
   defradb client view refresh --collection-id bae123
 
-refresh views by version id:  
+refresh views by version id:
   defradb client view refresh --version-id bae123
 ```
 

@@ -20,19 +20,19 @@ defradb client collection add [sdl] [flags]
 ### Examples
 
 ```
-add from an argument string:  
+add from an argument string:
   defradb client collection add 'type Foo { ... }'
 
-add from file:  
+add from file:
   defradb client collection add -f schema.graphql
 
-add from multiple files:  
+add from multiple files:
   defradb client collection add -f schema1.graphql -f schema2.graphql
 
-add from multiple files (comma-separated):  
+add from multiple files (comma-separated):
   defradb client collection add -f schema1.graphql,schema2.graphql
 
-add from stdin:  
+add from stdin:
   cat schema.graphql | defradb client collection add -
 ```
 

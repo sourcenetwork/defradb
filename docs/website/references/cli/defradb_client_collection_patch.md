@@ -17,13 +17,13 @@ defradb client collection patch [patch] [migration] [flags]
 ### Examples
 
 ```
-patch from an argument string:  
+patch from an argument string:
   defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
 
-patch from file:  
+patch from file:
   defradb client collection patch -p patch.json
 
-patch from stdin:  
+patch from stdin:
   cat patch.json | defradb client collection patch -
 ```
 

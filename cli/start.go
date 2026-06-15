@@ -131,7 +131,10 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
-				kr, err := openKeyring(cmd)
+				// The first startup generates the keyring, so confirm the secret to
+				// guard against a typo that would lock the node out of its keys.
+				confirm := !keyring.FileKeyringExists(cfg.GetString("keyring.path"))
+				kr, err := openKeyring(cmd, confirm)
 				if err != nil {
 					return err
 				}

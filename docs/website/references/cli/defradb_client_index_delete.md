@@ -13,7 +13,7 @@ defradb client index delete -c --collection <collection> -n --name <name> [flags
 ### Examples
 
 ```
-delete the index 'UsersByName' for 'Users' collection:  
+delete the index 'UsersByName' for 'Users' collection:
   defradb client index delete --collection Users --name UsersByName
 ```
 

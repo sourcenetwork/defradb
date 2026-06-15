@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -22,6 +23,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -182,7 +184,12 @@ func setContextRootDir(cmd *cobra.Command) error {
 }
 
 // openKeyring opens the keyring for the current environment.
-func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
+//
+// If the keyring secret is not already configured and stdin is an interactive
+// terminal, the user is prompted to enter it. When confirm is true the user is
+// asked to enter the secret twice, which is intended for commands that create a
+// new keyring so that a typo cannot leave it unlockable.
+func openKeyring(cmd *cobra.Command, confirm bool) (keyring.Keyring, error) {
 	cfg := mustGetContextConfig(cmd)
 	backend := cfg.Get("keyring.backend")
 	if backend == keyring.KeyringBackendSystem {
@@ -196,10 +203,47 @@ func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
 		return nil, err
 	}
 	secret := []byte(cfg.GetString("keyring.secret"))
+	if len(secret) == 0 && term.IsTerminal(int(os.Stdin.Fd())) {
+		prompted, err := promptKeyringSecret(cmd, confirm)
+		if err != nil {
+			return nil, err
+		}
+		secret = prompted
+	}
 	if len(secret) == 0 {
 		return nil, ErrMissingKeyringSecret
 	}
 	return keyring.OpenFileKeyring(path, secret)
+}
+
+// promptKeyringSecret reads the keyring secret from the terminal without echoing
+// it. When confirm is true the user must enter the same value twice.
+//
+// This is difficult to test: term.ReadPassword masks input by putting the
+// terminal device into raw (no-echo) mode via ioctl syscalls on the stdin file
+// descriptor, so it requires a real terminal and cannot be driven through
+// cmd.InOrStdin() or an os.Pipe (a non-terminal fd returns ENOTTY). Exercising
+// it would require either allocating a real pseudo-terminal or stubbing out the
+// term functions.
+func promptKeyringSecret(cmd *cobra.Command, confirm bool) ([]byte, error) {
+	cmd.PrintErr("Enter keyring secret: ")
+	secret, err := term.ReadPassword(int(os.Stdin.Fd()))
+	cmd.PrintErrln()
+	if err != nil {
+		return nil, err
+	}
+	if confirm {
+		cmd.PrintErr("Confirm keyring secret: ")
+		confirmSecret, err := term.ReadPassword(int(os.Stdin.Fd()))
+		cmd.PrintErrln()
+		if err != nil {
+			return nil, err
+		}
+		if !bytes.Equal(secret, confirmSecret) {
+			return nil, ErrKeyringSecretMismatch
+		}
+	}
+	return secret, nil
 }
 
 func writeJSON(cmd *cobra.Command, out any) error {
@@ -263,7 +307,7 @@ type exampleRegistryCtxKey struct{}
 func cliExampleToString(name, usage string) string {
 	// this is intentionally formatted this way, including
 	// the 2 white spaces at the start/end of the lines
-	return fmt.Sprintf(`%s:  
+	return fmt.Sprintf(`%s:
   %s`, name, usage)
 }
 

@@ -17,10 +17,10 @@ defradb client p2p collection sync-versions [versionID...] [flags]
 ### Examples
 
 ```
-synchronize single collection versions:  
+synchronize single collection versions:
   defradb client p2p collection sync-versions bafy123
 
-synchronize multiple collection versions:  
+synchronize multiple collection versions:
   defradb client p2p collection sync-versions bafy123 bafy456
 ```
 
