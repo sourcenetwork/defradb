@@ -175,9 +175,9 @@ deps\:modules:
 deps\:mocks:
 	go install github.com/vektra/mockery/v3@v3.5.2
 
-.PHONY: deps\:playground
-deps\:playground:
-	go generate -tags playground ./playground/...
+.PHONY: deps\:explorer
+deps\:explorer:
+	go generate -tags explorer ./explorer/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -197,7 +197,8 @@ deps:
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mocks
+	$(MAKE) deps:mocks && \
+	$(MAKE) deps:explorer
 
 .PHONY: mocks
 mocks:
@@ -465,9 +466,13 @@ fix:
 build-c-static-windows:
 	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
 	
-.PHONY build-c-shared-linux:
+.PHONY: build-c-shared-linux build-c-shared-linux-deb
+
 build-c-shared-linux:
-	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	@MAKE_DEB=0 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+build-c-shared-linux\:deb:
+	@MAKE_DEB=1 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
 	
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/

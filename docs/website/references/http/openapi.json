@@ -1921,7 +1921,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -1969,7 +1993,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2254,6 +2302,22 @@
         "/p2p/connect": {
             "post": {
                 "operationId": "connect",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/disconnect": {
+            "post": {
+                "operationId": "disconnect",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"

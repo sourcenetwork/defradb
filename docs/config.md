@@ -133,8 +133,7 @@ Possible values:
 The type of Document ACP to use.
 
 Possible values:
-- `none` (default): No Document ACP
-- `local` local-only Document ACP
+- `local` (default): local-only Document ACP
 - `source-hub` source hub Document ACP: https://github.com/sourcenetwork/sourcehub
 
 ## `acp.document.sourceHub.ChainID`

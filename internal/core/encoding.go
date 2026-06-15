@@ -117,7 +117,7 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {
-		case client.FieldKind_NILLABLE_FLOAT64:
+		case client.FieldKind_NILLABLE_FLOAT64, client.FieldKind_FLOAT64:
 			switch v := val.(type) {
 			case int64:
 				return float64(v), nil
@@ -128,7 +128,7 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case uint:
 				return float64(v), nil
 			}
-		case client.FieldKind_NILLABLE_FLOAT32:
+		case client.FieldKind_NILLABLE_FLOAT32, client.FieldKind_FLOAT32:
 			switch v := val.(type) {
 			case int64:
 				return float32(v), nil
@@ -141,7 +141,7 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case float64:
 				return float32(v), nil
 			}
-		case client.FieldKind_NILLABLE_INT:
+		case client.FieldKind_NILLABLE_INT, client.FieldKind_INT:
 			switch v := val.(type) {
 			case float64:
 				return int64(v), nil
@@ -154,22 +154,22 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case uint:
 				return int64(v), nil
 			}
-		case client.FieldKind_NILLABLE_DATETIME:
+		case client.FieldKind_NILLABLE_DATETIME, client.FieldKind_DATETIME:
 			switch v := val.(type) {
 			case string:
 				return time.Parse(time.RFC3339, v)
 			}
-		case client.FieldKind_NILLABLE_BOOL:
+		case client.FieldKind_NILLABLE_BOOL, client.FieldKind_BOOL:
 			switch v := val.(type) {
 			case int64:
 				return v != 0, nil
 			}
-		case client.FieldKind_NILLABLE_STRING:
+		case client.FieldKind_NILLABLE_STRING, client.FieldKind_STRING:
 			switch v := val.(type) {
 			case []byte:
 				return string(v), nil
 			}
-		case client.FieldKind_NILLABLE_JSON:
+		case client.FieldKind_NILLABLE_JSON, client.FieldKind_JSON:
 			return convertToJSON(fieldDesc.Name, val)
 		}
 	}

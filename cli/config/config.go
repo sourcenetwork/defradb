@@ -62,6 +62,7 @@ var ConfigFlags = map[string]string{
 	"peers":                      "net.peers",
 	"p2paddr":                    "net.p2paddresses",
 	"no-p2p":                     "net.p2pdisabled",
+	"relay":                      "net.relay",
 	"allowed-origins":            "api.allowed-origins",
 	"pubkeypath":                 "api.pubkeypath",
 	"privkeypath":                "api.privkeypath",
@@ -107,7 +108,7 @@ var ConfigDefaults = map[string]any{
 	"datastore.nosigning":               false,
 	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.document.type":                 "none",
+	"acp.document.type":                 "local",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 

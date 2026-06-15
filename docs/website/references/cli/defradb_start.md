@@ -18,7 +18,7 @@ defradb start [flags]
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data
                                            - generates temporary node identity if one doesn't exist in the keyring
-      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub) (default "none")
+      --document-acp-type string          Specify the document acp engine to use (supported: local (default), source-hub) (default "local")
   -h, --help                              help for start
   -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
@@ -32,6 +32,7 @@ defradb start [flags]
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
+      --relay                             Enable the p2p relay
       --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)

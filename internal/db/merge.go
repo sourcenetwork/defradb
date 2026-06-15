@@ -23,6 +23,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 
+	"github.com/sourcenetwork/corelog"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -32,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -292,58 +293,13 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 	return nil
 }
 
-func (mp *mergeProcessor) loadEncryptionBlock(
-	ctx context.Context,
-	encLink cidlink.Link,
-) (*coreblock.Encryption, error) {
-	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
-	if err != nil {
-		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
-	}
-
-	enc, err := coreblock.GetEncryptionBlockFromNode(nd)
-	if err != nil {
-		return nil, NewErrLoadEncryptionBlock(err, encLink.String())
-	}
-	return enc, nil
-}
-
-// processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
-// If the block is encrypted and we were not able to decrypt it, it returns false as the second return value
-// which indicates that the we can't read the block.
-// If we were able to decrypt the block, we return the decrypted block and true as the second return value.
-func (mp *mergeProcessor) processEncryptedBlock(
-	ctx context.Context,
-	dagBlock *coreblock.Block,
-) (*coreblock.Block, bool, error) {
-	if dagBlock.IsEncrypted() {
-		encBlock, err := mp.loadEncryptionBlock(ctx, *dagBlock.Encryption)
-		if err != nil {
-			return nil, false, err
-		}
-
-		if encBlock == nil {
-			return dagBlock, false, nil
-		}
-
-		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
-		if err != nil {
-			return nil, false, err
-		}
-		if plainTextBlock != nil {
-			return plainTextBlock, true, nil
-		}
-	}
-	return dagBlock, true, nil
-}
-
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
+	block, canRead, err := coreblock.ProcessEncryptedBlock(ctx, mp.encBlockLS, dagBlock)
 	if err != nil {
 		return NewErrProcessEncryptedBlock(err, blockLink.String())
 	}
@@ -383,30 +339,6 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	return nil
-}
-
-func decryptBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
-	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
-
-	if block.Delta.IsComposite() || block.Delta.IsCollection() {
-		// for composite blocks there is nothing to decrypt
-		return block, nil
-	}
-
-	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
-	if err != nil {
-		return nil, err
-	}
-	if len(bytes) == 0 {
-		return nil, nil
-	}
-	newBlock := block.Clone()
-	newBlock.Delta.SetData(bytes)
-	return newBlock, nil
 }
 
 func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (crdt.ReplicatedData, error) {
@@ -485,12 +417,28 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.GetDocument(ctx, docID)
+	doc, err := getDocForMerge(ctx, mp.col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return nil
+		return err
 	}
 	mp.docIDs[docID] = doc
 	return nil
+}
+
+// getDocForMerge fetches a doc during inbound merge without the ACP read filter.
+// The merge ctx has no caller identity, so GetDocument would deny access and
+// return nil, silently skipping the secondary-index Save. Access was already
+// gated at the P2P boundary, so we read directly.
+func getDocForMerge(
+	ctx context.Context,
+	col *collection,
+	docID client.DocID,
+) (*client.Document, error) {
+	primaryKey, err := col.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
+	return col.getInternal(ctx, primaryKey, nil, false)
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
@@ -574,13 +522,14 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.GetDocument(ctx, docID)
+	newDoc, err := getDocForMerge(ctx, col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
 	// Both can be nil during concurrent P2P operations (e.g. delete + update)
 	// where the document was already deleted and no prior indexed state exists.
 	if oldDoc == nil && newDoc == nil {
+		log.InfoContext(ctx, "skipping index update: no document found", corelog.String("docID", docID.String()))
 		return nil
 	}
 	if oldDoc != nil && newDoc != nil {
