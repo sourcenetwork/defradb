@@ -218,7 +218,7 @@ func (k ScalarArrayKind) SubKind() ScalarKind {
 	case FieldKind_NILLABLE_DATETIME_ARRAY:
 		return FieldKind_NILLABLE_DATETIME
 	case FieldKind_DATETIME_ARRAY:
-		return FieldKind_NILLABLE_DATETIME
+		return FieldKind_DATETIME
 	default:
 		return FieldKind_None
 	}
@@ -363,6 +363,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[Int]":              FieldKind_NILLABLE_INT_ARRAY,
 	"[Int!]":             FieldKind_INT_ARRAY,
 	"DateTime":           FieldKind_NILLABLE_DATETIME,
+	"DateTime!":          FieldKind_DATETIME,
 	"[DateTime]":         FieldKind_NILLABLE_DATETIME_ARRAY,
 	"[DateTime!]":        FieldKind_DATETIME_ARRAY,
 	"Float":              FieldKind_NILLABLE_FLOAT64,
