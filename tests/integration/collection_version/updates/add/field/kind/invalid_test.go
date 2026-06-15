@@ -18,32 +18,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCollectionVersionUpdatesAddFieldKind15(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			&action.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 15} }
-					]
-				`,
-				ExpectedError: "no type found for given name. Type: 15",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 // This test is currently the first unsupported value, if it becomes supported
 // please update this test to be the newly lowest unsupported value.
-func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
+func TestCollectionVersionUpdatesAddFieldKind30(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -56,10 +33,10 @@ func TestCollectionVersionUpdatesAddFieldKind25(t *testing.T) {
 			&action.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 23} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 30} }
 					]
 				`,
-				ExpectedError: "no type found for given name. Type: 23",
+				ExpectedError: "no type found for given name. Type: 30",
 			},
 		},
 	}
