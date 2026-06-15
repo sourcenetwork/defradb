@@ -157,8 +157,14 @@ func (c *collection) deleteIndexedDocWithID(
 //
 // The index description will be stored in the system store.
 //
-// Once finished, if there are existing documents in the collection,
-// the documents will be indexed by the new index.
+// Existing documents are backfilled in batched transactions after the definition
+// commits, so no single transaction exceeds the storage engine's size limit.
+// With an explicit (caller-provided) transaction the backfill runs inside the
+// caller's Commit() and its error cannot be returned — a failure is recorded
+// on the index state as status "failed" with a reason.
+//
+// If the backfill fails, the index definition remains in place with a failed status.
+// It is not maintained by subsequent writes. Use DeleteIndex to remove it before recreating.
 func (c *collection) NewIndex(
 	ctx context.Context,
 	desc client.NewIndexRequest,
@@ -182,12 +188,24 @@ func (c *collection) NewIndex(
 
 	defer txn.Discard()
 
-	index, err := c.newIndex(ctx, desc)
+	indexDesc, backfill, err := c.newIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
 
-	return index.Description(), txn.Commit()
+	if txn.explicit {
+		txn.OnSuccess(func() { _ = backfill(ctx) })
+		return indexDesc, nil
+	}
+
+	if err := txn.Commit(); err != nil {
+		return client.IndexDescription{}, err
+	}
+
+	if err := backfill(ctx); err != nil {
+		return client.IndexDescription{}, err
+	}
+	return indexDesc, nil
 }
 
 func processNewIndexRequest(
@@ -230,13 +248,18 @@ func processNewIndexRequest(
 	}, nil
 }
 
+// newIndex stages the index definition in the current transaction and returns a
+// backfill function the caller must run after the transaction commits.
+//
+// c.def.Indexes and c.indexes are updated so writes on this collection instance
+// maintain the new index immediately; both are rolled back if staging fails.
 func (c *collection) newIndex(
 	ctx context.Context,
 	newReq client.NewIndexRequest,
-) (CollectionIndex, error) {
+) (client.IndexDescription, func(context.Context) error, error) {
 	desc, err := processNewIndexRequest(ctx, c.Version(), newReq)
 	if err != nil {
-		return nil, err
+		return client.IndexDescription{}, nil, err
 	}
 
 	c.def.Indexes = append(c.def.Indexes, desc)
@@ -244,16 +267,31 @@ func (c *collection) newIndex(
 	err = description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
-		return nil, err
+		return client.IndexDescription{}, nil, err
 	}
 
-	index, err := c.appendNewIndexAndIndexExistingDocs(ctx, desc)
+	err = setIndexState(ctx, c.def.CollectionID, desc.ID, indexState{Status: client.IndexStatusBuilding})
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
-		return nil, err
+		return client.IndexDescription{}, nil, err
 	}
 
-	return index, nil
+	colIndex, err := NewCollectionIndex(c, desc)
+	if err != nil {
+		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
+		return client.IndexDescription{}, nil, err
+	}
+	c.indexes = append(c.indexes, colIndex)
+
+	// Backfill builds a fresh collection from this snapshot per batch,
+	// so each retry re-reads documents.
+	defSnapshot := c.def
+
+	backfill := func(bfCtx context.Context) error {
+		return c.db.backfillIndex(bfCtx, defSnapshot, desc)
+	}
+
+	return desc, backfill, nil
 }
 
 func (c *collection) appendNewIndexAndIndexExistingDocs(
@@ -276,14 +314,123 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 	return colIndex, nil
 }
 
-func (c *collection) iterateAllDocs(
+// collectDocIDsAfter performs a keys-only raw range scan over the datastore and collects
+// up to limit distinct docIDs in key order: all of them when watermark is None, or only
+// those sorting strictly after it.
+//
+// The scan range covers only active-value keys for the collection, so deleted docs and
+// non-document keys are never visited.
+func (c *collection) collectDocIDsAfter(
+	ctx context.Context,
+	shortID uint32,
+	watermark immutable.Option[string],
+	limit int,
+) (docIDs []string, err error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	var startKey datastore.Key = keys.DataStoreKey{
+		CollectionShortID: shortID,
+		InstanceType:      keys.ValueKey,
+	}
+	if watermark.HasValue() {
+		startKey = keys.DataStoreKey{
+			CollectionShortID: shortID,
+			InstanceType:      keys.ValueKey,
+			DocID:             watermark.Value(),
+		}.PrefixEnd()
+	}
+
+	endKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		InstanceType:      keys.ValueKey,
+	}.PrefixEnd()
+
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Start:    startKey,
+		End:      endKey,
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var prevDocID string
+	for len(docIDs) < limit {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		dsKey, err := keys.NewDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		if dsKey.DocID == "" || dsKey.DocID == prevDocID {
+			continue
+		}
+
+		prevDocID = dsKey.DocID
+		docIDs = append(docIDs, dsKey.DocID)
+	}
+
+	return docIDs, iter.Close()
+}
+
+// iterateDocsBatch iterates a batch of the collection's documents in docID order.
+//
+// When limit > 0 a keys-only scan collects the batch's docIDs (after startAfter, if set),
+// and the document fetcher is started with one exact per-doc prefix per collected docID.
+// Progress (lastDocID, count) is based on those candidate docIDs, not on what the fetcher
+// yields, so documents filtered out by ACP cannot stall or truncate the backfill.
+//
+// When limit == 0 the fetcher scans the whole collection and progress is based on
+// fetched documents.
+func (c *collection) iterateDocsBatch(
 	ctx context.Context,
 	fields []client.CollectionFieldDescription,
+	startAfter immutable.Option[string],
+	limit int,
 	exec func(doc *client.Document) error,
-) error {
+) (lastDocID string, count int, err error) {
+	shortID, idErr := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	if idErr != nil {
+		return "", 0, idErr
+	}
+
+	var prefixes []keys.Walkable
+
+	if limit > 0 {
+		candidates, scanErr := c.collectDocIDsAfter(ctx, shortID, startAfter, limit)
+		if scanErr != nil {
+			return "", 0, scanErr
+		}
+		if len(candidates) == 0 {
+			return "", 0, nil
+		}
+
+		lastDocID = candidates[len(candidates)-1]
+		count = len(candidates)
+
+		prefixes = make([]keys.Walkable, len(candidates))
+		for i, docID := range candidates {
+			prefixes[i] = keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}
+		}
+	} else {
+		prefixes = []keys.Walkable{
+			keys.DataStoreKey{CollectionShortID: shortID},
+		}
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 	df := c.newFetcher(ctx)
-	err := df.Init(
+	initErr := df.Init(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
@@ -297,44 +444,53 @@ func (c *collection) iterateAllDocs(
 		nil,
 		false,
 	)
-	if err != nil {
-		return errors.Join(err, df.Close())
+	if initErr != nil {
+		return "", 0, errors.Join(initErr, df.Close())
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	prefix := keys.DataStoreKey{
-		CollectionShortID: shortID,
-	}
-	err = df.Start(ctx, prefix)
-	if err != nil {
-		return errors.Join(err, df.Close())
+	startErr := df.Start(ctx, prefixes...)
+	if startErr != nil {
+		return "", 0, errors.Join(startErr, df.Close())
 	}
 
 	for {
-		encodedDoc, _, err := df.FetchNext(ctx)
-		if err != nil {
-			return errors.Join(err, df.Close())
+		encodedDoc, _, fetchErr := df.FetchNext(ctx)
+		if fetchErr != nil {
+			return "", 0, errors.Join(fetchErr, df.Close())
 		}
 		if encodedDoc == nil {
 			break
 		}
 
-		doc, err := fetcher.Decode(ctx, encodedDoc, c.Version())
-		if err != nil {
-			return errors.Join(err, df.Close())
+		doc, decodeErr := fetcher.Decode(ctx, encodedDoc, c.Version())
+		if decodeErr != nil {
+			return "", 0, errors.Join(decodeErr, df.Close())
 		}
 
-		err = exec(doc)
-		if err != nil {
-			return errors.Join(err, df.Close())
+		execErr := exec(doc)
+		if execErr != nil {
+			return "", 0, errors.Join(execErr, df.Close())
+		}
+
+		if limit == 0 {
+			// Whole-collection mode: track progress from fetched docs.
+			lastDocID = string(encodedDoc.ID())
+			count++
 		}
 	}
 
-	return df.Close()
+	return lastDocID, count, df.Close()
+}
+
+// iterateAllDocs iterates all documents in the collection in docID order,
+// calling exec for each one.  It is a thin wrapper around iterateDocsBatch.
+func (c *collection) iterateAllDocs(
+	ctx context.Context,
+	fields []client.CollectionFieldDescription,
+	exec func(doc *client.Document) error,
+) error {
+	_, _, err := c.iterateDocsBatch(ctx, fields, immutable.None[string](), 0, exec)
+	return err
 }
 
 func (c *collection) indexExistingDocs(
@@ -390,20 +546,41 @@ func (c *collection) DeleteIndex(
 }
 
 func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
-	var didFind bool
-	for i := range c.indexes {
-		if c.indexes[i].Name() == indexName {
-			err := c.indexes[i].RemoveAll(ctx)
-			if err != nil {
-				return err
-			}
-			c.indexes = slices.Delete(c.indexes, i, i+1)
-			didFind = true
+	// Locate the description by name in the version definition (source of truth).
+	// Failed indexes are excluded from c.indexes but still live in c.Version().Indexes.
+	var desc *client.IndexDescription
+	for i := range c.Version().Indexes {
+		if c.Version().Indexes[i].Name == indexName {
+			d := c.Version().Indexes[i]
+			desc = &d
 			break
 		}
 	}
-	if !didFind {
+	if desc == nil {
 		return NewErrIndexWithNameDoesNotExists(indexName)
+	}
+
+	// If the index instance is present in the active slice, use it and remove it.
+	// Otherwise construct a temporary instance solely to RemoveAll the (possibly partial) entries.
+	var removeErr error
+	var foundInSlice bool
+	for i := range c.indexes {
+		if c.indexes[i].Name() == indexName {
+			removeErr = c.indexes[i].RemoveAll(ctx)
+			c.indexes = slices.Delete(c.indexes, i, i+1)
+			foundInSlice = true
+			break
+		}
+	}
+	if !foundInSlice {
+		tmp, err := NewCollectionIndex(c, *desc)
+		if err != nil {
+			return err
+		}
+		removeErr = tmp.RemoveAll(ctx)
+	}
+	if removeErr != nil {
+		return removeErr
 	}
 
 	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))
@@ -418,6 +595,10 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 	err := description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.Indexes = oldIndexes
+		return err
+	}
+
+	if err := deleteIndexState(ctx, c.def.CollectionID, desc.ID); err != nil {
 		return err
 	}
 
@@ -767,7 +948,7 @@ func (db *DB) reindexNewActiveVersion(ctx context.Context, col client.Collection
 	}
 
 	txnOpt := datastore.CtxTryGetTxnOption(ctx)
-	collection, err := db.newCollection(col, txnOpt)
+	collection, err := db.newCollection(ctx, col, txnOpt)
 	if err != nil {
 		return err
 	}

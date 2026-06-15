@@ -56,8 +56,18 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 			&action.ListIndexes{
-				CollectionID:    0,
-				ExpectedIndexes: []client.IndexDescription{},
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "User_name_ASC",
+						ID:     1,
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "name"},
+							{Name: "age"},
+						},
+					},
+				},
 			},
 		},
 	}

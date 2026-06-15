@@ -9,14 +9,9 @@
 //
 // See tests/LICENSE for details.
 
-// Package index contains integration tests for secondary indexes.
-//
-// This file is a regression guard for issue #4907: creating a secondary index on a
-// collection whose existing documents total more than ~11MB must not fail. The current
-// (unfixed) code runs backfill inside a single badger transaction that overflows
-// badger's built-in txn-size cap, so NewIndex returns an ErrTxnTooBig error. This
-// test is therefore EXPECTED TO FAIL on the unpatched code path and MUST PASS once
-// the batched-backfill implementation is in place.
+// This file guards against regression of issue #4907: creating a secondary index on a
+// collection whose existing documents exceed the storage engine's transaction size limit
+// must succeed, which requires the backfill to run in batched transactions.
 
 package index
 
@@ -30,24 +25,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed verifies that calling
-// NewIndex on a collection that already holds many large documents succeeds without
-// hitting badger's transaction-size limit.
-//
-// Sizing rationale: badger's per-transaction cap is ~11 MB. Index keys embed the
-// indexed field value, so 250 documents each carrying a ~50 KB name value produce
-// roughly 12.5 MB of index data — guaranteed to overflow a single-transaction
-// backfill while keeping each individual key comfortably below badger's ~65 KB
-// per-key limit. Each document is inserted via its own AddDoc action (separate
-// transactions) so that only the backfill step is the one being exercised.
+// TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed creates an index over
+// ~12.5 MB of existing data: 250 documents, each with a ~50 KB indexed value.
+// Index keys embed the field value, so this cannot fit in one ~11 MB transaction,
+// while each individual key stays below the ~65 KB key cap.
 func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 	const numDocs = 250
-	const valuePadLen = 50 * 1024 // 50 KB of padding per name field
+	const valuePadLen = 50 * 1024
 
 	actions := make([]any, 0, numDocs+5)
 
-	// Step 1: define the collection without any inline @index directive so that
-	// the index can be added later via NewIndex, triggering the backfill path.
 	actions = append(actions, &action.AddCollection{
 		SDL: `
 			type User {
@@ -57,9 +44,8 @@ func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 		`,
 	})
 
-	// Step 2: insert 250 documents, each with a unique ~50 KB name value.
-	// Using individual AddDoc actions ensures every insert runs in its own
-	// transaction — only the subsequent NewIndex call is put under pressure.
+	// One AddDoc action per document, so each insert runs in its own transaction
+	// and only the backfill is put under pressure.
 	for i := 0; i < numDocs; i++ {
 		name := fmt.Sprintf("%04d", i) + strings.Repeat("a", valuePadLen)
 		doc := fmt.Sprintf(`{"name": %q, "age": %d}`, name, i)
@@ -68,15 +54,11 @@ func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 		})
 	}
 
-	// Step 3: create the secondary index AFTER all documents exist.
-	// On unpatched code this overflows the single badger transaction that
-	// backfill currently uses and returns an ErrTxnTooBig error.
 	actions = append(actions, &action.NewIndex{
 		IndexName: "User_name",
 		FieldName: "name",
 	})
 
-	// Step 4: confirm the index is registered correctly.
 	actions = append(actions, &action.ListIndexes{
 		ExpectedIndexes: []client.IndexDescription{
 			{
@@ -89,8 +71,7 @@ func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 		},
 	})
 
-	// Step 5: query a specific document by its large name value to prove the
-	// index was backfilled with the correct content.
+	// Querying one document by its value proves the index was backfilled correctly.
 	targetName := fmt.Sprintf("%04d", 42) + strings.Repeat("a", valuePadLen)
 	req := fmt.Sprintf(
 		`query { User(filter: {name: {_eq: %q}}) { age } }`,
@@ -106,7 +87,7 @@ func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
 		},
 	})
 
-	// Step 6: prove the planner actually uses the index (not a full scan).
+	// The planner must use the index, not a full scan.
 	actions = append(actions, &action.Request{
 		Request:  makeExplainQuery(req),
 		Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),

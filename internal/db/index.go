@@ -13,6 +13,8 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -28,6 +30,11 @@ type CollectionIndex interface {
 	client.CollectionIndex
 	// RemoveAll removes all documents from the index
 	RemoveAll(context.Context) error
+	// setBuilding marks the index as being in the building (backfill) state.
+	//
+	// While building, Save tolerates a unique-index entry already written by a
+	// concurrent live write of the same document, and Delete tolerates a missing entry.
+	setBuilding(bool)
 }
 
 func isSupportedKind(kind client.FieldKind) bool {
@@ -174,6 +181,13 @@ type collectionBaseIndex struct {
 	// If there is more than 1 field, the index is composite
 	fieldsDescs     []client.CollectionFieldDescription
 	fieldGenerators []FieldIndexGenerator
+	// building is true while the index is being backfilled. deleteIndexKey tolerates
+	// missing entries for documents not yet reached by the backfill.
+	building bool
+}
+
+func (index *collectionBaseIndex) setBuilding(v bool) {
+	index.building = v
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -236,6 +250,10 @@ func (index *collectionBaseIndex) deleteIndexKey(
 		return NewErrCheckIndexKeyExists(err, index.desc.Name)
 	}
 	if !exists {
+		// During backfill, documents not yet reached have no entry, so we skip silently.
+		if index.building {
+			return nil
+		}
 		return NewErrCorruptedIndex(index.desc.Name)
 	}
 	err = ds.Delete(ctx, &key)
@@ -421,8 +439,47 @@ func (index *collectionUniqueIndex) Save(
 	doc *client.Document,
 ) error {
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		return addNewUniqueKey(ctx, doc, key, index.fieldsDescs)
+		return saveUniqueKey(ctx, doc, key, index.fieldsDescs, index.building)
 	})
+}
+
+// saveUniqueKey writes a unique index entry for doc.
+//
+// Keys whose value is empty embed the docID in the key itself, so they are already
+// doc-specific and are written unconditionally. For value-bearing keys, an entry that
+// already exists is a uniqueness violation — except while the index is building, where
+// an entry for the same doc means a concurrent live write got there first and is skipped.
+func saveUniqueKey(
+	ctx context.Context,
+	doc *client.Document,
+	key keys.IndexDataStoreKey,
+	fieldsDescs []client.CollectionFieldDescription,
+	tolerateSameDoc bool,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	if err != nil {
+		return err
+	}
+
+	if len(val) != 0 {
+		existing, err := txn.Datastore().Get(ctx, &key)
+		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+			return NewErrCheckUniqueIndexConstraint(err)
+		}
+		if existing != nil {
+			if tolerateSameDoc && string(existing) == doc.ID().String() {
+				return nil
+			}
+			return newUniqueIndexError(doc, fieldsDescs)
+		}
+	}
+
+	if err := txn.Datastore().Set(ctx, &key, val); err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToString(), err)
+	}
+	return nil
 }
 
 func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
@@ -453,50 +510,6 @@ func makeUniqueKeyValueRecord(
 	} else {
 		return key, []byte(doc.ID().String()), nil
 	}
-}
-
-func validateUniqueKeyValue(
-	ctx context.Context,
-	key keys.IndexDataStoreKey,
-	val []byte,
-	doc *client.Document,
-	fieldsDescs []client.CollectionFieldDescription,
-) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	if len(val) != 0 {
-		exists, err := txn.Datastore().Has(ctx, &key)
-		if err != nil {
-			return NewErrCheckUniqueIndexConstraint(err)
-		}
-		if exists {
-			return newUniqueIndexError(doc, fieldsDescs)
-		}
-	}
-	return nil
-}
-
-func addNewUniqueKey(
-	ctx context.Context,
-	doc *client.Document,
-	key keys.IndexDataStoreKey,
-	fieldsDescs []client.CollectionFieldDescription,
-) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
-	if err != nil {
-		return err
-	}
-	err = validateUniqueKeyValue(ctx, key, val, doc, fieldsDescs)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Set(ctx, &key, val)
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToString(), err)
-	}
-	return nil
 }
 
 func (index *collectionUniqueIndex) Delete(

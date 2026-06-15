@@ -132,6 +132,7 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -1162,4 +1163,9 @@ func NewErrDematerializePopulatedView(name string, version string) error {
 		errors.NewKV("Name", name),
 		errors.NewKV("VersionID", version),
 	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
 }

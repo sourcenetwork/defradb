@@ -87,7 +87,7 @@ func (db *DB) backfillIndex(
 		)
 
 		batchErr := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
-			col, err := db.newCollection(def, datastore.CtxTryGetTxnOption(batchCtx))
+			col, err := db.newCollection(batchCtx, def, datastore.CtxTryGetTxnOption(batchCtx))
 			if err != nil {
 				return err
 			}
@@ -96,6 +96,9 @@ func (db *DB) backfillIndex(
 			if err != nil {
 				return err
 			}
+			// Mark building so Save tolerates entries a concurrent live write
+			// already stored for the same document.
+			colIndex.setBuilding(true)
 
 			lastDocID, n, err = col.iterateDocsBatch(
 				batchCtx, fields, watermark, indexBackfillBatchSize,
@@ -131,7 +134,12 @@ func (db *DB) backfillIndex(
 		watermark = immutable.Some(lastDocID)
 	}
 
-	if err := db.setIndexStateWithRetry(ctx, def.CollectionID, desc.ID, indexState{Status: client.IndexStatusReady}); err != nil {
+	// A missing state record means ready, so completion deletes the record
+	// instead of storing a terminal status. Only in-flight and failed
+	// indexes keep a record.
+	if err := db.withTxnRetries(ctx, func(c context.Context) error {
+		return deleteIndexState(c, def.CollectionID, desc.ID)
+	}); err != nil {
 		markErr := db.markIndexFailed(ctx, def, desc, err)
 		return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
 	}
