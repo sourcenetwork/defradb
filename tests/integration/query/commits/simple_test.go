@@ -249,9 +249,8 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		// Asserts signature == nil on every commit, which is untrue once
-		// signing is enabled (composite commits gain a non-nil signature).
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		// signing adds a non-nil signature; encryption changes the delta bytes
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

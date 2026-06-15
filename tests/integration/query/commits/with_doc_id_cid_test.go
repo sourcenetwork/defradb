@@ -93,7 +93,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -138,7 +138,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
