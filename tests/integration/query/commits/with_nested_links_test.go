@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func commitLink(fieldName string, height uint64) gomega.OmegaMatcher {
@@ -228,6 +229,8 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// encryption changes the delta bytes
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

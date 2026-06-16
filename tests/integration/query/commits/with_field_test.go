@@ -181,7 +181,10 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 
 func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	test := testUtils.TestCase{
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

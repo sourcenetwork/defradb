@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -51,7 +52,9 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -280,7 +283,9 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
@@ -427,7 +432,9 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 }
 func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

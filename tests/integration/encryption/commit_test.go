@@ -14,6 +14,7 @@ package encryption
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,6 +24,10 @@ import (
 )
 
 func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			addUserCollection(),
@@ -49,7 +54,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       gomega.And(ageCid, uniqueCid),
 							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), genesisDocID(john21DocID), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
@@ -57,7 +62,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       gomega.And(nameCid, uniqueCid),
 							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), genesisDocID(john21DocID), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
@@ -65,18 +70,18 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       uniqueCid,
 							"delta":     nil,
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":       testUtils.ValidCID(),
+									"cid":       nameCid,
 									"fieldName": "name",
 								},
 								{
-									"cid":       testUtils.ValidCID(),
+									"cid":       ageCid,
 									"fieldName": "age",
 								},
 							},

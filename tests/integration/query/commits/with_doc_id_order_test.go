@@ -138,7 +138,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 		// This test verifies result ordering by CID bytes. Under signing the CIDs
 		// differ, so the test's hardcoded ordering no longer matches — but the
 		// "order by CID" guarantee is fully exercised by the non-multiplier run.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -198,7 +198,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 		// This test verifies result ordering by CID bytes. Under signing the CIDs
 		// differ, so the test's hardcoded ordering no longer matches — but the
 		// "order by CID" guarantee is fully exercised by the non-multiplier run.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

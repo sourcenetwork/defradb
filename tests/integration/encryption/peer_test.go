@@ -14,6 +14,8 @@ package encryption
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -21,6 +23,10 @@ import (
 )
 
 func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		Actions: []any{
@@ -61,7 +67,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       gomega.And(ageCid, uniqueCid),
 							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), genesisDocID(john21DocID), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
@@ -69,7 +75,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       gomega.And(nameCid, uniqueCid),
 							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), genesisDocID(john21DocID), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
@@ -77,18 +83,18 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       testUtils.ValidCID(),
+							"cid":       uniqueCid,
 							"delta":     nil,
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":       testUtils.ValidCID(),
+									"cid":       nameCid,
 									"fieldName": "name",
 								},
 								{
-									"cid":       testUtils.ValidCID(),
+									"cid":       ageCid,
 									"fieldName": "age",
 								},
 							},

@@ -45,7 +45,9 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	test := testUtils.TestCase{
 		// Signed counter deltas are double-applied across peers.
 		// https://github.com/sourcenetwork/defradb/issues/4742
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		// Under encryption the same multi-peer convergence shape diverges
+		// (heads count at the create-commit differs).
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

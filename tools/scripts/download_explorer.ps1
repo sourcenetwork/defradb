@@ -1,13 +1,13 @@
-# Download static assets from: `github.com/sourcenetwork/defradb-playground`.
+# Download static assets from: `github.com/sourcenetwork/defradb-explorer`.
 #
 # Bump the release tag in the URL below to change versions.
 
-$url = "https://github.com/sourcenetwork/defradb-playground/releases/download/v1.0.1/dist.tar.gz"
+$url = "https://github.com/sourcenetwork/defradb-explorer/releases/download/v1.0.0-beta.1/dist.tar.gz"
 $tarFile = "dist.tar.gz"
 
 try {
     # Download the file
-    Write-Host "Downloading playground assets..."
+    Write-Host "Downloading explorer assets..."
     Invoke-WebRequest -Uri $url -OutFile $tarFile -ErrorAction Stop
 
     # Extract the tar.gz file
@@ -19,6 +19,6 @@ try {
 
     Write-Host "Download complete!"
 } catch {
-    Write-Error "Failed to download or extract playground assets: $_"
+    Write-Error "Failed to download or extract explorer assets: $_"
     exit 1
 }

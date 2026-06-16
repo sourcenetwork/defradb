@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -24,6 +25,8 @@ import (
 // This test runs VerifyBlockSignature inside of a transaction, illustrating that it works.
 func TestTxn_VerifyBlockSignature_InsideTxn_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		// LevelDB does not support concurrent transactions
 		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

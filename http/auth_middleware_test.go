@@ -51,7 +51,7 @@ func doAuthedPost(t *testing.T, cdb DB, url, token, body string) (int, string) {
 	req.Header.Set(authHeaderName, authSchemaPrefix+token)
 
 	rec := httptest.NewRecorder()
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
