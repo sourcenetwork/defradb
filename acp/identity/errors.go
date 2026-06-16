@@ -20,6 +20,7 @@ const (
 	errInvalidKeyTypeClaimType = "key type claim must be a string"
 	errPrivateKeyNotAvailable  = "private key not available"
 	errMustBeTokenIdentity     = "identity must be a TokenIdentity"
+	errTokenAudienceMismatch   = "auth token audience does not match any accepted audience"
 )
 
 var (
@@ -33,4 +34,7 @@ var (
 	ErrPrivateKeyNotAvailable = errors.New(errPrivateKeyNotAvailable)
 	// ErrMustBeTokenIdentity is returned when used identity does not implement TokenIdentity.
 	ErrMustBeTokenIdentity = errors.New(errMustBeTokenIdentity)
+	// ErrTokenAudienceMismatch is returned when an auth token's audience claim does not
+	// match any of the accepted audiences (e.g. the request host or an allowed origin).
+	ErrTokenAudienceMismatch = errors.New(errTokenAudienceMismatch)
 )

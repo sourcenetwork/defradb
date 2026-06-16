@@ -12,6 +12,7 @@ package identity
 
 import (
 	"encoding/hex"
+	"slices"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -183,12 +184,18 @@ func (f *fullIdentity) UpdateToken(
 	return nil
 }
 
-// VerifyAuthToken verifies that the jwt auth token is valid and that the signature
-// matches the identity of the subject.
-func VerifyAuthToken(ident TokenIdentity, audience string) error {
-	_, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithAudience(audience))
+// VerifyAuthToken verifies the jwt auth token's signature and that its audience
+// claim matches any one of the given audiences. At least one must be provided.
+func VerifyAuthToken(ident TokenIdentity, audiences ...string) error {
+	// Validate temporal claims (expiry, not-before); audience is checked below
+	// since jwx's WithAudience only accepts a single value.
+	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithValidate(true))
 	if err != nil {
 		return err
+	}
+
+	if !audienceMatches(token.Audience(), audiences) {
+		return ErrTokenAudienceMismatch
 	}
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
@@ -207,6 +214,17 @@ func VerifyAuthToken(ident TokenIdentity, audience string) error {
 	}
 
 	return nil
+}
+
+// audienceMatches reports whether the token's audience claim contains at least
+// one of the accepted audiences.
+func audienceMatches(tokenAudience []string, accepted []string) bool {
+	for _, aud := range accepted {
+		if slices.Contains(tokenAudience, aud) {
+			return true
+		}
+	}
+	return false
 }
 
 // keyTypeToJWK maps a crypto.KeyType to the corresponding JWA signature algorithm.
