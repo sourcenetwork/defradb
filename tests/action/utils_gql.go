@@ -50,8 +50,8 @@ func valueToGQL(val any) (string, error) {
 	case string:
 		// UTC_NOW is a DateTime enum literal in GQL, not a string value —
 		// emit it bare so the DateTime scalar's EnumValue branch accepts it.
-		if t == "UTC_NOW" {
-			return "UTC_NOW", nil
+		if t == client.UTCNOW {
+			return client.UTCNOW, nil
 		}
 	}
 	out, err := json.Marshal(val)
