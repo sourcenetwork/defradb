@@ -11,6 +11,8 @@
 package options
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -187,6 +189,47 @@ type NodeDBOptions struct {
 	LensPoolSize int
 	// ChunkSize is the chunk size for the blockstore.
 	ChunkSize immutable.Option[int]
+}
+
+// SanitizedMap returns the options as a generic map with sensitive fields replaced
+// by "<redacted>" to indicate their presence without exposing their values.
+func (opts *NodeOptions) SanitizedMap() (map[string]any, error) {
+	data, err := json.Marshal(opts)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "Identity", opts.DB.Identity.HasValue()); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue()); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func censorField(m map[string]any, parent, field string, present bool) error {
+	if !present {
+		return nil
+	}
+	sub, ok := m[parent].(map[string]any)
+	if !ok {
+		return fmt.Errorf("cannot redact %s.%s: parent key missing or wrong type", parent, field)
+	}
+	sub[field] = "<redacted>"
+	return nil
 }
 
 // nodeSubBuilder provides parent linkage, forwarding, and Node() navigation

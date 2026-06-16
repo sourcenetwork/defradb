@@ -136,6 +136,7 @@ func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -144,33 +145,40 @@ func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "User",
-						"fields": append(DefaultFields,
+						"fields": DefaultFields("User").Append(
 							Field{
 								"name": "boss",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
+						).Append(
 							Field{
 								"name": "_bossID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
+						).Append(
 							Field{
 								"name": "minion",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
+						).Append(
 							Field{
 								"name": "_minionID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),

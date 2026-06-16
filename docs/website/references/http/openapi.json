@@ -2111,6 +2111,26 @@
                 ]
             }
         },
+        "/node/options": {
+            "get": {
+                "description": "Get node configuration options",
+                "operationId": "get_node_options",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "node"
+                ]
+            }
+        },
         "/p2p/active-peers": {
             "get": {
                 "operationId": "active_peers",
