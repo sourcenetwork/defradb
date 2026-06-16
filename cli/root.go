@@ -82,6 +82,11 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"URL of HTTP endpoint to listen on or connect to",
 	)
 	cmd.PersistentFlags().String(
+		"audience",
+		cfg.GetString(config.ConfigFlags["audience"]),
+		"Audience to set on minted auth tokens. Defaults to the host of --url",
+	)
+	cmd.PersistentFlags().String(
 		"keyring-namespace",
 		cfg.GetString(config.ConfigFlags["keyring-namespace"]),
 		"Service name to use when using the system backend",
