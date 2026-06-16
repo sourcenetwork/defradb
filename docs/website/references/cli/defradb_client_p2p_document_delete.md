@@ -14,10 +14,10 @@ defradb client p2p document delete [docIDs] [flags]
 ### Examples
 
 ```
-delete single document: 
+delete single document:  
   defradb client p2p document delete bae123
 
-delete multiple documents: 
+delete multiple documents:  
   defradb client p2p document delete bae123,bae456
 ```
 

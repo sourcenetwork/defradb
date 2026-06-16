@@ -18,10 +18,10 @@ defradb identity new [flags]
 ### Examples
 
 ```
-generate a new identity with secp256k1 key (default): 
+generate a new identity with secp256k1 key (default):  
   defradb identity new
 
-generate a new identity with ed25519 key: 
+generate a new identity with ed25519 key:  
   defradb identity new --type ed25519
 ```
 

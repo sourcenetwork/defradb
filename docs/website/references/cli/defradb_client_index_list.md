@@ -16,7 +16,7 @@ defradb client index list [-c --collection <collection>] [flags]
 ### Examples
 
 ```
-show all index for 'Users' collection: 
+show all index for 'Users' collection:  
   defradb client index list --collection Users
 ```
 

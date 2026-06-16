@@ -16,10 +16,10 @@ defradb client p2p document sync [collection-name] [docID...] [flags]
 ### Examples
 
 ```
-sync single document: 
+sync single document:  
   defradb client p2p document sync Users bae123
 
-sync multiple documents: 
+sync multiple documents:  
   defradb client p2p document sync Users bae123 bae456
 ```
 

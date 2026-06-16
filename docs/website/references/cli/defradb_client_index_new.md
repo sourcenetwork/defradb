@@ -17,13 +17,13 @@ defradb client index new -c --collection <collection> --fields <fields[:ASC|:DES
 ### Examples
 
 ```
-make a new index for 'Users' collection on 'name' field: 
+make a new index for 'Users' collection on 'name' field:  
   defradb client index new --collection Users --fields name
 
-make a new named index for 'Users' collection on 'name' field: 
+make a new named index for 'Users' collection on 'name' field:  
   defradb client index new --collection Users --fields name --name UsersByName
 
-make a new unique index for 'Users' collection on 'name' and 'age': 
+make a new unique index for 'Users' collection on 'name' and 'age':  
   defradb client index new --collection Users --fields name:ASC,age:DESC --unique
 ```
 

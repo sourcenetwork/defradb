@@ -13,10 +13,10 @@ defradb client p2p connect <addresses...> [flags]
 ### Examples
 
 ```
-Connect to a peer: 
+Connect to a peer:  
   defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
 
-Connect to multiple peers: 
+Connect to multiple peers:  
   defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
 ```
 

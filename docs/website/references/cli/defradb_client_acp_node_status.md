@@ -22,7 +22,7 @@ defradb client acp node status [-i --identity] [flags]
 ### Examples
 
 ```
-Check Node ACP status: 
+Check Node ACP status:  
   defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 

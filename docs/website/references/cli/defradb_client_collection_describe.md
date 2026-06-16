@@ -13,16 +13,16 @@ defradb client collection describe [flags]
 ### Examples
 
 ```
-view all collections: 
+view all collections:  
   defradb client collection describe
 
-view collection by name: 
+view collection by name:  
   defradb client collection describe --name User
 
-view collection by collection id: 
+view collection by collection id:  
   defradb client collection describe --collection-id bae123
 
-view collection by version id: 
+view collection by version id:  
   defradb client collection describe --version-id bae123
 ```
 

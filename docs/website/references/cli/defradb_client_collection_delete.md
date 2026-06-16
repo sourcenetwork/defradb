@@ -25,13 +25,13 @@ defradb client collection delete [collectionNames] [flags]
 ### Examples
 
 ```
-delete every version of a single collection: 
+delete every version of a single collection:  
   defradb client collection delete Users
 
-delete every version of multiple collections in one call (this can be used to delete collections that reference each other via relations): 
+delete every version of multiple collections in one call (this can be used to delete collections that reference each other via relations):  
   defradb client collection delete Users,Books
 
-delete only the active head version, keeping earlier versions: 
+delete only the active head version, keeping earlier versions:  
   defradb client collection delete --active-only Users
 ```
 

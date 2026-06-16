@@ -16,13 +16,13 @@ defradb client lens add [cfg] [flags]
 ### Examples
 
 ```
-add from an argument string: 
+add from an argument string:  
   defradb client lens add '{"lenses": [...'
 
-add from file: 
+add from file:  
   defradb client lens add -f lens_config.json
 
-add from stdin: 
+add from stdin:  
   cat lens_config.json | defradb client lens add -
 ```
 

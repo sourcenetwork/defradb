@@ -19,7 +19,7 @@ defradb keyring get <name> [flags]
 ### Examples
 
 ```
-Get encryption key: 
+Get encryption key:  
   defradb keyring get encryption-key
 ```
 

@@ -30,7 +30,7 @@ defradb client acp document relationship add [--docID] [-c --collection] [-r --r
 ### Examples
 
 ```
-Let another actor read a private document: 
+Let another actor read a private document:  
   defradb client acp document relationship add \
 	--collection Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
@@ -38,7 +38,7 @@ Let another actor read a private document:
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 
-Let all actors read a private document: 
+Let all actors read a private document:  
   defradb client acp document relationship add \
 	--collection Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \

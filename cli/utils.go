@@ -307,7 +307,7 @@ type exampleRegistryCtxKey struct{}
 func cliExampleToString(name, usage string) string {
 	// this is intentionally formatted this way, including
 	// the 2 white spaces at the start/end of the lines
-	return fmt.Sprintf(`%s: 
+	return fmt.Sprintf(`%s:  
   %s`, name, usage)
 }
 

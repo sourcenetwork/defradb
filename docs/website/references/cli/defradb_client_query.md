@@ -18,17 +18,17 @@ defradb client query [-i --identity] [request] [flags]
 ### Examples
 
 ```
-Single argument query: 
+Single argument query:  
   defradb client query 'query { ... }'
 
-Query from file: 
+Query from file:  
   defradb client query -f request.graphql
 
-Query from file, with a provided identity: 
+Query from file, with a provided identity:  
   defradb client query -f request.graphql \
 	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
 
-Read query from stdin: 
+Read query from stdin:  
   cat request.graphql | defradb client query -
 ```
 

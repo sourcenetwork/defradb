@@ -19,7 +19,7 @@ defradb keyring add <name> <private-key-hex> [flags]
 ### Examples
 
 ```
-Add encryption key: 
+Add encryption key:  
   defradb keyring add encryption-key 0000000000000000
 ```
 

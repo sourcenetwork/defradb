@@ -21,7 +21,7 @@ defradb client backup export  [-c --collections | -p --pretty | -f --format] <ou
 ### Examples
 
 ```
-Export data for the 'Users' collection: 
+Export data for the 'Users' collection:  
   defradb client backup export --collections Users user_data.json
 ```
 

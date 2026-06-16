@@ -13,7 +13,7 @@ defradb client encrypted-index delete -c --collection <collection> --field <fiel
 ### Examples
 
 ```
-delete an encrypted index for 'Users' collection on 'name' field: 
+delete an encrypted index for 'Users' collection on 'name' field:  
   defradb client encrypted-index delete --collection Users --field name
 ```
 

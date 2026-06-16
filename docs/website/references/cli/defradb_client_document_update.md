@@ -13,15 +13,15 @@ defradb client document update [-i --identity] [--filter <filter> --docID <docID
 ### Examples
 
 ```
-update by filter: 
+update by filter:  
   defradb client document update --collection-name User \
   --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'
 
-update by docID: 
+update by docID:  
   defradb client document update --collection-name User \
   --docID bae-123 --updater '{ "verified": true }'
 
-update private docID, with identity: 
+update private docID, with identity:  
   defradb client document update --collection-name User \
   -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
   --docID bae-123 --updater '{ "verified": true }'

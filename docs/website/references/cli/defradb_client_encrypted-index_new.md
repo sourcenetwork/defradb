@@ -17,7 +17,7 @@ defradb client encrypted-index new -c --collection <collection> --field <field> 
 ### Examples
 
 ```
-make a new index for 'Users' collection on 'name' field: 
+make a new index for 'Users' collection on 'name' field:  
   defradb client encrypted-index new --collection Users --field name
 ```
 

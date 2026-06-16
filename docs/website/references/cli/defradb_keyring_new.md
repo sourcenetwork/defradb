@@ -22,16 +22,16 @@ defradb keyring new [flags]
 ### Examples
 
 ```
-Create new keys: 
+Create new keys:  
   defradb keyring new
 
-with no encryption key: 
+with no encryption key:  
   defradb keyring new --no-encryption
 
-with no peer key: 
+with no peer key:  
   defradb keyring new --no-peer-key
 
-with system keyring: 
+with system keyring:  
   defradb keyring new --keyring-backend system
 ```
 

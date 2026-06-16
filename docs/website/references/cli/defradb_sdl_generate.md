@@ -15,16 +15,16 @@ defradb sdl generate --output schema.graphql <input schema files...> [flags]
 ### Examples
 
 ```
-Generate SDL: 
+Generate SDL:  
   defradb sdl generate foo.graphql
 
-Generate Multiple SDLs: 
+Generate Multiple SDLs:  
   defradb sdl generate foo.graphql bar.graphql
 
-Generate SDL and overwrite output: 
+Generate SDL and overwrite output:  
   defradb sdl generate foo.graphql bar.graphql --output schema.graphql -y
 
-Generate SDL with Searchable Encryption type definitions: 
+Generate SDL with Searchable Encryption type definitions:  
   defradb sdl generate foo.graphql -s
 ```
 

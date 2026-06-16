@@ -17,7 +17,7 @@ defradb client block verify-signature [flags]
 ### Examples
 
 ```
-verify the signature of a block: 
+verify the signature of a block:  
   defradb client block verify-signature --type <type> <public-key> <cid>
 ```
 
