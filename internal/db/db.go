@@ -292,6 +292,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
+	// Preserve the original context before ensureContextTxn binds a transaction to it.
+	// Recovery helpers open their own transactions and must not inherit the init txn.
+	baseCtx := ctx
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -331,7 +335,10 @@ func (db *DB) initialize(ctx context.Context) error {
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.
-		return txn.Commit()
+		if err := txn.Commit(); err != nil {
+			return err
+		}
+		return db.recoverIndexStates(baseCtx)
 	}
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
@@ -339,7 +346,10 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	return txn.Commit()
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	return db.recoverIndexStates(baseCtx)
 }
 
 func (db *DB) Rootstore() corekv.TxnStore {
