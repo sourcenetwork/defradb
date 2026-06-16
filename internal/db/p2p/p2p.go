@@ -550,27 +550,7 @@ func (p *P2P) publicDocIDsForBlock(
 		return []string{docID}, nil
 	}
 
-	rawDocID := string(block.Delta.GetDocID())
-	if rawDocID == "" || id.IsGenesisDocID(rawDocID) {
-		if block.Delta.IsComposite() {
-			return []string{client.NewDocIDV0(blockCID).String()}, nil
-		}
-		if block.Delta.IsField() {
-			collectionShortID, err := id.GetUncachedShortCollectionID(
-				ctx,
-				col.Version().CollectionID,
-				p.db.Multistore().Systemstore(),
-			)
-			if err != nil {
-				return nil, err
-			}
-			return id.GetPublicDocIDsForGenesisFieldFromStore(
-				ctx,
-				p.db.Multistore().Systemstore(),
-				collectionShortID,
-				blockCID,
-			)
-		}
+	if block.Delta.IsCollection() {
 		return []string{""}, nil
 	}
 
@@ -582,19 +562,22 @@ func (p *P2P) publicDocIDsForBlock(
 	if err != nil {
 		return nil, err
 	}
-	publicDocID, found, err := id.GetPublicDocIDFromStore(
+	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
 		ctx,
 		p.db.Multistore().Systemstore(),
 		collectionShortID,
-		rawDocID,
+		blockCID,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if found {
-		return []string{publicDocID}, nil
+	if len(docIDs) > 0 {
+		return docIDs, nil
 	}
-	return []string{rawDocID}, nil
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
+	}
+	return []string{""}, nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.

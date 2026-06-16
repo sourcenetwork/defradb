@@ -520,13 +520,11 @@ func (c *collection) save(
 		}
 	}
 
-	deltaDocID := ""
 	legacyCreateDocID := ""
-	if !isAdd {
-		deltaDocID = doc.ID().String()
-	} else {
+	encryptionDocID := doc.ID().String()
+	if isAdd {
 		legacyCreateDocID = doc.ID().String()
-		deltaDocID = id.NewGenesisDocID(legacyCreateDocID)
+		encryptionDocID = id.NewGenesisDocID(legacyCreateDocID)
 	}
 
 	links := make([]coreblock.DAGLink, 0)
@@ -567,14 +565,17 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			merkleCRDT.SetDeltaDocID(deltaDocID)
-
 			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocShortID, k, val))
 			if err != nil {
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(signingCtx, merkleCRDT, delta)
+			link, _, err := coreblock.AddDeltaWithOptions(
+				signingCtx,
+				merkleCRDT,
+				delta,
+				coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
+			)
 			if err != nil {
 				return err
 			}
@@ -588,19 +589,24 @@ func (c *collection) save(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
-	merkleCRDT.SetDeltaDocID(deltaDocID)
-
 	var link cidlink.Link
 	var headNode []byte
 	if isAdd {
-		link, headNode, err = coreblock.AddDeltaForNewDocCreate(
+		link, headNode, err = coreblock.AddDeltaWithOptions(
 			signingCtx,
 			merkleCRDT,
 			merkleCRDT.Delta(),
+			coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
 			links...,
 		)
 	} else {
-		link, headNode, err = coreblock.AddDelta(signingCtx, merkleCRDT, merkleCRDT.Delta(), links...)
+		link, headNode, err = coreblock.AddDeltaWithOptions(
+			signingCtx,
+			merkleCRDT,
+			merkleCRDT.Delta(),
+			coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
+			links...,
+		)
 	}
 	if err != nil {
 		return err
@@ -637,13 +643,16 @@ func (c *collection) save(
 				return err
 			}
 		}
-		for _, link := range links {
-			if err := id.SetGenesisFieldDocIDMapping(ctx, shortID, link.Cid, docID.String()); err != nil {
-				return err
-			}
-		}
 		client.ApplySavedDocumentID(doc, docID)
 		updateDocID = docID.String()
+	}
+	if err := id.SetBlockDocIDMapping(ctx, shortID, link.Cid, updateDocID); err != nil {
+		return err
+	}
+	for _, link := range links {
+		if err := id.SetBlockDocIDMapping(ctx, shortID, link.Cid, updateDocID); err != nil {
+			return err
+		}
 	}
 
 	// publish an update event when the txn succeeds

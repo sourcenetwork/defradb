@@ -25,13 +25,6 @@ import (
 
 // DocCompositeDelta represents a delta-state update made of sub-MerkleCRDTs.
 type DocCompositeDelta struct {
-	// This property is duplicated from field-level blocks.
-	//
-	// We could remove this without much hassle from the composite, however long-term
-	// the ideal solution would be to remove it from the field-level commits *excluding*
-	// the initial field level commit where it must exist in order to scope it to a particular
-	// document.  This would require a local index in order to handle field level commit-queries.
-	DocID    []byte
 	Priority uint64
 	// CollectionVersionID is the collection version datastore key at the time of commit.
 	//
@@ -56,7 +49,6 @@ var _ Delta = (*DocCompositeDelta)(nil)
 func (delta *DocCompositeDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type DocCompositeDelta struct {
-		docID     			Bytes
 		priority  			Int
 		collectionVersionID String
 		status          	Int
@@ -77,7 +69,6 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 type DocComposite struct {
 	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
-	deltaDocID          string
 	collectionVersionID string
 }
 
@@ -97,10 +88,6 @@ func NewDocComposite(
 	}
 }
 
-func (m *DocComposite) SetDeltaDocID(docID string) {
-	m.deltaDocID = docID
-}
-
 func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 	return m.key.ToHeadStoreKey()
 }
@@ -108,7 +95,6 @@ func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 // DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.deltaDocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Deleted,
 	}
@@ -117,7 +103,6 @@ func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 // Delta the value of the composite CRDT to DAG.
 func (m *DocComposite) Delta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.deltaDocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Active,
 	}

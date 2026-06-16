@@ -130,14 +130,7 @@ func (db *DB) publicDocIDsForSignatureBlock(
 	block *coreblock.Block,
 	collection client.Collection,
 ) ([]string, error) {
-	docID := string(block.Delta.GetDocID())
-	if docID == "" || id.IsGenesisDocID(docID) {
-		if block.Delta.IsComposite() {
-			return []string{client.NewDocIDV0(blockCID).String()}, nil
-		}
-		if block.Delta.IsField() {
-			return db.publicDocIDsForGenesisField(ctx, blockCID, collection)
-		}
+	if block.Delta.IsCollection() {
 		return []string{""}, nil
 	}
 
@@ -150,41 +143,21 @@ func (db *DB) publicDocIDsForSignatureBlock(
 		return nil, err
 	}
 
-	publicDocID, found, err := id.GetPublicDocIDFromStore(
+	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
 		ctx,
 		datastore.SystemstoreFrom(db.rootstore),
 		shortID,
-		docID,
+		blockCID,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if found {
-		return []string{publicDocID}, nil
-	}
-	return []string{docID}, nil
-}
-
-// publicDocIDsForGenesisField resolves public DocIDs for a genesis field block from the field-CID index.
-func (db *DB) publicDocIDsForGenesisField(
-	ctx context.Context,
-	fieldCID cid.Cid,
-	collection client.Collection,
-) ([]string, error) {
-	systemstore := datastore.SystemstoreFrom(db.rootstore)
-	collectionShortID, err := id.GetUncachedShortCollectionID(
-		ctx,
-		collection.Version().CollectionID,
-		systemstore,
-	)
-	if err != nil {
-		return nil, err
+	if len(docIDs) > 0 {
+		return docIDs, nil
 	}
 
-	return id.GetPublicDocIDsForGenesisFieldFromStore(
-		ctx,
-		systemstore,
-		collectionShortID,
-		fieldCID,
-	)
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
+	}
+	return []string{""}, nil
 }

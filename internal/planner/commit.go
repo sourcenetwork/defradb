@@ -610,21 +610,20 @@ func (n *dagScanNode) publicCommitDocID(
 	blockCID cid.Cid,
 	collectionID string,
 ) (string, bool, error) {
-	rawDocID := string(block.Delta.GetDocID())
-	if rawDocID != "" && !id.IsGenesisDocID(rawDocID) {
-		publicDocID, err := n.publicDocIDForStoredDocID(collectionID, rawDocID)
-		if err != nil {
-			return "", false, err
-		}
-		n.activePublicDocID = immutable.Some(publicDocID)
-		return publicDocID, true, nil
-	}
-
 	if block.Delta.IsCollection() {
 		return "", false, nil
 	}
 
-	if block.Delta.IsComposite() {
+	publicDocID, found, err := n.publicDocIDForBlockCID(collectionID, blockCID)
+	if err != nil {
+		return "", false, err
+	}
+	if found {
+		n.activePublicDocID = immutable.Some(publicDocID)
+		return publicDocID, true, nil
+	}
+
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
 		publicDocID := client.NewDocIDV0(blockCID).String()
 		n.activePublicDocID = immutable.Some(publicDocID)
 		return publicDocID, true, nil
@@ -646,6 +645,19 @@ func (n *dagScanNode) publicCommitDocID(
 	}
 
 	return "", true, nil
+}
+
+func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.Cid) (string, bool, error) {
+	collectionShortID, err := id.GetShortCollectionID(n.planner.ctx, collectionID)
+	if err != nil {
+		return "", false, err
+	}
+	return id.GetPublicDocIDForBlockFromStore(
+		n.planner.ctx,
+		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
+		collectionShortID,
+		blockCID,
+	)
 }
 
 func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID string) (string, error) {

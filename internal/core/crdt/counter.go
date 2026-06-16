@@ -35,7 +35,6 @@ type Incrementable interface {
 
 // CounterDelta is a single delta operation for a Counter
 type CounterDelta struct {
-	DocID     []byte
 	FieldName string
 	Priority  uint64
 	// Nonce is an added randomly generated number that ensures
@@ -56,7 +55,6 @@ var _ Delta = (*CounterDelta)(nil)
 func (delta *CounterDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CounterDelta struct {
-		docID     			Bytes
 		fieldName 			String
 		priority  			Int
 		nonce 				Int
@@ -79,7 +77,6 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 type Counter struct {
 	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
-	deltaDocID          string
 	collectionVersionID string
 	fieldName           string
 	allowDecrement      bool
@@ -107,10 +104,6 @@ func NewCounter(
 		allowDecrement:      allowDecrement,
 		kind:                kind,
 	}
-}
-
-func (c *Counter) SetDeltaDocID(docID string) {
-	c.deltaDocID = docID
 }
 
 func (c *Counter) HeadstorePrefix() keys.HeadstoreKey {
@@ -146,7 +139,6 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	}
 
 	return &CounterDelta{
-		DocID:               []byte(c.deltaDocID),
 		FieldName:           c.fieldName,
 		Data:                bytes,
 		CollectionVersionID: c.collectionVersionID,

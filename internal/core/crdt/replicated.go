@@ -24,8 +24,3 @@ type ReplicatedData interface {
 	// data will be cached.
 	HeadstorePrefix() keys.HeadstoreKey
 }
-
-// NewDocCreateMerger applies the first blocks of a new document.
-type NewDocCreateMerger interface {
-	MergeNewDocCreate(ctx context.Context, other Delta) error
-}

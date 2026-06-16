@@ -24,7 +24,6 @@ import (
 type FieldLevelCRDT interface {
 	ReplicatedData
 	Delta(ctx context.Context, data *DocField) (Delta, error)
-	SetDeltaDocID(docID string)
 }
 
 func FieldLevelCRDTWithStore(

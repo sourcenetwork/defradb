@@ -26,7 +26,6 @@ import (
 // LWWDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWDelta struct {
-	DocID     []byte
 	FieldName string
 	Priority  uint64
 	// CollectionVersionID is the collection version datastore key at the time of commit.
@@ -44,7 +43,6 @@ var _ Delta = (*LWWDelta)(nil)
 func (d LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type LWWDelta struct {
-		docID     			Bytes
 		fieldName 			String
 		priority  			Int
 		collectionVersionID String
@@ -66,13 +64,11 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 type LWW struct {
 	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
-	deltaDocID          string
 	collectionVersionID string
 	fieldName           string
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
-var _ NewDocCreateMerger = (*LWW)(nil)
 var _ ReplicatedData = (*LWW)(nil)
 
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
@@ -91,10 +87,6 @@ func NewLWW(
 	}
 }
 
-func (l *LWW) SetDeltaDocID(docID string) {
-	l.deltaDocID = docID
-}
-
 func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
 	return l.key.ToHeadStoreKey()
 }
@@ -108,7 +100,6 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 
 	return &LWWDelta{
 		Data:                bytes,
-		DocID:               []byte(l.deltaDocID),
 		FieldName:           l.fieldName,
 		CollectionVersionID: l.collectionVersionID,
 	}, nil
@@ -124,45 +115,34 @@ func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 		return ErrMismatchedMergeType
 	}
 
-	return l.setValue(ctx, d.Data, d.GetPriority(), false)
+	return l.setValue(ctx, d.Data, d.GetPriority())
 }
 
-func (l *LWW) MergeNewDocCreate(ctx context.Context, delta Delta) error {
-	d, ok := delta.(*LWWDelta)
-	if !ok {
-		return ErrMismatchedMergeType
-	}
-
-	return l.setValue(ctx, d.Data, d.GetPriority(), true)
-}
-
-func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64, newDocCreateMode bool) error {
+func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	key := l.key.WithValueFlag()
 
-	if !newDocCreateMode {
-		curPrio, err := getPriority(ctx, l.store, l.key)
+	curPrio, err := getPriority(ctx, l.store, l.key)
+	if err != nil {
+		return NewErrFailedToGetPriority(err)
+	}
+
+	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return NewErrGetRegisterStatus(err, l.fieldName)
+	}
+	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+		key = key.WithDeletedFlag()
+	}
+	if priority < curPrio {
+		return nil
+	} else if priority == curPrio {
+		curValue, err := l.store.Get(ctx, key)
 		if err != nil {
-			return NewErrFailedToGetPriority(err)
+			return NewErrGetRegisterValue(err, l.fieldName)
 		}
 
-		marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
-		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-			return NewErrGetRegisterStatus(err, l.fieldName)
-		}
-		if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
-			key = key.WithDeletedFlag()
-		}
-		if priority < curPrio {
+		if bytes.Compare(curValue, val) >= 0 {
 			return nil
-		} else if priority == curPrio {
-			curValue, err := l.store.Get(ctx, key)
-			if err != nil {
-				return NewErrGetRegisterValue(err, l.fieldName)
-			}
-
-			if bytes.Compare(curValue, val) >= 0 {
-				return nil
-			}
 		}
 	}
 

@@ -45,6 +45,11 @@ func putBlock(
 	return link.(cidlink.Link), nil //nolint:forcetypeassert
 }
 
+// AddDeltaOptions controls storage behavior around a CRDT delta.
+type AddDeltaOptions struct {
+	EncryptionDocID string
+}
+
 // AddDelta adds a new delta to the existing DAG.
 //
 // It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
@@ -54,24 +59,25 @@ func AddDelta(
 	delta crdt.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, crdtData, delta, false, links...)
+	return AddDeltaWithOptions(ctx, crdtData, delta, AddDeltaOptions{}, links...)
 }
 
-// AddDeltaForNewDocCreate applies the delta as part of a new document create.
-func AddDeltaForNewDocCreate(
+// AddDeltaWithOptions adds a delta with explicit storage behavior options.
+func AddDeltaWithOptions(
 	ctx context.Context,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
+	options AddDeltaOptions,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, crdtData, delta, true, links...)
+	return addDelta(ctx, crdtData, delta, options, links...)
 }
 
 func addDelta(
 	ctx context.Context,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
-	newDocCreateMode bool,
+	options AddDeltaOptions,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -91,7 +97,7 @@ func addDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := determineBlockEncryption(ctx, options.EncryptionDocID, fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
 	}
@@ -118,7 +124,7 @@ func addDelta(
 	}
 
 	// merge the delta and update the state
-	err = processBlock(ctx, crdtData, block, link, newDocCreateMode)
+	err = ProcessBlock(ctx, crdtData, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -220,46 +226,11 @@ func ProcessBlock(
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	return processBlock(ctx, crdtData, block, blockLink, false)
-}
-
-// ProcessBlockForNewDocCreate applies a block as part of a new document create.
-func ProcessBlockForNewDocCreate(
-	ctx context.Context,
-	crdtData crdt.ReplicatedData,
-	block *Block,
-	blockLink cidlink.Link,
-) error {
-	return processBlock(ctx, crdtData, block, blockLink, true)
-}
-
-func processBlock(
-	ctx context.Context,
-	crdtData crdt.ReplicatedData,
-	block *Block,
-	blockLink cidlink.Link,
-	newDocCreateMode bool,
-) error {
-	err := mergeBlock(ctx, crdtData, block.Delta.GetDelta(), newDocCreateMode)
-	if err != nil {
+	if err := crdtData.Merge(ctx, block.Delta.GetDelta()); err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
 	return updateHeads(ctx, crdtData, block, blockLink)
-}
-
-func mergeBlock(
-	ctx context.Context,
-	crdtData crdt.ReplicatedData,
-	delta crdt.Delta,
-	newDocCreateMode bool,
-) error {
-	if newDocCreateMode {
-		if merger, ok := crdtData.(crdt.NewDocCreateMerger); ok {
-			return merger.MergeNewDocCreate(ctx, delta)
-		}
-	}
-	return crdtData.Merge(ctx, delta)
 }
 
 func updateHeads(

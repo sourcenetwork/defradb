@@ -398,7 +398,7 @@ func (c *collection) deleteDocIDMappings(
 	if err := id.DeleteNodeDocIDAliasesForShortDocID(ctx, systemstore, shortDocID); err != nil {
 		return err
 	}
-	if err := id.DeleteGenesisFieldDocIDMappings(ctx, systemstore, collectionShortID, publicDocID); err != nil {
+	if err := id.DeleteBlockDocIDMappings(ctx, systemstore, collectionShortID, publicDocID); err != nil {
 		return err
 	}
 

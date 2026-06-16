@@ -393,9 +393,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return NewErrEncryptionKeyMissing(current.cid.String())
 		}
 
-		docID, err := vf.storageDocIDForDelta(
+		docID, err := vf.storageDocIDForBlock(
 			shortID,
-			string(block.Delta.GetDocID()),
+			block,
 			current.cid,
 			current.createShortDocID,
 		)
@@ -463,8 +463,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 
 		childCreateShortDocID := current.createShortDocID
-		if block.Delta.IsComposite() &&
-			(len(block.Delta.GetDocID()) == 0 || id.IsGenesisDocID(string(block.Delta.GetDocID()))) {
+		if block.Delta.IsComposite() {
 			childCreateShortDocID = docID
 		}
 		for i := len(block.Links) - 1; i >= 0; i-- {
@@ -478,45 +477,78 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) storageDocIDForDelta(
+func (vf *VersionedFetcher) storageDocIDForBlock(
 	collectionShortID uint32,
-	rawDocID string,
+	block *coreblock.Block,
 	blockCID cid.Cid,
 	createShortDocID string,
 ) (string, error) {
-	if rawDocID == "" || id.IsGenesisDocID(rawDocID) {
-		if createShortDocID != "" {
-			return createShortDocID, nil
-		}
-
-		publicDocID := client.NewDocIDV0(blockCID).String()
-		shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
-		if err != nil {
-			return "", err
-		}
-		if found {
-			return shortDocID, nil
-		}
-		return publicDocID, nil
+	if block.Delta.IsCollection() {
+		return "", nil
 	}
 
-	if _, found, err := id.GetPublicDocID(vf.ctx, collectionShortID, rawDocID); err != nil {
+	if createShortDocID != "" && block.Delta.IsField() {
+		return createShortDocID, nil
+	}
+
+	publicDocID, found, err := id.GetPublicDocIDForBlockFromStore(
+		vf.ctx,
+		vf.txn.Systemstore(),
+		collectionShortID,
+		blockCID,
+	)
+	if err != nil {
 		return "", err
-	} else if found {
-		return rawDocID, nil
+	}
+	if found {
+		return vf.storageDocIDForPublicDocID(collectionShortID, publicDocID)
 	}
 
-	if _, err := client.NewDocIDFromString(rawDocID); err != nil {
-		return rawDocID, nil
+	if block.Delta.IsComposite() {
+		if len(block.Heads) == 0 {
+			return vf.storageDocIDForPublicDocID(collectionShortID, client.NewDocIDV0(blockCID).String())
+		}
+		return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
 	}
-	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, rawDocID)
+
+	return "", client.ErrMalformedDocID
+}
+
+func (vf *VersionedFetcher) storageDocIDForPublicDocID(
+	collectionShortID uint32,
+	publicDocID string,
+) (string, error) {
+	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
 	if err != nil {
 		return "", err
 	}
 	if found {
 		return shortDocID, nil
 	}
-	return rawDocID, nil
+	return publicDocID, nil
+}
+
+func (vf *VersionedFetcher) storageDocIDForCompositeHead(
+	collectionShortID uint32,
+	heads []cidlink.Link,
+) (string, error) {
+	for _, head := range heads {
+		headBlock, err := vf.getDAGBlock(head.Cid)
+		if err != nil {
+			return "", err
+		}
+		if !headBlock.Delta.IsComposite() {
+			continue
+		}
+		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid, "")
+		if err != nil {
+			return "", err
+		}
+		if docID != "" {
+			return docID, nil
+		}
+	}
+	return "", client.ErrMalformedDocID
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

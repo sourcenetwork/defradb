@@ -174,10 +174,17 @@ func (c *collection) applyDelete(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
-	merkleCRDT.SetDeltaDocID(publicDocID)
 
-	link, b, err := coreblock.AddDelta(signingCtx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, b, err := coreblock.AddDeltaWithOptions(
+		signingCtx,
+		merkleCRDT,
+		merkleCRDT.DeleteDelta(),
+		coreblock.AddDeltaOptions{EncryptionDocID: publicDocID},
+	)
 	if err != nil {
+		return err
+	}
+	if err := id.SetBlockDocIDMapping(ctx, primaryKey.CollectionShortID, link.Cid, publicDocID); err != nil {
 		return err
 	}
 

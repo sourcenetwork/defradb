@@ -25,17 +25,17 @@ import (
 //
 // Collection-scoped mappings are used by normal document reads and writes.
 // Node-scoped mappings support paths that only have a public DocID, such as P2P
-// and block-signing lookups. Genesis field indexes are stored in both directions:
-// field CID -> DocID for verification, and DocID -> field CID for cleanup.
+// and block-signing lookups. Block indexes are stored in both directions:
+// block CID -> DocID for verification, and DocID -> block CID for cleanup.
 //
 // The path segments are intentionally short because these keys are persisted for
-// every document and, for genesis fields, every indexed field block.
+// every document and document block.
 const (
-	SHORT_ID_TO_DOC_ID      = "s"
-	DOC_ID_TO_SHORT_ID      = "p"
-	NODE_DOC_ID_INDEX       = "n"
-	GENESIS_FIELD_TO_DOC_ID = "f"
-	DOC_ID_TO_GENESIS_FIELD = "pf"
+	SHORT_ID_TO_DOC_ID  = "s"
+	DOC_ID_TO_SHORT_ID  = "p"
+	NODE_DOC_ID_INDEX   = "n"
+	BLOCK_CID_TO_DOC_ID = "b"
+	DOC_ID_TO_BLOCK_CID = "pb"
 )
 
 type systemstoreDocIDKey struct {
@@ -132,38 +132,38 @@ func NewNodeShortIDToDocIDKey(shortDocID string) NodeShortIDToDocIDKey {
 	}
 }
 
-// GenesisFieldToDocIDKey maps a genesis field block CID to one public doc ID that links to it.
-type GenesisFieldToDocIDKey struct {
+// BlockCIDToDocIDKey maps a document block CID to one public doc ID that links to it.
+type BlockCIDToDocIDKey struct {
 	systemstoreDocIDKey
 }
 
-var _ Key = (*GenesisFieldToDocIDKey)(nil)
+var _ Key = (*BlockCIDToDocIDKey)(nil)
 
-func NewGenesisFieldToDocIDKey(collectionShortID uint32, fieldCID string, docID string) GenesisFieldToDocIDKey {
-	return GenesisFieldToDocIDKey{
+func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, docID string) BlockCIDToDocIDKey {
+	return BlockCIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			strconv.Itoa(int(collectionShortID)),
-			GENESIS_FIELD_TO_DOC_ID,
-			fieldCID,
+			BLOCK_CID_TO_DOC_ID,
+			blockCID,
 			docID,
 		),
 	}
 }
 
-// DocIDToGenesisFieldKey maps a public doc ID to one of its genesis field block CIDs.
-type DocIDToGenesisFieldKey struct {
+// DocIDToBlockCIDKey maps a public doc ID to one of its document block CIDs.
+type DocIDToBlockCIDKey struct {
 	systemstoreDocIDKey
 }
 
-var _ Key = (*DocIDToGenesisFieldKey)(nil)
+var _ Key = (*DocIDToBlockCIDKey)(nil)
 
-func NewDocIDToGenesisFieldKey(collectionShortID uint32, docID string, fieldCID string) DocIDToGenesisFieldKey {
-	return DocIDToGenesisFieldKey{
+func NewDocIDToBlockCIDKey(collectionShortID uint32, docID string, blockCID string) DocIDToBlockCIDKey {
+	return DocIDToBlockCIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			strconv.Itoa(int(collectionShortID)),
-			DOC_ID_TO_GENESIS_FIELD,
+			DOC_ID_TO_BLOCK_CID,
 			docID,
-			fieldCID,
+			blockCID,
 		),
 	}
 }

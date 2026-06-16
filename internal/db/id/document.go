@@ -291,21 +291,21 @@ func GetNodeDocIDAliasesForShortDocID(
 	return aliases, nil
 }
 
-func SetGenesisFieldDocIDMapping(
+func SetBlockDocIDMapping(
 	ctx context.Context,
 	collectionShortID uint32,
-	fieldCID cid.Cid,
+	blockCID cid.Cid,
 	docID string,
 ) error {
-	if !fieldCID.Defined() || docID == "" {
+	if !blockCID.Defined() || docID == "" {
 		return nil
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	fieldCIDStr := fieldCID.String()
+	blockCIDStr := blockCID.String()
 	if err := txn.Systemstore().Set(
 		ctx,
-		keys.NewGenesisFieldToDocIDKey(collectionShortID, fieldCIDStr, docID).Bytes(),
+		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCIDStr, docID).Bytes(),
 		[]byte{},
 	); err != nil {
 		return err
@@ -313,22 +313,22 @@ func SetGenesisFieldDocIDMapping(
 
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewDocIDToGenesisFieldKey(collectionShortID, docID, fieldCIDStr).Bytes(),
+		keys.NewDocIDToBlockCIDKey(collectionShortID, docID, blockCIDStr).Bytes(),
 		[]byte{},
 	)
 }
 
-func GetPublicDocIDsForGenesisFieldFromStore(
+func GetPublicDocIDsForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
-	fieldCID cid.Cid,
+	blockCID cid.Cid,
 ) ([]string, error) {
-	if !fieldCID.Defined() {
+	if !blockCID.Defined() {
 		return nil, nil
 	}
 
-	prefix := keys.NewGenesisFieldToDocIDKey(collectionShortID, fieldCID.String(), "").ToString() + "/"
+	prefix := keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), "").ToString() + "/"
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
 	if err != nil {
 		return nil, err
@@ -354,13 +354,13 @@ func GetPublicDocIDsForGenesisFieldFromStore(
 	return docIDs, nil
 }
 
-func GetPublicDocIDForGenesisFieldFromStore(
+func GetPublicDocIDForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
-	fieldCID cid.Cid,
+	blockCID cid.Cid,
 ) (string, bool, error) {
-	docIDs, err := GetPublicDocIDsForGenesisFieldFromStore(ctx, store, collectionShortID, fieldCID)
+	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, store, collectionShortID, blockCID)
 	if err != nil {
 		return "", false, err
 	}
@@ -370,7 +370,7 @@ func GetPublicDocIDForGenesisFieldFromStore(
 	return docIDs[0], true, nil
 }
 
-func DeleteGenesisFieldDocIDMappings(
+func DeleteBlockDocIDMappings(
 	ctx context.Context,
 	store corekv.ReaderWriter,
 	collectionShortID uint32,
@@ -380,15 +380,15 @@ func DeleteGenesisFieldDocIDMappings(
 		return nil
 	}
 
-	docFieldPrefix := keys.NewDocIDToGenesisFieldKey(collectionShortID, publicDocID, "").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(docFieldPrefix)})
+	docBlockPrefix := keys.NewDocIDToBlockCIDKey(collectionShortID, publicDocID, "").ToString() + "/"
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(docBlockPrefix)})
 	if err != nil {
 		return err
 	}
 
 	type mappingKey struct {
-		docToField []byte
-		fieldToDoc []byte
+		docToBlock []byte
+		blockToDoc []byte
 	}
 	mappingKeys := make([]mappingKey, 0)
 	for {
@@ -400,15 +400,15 @@ func DeleteGenesisFieldDocIDMappings(
 			break
 		}
 
-		fieldCID := strings.TrimPrefix(string(iter.Key()), docFieldPrefix)
-		if fieldCID == "" {
+		blockCID := strings.TrimPrefix(string(iter.Key()), docBlockPrefix)
+		if blockCID == "" {
 			continue
 		}
 		mappingKeys = append(mappingKeys, mappingKey{
-			docToField: append([]byte(nil), iter.Key()...),
-			fieldToDoc: keys.NewGenesisFieldToDocIDKey(
+			docToBlock: append([]byte(nil), iter.Key()...),
+			blockToDoc: keys.NewBlockCIDToDocIDKey(
 				collectionShortID,
-				fieldCID,
+				blockCID,
 				publicDocID,
 			).Bytes(),
 		})
@@ -418,10 +418,10 @@ func DeleteGenesisFieldDocIDMappings(
 	}
 
 	for _, key := range mappingKeys {
-		if err := store.Delete(ctx, key.docToField); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err := store.Delete(ctx, key.docToBlock); err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return err
 		}
-		if err := store.Delete(ctx, key.fieldToDoc); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err := store.Delete(ctx, key.blockToDoc); err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return err
 		}
 	}
