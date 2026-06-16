@@ -61,24 +61,7 @@ func UpdateDocument(
 	filter := C.GoString(filterStr)
 	updater := C.GoString(updaterStr)
 	switch {
-	// Update by filter
-	case filter != "":
-		var filterValue any
-		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater,
-			options.WithIdentity(options.UpdateDocumentsWithFilter(), ident))
-		if err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		jsonBytes, err := json.Marshal(res)
-		if err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		return returnC(returnGoC(0, "", string(jsonBytes)))
-
-	// Update by docID
+	// If docID is provided, update the document by docID
 	case docID != "":
 		newDocID, err := client.NewDocIDFromString(docID)
 		if err != nil {
@@ -97,6 +80,25 @@ func UpdateDocument(
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(returnGoC(0, "", ""))
+
+	// If docID is not provided, next try to update the documents by filter
+	case filter != "":
+		var filterValue any
+		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater,
+			options.WithIdentity(options.UpdateDocumentsWithFilter(), ident))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		jsonBytes, err := json.Marshal(res)
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		return returnC(returnGoC(0, "", string(jsonBytes)))
+
+	// If neither docID nor filter is provided, that must be an error
 	default:
 		return returnC(returnGoC(1, errNoDocIDOrFilter, ""))
 	}
