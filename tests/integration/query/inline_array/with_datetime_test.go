@@ -458,8 +458,6 @@ func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
 	executeTestCaseDateTime(t, test)
 }
 
-// TestQueryInlineArrayWithDateTime_UTC_NOW tests using UTC_NOW inside a DateTime array
-// as requested in review by @ChrisBQu.
 func TestQueryInlineArrayWithDateTime_UTC_NOW(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

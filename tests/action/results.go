@@ -223,6 +223,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[string]:
 		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[time.Time]:
+		return areResultOptionsEqual(expectedVal, actual)
 	case []uint8:
 		return areResultsEqual(base64.StdEncoding.EncodeToString(expectedVal), actual)
 	case []int64:
