@@ -261,18 +261,18 @@ func convertToFloat32(propertyName string, untypedValue any) (float32, error) {
 // convertToTime converts a value to time.Time.
 // It supports time.Time and RFC3339 strings (used by CBOR/JSON).
 func convertToTime(propertyName string, untypedValue any) (time.Time, error) {
-    switch value := untypedValue.(type) {
-    case time.Time:
-        return value, nil
-    case string:
-        // Support both RFC3339 and RFC3339Nano for flexibility in tests and storage
-        if t, err := time.Parse(time.RFC3339Nano, value); err == nil {
-            return t, nil
-        }
-        return time.Parse(time.RFC3339, value)
-    default:
-        return time.Time{}, client.NewErrUnexpectedType[time.Time](propertyName, untypedValue)
-    }
+	switch value := untypedValue.(type) {
+	case time.Time:
+		return value, nil
+	case string:
+		// Support both RFC3339 and RFC3339Nano for flexibility in tests and storage
+		if t, err := time.Parse(time.RFC3339Nano, value); err == nil {
+			return t, nil
+		}
+		return time.Parse(time.RFC3339, value)
+	default:
+		return time.Time{}, client.NewErrUnexpectedType[time.Time](propertyName, untypedValue)
+	}
 }
 
 // convertToJSON converts the given value to a valid JSON value.

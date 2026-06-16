@@ -27,6 +27,9 @@ func eq(condition, data any, propExists bool) (bool, error) {
 	case immutable.Option[int64]:
 		data = immutableValueOrNil(arr)
 
+	case immutable.Option[float32]:
+		data = immutableValueOrNil(arr)
+
 	case immutable.Option[float64]:
 		data = immutableValueOrNil(arr)
 
@@ -71,6 +74,9 @@ func eq(condition, data any, propExists bool) (bool, error) {
 		return numbers.Equal(cn, data), nil
 
 	case float64:
+		return numbers.Equal(cn, data), nil
+
+	case float32:
 		return numbers.Equal(cn, data), nil
 
 	case time.Time:

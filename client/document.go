@@ -510,6 +510,10 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 			return time.Time{}, err
 		}
 		s = string(b)
+		if s == "UTC_NOW" {
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
+		}
 	case time.Time:
 		return val, nil
 	default:
@@ -644,7 +648,7 @@ func getDateTimeArray(ctx context.Context, v any, size int) ([]time.Time, error)
 		arr := make([]time.Time, len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
-				continue
+				return nil, ErrNullValueForNonNillableField
 			}
 			arr[i], err = getDateTime(ctx, arrItem)
 			if err != nil {
@@ -655,6 +659,9 @@ func getDateTimeArray(ctx context.Context, v any, size int) ([]time.Time, error)
 	case []any:
 		arr := make([]time.Time, len(val))
 		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
 			var err error
 			arr[i], err = getDateTime(ctx, arrItem)
 			if err != nil {
@@ -1046,21 +1053,21 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 
 		// In the case of nillable arrays of nillables, we need to convert to the underlying value.
 		var innerValue any
-        if v, ok := normValue.NillableStringArray(); ok {
-            innerValue = convertImmutable(v)
-        } else if v, ok := normValue.NillableIntArray(); ok {
-            innerValue = convertImmutable(v)
-        } else if v, ok := normValue.NillableFloat64Array(); ok {
-            innerValue = convertImmutable(v)
-        } else if v, ok := normValue.NillableFloat32Array(); ok {
-            innerValue = convertImmutable(v)
-        } else if v, ok := normValue.NillableBoolArray(); ok {
-            innerValue = convertImmutable(v)
-        } else if v, ok := normValue.NillableTimeArray(); ok {  // ← Added for nillable DateTime arrays
-            innerValue = convertImmutable(v)
-        } else {
-            innerValue = normValue.Unwrap()
-        }
+		if v, ok := normValue.NillableStringArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableIntArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat64Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat32Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableBoolArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableTimeArray(); ok {
+			innerValue = convertImmutable(v)
+		} else {
+			innerValue = normValue.Unwrap()
+		}
 		docMap[k] = innerValue
 	}
 

@@ -334,15 +334,15 @@ const (
 	FieldKind_NILLABLE_FLOAT64_ARRAY  ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY   ScalarArrayKind = 21
 	FieldKind_NILLABLE_FLOAT32_ARRAY  ScalarArrayKind = 22
-	FieldKind_DATETIME_ARRAY          ScalarArrayKind = 23
-	FieldKind_NILLABLE_DATETIME_ARRAY ScalarArrayKind = 24
-	FieldKind_INT                     ScalarKind      = 25
-	FieldKind_FLOAT64                 ScalarKind      = 26
-	FieldKind_FLOAT32                 ScalarKind      = 27
-	FieldKind_STRING                  ScalarKind      = 28
-	FieldKind_DATETIME                ScalarKind      = 29
-	FieldKind_BLOB                    ScalarKind      = 30
-	FieldKind_JSON                    ScalarKind      = 31
+	FieldKind_INT                     ScalarKind      = 23
+	FieldKind_FLOAT64                 ScalarKind      = 24
+	FieldKind_FLOAT32                 ScalarKind      = 25
+	FieldKind_STRING                  ScalarKind      = 26
+	FieldKind_DATETIME                ScalarKind      = 27
+	FieldKind_BLOB                    ScalarKind      = 28
+	FieldKind_JSON                    ScalarKind      = 29
+	FieldKind_DATETIME_ARRAY          ScalarArrayKind = 30
+	FieldKind_NILLABLE_DATETIME_ARRAY ScalarArrayKind = 31
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to

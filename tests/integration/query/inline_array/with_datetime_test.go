@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var dateTimeArraySchema = (`
+var dateTimeArrayCollection = (`
 	type Events {
 		name: String
 		scheduledTimes: [DateTime!]
@@ -31,23 +31,23 @@ var dateTimeArraySchema = (`
 // executeTestCaseDateTime adds the DateTime array schema then runs the test
 // while preserving all other TestCase fields (Description, etc.).
 func executeTestCaseDateTime(t *testing.T, test testUtils.TestCase) {
-    fullTest := test // copy struct
-    fullTest.Actions = append(
-        []any{
-            &action.AddSchema{
-                Schema: dateTimeArraySchema,
-            },
-        },
-        test.Actions...,
-    )
+	fullTest := test // copy struct
+	fullTest.Actions = append(
+		[]any{
+			&action.AddCollection{
+				SDL: dateTimeArrayCollection,
+			},
+		},
+		test.Actions...,
+	)
 
-    testUtils.ExecuteTestCase(t, fullTest)
+	testUtils.ExecuteTestCase(t, fullTest)
 }
 
 func TestQueryInlineArrayWithDateTime_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Birthday Party",
 					"scheduledTimes": null
@@ -78,7 +78,7 @@ func TestQueryInlineArrayWithDateTime_Null(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Meeting",
 					"scheduledTimes": []
@@ -109,7 +109,7 @@ func TestQueryInlineArrayWithDateTime_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Conference",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T14:00:00Z", "2024-01-16T10:00:00Z"]
@@ -144,7 +144,7 @@ func TestQueryInlineArrayWithDateTime_NotEmpty(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Workshop",
 					"optionalTimes": ["2024-02-20T10:00:00Z", null, "2024-02-21T15:00:00Z"]
@@ -179,7 +179,7 @@ func TestQueryInlineArrayWithNillableDateTime(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime_AllNull(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Pending",
 					"optionalTimes": [null, null]
@@ -216,13 +216,13 @@ func TestQueryInlineArrayWithNillableDateTime_AllNull(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime_FilterAny(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Mixed Event",
 					"optionalTimes": ["2024-03-15T10:00:00Z", null, "2024-03-16T10:00:00Z"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Empty Event",
 					"optionalTimes": [null, null]
@@ -251,13 +251,13 @@ func TestQueryInlineArrayWithNillableDateTime_FilterAny(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterAny(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Morning Event",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T10:00:00Z"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Evening Event",
 					"scheduledTimes": ["2024-01-15T18:00:00Z", "2024-01-15T19:00:00Z"]
@@ -286,13 +286,13 @@ func TestQueryInlineArrayWithDateTime_FilterAny(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Waitlisted",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-16T09:00:00Z"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Confirmed",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T10:00:00Z"]
@@ -334,13 +334,13 @@ func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Future Event",
 					"scheduledTimes": ["2024-02-01T00:00:00Z"]
 				}`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Past Event",
 					"scheduledTimes": ["2023-01-01T00:00:00Z"]
@@ -369,15 +369,15 @@ func TestQueryInlineArrayWithDateTime_FilterNone(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_Index(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddSchema{
-				Schema: `
+			&action.AddCollection{
+				SDL: `
 					type Events {
 						name: String
 						scheduledTimes: [DateTime!] @index
 					}
 				`,
 			},
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Indexed Event",
 					"scheduledTimes": ["2024-06-01T12:00:00Z"]
@@ -406,13 +406,13 @@ func TestQueryInlineArrayWithDateTime_Index(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.CreateDoc{
+			&action.AddDoc{
 				Doc: `{
 					"name": "Rescheduled Event",
 					"scheduledTimes": ["2024-01-01T00:00:00Z"]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"scheduledTimes": ["2024-02-01T00:00:00Z", "2024-03-01T00:00:00Z"]
 				}`,
@@ -443,90 +443,81 @@ func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
-    test := testUtils.TestCase{
-        Description: "Error on malformed DateTime string in array",
-        Actions: []any{
-            &action.CreateDoc{
-                Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
                     "name": "Bad Date",
                     "scheduledTimes": ["not-a-date"]
                 }`,
-                ExpectedError: "cannot parse \"not-a-date\"",
-            },
-        },
-    }
+				ExpectedError: "cannot parse \"not-a-date\"",
+			},
+		},
+	}
 
-    executeTestCaseDateTime(t, test)
+	executeTestCaseDateTime(t, test)
 }
 
 // TestQueryInlineArrayWithDateTime_UTC_NOW tests using UTC_NOW inside a DateTime array
 // as requested in review by @ChrisBQu.
 func TestQueryInlineArrayWithDateTime_UTC_NOW(t *testing.T) {
-    test := testUtils.TestCase{
-        Description: "DateTime array with UTC_NOW value",
-        Actions: []any{
-            &action.AddSchema{
-                Schema: `type Events { name: String; times: [DateTime!] }`,
-            },
-            &action.CreateDoc{
-                Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
                     "name": "Now Event",
                     "times": ["UTC_NOW"]
                 }`,
-            },
-            &action.Request{
-                Request: `query { Events { name times } }`,
-                Results: map[string]any{
-                    "Events": []map[string]any{
-                        {
-                            "name": "Now Event",
-                            "times": []any{testUtils.CurrentTimestamp()},
-                        },
-                    },
-                },
-            },
-        },
-    }
+			},
+			&action.Request{
+				Request: `query { Events { name times } }`,
+				Results: map[string]any{
+					"Events": []map[string]any{
+						{
+							"name":  "Now Event",
+							"times": []any{testUtils.CurrentTimestamp()},
+						},
+					},
+				},
+			},
+		},
+	}
 
-    executeTestCaseDateTime(t, test)
+	executeTestCaseDateTime(t, test)
 }
 
 // TestQueryInlineArrayWithDateTime_NonNillable ensures non-nillable [DateTime!] arrays work
 // for consistency with recent changes in the codebase.
 func TestQueryInlineArrayWithDateTime_NonNillable(t *testing.T) {
-    test := testUtils.TestCase{
-        Description: "Non-nillable DateTime array ([DateTime!])",
-        Actions: []any{
-            &action.AddSchema{
-                Schema: `type Events { name: String; times: [DateTime!] }`,
-            },
-            &action.CreateDoc{
-                Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
                     "name": "Conference",
                     "times": ["2025-01-01T10:00:00Z", "2025-01-02T14:00:00Z"]
                 }`,
-            },
-            &action.Request{
-                Request: `query {
+			},
+			&action.Request{
+				Request: `query {
                     Events {
                         name
                         times
                     }
                 }`,
-                Results: map[string]any{
-                    "Events": []map[string]any{
-                        {
-                            "name": "Conference",
-                            "times": []time.Time{
-                                testUtils.MustParseTime("2025-01-01T10:00:00Z"),
-                                testUtils.MustParseTime("2025-01-02T14:00:00Z"),
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    }
+				Results: map[string]any{
+					"Events": []map[string]any{
+						{
+							"name": "Conference",
+							"times": []time.Time{
+								testUtils.MustParseTime("2025-01-01T10:00:00Z"),
+								testUtils.MustParseTime("2025-01-02T14:00:00Z"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-    executeTestCaseDateTime(t, test)
+	executeTestCaseDateTime(t, test)
 }
