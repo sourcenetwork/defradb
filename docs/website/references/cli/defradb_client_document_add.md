@@ -23,7 +23,7 @@ Options:
 		
 
 ```
-defradb client document add [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
+defradb client document add [-i, --identity <identity>] [-e, --encrypt] [--encrypt-fields <fields>] <document> [flags]
 ```
 
 ### Examples

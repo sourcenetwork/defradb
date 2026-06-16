@@ -20,7 +20,7 @@ Notes:
 
 
 ```
-defradb client acp node relationship add [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp node relationship add -r, --relation <relation> -a, --actor <actor> [-i, --identity <identity>] [flags]
 ```
 
 ### Examples

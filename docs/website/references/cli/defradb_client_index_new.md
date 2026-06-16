@@ -11,7 +11,7 @@ The --unique flag is optional. If provided, the index will be unique.
 If no order is specified for the field, the default value will be "ASC"
 
 ```
-defradb client index new -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique] [flags]
+defradb client index new -c, --collection <collection> --fields <fields[:ASC|:DESC]> [-n, --name <name>] [--unique] [flags]
 ```
 
 ### Examples

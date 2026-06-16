@@ -10,7 +10,7 @@ all collections that are on the given source collection version within the local
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client lens set [src] [dst] [cfg] [flags]
+defradb client lens set <src> <dst> [cfg] [flags]
 ```
 
 ### Examples

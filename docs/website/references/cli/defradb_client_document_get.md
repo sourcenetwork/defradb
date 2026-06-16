@@ -7,7 +7,7 @@ View document fields.
 View document fields.
 
 ```
-defradb client document get [-i --identity] [--show-deleted] <docID>  [flags]
+defradb client document get [-i, --identity <identity>] [--show-deleted] <docID> [flags]
 ```
 
 ### Examples
