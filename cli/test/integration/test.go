@@ -41,11 +41,20 @@ type Test struct {
 	// Actions contains the set of actions that should be
 	// executed as part of this test.
 	Actions action.Actions
+
+	// Timeout overrides the default context deadline for the test. When zero,
+	// the default of 1 second is used. Increase this for tests that start a
+	// node in disk mode, which requires more time than the in-memory default.
+	Timeout time.Duration
 }
 
 func (test *Test) Execute(t testing.TB) {
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	timeout := test.Timeout
+	if timeout == 0 {
+		timeout = time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	// Prepend a start action if there is not already one present, this saves each test from

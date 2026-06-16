@@ -17,3 +17,10 @@ const (
 	// looked into.  Going one byte smaller does not have this issue.
 	defaultChunkSize = (1 << 20) - 1
 )
+
+// GetDefaultChunkSize returns the default chunk size.
+// This function exists so that the value used above can be utilized by other packages, without a danger of
+// the value being changed inadvertently in only one location.
+func GetDefaultChunkSize() int {
+	return defaultChunkSize
+}

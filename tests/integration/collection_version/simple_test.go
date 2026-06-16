@@ -167,6 +167,7 @@ func TestCollectionVersionSimpleAddsCollectionWithDefaultFieldsGivenEmptyType(t 
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -175,7 +176,7 @@ func TestCollectionVersionSimpleAddsCollectionWithDefaultFieldsGivenEmptyType(t 
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name":   "Users",
-						"fields": DefaultFields.Tidy(),
+						"fields": DefaultFields("Users").Tidy(),
 					},
 				},
 			},
@@ -240,6 +241,7 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testin
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -248,12 +250,13 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithStringField(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -307,6 +310,7 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -315,12 +319,13 @@ func TestCollectionVersionSimpleAddsCollectionGivenTypeWithBlobField(t *testing.
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "data",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Blob",
+									"kind":   "SCALAR",
+									"name":   "Blob",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -353,6 +358,7 @@ func TestCollectionVersionSimple_WithJSONField_AddsCollectionGivenType(t *testin
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -361,12 +367,13 @@ func TestCollectionVersionSimple_WithJSONField_AddsCollectionGivenType(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "data",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "JSON",
+									"kind":   "SCALAR",
+									"name":   "JSON",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -399,6 +406,7 @@ func TestCollectionVersionSimple_WithFloat32Field_AddsCollectionGivenType(t *tes
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -407,12 +415,13 @@ func TestCollectionVersionSimple_WithFloat32Field_AddsCollectionGivenType(t *tes
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "data",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float32",
+									"kind":   "SCALAR",
+									"name":   "Float32",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -445,6 +454,7 @@ func TestCollectionVersionSimple_WithFloat64Field_AddsCollectionGivenType(t *tes
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -453,12 +463,13 @@ func TestCollectionVersionSimple_WithFloat64Field_AddsCollectionGivenType(t *tes
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "data",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float64",
+									"kind":   "SCALAR",
+									"name":   "Float64",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -491,6 +502,7 @@ func TestCollectionVersionSimple_WithFloatField_AddsCollectionGivenType(t *testi
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -499,12 +511,13 @@ func TestCollectionVersionSimple_WithFloatField_AddsCollectionGivenType(t *testi
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "data",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float64",
+									"kind":   "SCALAR",
+									"name":   "Float64",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -561,6 +574,7 @@ func TestCollectionVersionSimple_WithAllTypes_AddsCollectionGivenTypes(t *testin
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -569,152 +583,230 @@ func TestCollectionVersionSimple_WithAllTypes_AddsCollectionGivenTypes(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Users").Append(
 							Field{
 								"name": "tBlob",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Blob"},
+									"kind":   "SCALAR",
+									"name":   "Blob",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tBool",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Boolean"},
+									"kind":   "SCALAR",
+									"name":   "Boolean",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tBoolA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tDateTime",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "DateTime"},
+									"kind":   "SCALAR",
+									"name":   "DateTime",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloat",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float64"},
+									"kind":   "SCALAR",
+									"name":   "Float64",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloat32",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float32"},
+									"kind":   "SCALAR",
+									"name":   "Float32",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloat32A",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloat64",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Float64"},
+									"kind":   "SCALAR",
+									"name":   "Float64",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloat64A",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tFloatA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tInt",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int"},
+									"kind":   "SCALAR",
+									"name":   "Int",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tIntA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tJSON",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "JSON"},
+									"kind":   "SCALAR",
+									"name":   "JSON",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNBoolA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "Boolean",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNFloat32A",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "Float32",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNFloat64A",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "Float64",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNFloatA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "Float64",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNIntA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "Int",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tNStringA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "SCALAR",
+										"name": "String",
+									},
+								},
 							},
 						).Append(
 							Field{
 								"name": "tString",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String"},
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
+								},
 							},
 						).Append(
 							Field{
 								"name": "tStringA",
 								"type": map[string]any{
 									"kind": "LIST",
-									"name": any(nil)},
+									"name": any(nil),
+									"ofType": map[string]any{
+										"kind": "NON_NULL",
+										"name": nil,
+									},
+								},
 							},
 						).Tidy(),
 					},

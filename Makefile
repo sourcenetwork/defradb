@@ -67,7 +67,7 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
-JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
+JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/... 
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
@@ -175,9 +175,9 @@ deps\:modules:
 deps\:mocks:
 	go install github.com/vektra/mockery/v3@v3.5.2
 
-.PHONY: deps\:playground
-deps\:playground:
-	go generate -tags playground ./playground/...
+.PHONY: deps\:explorer
+deps\:explorer:
+	go generate -tags explorer ./explorer/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -197,7 +197,8 @@ deps:
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mocks
+	$(MAKE) deps:mocks && \
+	$(MAKE) deps:explorer
 
 .PHONY: mocks
 mocks:

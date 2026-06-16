@@ -23,9 +23,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// PlaygroundEnabled is used to detect if the playground is enabled
+// ExplorerEnabled is used to detect if the explorer is enabled
 // on the current http server instance.
-var PlaygroundEnabled = false
+var ExplorerEnabled = false
 
 // We only allow cipher suites that are marked secure
 // by ssllabs

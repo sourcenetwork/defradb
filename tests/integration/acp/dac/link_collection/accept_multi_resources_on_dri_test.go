@@ -72,6 +72,7 @@ resources:
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -80,20 +81,22 @@ resources:
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
+						"fields": schemaUtils.DefaultFields("Users").Append(
 							schemaUtils.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							schemaUtils.Field{
 								"name": "age",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
+									"kind":   "SCALAR",
+									"name":   "Int",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -159,6 +162,7 @@ resources:
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -167,20 +171,22 @@ resources:
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
+						"fields": schemaUtils.DefaultFields("Users").Append(
 							schemaUtils.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							schemaUtils.Field{
 								"name": "age",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
+									"kind":   "SCALAR",
+									"name":   "Int",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -209,6 +215,7 @@ resources:
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -217,12 +224,13 @@ resources:
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Books", // NOTE: "Books" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
+						"fields": schemaUtils.DefaultFields("Books").Append(
 							schemaUtils.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
