@@ -16,11 +16,20 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-// Doc ID mapping keys bridge two lookup shapes:
-// collection-scoped keys preserve the short ID <-> public DocID relation, while
-// node-scoped keys handle paths that only know a public DocID. Genesis field
-// indexes are stored both ways so verification can resolve field blocks quickly
-// and document cleanup can remove those reverse indexes without scanning.
+// Doc ID mapping keys bridge storage IDs and public DocIDs.
+//
+// Public DocIDs are derived from the genesis composite CID, but the datastore
+// needs a stable key before that CID exists. Document data is therefore written
+// under a local short ID, and these systemstore keys record how that short ID
+// maps to the public DocID once the genesis block has been materialized.
+//
+// Collection-scoped mappings are used by normal document reads and writes.
+// Node-scoped mappings support paths that only have a public DocID, such as P2P
+// and block-signing lookups. Genesis field indexes are stored in both directions:
+// field CID -> DocID for verification, and DocID -> field CID for cleanup.
+//
+// The path segments are intentionally short because these keys are persisted for
+// every document and, for genesis fields, every indexed field block.
 const (
 	SHORT_ID_TO_DOC_ID      = "s"
 	DOC_ID_TO_SHORT_ID      = "p"
