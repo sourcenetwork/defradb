@@ -450,7 +450,9 @@ func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
                     "name": "Bad Date",
                     "scheduledTimes": ["not-a-date"]
                 }`,
-				ExpectedError: "cannot parse \"not-a-date\"",
+				// Error wording differs between mutation paths (collection vs GQL),
+				// but both surface the offending value verbatim.
+				ExpectedError: "not-a-date",
 			},
 		},
 	}

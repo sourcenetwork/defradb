@@ -501,6 +501,8 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
+const UTCNOW = "UTC_NOW"
+
 func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
@@ -510,7 +512,7 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 			return time.Time{}, err
 		}
 		s = string(b)
-		if s == "UTC_NOW" {
+		if s == UTCNOW {
 			t := clock.TimeFromContext(ctx)
 			return t.UTC(), nil
 		}
@@ -518,7 +520,7 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 		return val, nil
 	default:
 		s = val.(string)
-		if s == "UTC_NOW" {
+		if s == UTCNOW {
 			t := clock.TimeFromContext(ctx)
 			return t.UTC(), nil
 		}
