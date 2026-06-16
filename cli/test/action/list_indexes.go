@@ -50,7 +50,7 @@ func (a *ListIndexes) Execute() {
 
 	if a.Collection != "" {
 		// Listing indexes for a specific collection
-		result, err := executeJson[[]client.IndexDescription](a.s.Ctx, args)
+		result, err := executeJson[[]client.IndexDescriptionStatus](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)
@@ -76,7 +76,7 @@ func (a *ListIndexes) Execute() {
 		}
 	} else {
 		// Listing all indexes
-		result, err := executeJson[map[client.CollectionName][]client.IndexDescription](a.s.Ctx, args)
+		result, err := executeJson[map[client.CollectionName][]client.IndexDescriptionStatus](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)

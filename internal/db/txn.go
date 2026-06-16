@@ -529,7 +529,7 @@ func (txn *Txn) GetCollections(
 func (txn *Txn) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
 	ctx = InitContext(ctx, txn)
 
 	ctx, unlock := lockForTxn(ctx, txn)

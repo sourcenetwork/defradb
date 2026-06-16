@@ -955,7 +955,7 @@ func (w *CWrapper) GetCollections(
 func (w *CWrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -978,7 +978,7 @@ func (w *CWrapper) ListIndexes(
 		return nil, errors.New(res.Error)
 	}
 
-	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
+	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescriptionStatus](res.Value)
 	if err != nil {
 		return nil, err
 	}

@@ -35,22 +35,37 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// listIndexDescriptions returns all the index descriptions in the database.
+// listIndexDescriptions returns all index descriptions in the database joined with their runtime state.
 func (db *DB) listIndexDescriptions(
 	ctx context.Context,
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
 	collections, err := description.GetCollections(ctx, db.collectionRepository)
-
 	if err != nil {
 		return nil, err
 	}
 
-	indexes := make(map[client.CollectionName][]client.IndexDescription)
+	indexes := make(map[client.CollectionName][]client.IndexDescriptionStatus)
 
 	for _, col := range collections {
-		if len(col.Indexes) > 0 {
-			indexes[col.Name] = col.Indexes
+		if len(col.Indexes) == 0 {
+			continue
 		}
+		states, err := getIndexStates(ctx, col.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+		statuses := make([]client.IndexDescriptionStatus, len(col.Indexes))
+		for i, desc := range col.Indexes {
+			s := client.IndexDescriptionStatus{IndexDescription: desc}
+			if state, ok := states[desc.ID]; ok {
+				s.Status = state.Status
+				s.Reason = state.Reason
+			} else {
+				s.Status = client.IndexStatusReady
+			}
+			statuses[i] = s
+		}
+		indexes[col.Name] = statuses
 	}
 
 	return indexes, nil
@@ -613,11 +628,11 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 	return gc, nil
 }
 
-// ListIndexes returns all indexes for the collection.
+// ListIndexes returns all indexes for the collection with their current status.
 func (c *collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.IndexDescriptionStatus, error) {
 	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	opt := utils.NewOptions(opts...)
@@ -626,7 +641,30 @@ func (c *collection) ListIndexes(
 		return nil, err
 	}
 
-	return c.Version().Indexes, nil
+	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	states, err := getIndexStates(ctx, c.def.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	indexes := c.Version().Indexes
+	result := make([]client.IndexDescriptionStatus, len(indexes))
+	for i, desc := range indexes {
+		s := client.IndexDescriptionStatus{IndexDescription: desc}
+		if state, ok := states[desc.ID]; ok {
+			s.Status = state.Status
+			s.Reason = state.Reason
+		} else {
+			s.Status = client.IndexStatusReady
+		}
+		result[i] = s
+	}
+	return result, nil
 }
 
 // NewEncryptedIndex adds a new encrypted index to the collection.

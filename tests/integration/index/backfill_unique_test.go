@@ -107,7 +107,7 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 				Unique:        true,
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
-			// The definition persists even though the backfill failed.
+			// The definition persists even though the backfill failed, with a failed status.
 			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
@@ -118,6 +118,12 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age"},
 						},
+					},
+				},
+				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+					"User_age_ASC": {
+						Status: client.IndexStatusFailed,
+						Reason: "can not index",
 					},
 				},
 			},
@@ -153,6 +159,11 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age"},
 						},
+					},
+				},
+				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+					"User_age_ASC": {
+						Status: client.IndexStatusReady,
 					},
 				},
 			},

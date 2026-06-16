@@ -342,7 +342,7 @@ type Store interface {
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListIndexesOptions],
-	) (map[CollectionName][]IndexDescription, error)
+	) (map[CollectionName][]IndexDescriptionStatus, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
 	ListAllEncryptedIndexes(
