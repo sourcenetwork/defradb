@@ -185,26 +185,27 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 			// Because the datastore read-locks are only ever released when the transaction closes,
 			// we do not need to worry about timing or order-of-operation issues, *unless* we change
 			// when the datastore read-locks are released.
-			// Prefix-shaped keys do not identify a document.
-			if key.DocShortID != "" {
-				if _, done := deletedDocIDs[key.DocShortID]; !done {
-					publicDocID, found, err := id.GetPublicDocID(ctx, colShortID, key.DocShortID)
-					if err != nil {
-						return err
-					}
-					if !found {
-						publicDocID = key.DocShortID
-					}
-
-					err = c.hardDeleteDocumentBlocks(ctx, key.DocShortID)
-					if err != nil {
-						return err
-					}
-					if err := c.deleteDocIDMappings(ctx, colShortID, key.DocShortID, publicDocID); err != nil {
-						return err
-					}
-					deletedDocIDs[key.DocShortID] = struct{}{}
+			// Every stored document key under this prefix should identify a document.
+			if key.DocShortID == "" {
+				return NewErrTruncateDatastoreKey(errors.New("missing document short ID"), key.ToString())
+			}
+			if _, done := deletedDocIDs[key.DocShortID]; !done {
+				publicDocID, found, err := id.GetPublicDocID(ctx, colShortID, key.DocShortID)
+				if err != nil {
+					return err
 				}
+				if !found {
+					publicDocID = key.DocShortID
+				}
+
+				err = c.hardDeleteDocumentBlocks(ctx, key.DocShortID)
+				if err != nil {
+					return err
+				}
+				if err := c.deleteDocIDMappings(ctx, colShortID, key.DocShortID, publicDocID); err != nil {
+					return err
+				}
+				deletedDocIDs[key.DocShortID] = struct{}{}
 			}
 
 			// Not all store implementations support mutations whilst iterating, so whilst it would
