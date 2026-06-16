@@ -99,7 +99,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	cmd.PersistentFlags().String(
 		"keyring-path",
 		cfg.GetString(config.ConfigFlags["keyring-path"]),
-		"Path to store encrypted keys when using the file backend",
+		"Path (relative to DefraDB root directory) to store encrypted keys when using the file backend",
 	)
 	cmd.PersistentFlags().Bool(
 		"no-keyring",
