@@ -19,7 +19,7 @@ Notes:
 
 
 ```
-defradb client acp node relationship delete -r, --relation <relation> -a, --actor <actor> [-i, --identity <identity>] [flags]
+defradb client acp node relationship delete [flags]
 ```
 
 ### Examples

@@ -24,7 +24,7 @@ Notes:
 
 
 ```
-defradb client acp document relationship delete --docID <docID> -c, --collection <collection> -r, --relation <relation> -a, --actor <actor> [-i, --identity <identity>] [flags]
+defradb client acp document relationship delete [flags]
 ```
 
 ### Examples

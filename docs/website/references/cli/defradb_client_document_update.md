@@ -7,7 +7,7 @@ Update documents by docID or filter.
 Update documents by docID or filter.
 
 ```
-defradb client document update [-i, --identity <identity>] [--filter <filter> | --docID <docID>] --updater <updater> [flags]
+defradb client document update [flags]
 ```
 
 ### Examples

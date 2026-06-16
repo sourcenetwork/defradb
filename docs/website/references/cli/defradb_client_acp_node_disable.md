@@ -16,7 +16,7 @@ Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/re
 
 
 ```
-defradb client acp node disable [-i, --identity <identity>] [flags]
+defradb client acp node disable [flags]
 ```
 
 ### Examples

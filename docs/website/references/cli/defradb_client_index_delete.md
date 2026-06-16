@@ -7,7 +7,7 @@ Delete a collection's secondary index
 Delete a collection's secondary index.
 
 ```
-defradb client index delete -c, --collection <collection> -n, --name <name> [flags]
+defradb client index delete [flags]
 ```
 
 ### Examples

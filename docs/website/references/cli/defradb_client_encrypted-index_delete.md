@@ -7,7 +7,7 @@ Delete an encrypted index from a collection's field
 Delete an encrypted index from a collection's field.
 
 ```
-defradb client encrypted-index delete -c, --collection <collection> --field <field> [flags]
+defradb client encrypted-index delete [flags]
 ```
 
 ### Examples

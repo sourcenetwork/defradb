@@ -7,7 +7,7 @@ Delete documents by docID or filter.
 Delete documents by docID or filter and lists the number of documents deleted.
 
 ```
-defradb client document delete [-i, --identity <identity>] [--filter <filter> | --docID <docID>] [flags]
+defradb client document delete [flags]
 ```
 
 ### Examples

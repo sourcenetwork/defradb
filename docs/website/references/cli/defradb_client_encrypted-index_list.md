@@ -10,7 +10,7 @@ If the --collection flag is provided, only the encrypted indexes for that collec
 Otherwise, all encrypted indexes in the database will be shown.
 
 ```
-defradb client encrypted-index list [-c, --collection <collection>] [flags]
+defradb client encrypted-index list [flags]
 ```
 
 ### Examples

@@ -20,7 +20,7 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 
 
 ```
-defradb client backup export [-c, --collections <collections> | -p, --pretty | -f, --format <format>] <output_path> [flags]
+defradb client backup export <output_path> [flags]
 ```
 
 ### Examples
