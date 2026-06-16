@@ -22,6 +22,7 @@ type StartCli struct {
 	stateful
 	inlineArgs    []string
 	expectedError error
+	useDisk       bool
 }
 
 var _ Action = (*StartCli)(nil)
@@ -53,15 +54,36 @@ func Start() *StartCli {
 	return StartWithArgs([]string{})
 }
 
+// StartDisk starts the node using disk-based (Badger) storage. This allows testing
+// options that behave differently in disk mode, such as ChunkSize (which is always
+// overridden in memory mode).
+func StartDisk() *StartCli {
+	return StartDiskWithArgs([]string{})
+}
+
+// StartDiskWithArgs starts the node using disk-based storage with additional CLI arguments.
+func StartDiskWithArgs(args []string) *StartCli {
+	return &StartCli{
+		inlineArgs: args,
+		useDisk:    true,
+	}
+}
+
 func (a *StartCli) Execute() {
 	a.s.RootDir = a.s.T.TempDir()
+	// Wazero is the only lens runtime supported on all platforms. Set it via
+	// environment variable since there is no dedicated CLI flag for the lens runtime.
+	// t.Setenv restores the original value when the test ends.
+	a.s.T.Setenv("DEFRA_LENS_RUNTIME", "wazero")
 	args := []string{
 		"start",
 		"--no-keyring",
-		"--store=memory",
 		"--rootdir", a.s.RootDir,
 		"--url=127.0.0.1:",
 		"--document-acp-type=local",
+	}
+	if !a.useDisk {
+		args = append(args, "--store=memory")
 	}
 
 	args = append(args, a.inlineArgs...)
@@ -87,7 +109,7 @@ func (a *StartCli) Execute() {
 	case err := <-asyncExecute(ctx, args):
 		require.NoError(a.s.T, err)
 	case a.s.Url = <-messageChans.APIURL:
-	case <-time.After(1 * time.Second):
+	case <-ctx.Done():
 		a.s.T.Error("expected url but got none")
 	}
 }

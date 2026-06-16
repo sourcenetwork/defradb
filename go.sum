@@ -1238,8 +1238,6 @@ github.com/libp2p/go-cidranger v1.1.0 h1:ewPN8EZ0dd1LSnrtuwd4709PXVcITVeuwbag38y
 github.com/libp2p/go-cidranger v1.1.0/go.mod h1:KWZTfSr+r9qEo9OkI9/SIEeAtw+NNoU0dXIXt15Okic=
 github.com/libp2p/go-flow-metrics v0.3.0 h1:q31zcHUvHnwDO0SHaukewPYgwOBSxtt830uJtUx6784=
 github.com/libp2p/go-flow-metrics v0.3.0/go.mod h1:nuhlreIwEguM1IvHAew3ij7A8BMlyHQJ279ao24eZZo=
-github.com/libp2p/go-libp2p v0.48.0 h1:h2BrLAgrj7X8bEN05K7qmrjpNHYA+6tnsGRdprjTnvo=
-github.com/libp2p/go-libp2p v0.48.0/go.mod h1:Q1fBZNdmC2Hf82husCTfkKJVfHm2we5zk+NWmOGEmWk=
 github.com/libp2p/go-libp2p-asn-util v0.4.1 h1:xqL7++IKD9TBFMgnLPZR6/6iYhawHKHl950SO9L6n94=
 github.com/libp2p/go-libp2p-asn-util v0.4.1/go.mod h1:d/NI6XZ9qxw67b4e+NgpQexCIiFYJjErASrYW4PFDN8=
 github.com/libp2p/go-libp2p-kad-dht v0.38.0 h1:NToFzwvICo6ghDfSwuTmROCtl9LDXSZT1VawEbm4NUs=
@@ -1799,6 +1797,8 @@ github.com/sourcenetwork/corekv/namespace v0.3.1 h1:XllaUw6cteZkJYC5tgcJ40c6hIMh
 github.com/sourcenetwork/corekv/namespace v0.3.1/go.mod h1:uidxEQZsJ1eqecq1Zn5NipnFAgxL+VyXB6bPGziBewk=
 github.com/sourcenetwork/corelog v0.0.9 h1:wpoBbvju4wYtwpolfpGo8CrUVsRI8Gz1IeaXPQCW8yY=
 github.com/sourcenetwork/corelog v0.0.9/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
+github.com/sourcenetwork/go-libp2p v0.48.1-0.20260507195519-936d69f6d050 h1:zw0GN/ULVYmdhbii4U1RFoTyBp/LW/jK6gaYC0hKHG4=
+github.com/sourcenetwork/go-libp2p v0.48.1-0.20260507195519-936d69f6d050/go.mod h1:f0VD9Qbat15T3S1mcuyN1uNKNwWdEFno+YJJ1PFbnAs=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
 github.com/sourcenetwork/go-p2p v0.1.11 h1:ddsOsw0NTbx2b55bEP6xkNmMfh8J+FY40sQnBZrBDYI=
