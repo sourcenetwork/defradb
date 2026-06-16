@@ -21,7 +21,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 func TestPublicDocIDsForSignatureBlockResolvesGenesisCompositeAndField(t *testing.T) {
@@ -55,7 +54,7 @@ func TestPublicDocIDsForSignatureBlockResolvesGenesisCompositeAndField(t *testin
 	require.Equal(t, []string{doc.ID().String()}, docIDs)
 }
 
-func TestPublicDocIDsForSignatureBlockMapsStoredShortDocID(t *testing.T) {
+func TestPublicDocIDsForSignatureBlockMapsStoredBlockCID(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -71,20 +70,8 @@ func TestPublicDocIDsForSignatureBlockMapsStoredShortDocID(t *testing.T) {
 	err = col.AddDocument(ctx, doc)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
-	require.NoError(t, err)
-	defer txn.Discard()
-	txnCtx := InitContext(ctx, txn)
-
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
-	require.NoError(t, err)
-	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, doc.ID().String())
-	require.NoError(t, err)
-	require.True(t, found)
-
 	block := &coreblock.Block{
 		Delta: crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               []byte(shortDocID),
 			CollectionVersionID: col.Version().VersionID,
 			Status:              client.Active,
 		}),

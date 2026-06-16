@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestCRDTDeltaDocIDDefaultsEmpty(t *testing.T) {
+func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	ctx := context.Background()
 	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
 	ctx = datastore.CtxSetTxn(ctx, txn)
@@ -42,7 +42,7 @@ func TestCRDTDeltaDocIDDefaultsEmpty(t *testing.T) {
 		NewDocField(key.DocShortID, "name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
 	)
 	require.NoError(t, err)
-	require.Empty(t, lwwDelta.(*LWWDelta).DocID) //nolint:forcetypeassert
+	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
 	counter := NewCounter(store, "collection-version", key, "age", false, client.FieldKind_NILLABLE_INT)
 	counterDelta, err := counter.Delta(
@@ -50,8 +50,8 @@ func TestCRDTDeltaDocIDDefaultsEmpty(t *testing.T) {
 		NewDocField(key.DocShortID, "age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
 	)
 	require.NoError(t, err)
-	require.Empty(t, counterDelta.(*CounterDelta).DocID) //nolint:forcetypeassert
+	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
 	composite := NewDocComposite(store, "collection-version", key)
-	require.Empty(t, composite.Delta().DocID)
+	require.NotContains(t, string(composite.Delta().IPLDSchemaBytes()), "docID")
 }

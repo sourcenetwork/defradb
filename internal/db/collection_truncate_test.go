@@ -65,7 +65,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
 	require.NoError(t, err)
 
-	docIDs, err := id.GetPublicDocIDsForGenesisFieldFromStore(
+	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
@@ -101,7 +101,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err = id.GetPublicDocIDsForGenesisFieldFromStore(
+	docIDs, err = id.GetPublicDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
@@ -166,7 +166,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err := id.GetPublicDocIDsForGenesisFieldFromStore(
+	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,

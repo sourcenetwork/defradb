@@ -45,10 +45,10 @@ func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "{{.DocID0_1}}",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "{{.DocID0_0}}",
+							"docID": "{{.DocID0_1}}",
 						},
 					},
 				},

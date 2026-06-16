@@ -50,14 +50,14 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 			want: "/docid/n/s/" + shortDocID,
 		},
 		{
-			name: "genesis field to public",
-			key:  NewGenesisFieldToDocIDKey(collectionShortID, fieldCID, publicDocID),
-			want: "/docid/42/f/" + fieldCID + "/" + publicDocID,
+			name: "block to public",
+			key:  NewBlockCIDToDocIDKey(collectionShortID, fieldCID, publicDocID),
+			want: "/docid/42/b/" + fieldCID + "/" + publicDocID,
 		},
 		{
-			name: "public to genesis field",
-			key:  NewDocIDToGenesisFieldKey(collectionShortID, publicDocID, fieldCID),
-			want: "/docid/42/pf/" + publicDocID + "/" + fieldCID,
+			name: "public to block",
+			key:  NewDocIDToBlockCIDKey(collectionShortID, publicDocID, fieldCID),
+			want: "/docid/42/pb/" + publicDocID + "/" + fieldCID,
 		},
 	}
 

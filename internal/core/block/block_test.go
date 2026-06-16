@@ -29,7 +29,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -43,7 +42,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	compositeBlock := Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
-				DocID:               []byte("docID"),
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
 				Status:              1,
@@ -62,7 +60,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	fieldUpdateBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            2,
 				CollectionVersionID: "collectionVersionID",
@@ -79,7 +76,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	return Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
-				DocID:               []byte("docID"),
 				Priority:            2,
 				CollectionVersionID: "collectionVersionID",
 				Status:              1,
@@ -181,7 +177,6 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	block := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -220,7 +215,6 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -241,7 +235,6 @@ func TestBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
 	validBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -387,7 +380,6 @@ func TestBlock_Clone(t *testing.T) {
 	original := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",

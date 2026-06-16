@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
@@ -28,7 +27,6 @@ import (
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
-	const docID = "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790"
 	const collectionVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
 
 	fieldVal, err := cbor.Marshal(value)
@@ -38,7 +36,6 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 
 	delta := &crdt.LWWDelta{
 		Data:                fieldVal,
-		DocID:               []byte(id.NewGenesisDocID(docID)),
 		FieldName:           fieldName,
 		CollectionVersionID: collectionVersionID,
 		Priority:            1,

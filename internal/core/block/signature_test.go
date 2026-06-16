@@ -144,7 +144,6 @@ func TestBlockMarshal_IfSignatureNotSet_ShouldNotContainSignatureField(t *testin
 	block := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -207,7 +206,6 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 	block := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",

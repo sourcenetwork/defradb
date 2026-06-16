@@ -107,11 +107,11 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.Empty(t, aliases)
 
 	undefinedCID := blocks.NewBlock(nil).Cid()
-	docIDs, err := GetPublicDocIDsForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
+	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
 
-	docID, found, err := GetPublicDocIDForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
+	docID, found, err := GetPublicDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
 	require.False(t, found)
 	require.Empty(t, docID)
@@ -213,7 +213,7 @@ func TestDocIDMappingFallsBackToCollectionMappings(t *testing.T) {
 	require.Equal(t, publicDocID, gotPublicDocID)
 }
 
-func TestGenesisFieldDocIDMappings(t *testing.T) {
+func TestBlockDocIDMappings(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -226,30 +226,30 @@ func TestGenesisFieldDocIDMappings(t *testing.T) {
 	)
 	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
 
-	err := SetGenesisFieldDocIDMapping(ctx, collectionShortID, fieldCID, docID1)
+	err := SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID1)
 	require.NoError(t, err)
-	err = SetGenesisFieldDocIDMapping(ctx, collectionShortID, fieldCID, docID2)
+	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID2)
 	require.NoError(t, err)
 
-	docIDs, err := GetPublicDocIDsForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
 
-	docID, found, err := GetPublicDocIDForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err := GetPublicDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Contains(t, []string{docID1, docID2}, docID)
 
-	err = DeleteGenesisFieldDocIDMappings(ctx, txn.Systemstore(), collectionShortID, docID1)
+	err = DeleteBlockDocIDMappings(ctx, txn.Systemstore(), collectionShortID, docID1)
 	require.NoError(t, err)
 
-	docIDs, err = GetPublicDocIDsForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err = GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{docID2}, docIDs)
 
-	err = SetGenesisFieldDocIDMapping(ctx, collectionShortID, fieldCID, "")
+	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, "")
 	require.NoError(t, err)
-	docIDs, err = GetPublicDocIDsForGenesisFieldFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err = GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{docID2}, docIDs)
 }

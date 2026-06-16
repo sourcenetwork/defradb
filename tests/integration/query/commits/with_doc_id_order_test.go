@@ -166,6 +166,14 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 						{
@@ -175,14 +183,6 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 						{
 							"cid":    testUtils.ValidCID(),
 							"height": int64(1),
-						},
-						{
-							"cid":    testUtils.ValidCID(),
-							"height": int64(1),
-						},
-						{
-							"cid":    testUtils.ValidCID(),
-							"height": int64(2),
 						},
 					},
 				},
@@ -226,14 +226,6 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							"cid":    testUtils.ValidCID(),
-							"height": int64(2),
-						},
-						{
-							"cid":    testUtils.ValidCID(),
-							"height": int64(1),
-						},
-						{
-							"cid":    testUtils.ValidCID(),
 							"height": int64(1),
 						},
 						{
@@ -243,6 +235,14 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 						{
 							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
 						},
 					},
 				},
