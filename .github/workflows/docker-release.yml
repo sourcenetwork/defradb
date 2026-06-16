@@ -69,6 +69,8 @@ jobs:
           file: tools/defradb.containerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: |
+            VERSION=v${{ github.event.inputs.tag }}
           tags: |
             ${{ github.repository_owner }}/defradb:latest
             ${{ github.repository_owner }}/defradb:${{ github.event.inputs.tag }}
