@@ -16,10 +16,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -81,6 +84,8 @@ func TestQuery_AddDocWithNestedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -147,6 +152,8 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -311,6 +318,8 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -380,6 +389,8 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{
@@ -553,6 +564,8 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: userCollectionGQLSchema,
@@ -628,6 +641,8 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
+		// links are sorted by child CID (block.go:222) so encryption flips the order
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: userCollectionGQLSchema,
