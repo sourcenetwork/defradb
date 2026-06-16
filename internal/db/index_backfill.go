@@ -66,10 +66,15 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 // backfillIndex indexes all existing documents in def for the given index desc,
 // running the work in batched transactions so that no single transaction exceeds
 // the storage engine's transaction size limit.
+//
+// startAfter resumes the build after the given docID, used by startup recovery to
+// continue an interrupted build from its persisted watermark; pass None to build
+// the whole collection.
 func (db *DB) backfillIndex(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
+	startAfter immutable.Option[string],
 ) error {
 	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
 	for _, f := range desc.Fields {
@@ -78,7 +83,7 @@ func (db *DB) backfillIndex(
 		}
 	}
 
-	watermark := immutable.None[string]()
+	watermark := startAfter
 
 	for {
 		var (

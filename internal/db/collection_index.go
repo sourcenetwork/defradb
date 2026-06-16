@@ -288,7 +288,7 @@ func (c *collection) newIndex(
 	defSnapshot := c.def
 
 	backfill := func(bfCtx context.Context) error {
-		return c.db.backfillIndex(bfCtx, defSnapshot, desc)
+		return c.db.backfillIndex(bfCtx, defSnapshot, desc, immutable.None[string]())
 	}
 
 	return desc, backfill, nil

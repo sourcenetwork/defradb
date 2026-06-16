@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,35 +20,45 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// TestRecoverIndexStates_BuildingBecomesFailed simulates a shutdown mid-backfill
-// by seeding a building state record, then asserts that recovery marks the index failed.
-func TestRecoverIndexStates_BuildingBecomesFailed(t *testing.T) {
+// TestRecoverIndexStates_BuildingResumesAndCompletes simulates a shutdown mid-backfill
+// by clearing the index entries and seeding a building record, then asserts that recovery
+// rebuilds every entry and clears the record (a completed build keeps no record).
+func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
-	addUserDoc(t, ctx, col, "Alice")
-	addUserDoc(t, ctx, col, "Bob")
+	names := []string{"Alice", "Bob", "Carol"}
+	for _, name := range names {
+		addUserDoc(t, ctx, col, name)
+	}
 
 	desc, err := newNameIndex(t, ctx, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	// Seed a building record over the existing index to simulate an interrupted backfill.
+	// Wipe the entries and seed a building record with no watermark, mimicking a build
+	// that committed its definition and state but was interrupted before indexing docs.
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
+			return err
+		}
 		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
-			Status:    client.IndexStatusBuilding,
-			Watermark: "bae-some-docid",
+			Status: client.IndexStatusBuilding,
 		})
 	})
 	require.NoError(t, err)
+	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
 	require.NoError(t, db.recoverIndexStates(context.Background()))
 
-	state := readIndexState(t, ctx, db, collectionID, desc.ID)
-	assert.Equal(t, client.IndexStatusFailed, state.Status)
-	assert.True(t, strings.Contains(state.Reason, "interrupted"),
-		"expected reason to mention interrupted, got: %q", state.Reason)
+	// The resumed build indexes every document and clears the record (missing == ready).
+	assert.Equal(t, len(names), countIndexEntries(t, ctx, db, shortID, desc.ID))
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+	for _, name := range names {
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "name %q must be queryable", name)
+	}
 }
 
 // TestRecoverIndexStates_DroppingResumesGC simulates a shutdown mid-GC by seeding a

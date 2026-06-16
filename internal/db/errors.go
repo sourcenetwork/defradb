@@ -134,6 +134,7 @@ const (
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 	errIndexBackfillFailed                 string = "index backfill failed"
 	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -1174,4 +1175,14 @@ func NewErrIndexBackfillFailed(inner error, indexName string) error {
 // NewErrIndexGCFailed returns a new error indicating that the index GC failed.
 func NewErrIndexGCFailed(inner error, indexName string) error {
 	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
+	)
 }

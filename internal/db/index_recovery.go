@@ -15,8 +15,10 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -45,7 +47,7 @@ func (db *DB) recoverIndexStates(ctx context.Context) error {
 	for key, state := range states {
 		switch state.Status {
 		case client.IndexStatusBuilding:
-			if err := db.recoverBuilding(ctx, key); err != nil {
+			if err := db.recoverBuilding(ctx, key, state.Watermark); err != nil {
 				log.ErrorE("Failed to recover building index", err,
 					corelog.String("collectionID", key.CollectionID),
 					corelog.Any("indexID", key.IndexID),
@@ -78,14 +80,51 @@ func (db *DB) listAllIndexStates(ctx context.Context) (map[keys.IndexStateKey]in
 	return listIndexStates(txnCtx)
 }
 
-// recoverBuilding marks a building index as failed. The backfill was interrupted and
-// cannot be safely resumed without tracking where it left off, so the index is put
-// into a terminal failed state that the user must resolve by deleting the index.
-func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey) error {
-	return db.setIndexStateWithRetry(ctx, key.CollectionID, key.IndexID, indexState{
-		Status: client.IndexStatusFailed,
-		Reason: "index build interrupted by shutdown",
-	})
+// recoverBuilding resumes an interrupted backfill from its persisted watermark.
+// An interrupted build is not itself a problem with the index, so the build is
+// continued rather than abandoned. If the resumed build hits a non-retryable error
+// (e.g. the data violates a unique constraint), backfillIndex records the failed
+// state itself, so this returns that error without further action.
+func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, watermark string) error {
+	def, desc, err := db.findIndexDefinition(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	startAfter := immutable.None[string]()
+	if watermark != "" {
+		startAfter = immutable.Some(watermark)
+	}
+	return db.backfillIndex(ctx, def, desc, startAfter)
+}
+
+// findIndexDefinition resolves the collection version and index description for the
+// given state key from the collection repository.
+func (db *DB) findIndexDefinition(
+	ctx context.Context,
+	key keys.IndexStateKey,
+) (client.CollectionVersion, client.IndexDescription, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return client.CollectionVersion{}, client.IndexDescription{}, err
+	}
+	defer rawTxn.Discard()
+	txnCtx := InitContext(ctx, rawTxn)
+
+	versions, err := description.GetCollectionsByCollectionID(txnCtx, db.collectionRepository, key.CollectionID)
+	if err != nil {
+		return client.CollectionVersion{}, client.IndexDescription{}, err
+	}
+
+	for _, def := range versions {
+		for _, idx := range def.Indexes {
+			if idx.ID == key.IndexID {
+				return def, idx, nil
+			}
+		}
+	}
+	return client.CollectionVersion{}, client.IndexDescription{},
+		NewErrIndexWithIDDoesNotExist(key.IndexID, key.CollectionID)
 }
 
 // recoverDropping resumes an interrupted GC run for the given index. The short

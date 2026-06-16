@@ -59,6 +59,41 @@ func countIndexEntries(t *testing.T, ctx context.Context, db *DB, shortID uint32
 	return count
 }
 
+// clearIndexEntries deletes all raw keys under the given index prefix using the
+// transaction already set on ctx. Used to simulate a build that has not yet run.
+func clearIndexEntries(t *testing.T, ctx context.Context, shortID uint32, indexID uint32) error {
+	t.Helper()
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	prefix := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{Prefix: prefix, KeysOnly: true})
+	if err != nil {
+		return err
+	}
+
+	var rawKeys [][]byte
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		rawKeys = append(rawKeys, append([]byte(nil), iter.Key()...))
+	}
+	if err := iter.Close(); err != nil {
+		return err
+	}
+
+	for _, k := range rawKeys {
+		if err := txn.Datastore().Delete(ctx, rawBytesKey{k}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // getCollectionShortID resolves the short collection ID for tests.
 func getCollectionShortID(t *testing.T, ctx context.Context, db *DB, collectionID string) uint32 {
 	t.Helper()
