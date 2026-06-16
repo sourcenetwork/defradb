@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (c *Collection) AddDocument(
@@ -29,13 +28,7 @@ func (c *Collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	docVal, err := goji.MarshalJS(doc)
-	if err != nil {
-		return err
-	}
-	res, err := execute(ctx, c.client, "addDocument", docVal, makeDocAddOptions(opts))
+	res, err := execute(ctx, c.client, "addDocument", goji.MustMarshalJS(doc), jsOpts(opts))
 	if err != nil {
 		return err
 	}
@@ -44,25 +37,6 @@ func (c *Collection) AddDocument(
 	}
 	doc.Clean()
 	return nil
-}
-
-// addOptionsJS is used to marshal options for the JS client.
-type addOptionsJS struct {
-	EncryptDoc      bool     `json:"encryptDoc"`
-	EncryptedFields []string `json:"encryptedFields"`
-}
-
-func makeDocAddOptions(opts []options.Enumerable[options.AddDocumentOptions]) js.Value {
-	jsOpts := addOptionsJS{}
-	addOpts := utils.NewOptions(opts...)
-	jsOpts.EncryptDoc = addOpts.EncryptDoc
-	jsOpts.EncryptedFields = addOpts.EncryptedFields
-
-	optsVal, err := goji.MarshalJS(jsOpts)
-	if err != nil {
-		return js.Undefined()
-	}
-	return optsVal
 }
 
 func setDocumentIDsFromJS(docs []*client.Document, value js.Value) error {
@@ -88,13 +62,7 @@ func (c *Collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	docsVal, err := goji.MarshalJS(docs)
-	if err != nil {
-		return err
-	}
-	res, err := execute(ctx, c.client, "addManyDocuments", docsVal, makeDocAddOptions(opts))
+	res, err := execute(ctx, c.client, "addManyDocuments", goji.MustMarshalJS(docs), jsOpts(opts))
 	if err != nil {
 		return err
 	}
@@ -112,15 +80,11 @@ func (c *Collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
-	docID := doc.ID().String()
-	_, err = execute(ctx, c.client, "updateDocument", docID, string(patch))
-	if err != nil {
+	if _, err := execute(ctx, c.client, "updateDocument", doc.ID().String(), string(patch), jsOpts(opts)); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -132,19 +96,15 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	saveOpts := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, saveOpts)
-	_, err := c.GetDocument(ctx, doc.ID(), options.GetDocument().SetShowDeleted(true))
-	if err == nil {
-		return c.UpdateDocument(ctx, doc)
+	patch, err := doc.ToJSONPatch()
+	if err != nil {
+		return err
 	}
-	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		addOpts := options.AddDocument().
-			SetEncryptDoc(saveOpts.EncryptDoc).
-			SetEncryptedFields(saveOpts.EncryptedFields)
-		return c.AddDocument(ctx, doc, addOpts)
+	if _, err := execute(ctx, c.client, "saveDocument", doc.ID().String(), string(patch), jsOpts(opts)); err != nil {
+		return err
 	}
-	return err
+	doc.Clean()
+	return nil
 }
 
 func (c *Collection) DeleteDocument(
@@ -152,9 +112,7 @@ func (c *Collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "deleteDocument", docID.String())
+	res, err := execute(ctx, c.client, "deleteDocument", docID.String(), jsOpts(opts))
 	if err != nil {
 		return false, err
 	}
@@ -166,9 +124,7 @@ func (c *Collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "existsDocument", docID.String())
+	res, err := execute(ctx, c.client, "existsDocument", docID.String(), jsOpts(opts))
 	if err != nil {
 		return false, err
 	}
@@ -181,9 +137,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "updateDocumentsWithFilter", filter, updater)
+	res, err := execute(ctx, c.client, "updateDocumentsWithFilter", filter, updater, jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -199,9 +153,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter", filter)
+	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter", filter, jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -217,10 +169,7 @@ func (c *Collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	showDeleted := opt.ShowDeleted
-	res, err := execute(ctx, c.client, "getDocument", docID.String(), showDeleted)
+	res, err := execute(ctx, c.client, "getDocument", docID.String(), jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
