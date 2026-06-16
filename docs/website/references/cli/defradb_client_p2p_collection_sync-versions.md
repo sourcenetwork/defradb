@@ -11,7 +11,7 @@ Older versions of a requested collection will also be synchronized.
 
 
 ```
-defradb client p2p collection sync-versions [versionID...] [flags]
+defradb client p2p collection sync-versions <versionID...> [flags]
 ```
 
 ### Examples

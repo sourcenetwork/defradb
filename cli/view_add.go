@@ -24,7 +24,7 @@ func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var query, sdl, lensCID string
 	var queryFile, sdlFile string
 	cmd := &cobra.Command{
-		Use:   "add [query|query-file] [sdl|sdl-file]",
+		Use:   "add",
 		Short: "Add new view",
 		Long: `Add new database view.
 

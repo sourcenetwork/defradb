@@ -19,7 +19,7 @@ The named collections must not contain any documents. Delete all documents first
 before deleting the collection.
 
 ```
-defradb client collection delete [collectionNames] [flags]
+defradb client collection delete <collectionNames> [flags]
 ```
 
 ### Examples
