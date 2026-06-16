@@ -28,11 +28,7 @@ func MakeDocumentACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use: "add --docID <docID> " +
-			"-c, --collection <collection> " +
-			"-r, --relation <relation> " +
-			"-a, --actor <actor> " +
-			"[-i, --identity <identity>]",
+		Use: "add",
 		Short: "Add new relationship",
 		Long: `Add new relationship
 

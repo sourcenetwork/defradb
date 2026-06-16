@@ -23,7 +23,7 @@ import (
 func MakeDocumentGetCommand(ctx context.Context) *cobra.Command {
 	var showDeleted bool
 	var cmd = &cobra.Command{
-		Use:   "get [-i, --identity <identity>] [--show-deleted] <docID>",
+		Use:   "get <docID>",
 		Short: "View document fields.",
 		Long:  `View document fields.`,
 		Args:  cobra.ExactArgs(1),

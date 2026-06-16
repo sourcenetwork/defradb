@@ -25,7 +25,7 @@ func MakeEncryptedIndexNewCommand(ctx context.Context) *cobra.Command {
 	var fieldArg string
 	var typeArg string
 	var cmd = &cobra.Command{
-		Use:   "new -c, --collection <collection> --field <field> [--type <type>]",
+		Use:   "new",
 		Short: "Make a new encrypted index on a collection's field",
 		Long: `Make a new encrypted index on a collection's field.
 

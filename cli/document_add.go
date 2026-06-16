@@ -27,7 +27,7 @@ func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var cmd = &cobra.Command{
-		Use:   "add [-i, --identity <identity>] [-e, --encrypt] [--encrypt-fields <fields>] <document>",
+		Use:   "add <document>",
 		Short: "Add a new document.",
 		Long: `Add a new document.
 

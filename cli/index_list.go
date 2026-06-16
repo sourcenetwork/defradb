@@ -22,7 +22,7 @@ import (
 func MakeIndexListCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
-		Use:   "list [-c, --collection <collection>]",
+		Use:   "list",
 		Short: "Shows the list indexes in the database or for a specific collection",
 		Long: `Shows the list indexes in the database or for a specific collection.
 
