@@ -247,7 +247,15 @@ func (mp *mergeProcessor) loadComposites(
 	// of the composite DAG. However, the new block and its children might have branched off from an older block.
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
 	if block.Delta.GetPriority() >= mt.headHeight {
-		mp.composites.PushFront(block)
+		// Only composite blocks may enter the merge-processing list. A field
+		// (e.g. counter) block can reach here as the merge head when a peer pushes
+		// the DAG block-by-block (every block as its own pushLogRequest); processing
+		// it directly re-applies its delta — already applied via its owning
+		// composite's link recursion — double-counting counters (#4935). The
+		// composite is the merge unit and carries the field via its links.
+		if block.Delta.IsComposite() {
+			mp.composites.PushFront(block)
+		}
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
 			if err != nil {
