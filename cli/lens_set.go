@@ -92,7 +92,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 	EmbedCLIExample(ctx, cmd, "set from file",
 		`defradb client lens set bae123 bae456 -f collection_migration.lens`)
 
-	EmbedCLIExample(ctx, cmd, "add from stdin",
+	EmbedCLIExample(ctx, cmd, "set from stdin",
 		`cat collection_migration.lens | defradb client lens set bae123 bae456 -`)
 
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

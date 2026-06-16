@@ -13,10 +13,10 @@ defradb client document get [-i --identity] [--show-deleted] <docID>  [flags]
 ### Examples
 
 ```
-Get document by ID:
+Get document by ID: 
   defradb client document get --collection-name User bae-123
 
-Get a private document using an identity:
+Get a private document using an identity: 
   defradb client document get --collection-name User bae-123 \
 	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
 ```

@@ -14,10 +14,10 @@ defradb client p2p collection add [collectionNames] [flags]
 ### Examples
 
 ```
-add single collection:
+add single collection: 
   defradb client p2p collection add User
 
-add multiple collections:
+add multiple collections: 
   defradb client p2p collection add User,Address
 ```
 

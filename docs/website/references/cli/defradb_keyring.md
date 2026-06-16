@@ -16,10 +16,10 @@ The following keys are loaded from the keyring on start:
 ### Examples
 
 ```
-Randomly generate the required keys:
+Randomly generate the required keys: 
   defradb keyring new
 
-Import externally generated keys:
+Import externally generated keys: 
   defradb keyring add <name> <private-key-hex>
 ```
 

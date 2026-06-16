@@ -17,10 +17,10 @@ defradb client p2p collection sync-branchable [collection-id] [flags]
 ### Examples
 
 ```
-sync branchable collection:
+sync branchable collection: 
   defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq
 
-sync branchable collection with timeout:
+sync branchable collection with timeout: 
   defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq --timeout 10s
 ```
 

@@ -16,7 +16,7 @@ defradb client encrypted-index list [-c --collection <collection>] [flags]
 ### Examples
 
 ```
-show all encrypted indexes for 'Users' collection:
+show all encrypted indexes for 'Users' collection: 
   defradb client encrypted-index list --collection Users
 ```
 

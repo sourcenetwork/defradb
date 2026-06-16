@@ -30,7 +30,7 @@ defradb client acp document relationship delete [--docID] [-c --collection] [-r 
 ### Examples
 
 ```
-Remove an actor from reading a private document:
+Remove an actor from reading a private document: 
   defradb client acp document relationship delete \
 	--collection Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \

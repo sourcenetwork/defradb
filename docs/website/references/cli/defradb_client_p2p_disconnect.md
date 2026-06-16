@@ -13,10 +13,10 @@ defradb client p2p disconnect <addresses...> [flags]
 ### Examples
 
 ```
-Disconnect from a peer:
+Disconnect from a peer: 
   defradb client p2p disconnect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
 
-Disconnect from multiple peers:
+Disconnect from multiple peers: 
   defradb client p2p disconnect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
 ```
 

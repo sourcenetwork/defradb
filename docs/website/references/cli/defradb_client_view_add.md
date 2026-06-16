@@ -17,13 +17,13 @@ defradb client view add [query|query-file] [sdl|sdl-file] [flags]
 ### Examples
 
 ```
-add a simple view from string flags:
+add a simple view from string flags: 
   defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }'
 
-add using an existing lens CID:
+add using an existing lens CID: 
   defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-cid bafyreih...
 
-add from file flags using an existing lens CID:
+add from file flags using an existing lens CID: 
   defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-cid bafyreih...
 ```
 

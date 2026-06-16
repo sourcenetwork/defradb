@@ -15,7 +15,7 @@ defradb client lens list [flags]
 ### Examples
 
 ```
-list all lenses:
+list all lenses: 
   defradb client lens list
 ```
 

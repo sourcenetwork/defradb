@@ -17,7 +17,7 @@ defradb keyring list [flags]
 ### Examples
 
 ```
-List all keys:
+List all keys: 
   defradb keyring list
 ```
 

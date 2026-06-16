@@ -14,10 +14,10 @@ defradb client p2p replicator add [-c, --collection] <addresses...> [flags]
 ### Examples
 
 ```
-Add a replicator to replicate the "Users" collection to a peer:
+Add a replicator to replicate the "Users" collection to a peer: 
   defradb client p2p replicator add -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...
 
-Add a replicator to replicate the "Orders" collection to multiple peers:
+Add a replicator to replicate the "Orders" collection to multiple peers: 
   defradb client p2p replicator add -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...
 ```
 

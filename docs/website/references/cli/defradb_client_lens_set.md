@@ -16,13 +16,13 @@ defradb client lens set [src] [dst] [cfg] [flags]
 ### Examples
 
 ```
-set from an argument string:
+set from an argument string: 
   defradb client lens set bae123 bae456 '{"lenses": [...'
 
-set from file:
+set from file: 
   defradb client lens set bae123 bae456 -f collection_migration.lens
 
-add from stdin:
+set from stdin: 
   cat collection_migration.lens | defradb client lens set bae123 bae456 -
 ```
 

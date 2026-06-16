@@ -14,10 +14,10 @@ defradb client p2p collection delete [collectionNames] [flags]
 ### Examples
 
 ```
-delete single collection:
+delete single collection: 
   defradb client p2p collection delete User
 
-delete multiple collections:
+delete multiple collections: 
   defradb client p2p collection delete User,Address
 ```
 

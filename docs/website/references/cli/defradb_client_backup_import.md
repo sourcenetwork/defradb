@@ -13,7 +13,7 @@ defradb client backup import <input_path> [flags]
 ### Examples
 
 ```
-Import data to the database:
+Import data to the database: 
   defradb client backup import user_data.json
 ```
 

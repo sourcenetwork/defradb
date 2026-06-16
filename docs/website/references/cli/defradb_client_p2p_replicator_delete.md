@@ -14,7 +14,7 @@ defradb client p2p replicator delete [-c, --collection] <peerID> [flags]
 ### Examples
 
 ```
-Delete replicator:
+Delete replicator: 
   defradb client p2p replicator delete -c Users 12D3...
 ```
 

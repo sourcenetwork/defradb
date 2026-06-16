@@ -14,7 +14,7 @@ defradb client p2p replicator list [flags]
 ### Examples
 
 ```
-List all replicators:
+List all replicators: 
   defradb client p2p replicator list
 ```
 

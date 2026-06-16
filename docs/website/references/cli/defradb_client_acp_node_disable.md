@@ -22,7 +22,7 @@ defradb client acp node disable [-i --identity] [flags]
 ### Examples
 
 ```
-Disable node access control:
+Disable node access control: 
   defradb client acp node disable -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 
