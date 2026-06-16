@@ -114,7 +114,10 @@ func (c *clientCollection) saveDocument(this js.Value, args []js.Value) (js.Valu
 	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.col.SaveDocument(ctx, doc, asOpts(opt))
+	if err := c.col.SaveDocument(ctx, doc, asOpts(opt)); err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS([]string{doc.ID().String()})
 }
 
 func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Value, error) {

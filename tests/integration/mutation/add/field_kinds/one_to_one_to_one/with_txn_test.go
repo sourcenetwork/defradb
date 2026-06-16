@@ -300,6 +300,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			},
 			&action.CommitTransaction{
 				TransactionID: 1,
+				ExpectedError: "transaction conflict",
 			},
 			&action.Request{
 				// Assert publishers -> books direction outside the transactions.
@@ -316,12 +317,9 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID": testUtils.NewDocIndex(2, 1),
-							"name":   "Online",
-							"published": map[string]any{
-								"_docID": testUtils.ValidDocID(),
-								"name":   "Book By Online",
-							},
+							"_docID":    testUtils.NewDocIndex(2, 1),
+							"name":      "Online",
+							"published": nil,
 						},
 						{
 							"_docID": testUtils.NewDocIndex(2, 0),

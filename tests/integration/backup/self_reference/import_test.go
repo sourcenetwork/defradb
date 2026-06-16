@@ -77,7 +77,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 		`"User":[` +
 		`{` +
 		`"_bossID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
-		`"_docID":"bae-b9fdcc2f-6368-5c26-a39e-84161e553ab7",` +
+		`"_docID":"bae-1706de90-8842-5d6e-9702-5c45bebff330",` +
 		`"_docIDNew":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
 		`"age":31,` +
 		`"name":"Bob"` +

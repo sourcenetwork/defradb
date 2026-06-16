@@ -45,7 +45,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"iterations":    uint64(4),
+										"iterations":    uint64(3),
 										"filterMatches": uint64(3),
 										"dagScanNode": dataMap{
 											"iterations": uint64(4),

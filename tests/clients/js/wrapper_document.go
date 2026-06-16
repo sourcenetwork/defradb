@@ -100,7 +100,11 @@ func (c *Collection) SaveDocument(
 	if err != nil {
 		return err
 	}
-	if _, err := execute(ctx, c.client, "saveDocument", doc.ID().String(), string(patch), jsOpts(opts)); err != nil {
+	res, err := execute(ctx, c.client, "saveDocument", doc.ID().String(), string(patch), jsOpts(opts))
+	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS([]*client.Document{doc}, res[0]); err != nil {
 		return err
 	}
 	doc.Clean()
