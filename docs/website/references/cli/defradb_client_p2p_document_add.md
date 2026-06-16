@@ -8,7 +8,7 @@ Add P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p document add [docIDs] [flags]
+defradb client p2p document add <docIDs> [flags]
 ```
 
 ### Examples

@@ -7,7 +7,7 @@ Discard a DefraDB transaction.
 Discard a DefraDB transaction.
 
 ```
-defradb client tx discard [id] [flags]
+defradb client tx discard <id> [flags]
 ```
 
 ### Options

@@ -7,7 +7,7 @@ Commit a DefraDB transaction.
 Commit a DefraDB transaction.
 
 ```
-defradb client tx commit [id] [flags]
+defradb client tx commit <id> [flags]
 ```
 
 ### Options

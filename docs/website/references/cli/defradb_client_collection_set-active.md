@@ -8,7 +8,7 @@ Activates all collection versions with the given version id, and deactivates all
 other versions of that collection.
 
 ```
-defradb client collection set-active [versionID] [flags]
+defradb client collection set-active <versionID> [flags]
 ```
 
 ### Options
