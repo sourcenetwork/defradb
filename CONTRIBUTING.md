@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://discord.gg/w7jYQVJ"><img src="https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://twitter.com/sourcenetwrk"><img src="https://img.shields.io/twitter/follow/sourcenetwrk.svg?label=Follow&style=social" alt="Twitter"></a>
+  <a href="https://source.network/discord"><img src="https://img.shields.io/discord/1374835078781468722.svg?color=768AD4&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://x.com/edgeofsource"><img src="https://img.shields.io/twitter/follow/edgeofsource.svg?label=&style=social" alt="X"></a>
   <a href="https://github.com/sourcenetwork/defradb/blob/develop/licenses/BSL.txt"><img src="https://img.shields.io/badge/license-BSL--1.1-blue" alt="License"></a>
   <a href="https://codecov.io/gh/sourcenetwork/defradb"><img src="https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA" alt="codecov"></a>
   <a href="https://goreportcard.com/report/github.com/sourcenetwork/defradb"><img src="https://goreportcard.com/badge/github.com/sourcenetwork/defradb" alt="Go Report Card"></a>
@@ -17,7 +17,7 @@
 **Thank you for your interest in contributing to DefraDB!** You're about to join a wave of innovation in decentralized and powerful databases. Every contribution makes a difference - whether it's reporting a bug, improving documentation, suggesting a feature, or writing code.
 
 > [!NOTE]
-> 💡 **New here?** The quickest way to get started is to join our [Discord community](https://discord.gg/w7jYQVJ) and say hello. We're happy to help you find the right place to contribute!
+> 💡 **New here?** The quickest way to get started is to join our [Discord community](https://source.network/discord) and say hello. We're happy to help you find the right place to contribute!
 
 ---
 
@@ -211,7 +211,7 @@ Resolves #123
 
 ### 🏷️ Title Format
 
-PR titles follow the **[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)** style: &nbsp; **`<label>: <Description>`**
+PR titles follow our own convention, close to and inspired by **[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)** (but not identical to it): &nbsp; **`<label>: <Description>`**
 
 **Available labels:**
 
@@ -237,6 +237,7 @@ PR titles follow the **[Conventional Commits](https://www.conventionalcommits.or
 | 3️⃣ | Description **should** start with an [**action verb**](https://gist.github.com/scmx/411f6fea4ee3832806720d536a7d5d8f) | *Add, Update, Fix, Remove, Refactor...* |
 | 4️⃣ | Last character must be **alphanumeric** | No trailing `.` `)` or special characters |
 | 5️⃣ | Title must **not exceed 60 characters** (except `bot`) | Keep it concise! |
+| 6️⃣ | *Optional:* suffix the label with **`(i)`** to mark an **internal** change (no user-facing impact) - it is left out of the release changelog | `docs(i): Update contributing guidelines` |
 
 > 📌 More examples in [`tools/scripts/scripts_test.sh`](./tools/scripts/scripts_test.sh).
 
@@ -252,16 +253,7 @@ First-time contributors will be asked to sign the **Contributor License Agreemen
 
 Request a review from the **database-team**. After receiving feedback, please try to respond within **two weeks** to keep the conversation moving.
 
-We use labels inspired by **[Conventional Comments](https://conventionalcomments.org/)** to clarify comment intent:
-
-| &nbsp; | Label | Meaning | Blocking? |
-|--------|-------|---------|-----------|
-| 💭 | `thought` | Just sharing ideas | No |
-| ❓ | `question` | Reviewer needs clarification | No |
-| 🔍 | `nitpick` | Minor suggestion - take it or leave it | No |
-| 💡 | `suggestion` | Non-blocking suggestion | No |
-| 📋 | `todo` | Must be resolved before merge | **Yes** |
-| 🚨 | `issue` | Critical - must be fixed in this PR | **Yes** |
+Reviewers prefix their comments with labels inspired by **[Conventional Comments](https://conventionalcomments.org/)** to clarify intent and whether a comment is blocking, see the [Commenting Etiquette guide](./CONTRIBUTING_INTERNAL.md#-commenting-etiquette) for what each label means and what action is expected.
 
 ---
 
@@ -301,8 +293,8 @@ We'd love to hear from you!
 
 | &nbsp; | Channel | Purpose |
 |:------:|---------|---------|
-| 💬 | **[Discord](https://discord.gg/w7jYQVJ)** | Real-time chat & Q&A |
-| 🐦 | **[Twitter](https://twitter.com/sourcenetwrk)** | Updates & announcements |
+| 💬 | **[Discord](https://source.network/discord)** | Real-time chat & Q&A |
+|  | **[X](https://x.com/edgeofsource)** | Updates & announcements |
 | 💻 | **[Discussions](https://github.com/sourcenetwork/defradb/discussions)** | Feature ideas & long-form chats |
 
 ---

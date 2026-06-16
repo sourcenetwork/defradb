@@ -21,7 +21,7 @@
 &nbsp;
 
 - [🔀 Branch Flow](#-branch-flow)
-- [💬 Commenting Etiquette - Detailed Guide](#-commenting-etiquette--detailed-guide)
+- [💬 Commenting Etiquette](#-commenting-etiquette)
 - [⚙️ CI Checks - Complete Reference](#-ci-checks--complete-reference)
   - [✅ Required CI Checks](#-required-ci-checks)
   - [📊 Additional CI Checks (Non-Blocking)](#-additional-ci-checks-non-blocking)
@@ -85,7 +85,7 @@ make docs && make mocks && make lint && make tidy && make test && make test:chan
 
 ---
 
-## 💬 Commenting Etiquette - Detailed Guide
+## 💬 Commenting Etiquette
 
 We use labels inspired by **[Conventional Comments](https://conventionalcomments.org/)** to clarify the nature and urgency of each review comment. Prefix your review comments with the label.
 
@@ -129,6 +129,7 @@ These run on every PR targeting `develop` or `master` and **must pass** to merge
 
 | Check | What It Does | Fix Locally |
 |-------|--------------|-------------|
+| 🔗 **Build C Shared Library (Linux)**<br>[`build-c-shared-linux.yml`](./.github/workflows/build-c-shared-linux.yml) | Builds and tests the Linux C shared library (`libdefradb`) | `make build-c-shared-linux` |
 | 🏗️ **Build Dependencies**<br>[`build-dependencies.yml`](./.github/workflows/build-dependencies.yml) | Ensures all project dependencies can be built | `make deps` |
 | 📊 **Check Data Format Changes**<br>[`check-data-format-changes.yml`](./.github/workflows/check-data-format-changes.yml) | Detects backwards-incompatible data format changes. Must be documented in [`docs/data_format_changes/`](./docs/data_format_changes/README.md) | `make test:changes` *(see [change detector README](./tests/change_detector/README.md))* |
 | 📖 **Check Documentation**<br>[`check-documentation.yml`](./.github/workflows/check-documentation.yml) | Ensures CLI docs, HTTP API docs, and README TOC are up to date *(3 sub-checks: cli, http, readme-toc)* | `make docs` *(runs `docs:cli`, `docs:http`, `toc`)* |
@@ -140,8 +141,9 @@ These run on every PR targeting `develop` or `master` and **must pass** to merge
 | 🧹📊 **Lint Then Benchmark**<br>[`lint-then-benchmark.yml`](./.github/workflows/lint-then-benchmark.yml) | Linting + conditional benchmarks. *`SHORT` for PRs to develop · `FULL` with label · Skip with `action/no-benchmark`* | `make lint` then `make test:bench-short` |
 | 🚀 **Start Binary**<br>[`start-binary.yml`](./.github/workflows/start-binary.yml) | Builds the binary and verifies it starts | `make build && ./build/defradb start --no-keyring` |
 | 🧪 **Test Coverage**<br>[`test-coverage.yml`](./.github/workflows/test-coverage.yml) | Comprehensive test matrix: clients (Go/HTTP/CLI), databases, mutations, ACP, lenses, views, encryption, vectors → [Codecov](https://codecov.io/gh/sourcenetwork/defradb) | `make test` with [env variables](#-test-configuration-variables) |
+| 🐧 **Test Debian Package**<br>[`test-deb-package.yml`](./.github/workflows/test-deb-package.yml) | Builds the `libdefradb` Debian package, installs it, and verifies it works | `make build-c-shared-linux:deb` |
 | 🐋 **Validate Containerfile**<br>[`validate-containerfile.yml`](./.github/workflows/validate-containerfile.yml) | Builds Docker image from [containerfile](./tools/defradb.containerfile) and verifies it runs | Ensure [containerfile](./tools/defradb.containerfile) is valid |
-| 🏷️ **Validate Title**<br>[`validate-title.yml`](./.github/workflows/validate-title.yml) | Validates PR title follows [conventional commit style](./CONTRIBUTING.md#-title-format) | Fix title per [rules](./CONTRIBUTING.md#-title-format) · [script](./tools/scripts/validate-conventional-style.sh) |
+| 🏷️ **Validate Title**<br>[`validate-title.yml`](./.github/workflows/validate-title.yml) | Validates PR title follows our [title format rules](./CONTRIBUTING.md#-title-format) (inspired by conventional commits) | Fix title per [rules](./CONTRIBUTING.md#-title-format) · [script](./tools/scripts/validate-conventional-style.sh) |
 
 ### 📊 Additional CI Checks (Non-Blocking)
 

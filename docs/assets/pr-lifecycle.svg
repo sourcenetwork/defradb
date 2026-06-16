@@ -53,8 +53,8 @@
   <text x="250" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Resolves #issue</text>
   <text x="250" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Issue-driven dev</text>
 
-  <text x="415" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">18 workflow checks</text>
-  <text x="415" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">All must pass ✓</text>
+  <text x="415" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">CI workflow checks</text>
+  <text x="415" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Required must pass ✓</text>
 
   <text x="580" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">database-team</text>
   <text x="580" y="175" text-anchor="middle" font-family="monospace" font-size="10" fill="#8b949e">Conv. comments</text>
