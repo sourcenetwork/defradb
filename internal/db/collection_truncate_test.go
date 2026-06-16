@@ -237,3 +237,35 @@ func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, hasValue)
 }
+
+func TestCollectionTruncateErrorsOnStorageKeyWithoutDocID(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	malformedKey := keys.DataStoreKey{
+		CollectionShortID: collectionShortID,
+		InstanceType:      keys.ValueKey,
+	}
+	require.NoError(t, dbTxn.Datastore().Set(txnCtx, malformedKey, []byte("value")))
+	require.NoError(t, txn.Commit())
+
+	err = col.Truncate(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "missing document short ID")
+}
