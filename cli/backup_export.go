@@ -30,7 +30,8 @@ func MakeBackupExportCommand(ctx context.Context) *cobra.Command {
 		Short: "Export the database to a file",
 		Long: `Export the database to a file.
 
-The backup captures a snapshot of documents in the database, but does not include their history or ownership information.
+The backup captures a snapshot of documents in the database, but does not include their
+history or ownership information, and docIDs may not be preserved.
 
 The instance must be running in development mode for a backup to be exported.
 
