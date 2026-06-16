@@ -44,6 +44,34 @@ func bearerTokenForAudience(t *testing.T, audience string) string {
 	return string(token)
 }
 
+// tamperedSignatureToken returns a token that parses and carries the given
+// audience but whose signature no longer verifies against the signer's key. The
+// subject (public key) is left intact so FromToken still derives the right key;
+// only the signature segment is corrupted, so verification fails at jws.Verify.
+func tamperedSignatureToken(t *testing.T, audience string) string {
+	t.Helper()
+
+	token := bearerTokenForAudience(t, audience)
+
+	parts := strings.Split(token, ".")
+	require.Len(t, parts, 3, "expected a three-segment JWT")
+
+	// Mutate a character mid-segment so the decoded signature bytes actually change
+	// (flipping the final base64url character can leave them unchanged). The segment
+	// still decodes, but the signature no longer verifies.
+	sig := []byte(parts[2])
+	require.Greater(t, len(sig), 1)
+	i := len(sig) / 2
+	if sig[i] == 'A' {
+		sig[i] = 'B'
+	} else {
+		sig[i] = 'A'
+	}
+	parts[2] = string(sig)
+
+	return strings.Join(parts, ".")
+}
+
 func doAuthedPost(t *testing.T, cdb DB, url, token, body string) (int, string) {
 	t.Helper()
 
@@ -61,11 +89,11 @@ func doAuthedPost(t *testing.T, cdb DB, url, token, body string) (int, string) {
 	return res.StatusCode, strings.TrimSpace(string(raw))
 }
 
-// AuthMiddleware rejects every token-verify failure with the same bare "forbidden"
-// body. The tests below pin that opacity so a future fix that categorises the cause
-// can't silently preserve it. They also lock in that the rejection is deterministic
-// per (token, Host) pair — not a startup race, as the bug report assumed.
-func TestAuth_TokenAudienceMismatch_ReturnsBareForbidden(t *testing.T) {
+// AuthMiddleware rejects each distinct token-verify failure with a descriptive 403
+// body identifying the operator-actionable cause. The tests below pin those reason
+// strings (the stable contract) and lock in that the rejection is deterministic per
+// (token, Host) pair — not a startup race, as the bug report assumed.
+func TestAuth_TokenAudienceMismatch_ReturnsMismatchReason(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	// Token minted for audience "localhost:9181" — the typical provisioning host.
@@ -96,7 +124,7 @@ func TestAuth_TokenAudienceMismatch_ReturnsBareForbidden(t *testing.T) {
 			status, body := doAuthedPost(t, cdb, tc.url, token, tc.body)
 
 			require.Equal(t, http.StatusForbidden, status)
-			require.Equal(t, "forbidden", body)
+			require.Equal(t, authErrAudienceMismatch, body)
 		})
 	}
 }
@@ -123,9 +151,9 @@ func TestAuth_TokenAudienceMatch_PassesMiddleware(t *testing.T) {
 }
 
 // A missing `aud` claim is its own failure mode — VerifyAuthToken requires the
-// claim to exist, not just to match. Without this case the suite couldn't tell
-// "wrong audience" from "no audience" if those ever diverge in future categorisation.
-func TestAuth_TokenWithoutAudience_ReturnsBareForbidden(t *testing.T) {
+// claim to exist, not just to match — and now reports a distinct reason from a
+// wrong audience.
+func TestAuth_TokenWithoutAudience_ReturnsMissingAudienceReason(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	token := bearerTokenForAudience(t, "")
@@ -139,13 +167,14 @@ func TestAuth_TokenWithoutAudience_ReturnsBareForbidden(t *testing.T) {
 	)
 
 	require.Equal(t, http.StatusForbidden, status)
-	require.Equal(t, "forbidden", body)
+	require.Equal(t, authErrMissingAudience, body)
 }
 
 // Covers the FromToken-failure branch, which the audience cases don't reach
-// (they all parse cleanly). With this in place every distinguishable auth-failure
-// cause is shown to collapse to the same bare "forbidden".
-func TestAuth_MalformedToken_ReturnsBareForbidden(t *testing.T) {
+// (they all parse cleanly). A malformed token reports the generic invalid-token
+// reason — the same bucket as a signature failure, so the two are not
+// distinguishable to a caller.
+func TestAuth_MalformedToken_ReturnsInvalidTokenReason(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	status, body := doAuthedPost(
@@ -157,5 +186,26 @@ func TestAuth_MalformedToken_ReturnsBareForbidden(t *testing.T) {
 	)
 
 	require.Equal(t, http.StatusForbidden, status)
-	require.Equal(t, "forbidden", body)
+	require.Equal(t, authErrInvalidToken, body)
+}
+
+// A token whose signature does not verify must report the generic invalid-token
+// reason, never a signature-specific message — distinguishing it would let an
+// attacker probe key validity. We forge a token with a valid audience but signed
+// by a different key than the one its DID/public key implies.
+func TestAuth_InvalidSignature_ReturnsInvalidTokenReason(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	token := tamperedSignatureToken(t, "localhost:9181")
+
+	status, body := doAuthedPost(
+		t,
+		cdb,
+		"http://localhost:9181/api/v1/collections",
+		token,
+		`type Author { name: String }`,
+	)
+
+	require.Equal(t, http.StatusForbidden, status)
+	require.Equal(t, authErrInvalidToken, body)
 }

@@ -12,6 +12,7 @@ package identity
 
 import (
 	"encoding/hex"
+	"slices"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -20,6 +21,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -185,10 +187,29 @@ func (f *fullIdentity) UpdateToken(
 
 // VerifyAuthToken verifies that the jwt auth token is valid and that the signature
 // matches the identity of the subject.
+//
+// On failure it returns a typed error identifying the cause so callers can
+// distinguish operator-actionable problems from token-integrity ones:
+//   - ErrMissingAudience  — the token carries no audience claim.
+//   - ErrAudienceMismatch — the audience claim does not match the given audience.
+//   - ErrInvalidAuthToken — the token is malformed/structurally invalid, or its
+//     signature does not verify. Signature failures are intentionally not
+//     distinguished, to avoid leaking information about key validity.
 func VerifyAuthToken(ident TokenIdentity, audience string) error {
-	_, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithAudience(audience))
+	// Parse structurally first, without audience validation. jwx reports a missing
+	// `aud` claim the same way as a mismatched one (both as an audience failure), so
+	// we inspect the claim ourselves to tell the two apart.
+	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false))
 	if err != nil {
-		return err
+		return errors.Wrap(errInvalidAuthToken, err)
+	}
+
+	tokenAudience := token.Audience()
+	if len(tokenAudience) == 0 {
+		return ErrMissingAudience
+	}
+	if !slices.Contains(tokenAudience, audience) {
+		return ErrAudienceMismatch
 	}
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
@@ -203,7 +224,9 @@ func VerifyAuthToken(ident TokenIdentity, audience string) error {
 
 	_, err = jws.Verify([]byte(ident.BearerToken()), jws.WithKey(keyTypeToJWK(ident.PublicKey().Type()), pubKey))
 	if err != nil {
-		return err
+		// Bucket signature failures under the generic invalid-token error so the
+		// cause is not distinguishable from a malformed token.
+		return errors.Wrap(errInvalidAuthToken, err)
 	}
 
 	return nil

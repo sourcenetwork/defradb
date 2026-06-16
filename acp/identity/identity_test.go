@@ -13,6 +13,7 @@ package identity
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,6 +26,29 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 )
+
+// corruptJWTSignature returns the token with its signature segment altered so it
+// no longer verifies, while leaving the header and payload (incl. subject/audience)
+// intact. It mutates a character mid-segment to ensure the decoded signature bytes
+// actually change (flipping the final base64url character can leave them unchanged).
+func corruptJWTSignature(t *testing.T, token string) string {
+	t.Helper()
+
+	parts := strings.Split(token, ".")
+	require.Len(t, parts, 3, "expected a three-segment JWT")
+
+	sig := []byte(parts[2])
+	require.Greater(t, len(sig), 1)
+	i := len(sig) / 2
+	if sig[i] == 'A' {
+		sig[i] = 'B'
+	} else {
+		sig[i] = 'A'
+	}
+	parts[2] = string(sig)
+
+	return strings.Join(parts, ".")
+}
 
 type mockIdentity struct {
 	did         string
@@ -304,8 +328,11 @@ func TestVerifyAuthToken_WithExpiredToken_Error(t *testing.T) {
 	err = identity.UpdateToken(-time.Hour, immutable.Some("test-audience"), immutable.None[string]())
 	require.NoError(t, err)
 
+	// Expiry is validated during the structural parse, so it surfaces as the
+	// generic invalid-token cause (it is not one of the operator-actionable
+	// audience causes).
 	err = VerifyAuthToken(identity, "test-audience")
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrInvalidAuthToken)
 }
 
 func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
@@ -316,7 +343,45 @@ func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
 	require.NoError(t, err)
 
 	err = VerifyAuthToken(identity, "wrong-audience")
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrAudienceMismatch)
+}
+
+func TestVerifyAuthToken_WithMissingAudience_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	// Mint a token with no audience claim.
+	err = identity.UpdateToken(time.Hour, immutable.None[string](), immutable.None[string]())
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrMissingAudience)
+}
+
+func TestVerifyAuthToken_WithInvalidSignature_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	// Corrupt only the signature segment; the subject (public key) stays intact so
+	// the token still parses and the audience still matches, but jws.Verify fails.
+	identity.SetBearerToken(corruptJWTSignature(t, identity.BearerToken()))
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrInvalidAuthToken)
+}
+
+func TestVerifyAuthToken_WithMalformedToken_Error(t *testing.T) {
+	identity := &mockIdentity{
+		did:         "did:key:test",
+		bearerToken: "not-a-jwt",
+		publicKey:   nil,
+	}
+
+	err := VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrInvalidAuthToken)
 }
 
 func TestVerifyAuthToken_WithNoToken_Error(t *testing.T) {
