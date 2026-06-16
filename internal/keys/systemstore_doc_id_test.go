@@ -14,15 +14,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 func TestSystemstoreDocIDKeys(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
-		shortDocID               = "0000000000000007"
+		shortDocID        uint64 = 7
 		publicDocID              = "bae-public-doc"
 		fieldCID                 = "bafy-field-cid"
 	)
+	collectionSegment := string(encoding.EncodeUvarintAscending(nil, uint64(collectionShortID)))
+	shortDocIDSegment := string(EncodeDocShortID(shortDocID))
 
 	tests := []struct {
 		name string
@@ -32,12 +36,12 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		{
 			name: "short to public",
 			key:  NewShortIDToDocIDKey(collectionShortID, shortDocID),
-			want: "/docid/42/s/" + shortDocID,
+			want: "/docid/" + collectionSegment + "/s/" + shortDocIDSegment,
 		},
 		{
 			name: "public to short",
 			key:  NewDocIDToShortIDKey(collectionShortID, publicDocID),
-			want: "/docid/42/p/" + publicDocID,
+			want: "/docid/" + collectionSegment + "/p/" + publicDocID,
 		},
 		{
 			name: "node public to short",
@@ -47,17 +51,17 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		{
 			name: "node short to public",
 			key:  NewNodeShortIDToDocIDKey(shortDocID),
-			want: "/docid/n/s/" + shortDocID,
+			want: "/docid/n/s/" + shortDocIDSegment,
 		},
 		{
 			name: "block to public",
 			key:  NewBlockCIDToDocIDKey(collectionShortID, fieldCID, publicDocID),
-			want: "/docid/42/b/" + fieldCID + "/" + publicDocID,
+			want: "/docid/" + collectionSegment + "/b/" + fieldCID + "/" + publicDocID,
 		},
 		{
 			name: "public to block",
 			key:  NewDocIDToBlockCIDKey(collectionShortID, publicDocID, fieldCID),
-			want: "/docid/42/pb/" + publicDocID + "/" + fieldCID,
+			want: "/docid/" + collectionSegment + "/pb/" + publicDocID + "/" + fieldCID,
 		},
 	}
 

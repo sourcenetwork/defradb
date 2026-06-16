@@ -13,8 +13,6 @@ package id
 import (
 	"context"
 	stderrors "errors"
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/ipfs/go-cid"
@@ -26,41 +24,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-const shortDocIDWidth = 16
-const genesisDocIDPrefix = "genesis:"
-
-// NewGenesisDocID marks a create-time alias stored before the final CID-derived DocID exists.
-func NewGenesisDocID(docID string) string {
-	return genesisDocIDPrefix + docID
-}
-
-// IsGenesisDocID reports whether docID is a create-time alias.
-func IsGenesisDocID(docID string) bool {
-	return strings.HasPrefix(docID, genesisDocIDPrefix)
-}
-
-// UnwrapGenesisDocID removes the create-time alias marker if present.
-func UnwrapGenesisDocID(docID string) string {
-	return strings.TrimPrefix(docID, genesisDocIDPrefix)
-}
-
-// FormatShortDocID returns a zero-padded datastore key segment for a local short doc ID.
-func FormatShortDocID(seq uint64) string {
-	return fmt.Sprintf("%016x", seq)
-}
-
-// ParseShortDocID parses a datastore short doc ID segment.
-func ParseShortDocID(shortDocID string) (uint64, error) {
-	if len(shortDocID) == 0 || len(shortDocID) > shortDocIDWidth {
-		return 0, strconv.ErrSyntax
-	}
-	return strconv.ParseUint(shortDocID, 16, 64)
-}
-
 func SetDocIDMapping(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID string,
+	shortDocID uint64,
 	docID string,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -75,7 +42,7 @@ func SetDocIDMapping(
 	if err := txn.Systemstore().Set(
 		ctx,
 		keys.NewDocIDToShortIDKey(collectionShortID, docID).Bytes(),
-		[]byte(shortDocID),
+		keys.EncodeDocShortID(shortDocID),
 	); err != nil {
 		return err
 	}
@@ -83,7 +50,7 @@ func SetDocIDMapping(
 	if err := txn.Systemstore().Set(
 		ctx,
 		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
-		[]byte(shortDocID),
+		keys.EncodeDocShortID(shortDocID),
 	); err != nil {
 		return err
 	}
@@ -101,25 +68,25 @@ func SetDocIDMapping(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(docID)},
-			{Value: client.NewNormalString(shortDocID)},
+			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
 		},
 	)
 	return txn.Datastore().Set(ctx, &docIDIndexKey, []byte{})
 }
 
-func SetDocIDAlias(ctx context.Context, shortDocID string, docID string) error {
+func SetDocIDAlias(ctx context.Context, shortDocID uint64, docID string) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
 		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
-		[]byte(shortDocID),
+		keys.EncodeDocShortID(shortDocID),
 	)
 }
 
 func GetPublicDocID(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID string,
+	shortDocID uint64,
 ) (string, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetPublicDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, shortDocID)
@@ -129,7 +96,7 @@ func GetPublicDocIDFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
-	shortDocID string,
+	shortDocID uint64,
 ) (string, bool, error) {
 	value, err := store.Get(ctx, keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
@@ -145,7 +112,7 @@ func GetShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
-) (string, bool, error) {
+) (uint64, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetShortDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, docID)
 }
@@ -155,18 +122,22 @@ func GetShortDocIDFromStore(
 	store corekv.Reader,
 	collectionShortID uint32,
 	docID string,
-) (string, bool, error) {
+) (uint64, bool, error) {
 	value, err := store.Get(ctx, keys.NewDocIDToShortIDKey(collectionShortID, docID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
-		return "", false, nil
+		return 0, false, nil
 	}
 	if err != nil {
-		return "", false, err
+		return 0, false, err
 	}
-	return string(value), true, nil
+	shortDocID, err := keys.DecodeDocShortID(value)
+	if err != nil {
+		return 0, false, err
+	}
+	return shortDocID, true, nil
 }
 
-func GetNodeShortDocID(ctx context.Context, docID string) (string, bool, error) {
+func GetNodeShortDocID(ctx context.Context, docID string) (uint64, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetNodeShortDocIDFromStore(ctx, txn.Systemstore(), docID)
 }
@@ -175,7 +146,7 @@ func ResolveShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
-) (string, bool, error) {
+) (uint64, bool, error) {
 	shortDocID, found, err := GetShortDocID(ctx, collectionShortID, docID)
 	if err != nil || found {
 		return shortDocID, found, err
@@ -183,20 +154,24 @@ func ResolveShortDocID(
 
 	shortDocID, found, err = GetNodeShortDocID(ctx, docID)
 	if err != nil || !found {
-		return "", false, err
+		return 0, false, err
 	}
 	return shortDocID, true, nil
 }
 
-func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, bool, error) {
+func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (uint64, bool, error) {
 	value, err := store.Get(ctx, keys.NewNodeDocIDToShortIDKey(docID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
-		return "", false, nil
+		return 0, false, nil
 	}
 	if err != nil {
-		return "", false, err
+		return 0, false, err
 	}
-	return string(value), true, nil
+	shortDocID, err := keys.DecodeDocShortID(value)
+	if err != nil {
+		return 0, false, err
+	}
+	return shortDocID, true, nil
 }
 
 func GetNodePublicDocID(ctx context.Context, docID string) (string, bool, error) {
@@ -218,47 +193,15 @@ func GetNodePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID
 		return "", false, err
 	}
 
-	prefix := keys.DOC_ID_INDEX + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
-	if err != nil {
-		return "", false, err
-	}
-
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return "", false, stderrors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		parts := strings.Split(strings.TrimPrefix(string(iter.Key()), prefix), "/")
-		if len(parts) != 3 || parts[1] != keys.SHORT_ID_TO_DOC_ID || parts[2] != shortDocID {
-			continue
-		}
-
-		value, err := iter.Value()
-		if err != nil {
-			return "", false, stderrors.Join(err, iter.Close())
-		}
-		if err := iter.Close(); err != nil {
-			return "", false, err
-		}
-		return string(value), true, nil
-	}
-	if err := iter.Close(); err != nil {
-		return "", false, err
-	}
 	return "", false, nil
 }
 
 func GetNodeDocIDAliasesForShortDocID(
 	ctx context.Context,
 	store corekv.Reader,
-	shortDocID string,
+	shortDocID uint64,
 ) ([]string, error) {
-	if shortDocID == "" {
+	if shortDocID == 0 {
 		return nil, nil
 	}
 
@@ -281,7 +224,11 @@ func GetNodeDocIDAliasesForShortDocID(
 		if err != nil {
 			return nil, stderrors.Join(err, iter.Close())
 		}
-		if string(value) == shortDocID {
+		valueShortDocID, err := keys.DecodeDocShortID(value)
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		if valueShortDocID == shortDocID {
 			aliases = append(aliases, strings.TrimPrefix(string(iter.Key()), prefix))
 		}
 	}
@@ -431,9 +378,9 @@ func DeleteBlockDocIDMappings(
 func DeleteNodeDocIDAliasesForShortDocID(
 	ctx context.Context,
 	store corekv.ReaderWriter,
-	shortDocID string,
+	shortDocID uint64,
 ) error {
-	if shortDocID == "" {
+	if shortDocID == 0 {
 		return nil
 	}
 
@@ -456,7 +403,11 @@ func DeleteNodeDocIDAliasesForShortDocID(
 		if err != nil {
 			return stderrors.Join(err, iter.Close())
 		}
-		if string(value) == shortDocID {
+		valueShortDocID, err := keys.DecodeDocShortID(value)
+		if err != nil {
+			return stderrors.Join(err, iter.Close())
+		}
+		if valueShortDocID == shortDocID {
 			aliasKeys = append(aliasKeys, append([]byte(nil), iter.Key()...))
 		}
 	}

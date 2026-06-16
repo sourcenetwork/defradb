@@ -59,7 +59,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalString(shortDocID)},
+			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
 		},
 	)
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
@@ -180,7 +180,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalString(shortDocID)},
+			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
 		},
 	)
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
@@ -213,7 +213,7 @@ func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {
 	key := keys.DataStoreKey{
 		CollectionShortID: collectionShortID,
 		InstanceType:      keys.ValueKey,
-		DocShortID:        "legacy-doc",
+		DocShortID:        99,
 		FieldID:           "1",
 	}
 	require.NoError(t, dbTxn.Datastore().Set(txnCtx, key, []byte("value")))
@@ -238,7 +238,7 @@ func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {
 	require.False(t, hasValue)
 }
 
-func TestCollectionTruncateErrorsOnStorageKeyWithoutDocID(t *testing.T) {
+func TestCollectionTruncateDeletesStorageKeyWithoutDocID(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -266,6 +266,15 @@ func TestCollectionTruncateErrorsOnStorageKeyWithoutDocID(t *testing.T) {
 	require.NoError(t, txn.Commit())
 
 	err = col.Truncate(ctx)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "missing document short ID")
+	require.NoError(t, err)
+
+	txn, err = db.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok = txn.(*Txn)
+	require.True(t, ok)
+	txnCtx = InitContext(ctx, dbTxn)
+	hasValue, err := dbTxn.Datastore().Has(txnCtx, malformedKey)
+	require.NoError(t, err)
+	require.False(t, hasValue)
 }

@@ -370,7 +370,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 	type mergeItem struct {
 		cid              cid.Cid
-		createShortDocID string
+		createShortDocID uint64
 	}
 
 	stack := make([]mergeItem, 0, 64)
@@ -481,13 +481,13 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
-	createShortDocID string,
-) (string, error) {
+	createShortDocID uint64,
+) (uint64, error) {
 	if block.Delta.IsCollection() {
-		return "", nil
+		return 0, nil
 	}
 
-	if createShortDocID != "" && block.Delta.IsField() {
+	if createShortDocID != 0 && block.Delta.IsField() {
 		return createShortDocID, nil
 	}
 
@@ -498,7 +498,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		blockCID,
 	)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if found {
 		return vf.storageDocIDForPublicDocID(collectionShortID, publicDocID)
@@ -511,44 +511,44 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
 	}
 
-	return "", client.ErrMalformedDocID
+	return 0, client.ErrMalformedDocID
 }
 
 func (vf *VersionedFetcher) storageDocIDForPublicDocID(
 	collectionShortID uint32,
 	publicDocID string,
-) (string, error) {
+) (uint64, error) {
 	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if found {
 		return shortDocID, nil
 	}
-	return publicDocID, nil
+	return 0, client.ErrMalformedDocID
 }
 
 func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 	collectionShortID uint32,
 	heads []cidlink.Link,
-) (string, error) {
+) (uint64, error) {
 	for _, head := range heads {
 		headBlock, err := vf.getDAGBlock(head.Cid)
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 		if !headBlock.Delta.IsComposite() {
 			continue
 		}
-		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid, "")
+		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid, 0)
 		if err != nil {
-			return "", err
+			return 0, err
 		}
-		if docID != "" {
+		if docID != 0 {
 			return docID, nil
 		}
 	}
-	return "", client.ErrMalformedDocID
+	return 0, client.ErrMalformedDocID
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

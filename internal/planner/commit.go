@@ -53,7 +53,7 @@ type dagScanNode struct {
 	headsScanNodes []*dagScanNode
 
 	activePublicDocID  immutable.Option[string]
-	activeStorageDocID immutable.Option[string]
+	activeStorageDocID immutable.Option[uint64]
 
 	execInfo dagScanExecInfo
 }
@@ -110,11 +110,11 @@ func (n *dagScanNode) Init() error {
 
 	if !n.prefix.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-			docID, err := n.getHeadstoreDocID(n.commitSelect.DocIDs.Value()[0])
+			shortDocID, err := n.getHeadstoreShortDocID(n.commitSelect.DocIDs.Value()[0])
 			if err != nil {
 				return err
 			}
-			key := keys.HeadstoreDocKey{}.WithDocID(docID)
+			key := keys.HeadstoreDocKey{}.WithDocShortID(shortDocID)
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
@@ -150,29 +150,26 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 		start = s
 	}
 
-	docID, err := n.getHeadstoreDocID(start.DocID)
-	if err != nil {
-		n.prefixErr = err
+	if start.DocShortID == 0 {
+		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
 		return
 	}
-	n.prefixErr = nil
-	start.DocID = docID
 
 	n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
 }
 
-func (n *dagScanNode) getHeadstoreDocID(docID string) (string, error) {
+func (n *dagScanNode) getHeadstoreShortDocID(docID string) (uint64, error) {
 	if docID == "" {
-		return docID, nil
+		return 0, nil
 	}
 	shortDocID, found, err := id.GetNodeShortDocID(n.planner.ctx, docID)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if found {
 		return shortDocID, nil
 	}
-	return docID, nil
+	return 0, nil
 }
 
 func (n *dagScanNode) Close() error {
@@ -586,12 +583,12 @@ func (n *dagScanNode) reset() {
 	n.currentValue = core.Doc{}
 	n.prefixErr = nil
 	n.activePublicDocID = immutable.None[string]()
-	n.activeStorageDocID = immutable.None[string]()
+	n.activeStorageDocID = immutable.None[uint64]()
 }
 
 func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
 	n.activePublicDocID = immutable.None[string]()
-	n.activeStorageDocID = immutable.None[string]()
+	n.activeStorageDocID = immutable.None[uint64]()
 
 	currentKey := n.fetcher.CurrentKey()
 	if !currentKey.HasValue() {
@@ -602,7 +599,7 @@ func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
 	if !ok {
 		return
 	}
-	n.activeStorageDocID = immutable.Some(docKey.DocID)
+	n.activeStorageDocID = immutable.Some(docKey.DocShortID)
 }
 
 func (n *dagScanNode) publicCommitDocID(
@@ -660,7 +657,7 @@ func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.C
 	)
 }
 
-func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID string) (string, error) {
+func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID uint64) (string, error) {
 	collectionShortID, err := id.GetShortCollectionID(n.planner.ctx, collectionID)
 	if err != nil {
 		return "", err
@@ -672,5 +669,5 @@ func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID strin
 	if found {
 		return publicDocID, nil
 	}
-	return docID, nil
+	return "", nil
 }

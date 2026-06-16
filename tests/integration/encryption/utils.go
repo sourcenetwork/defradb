@@ -17,7 +17,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -42,9 +42,6 @@ const (
 		"name":	"Islam",
 		"age":	33
 	}`
-	john21DocID  = "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738"
-	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
-	counterDocID = "bae-c60ff298-7222-528f-920f-783ca0caeae1"
 )
 
 func addUserCollection() *action.AddCollection {
@@ -89,8 +86,8 @@ func encryptedCBORValueWithKey(
 	}
 }
 
-func genesisDocID(docID string) string {
-	return id.NewGenesisDocID(docID)
+func shortDocIDKey(seq uint64) string {
+	return string(keys.EncodeDocShortID(seq))
 }
 
 func notPlainCBORValue(plaintext []byte) *notPlainCBORValueMatcher {

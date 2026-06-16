@@ -19,8 +19,6 @@ import (
 )
 
 func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedCommit(t *testing.T) {
-	const userDocID = "bae-32a035a1-1d5c-5a38-9637-04abfe64dd16"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -66,7 +64,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("Chris"), genesisDocID(userDocID), ""),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("Chris"), shortDocIDKey(1), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 						},

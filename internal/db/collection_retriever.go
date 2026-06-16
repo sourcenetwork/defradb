@@ -19,7 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
@@ -99,10 +101,32 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 }
 
 func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, error) {
-	docID = id.UnwrapGenesisDocID(docID)
 	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docID)
-	if err != nil || !found {
-		return docID, err
+	if err != nil {
+		return "", err
 	}
-	return publicDocID, nil
+	if found {
+		return publicDocID, nil
+	}
+	return resolveEncodedShortDocIDFromStore(ctx, store, docID)
+}
+
+func resolveEncodedShortDocIDFromStore(
+	ctx context.Context,
+	store corekv.Reader,
+	docID string,
+) (string, error) {
+	shortDocID, err := keys.DecodeDocShortID([]byte(docID))
+	if err != nil {
+		return docID, nil
+	}
+
+	value, err := store.Get(ctx, keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes())
+	if errors.Is(err, corekv.ErrNotFound) {
+		return docID, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(value), nil
 }

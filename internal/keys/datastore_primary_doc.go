@@ -11,9 +11,11 @@
 package keys
 
 import (
-	"fmt"
+	"bytes"
 
 	ds "github.com/ipfs/go-datastore"
+
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 const (
@@ -22,11 +24,36 @@ const (
 
 type PrimaryDataStoreKey struct {
 	CollectionShortID uint32
-	DocShortID        string
+	DocShortID        uint64
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)
 var _ CollectionedKey = PrimaryDataStoreKey{}
+
+func NewPrimaryDataStoreKey(key string) (PrimaryDataStoreKey, error) {
+	parts := bytes.Split([]byte(key), []byte{'/'})
+	if len(parts) < 3 || len(parts) > 4 || len(parts[0]) != 0 || string(parts[2]) != "pk" {
+		return PrimaryDataStoreKey{}, ErrInvalidKey
+	}
+
+	rest, collectionShortID, err := encoding.DecodeUvarintAscending(parts[1])
+	if err != nil {
+		return PrimaryDataStoreKey{}, err
+	}
+	if len(rest) != 0 {
+		return PrimaryDataStoreKey{}, ErrInvalidKey
+	}
+
+	result := PrimaryDataStoreKey{CollectionShortID: uint32(collectionShortID)}
+	if len(parts) == 4 {
+		docShortID, err := DecodeDocShortID(parts[3])
+		if err != nil {
+			return PrimaryDataStoreKey{}, err
+		}
+		result.DocShortID = docShortID
+	}
+	return result, nil
+}
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
@@ -36,7 +63,16 @@ func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 }
 
 func (k PrimaryDataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
+	result := []byte{}
+	if k.CollectionShortID != 0 {
+		result = encoding.EncodeUvarintAscending([]byte{'/'}, uint64(k.CollectionShortID))
+	}
+	result = append(result, []byte(PRIMARY_KEY)...)
+	if k.DocShortID != 0 {
+		result = append(result, '/')
+		result = append(result, EncodeDocShortID(k.DocShortID)...)
+	}
+	return result
 }
 
 func (k PrimaryDataStoreKey) ToDS() ds.Key {
@@ -44,17 +80,7 @@ func (k PrimaryDataStoreKey) ToDS() ds.Key {
 }
 
 func (k PrimaryDataStoreKey) ToString() string {
-	result := ""
-
-	if k.CollectionShortID != 0 {
-		result = result + "/" + fmt.Sprint(k.CollectionShortID)
-	}
-	result = result + PRIMARY_KEY
-	if k.DocShortID != "" {
-		result = result + "/" + k.DocShortID
-	}
-
-	return result
+	return string(k.Bytes())
 }
 
 func (k PrimaryDataStoreKey) GetCollectionShortID() uint32 {

@@ -40,7 +40,7 @@ type indexFetcher struct {
 	indexDesc         client.IndexDescription
 	indexIter         indexIterator
 	currentDocID      immutable.Option[string]
-	currentShortDocID immutable.Option[string]
+	currentShortDocID immutable.Option[uint64]
 	collectionShortID uint32
 	execInfo          *ExecInfo
 	ordering          []mapper.OrderCondition
@@ -120,7 +120,7 @@ func newIndexFetcher(
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	f.currentDocID = immutable.None[string]()
-	f.currentShortDocID = immutable.None[string]()
+	f.currentShortDocID = immutable.None[uint64]()
 
 	res, err := f.indexIter.Next()
 	if err != nil {
@@ -136,7 +136,10 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	if f.indexDesc.Unique && !hasNilField {
-		shortDocID := string(res.value)
+		shortDocID, err := keys.DecodeDocShortID(res.value)
+		if err != nil {
+			return immutable.None[string](), err
+		}
 		docID, err := f.publicDocID(shortDocID)
 		if err != nil {
 			return immutable.None[string](), err
@@ -145,7 +148,9 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		f.currentShortDocID = immutable.Some(shortDocID)
 	} else {
 		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-		if shortDocID, ok := lastVal.String(); ok {
+		if shortDocID, ok, err := normalShortDocID(lastVal); err != nil {
+			return immutable.None[string](), err
+		} else if ok {
 			docID, err := f.publicDocID(shortDocID)
 			if err != nil {
 				return immutable.None[string](), err
@@ -159,15 +164,27 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	return f.currentDocID, nil
 }
 
-func (f *indexFetcher) publicDocID(docID string) (string, error) {
-	publicDocID, found, err := id.GetPublicDocID(f.ctx, f.collectionShortID, docID)
+func normalShortDocID(val client.NormalValue) (uint64, bool, error) {
+	encodedShortDocID, ok := val.Bytes()
+	if !ok {
+		return 0, false, nil
+	}
+	shortDocID, err := keys.DecodeDocShortID(encodedShortDocID)
+	if err != nil {
+		return 0, false, err
+	}
+	return shortDocID, true, nil
+}
+
+func (f *indexFetcher) publicDocID(shortDocID uint64) (string, error) {
+	publicDocID, found, err := id.GetPublicDocID(f.ctx, f.collectionShortID, shortDocID)
 	if err != nil {
 		return "", err
 	}
 	if found {
 		return publicDocID, nil
 	}
-	return docID, nil
+	return "", nil
 }
 
 func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
@@ -176,23 +193,25 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	}
 
 	docID := ""
+	var shortDocID uint64
 	if f.currentShortDocID.HasValue() {
-		docID = f.currentShortDocID.Value()
+		shortDocID = f.currentShortDocID.Value()
 	} else {
 		var err error
 		docID = f.currentDocID.Value()
-		shortDocID, found, err := id.GetShortDocID(f.ctx, f.collectionShortID, docID)
+		var found bool
+		shortDocID, found, err = id.GetShortDocID(f.ctx, f.collectionShortID, docID)
 		if err != nil {
 			return immutable.None[EncodedDocument](), err
 		}
-		if found {
-			docID = shortDocID
+		if !found {
+			return immutable.None[EncodedDocument](), nil
 		}
 	}
 
 	prefix := keys.DataStoreKey{
 		CollectionShortID: f.collectionShortID,
-		DocShortID:        docID,
+		DocShortID:        shortDocID,
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)

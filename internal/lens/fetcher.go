@@ -339,13 +339,13 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	if err != nil {
 		return err
 	}
-	if found {
-		docID = shortDocID
+	if !found {
+		return nil
 	}
 
 	datastoreKeyBase := keys.DataStoreKey{
 		CollectionShortID: shortID,
-		DocShortID:        docID,
+		DocShortID:        shortDocID,
 		InstanceType:      keys.ValueKey,
 	}
 

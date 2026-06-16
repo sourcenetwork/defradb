@@ -179,7 +179,7 @@ func (c *collection) applyDelete(
 		signingCtx,
 		merkleCRDT,
 		merkleCRDT.DeleteDelta(),
-		coreblock.AddDeltaOptions{EncryptionDocID: publicDocID},
+		coreblock.AddDeltaOptions{EncryptionDocID: keys.EncodeDocShortID(primaryKey.DocShortID)},
 	)
 	if err != nil {
 		return err

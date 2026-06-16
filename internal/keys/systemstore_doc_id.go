@@ -11,9 +11,9 @@
 package keys
 
 import (
-	"strconv"
-
 	ds "github.com/ipfs/go-datastore"
+
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 // Doc ID mapping keys bridge storage IDs and public DocIDs.
@@ -39,29 +39,44 @@ const (
 )
 
 type systemstoreDocIDKey struct {
-	segments []string
+	segments [][]byte
 }
 
-func newSystemstoreDocIDKey(segments ...string) systemstoreDocIDKey {
+func newSystemstoreDocIDKey(segments ...[]byte) systemstoreDocIDKey {
 	return systemstoreDocIDKey{segments: segments}
 }
 
 func (k systemstoreDocIDKey) ToString() string {
-	result := DOC_ID_INDEX
+	return string(k.Bytes())
+}
+
+func (k systemstoreDocIDKey) Bytes() []byte {
+	result := []byte(DOC_ID_INDEX)
 	for _, segment := range k.segments {
-		if segment != "" {
-			result += "/" + segment
+		if len(segment) != 0 {
+			result = append(result, '/')
+			result = append(result, segment...)
 		}
 	}
 	return result
 }
 
-func (k systemstoreDocIDKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
 func (k systemstoreDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+func collectionShortIDSegment(collectionShortID uint32) []byte {
+	if collectionShortID == 0 {
+		return nil
+	}
+	return encoding.EncodeUvarintAscending(nil, uint64(collectionShortID))
+}
+
+func docIDSegment(docID string) []byte {
+	if docID == "" {
+		return nil
+	}
+	return []byte(docID)
 }
 
 // ShortIDToDocIDKey maps a short doc ID to its public doc ID.
@@ -71,12 +86,12 @@ type ShortIDToDocIDKey struct {
 
 var _ Key = (*ShortIDToDocIDKey)(nil)
 
-func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID string) ShortIDToDocIDKey {
+func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID uint64) ShortIDToDocIDKey {
 	return ShortIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			strconv.Itoa(int(collectionShortID)),
-			SHORT_ID_TO_DOC_ID,
-			shortDocID,
+			collectionShortIDSegment(collectionShortID),
+			[]byte(SHORT_ID_TO_DOC_ID),
+			EncodeDocShortID(shortDocID),
 		),
 	}
 }
@@ -91,9 +106,9 @@ var _ Key = (*DocIDToShortIDKey)(nil)
 func NewDocIDToShortIDKey(collectionShortID uint32, docID string) DocIDToShortIDKey {
 	return DocIDToShortIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			strconv.Itoa(int(collectionShortID)),
-			DOC_ID_TO_SHORT_ID,
-			docID,
+			collectionShortIDSegment(collectionShortID),
+			[]byte(DOC_ID_TO_SHORT_ID),
+			docIDSegment(docID),
 		),
 	}
 }
@@ -108,9 +123,9 @@ var _ Key = (*NodeDocIDToShortIDKey)(nil)
 func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 	return NodeDocIDToShortIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			NODE_DOC_ID_INDEX,
-			DOC_ID_TO_SHORT_ID,
-			docID,
+			[]byte(NODE_DOC_ID_INDEX),
+			[]byte(DOC_ID_TO_SHORT_ID),
+			docIDSegment(docID),
 		),
 	}
 }
@@ -122,12 +137,12 @@ type NodeShortIDToDocIDKey struct {
 
 var _ Key = (*NodeShortIDToDocIDKey)(nil)
 
-func NewNodeShortIDToDocIDKey(shortDocID string) NodeShortIDToDocIDKey {
+func NewNodeShortIDToDocIDKey(shortDocID uint64) NodeShortIDToDocIDKey {
 	return NodeShortIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			NODE_DOC_ID_INDEX,
-			SHORT_ID_TO_DOC_ID,
-			shortDocID,
+			[]byte(NODE_DOC_ID_INDEX),
+			[]byte(SHORT_ID_TO_DOC_ID),
+			EncodeDocShortID(shortDocID),
 		),
 	}
 }
@@ -142,10 +157,10 @@ var _ Key = (*BlockCIDToDocIDKey)(nil)
 func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, docID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			strconv.Itoa(int(collectionShortID)),
-			BLOCK_CID_TO_DOC_ID,
-			blockCID,
-			docID,
+			collectionShortIDSegment(collectionShortID),
+			[]byte(BLOCK_CID_TO_DOC_ID),
+			docIDSegment(blockCID),
+			docIDSegment(docID),
 		),
 	}
 }
@@ -160,10 +175,10 @@ var _ Key = (*DocIDToBlockCIDKey)(nil)
 func NewDocIDToBlockCIDKey(collectionShortID uint32, docID string, blockCID string) DocIDToBlockCIDKey {
 	return DocIDToBlockCIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			strconv.Itoa(int(collectionShortID)),
-			DOC_ID_TO_BLOCK_CID,
-			docID,
-			blockCID,
+			collectionShortIDSegment(collectionShortID),
+			[]byte(DOC_ID_TO_BLOCK_CID),
+			docIDSegment(docID),
+			docIDSegment(blockCID),
 		),
 	}
 }

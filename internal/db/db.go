@@ -254,15 +254,15 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	if err != nil {
 		return err
 	}
-	if found {
-		docID = shortDocID
+	if !found {
+		return nil
 	}
 
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
-		docID,
+		shortDocID,
 	)
 	if err != nil {
 		return err

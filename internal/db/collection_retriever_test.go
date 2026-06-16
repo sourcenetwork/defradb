@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -57,13 +58,18 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 
 	retriever := NewCollectionRetriever(db)
 
-	resolvedDocID, err := retriever.ResolvePublicDocID(ctx, id.NewGenesisDocID(legacyDocID))
+	resolvedDocID, err := retriever.ResolvePublicDocID(ctx, legacyDocID)
+	require.NoError(t, err)
+	require.Equal(t, publicDocID, resolvedDocID)
+
+	encodedShortDocID := string(keys.EncodeDocShortID(shortDocID))
+	resolvedDocID, err = retriever.ResolvePublicDocID(ctx, encodedShortDocID)
 	require.NoError(t, err)
 	require.Equal(t, publicDocID, resolvedDocID)
 
 	retrievedCol, err := retriever.RetrieveCollectionFromDocID(
 		ctx,
-		id.NewGenesisDocID(legacyDocID),
+		encodedShortDocID,
 		immutable.None[identity.Identity](),
 	)
 	require.NoError(t, err)

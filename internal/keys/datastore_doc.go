@@ -15,7 +15,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
@@ -37,7 +36,7 @@ const (
 type DataStoreKey struct {
 	CollectionShortID uint32
 	InstanceType      InstanceType
-	DocShortID        string
+	DocShortID        uint64
 	FieldID           string
 }
 
@@ -63,9 +62,9 @@ func MustNewDataStoreKey(key string) DataStoreKey {
 	return dsKey
 }
 
-func DataStoreKeyFromDocID(docID client.DocID) DataStoreKey {
+func DataStoreKeyFromDocShortID(docShortID uint64) DataStoreKey {
 	return DataStoreKey{
-		DocShortID: docID.String(),
+		DocShortID: docShortID,
 	}
 }
 
@@ -93,9 +92,9 @@ func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithDocID(docID string) DataStoreKey {
+func (k DataStoreKey) WithDocShortID(docShortID uint64) DataStoreKey {
 	newKey := k
-	newKey.DocShortID = docID
+	newKey.DocShortID = docShortID
 	return newKey
 }
 
@@ -115,8 +114,8 @@ func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 
 func (k DataStoreKey) ToHeadStoreKey() HeadstoreDocKey {
 	return HeadstoreDocKey{
-		DocID:   k.DocShortID,
-		FieldID: k.FieldID,
+		DocShortID: k.DocShortID,
+		FieldID:    k.FieldID,
 	}
 }
 
@@ -141,8 +140,8 @@ func (k DataStoreKey) PrettyPrint() string {
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
 	}
-	if k.DocShortID != "" {
-		result = result + "/" + k.DocShortID
+	if k.DocShortID != 0 {
+		result = result + "/" + strconv.FormatUint(k.DocShortID, 10)
 	}
 	if k.FieldID != "" {
 		result = result + "/" + k.FieldID
@@ -175,8 +174,8 @@ func (k DataStoreKey) PrefixEnd() Walkable {
 		newKey.FieldID = string(bytesPrefixEnd([]byte(k.FieldID)))
 		return newKey
 	}
-	if k.DocShortID != "" {
-		newKey.DocShortID = string(bytesPrefixEnd([]byte(k.DocShortID)))
+	if k.DocShortID != 0 {
+		newKey.DocShortID++
 		return newKey
 	}
 	if k.InstanceType != "" {
@@ -242,7 +241,7 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 		data = data[1:]
 	}
 
-	var docShortID string
+	var docShortID uint64
 	if len(data) > 0 {
 		if data[0] == '/' {
 			data = data[1:]
@@ -254,7 +253,10 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 				break
 			}
 		}
-		docShortID = string(data[:docShortIDEnd])
+		docShortID, err = DecodeDocShortID(data[:docShortIDEnd])
+		if err != nil {
+			return DataStoreKey{}, err
+		}
 		data = data[docShortIDEnd:]
 	}
 
@@ -289,9 +291,9 @@ func EncodeDataStoreKey(key *DataStoreKey) []byte {
 		result = append(result, []byte(string(key.InstanceType))...)
 	}
 
-	if key.DocShortID != "" {
+	if key.DocShortID != 0 {
 		result = append(result, '/')
-		result = append(result, []byte(key.DocShortID)...)
+		result = append(result, EncodeDocShortID(key.DocShortID)...)
 	}
 
 	if key.FieldID != "" {

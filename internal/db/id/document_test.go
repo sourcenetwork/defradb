@@ -12,7 +12,6 @@ package id
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	blocks "github.com/ipfs/go-block-format"
@@ -31,45 +30,6 @@ func newDocumentIDTestTxn(ctx context.Context) datastore.Txn {
 	return datastore.NewTxnFrom(rootstore, lock.NewLockSet(), 1, false, immutable.None[int]())
 }
 
-func TestFormatAndParseShortDocID(t *testing.T) {
-	tests := []struct {
-		seq       uint64
-		formatted string
-	}{
-		{seq: 0, formatted: "0000000000000000"},
-		{seq: 1, formatted: "0000000000000001"},
-		{seq: 15, formatted: "000000000000000f"},
-		{seq: 16, formatted: "0000000000000010"},
-		{seq: 0xffffffffffffffff, formatted: "ffffffffffffffff"},
-	}
-
-	for _, test := range tests {
-		t.Run(test.formatted, func(t *testing.T) {
-			require.Equal(t, test.formatted, FormatShortDocID(test.seq))
-
-			seq, err := ParseShortDocID(test.formatted)
-			require.NoError(t, err)
-			require.Equal(t, test.seq, seq)
-		})
-	}
-
-	_, err := ParseShortDocID("")
-	require.ErrorIs(t, err, strconv.ErrSyntax)
-
-	_, err = ParseShortDocID("00000000000000000")
-	require.ErrorIs(t, err, strconv.ErrSyntax)
-}
-
-func TestGenesisDocIDHelpers(t *testing.T) {
-	const docID = "bae-public-doc"
-
-	genesisDocID := NewGenesisDocID(docID)
-	require.True(t, IsGenesisDocID(genesisDocID))
-	require.False(t, IsGenesisDocID(docID))
-	require.Equal(t, docID, UnwrapGenesisDocID(genesisDocID))
-	require.Equal(t, docID, UnwrapGenesisDocID(docID))
-}
-
 func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -78,7 +38,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		shortDocID               = "0000000000000007"
+		shortDocID        uint64 = 7
 		publicDocID              = "bae-public-doc"
 	)
 
@@ -102,7 +62,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), "")
+	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), 0)
 	require.NoError(t, err)
 	require.Empty(t, aliases)
 
@@ -125,7 +85,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		shortDocID               = "0000000000000007"
+		shortDocID        uint64 = 7
 		publicDocID              = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 	)
@@ -175,42 +135,11 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalString(shortDocID)},
+			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
 		},
 	)
 	_, err = txn.Datastore().Get(ctx, &docIDIndexKey)
 	require.NoError(t, err)
-}
-
-func TestDocIDMappingFallsBackToCollectionMappings(t *testing.T) {
-	ctx := context.Background()
-	txn := newDocumentIDTestTxn(ctx)
-	defer txn.Discard()
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
-	const (
-		collectionShortID uint32 = 42
-		shortDocID               = "0000000000000007"
-		publicDocID              = "bae-public-doc"
-	)
-
-	err := txn.Systemstore().Set(
-		ctx,
-		keys.NewNodeDocIDToShortIDKey(publicDocID).Bytes(),
-		[]byte(shortDocID),
-	)
-	require.NoError(t, err)
-	err = txn.Systemstore().Set(
-		ctx,
-		keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes(),
-		[]byte(publicDocID),
-	)
-	require.NoError(t, err)
-
-	gotPublicDocID, found, err := GetNodePublicDocID(ctx, publicDocID)
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, publicDocID, gotPublicDocID)
 }
 
 func TestBlockDocIDMappings(t *testing.T) {
@@ -261,11 +190,11 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	const (
-		shortDocID      = "0000000000000007"
-		otherShortDocID = "0000000000000008"
-		publicDocID     = "bae-public-doc"
-		legacyDocID     = "bae-legacy-doc"
-		otherDocID      = "bae-other-doc"
+		shortDocID      uint64 = 7
+		otherShortDocID uint64 = 8
+		publicDocID            = "bae-public-doc"
+		legacyDocID            = "bae-legacy-doc"
+		otherDocID             = "bae-other-doc"
 	)
 
 	require.NoError(t, SetDocIDAlias(ctx, shortDocID, publicDocID))

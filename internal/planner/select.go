@@ -336,12 +336,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 				if err != nil {
 					return nil, nil, err
 				}
-				if found {
-					docID = shortDocID
+				if !found {
+					continue
 				}
 				prefixes[i] = keys.DataStoreKey{
 					CollectionShortID: shortID,
-					DocShortID:        docID,
+					DocShortID:        shortDocID,
 				}
 			}
 			origScan.Prefixes(prefixes)

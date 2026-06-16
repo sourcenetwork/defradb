@@ -186,17 +186,17 @@ type mergeProcessor struct {
 
 type resolvedDocID struct {
 	publicDocID string
-	shortDocID  string
+	shortDocID  uint64
 }
 
 func (mp *mergeProcessor) resolveOrAllocateShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	publicDocID string,
-) (string, error) {
+) (uint64, error) {
 	shortDocID, found, err := id.GetShortDocID(ctx, collectionShortID, publicDocID)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if found {
 		return shortDocID, nil
@@ -204,7 +204,7 @@ func (mp *mergeProcessor) resolveOrAllocateShortDocID(
 
 	shortDocID = mp.db.nextShortDocID()
 	if err := id.SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID); err != nil {
-		return "", err
+		return 0, err
 	}
 	return shortDocID, nil
 }
@@ -216,8 +216,8 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 			return nil, err
 		}
 		return keys.HeadstoreDocKey{
-			DocID:   primaryKey.DocShortID,
-			FieldID: core.COMPOSITE_NAMESPACE,
+			DocShortID: primaryKey.DocShortID,
+			FieldID:    core.COMPOSITE_NAMESPACE,
 		}, nil
 	}
 

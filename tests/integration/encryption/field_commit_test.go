@@ -41,7 +41,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), genesisDocID(john21DocID), "age"),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), shortDocIDKey(1), "age"),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
 						},

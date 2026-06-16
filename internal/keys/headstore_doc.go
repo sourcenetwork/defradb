@@ -11,16 +11,16 @@
 package keys
 
 import (
-	"strings"
+	"bytes"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 )
 
 type HeadstoreDocKey struct {
-	DocID   string
-	FieldID string //can be 'C'
-	Cid     cid.Cid
+	DocShortID uint64
+	FieldID    string //can be 'C'
+	Cid        cid.Cid
 }
 
 var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
@@ -29,31 +29,36 @@ var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /d/[DocID]/[FieldId]/[Cid]
+// /d/[DocShortID]/[FieldId]/[Cid]
 //
 // Any properties before the above are ignored
 func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
-	elements := strings.Split(key, "/")
+	elements := bytes.Split([]byte(key), []byte{'/'})
 	if len(elements) != 5 {
 		return HeadstoreDocKey{}, ErrInvalidKey
 	}
 
-	cid, err := cid.Decode(elements[4])
+	docShortID, err := DecodeDocShortID(elements[2])
+	if err != nil {
+		return HeadstoreDocKey{}, err
+	}
+
+	cid, err := cid.Decode(string(elements[4]))
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
 	return HeadstoreDocKey{
 		// elements[0] is empty (key has leading '/')
-		DocID:   elements[2],
-		FieldID: elements[3],
-		Cid:     cid,
+		DocShortID: docShortID,
+		FieldID:    string(elements[3]),
+		Cid:        cid,
 	}, nil
 }
 
-func (k HeadstoreDocKey) WithDocID(docID string) HeadstoreDocKey {
+func (k HeadstoreDocKey) WithDocShortID(docShortID uint64) HeadstoreDocKey {
 	newKey := k
-	newKey.DocID = docID
+	newKey.DocShortID = docShortID
 	return newKey
 }
 
@@ -74,23 +79,26 @@ func (k HeadstoreDocKey) WithFieldID(fieldID string) HeadstoreDocKey {
 }
 
 func (k HeadstoreDocKey) ToString() string {
-	result := HEADSTORE_DOC
-
-	if k.DocID != "" {
-		result = result + "/" + k.DocID
-	}
-	if k.FieldID != "" {
-		result = result + "/" + k.FieldID
-	}
-	if k.Cid.Defined() {
-		result = result + "/" + k.Cid.String()
-	}
-
-	return result
+	return string(k.Bytes())
 }
 
 func (k HeadstoreDocKey) Bytes() []byte {
-	return []byte(k.ToString())
+	result := []byte(HEADSTORE_DOC)
+
+	if k.DocShortID != 0 {
+		result = append(result, '/')
+		result = append(result, EncodeDocShortID(k.DocShortID)...)
+	}
+	if k.FieldID != "" {
+		result = append(result, '/')
+		result = append(result, []byte(k.FieldID)...)
+	}
+	if k.Cid.Defined() {
+		result = append(result, '/')
+		result = append(result, []byte(k.Cid.String())...)
+	}
+
+	return result
 }
 
 func (k HeadstoreDocKey) ToDS() ds.Key {
@@ -104,8 +112,8 @@ func (k HeadstoreDocKey) PrefixEnd() Walkable {
 		newKey.FieldID = string(bytesPrefixEnd([]byte(k.FieldID)))
 		return newKey
 	}
-	if k.DocID != "" {
-		newKey.DocID = string(bytesPrefixEnd([]byte(k.DocID)))
+	if k.DocShortID != 0 {
+		newKey.DocShortID++
 		return newKey
 	}
 	if k.Cid.Defined() {

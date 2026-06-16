@@ -32,14 +32,14 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 
 	key := keys.DataStoreKey{
 		CollectionShortID: 1,
-		DocShortID:        "000000000000002a",
+		DocShortID:        42,
 		FieldID:           "1",
 	}
 
 	lww := NewLWW(store, "collection-version", key, "name")
 	lwwDelta, err := lww.Delta(
 		ctx,
-		NewDocField(key.DocShortID, "name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
+		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
@@ -47,7 +47,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	counter := NewCounter(store, "collection-version", key, "age", false, client.FieldKind_NILLABLE_INT)
 	counterDelta, err := counter.Delta(
 		ctx,
-		NewDocField(key.DocShortID, "age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
+		NewDocField("age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert

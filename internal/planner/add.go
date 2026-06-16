@@ -70,12 +70,12 @@ func (n *addNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) 
 		if err != nil {
 			return nil, err
 		}
-		if found {
-			docID = shortDocID
+		if !found {
+			return nil, client.ErrDocumentNotFoundOrNotAuthorized
 		}
 		prefixes[i] = keys.DataStoreKey{
 			CollectionShortID: shortID,
-			DocShortID:        docID,
+			DocShortID:        shortDocID,
 		}
 	}
 	return prefixes, nil

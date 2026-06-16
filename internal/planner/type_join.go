@@ -469,13 +469,13 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
-	if found {
-		docID = shortDocID
+	if !found {
+		return immutable.None[core.Doc](), nil
 	}
 
 	dsKey := keys.DataStoreKey{
 		CollectionShortID: shortID,
-		DocShortID:        docID,
+		DocShortID:        shortDocID,
 	}
 
 	prefixes := []keys.Walkable{dsKey}

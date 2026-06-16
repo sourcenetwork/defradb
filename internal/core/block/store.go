@@ -47,7 +47,7 @@ func putBlock(
 
 // AddDeltaOptions controls storage behavior around a CRDT delta.
 type AddDeltaOptions struct {
-	EncryptionDocID string
+	EncryptionDocID []byte
 }
 
 // AddDelta adds a new delta to the existing DAG.
@@ -139,7 +139,7 @@ func addDelta(
 
 func determineBlockEncryption(
 	ctx context.Context,
-	docID string,
+	docID []byte,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
@@ -147,14 +147,14 @@ func determineBlockEncryption(
 
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &Encryption{DocID: []byte(docID)}
+		encBlock := &Encryption{DocID: append([]byte(nil), docID...)}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			f := fieldName.Value()
 			encBlock.FieldName = &f
 		}
 		encryptor := encryption.GetEncryptorFromContext(ctx)
 		if encryptor != nil {
-			encKey, err := encryptor.GetOrGenerateEncryptionKey(docID, fieldName)
+			encKey, err := encryptor.GetOrGenerateEncryptionKey(string(docID), fieldName)
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrGetEncryptionKey(err)
 			}

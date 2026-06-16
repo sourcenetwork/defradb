@@ -13,7 +13,6 @@ package p2p
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -215,22 +214,27 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if !hasNext {
 			return nil
 		}
-		splitString := strings.Split(string(iter.Key()), "/")
-		storageDocID := splitString[len(splitString)-1]
+		primaryKey, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return err
+		}
+		if primaryKey.DocShortID == 0 {
+			continue
+		}
 		publicDocID, found, err := id.GetPublicDocIDFromStore(
 			ctx,
 			p.db.Multistore().Systemstore(),
 			shortID,
-			storageDocID,
+			primaryKey.DocShortID,
 		)
 		if err != nil {
 			return err
 		}
 		if !found {
-			publicDocID = storageDocID
+			continue
 		}
 
-		err = p.pushHeadsForDoc(ctx, storageDocID, publicDocID, col.CollectionID(), peerID)
+		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, publicDocID, col.CollectionID(), peerID)
 		if err != nil {
 			return NewErrPushDocHeads(err, publicDocID)
 		}
@@ -241,12 +245,12 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 // to the given peer.
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
-	storageDocID string,
+	storageDocID uint64,
 	publicDocID string,
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeads(ctx, storageDocID)
+	heads, err := p.getHeadsForShortDocID(ctx, storageDocID, publicDocID)
 	if err != nil {
 		return err
 	}
@@ -787,20 +791,24 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
-	headstore := p.db.Multistore().Headstore()
-	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
-
 	shortDocID, found, err := id.GetNodeShortDocIDFromStore(ctx, p.db.Multistore().Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
-	if found {
-		docID = shortDocID
+	if !found {
+		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
 	}
 
+	return p.getHeadsForShortDocID(ctx, shortDocID, docID)
+}
+
+func (p *P2P) getHeadsForShortDocID(ctx context.Context, shortDocID uint64, docID string) ([]head, error) {
+	headstore := p.db.Multistore().Headstore()
+	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
+
 	prefix := keys.HeadstoreDocKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
+		DocShortID: shortDocID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	iter, err := headstore.Iterator(ctx, corekv.IterOptions{

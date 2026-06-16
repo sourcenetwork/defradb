@@ -311,13 +311,13 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	if err != nil {
 		return docSyncItem{}, err
 	}
-	if found {
-		docID = shortDocID
+	if !found {
+		return docSyncItem{}, fmt.Errorf("heads not found for docID %s", requestedDocID)
 	}
 
 	key := keys.HeadstoreDocKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
+		DocShortID: shortDocID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)

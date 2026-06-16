@@ -389,7 +389,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 type memorizingIndexIterator struct {
 	inner indexIterator
 
-	fetchedDocs map[string]struct{}
+	fetchedDocs map[uint64]struct{}
 
 	ctx   context.Context
 	store datastore.Keyedstore
@@ -400,7 +400,7 @@ var _ indexIterator = (*memorizingIndexIterator)(nil)
 func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
-	iter.fetchedDocs = make(map[string]struct{})
+	iter.fetchedDocs = make(map[uint64]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
@@ -413,21 +413,27 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		if !res.foundKey {
 			return res, nil
 		}
-		var docID string
+		var docShortID uint64
 		if len(res.value) > 0 {
-			docID = string(res.value)
+			docShortID, err = keys.DecodeDocShortID(res.value)
+			if err != nil {
+				return indexIterResult{}, err
+			}
 		} else {
 			lastField := &res.key.Fields[len(res.key.Fields)-1]
 			var ok bool
-			docID, ok = lastField.Value.String()
+			docShortID, ok, err = normalShortDocID(lastField.Value)
+			if err != nil {
+				return indexIterResult{}, err
+			}
 			if !ok {
 				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
 			}
 		}
-		if _, ok := iter.fetchedDocs[docID]; ok {
+		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue
 		}
-		iter.fetchedDocs[docID] = struct{}{}
+		iter.fetchedDocs[docShortID] = struct{}{}
 		return res, nil
 	}
 }

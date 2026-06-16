@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -186,11 +187,15 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	if key == "" {
 		return false, nil
 	}
+	shortDocID, found, err := id.GetNodeShortDocID(p.p.ctx, key)
+	if err != nil || !found {
+		return false, err
+	}
 
 	// pass the doc key as a reference through the prefixes interface
-	prefixes := []keys.Walkable{keys.DataStoreKey{DocShortID: key}}
+	prefixes := []keys.Walkable{keys.DataStoreKey{DocShortID: shortDocID}}
 	plan.Prefixes(prefixes)
-	err := plan.Init()
+	err = plan.Init()
 	if err != nil {
 		return false, err
 	}

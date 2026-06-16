@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/ipfs/go-cid"
@@ -138,7 +139,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 
 	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 
-	deletedDocIDs := make(map[string]struct{})
+	deletedDocIDs := make(map[uint64]struct{})
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
@@ -164,11 +165,19 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				break
 			}
 
+			shortDocID, isDocKey, err := docShortIDFromCollectionDataKey(iter.Key())
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+			if !isDocKey {
+				continue
+			}
+
 			key, err := keys.NewDataStoreKey(string(iter.Key()))
 			if err != nil {
 				return errors.Join(err, iter.Close())
 			}
-
+			key.DocShortID = shortDocID
 			keysToDelete = append(keysToDelete, key)
 		}
 
@@ -186,7 +195,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 			// we do not need to worry about timing or order-of-operation issues, *unless* we change
 			// when the datastore read-locks are released.
 			// Every stored document key under this prefix should identify a document.
-			if key.DocShortID == "" {
+			if key.DocShortID == 0 {
 				return NewErrTruncateDatastoreKey(errors.New("missing document short ID"), key.ToString())
 			}
 			if _, done := deletedDocIDs[key.DocShortID]; !done {
@@ -195,7 +204,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 					return err
 				}
 				if !found {
-					publicDocID = key.DocShortID
+					publicDocID = ""
 				}
 
 				err = c.hardDeleteDocumentBlocks(ctx, key.DocShortID)
@@ -223,6 +232,24 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	}
 
 	return nil
+}
+
+func docShortIDFromCollectionDataKey(rawKey []byte) (uint64, bool, error) {
+	segments := bytes.Split(rawKey, []byte{'/'})
+	if len(segments) < 4 || len(segments[0]) != 0 {
+		return 0, false, nil
+	}
+
+	switch keys.InstanceType(string(segments[2])) {
+	case keys.ValueKey, keys.PriorityKey, keys.DeletedKey:
+		shortDocID, err := keys.DecodeDocShortID(segments[3])
+		if err != nil {
+			return 0, false, err
+		}
+		return shortDocID, true, nil
+	default:
+		return 0, false, nil
+	}
 }
 
 func (c *collection) hardDeleteDatastorePrefix(
@@ -294,7 +321,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 
 func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
-	docID string,
+	docID uint64,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
@@ -304,7 +331,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 
 	for hasMore {
 		prefix := keys.HeadstoreDocKey{
-			DocID: docID,
+			DocShortID: docID,
 		}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
@@ -366,7 +393,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 func (c *collection) deleteDocIDMappings(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID string,
+	shortDocID uint64,
 	publicDocID string,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -380,7 +407,7 @@ func (c *collection) deleteDocIDMappings(
 			return err
 		}
 		if !found {
-			publicDocID = shortDocID
+			publicDocID = ""
 		}
 	}
 
@@ -407,7 +434,7 @@ func (c *collection) deleteDocIDMappings(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalString(shortDocID)},
+			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
 		},
 	)
 	return deleteDatastoreKeyIfExists(ctx, txn.Datastore(), &docIDIndexKey)

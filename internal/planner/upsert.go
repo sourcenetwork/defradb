@@ -144,12 +144,12 @@ func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersio
 		if err != nil {
 			return nil, err
 		}
-		if found {
-			docID = shortDocID
+		if !found {
+			return nil, client.ErrDocumentNotFoundOrNotAuthorized
 		}
 		prefixes[i] = keys.DataStoreKey{
 			CollectionShortID: shortID,
-			DocShortID:        docID,
+			DocShortID:        shortDocID,
 		}
 	}
 	return prefixes, nil

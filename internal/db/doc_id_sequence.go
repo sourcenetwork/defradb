@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -22,8 +21,8 @@ import (
 )
 
 // nextShortDocID returns the next local storage key segment.
-func (db *DB) nextShortDocID() string {
-	return id.FormatShortDocID(db.docIDSequence.Add(1))
+func (db *DB) nextShortDocID() uint64 {
+	return db.docIDSequence.Add(1)
 }
 
 // seedDocIDSequence restores the counter from stored primary keys.
@@ -62,8 +61,7 @@ func (db *DB) seedDocIDSequence(ctx context.Context) error {
 			continue
 		}
 
-		shortDocID := strings.TrimPrefix(string(iter.Key()), prefix.ToString()+"/")
-		seq, err := id.ParseShortDocID(shortDocID)
+		key, err := keys.NewDataStoreKey(string(iter.Key()))
 		closeErr := iter.Close()
 		if err != nil {
 			return errors.Join(err, closeErr)
@@ -71,8 +69,8 @@ func (db *DB) seedDocIDSequence(ctx context.Context) error {
 		if closeErr != nil {
 			return closeErr
 		}
-		if seq > maxSeq {
-			maxSeq = seq
+		if key.DocShortID > maxSeq {
+			maxSeq = key.DocShortID
 		}
 	}
 

@@ -105,7 +105,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		kv := f.nextKV.Value()
 		f.nextKV = immutable.None[keyValue]()
 
-		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != "" {
+		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != 0 {
 			f.currentKV = kv
 			f.execInfo.DocsFetched++
 			docID, err := f.publicDocID(kv.Key.CollectionShortID, kv.Key.DocShortID)
@@ -129,7 +129,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		if err != nil {
 			return immutable.None[string](), NewErrParseDocumentKey(err)
 		}
-		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == "" {
+		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == 0 {
 			continue
 		}
 
@@ -162,7 +162,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 }
 
 func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
-	if f.currentKV.Key.CollectionShortID == 0 || f.currentKV.Key.DocShortID == "" {
+	if f.currentKV.Key.CollectionShortID == 0 || f.currentKV.Key.DocShortID == 0 {
 		return immutable.None[EncodedDocument](), nil
 	}
 
@@ -193,7 +193,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 		if err != nil {
 			return immutable.None[EncodedDocument](), NewErrParseFieldKey(err)
 		}
-		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == "" {
+		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == 0 {
 			continue
 		}
 
@@ -224,7 +224,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	return immutable.Some[EncodedDocument](&doc), nil
 }
 
-func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID string) (string, error) {
+func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID uint64) (string, error) {
 	docID, found, err := id.GetPublicDocID(f.ctx, collectionShortID, shortDocID)
 	if err != nil {
 		return "", err
@@ -232,7 +232,7 @@ func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID strin
 	if found {
 		return docID, nil
 	}
-	return shortDocID, nil
+	return "", nil
 }
 
 func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {

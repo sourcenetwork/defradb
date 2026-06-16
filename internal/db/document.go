@@ -96,14 +96,20 @@ func (c *collection) getAllDocIDsChan(
 				break
 			}
 
-			splitString := strings.Split(string(iter.Key()), "/")
-			shortDocID := splitString[len(splitString)-1]
+			key, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
+			}
 
 			publicDocID, found, err := id.GetPublicDocIDFromStore(
 				ctx,
 				c.db.Multistore().Systemstore(),
 				shortID,
-				shortDocID,
+				key.DocShortID,
 			)
 			if err != nil {
 				closeIterator()
@@ -113,7 +119,7 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 			if !found {
-				publicDocID = shortDocID
+				continue
 			}
 
 			docID, err := client.NewDocIDFromString(publicDocID)
@@ -521,10 +527,9 @@ func (c *collection) save(
 	}
 
 	legacyCreateDocID := ""
-	encryptionDocID := doc.ID().String()
+	encryptionDocID := keys.EncodeDocShortID(primaryKey.DocShortID)
 	if isAdd {
 		legacyCreateDocID = doc.ID().String()
-		encryptionDocID = id.NewGenesisDocID(legacyCreateDocID)
 	}
 
 	links := make([]coreblock.DAGLink, 0)
@@ -565,7 +570,7 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocShortID, k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val))
 			if err != nil {
 				return err
 			}
@@ -805,6 +810,10 @@ func (c *collection) exists(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
+	if primaryKey.DocShortID == 0 {
+		return false, false, nil
+	}
+
 	publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
 	if err != nil {
 		return false, false, err
@@ -826,7 +835,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, primaryKey.DocShortID)
+		return false, false, NewErrGetDocStatus(err, strconv.FormatUint(primaryKey.DocShortID, 10))
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -856,12 +865,14 @@ func (c *collection) getPrimaryKeyFromDocIDString(
 		return keys.PrimaryDataStoreKey{}, err
 	}
 	if found {
-		docID = shortDocID
+		return keys.PrimaryDataStoreKey{
+			CollectionShortID: shortID,
+			DocShortID:        shortDocID,
+		}, nil
 	}
 
 	return keys.PrimaryDataStoreKey{
 		CollectionShortID: shortID,
-		DocShortID:        docID,
 	}, nil
 }
 
@@ -876,5 +887,5 @@ func (c *collection) getPublicDocIDFromPrimaryKey(
 	if found {
 		return docID, nil
 	}
-	return primaryKey.DocShortID, nil
+	return "", nil
 }
