@@ -58,7 +58,6 @@ func DeleteDocument(nodePtr C.uintptr_t,
 	docID := C.GoString(docIDStr)
 	filter := C.GoString(filterStr)
 	switch {
-
 	// If docID is provided, delete the document by docID
 	case docID != "":
 		ID, err := client.NewDocIDFromString(docID)

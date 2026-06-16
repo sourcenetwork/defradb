@@ -61,7 +61,6 @@ func UpdateDocument(
 	filter := C.GoString(filterStr)
 	updater := C.GoString(updaterStr)
 	switch {
-
 	// If docID is provided, update the document by docID
 	case docID != "":
 		newDocID, err := client.NewDocIDFromString(docID)
