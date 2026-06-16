@@ -43,6 +43,30 @@ func TestAuthAudienceForURL(t *testing.T) {
 			rawURL:   "http://Example.COM:9181",
 			expected: "example.com:9181",
 		},
+		{
+			// Go's net/http does not strip default ports from the wire Host
+			// header, so the audience must keep them to match the server check.
+			name:     "default http port is preserved",
+			rawURL:   "http://example.com:80",
+			expected: "example.com:80",
+		},
+		{
+			name:     "default https port is preserved",
+			rawURL:   "https://example.com:443",
+			expected: "example.com:443",
+		},
+		{
+			name:     "ipv6 host is supported",
+			rawURL:   "http://[::1]:9181",
+			expected: "[::1]:9181",
+		},
+		{
+			// A scheme-less host that merely begins with "http" must still get
+			// a scheme prepended so it parses with a non-empty host.
+			name:     "scheme-less host beginning with http",
+			rawURL:   "httpbin.local:9181",
+			expected: "httpbin.local:9181",
+		},
 	}
 
 	for _, tt := range tests {
@@ -50,6 +74,30 @@ func TestAuthAudienceForURL(t *testing.T) {
 			got, err := AuthAudienceForURL(tt.rawURL)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestAuthAudienceForURL_Errors(t *testing.T) {
+	tests := []struct {
+		name   string
+		rawURL string
+	}{
+		{
+			name:   "malformed url fails to parse",
+			rawURL: "http://[::1]:invalid",
+		},
+		{
+			name:   "url with no derivable host",
+			rawURL: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := AuthAudienceForURL(tt.rawURL)
+			require.Error(t, err)
+			assert.Empty(t, got)
 		})
 	}
 }
