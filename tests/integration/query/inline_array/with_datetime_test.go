@@ -308,7 +308,7 @@ func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 					"Events": []map[string]any{},
 				},
 			},
-			&action.Request{ // _ge matches both docs since all their times are >= the target
+			&action.Request{ // _ge matches both docs since all their scheduledTimes are >= the target
 				Request: `query {
 					Events(filter: {scheduledTimes: {_all: {_geq: "2024-01-15T09:00:00Z"}}}) {
 						name
@@ -466,16 +466,16 @@ func TestQueryInlineArrayWithDateTime_UTC_NOW(t *testing.T) {
 			&action.AddDoc{
 				Doc: `{
                     "name": "Now Event",
-                    "times": ["UTC_NOW"]
+                    "scheduledTimes": ["UTC_NOW"]
                 }`,
 			},
 			&action.Request{
-				Request: `query { Events { name times } }`,
+				Request: `query { Events { name scheduledTimes } }`,
 				Results: map[string]any{
 					"Events": []map[string]any{
 						{
-							"name":  "Now Event",
-							"times": []any{testUtils.CurrentTimestamp()},
+							"name":           "Now Event",
+							"scheduledTimes": testUtils.NewArrayMatcher(testUtils.CurrentTimestamp()),
 						},
 					},
 				},
@@ -494,21 +494,21 @@ func TestQueryInlineArrayWithDateTime_NonNillable(t *testing.T) {
 			&action.AddDoc{
 				Doc: `{
                     "name": "Conference",
-                    "times": ["2025-01-01T10:00:00Z", "2025-01-02T14:00:00Z"]
+                    "scheduledTimes": ["2025-01-01T10:00:00Z", "2025-01-02T14:00:00Z"]
                 }`,
 			},
 			&action.Request{
 				Request: `query {
                     Events {
                         name
-                        times
+                        scheduledTimes
                     }
                 }`,
 				Results: map[string]any{
 					"Events": []map[string]any{
 						{
 							"name": "Conference",
-							"times": []time.Time{
+							"scheduledTimes": []time.Time{
 								testUtils.MustParseTime("2025-01-01T10:00:00Z"),
 								testUtils.MustParseTime("2025-01-02T14:00:00Z"),
 							},
