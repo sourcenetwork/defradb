@@ -64,7 +64,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("Chris"), shortDocIDKey(1), ""),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("Chris"), localDocIDKey(1, 1), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 						},

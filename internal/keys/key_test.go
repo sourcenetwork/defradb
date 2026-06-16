@@ -161,15 +161,15 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 			},
 		},
 		{
-			name: "last encoded value without matching field description is docID",
+			name: "last encoded value without matching field description is short doc ID",
 			desc: client.IndexDescription{
 				ID:     indexID,
 				Fields: []client.IndexedFieldDescription{{}},
 			},
-			inputBytes: encoding.EncodeStringAscending(append(encodeKey(1, indexID, 5, false), '/'), "docID"),
+			inputBytes: append(append(encodeKey(1, indexID, 5, false), '/'), EncodeDocShortID(7)...),
 			expectedFields: []IndexedField{
 				{Value: client.NewNormalInt(5)},
-				{Value: client.NewNormalString("docID")},
+				NewDocShortIDIndexedField(7),
 			},
 			fieldKinds: []client.FieldKind{client.FieldKind_NILLABLE_INT},
 		},

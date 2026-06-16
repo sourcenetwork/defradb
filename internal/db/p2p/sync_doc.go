@@ -307,7 +307,7 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	requestedDocID := docID
-	shortDocID, found, err := id.GetNodeShortDocIDFromStore(p.ctx, p.db.Multistore().Systemstore(), docID)
+	localDocID, found, err := id.GetLocalDocIDFromStore(p.ctx, p.db.Multistore().Systemstore(), docID)
 	if err != nil {
 		return docSyncItem{}, err
 	}
@@ -316,8 +316,9 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	key := keys.HeadstoreDocKey{
-		DocShortID: shortDocID,
-		FieldID:    core.COMPOSITE_NAMESPACE,
+		CollectionShortID: localDocID.CollectionShortID,
+		DocShortID:        localDocID.DocShortID,
+		FieldID:           core.COMPOSITE_NAMESPACE,
 	}
 
 	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)

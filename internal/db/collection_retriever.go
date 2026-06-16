@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -101,6 +100,19 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 }
 
 func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, error) {
+	localDocID, err := keys.DecodeLocalDocID([]byte(docID))
+	if err == nil {
+		publicDocID, found, err := id.GetPublicDocIDFromStore(
+			ctx,
+			store,
+			localDocID.CollectionShortID,
+			localDocID.DocShortID,
+		)
+		if err != nil || found {
+			return publicDocID, err
+		}
+	}
+
 	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docID)
 	if err != nil {
 		return "", err
@@ -108,25 +120,5 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID
 	if found {
 		return publicDocID, nil
 	}
-	return resolveEncodedShortDocIDFromStore(ctx, store, docID)
-}
-
-func resolveEncodedShortDocIDFromStore(
-	ctx context.Context,
-	store corekv.Reader,
-	docID string,
-) (string, error) {
-	shortDocID, err := keys.DecodeDocShortID([]byte(docID))
-	if err != nil {
-		return docID, nil
-	}
-
-	value, err := store.Get(ctx, keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes())
-	if errors.Is(err, corekv.ErrNotFound) {
-		return docID, nil
-	}
-	if err != nil {
-		return "", err
-	}
-	return string(value), nil
+	return docID, nil
 }

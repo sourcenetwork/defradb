@@ -230,7 +230,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		if err != nil {
 			return keys.IndexDataStoreKey{}, err
 		}
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))})
+		fields = append(fields, keys.NewDocShortIDIndexedField(shortDocID))
 	}
 
 	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
@@ -240,7 +240,7 @@ func (index *collectionBaseIndex) getShortDocIDForIndex(
 	ctx context.Context,
 	collectionShortID uint32,
 	doc *client.Document,
-) (uint64, error) {
+) (uint32, error) {
 	shortDocID, found, err := id.GetShortDocID(ctx, collectionShortID, doc.ID().String())
 	if err != nil {
 		return 0, err
@@ -471,11 +471,11 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	shortDocID uint64,
+	shortDocID uint32,
 ) (keys.IndexDataStoreKey, []byte, error) {
 	encodedShortDocID := keys.EncodeDocShortID(shortDocID)
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalBytes(encodedShortDocID)})
+		key.Fields = append(key.Fields, keys.NewDocShortIDIndexedField(shortDocID))
 		return key, []byte{}, nil
 	} else {
 		return key, encodedShortDocID, nil

@@ -314,7 +314,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// as a prefix. And with this design limitation this is
 			// currently the least bad way of passing the cid in to the fetcher.
 			origScan.Prefixes(prefixes)
-		} else if n.selectReq.DocIDs.HasValue() {
+		} else if n.selectReq.DocIDs.HasValue() && len(n.selectReq.DocIDs.Value()) > 0 {
 			shortID, err := id.GetShortCollectionID(
 				n.planner.ctx,
 				sourcePlan.collection.Version().CollectionID,
@@ -329,9 +329,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+			prefixes := make([]keys.Walkable, 0, len(n.selectReq.DocIDs.Value()))
 
-			for i, docID := range n.selectReq.DocIDs.Value() {
+			for _, docID := range n.selectReq.DocIDs.Value() {
 				shortDocID, found, err := id.ResolveShortDocID(n.planner.ctx, shortID, docID)
 				if err != nil {
 					return nil, nil, err
@@ -339,12 +339,15 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 				if !found {
 					continue
 				}
-				prefixes[i] = keys.DataStoreKey{
+				prefixes = append(prefixes, keys.DataStoreKey{
 					CollectionShortID: shortID,
 					DocShortID:        shortDocID,
-				}
+				})
 			}
 			origScan.Prefixes(prefixes)
+			if len(prefixes) == 0 {
+				origScan.noResults = true
+			}
 		}
 	}
 

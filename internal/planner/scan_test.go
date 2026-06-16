@@ -32,12 +32,13 @@ func TestDocIDFilterAliasExpansion(t *testing.T) {
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	const (
-		shortDocID  = "0000000000000007"
-		publicDocID = "bae-public-doc"
-		legacyDocID = "bae-legacy-doc"
+		collectionShortID = uint32(1)
+		shortDocID        = uint32(7)
+		publicDocID       = "bae-public-doc"
+		legacyDocID       = "bae-legacy-doc"
 	)
-	require.NoError(t, id.SetDocIDAlias(ctx, shortDocID, publicDocID))
-	require.NoError(t, id.SetDocIDAlias(ctx, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, publicDocID))
+	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
 
 	values, err := docIDFilterValues(ctx, publicDocID)
 	require.NoError(t, err)

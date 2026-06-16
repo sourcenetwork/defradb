@@ -234,7 +234,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			continue
 		}
 
-		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, publicDocID, col.CollectionID(), peerID)
+		err = p.pushHeadsForDoc(ctx, shortID, primaryKey.DocShortID, publicDocID, col.CollectionID(), peerID)
 		if err != nil {
 			return NewErrPushDocHeads(err, publicDocID)
 		}
@@ -245,12 +245,13 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 // to the given peer.
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
-	storageDocID uint64,
+	collectionShortID uint32,
+	storageDocID uint32,
 	publicDocID string,
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeadsForShortDocID(ctx, storageDocID, publicDocID)
+	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, storageDocID, publicDocID)
 	if err != nil {
 		return err
 	}
@@ -791,7 +792,7 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
-	shortDocID, found, err := id.GetNodeShortDocIDFromStore(ctx, p.db.Multistore().Systemstore(), docID)
+	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, p.db.Multistore().Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -799,16 +800,22 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
 	}
 
-	return p.getHeadsForShortDocID(ctx, shortDocID, docID)
+	return p.getHeadsForShortDocID(ctx, localDocID.CollectionShortID, localDocID.DocShortID, docID)
 }
 
-func (p *P2P) getHeadsForShortDocID(ctx context.Context, shortDocID uint64, docID string) ([]head, error) {
+func (p *P2P) getHeadsForShortDocID(
+	ctx context.Context,
+	collectionShortID uint32,
+	shortDocID uint32,
+	docID string,
+) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
 	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
-		DocShortID: shortDocID,
-		FieldID:    core.COMPOSITE_NAMESPACE,
+		CollectionShortID: collectionShortID,
+		DocShortID:        shortDocID,
+		FieldID:           core.COMPOSITE_NAMESPACE,
 	}
 
 	iter, err := headstore.Iterator(ctx, corekv.IterOptions{

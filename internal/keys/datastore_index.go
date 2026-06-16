@@ -11,6 +11,7 @@
 package keys
 
 import (
+	"bytes"
 	"math"
 
 	ds "github.com/ipfs/go-datastore"
@@ -29,6 +30,7 @@ type IndexedField struct {
 	Value client.NormalValue
 	// Descending is true if the field is sorted in descending order
 	Descending bool
+	docShortID uint32
 }
 
 // IndexDataStoreKey is key of an indexed document in the database.
@@ -90,12 +92,22 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 	}
 
 	for i, field := range k.Fields {
-		if !field.Value.Equal(other.Fields[i].Value) || field.Descending != other.Fields[i].Descending {
+		if !field.Value.Equal(other.Fields[i].Value) ||
+			field.Descending != other.Fields[i].Descending ||
+			field.docShortID != other.Fields[i].docShortID {
 			return false
 		}
 	}
 
 	return true
+}
+
+// NewDocShortIDIndexedField returns the hidden document suffix used by non-unique index keys.
+func NewDocShortIDIndexedField(shortDocID uint32) IndexedField {
+	return IndexedField{
+		Value:      client.NewNormalBytes(EncodeDocShortID(shortDocID)),
+		docShortID: shortDocID,
+	}
 }
 
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
@@ -155,18 +167,25 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
-		var kind client.FieldKind = client.FieldKind_DocID
-		// If the key has more values encoded then fields on the index description, the last
-		// value must be the local short doc ID and we treat it as encoded bytes.
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
-			kind = fields[i].Kind
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		} else {
-			kind = client.FieldKind_NILLABLE_BLOB
+			shortDocIDEnd := len(data)
+			if slash := bytes.IndexByte(data, '/'); slash >= 0 {
+				shortDocIDEnd = slash
+			}
+			shortDocID, err := DecodeDocShortID(data[:shortDocIDEnd])
+			if err != nil {
+				return IndexDataStoreKey{}, err
+			}
+			key.Fields = append(key.Fields, NewDocShortIDIndexedField(shortDocID))
+			data = data[shortDocIDEnd:]
+			continue
 		}
 
+		kind := fields[i].Kind
 		if kind != nil && kind.IsArray() {
 			if arrKind, ok := kind.(client.ScalarArrayKind); ok {
 				kind = arrKind.SubKind()
@@ -200,7 +219,11 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 
 		for _, field := range key.Fields {
 			b = append(b, '/')
-			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+			if field.docShortID != 0 {
+				b = append(b, EncodeDocShortID(field.docShortID)...)
+			} else {
+				b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+			}
 		}
 	}
 

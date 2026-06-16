@@ -18,9 +18,10 @@ import (
 )
 
 type HeadstoreDocKey struct {
-	DocShortID uint64
-	FieldID    string //can be 'C'
-	Cid        cid.Cid
+	CollectionShortID uint32
+	DocShortID        uint32
+	FieldID           string //can be 'C'
+	Cid               cid.Cid
 }
 
 var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
@@ -29,34 +30,47 @@ var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /d/[DocShortID]/[FieldId]/[Cid]
+// /d/[CollectionShortID]/[DocShortID]/[FieldId]/[Cid]
 //
 // Any properties before the above are ignored
 func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
 	elements := bytes.Split([]byte(key), []byte{'/'})
-	if len(elements) != 5 {
+	if len(elements) != 6 {
 		return HeadstoreDocKey{}, ErrInvalidKey
 	}
 
-	docShortID, err := DecodeDocShortID(elements[2])
+	collectionShortID, err := DecodeCollectionShortID(elements[2])
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
-	cid, err := cid.Decode(string(elements[4]))
+	docShortID, err := DecodeDocShortID(elements[3])
+	if err != nil {
+		return HeadstoreDocKey{}, err
+	}
+
+	cid, err := cid.Decode(string(elements[5]))
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
 	return HeadstoreDocKey{
 		// elements[0] is empty (key has leading '/')
-		DocShortID: docShortID,
-		FieldID:    string(elements[3]),
-		Cid:        cid,
+		CollectionShortID: collectionShortID,
+		DocShortID:        docShortID,
+		FieldID:           string(elements[4]),
+		Cid:               cid,
 	}, nil
 }
 
-func (k HeadstoreDocKey) WithDocShortID(docShortID uint64) HeadstoreDocKey {
+// WithCollectionShortID returns a copy of the key scoped to the given collection.
+func (k HeadstoreDocKey) WithCollectionShortID(collectionShortID uint32) HeadstoreDocKey {
+	newKey := k
+	newKey.CollectionShortID = collectionShortID
+	return newKey
+}
+
+func (k HeadstoreDocKey) WithDocShortID(docShortID uint32) HeadstoreDocKey {
 	newKey := k
 	newKey.DocShortID = docShortID
 	return newKey
@@ -85,6 +99,10 @@ func (k HeadstoreDocKey) ToString() string {
 func (k HeadstoreDocKey) Bytes() []byte {
 	result := []byte(HEADSTORE_DOC)
 
+	if k.CollectionShortID != 0 {
+		result = append(result, '/')
+		result = append(result, EncodeCollectionShortID(k.CollectionShortID)...)
+	}
 	if k.DocShortID != 0 {
 		result = append(result, '/')
 		result = append(result, EncodeDocShortID(k.DocShortID)...)
@@ -114,6 +132,10 @@ func (k HeadstoreDocKey) PrefixEnd() Walkable {
 	}
 	if k.DocShortID != 0 {
 		newKey.DocShortID++
+		return newKey
+	}
+	if k.CollectionShortID != 0 {
+		newKey.CollectionShortID++
 		return newKey
 	}
 	if k.Cid.Defined() {

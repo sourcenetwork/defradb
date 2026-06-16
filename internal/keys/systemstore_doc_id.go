@@ -24,7 +24,7 @@ import (
 // maps to the public DocID once the genesis block has been materialized.
 //
 // Collection-scoped mappings are used by normal document reads and writes.
-// Node-scoped mappings support paths that only have a public DocID, such as P2P
+// The node-scoped mapping supports paths that only have a public DocID, such as P2P
 // and block-signing lookups. Block indexes are stored in both directions:
 // block CID -> DocID for verification, and DocID -> block CID for cleanup.
 //
@@ -86,7 +86,7 @@ type ShortIDToDocIDKey struct {
 
 var _ Key = (*ShortIDToDocIDKey)(nil)
 
-func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID uint64) ShortIDToDocIDKey {
+func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID uint32) ShortIDToDocIDKey {
 	return ShortIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			collectionShortIDSegment(collectionShortID),
@@ -126,23 +126,6 @@ func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 			[]byte(NODE_DOC_ID_INDEX),
 			[]byte(DOC_ID_TO_SHORT_ID),
 			docIDSegment(docID),
-		),
-	}
-}
-
-// NodeShortIDToDocIDKey maps this node's local short doc ID to its public doc ID.
-type NodeShortIDToDocIDKey struct {
-	systemstoreDocIDKey
-}
-
-var _ Key = (*NodeShortIDToDocIDKey)(nil)
-
-func NewNodeShortIDToDocIDKey(shortDocID uint64) NodeShortIDToDocIDKey {
-	return NodeShortIDToDocIDKey{
-		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			[]byte(NODE_DOC_ID_INDEX),
-			[]byte(SHORT_ID_TO_DOC_ID),
-			EncodeDocShortID(shortDocID),
 		),
 	}
 }

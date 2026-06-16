@@ -370,7 +370,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 	type mergeItem struct {
 		cid              cid.Cid
-		createShortDocID uint64
+		createShortDocID uint32
 	}
 
 	stack := make([]mergeItem, 0, 64)
@@ -481,8 +481,8 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
-	createShortDocID uint64,
-) (uint64, error) {
+	createShortDocID uint32,
+) (uint32, error) {
 	if block.Delta.IsCollection() {
 		return 0, nil
 	}
@@ -517,7 +517,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 func (vf *VersionedFetcher) storageDocIDForPublicDocID(
 	collectionShortID uint32,
 	publicDocID string,
-) (uint64, error) {
+) (uint32, error) {
 	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
 	if err != nil {
 		return 0, err
@@ -531,7 +531,7 @@ func (vf *VersionedFetcher) storageDocIDForPublicDocID(
 func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 	collectionShortID uint32,
 	heads []cidlink.Link,
-) (uint64, error) {
+) (uint32, error) {
 	for _, head := range heads {
 		headBlock, err := vf.getDAGBlock(head.Cid)
 		if err != nil {

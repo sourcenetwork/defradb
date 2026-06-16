@@ -187,13 +187,16 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	if key == "" {
 		return false, nil
 	}
-	shortDocID, found, err := id.GetNodeShortDocID(p.p.ctx, key)
+	localDocID, found, err := id.GetLocalDocID(p.p.ctx, key)
 	if err != nil || !found {
 		return false, err
 	}
 
 	// pass the doc key as a reference through the prefixes interface
-	prefixes := []keys.Walkable{keys.DataStoreKey{DocShortID: shortDocID}}
+	prefixes := []keys.Walkable{keys.DataStoreKey{
+		CollectionShortID: localDocID.CollectionShortID,
+		DocShortID:        localDocID.DocShortID,
+	}}
 	plan.Prefixes(prefixes)
 	err = plan.Init()
 	if err != nil {

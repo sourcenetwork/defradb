@@ -55,7 +55,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 					"_commits": []map[string]any{
 						{
 							"cid":       gomega.And(ageCid, uniqueCid),
-							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), shortDocIDKey(1), ""),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), localDocIDKey(1, 1), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
 							"height":    int64(1),
@@ -63,7 +63,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 						},
 						{
 							"cid":       gomega.And(nameCid, uniqueCid),
-							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), shortDocIDKey(1), ""),
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), localDocIDKey(1, 1), ""),
 							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 							"height":    int64(1),
@@ -120,10 +120,10 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(22), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(22), localDocIDKey(1, 1), ""),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), localDocIDKey(1, 1), ""),
 						},
 					},
 				},
@@ -178,11 +178,11 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 							"docID": testUtils.NewDocIndex(0, 1),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(22), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(22), localDocIDKey(1, 1), ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), localDocIDKey(1, 1), ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 					},
@@ -223,7 +223,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(5), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(5), localDocIDKey(1, 1), ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
@@ -271,10 +271,10 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(3), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(3), localDocIDKey(1, 1), ""),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(5), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(5), localDocIDKey(1, 1), ""),
 						},
 					},
 				},
@@ -305,11 +305,11 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(33), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(33), localDocIDKey(1, 1), ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue("Islam"), shortDocIDKey(1), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue("Islam"), localDocIDKey(1, 1), ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
@@ -317,11 +317,11 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), shortDocIDKey(2), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue(21), localDocIDKey(1, 2), ""),
 							"docID": testUtils.NewDocIndex(0, 1),
 						},
 						{
-							"delta": encryptedCBORValueWithKey(testUtils.CBORValue("John"), shortDocIDKey(2), ""),
+							"delta": encryptedCBORValueWithKey(testUtils.CBORValue("John"), localDocIDKey(1, 2), ""),
 							"docID": testUtils.NewDocIndex(0, 1),
 						},
 						{

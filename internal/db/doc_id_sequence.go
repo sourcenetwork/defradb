@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"math"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -21,8 +22,12 @@ import (
 )
 
 // nextShortDocID returns the next local storage key segment.
-func (db *DB) nextShortDocID() uint64 {
-	return db.docIDSequence.Add(1)
+func (db *DB) nextShortDocID() (uint32, error) {
+	next := db.docIDSequence.Add(1)
+	if next > math.MaxUint32 {
+		return 0, errors.New("local document short ID sequence exhausted")
+	}
+	return uint32(next), nil
 }
 
 // seedDocIDSequence restores the counter from stored primary keys.
@@ -33,7 +38,7 @@ func (db *DB) seedDocIDSequence(ctx context.Context) error {
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	var maxSeq uint64
+	var maxSeq uint32
 	for _, col := range cols {
 		collectionShortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
 		if err != nil {
@@ -74,6 +79,6 @@ func (db *DB) seedDocIDSequence(ctx context.Context) error {
 		}
 	}
 
-	db.docIDSequence.Store(maxSeq)
+	db.docIDSequence.Store(uint64(maxSeq))
 	return nil
 }

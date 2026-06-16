@@ -262,6 +262,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
+		collectionShortID,
 		shortDocID,
 	)
 	if err != nil {

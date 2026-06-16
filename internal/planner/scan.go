@@ -51,7 +51,8 @@ type scanNode struct {
 
 	showDeleted bool
 
-	prefixes []keys.Walkable
+	prefixes  []keys.Walkable
+	noResults bool
 
 	filter   *mapper.Filter
 	ordering []mapper.OrderCondition
@@ -293,7 +294,7 @@ func docIDFilterValues(ctx context.Context, docID string) ([]any, error) {
 		return values, nil
 	}
 
-	shortDocID, found, err := id.GetNodeShortDocID(ctx, docID)
+	localDocID, found, err := id.GetLocalDocID(ctx, docID)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +305,8 @@ func docIDFilterValues(ctx context.Context, docID string) ([]any, error) {
 	aliases, err := id.GetNodeDocIDAliasesForShortDocID(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		shortDocID,
+		localDocID.CollectionShortID,
+		localDocID.DocShortID,
 	)
 	if err != nil {
 		return nil, err
@@ -439,6 +441,9 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
+	if n.noResults {
+		return nil
+	}
 	if len(n.prefixes) == 0 {
 		shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
 		if err != nil {
@@ -464,6 +469,10 @@ func (n *scanNode) initScan() error {
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
 	n.execInfo.iterations++
+
+	if n.noResults {
+		return false, nil
+	}
 
 	if len(n.prefixes) == 0 {
 		return false, nil
@@ -500,6 +509,7 @@ func (n *scanNode) Next() (bool, error) {
 
 func (n *scanNode) Prefixes(prefixes []keys.Walkable) {
 	n.prefixes = prefixes
+	n.noResults = false
 }
 
 func (n *scanNode) Close() error {

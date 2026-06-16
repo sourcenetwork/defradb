@@ -36,7 +36,7 @@ const (
 type DataStoreKey struct {
 	CollectionShortID uint32
 	InstanceType      InstanceType
-	DocShortID        uint64
+	DocShortID        uint32
 	FieldID           string
 }
 
@@ -62,7 +62,7 @@ func MustNewDataStoreKey(key string) DataStoreKey {
 	return dsKey
 }
 
-func DataStoreKeyFromDocShortID(docShortID uint64) DataStoreKey {
+func DataStoreKeyFromDocShortID(docShortID uint32) DataStoreKey {
 	return DataStoreKey{
 		DocShortID: docShortID,
 	}
@@ -92,7 +92,7 @@ func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithDocShortID(docShortID uint64) DataStoreKey {
+func (k DataStoreKey) WithDocShortID(docShortID uint32) DataStoreKey {
 	newKey := k
 	newKey.DocShortID = docShortID
 	return newKey
@@ -114,8 +114,9 @@ func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 
 func (k DataStoreKey) ToHeadStoreKey() HeadstoreDocKey {
 	return HeadstoreDocKey{
-		DocShortID: k.DocShortID,
-		FieldID:    k.FieldID,
+		CollectionShortID: k.CollectionShortID,
+		DocShortID:        k.DocShortID,
+		FieldID:           k.FieldID,
 	}
 }
 
@@ -141,7 +142,7 @@ func (k DataStoreKey) PrettyPrint() string {
 		result = result + "/" + string(k.InstanceType)
 	}
 	if k.DocShortID != 0 {
-		result = result + "/" + strconv.FormatUint(k.DocShortID, 10)
+		result = result + "/" + strconv.FormatUint(uint64(k.DocShortID), 10)
 	}
 	if k.FieldID != "" {
 		result = result + "/" + k.FieldID
@@ -241,7 +242,7 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 		data = data[1:]
 	}
 
-	var docShortID uint64
+	var docShortID uint32
 	if len(data) > 0 {
 		if data[0] == '/' {
 			data = data[1:]

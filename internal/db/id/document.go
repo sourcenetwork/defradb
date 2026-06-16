@@ -27,7 +27,7 @@ import (
 func SetDocIDMapping(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID uint64,
+	shortDocID uint32,
 	docID string,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -41,24 +41,8 @@ func SetDocIDMapping(
 
 	if err := txn.Systemstore().Set(
 		ctx,
-		keys.NewDocIDToShortIDKey(collectionShortID, docID).Bytes(),
-		keys.EncodeDocShortID(shortDocID),
-	); err != nil {
-		return err
-	}
-
-	if err := txn.Systemstore().Set(
-		ctx,
 		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
-		keys.EncodeDocShortID(shortDocID),
-	); err != nil {
-		return err
-	}
-
-	if err := txn.Systemstore().Set(
-		ctx,
-		keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes(),
-		[]byte(docID),
+		keys.EncodeLocalDocID(collectionShortID, shortDocID),
 	); err != nil {
 		return err
 	}
@@ -68,25 +52,25 @@ func SetDocIDMapping(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(docID)},
-			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
+			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
 	return txn.Datastore().Set(ctx, &docIDIndexKey, []byte{})
 }
 
-func SetDocIDAlias(ctx context.Context, shortDocID uint64, docID string) error {
+func SetDocIDAlias(ctx context.Context, collectionShortID uint32, shortDocID uint32, docID string) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
 		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
-		keys.EncodeDocShortID(shortDocID),
+		keys.EncodeLocalDocID(collectionShortID, shortDocID),
 	)
 }
 
 func GetPublicDocID(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID uint64,
+	shortDocID uint32,
 ) (string, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetPublicDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, shortDocID)
@@ -96,7 +80,7 @@ func GetPublicDocIDFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
-	shortDocID uint64,
+	shortDocID uint32,
 ) (string, bool, error) {
 	value, err := store.Get(ctx, keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
@@ -112,7 +96,7 @@ func GetShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
-) (uint64, bool, error) {
+) (uint32, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetShortDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, docID)
 }
@@ -122,22 +106,18 @@ func GetShortDocIDFromStore(
 	store corekv.Reader,
 	collectionShortID uint32,
 	docID string,
-) (uint64, bool, error) {
-	value, err := store.Get(ctx, keys.NewDocIDToShortIDKey(collectionShortID, docID).Bytes())
-	if errors.Is(err, corekv.ErrNotFound) {
+) (uint32, bool, error) {
+	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
+	if err != nil || !found {
+		return 0, found, err
+	}
+	if localDocID.CollectionShortID != collectionShortID {
 		return 0, false, nil
 	}
-	if err != nil {
-		return 0, false, err
-	}
-	shortDocID, err := keys.DecodeDocShortID(value)
-	if err != nil {
-		return 0, false, err
-	}
-	return shortDocID, true, nil
+	return localDocID.DocShortID, true, nil
 }
 
-func GetNodeShortDocID(ctx context.Context, docID string) (uint64, bool, error) {
+func GetNodeShortDocID(ctx context.Context, docID string) (uint32, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetNodeShortDocIDFromStore(ctx, txn.Systemstore(), docID)
 }
@@ -146,7 +126,7 @@ func ResolveShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
-) (uint64, bool, error) {
+) (uint32, bool, error) {
 	shortDocID, found, err := GetShortDocID(ctx, collectionShortID, docID)
 	if err != nil || found {
 		return shortDocID, found, err
@@ -159,19 +139,32 @@ func ResolveShortDocID(
 	return shortDocID, true, nil
 }
 
-func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (uint64, bool, error) {
+func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (uint32, bool, error) {
+	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
+	if err != nil || !found {
+		return 0, found, err
+	}
+	return localDocID.DocShortID, true, nil
+}
+
+func GetLocalDocID(ctx context.Context, docID string) (keys.LocalDocID, bool, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	return GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
+}
+
+func GetLocalDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (keys.LocalDocID, bool, error) {
 	value, err := store.Get(ctx, keys.NewNodeDocIDToShortIDKey(docID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
-		return 0, false, nil
+		return keys.LocalDocID{}, false, nil
 	}
 	if err != nil {
-		return 0, false, err
+		return keys.LocalDocID{}, false, err
 	}
-	shortDocID, err := keys.DecodeDocShortID(value)
+	localDocID, err := keys.DecodeLocalDocID(value)
 	if err != nil {
-		return 0, false, err
+		return keys.LocalDocID{}, false, err
 	}
-	return shortDocID, true, nil
+	return localDocID, true, nil
 }
 
 func GetNodePublicDocID(ctx context.Context, docID string) (string, bool, error) {
@@ -180,28 +173,21 @@ func GetNodePublicDocID(ctx context.Context, docID string) (string, bool, error)
 }
 
 func GetNodePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, bool, error) {
-	shortDocID, found, err := GetNodeShortDocIDFromStore(ctx, store, docID)
+	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
 	if err != nil || !found {
 		return "", found, err
 	}
 
-	value, err := store.Get(ctx, keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes())
-	if err == nil {
-		return string(value), true, nil
-	}
-	if !errors.Is(err, corekv.ErrNotFound) {
-		return "", false, err
-	}
-
-	return "", false, nil
+	return GetPublicDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
 }
 
 func GetNodeDocIDAliasesForShortDocID(
 	ctx context.Context,
 	store corekv.Reader,
-	shortDocID uint64,
+	collectionShortID uint32,
+	shortDocID uint32,
 ) ([]string, error) {
-	if shortDocID == 0 {
+	if collectionShortID == 0 || shortDocID == 0 {
 		return nil, nil
 	}
 
@@ -224,11 +210,11 @@ func GetNodeDocIDAliasesForShortDocID(
 		if err != nil {
 			return nil, stderrors.Join(err, iter.Close())
 		}
-		valueShortDocID, err := keys.DecodeDocShortID(value)
+		localDocID, err := keys.DecodeLocalDocID(value)
 		if err != nil {
 			return nil, stderrors.Join(err, iter.Close())
 		}
-		if valueShortDocID == shortDocID {
+		if localDocID.CollectionShortID == collectionShortID && localDocID.DocShortID == shortDocID {
 			aliases = append(aliases, strings.TrimPrefix(string(iter.Key()), prefix))
 		}
 	}
@@ -378,9 +364,10 @@ func DeleteBlockDocIDMappings(
 func DeleteNodeDocIDAliasesForShortDocID(
 	ctx context.Context,
 	store corekv.ReaderWriter,
-	shortDocID uint64,
+	collectionShortID uint32,
+	shortDocID uint32,
 ) error {
-	if shortDocID == 0 {
+	if collectionShortID == 0 || shortDocID == 0 {
 		return nil
 	}
 
@@ -403,11 +390,11 @@ func DeleteNodeDocIDAliasesForShortDocID(
 		if err != nil {
 			return stderrors.Join(err, iter.Close())
 		}
-		valueShortDocID, err := keys.DecodeDocShortID(value)
+		localDocID, err := keys.DecodeLocalDocID(value)
 		if err != nil {
 			return stderrors.Join(err, iter.Close())
 		}
-		if valueShortDocID == shortDocID {
+		if localDocID.CollectionShortID == collectionShortID && localDocID.DocShortID == shortDocID {
 			aliasKeys = append(aliasKeys, append([]byte(nil), iter.Key()...))
 		}
 	}

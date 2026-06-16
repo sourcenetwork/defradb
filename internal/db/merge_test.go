@@ -210,7 +210,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.Equal(t, genesisPublicDocID, fieldResolved.publicDocID)
 	require.Equal(t, resolved.shortDocID, fieldResolved.shortDocID)
 
-	const existingShortDocID uint64 = 42
+	const existingShortDocID uint32 = 42
 	existingPublicDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
 	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingShortDocID, existingPublicDocID))
 	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()

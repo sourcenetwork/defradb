@@ -38,7 +38,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		shortDocID        uint64 = 7
+		shortDocID        uint32 = 7
 		publicDocID              = "bae-public-doc"
 	)
 
@@ -62,7 +62,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), 0)
+	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, 0)
 	require.NoError(t, err)
 	require.Empty(t, aliases)
 
@@ -85,7 +85,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		shortDocID        uint64 = 7
+		shortDocID        uint32 = 7
 		publicDocID              = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 	)
@@ -118,7 +118,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, shortDocID, gotShortDocID)
 
-	err = SetDocIDAlias(ctx, shortDocID, legacyDocID)
+	err = SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID)
 	require.NoError(t, err)
 
 	gotPublicDocID, found, err = GetNodePublicDocID(ctx, legacyDocID)
@@ -126,7 +126,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
 
-	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), shortDocID)
+	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{publicDocID, legacyDocID}, aliases)
 
@@ -135,7 +135,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
+			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
 	_, err = txn.Datastore().Get(ctx, &docIDIndexKey)
@@ -190,18 +190,19 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	const (
-		shortDocID      uint64 = 7
-		otherShortDocID uint64 = 8
-		publicDocID            = "bae-public-doc"
-		legacyDocID            = "bae-legacy-doc"
-		otherDocID             = "bae-other-doc"
+		collectionShortID uint32 = 42
+		shortDocID        uint32 = 7
+		otherShortDocID   uint32 = 8
+		publicDocID              = "bae-public-doc"
+		legacyDocID              = "bae-legacy-doc"
+		otherDocID               = "bae-other-doc"
 	)
 
-	require.NoError(t, SetDocIDAlias(ctx, shortDocID, publicDocID))
-	require.NoError(t, SetDocIDAlias(ctx, shortDocID, legacyDocID))
-	require.NoError(t, SetDocIDAlias(ctx, otherShortDocID, otherDocID))
+	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, shortDocID, publicDocID))
+	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
+	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, otherShortDocID, otherDocID))
 
-	err := DeleteNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), shortDocID)
+	err := DeleteNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, shortDocID)
 	require.NoError(t, err)
 
 	_, found, err := GetNodeShortDocID(ctx, publicDocID)

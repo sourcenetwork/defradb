@@ -139,7 +139,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 
 	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 
-	deletedDocIDs := make(map[uint64]struct{})
+	deletedDocIDs := make(map[uint32]struct{})
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
@@ -207,7 +207,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 					publicDocID = ""
 				}
 
-				err = c.hardDeleteDocumentBlocks(ctx, key.DocShortID)
+				err = c.hardDeleteDocumentBlocks(ctx, colShortID, key.DocShortID)
 				if err != nil {
 					return err
 				}
@@ -234,7 +234,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	return nil
 }
 
-func docShortIDFromCollectionDataKey(rawKey []byte) (uint64, bool, error) {
+func docShortIDFromCollectionDataKey(rawKey []byte) (uint32, bool, error) {
 	segments := bytes.Split(rawKey, []byte{'/'})
 	if len(segments) < 4 || len(segments[0]) != 0 {
 		return 0, false, nil
@@ -321,7 +321,8 @@ func (c *collection) hardDeleteDatastorePrefix(
 
 func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
-	docID uint64,
+	collectionShortID uint32,
+	docShortID uint32,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
@@ -331,7 +332,8 @@ func (c *collection) hardDeleteDocumentBlocks(
 
 	for hasMore {
 		prefix := keys.HeadstoreDocKey{
-			DocShortID: docID,
+			CollectionShortID: collectionShortID,
+			DocShortID:        docShortID,
 		}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
@@ -393,7 +395,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 func (c *collection) deleteDocIDMappings(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID uint64,
+	shortDocID uint32,
 	publicDocID string,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -415,14 +417,7 @@ func (c *collection) deleteDocIDMappings(
 	if err := deleteRawKeyIfExists(ctx, systemstore, shortToPublicKey); err != nil {
 		return err
 	}
-	publicToShortKey := keys.NewDocIDToShortIDKey(collectionShortID, publicDocID).Bytes()
-	if err := deleteRawKeyIfExists(ctx, systemstore, publicToShortKey); err != nil {
-		return err
-	}
-	if err := deleteRawKeyIfExists(ctx, systemstore, keys.NewNodeShortIDToDocIDKey(shortDocID).Bytes()); err != nil {
-		return err
-	}
-	if err := id.DeleteNodeDocIDAliasesForShortDocID(ctx, systemstore, shortDocID); err != nil {
+	if err := id.DeleteNodeDocIDAliasesForShortDocID(ctx, systemstore, collectionShortID, shortDocID); err != nil {
 		return err
 	}
 	if err := id.DeleteBlockDocIDMappings(ctx, systemstore, collectionShortID, publicDocID); err != nil {
@@ -434,7 +429,7 @@ func (c *collection) deleteDocIDMappings(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
+			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
 	return deleteDatastoreKeyIfExists(ctx, txn.Datastore(), &docIDIndexKey)

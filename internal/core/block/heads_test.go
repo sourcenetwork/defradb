@@ -47,7 +47,7 @@ func newHeadSet() *heads {
 
 	return NewHeadSet(
 		s,
-		keys.HeadstoreDocKey{}.WithDocShortID(1).WithFieldID("1"),
+		keys.HeadstoreDocKey{}.WithCollectionShortID(1).WithDocShortID(1).WithFieldID("1"),
 	)
 }
 

@@ -21,7 +21,7 @@ import (
 func TestSystemstoreDocIDKeys(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
-		shortDocID        uint64 = 7
+		shortDocID        uint32 = 7
 		publicDocID              = "bae-public-doc"
 		fieldCID                 = "bafy-field-cid"
 	)
@@ -47,11 +47,6 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 			name: "node public to short",
 			key:  NewNodeDocIDToShortIDKey(publicDocID),
 			want: "/docid/n/p/" + publicDocID,
-		},
-		{
-			name: "node short to public",
-			key:  NewNodeShortIDToDocIDKey(shortDocID),
-			want: "/docid/n/s/" + shortDocIDSegment,
 		},
 		{
 			name: "block to public",

@@ -59,7 +59,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
+			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
@@ -149,7 +149,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.True(t, found)
 
 	const legacyDocID = "bae-legacy-doc"
-	require.NoError(t, id.SetDocIDAlias(txnCtx, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
 
 	require.NoError(t, c.deleteDocIDMappings(txnCtx, collectionShortID, shortDocID, ""))
 
@@ -180,7 +180,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			{Value: client.NewNormalBytes(keys.EncodeDocShortID(shortDocID))},
+			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)

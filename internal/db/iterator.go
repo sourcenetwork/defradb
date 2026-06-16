@@ -40,11 +40,13 @@ func NewHeadBlocksIterator(
 	ctx context.Context,
 	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
-	docID uint64,
+	collectionShortID uint32,
+	docShortID uint32,
 ) (*DocHeadBlocksIterator, error) {
 	headStoreKey := keys.HeadstoreDocKey{
-		DocShortID: docID,
-		FieldID:    core.COMPOSITE_NAMESPACE,
+		CollectionShortID: collectionShortID,
+		DocShortID:        docShortID,
+		FieldID:           core.COMPOSITE_NAMESPACE,
 	}
 	headset := coreblock.NewHeadSet(headstore, headStoreKey)
 	cids, _, err := headset.List(ctx)
@@ -64,7 +66,7 @@ func NewHeadBlocksIteratorFromTxn(
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	shortDocID, found, err := id.GetNodeShortDocIDFromStore(ctx, txn.Systemstore(), docID)
+	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +80,8 @@ func NewHeadBlocksIteratorFromTxn(
 		ctx,
 		txn.Headstore(),
 		txn.Blockstore(),
-		shortDocID,
+		localDocID.CollectionShortID,
+		localDocID.DocShortID,
 	)
 }
 

@@ -504,9 +504,13 @@ func (c *collection) save(
 
 	var primaryKey keys.PrimaryDataStoreKey
 	if isAdd {
+		docShortID, err := c.db.nextShortDocID()
+		if err != nil {
+			return err
+		}
 		primaryKey = keys.PrimaryDataStoreKey{
 			CollectionShortID: shortID,
-			DocShortID:        c.db.nextShortDocID(),
+			DocShortID:        docShortID,
 		}
 	} else {
 		primaryKey, err = c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -527,7 +531,7 @@ func (c *collection) save(
 	}
 
 	legacyCreateDocID := ""
-	encryptionDocID := keys.EncodeDocShortID(primaryKey.DocShortID)
+	encryptionDocID := keys.EncodeLocalDocID(shortID, primaryKey.DocShortID)
 	if isAdd {
 		legacyCreateDocID = doc.ID().String()
 	}
@@ -644,7 +648,7 @@ func (c *collection) save(
 			return err
 		}
 		if legacyCreateDocID != "" && legacyCreateDocID != docID.String() {
-			if err := id.SetDocIDAlias(ctx, primaryKey.DocShortID, legacyCreateDocID); err != nil {
+			if err := id.SetDocIDAlias(ctx, shortID, primaryKey.DocShortID, legacyCreateDocID); err != nil {
 				return err
 			}
 		}
@@ -835,7 +839,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, strconv.FormatUint(primaryKey.DocShortID, 10))
+		return false, false, NewErrGetDocStatus(err, strconv.FormatUint(uint64(primaryKey.DocShortID), 10))
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil

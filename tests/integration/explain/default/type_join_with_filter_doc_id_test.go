@@ -85,10 +85,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 									"_eq": "John Grisham",
 								},
 							},
-							"prefixes": []string{
-								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
-							},
+							"prefixes": []string{},
 						},
 					},
 				},
@@ -174,9 +171,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 									"_eq": "Cornelia Funke",
 								},
 							},
-							"prefixes": []string{
-								"/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-							},
+							"prefixes": []string{},
 						},
 					},
 				},

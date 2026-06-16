@@ -53,7 +53,7 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	require.NoError(t, id.SetDocIDAlias(txnCtx, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
 	require.NoError(t, txn.Commit())
 
 	retriever := NewCollectionRetriever(db)
@@ -62,14 +62,16 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, publicDocID, resolvedDocID)
 
-	encodedShortDocID := string(keys.EncodeDocShortID(shortDocID))
-	resolvedDocID, err = retriever.ResolvePublicDocID(ctx, encodedShortDocID)
+	resolvedDocID, err = retriever.ResolvePublicDocID(
+		ctx,
+		string(keys.EncodeLocalDocID(collectionShortID, shortDocID)),
+	)
 	require.NoError(t, err)
 	require.Equal(t, publicDocID, resolvedDocID)
 
 	retrievedCol, err := retriever.RetrieveCollectionFromDocID(
 		ctx,
-		encodedShortDocID,
+		legacyDocID,
 		immutable.None[identity.Identity](),
 	)
 	require.NoError(t, err)
