@@ -104,11 +104,15 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	// It is registered before any routes so every HTTP route on this handler
 	// is normalized consistently.
 	mux.Use(middleware.StripSlashes)
+	var allowedOrigins []string
+	if nodeOpts != nil {
+		allowedOrigins = nodeOpts.HTTP.AllowedOrigins
+	}
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs, nodeOpts),
 			TransactionMiddleware,
-			AuthMiddleware,
+			AuthMiddleware(allowedOrigins),
 		)
 		// This is left in for backwards compatibility as we
 		// transition to v1 and should be removed in v2.
