@@ -31,6 +31,7 @@ Get a private document using an identity:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --collection-id string        Collection ID
       --collection-name string      Collection name
       --get-inactive                Get inactive collections as well as active
