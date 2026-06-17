@@ -119,5 +119,6 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

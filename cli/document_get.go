@@ -65,5 +65,6 @@ func MakeDocumentGetCommand(ctx context.Context) *cobra.Command {
 	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f `)
 
 	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

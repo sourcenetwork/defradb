@@ -77,14 +77,14 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 }
 
 func setCollectionSelectorFlags(cmd *cobra.Command) {
-	cmd.Flags().String("name", "", "Collection name")
+	cmd.Flags().String("collection-name", "", "Collection name")
 	cmd.Flags().String("collection-id", "", "Collection ID")
 	cmd.Flags().String("version-id", "", "Collection version ID")
 	cmd.Flags().Bool("get-inactive", false, "Get inactive collections as well as active")
 }
 
 func getCollectionSelectorOptions(cmd *cobra.Command) *options.GetCollectionsOptionsBuilder {
-	name, _ := cmd.Flags().GetString("name")
+	name, _ := cmd.Flags().GetString("collection-name")
 	collectionID, _ := cmd.Flags().GetString("collection-id")
 	versionID, _ := cmd.Flags().GetString("version-id")
 	getInactive, _ := cmd.Flags().GetBool("get-inactive")

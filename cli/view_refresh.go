@@ -13,17 +13,12 @@ package cli
 import (
 	"context"
 
-	"github.com/spf13/cobra"
-
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/spf13/cobra"
 )
 
 func MakeViewRefreshCommand(ctx context.Context) *cobra.Command {
-	var name string
-	var collectionID string
-	var versionID string
-	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "refresh",
 		Short: "Refresh views.",
@@ -35,6 +30,11 @@ permissions. Subsequent query requests to the view, regardless of user, will rec
 items from that cache.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
+
+			name, _ := cmd.Flags().GetString("collection-name")
+			collectionID, _ := cmd.Flags().GetString("collection-id")
+			versionID, _ := cmd.Flags().GetString("version-id")
+			getInactive, _ := cmd.Flags().GetBool("get-inactive")
 
 			opt := options.WithIdentity(options.RefreshViews(), identity.FromContext(cmd.Context()))
 			if versionID != "" {
@@ -61,7 +61,7 @@ items from that cache.`,
 		`defradb client view refresh`)
 
 	EmbedCLIExample(ctx, cmd, "refresh views by name",
-		`defradb client view refresh --name UserView`)
+		`defradb client view refresh --collection-name UserView`)
 
 	EmbedCLIExample(ctx, cmd, "refresh views by collection id",
 		`defradb client view refresh --collection-id bae123`)
@@ -69,9 +69,6 @@ items from that cache.`,
 	EmbedCLIExample(ctx, cmd, "refresh views by version id",
 		`defradb client view refresh --version-id bae123`)
 
-	cmd.Flags().StringVar(&name, "name", "", "View name")
-	cmd.Flags().StringVar(&collectionID, "collection-id", "", "View collection ID")
-	cmd.Flags().StringVar(&versionID, "version-id", "", "View version ID")
-	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive views as well as active")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

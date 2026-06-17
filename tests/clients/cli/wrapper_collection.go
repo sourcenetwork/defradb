@@ -228,7 +228,7 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	args := []string{"client", "collection", "truncate"}
-	args = append(args, "--name", c.Version().Name)
+	args = append(args, "--collection-name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

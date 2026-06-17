@@ -46,7 +46,7 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 		`defradb client collection describe`)
 
 	EmbedCLIExample(ctx, cmd, "view collection by name",
-		`defradb client collection describe --name User`)
+		`defradb client collection describe --collection-name User`)
 
 	EmbedCLIExample(ctx, cmd, "view collection by collection id",
 		`defradb client collection describe --collection-id bae123`)
