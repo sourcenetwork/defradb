@@ -522,7 +522,7 @@ func resolveDocIDAliasForCollection(ctx context.Context, col client.Collection, 
 		return docID, nil
 	}
 
-	publicDocID, found, err := id.GetPublicDocID(ctx, collectionShortID, localDocID.DocShortID)
+	publicDocID, found, err := id.GetDocID(ctx, collectionShortID, localDocID.DocShortID)
 	if err != nil {
 		return "", err
 	}

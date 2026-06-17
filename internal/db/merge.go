@@ -381,6 +381,11 @@ func (mp *mergeProcessor) processBlock(
 			if err := mp.setBlockDocIDMapping(ctx, docID.publicDocID, blockLink.Cid); err != nil {
 				return err
 			}
+			if dagBlock.Encryption != nil {
+				if err := mp.setBlockDocIDMapping(ctx, docID.publicDocID, dagBlock.Encryption.Cid); err != nil {
+					return err
+				}
+			}
 		}
 		if block.Delta.IsComposite() && docID.publicDocID != "" {
 			if err := mp.setLinkedBlockDocIDMappings(ctx, docID.publicDocID, dagBlock.Links); err != nil {
@@ -559,7 +564,7 @@ func (mp *mergeProcessor) resolveCompositeBlockDocID(
 		return resolved, nil
 	}
 
-	if publicDocID, found, err := id.GetPublicDocIDForBlockFromStore(
+	if publicDocID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,
@@ -600,7 +605,7 @@ func (mp *mergeProcessor) resolveFieldBlockDocID(
 		return resolved, nil
 	}
 
-	publicDocID, found, err := id.GetPublicDocIDForBlockFromStore(
+	publicDocID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,
@@ -624,7 +629,7 @@ func (mp *mergeProcessor) resolveDocIDForCompositeCID(
 		return resolved, nil
 	}
 
-	publicDocID, found, err := id.GetPublicDocIDForBlockFromStore(
+	publicDocID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,

@@ -221,7 +221,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if primaryKey.DocShortID == 0 {
 			continue
 		}
-		publicDocID, found, err := id.GetPublicDocIDFromStore(
+		publicDocID, found, err := id.GetDocIDFromStore(
 			ctx,
 			p.db.Multistore().Systemstore(),
 			shortID,

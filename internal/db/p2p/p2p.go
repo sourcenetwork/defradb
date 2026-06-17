@@ -562,7 +562,7 @@ func (p *P2P) publicDocIDsForBlock(
 	if err != nil {
 		return nil, err
 	}
-	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		ctx,
 		p.db.Multistore().Systemstore(),
 		collectionShortID,

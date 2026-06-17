@@ -165,8 +165,7 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	lsys.SetWriteStorage(&store)
 
 	encBlock := Encryption{
-		DocID: []byte("docID"),
-		Key:   []byte("keyID"),
+		Key: []byte("keyID"),
 	}
 
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
@@ -268,11 +267,8 @@ func TestEncryptionBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
 }
 
 func TestEncryptionBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
-	fieldName := "fieldName"
 	encBlock := Encryption{
-		DocID:     []byte("docID"),
-		Key:       []byte("keyID"),
-		FieldName: &fieldName,
+		Key: []byte("keyID"),
 	}
 
 	marshaledData, err := encBlock.Marshal()
@@ -346,8 +342,7 @@ func TestBlock_Clone(t *testing.T) {
 
 	// Create encryption block and link
 	encBlock := Encryption{
-		DocID: []byte("docID"),
-		Key:   []byte("keyID"),
+		Key: []byte("keyID"),
 	}
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
 	require.NoError(t, err, "Failed to store encryption block")

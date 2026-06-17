@@ -491,7 +491,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		return createShortDocID, nil
 	}
 
-	publicDocID, found, err := id.GetPublicDocIDForBlockFromStore(
+	publicDocID, found, err := id.GetDocIDForBlockFromStore(
 		vf.ctx,
 		vf.txn.Systemstore(),
 		collectionShortID,

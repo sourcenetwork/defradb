@@ -147,11 +147,7 @@ func determineBlockEncryption(
 
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &Encryption{DocID: append([]byte(nil), docKey...)}
-		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
-			f := fieldName.Value()
-			encBlock.FieldName = &f
-		}
+		encBlock := &Encryption{}
 		encryptor := encryption.GetEncryptorFromContext(ctx)
 		if encryptor != nil {
 			encKey, err := encryptor.GetOrGenerateEncryptionKey(string(docKey), fieldName)
@@ -190,9 +186,7 @@ func determineBlockEncryption(
 				return nil, cidlink.Link{}, NewErrDecodeEncryptionBlock(err)
 			}
 			return &Encryption{
-				DocID:     prevEncBlock.DocID,
-				FieldName: prevEncBlock.FieldName,
-				Key:       prevEncBlock.Key,
+				Key: prevEncBlock.Key,
 			}, *prevBlock.Encryption, nil
 		}
 	}

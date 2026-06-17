@@ -189,6 +189,15 @@ func (c *collection) applyDelete(
 	if err := id.SetBlockDocIDMapping(ctx, primaryKey.CollectionShortID, link.Cid, publicDocID); err != nil {
 		return err
 	}
+	encryptionCIDs, err := appendEncryptionCID(nil, b)
+	if err != nil {
+		return err
+	}
+	for _, encCID := range encryptionCIDs {
+		if err := id.SetBlockDocIDMapping(ctx, primaryKey.CollectionShortID, encCID, publicDocID); err != nil {
+			return err
+		}
+	}
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{

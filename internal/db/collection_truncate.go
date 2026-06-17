@@ -195,7 +195,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				return NewErrTruncateDatastoreKey(errors.New("missing document short ID"), key.ToString())
 			}
 			if _, done := deletedDocIDs[key.DocShortID]; !done {
-				publicDocID, found, err := id.GetPublicDocID(ctx, colShortID, key.DocShortID)
+				publicDocID, found, err := id.GetDocID(ctx, colShortID, key.DocShortID)
 				if err != nil {
 					return err
 				}
@@ -415,7 +415,7 @@ func (c *collection) deleteDocIDMappings(
 	if publicDocID == "" {
 		var found bool
 		var err error
-		publicDocID, found, err = id.GetPublicDocID(ctx, collectionShortID, shortDocID)
+		publicDocID, found, err = id.GetDocID(ctx, collectionShortID, shortDocID)
 		if err != nil {
 			return err
 		}

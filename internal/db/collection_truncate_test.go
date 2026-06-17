@@ -65,7 +65,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
 	require.NoError(t, err)
 
-	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
@@ -89,7 +89,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetPublicDocID(txnCtx, collectionShortID, shortDocID)
+	_, found, err = id.GetDocID(txnCtx, collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -97,11 +97,11 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetNodePublicDocID(txnCtx, publicDocID)
+	_, found, err = id.GetNodeDocID(txnCtx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err = id.GetPublicDocIDsForBlockFromStore(
+	docIDs, err = id.GetDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
@@ -156,7 +156,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetPublicDocID(txnCtx, collectionShortID, shortDocID)
+	_, found, err = id.GetDocID(txnCtx, collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 	_, found, err = id.GetNodeShortDocID(txnCtx, publicDocID)
@@ -166,7 +166,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,

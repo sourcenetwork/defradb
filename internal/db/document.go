@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -103,7 +104,7 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 
-			publicDocID, found, err := id.GetPublicDocIDFromStore(
+			publicDocID, found, err := id.GetDocIDFromStore(
 				ctx,
 				c.db.Multistore().Systemstore(),
 				shortID,
@@ -538,6 +539,7 @@ func (c *collection) save(
 	}
 
 	links := make([]coreblock.DAGLink, 0)
+	encryptionCIDs := make([]cid.Cid, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -580,7 +582,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDeltaWithOptions(
+			link, rawBlock, err := coreblock.AddDeltaWithOptions(
 				signingCtx,
 				merkleCRDT,
 				delta,
@@ -591,6 +593,10 @@ func (c *collection) save(
 			}
 
 			links = append(links, coreblock.NewDAGLink(k, link))
+			encryptionCIDs, err = appendEncryptionCID(encryptionCIDs, rawBlock)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -606,6 +612,10 @@ func (c *collection) save(
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 		links...,
 	)
+	if err != nil {
+		return err
+	}
+	encryptionCIDs, err = appendEncryptionCID(encryptionCIDs, headNode)
 	if err != nil {
 		return err
 	}
@@ -649,6 +659,11 @@ func (c *collection) save(
 	}
 	for _, link := range links {
 		if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, updateDocID); err != nil {
+			return err
+		}
+	}
+	for _, encCID := range encryptionCIDs {
+		if err := id.SetBlockDocIDMapping(ctx, colShortID, encCID, updateDocID); err != nil {
 			return err
 		}
 	}
@@ -711,6 +726,17 @@ func (c *collection) save(
 	}
 
 	return nil
+}
+
+func appendEncryptionCID(cids []cid.Cid, rawBlock []byte) ([]cid.Cid, error) {
+	block, err := coreblock.GetFromBytes(rawBlock)
+	if err != nil {
+		return nil, err
+	}
+	if block.Encryption == nil {
+		return cids, nil
+	}
+	return append(cids, block.Encryption.Cid), nil
 }
 
 // DeleteDocument will attempt to delete a document by docID and return true if a deletion is successful,
@@ -873,7 +899,7 @@ func (c *collection) getPublicDocIDFromPrimaryKey(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (string, error) {
-	docID, found, err := id.GetPublicDocID(ctx, primaryKey.CollectionShortID, primaryKey.DocShortID)
+	docID, found, err := id.GetDocID(ctx, primaryKey.CollectionShortID, primaryKey.DocShortID)
 	if err != nil {
 		return "", err
 	}

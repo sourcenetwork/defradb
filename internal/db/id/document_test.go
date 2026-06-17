@@ -42,7 +42,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 		publicDocID              = "bae-public-doc"
 	)
 
-	_, found, err := GetPublicDocID(ctx, collectionShortID, shortDocID)
+	_, found, err := GetDocID(ctx, collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -58,7 +58,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = GetNodePublicDocID(ctx, publicDocID)
+	_, found, err = GetNodeDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -67,11 +67,11 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.Empty(t, aliases)
 
 	undefinedCID := blocks.NewBlock(nil).Cid()
-	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
+	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
 
-	docID, found, err := GetPublicDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
+	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
 	require.False(t, found)
 	require.Empty(t, docID)
@@ -93,7 +93,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	err := SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID)
 	require.NoError(t, err)
 
-	gotPublicDocID, found, err := GetPublicDocID(ctx, collectionShortID, shortDocID)
+	gotPublicDocID, found, err := GetDocID(ctx, collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
@@ -108,7 +108,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, shortDocID, gotShortDocID)
 
-	gotPublicDocID, found, err = GetNodePublicDocID(ctx, publicDocID)
+	gotPublicDocID, found, err = GetNodeDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
@@ -121,7 +121,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	err = SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID)
 	require.NoError(t, err)
 
-	gotPublicDocID, found, err = GetNodePublicDocID(ctx, legacyDocID)
+	gotPublicDocID, found, err = GetNodeDocID(ctx, legacyDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
@@ -191,11 +191,11 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID2)
 	require.NoError(t, err)
 
-	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
 
-	docID, found, err := GetPublicDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Contains(t, []string{docID1, docID2}, docID)
@@ -203,13 +203,13 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = DeleteBlockDocIDMappings(ctx, txn.Systemstore(), collectionShortID, docID1)
 	require.NoError(t, err)
 
-	docIDs, err = GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{docID2}, docIDs)
 
 	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, "")
 	require.NoError(t, err)
-	docIDs, err = GetPublicDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{docID2}, docIDs)
 }

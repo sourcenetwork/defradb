@@ -67,16 +67,16 @@ func SetDocIDAlias(ctx context.Context, collectionShortID uint32, shortDocID uin
 	)
 }
 
-func GetPublicDocID(
+func GetDocID(
 	ctx context.Context,
 	collectionShortID uint32,
 	shortDocID uint32,
 ) (string, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	return GetPublicDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, shortDocID)
+	return GetDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, shortDocID)
 }
 
-func GetPublicDocIDFromStore(
+func GetDocIDFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
@@ -158,18 +158,18 @@ func GetLocalDocIDFromStore(ctx context.Context, store corekv.Reader, docID stri
 	return localDocID, true, nil
 }
 
-func GetNodePublicDocID(ctx context.Context, docID string) (string, bool, error) {
+func GetNodeDocID(ctx context.Context, docID string) (string, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	return GetNodePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
+	return GetNodeDocIDFromStore(ctx, txn.Systemstore(), docID)
 }
 
-func GetNodePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, bool, error) {
+func GetNodeDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, bool, error) {
 	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
 	if err != nil || !found {
 		return "", found, err
 	}
 
-	return GetPublicDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
+	return GetDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
 }
 
 func GetNodeDocIDAliasesForShortDocID(
@@ -242,7 +242,7 @@ func SetBlockDocIDMapping(
 	)
 }
 
-func GetPublicDocIDsForBlockFromStore(
+func GetDocIDsForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
@@ -278,13 +278,13 @@ func GetPublicDocIDsForBlockFromStore(
 	return docIDs, nil
 }
 
-func GetPublicDocIDForBlockFromStore(
+func GetDocIDForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
 	blockCID cid.Cid,
 ) (string, bool, error) {
-	docIDs, err := GetPublicDocIDsForBlockFromStore(ctx, store, collectionShortID, blockCID)
+	docIDs, err := GetDocIDsForBlockFromStore(ctx, store, collectionShortID, blockCID)
 	if err != nil {
 		return "", false, err
 	}

@@ -143,7 +143,7 @@ func (db *DB) publicDocIDsForSignatureBlock(
 		return nil, err
 	}
 
-	docIDs, err := id.GetPublicDocIDsForBlockFromStore(
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		ctx,
 		datastore.SystemstoreFrom(db.rootstore),
 		shortID,

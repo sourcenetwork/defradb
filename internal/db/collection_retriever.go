@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
@@ -42,7 +43,30 @@ func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID strin
 	}
 	defer txn.Discard()
 
-	return resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
+	publicDocID, err := resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
+	if err != nil || publicDocID != docID {
+		return publicDocID, err
+	}
+
+	blockCID, err := cid.Decode(docID)
+	if err != nil {
+		return docID, nil
+	}
+	cols, err := txn.GetCollections(ctx, options.GetCollections())
+	if err != nil {
+		return "", err
+	}
+	for _, col := range cols {
+		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
+		if err != nil {
+			return "", err
+		}
+		publicDocID, found, err := id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), shortID, blockCID)
+		if err != nil || found {
+			return publicDocID, err
+		}
+	}
+	return docID, nil
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
@@ -100,10 +124,10 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 }
 
 func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
-	// Encryption blocks carry the encoded local document key; callers can also pass a public DocID or alias.
+	// Old encryption blocks may carry an encoded local document key.
 	localDocID, err := keys.DecodeLocalDocID([]byte(docKey))
 	if err == nil {
-		publicDocID, found, err := id.GetPublicDocIDFromStore(
+		publicDocID, found, err := id.GetDocIDFromStore(
 			ctx,
 			store,
 			localDocID.CollectionShortID,
@@ -114,7 +138,7 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKe
 		}
 	}
 
-	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docKey)
+	publicDocID, found, err := id.GetNodeDocIDFromStore(ctx, store, docKey)
 	if err != nil {
 		return "", err
 	}

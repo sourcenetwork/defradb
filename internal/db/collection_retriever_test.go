@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -53,7 +54,9 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
+	blockCID := blocks.NewBlock([]byte("encryption-key")).Cid()
 	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, blockCID, publicDocID))
 	require.NoError(t, txn.Commit())
 
 	retriever := NewCollectionRetriever(db)
@@ -66,6 +69,10 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 		ctx,
 		string(keys.EncodeLocalDocID(collectionShortID, shortDocID)),
 	)
+	require.NoError(t, err)
+	require.Equal(t, publicDocID, resolvedDocID)
+
+	resolvedDocID, err = retriever.ResolvePublicDocID(ctx, blockCID.String())
 	require.NoError(t, err)
 	require.Equal(t, publicDocID, resolvedDocID)
 

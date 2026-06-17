@@ -177,7 +177,7 @@ func normalShortDocID(val client.NormalValue) (uint32, bool, error) {
 }
 
 func (f *indexFetcher) publicDocID(shortDocID uint32) (string, error) {
-	publicDocID, found, err := id.GetPublicDocID(f.ctx, f.collectionShortID, shortDocID)
+	publicDocID, found, err := id.GetDocID(f.ctx, f.collectionShortID, shortDocID)
 	if err != nil {
 		return "", err
 	}

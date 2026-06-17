@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -391,9 +392,15 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		docID := string(encBlock.DocID)
-		if docID != "" {
-			// Doc-scoped block: gate on per-doc DAC.
+		_, encCID, err := cid.CidFromBytes(link)
+		if err != nil {
+			return nil, err
+		}
+		docID, err := s.colRetriever.ResolvePublicDocID(ctx, encCID.String())
+		if err != nil {
+			return nil, err
+		}
+		if docID != encCID.String() {
 			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
 				return nil, err
@@ -402,11 +409,6 @@ func (s *pubSubService) getEncryptionKeysLocally(
 				continue
 			}
 		} else {
-			// Collection-scoped block (e.g. a `@branchable` collection's own head).
-			// The block doesn't carry a CollectionID, so we can't run a per-collection
-			// DAC check. Fall back to a node-level NAC gate: if the requester has no
-			// authorized access on this node, refuse to serve. When NAC is not enabled
-			// this is a no-op, preserving existing behaviour.
 			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
 			if err != nil {
 				return nil, err
@@ -428,19 +430,14 @@ func (s *pubSubService) getEncryptionKeysLocally(
 
 // doesIdentityHaveDocPermission asks whether actorIdentity may read docID.
 // The collection lookup runs as the node itself (NAC), the DAC check runs as
-// the requester. docID must be non-empty.
+// the requester. publicDocID must be non-empty.
 func (s *pubSubService) doesIdentityHaveDocPermission(
 	ctx context.Context,
 	actorIdentity immutable.Option[identity.Identity],
-	docID string,
+	publicDocID string,
 ) (bool, error) {
 	if !s.documentACP.HasValue() {
 		return true, nil
-	}
-
-	publicDocID, err := s.colRetriever.ResolvePublicDocID(ctx, docID)
-	if err != nil {
-		return false, err
 	}
 
 	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, publicDocID, s.nodeIdentity)

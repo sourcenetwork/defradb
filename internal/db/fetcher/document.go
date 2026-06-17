@@ -225,7 +225,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 }
 
 func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID uint32) (string, error) {
-	docID, found, err := id.GetPublicDocID(f.ctx, collectionShortID, shortDocID)
+	docID, found, err := id.GetDocID(f.ctx, collectionShortID, shortDocID)
 	if err != nil {
 		return "", err
 	}

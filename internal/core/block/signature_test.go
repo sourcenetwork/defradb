@@ -181,8 +181,7 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 
 	// Create encryption block
 	encBlock := Encryption{
-		DocID: []byte("docID"),
-		Key:   []byte("keyID"),
+		Key: []byte("keyID"),
 	}
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
 	require.NoError(t, err)

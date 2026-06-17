@@ -654,7 +654,7 @@ func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.C
 	if err != nil {
 		return "", false, err
 	}
-	return id.GetPublicDocIDForBlockFromStore(
+	return id.GetDocIDForBlockFromStore(
 		n.planner.ctx,
 		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
 		collectionShortID,
@@ -667,7 +667,7 @@ func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID uint3
 	if err != nil {
 		return "", err
 	}
-	publicDocID, found, err := id.GetPublicDocID(n.planner.ctx, collectionShortID, docID)
+	publicDocID, found, err := id.GetDocID(n.planner.ctx, collectionShortID, docID)
 	if err != nil {
 		return "", err
 	}
