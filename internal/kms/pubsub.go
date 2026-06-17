@@ -258,7 +258,9 @@ func (s *pubSubService) handleFetchEncryptionKeyResponses(
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
 ) {
-	// track latest `cancelPublish` func via the closure
+	// track latest `cancelPublish` func via the closure since the cancel func
+	// is mutated in this function and we need to cancel the latest value at defer
+	// time
 	defer func() {
 		cancelPublish()
 	}()
