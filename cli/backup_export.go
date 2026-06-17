@@ -26,7 +26,7 @@ func MakeBackupExportCommand(ctx context.Context) *cobra.Command {
 	var pretty bool
 	var format string
 	var cmd = &cobra.Command{
-		Use:   "export  [-c --collections | -p --pretty | -f --format] <output_path>",
+		Use:   "export <output_path>",
 		Short: "Export the database to a file",
 		Long: `Export the database to a file.
 

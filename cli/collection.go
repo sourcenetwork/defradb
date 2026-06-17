@@ -27,7 +27,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
-		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
+		Use:   "collection",
 		Short: "Interact with a collection.",
 		Long:  `Add, describe, patch, set-active, delete, and truncate collections.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
