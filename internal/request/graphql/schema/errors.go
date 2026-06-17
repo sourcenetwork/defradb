@@ -44,6 +44,7 @@ const (
 	errEncryptedIndexTypeNotSupported   string = "encrypted index type not supported"
 	errEncryptedIndexOnNonExistentField string = "encrypted index on non-existent field"
 	errEncryptedIndexAlreadyExists      string = "encrypted index already exists on field"
+	errNestedListsNotSupported          string = "nested lists are not supported"
 )
 
 var (
@@ -71,6 +72,7 @@ var (
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
 	ErrInvalidTypeForConstraint  = errors.New(errInvalidTypeForConstraint)
+	ErrNestedListsNotSupported   = errors.New(errNestedListsNotSupported)
 	ErrWritingSDL                = errors.New("writing SDL")
 	ErrParsingSDL                = errors.New("parsing SDL")
 	ErrGeneratingSDL             = errors.New("generating SDL")

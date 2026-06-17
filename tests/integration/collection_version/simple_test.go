@@ -817,3 +817,37 @@ func TestCollectionVersionSimple_WithAllTypes_AddsCollectionGivenTypes(t *testin
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestCollectionVersionSimpleErrorsGivenNestedListField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: [[String]]
+					}
+				`,
+				ExpectedError: "nested lists are not supported",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionSimpleErrorsGivenNestedNonNullListField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: [[String!]!]
+					}
+				`,
+				ExpectedError: "nested lists are not supported",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -702,7 +702,11 @@ func astTypeToKind(
 	case *ast.List:
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *ast.NonNull:
-			switch innerAstTypeVal.Type.(*ast.Named).Name.Value {
+			innerNamedType, ok := innerAstTypeVal.Type.(*ast.Named)
+			if !ok {
+				return client.FieldKind_None, ErrNestedListsNotSupported
+			}
+			switch innerNamedType.Name.Value {
 			case typeBoolean:
 				return client.FieldKind_BOOL_ARRAY, nil
 			case typeInt:
@@ -714,11 +718,18 @@ func astTypeToKind(
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
 			default:
-				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
+				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerNamedType.Name.Value)
 			}
 
+		case *ast.List:
+			return client.FieldKind_None, ErrNestedListsNotSupported
+
 		default:
-			switch astTypeVal.Type.(*ast.Named).Name.Value {
+			namedType, ok := astTypeVal.Type.(*ast.Named)
+			if !ok {
+				return client.FieldKind_None, ErrNestedListsNotSupported
+			}
+			switch namedType.Name.Value {
 			case typeBoolean:
 				return client.FieldKind_NILLABLE_BOOL_ARRAY, nil
 			case typeInt:
@@ -730,7 +741,7 @@ func astTypeToKind(
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
-				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
+				return client.NewNamedKind(namedType.Name.Value, true), nil
 			}
 		}
 
