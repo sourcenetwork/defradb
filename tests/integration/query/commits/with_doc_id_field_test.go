@@ -32,7 +32,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "{{.DocID0_0}}", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "not a field"}}
 						) {
 							cid
@@ -62,7 +62,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "{{.DocID0_0}}", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "999999"}
 						}) {
 							cid
@@ -92,8 +92,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-
-							docID: "{{.DocID0_0}}", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "age"}}
 						) {
 							cid
@@ -128,8 +127,7 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-
-							docID: "{{.DocID0_0}}", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "_C"}}
 						) {
 							cid

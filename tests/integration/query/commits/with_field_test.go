@@ -198,7 +198,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 				Request: `query {
 						_commits (
 
-							filter: {fieldName: {_eq: "age"}}, 
+							filter: {fieldName: {_eq: "age"}},
 							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid
@@ -234,7 +234,7 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 				Request: `query {
 						_commits (
 
-							filter: {fieldName: {_eq: "name"}}, 
+							filter: {fieldName: {_eq: "name"}},
 							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid
@@ -266,7 +266,7 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 				Request: `query {
 						_commits (
 
-							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 
+							filter: {fieldName: {_eq: "NOT_A_FIELD"}},
 							cid: "{{.FieldCID0_0_age_0}}"
 						) {
 							cid

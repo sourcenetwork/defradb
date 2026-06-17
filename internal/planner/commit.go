@@ -646,7 +646,7 @@ func (n *dagScanNode) publicCommitDocID(
 		return publicDocID, true, nil
 	}
 
-	return "", true, nil
+	return "", false, nil
 }
 
 func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.Cid) (string, bool, error) {
