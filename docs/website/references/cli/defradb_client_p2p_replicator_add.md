@@ -8,7 +8,7 @@ Add replicator(s) and start synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.
 
 ```
-defradb client p2p replicator add [-c, --collection] <addresses...> [flags]
+defradb client p2p replicator add <addresses...> [flags]
 ```
 
 ### Examples
