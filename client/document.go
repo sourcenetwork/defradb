@@ -982,7 +982,7 @@ func DocumentIDs(docs []*Document) []string {
 }
 
 // ApplySavedDocumentID applies an ID returned by a DefraDB save operation.
-// Temporary adapter hook; user code should not set document IDs directly.
+// This is a temporary adapter hook for client implementations; user code should not call it.
 func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
 }
