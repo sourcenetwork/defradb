@@ -18,6 +18,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
@@ -42,6 +45,34 @@ func bearerTokenForAudience(t *testing.T, audience string) string {
 	require.NoError(t, err)
 
 	return string(token)
+}
+
+// tokenWithInvalidSubject returns a validly-signed token whose subject is not a
+// valid public key, so FromToken rejects it with ErrInvalidSubject.
+func tokenWithInvalidSubject(t *testing.T, audience string) string {
+	t.Helper()
+
+	full, err := acpIdentity.Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	now := time.Now()
+	tok, err := jwt.NewBuilder().
+		Subject("not-a-public-key").
+		Audience([]string{audience}).
+		Expiration(now.Add(time.Hour)).
+		NotBefore(now).
+		IssuedAt(now).
+		Build()
+	require.NoError(t, err)
+	require.NoError(t, tok.Set(acpIdentity.KeyTypeClaim, string(crypto.KeyTypeSecp256k1)))
+
+	privKey := full.PrivateKey().Underlying()
+	secpPrivKey, ok := privKey.(*secp256k1.PrivateKey)
+	require.True(t, ok)
+	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.ES256K, secpPrivKey.ToECDSA()))
+	require.NoError(t, err)
+
+	return string(signed)
 }
 
 // tamperedSignatureToken returns a token that parses and carries the given
@@ -208,4 +239,45 @@ func TestAuth_InvalidSignature_ReturnsInvalidTokenReason(t *testing.T) {
 
 	require.Equal(t, http.StatusForbidden, status)
 	require.Equal(t, authErrInvalidToken, body)
+}
+
+// An expired token reports its own cause rather than the generic reason, so an
+// operator can see they need to mint a fresh token.
+func TestAuth_ExpiredToken_ReturnsExpiredReason(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	full, err := acpIdentity.Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	tokenBytes, err := full.NewToken(-time.Hour, immutable.Some("localhost:9181"), immutable.None[string]())
+	require.NoError(t, err)
+
+	status, body := doAuthedPost(
+		t,
+		cdb,
+		"http://localhost:9181/api/v1/collections",
+		string(tokenBytes),
+		`type Author { name: String }`,
+	)
+
+	require.Equal(t, http.StatusForbidden, status)
+	require.Equal(t, authErrExpired, body)
+}
+
+// A token whose subject is not a valid public key reports the invalid-subject
+// cause, so an operator can see they put the wrong value in the `sub` claim.
+func TestAuth_InvalidSubject_ReturnsInvalidSubjectReason(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	token := tokenWithInvalidSubject(t, "localhost:9181")
+
+	status, body := doAuthedPost(
+		t,
+		cdb,
+		"http://localhost:9181/api/v1/collections",
+		token,
+		`type Author { name: String }`,
+	)
+
+	require.Equal(t, http.StatusForbidden, status)
+	require.Equal(t, authErrInvalidSubject, body)
 }

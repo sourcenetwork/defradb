@@ -190,6 +190,8 @@ func (f *fullIdentity) UpdateToken(
 //
 // On failure it returns a typed error identifying the cause so callers can
 // distinguish operator-actionable problems from token-integrity ones:
+//   - ErrTokenExpired     — the token's expiry (exp) is in the past.
+//   - ErrTokenNotYetValid — the token's not-before (nbf) is in the future.
 //   - ErrMissingAudience  — the token carries no audience claim.
 //   - ErrAudienceMismatch — the audience claim does not match the given audience.
 //   - ErrInvalidAuthToken — the token is malformed/structurally invalid, or its
@@ -198,10 +200,18 @@ func (f *fullIdentity) UpdateToken(
 func VerifyAuthToken(ident TokenIdentity, audience string) error {
 	// Parse structurally first, without audience validation. jwx reports a missing
 	// `aud` claim the same way as a mismatched one (both as an audience failure), so
-	// we inspect the claim ourselves to tell the two apart.
+	// we inspect the claim ourselves to tell the two apart. The temporal claims
+	// (exp/nbf) are validated here by default.
 	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false))
 	if err != nil {
-		return errors.Wrap(errInvalidAuthToken, err)
+		switch {
+		case errors.Is(err, jwt.ErrTokenExpired()):
+			return ErrTokenExpired
+		case errors.Is(err, jwt.ErrTokenNotYetValid()):
+			return ErrTokenNotYetValid
+		default:
+			return errors.Wrap(errInvalidAuthToken, err)
+		}
 	}
 
 	tokenAudience := token.Audience()
