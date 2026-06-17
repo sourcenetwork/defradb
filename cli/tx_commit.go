@@ -21,7 +21,7 @@ import (
 
 func MakeTxCommitCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "commit [id]",
+		Use:   "commit <id>",
 		Short: "Commit a DefraDB transaction.",
 		Long:  `Commit a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),

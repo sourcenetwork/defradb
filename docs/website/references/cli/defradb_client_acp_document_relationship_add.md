@@ -24,7 +24,7 @@ Notes:
 
 
 ```
-defradb client acp document relationship add [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp document relationship add [flags]
 ```
 
 ### Examples
