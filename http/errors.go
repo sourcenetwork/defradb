@@ -30,6 +30,7 @@ const (
 	errFailedToGetContext       string = "failed to get context"
 	errMissingRequiredParameter string = "required parameter %s is missing"
 	errCollectionNotFound       string = "collection not found"
+	errNoHostInURL              string = "could not derive a host from the url"
 )
 
 // Errors returnable from this package.
@@ -119,6 +120,13 @@ func NewErrCollectionNotFound(collectionName string) error {
 	return errors.New(
 		errCollectionNotFound,
 		errors.NewKV("CollectionName", collectionName),
+	)
+}
+
+func NewErrNoHostInURL(rawURL string) error {
+	return errors.New(
+		errNoHostInURL,
+		errors.NewKV("URL", rawURL),
 	)
 }
 

@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
@@ -105,12 +106,25 @@ func tamperedSignatureToken(t *testing.T, audience string) string {
 
 func doAuthedPost(t *testing.T, cdb DB, url, token, body string) (int, string) {
 	t.Helper()
+	return doAuthedPostWithOrigins(t, cdb, nil, url, token, body)
+}
+
+// doAuthedPostWithOrigins builds a handler whose AuthMiddleware is configured with
+// the given allowed origins, so the audience allow-list behaviour can be exercised.
+func doAuthedPostWithOrigins(t *testing.T, cdb DB, allowedOrigins []string, url, token, body string) (int, string) {
+	t.Helper()
 
 	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(body))
 	req.Header.Set(authHeaderName, authSchemaPrefix+token)
 
 	rec := httptest.NewRecorder()
-	handler, err := NewHandler(cdb, nil)
+	var nodeOpts *options.NodeOptions
+	if allowedOrigins != nil {
+		nodeOpts = &options.NodeOptions{
+			HTTP: options.NodeHTTPOptions{AllowedOrigins: allowedOrigins},
+		}
+	}
+	handler, err := NewHandler(cdb, nodeOpts)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -280,4 +294,49 @@ func TestAuth_InvalidSubject_ReturnsInvalidSubjectReason(t *testing.T) {
 
 	require.Equal(t, http.StatusForbidden, status)
 	require.Equal(t, authErrInvalidSubject, body)
+}
+
+// A token whose audience does not match the request host is accepted when the
+// audience matches one of the configured allowed origins. This lets a server
+// behind a proxy authorize tokens minted for its public address even though the
+// host it directly sees differs.
+func TestAuth_TokenAudienceMatchesAllowedOrigin_PassesMiddleware(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	// Token minted for the public address, while the request reaches the server
+	// on a different host (e.g. behind a proxy).
+	token := bearerTokenForAudience(t, "public.example.com")
+
+	status, body := doAuthedPostWithOrigins(
+		t,
+		cdb,
+		[]string{"http://public.example.com"},
+		"http://127.0.0.1:9181/api/v1/collections",
+		token,
+		`type Author { name: String }`,
+	)
+
+	require.False(t, status == http.StatusForbidden && body == "forbidden",
+		"audience matching an allowed origin must pass AuthMiddleware (got %d %q)", status, body)
+}
+
+// A token whose audience matches neither the request host nor any allowed origin
+// is still rejected — the allow-list widens the accepted set, it does not disable
+// the check — and reports the audience-mismatch reason.
+func TestAuth_TokenAudienceMatchesNeitherHostNorOrigin_ReturnsMismatchReason(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	token := bearerTokenForAudience(t, "evil.example.com")
+
+	status, body := doAuthedPostWithOrigins(
+		t,
+		cdb,
+		[]string{"http://public.example.com"},
+		"http://127.0.0.1:9181/api/v1/collections",
+		token,
+		`type Author { name: String }`,
+	)
+
+	require.Equal(t, http.StatusForbidden, status)
+	require.Equal(t, authErrAudienceMismatch, body)
 }
