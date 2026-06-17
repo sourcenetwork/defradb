@@ -192,5 +192,5 @@ func storeEncryptionBlock(
 	)
 	require.NoError(t, err)
 
-	return link.(cidlink.Link).Cid.Bytes()
+	return []byte(link.Binary())
 }
