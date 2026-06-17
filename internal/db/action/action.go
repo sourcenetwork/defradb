@@ -29,7 +29,7 @@ func Register(
 	collectionID string,
 	action client.Action,
 ) error {
-	status, err := getStatus(ctx, multistore, collectionID, action)
+	status, err := getStatus(multistore, collectionID, action)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,10 @@ func Set(
 	binary.PutUvarint(val, uint64(status))
 
 	err := multistore.Systemstore().Set(
-		ctx,
+		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
+		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
+		// https://github.com/sourcenetwork/corekv/issues/107
+		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
 		val,
 	)
@@ -76,7 +79,10 @@ func Complete(
 	action client.Action,
 ) error {
 	err := multistore.Systemstore().Delete(
-		ctx,
+		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
+		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
+		// https://github.com/sourcenetwork/corekv/issues/107
+		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
 
@@ -90,13 +96,15 @@ func Complete(
 }
 
 func getStatus(
-	ctx context.Context,
 	multistore *datastore.Multistore,
 	collectionID string,
 	action client.Action,
 ) (client.ActionStatus, error) {
 	val, err := multistore.Systemstore().Get(
-		ctx,
+		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
+		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
+		// https://github.com/sourcenetwork/corekv/issues/107
+		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
 	if err != nil {
