@@ -133,10 +133,11 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 
 		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 
-		// Registerd using the background context, as stores rely on the closing of other contexts in order
-		// to time the flushing of writes - meaning if ctx was used to write, the status would not be readable
-		// by other threads until after the refresh has completed.
-		err = action.Register(context.Background(), multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		// Clear the transaction on the context used to write the action execution information, otherwise
+		// corekv will pick it up again, writing using the transaction.
+		// https://github.com/sourcenetwork/corekv/issues/107
+		txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
+		err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}
@@ -159,7 +160,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			return err
 		}
 
-		err = action.Complete(context.Background(), multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}

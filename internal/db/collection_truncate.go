@@ -64,10 +64,11 @@ func (c *collection) Truncate(
 
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 
-	// Registerd using the background context, as stores rely on the closing of other contexts in order
-	// to time the flushing of writes - meaning if ctx was used to write, the status would not be readable
-	// by other threads until after the truncate has completed.
-	err = action.Register(context.Background(), multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
+	// Clear the transaction on the context used to write the action execution information, otherwise
+	// corekv will pick it up again, writing using the transaction.
+	// https://github.com/sourcenetwork/corekv/issues/107
+	txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
+	err = action.Register(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func (c *collection) Truncate(
 		return err
 	}
 
-	err = action.Complete(context.Background(), multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
+	err = action.Complete(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 	if err != nil {
 		return err
 	}
