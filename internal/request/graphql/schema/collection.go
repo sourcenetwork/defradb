@@ -19,6 +19,7 @@ import (
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/sourcenetwork/graphql-go/language/printer"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -42,20 +43,6 @@ const (
 	// Special case enums
 	enum_UTC_NOW string = "UTC_NOW"
 )
-
-// TypeToDefaultPropName mapping is used to check that the default prop value
-// matches the field type
-var TypeToDefaultPropName = map[string]string{
-	typeString:   types.DefaultDirectivePropString,
-	typeBoolean:  types.DefaultDirectivePropBool,
-	typeInt:      types.DefaultDirectivePropInt,
-	typeFloat:    types.DefaultDirectivePropFloat,
-	typeFloat32:  types.DefaultDirectivePropFloat32,
-	typeFloat64:  types.DefaultDirectivePropFloat64,
-	typeDateTime: types.DefaultDirectivePropDateTime,
-	typeJSON:     types.DefaultDirectivePropJSON,
-	typeBlob:     types.DefaultDirectivePropBlob,
-}
 
 type typeDefinition struct {
 	Name        *ast.Name
@@ -408,34 +395,35 @@ func defaultFromAST(
 ) (any, error) {
 	astNamed, ok := field.Type.(*ast.Named)
 	if !ok {
+		// Non-named types (e.g. lists) cannot have a default value.
 		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, field.Type.String())
-	}
-	propName, ok := TypeToDefaultPropName[astNamed.Name.Value]
-	if !ok {
-		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
 	}
 	if len(directive.Arguments) != 1 {
 		return nil, NewErrDefaultValueOneArg(field.Name.Value)
 	}
 	arg := directive.Arguments[0]
-	if propName != arg.Name.Value {
-		return nil, NewErrDefaultValueType(field.Name.Value, propName, arg.Name.Value)
+	if arg.Name.Value != types.DefaultDirectivePropValue {
+		// Defensive: GraphQL validation (KnownArgumentNamesRule) already rejects any
+		// argument other than `value`, but guard anyway.
+		return nil, NewErrDefaultValueOneArg(field.Name.Value)
 	}
+	// The value is coerced based on the type of the field the directive is applied to,
+	// reusing each scalar's existing ParseLiteral coercion.
 	var value any
-	switch propName {
-	case types.DefaultDirectivePropInt:
+	switch astNamed.Name.Value {
+	case typeInt:
 		value = gql.Int.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropFloat:
+	case typeFloat:
 		value = gql.Float.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropFloat32:
+	case typeFloat32:
 		value = types.Float32.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropFloat64:
+	case typeFloat64:
 		value = types.Float64.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropBool:
+	case typeBoolean:
 		value = gql.Boolean.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropString:
+	case typeString:
 		value = gql.String.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropDateTime:
+	case typeDateTime:
 		// Handle UTC_NOW as a special case, if that's what the default is
 		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == enum_UTC_NOW {
 			value = enum_UTC_NOW
@@ -443,7 +431,7 @@ func defaultFromAST(
 		}
 		// Otherwise, parse the value normally as a DateTime
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
-	case types.DefaultDirectivePropJSON:
+	case typeJSON:
 		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
 		switch v := jsonValue.(type) {
 		case nil:
@@ -454,20 +442,58 @@ func defaultFromAST(
 			// If the value is not a primitive type, marshal it to a JSON string for storage
 			jsonBytes, err := json.Marshal(jsonValue)
 			if err != nil {
-				return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
+				return nil, NewErrDefaultValueInvalid(
+					field.Name.Value,
+					astNamed.Name.Value,
+					defaultValueLiteralType(arg.Value),
+					printer.Print(arg.Value),
+				)
 			}
 			value = string(jsonBytes)
 		}
-	case types.DefaultDirectivePropBlob:
+	case typeBlob:
 		value = types.Blob.ParseLiteral(arg.Value, nil)
+	default:
+		// Field types not present above (e.g. ID, relations) cannot have a default value.
+		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
 	}
 	// If the value is nil, then parsing has failed, or a nil value was provided.
 	// Since setting a default value to nil is the same as not providing one,
 	// it is safer to return an error to let the user know something is wrong.
 	if value == nil {
-		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
+		return nil, NewErrDefaultValueInvalid(
+			field.Name.Value,
+			astNamed.Name.Value,
+			defaultValueLiteralType(arg.Value),
+			printer.Print(arg.Value),
+		)
 	}
 	return value, nil
+}
+
+func defaultValueLiteralType(value ast.Value) string {
+	switch value.(type) {
+	case *ast.BooleanValue:
+		return typeBoolean
+	case *ast.IntValue:
+		return typeInt
+	case *ast.FloatValue:
+		return typeFloat
+	case *ast.StringValue:
+		return typeString
+	case *ast.EnumValue:
+		return "Enum"
+	case *ast.ListValue:
+		return "List"
+	case *ast.ObjectValue:
+		return "Object"
+	case *ast.NullValue:
+		return "Null"
+	case *ast.Variable:
+		return "Variable"
+	default:
+		return "Unknown"
+	}
 }
 
 func encryptedIndexFromAST(

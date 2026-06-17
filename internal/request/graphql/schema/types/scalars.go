@@ -119,6 +119,62 @@ var JSON = graphql.NewScalar(graphql.ScalarConfig{
 	ParseLiteral: parseJSON,
 })
 
+// parseAny coerces an AST literal of any kind into a non-nil Go value. It deliberately
+// accepts every literal shape (scalars, enums, lists, and objects) so that the `Any`
+// scalar passes GraphQL schema validation for any value. The value returned here is only
+// used by the validation layer as a non-null gate - the real, field-type-specific coercion
+// of a @default value happens in defaultFromAST, which re-parses the raw AST with the
+// scalar matching the host field's type.
+func parseAny(valueAST ast.Value, variables map[string]any) any {
+	switch valueAST := valueAST.(type) {
+	case *ast.ObjectValue:
+		out := make(map[string]any)
+		for _, f := range valueAST.Fields {
+			out[f.Name.Value] = parseAny(f.Value, variables)
+		}
+		return out
+
+	case *ast.ListValue:
+		out := make([]any, len(valueAST.Values))
+		for i, v := range valueAST.Values {
+			out[i] = parseAny(v, variables)
+		}
+		return out
+
+	case *ast.BooleanValue:
+		return valueAST.Value
+
+	case *ast.IntValue:
+		return valueAST.Value
+
+	case *ast.FloatValue:
+		return valueAST.Value
+
+	case *ast.StringValue:
+		return valueAST.Value
+
+	case *ast.EnumValue:
+		// Supports bare-word literals such as `UTC_NOW`.
+		return valueAST.Value
+
+	case *ast.Variable:
+		return variables[valueAST.Name.Value]
+
+	default:
+		return nil
+	}
+}
+
+var Any = graphql.NewScalar(graphql.ScalarConfig{
+	Name:        "Any",
+	Description: "The `Any` scalar type represents any GQL value.",
+	// Serialize / ParseValue are passthroughs; `Any` is only ever used as the type of the
+	// `@default(value:)` directive argument, which is always supplied as an SDL literal.
+	Serialize:    func(value any) any { return value },
+	ParseValue:   func(value any) any { return value },
+	ParseLiteral: parseAny,
+})
+
 func coerceFloat32(value any) any {
 	switch value := value.(type) {
 	case bool:

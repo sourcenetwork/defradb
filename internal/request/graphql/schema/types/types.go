@@ -56,16 +56,8 @@ const (
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
-	DefaultDirectiveLabel        = "default"
-	DefaultDirectivePropString   = "string"
-	DefaultDirectivePropBool     = "bool"
-	DefaultDirectivePropInt      = "int"
-	DefaultDirectivePropFloat    = "float"
-	DefaultDirectivePropFloat32  = "float32"
-	DefaultDirectivePropFloat64  = "float64"
-	DefaultDirectivePropDateTime = "dateTime"
-	DefaultDirectivePropJSON     = "json"
-	DefaultDirectivePropBlob     = "blob"
+	DefaultDirectiveLabel     = "default"
+	DefaultDirectivePropValue = "value"
 
 	MaterializedDirectiveLabel  = "materialized"
 	MaterializedDirectivePropIf = "if"
@@ -126,32 +118,8 @@ func DefaultDirective() *gql.Directive {
 		
 		Setting a default value on a field within a view has no effect.`,
 		Args: gql.FieldConfigArgument{
-			DefaultDirectivePropString: &gql.ArgumentConfig{
-				Type: gql.String,
-			},
-			DefaultDirectivePropBool: &gql.ArgumentConfig{
-				Type: gql.Boolean,
-			},
-			DefaultDirectivePropInt: &gql.ArgumentConfig{
-				Type: gql.Int,
-			},
-			DefaultDirectivePropFloat: &gql.ArgumentConfig{
-				Type: gql.Float,
-			},
-			DefaultDirectivePropFloat32: &gql.ArgumentConfig{
-				Type: Float32,
-			},
-			DefaultDirectivePropFloat64: &gql.ArgumentConfig{
-				Type: Float64,
-			},
-			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
-				Type: gql.DateTime,
-			},
-			DefaultDirectivePropJSON: &gql.ArgumentConfig{
-				Type: JSON,
-			},
-			DefaultDirectivePropBlob: &gql.ArgumentConfig{
-				Type: Blob,
+			DefaultDirectivePropValue: &gql.ArgumentConfig{
+				Type: Any,
 			},
 		},
 		Locations: []string{
