@@ -23,10 +23,12 @@ import (
 	kvblockstore "github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corekv/memory"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMarshalFetchEncryptionKeyRequest_GeneratesDistinctRequestIDs(t *testing.T) {
@@ -62,8 +64,7 @@ func TestTryHandleFetchEncryptionKeyResponse_UsesReplySenderForAAD(t *testing.T)
 	}
 
 	encBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
+		Key: []byte("doc-key"),
 	}
 	plainBlock, err := encBlock.Marshal()
 	require.NoError(t, err)
@@ -145,19 +146,18 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	rootstore := memory.NewDatastore(ctx)
 	encstore := datastore.EncstoreFrom(rootstore)
 	service := &pubSubService{
-		ctx:      ctx,
-		encStore: newIPLDEncryptionStorage(encstore),
+		ctx:          ctx,
+		encStore:     newIPLDEncryptionStorage(encstore),
+		colRetriever: testCollectionRetriever{},
 	}
 
 	foundBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
+		Key: []byte("doc-key"),
 	}
 	foundLink := storeEncryptionBlock(t, ctx, encstore, foundBlock)
 
 	missingBlock := &coreblock.Encryption{
-		DocID: []byte("doc2"),
-		Key:   []byte("other-doc-key"),
+		Key: []byte("other-doc-key"),
 	}
 	missingLink := storeEncryptionBlock(t, ctx, datastore.EncstoreFrom(memory.NewDatastore(ctx)), missingBlock)
 
@@ -172,6 +172,20 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	foundBlockBytes, err := foundBlock.Marshal()
 	require.NoError(t, err)
 	assert.Equal(t, foundBlockBytes, blocks[0])
+}
+
+type testCollectionRetriever struct{}
+
+func (testCollectionRetriever) RetrieveCollectionFromDocID(
+	context.Context,
+	string,
+	immutable.Option[identity.Identity],
+) (client.Collection, error) {
+	return nil, nil
+}
+
+func (testCollectionRetriever) ResolvePublicDocID(_ context.Context, docID string) (string, error) {
+	return "doc-" + docID, nil
 }
 
 func storeEncryptionBlock(

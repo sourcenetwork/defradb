@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
-	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
