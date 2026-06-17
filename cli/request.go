@@ -33,7 +33,7 @@ func MakeRequestCommand(ctx context.Context) *cobra.Command {
 	var operationName string
 	var variablesJSON string
 	var cmd = &cobra.Command{
-		Use:   "query [-i --identity] [request]",
+		Use:   "query [request]",
 		Short: "Send a DefraDB GraphQL query request",
 		Long: `Send a DefraDB GraphQL query request to the database.
 
