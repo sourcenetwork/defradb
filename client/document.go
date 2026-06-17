@@ -360,6 +360,20 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalTime(v), nil
 
+	case FieldKind_DATETIME_ARRAY:
+		v, err := getDateTimeArray(ctx, val, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalTimeArray(v), nil
+
+	case FieldKind_NILLABLE_DATETIME_ARRAY:
+		v, err := getNillableDateTimeArray(ctx, val, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableTimeArray(v), nil
+
 	case FieldKind_NILLABLE_INT, FieldKind_INT:
 		v, err := getInt64(val)
 		if err != nil {
@@ -470,6 +484,8 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
+const UTCNOW = "UTC_NOW"
+
 func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
@@ -479,11 +495,15 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 			return time.Time{}, err
 		}
 		s = string(b)
+		if s == UTCNOW {
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
+		}
 	case time.Time:
 		return val, nil
 	default:
 		s = val.(string)
-		if s == "UTC_NOW" {
+		if s == UTCNOW {
 			t := clock.TimeFromContext(ctx)
 			return t.UTC(), nil
 		}
@@ -589,6 +609,105 @@ func getNillableArray[T any](
 
 		array = arr
 	case []immutable.Option[T]:
+		array = val
+	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
+}
+
+func getDateTimeArray(ctx context.Context, v any, size int) ([]time.Time, error) {
+	array := []time.Time{}
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]time.Time, len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				return nil, ErrNullValueForNonNillableField
+			}
+			arr[i], err = getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+		array = arr
+	case []any:
+		arr := make([]time.Time, len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
+			var err error
+			arr[i], err = getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+		array = arr
+	case []time.Time:
+		array = val
+	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
+}
+
+func getNillableDateTimeArray(
+	ctx context.Context,
+	v any,
+	size int,
+) ([]immutable.Option[time.Time], error) {
+	array := []immutable.Option[time.Time]{}
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]immutable.Option[time.Time], len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = immutable.None[time.Time]()
+				continue
+			}
+			t, err := getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(t)
+		}
+		array = arr
+	case []any:
+		arr := make([]immutable.Option[time.Time], len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
+				arr[i] = immutable.None[time.Time]()
+				continue
+			}
+			t, err := getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(t)
+		}
+		array = arr
+	case []immutable.Option[time.Time]:
 		array = val
 	}
 	if size != 0 && len(array) != size {
@@ -928,6 +1047,8 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 		} else if v, ok := normValue.NillableFloat32Array(); ok {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableBoolArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableTimeArray(); ok {
 			innerValue = convertImmutable(v)
 		} else {
 			innerValue = normValue.Unwrap()
