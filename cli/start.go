@@ -93,7 +93,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
 				SetPath(cfg.GetString("datastore.badger.path")).
-				SetBadgerInMemory(inMem)
+				SetBadgerInMemory(inMem).
+				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
@@ -288,6 +289,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"Disable the peer-to-peer network synchronization system",
 	)
 	cmd.PersistentFlags().Bool(
+		"pubsub",
+		cfg.GetBool(config.ConfigFlags["pubsub"]),
+		"Enable the pubsub system",
+	)
+	cmd.PersistentFlags().Bool(
 		"relay",
 		cfg.GetBool(config.ConfigFlags["relay"]),
 		"Enable the p2p relay",
@@ -295,7 +301,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
 		cfg.GetStringSlice(config.ConfigFlags["allowed-origins"]),
-		"List of origins to allow for CORS requests",
+		"List of origins to allow for CORS requests. Their hosts are also accepted as auth token audiences",
 	)
 	cmd.PersistentFlags().String(
 		"pubkeypath",

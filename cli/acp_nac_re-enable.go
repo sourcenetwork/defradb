@@ -22,7 +22,7 @@ import (
 
 func MakeNodeACPReEnableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "re-enable [-i --identity]",
+		Use:   "re-enable",
 		Short: "Re-enable the node access control",
 		Long: `Re-enable the node access control
 Note:

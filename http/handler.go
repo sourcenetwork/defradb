@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
@@ -88,12 +89,13 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db DB) (*Handler, error) {
+func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
 	}
 	txs := &sync.Map{}
+
 	mux := chi.NewMux()
 	// Normalize trailing slashes so that, for example, `/collections` and
 	// `/collections/` resolve to the same route instead of the latter missing
@@ -102,11 +104,15 @@ func NewHandler(db DB) (*Handler, error) {
 	// It is registered before any routes so every HTTP route on this handler
 	// is normalized consistently.
 	mux.Use(middleware.StripSlashes)
+	var allowedOrigins []string
+	if nodeOpts != nil {
+		allowedOrigins = nodeOpts.HTTP.AllowedOrigins
+	}
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs),
+			ApiMiddleware(db, txs, nodeOpts),
 			TransactionMiddleware,
-			AuthMiddleware,
+			AuthMiddleware(allowedOrigins),
 		)
 		// This is left in for backwards compatibility as we
 		// transition to v1 and should be removed in v2.
