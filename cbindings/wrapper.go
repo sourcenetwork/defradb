@@ -69,6 +69,7 @@ extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isReadOnly);
 extern Result GetVersion(int flagFull, int flagJSON);
 extern Result AddView(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
 extern Result RefreshView(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result ListActions(uintptr_t nodePtr, uintptr_t identityPtr);
 */
 import "C"
 
@@ -799,6 +800,28 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[
 		return errors.New(res.Error)
 	}
 	return nil
+}
+
+func (w *CWrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.FreeIdentity(cIdentity)
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ListActions(callHandle, cIdentity))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	info, err := unmarshalResult[[]client.ActionExecution](res.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }
 
 func (w *CWrapper) SetMigration(
