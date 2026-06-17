@@ -13,6 +13,7 @@ package identity
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,6 +26,66 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 )
+
+// signTokenWithNotBefore mints a signed token for the given full identity with an
+// explicit not-before time, which the public minting API does not expose (it always
+// sets nbf to now). Returned as a TokenIdentity ready for VerifyAuthToken.
+func signTokenWithNotBefore(t *testing.T, full FullIdentity, audience string, notBefore time.Time) TokenIdentity {
+	t.Helper()
+
+	pubKey := full.PublicKey()
+
+	// Issue-at is left at "now" so only the not-before (nbf) check trips — jwx
+	// validates iat before nbf, so a future iat would mask the case under test.
+	builder := jwt.NewBuilder().
+		Subject(pubKey.String()).
+		Audience([]string{audience}).
+		Expiration(notBefore.Add(time.Hour)).
+		NotBefore(notBefore).
+		IssuedAt(time.Now())
+	tok, err := builder.Build()
+	require.NoError(t, err)
+	require.NoError(t, tok.Set(KeyTypeClaim, string(pubKey.Type())))
+
+	privKey := full.PrivateKey().Underlying()
+	if secpPrivKey, ok := privKey.(*secp256k1.PrivateKey); ok {
+		privKey = secpPrivKey.ToECDSA()
+	}
+	signed, err := jwt.Sign(tok, jwt.WithKey(keyTypeToJWK(pubKey.Type()), privKey))
+	require.NoError(t, err)
+
+	// Build the TokenIdentity directly rather than via FromToken: FromToken parses
+	// (and validates) the token, which would itself reject a not-yet-valid token
+	// before we can hand it to VerifyAuthToken.
+	return &mockIdentity{
+		did:         full.DID(),
+		bearerToken: string(signed),
+		publicKey:   pubKey,
+	}
+}
+
+// corruptJWTSignature returns the token with its signature segment altered so it
+// no longer verifies, while leaving the header and payload (incl. subject/audience)
+// intact. It mutates a character mid-segment to ensure the decoded signature bytes
+// actually change (flipping the final base64url character can leave them unchanged).
+func corruptJWTSignature(t *testing.T, token string) string {
+	t.Helper()
+
+	parts := strings.Split(token, ".")
+	require.Len(t, parts, 3, "expected a three-segment JWT")
+
+	sig := []byte(parts[2])
+	require.Greater(t, len(sig), 1)
+	i := len(sig) / 2
+	if sig[i] == 'A' {
+		sig[i] = 'B'
+	} else {
+		sig[i] = 'A'
+	}
+	parts[2] = string(sig)
+
+	return strings.Join(parts, ".")
+}
 
 type mockIdentity struct {
 	did         string
@@ -304,8 +365,21 @@ func TestVerifyAuthToken_WithExpiredToken_Error(t *testing.T) {
 	err = identity.UpdateToken(-time.Hour, immutable.Some("test-audience"), immutable.None[string]())
 	require.NoError(t, err)
 
+	// An expired token is its own operator-actionable cause.
 	err = VerifyAuthToken(identity, "test-audience")
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrTokenExpired)
+}
+
+func TestVerifyAuthToken_WithNotYetValidToken_Error(t *testing.T) {
+	full, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	// Mint a token whose not-before is an hour in the future. The public minting
+	// API always sets nbf to now, so build and sign the token directly here.
+	identity := signTokenWithNotBefore(t, full, "test-audience", time.Now().Add(time.Hour))
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrTokenNotYetValid)
 }
 
 func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
@@ -316,7 +390,45 @@ func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
 	require.NoError(t, err)
 
 	err = VerifyAuthToken(identity, "wrong-audience")
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrAudienceMismatch)
+}
+
+func TestVerifyAuthToken_WithMissingAudience_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	// Mint a token with no audience claim.
+	err = identity.UpdateToken(time.Hour, immutable.None[string](), immutable.None[string]())
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrMissingAudience)
+}
+
+func TestVerifyAuthToken_WithInvalidSignature_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	// Corrupt only the signature segment; the subject (public key) stays intact so
+	// the token still parses and the audience still matches, but jws.Verify fails.
+	identity.SetBearerToken(corruptJWTSignature(t, identity.BearerToken()))
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrInvalidAuthToken)
+}
+
+func TestVerifyAuthToken_WithMalformedToken_Error(t *testing.T) {
+	identity := &mockIdentity{
+		did:         "did:key:test",
+		bearerToken: "not-a-jwt",
+		publicKey:   nil,
+	}
+
+	err := VerifyAuthToken(identity, "test-audience")
+	require.ErrorIs(t, err, ErrInvalidAuthToken)
 }
 
 func TestVerifyAuthToken_WithNoToken_Error(t *testing.T) {
@@ -383,6 +495,30 @@ func TestFromToken_WithNonStringKeyType_Error(t *testing.T) {
 	_, err = FromToken(modifiedToken)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrInvalidKeyTypeClaimType)
+}
+
+func TestFromToken_WithInvalidSubject_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	token, err := identity.NewToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	parsedToken, err := jwt.Parse(token, jwt.WithVerify(false))
+	require.NoError(t, err)
+
+	// Replace the subject with a value that is not a valid public key.
+	err = parsedToken.Set(jwt.SubjectKey, "not-a-public-key")
+	require.NoError(t, err)
+
+	privKey := identity.PrivateKey().Underlying()
+	secpPrivKey, ok := privKey.(*secp256k1.PrivateKey)
+	require.True(t, ok, "expected secp256k1.PrivateKey")
+	modifiedToken, err := jwt.Sign(parsedToken, jwt.WithKey(jwa.ES256K, secpPrivKey.ToECDSA()))
+	require.NoError(t, err)
+
+	_, err = FromToken(modifiedToken)
+	require.ErrorIs(t, err, ErrInvalidSubject)
 }
 
 func TestFromPublicKey_WithSecp256k1_CreatesIdentityWithoutPrivateKey(t *testing.T) {
