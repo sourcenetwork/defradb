@@ -38,13 +38,14 @@ var _ Action = (*Wait)(nil)
 var _ Stateful = (*Wait)(nil)
 
 func (a *Wait) Execute() {
-	for {
-		select {
-		case <-time.After(orDefault(a.Duration, time.Hour)):
-			return
+	switch {
+	case a.Duration.HasValue() && a.Action.HasValue():
+		for {
+			select {
+			case <-time.After(a.Duration.Value()):
+				return
 
-		case action := <-a.s.Nodes[0].Event.Action.Message():
-			if a.Action.HasValue() {
+			case action := <-a.s.Nodes[0].Event.Action.Message():
 				expected := a.Action.Value()
 				//nolint:forcetypeassert
 				actual := action.Data.(event.ActionExecution)
@@ -55,13 +56,25 @@ func (a *Wait) Execute() {
 				}
 			}
 		}
-	}
-}
 
-func orDefault(opt immutable.Option[time.Duration], defaultDuration time.Duration) time.Duration {
-	if opt.HasValue() {
-		return opt.Value()
-	}
+	case a.Duration.HasValue() && !a.Action.HasValue():
+		<-time.After(a.Duration.Value())
+		return
 
-	return defaultDuration
+	case !a.Duration.HasValue() && a.Action.HasValue():
+		for {
+			action := <-a.s.Nodes[0].Event.Action.Message()
+			expected := a.Action.Value()
+			//nolint:forcetypeassert
+			actual := action.Data.(event.ActionExecution)
+			if expected.Action == actual.Action &&
+				expected.CollectionID == actual.CollectionID &&
+				expected.Status == actual.Status {
+				return
+			}
+		}
+
+	default:
+		return
+	}
 }
