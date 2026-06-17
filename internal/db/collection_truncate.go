@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -435,15 +434,7 @@ func (c *collection) deleteDocIDMappings(
 		return err
 	}
 
-	docIDIndexKey := keys.NewIndexDataStoreKey(
-		collectionShortID,
-		keys.DocIDIndexID,
-		[]keys.IndexedField{
-			{Value: client.NewNormalString(publicDocID)},
-		},
-	)
-	docIDIndexKey.DocShortID = shortDocID
-	return deleteDatastoreKeyIfExists(ctx, txn.Datastore(), &docIDIndexKey)
+	return nil
 }
 
 func deleteRawKeyIfExists(ctx context.Context, store corekv.ReaderWriter, key []byte) error {

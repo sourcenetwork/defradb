@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/memory"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -130,16 +129,6 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{publicDocID, legacyDocID}, aliases)
 
-	docIDIndexKey := keys.NewIndexDataStoreKey(
-		collectionShortID,
-		keys.DocIDIndexID,
-		[]keys.IndexedField{
-			{Value: client.NewNormalString(publicDocID)},
-		},
-	)
-	docIDIndexKey.DocShortID = shortDocID
-	_, err = txn.Datastore().Get(ctx, &docIDIndexKey)
-	require.NoError(t, err)
 }
 
 func TestResolveShortDocIDDoesNotCrossCollections(t *testing.T) {

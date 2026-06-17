@@ -11,18 +11,11 @@
 package keys
 
 import (
-	"math"
-
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
-
-// DocIDIndexID is reserved for DefraDB's internal _docID index.
-// Primary keys are ordered by short doc ID, so this index preserves efficient
-// filtering and ordering by the user-facing DocID.
-const DocIDIndexID = math.MaxUint32
 
 // IndexedField contains information necessary for storing a single
 // value of a field in an index.

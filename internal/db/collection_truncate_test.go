@@ -54,17 +54,6 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	docIDIndexKey := keys.NewIndexDataStoreKey(
-		collectionShortID,
-		keys.DocIDIndexID,
-		[]keys.IndexedField{
-			{Value: client.NewNormalString(publicDocID)},
-		},
-	)
-	docIDIndexKey.DocShortID = shortDocID
-	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
-	require.NoError(t, err)
-
 	docIDs, err := id.GetDocIDsForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
@@ -109,9 +98,6 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
-
-	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
-	require.Error(t, err)
 }
 
 func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
@@ -175,16 +161,6 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
 
-	docIDIndexKey := keys.NewIndexDataStoreKey(
-		collectionShortID,
-		keys.DocIDIndexID,
-		[]keys.IndexedField{
-			{Value: client.NewNormalString(publicDocID)},
-		},
-	)
-	docIDIndexKey.DocShortID = shortDocID
-	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
-	require.Error(t, err)
 }
 
 func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {

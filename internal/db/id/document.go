@@ -18,7 +18,6 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -47,15 +46,7 @@ func SetDocIDMapping(
 		return err
 	}
 
-	docIDIndexKey := keys.NewIndexDataStoreKey(
-		collectionShortID,
-		keys.DocIDIndexID,
-		[]keys.IndexedField{
-			{Value: client.NewNormalString(docID)},
-		},
-	)
-	docIDIndexKey.DocShortID = shortDocID
-	return txn.Datastore().Set(ctx, &docIDIndexKey, []byte{})
+	return nil
 }
 
 func SetDocIDAlias(ctx context.Context, collectionShortID uint32, shortDocID uint32, docID string) error {

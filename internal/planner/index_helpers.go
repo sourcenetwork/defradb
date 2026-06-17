@@ -15,10 +15,8 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/immutable"
@@ -91,10 +89,6 @@ func findIndexByFieldName(
 	col client.Collection,
 	fieldName string,
 ) immutable.Option[client.IndexDescription] {
-	if fieldName == request.DocIDFieldName {
-		return immutable.Some(docIDIndexDescription())
-	}
-
 	colVersion := col.Version()
 
 	for _, field := range colVersion.Fields {
@@ -120,9 +114,6 @@ func findIndexForOrdering(
 	if len(ordering) == 0 {
 		return immutable.None[client.IndexDescription]()
 	}
-	if isDocIDOrdering(ordering[0], docMapping) {
-		return immutable.Some(docIDIndexDescription())
-	}
 
 	indexes := col.Version().Indexes
 	for _, idx := range indexes {
@@ -133,27 +124,6 @@ func findIndexForOrdering(
 	}
 
 	return immutable.None[client.IndexDescription]()
-}
-
-func isDocIDOrdering(
-	ordering mapper.OrderCondition,
-	docMapping *core.DocumentMapping,
-) bool {
-	if docMapping == nil || len(ordering.FieldIndexes) == 0 {
-		return false
-	}
-	fieldName, found := docMapping.TryToFindNameFromIndex(ordering.FieldIndexes[0])
-	return found && fieldName == request.DocIDFieldName
-}
-
-func docIDIndexDescription() client.IndexDescription {
-	return client.IndexDescription{
-		Name: request.DocIDFieldName,
-		ID:   keys.DocIDIndexID,
-		Fields: []client.IndexedFieldDescription{
-			{Name: request.DocIDFieldName},
-		},
-	}
 }
 
 // canIndexSatisfyOrdering checks if the given index can satisfy the ordering conditions.

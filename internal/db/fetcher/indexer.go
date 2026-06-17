@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -96,14 +95,6 @@ func newIndexFetcher(
 	}
 
 	for _, indexedField := range f.indexDesc.Fields {
-		if indexedField.Name == request.DocIDFieldName {
-			// _docID uses DefraDB's reserved internal index, not a user-defined index.
-			f.indexedFields = append(f.indexedFields, client.CollectionFieldDescription{
-				Name: indexedField.Name,
-				Kind: client.FieldKind_DocID,
-			})
-			continue
-		}
 		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
