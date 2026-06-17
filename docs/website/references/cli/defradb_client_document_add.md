@@ -23,7 +23,7 @@ Options:
 		
 
 ```
-defradb client document add <document> [flags]
+defradb client document add [<document>] [flags]
 ```
 
 ### Examples
