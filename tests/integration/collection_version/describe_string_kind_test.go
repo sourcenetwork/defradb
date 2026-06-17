@@ -75,6 +75,71 @@ func TestGetCollectionVersion_RoundTripsStringifiedScalarAndArrayKinds(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestGetCollectionVersion_RoundTripsStringifiedCollectionKind asserts that a
+// cross-collection relation (a *CollectionKind, as opposed to the *SelfKind exercised
+// below) keeps its object shape in the describe output and rebuilds as a *CollectionKind
+// (NOT a NamedKind) after the round-trip. The SelfKind case below covers circular
+// relations; this covers the distinct-collection case, which encodes a non-empty
+// CollectionID rather than a RelativeID.
+//
+// As above, the http and cli clients reconstruct the version from the stringified
+// describe wire form, so running this under DEFRA_CLIENT_TYPE=http and =cli is what
+// guards the round-trip.
+func TestGetCollectionVersion_RoundTripsStringifiedCollectionKind(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						dogs: [Dog]
+					}
+					type Dog {
+						name: String
+						owner: User @primary
+					}
+				`,
+			},
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("Dog"),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Dog",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name:         "_ownerID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								RelationName: immutable.Some("dog_user"),
+								IsPrimary:    true,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name:         "owner",
+								Kind:         client.NewCollectionKind("bafyreibhpgygzsmki22sql5ejzcojrrxbc5iuhpydhdzxul5w2znc7zrgu", false),
+								RelationName: immutable.Some("dog_user"),
+								IsPrimary:    true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // TestGetCollectionVersion_RoundTripsStringifiedRelationKinds asserts that relation kinds
 // keep their object shape in the describe output and rebuild as the correct
 // *SelfKind/*CollectionKind (NOT a NamedKind) after the round-trip.
