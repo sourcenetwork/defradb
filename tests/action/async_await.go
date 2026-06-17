@@ -76,6 +76,8 @@ func (a *Await) Execute() {
 	}
 }
 
+// ActionGroup executes its children synchronously and serially, in the order in which they
+// are declared.
 type ActionGroup struct {
 	s *state.State
 

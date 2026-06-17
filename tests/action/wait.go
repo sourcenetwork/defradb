@@ -19,13 +19,18 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// Wait is an action that will wait for the given duration.
+// Wait is an action that will wait for the first not-none property
+// to be fulfilled.
 type Wait struct {
 	stateful
 
 	// Duration is the duration to wait.
 	Duration immutable.Option[time.Duration]
 
+	// The action execution status to wait for.
+	//
+	// Due to implementation limitations, this will pick up events that occured
+	// before this test action begins execution.
 	Action immutable.Option[client.ActionExecution]
 }
 
