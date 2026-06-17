@@ -12,8 +12,8 @@ WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
-RUN make deps:playground
-ENV BUILD_TAGS=playground,telemetry
+RUN make deps:explorer
+ENV BUILD_TAGS=explorer,telemetry
 RUN make build
 
 # Stage: RUN

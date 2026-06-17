@@ -16,9 +16,10 @@ import (
 	"sync"
 	"syscall/js"
 
+	"github.com/sourcenetwork/goji"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/goji"
 )
 
 type Client struct {
@@ -53,6 +54,9 @@ func (c *Client) JSValue() js.Value {
 		"listIndexes":                goji.Async(c.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(c.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(c.execRequest),
+		"printDump":                  goji.Async(c.printDump),
+		"basicImport":                goji.Async(c.basicImport),
+		"basicExport":                goji.Async(c.basicExport),
 		"addDACPolicy":               goji.Async(c.addDACPolicy),
 		"verifyDACAccess":            goji.Async(c.verifyDACAccess),
 		"addDACActorRelationship":    goji.Async(c.addDACActorRelationship),
@@ -65,6 +69,22 @@ func (c *Client) JSValue() js.Value {
 		"getNodeIdentity":            goji.Async(c.getNodeIdentity),
 		"newTxn":                     goji.Async(c.newTxn),
 		"verifySignature":            goji.Async(c.verifySignature),
+		"peerInfo":                   goji.Async(c.peerInfo),
+		"activePeers":                goji.Async(c.activePeers),
+		"connect":                    goji.Async(c.connect),
+		"disconnect":                 goji.Async(c.disconnect),
+		"addReplicator":              goji.Async(c.addReplicator),
+		"deleteReplicator":           goji.Async(c.deleteReplicator),
+		"listReplicators":            goji.Async(c.listReplicators),
+		"addP2PCollections":          goji.Async(c.addP2PCollections),
+		"deleteP2PCollections":       goji.Async(c.deleteP2PCollections),
+		"listP2PCollections":         goji.Async(c.listP2PCollections),
+		"addP2PDocuments":            goji.Async(c.addP2PDocuments),
+		"deleteP2PDocuments":         goji.Async(c.deleteP2PDocuments),
+		"listP2PDocuments":           goji.Async(c.listP2PDocuments),
+		"syncDocuments":              goji.Async(c.syncDocuments),
+		"syncCollectionVersions":     goji.Async(c.syncCollectionVersions),
+		"syncBranchableCollection":   goji.Async(c.syncBranchableCollection),
 		"close":                      goji.Async(c.close),
 	})
 }

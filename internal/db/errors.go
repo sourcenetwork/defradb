@@ -21,25 +21,27 @@ import (
 )
 
 const (
-	errFailedToGetHeads                          string = "failed to get document heads"
-	errFailedToCreateCollectionQuery             string = "failed to create collection prefix query"
-	errFailedToGetCollection                     string = "failed to get collection"
-	errFailedToGetAllCollections                 string = "failed to get all collections"
-	errDocVerification                           string = "the document verification failed"
-	errAddingP2PCollection                       string = "cannot add collection ID"
-	errRemovingP2PCollection                     string = "cannot remove collection ID"
-	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
-	errRemoveReferencedCollection                string = "cannot remove a collection while another field references it"
-	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
-	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
-	errCannotSetVersionID                        string = "setting the VersionID is not supported"
-	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
-	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
-	errRelationalFieldIDInvalidType              string = "relational id field of invalid kind"
-	errDuplicateField                            string = "duplicate field"
-	errCannotMutateField                         string = "mutating an existing field is not supported"
-	errCannotMoveField                           string = "moving fields is not currently supported"
-	errCannotDeleteField                         string = "deleting an existing field is not supported"
+	errFailedToGetHeads              string = "failed to get document heads"
+	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
+	errFailedToGetCollection         string = "failed to get collection"
+	errFailedToGetAllCollections     string = "failed to get all collections"
+	errDocVerification               string = "the document verification failed"
+	errAddingP2PCollection           string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot remove collection ID"
+	errAddCollectionWithPatch        string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection    string = "cannot remove a collection while another field references it"
+	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
+	errCollectionRootDoesntMatch     string = "CollectionRoot does not match existing"
+	errCannotSetVersionID            string = "setting the VersionID is not supported"
+	errRelationalFieldMissingIDField string = "missing id field for relation object field"
+	errRelatedFieldKindMismatch      string = "invalid Kind of the related field"
+	errRelationalFieldIDInvalidType  string = "relational id field of invalid kind"
+	errDuplicateField                string = "duplicate field"
+	errCannotMutateField             string = "mutating an existing field is not supported"
+	errCannotMoveField               string = "moving fields is not currently supported"
+	errCannotDeleteField             string = "deleting an existing field is not supported"
+	errCannotAddNonNillableField     string = "adding a non-nillable field to an existing collection " +
+		"is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
@@ -490,6 +492,13 @@ func NewErrCanNotEncryptBuiltinField(name string) error {
 func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCannotAddNonNillableField(name string) error {
+	return errors.New(
+		errCannotAddNonNillableField,
 		errors.NewKV("Name", name),
 	)
 }

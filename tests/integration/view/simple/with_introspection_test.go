@@ -51,6 +51,7 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -59,12 +60,13 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "UserView",
-						"fields": collection_version.DefaultViewObjFields.Append(
+						"fields": collection_version.DefaultViewObjFields("UserView").Append(
 							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),

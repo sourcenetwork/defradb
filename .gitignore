@@ -70,3 +70,6 @@ crash.log
 
 # Ignore .env files containing sensitive information.
 .env
+
+# Ignore direnv environment files (developer-local).
+.envrc

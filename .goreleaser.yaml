@@ -3,7 +3,7 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - make deps:playground
+    - make deps:explorer
 
 builds:
   # Minimal build with no extras
@@ -16,11 +16,11 @@ builds:
     goarch:
       - amd64
       - arm64
-  # Default build with playground and telemetry
+  # Default build with explorer and telemetry
   - id: "defradb"
     main: ./cmd/defradb
     flags:
-      - -tags=playground,telemetry
+      - -tags=explorer,telemetry
     goos:
       - linux
       - windows

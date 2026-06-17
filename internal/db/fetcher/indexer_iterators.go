@@ -762,7 +762,8 @@ func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
 	hasArray := false
 	hasJSON := false
 	for i := range conditions {
-		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		isJSON := conditions[i].kind == client.FieldKind_NILLABLE_JSON || conditions[i].kind == client.FieldKind_JSON
+		hasJSON = hasJSON || isJSON
 		hasArray = hasArray || conditions[i].kind.IsArray()
 	}
 	return hasArray || hasJSON
@@ -905,7 +906,7 @@ func getNestedOperatorConditionIfJSON(
 	indexedField client.CollectionFieldDescription,
 	condMap map[connor.FilterKey]any,
 ) (map[connor.FilterKey]any, client.JSONPath) {
-	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON && indexedField.Kind != client.FieldKind_JSON {
 		return condMap, client.JSONPath{}
 	}
 	var jsonPath client.JSONPath
@@ -964,7 +965,7 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
 //     leaf values (scalars), not entire objects or arrays.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
-	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON
+	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 
 	if filterVal == nil {
 		if op == opGe {
@@ -1037,7 +1038,8 @@ func isNumericFilterValue(filterVal any) bool {
 // If the filter value is nil and path is empty, it means we are filtering for null values
 // on the entire JSON field, which can be handled as a scalar nil value.
 func isJSONFilterCondition(kind client.FieldKind, jsonPath client.JSONPath, filterVal any) bool {
-	return kind == client.FieldKind_NILLABLE_JSON && (len(jsonPath) > 0 || filterVal != nil)
+	isJSON := kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON
+	return isJSON && (len(jsonPath) > 0 || filterVal != nil)
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that

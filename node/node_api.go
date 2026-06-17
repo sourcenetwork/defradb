@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build !js
+
 package node
 
 import (
@@ -24,7 +26,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if n.opts.DisableAPI {
 		return nil
 	}
-	handler, err := http.NewHandler(n.DB)
+	handler, err := http.NewHandler(n.DB, n.opts)
 	if err != nil {
 		return err
 	}
@@ -39,7 +41,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 		return err
 	}
 	log.InfoContext(ctx,
-		fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.server.Address(), http.PlaygroundEnabled))
+		fmt.Sprintf("Providing HTTP API at %s ExplorerEnabled=%t", n.server.Address(), http.ExplorerEnabled))
 	log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/graphql", n.server.Address()))
 	go func() {
 		if err := n.server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
