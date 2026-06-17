@@ -109,7 +109,7 @@ func (n *dagScanNode) Init() error {
 		return n.prefixErr
 	}
 
-	if !n.prefix.HasValue() {
+	if !n.prefix.HasValue() && !n.commitSelect.Cids.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
 			localDocID, found, err := n.getHeadstoreLocalDocID(n.commitSelect.DocIDs.Value()[0])
 			if err != nil {
@@ -641,9 +641,6 @@ func (n *dagScanNode) publicCommitDocID(
 
 	if n.activePublicDocID.HasValue() {
 		return n.activePublicDocID.Value(), true, nil
-	}
-	if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-		return n.commitSelect.DocIDs.Value()[0], true, nil
 	}
 	if n.activeStorageDocID.HasValue() {
 		publicDocID, err := n.publicDocIDForStoredDocID(collectionID, n.activeStorageDocID.Value())

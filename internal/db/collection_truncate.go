@@ -11,7 +11,6 @@
 package db
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/ipfs/go-cid"
@@ -235,21 +234,36 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 }
 
 func docShortIDFromCollectionDataKey(rawKey []byte) (uint32, bool, error) {
-	segments := bytes.Split(rawKey, []byte{'/'})
-	if len(segments) < 4 || len(segments[0]) != 0 {
+	if len(rawKey) == 0 || rawKey[0] != '/' {
+		return 0, false, nil
+	}
+	rest, _, err := keys.DecodeCollectionShortIDPrefix(rawKey[1:])
+	if err != nil {
+		return 0, false, err
+	}
+	if len(rest) < 3 || rest[0] != '/' || rest[2] != '/' {
 		return 0, false, nil
 	}
 
-	switch keys.InstanceType(string(segments[2])) {
+	instanceType := keys.InstanceType(rest[1])
+	switch instanceType {
 	case keys.ValueKey, keys.PriorityKey, keys.DeletedKey:
-		shortDocID, err := keys.DecodeDocShortID(segments[3])
-		if err != nil {
-			return 0, false, err
-		}
-		return shortDocID, true, nil
 	default:
 		return 0, false, nil
 	}
+
+	key, err := keys.DecodeDataStoreKey(rawKey)
+	if err != nil {
+		return 0, false, err
+	}
+	if key.DocShortID == 0 {
+		return 0, false, nil
+	}
+
+	if key.InstanceType != instanceType {
+		return 0, false, nil
+	}
+	return key.DocShortID, true, nil
 }
 
 func (c *collection) hardDeleteDatastorePrefix(

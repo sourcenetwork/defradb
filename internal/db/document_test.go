@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const userDocIDTestSchema = `
@@ -123,4 +124,36 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 	require.NotEqual(t, shortIDA, shortIDB)
+}
+
+func TestSeedDocIDSequenceRestoresPrimaryKeyWithSlashEncodedShortID(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	const slashEncodedShortID uint32 = 303
+	require.Contains(t, keys.EncodeDocShortID(slashEncodedShortID), byte('/'))
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	db.docIDSequence.Store(uint64(slashEncodedShortID - 1))
+
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc))
+
+	db.docIDSequence.Store(0)
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	txnCtx := InitContext(ctx, txn)
+	require.NoError(t, db.seedDocIDSequence(txnCtx))
+	require.NoError(t, txn.Commit())
+
+	nextShortID, err := db.nextShortDocID()
+	require.NoError(t, err)
+	require.Equal(t, slashEncodedShortID+1, nextShortID)
 }

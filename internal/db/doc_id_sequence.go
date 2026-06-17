@@ -66,7 +66,7 @@ func (db *DB) seedDocIDSequence(ctx context.Context) error {
 			continue
 		}
 
-		key, err := keys.NewDataStoreKey(string(iter.Key()))
+		key, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
 		closeErr := iter.Close()
 		if err != nil {
 			return errors.Join(err, closeErr)

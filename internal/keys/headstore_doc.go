@@ -26,39 +26,49 @@ type HeadstoreDocKey struct {
 
 var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 
-// Creates a new HeadstoreDocKey from a string as best as it can,
-// splitting the input using '/' as a field deliminator.  It assumes
-// that the input string is in the following format:
+// NewHeadstoreDocKey creates a new HeadstoreDocKey from its encoded path form:
 //
 // /d/[CollectionShortID]/[DocShortID]/[FieldId]/[Cid]
-//
-// Any properties before the above are ignored
 func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
-	elements := bytes.Split([]byte(key), []byte{'/'})
-	if len(elements) != 6 {
+	data := []byte(key)
+	docPrefix := append([]byte(HEADSTORE_DOC), '/')
+	if !bytes.HasPrefix(data, docPrefix) {
 		return HeadstoreDocKey{}, ErrInvalidKey
 	}
+	data = data[len(docPrefix):]
 
-	collectionShortID, err := DecodeCollectionShortID(elements[2])
+	data, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
-	docShortID, err := DecodeDocShortID(elements[3])
+	if len(data) == 0 || data[0] != '/' {
+		return HeadstoreDocKey{}, ErrInvalidKey
+	}
+	data, docShortID, err := DecodeDocShortIDPrefix(data[1:])
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
-	cid, err := cid.Decode(string(elements[5]))
+	if len(data) == 0 || data[0] != '/' {
+		return HeadstoreDocKey{}, ErrInvalidKey
+	}
+	data = data[1:]
+	fieldEnd := bytes.IndexByte(data, '/')
+	if fieldEnd < 0 {
+		return HeadstoreDocKey{}, ErrInvalidKey
+	}
+	fieldID := string(data[:fieldEnd])
+
+	cid, err := cid.Decode(string(data[fieldEnd+1:]))
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
 
 	return HeadstoreDocKey{
-		// elements[0] is empty (key has leading '/')
 		CollectionShortID: collectionShortID,
 		DocShortID:        docShortID,
-		FieldID:           string(elements[4]),
+		FieldID:           fieldID,
 		Cid:               cid,
 	}, nil
 }

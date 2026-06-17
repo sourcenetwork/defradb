@@ -11,7 +11,6 @@
 package keys
 
 import (
-	"bytes"
 	"math"
 
 	ds "github.com/ipfs/go-datastore"
@@ -172,16 +171,12 @@ func DecodeIndexDataStoreKey(
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		} else {
-			shortDocIDEnd := len(data)
-			if slash := bytes.IndexByte(data, '/'); slash >= 0 {
-				shortDocIDEnd = slash
-			}
-			shortDocID, err := DecodeDocShortID(data[:shortDocIDEnd])
+			var shortDocID uint32
+			data, shortDocID, err = DecodeDocShortIDPrefix(data)
 			if err != nil {
 				return IndexDataStoreKey{}, err
 			}
 			key.Fields = append(key.Fields, NewDocShortIDIndexedField(shortDocID))
-			data = data[shortDocIDEnd:]
 			continue
 		}
 

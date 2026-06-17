@@ -43,13 +43,9 @@ type DataStoreKey struct {
 var _ Walkable = (*DataStoreKey)(nil)
 var _ CollectionedKey = DataStoreKey{}
 
-// Creates a new DataStoreKey from a string as best as it can,
-// splitting the input using '/' as a field deliminator.  It assumes
-// that the input string is in the following format:
+// NewDataStoreKey creates a new DataStoreKey from its encoded path form:
 //
 // /[CollectionRootId]/[InstanceType]/[DocShortID]/[FieldId]
-//
-// Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) (DataStoreKey, error) {
 	return DecodeDataStoreKey([]byte(key))
 }
@@ -228,15 +224,19 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 	}
 	data = data[1:]
 
-	data, colRootID, err := encoding.DecodeUvarintAscending(data)
+	data, colRootID, err := DecodeCollectionShortIDPrefix(data)
 	if err != nil {
 		return DataStoreKey{}, err
 	}
 
 	var instanceType InstanceType
-	if len(data) > 1 {
-		if data[0] == '/' {
-			data = data[1:]
+	if len(data) > 0 {
+		if data[0] != '/' {
+			return DataStoreKey{}, ErrInvalidKey
+		}
+		data = data[1:]
+		if len(data) == 0 {
+			return DataStoreKey{}, ErrInvalidKey
 		}
 		instanceType = InstanceType(data[0])
 		data = data[1:]
@@ -244,35 +244,29 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 
 	var docShortID uint32
 	if len(data) > 0 {
-		if data[0] == '/' {
-			data = data[1:]
+		if data[0] != '/' {
+			return DataStoreKey{}, ErrInvalidKey
 		}
-		docShortIDEnd := len(data)
-		for i, b := range data {
-			if b == '/' {
-				docShortIDEnd = i
-				break
-			}
-		}
-		docShortID, err = DecodeDocShortID(data[:docShortIDEnd])
+		data = data[1:]
+		data, docShortID, err = DecodeDocShortIDPrefix(data)
 		if err != nil {
 			return DataStoreKey{}, err
 		}
-		data = data[docShortIDEnd:]
 	}
 
 	var fieldID string
-	if len(data) > 1 {
-		if data[0] == '/' {
-			data = data[1:]
+	if len(data) > 0 {
+		if data[0] != '/' {
+			return DataStoreKey{}, ErrInvalidKey
 		}
+		data = data[1:]
 		// Todo: This should be encoded/decoded properly in
 		// https://github.com/sourcenetwork/defradb/issues/2818
 		fieldID = string(data)
 	}
 
 	return DataStoreKey{
-		CollectionShortID: uint32(colRootID),
+		CollectionShortID: colRootID,
 		InstanceType:      (instanceType),
 		DocShortID:        docShortID,
 		FieldID:           fieldID,

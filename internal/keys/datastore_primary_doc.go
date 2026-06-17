@@ -31,24 +31,32 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 var _ CollectionedKey = PrimaryDataStoreKey{}
 
 func NewPrimaryDataStoreKey(key string) (PrimaryDataStoreKey, error) {
-	parts := bytes.Split([]byte(key), []byte{'/'})
-	if len(parts) < 3 || len(parts) > 4 || len(parts[0]) != 0 || string(parts[2]) != "pk" {
+	data := []byte(key)
+	if len(data) == 0 || data[0] != '/' {
 		return PrimaryDataStoreKey{}, ErrInvalidKey
 	}
+	data = data[1:]
 
-	rest, collectionShortID, err := encoding.DecodeUvarintAscending(parts[1])
+	data, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
 	if err != nil {
 		return PrimaryDataStoreKey{}, err
 	}
-	if len(rest) != 0 {
+	if !bytes.HasPrefix(data, []byte(PRIMARY_KEY)) {
 		return PrimaryDataStoreKey{}, ErrInvalidKey
 	}
+	data = data[len(PRIMARY_KEY):]
 
-	result := PrimaryDataStoreKey{CollectionShortID: uint32(collectionShortID)}
-	if len(parts) == 4 {
-		docShortID, err := DecodeDocShortID(parts[3])
+	result := PrimaryDataStoreKey{CollectionShortID: collectionShortID}
+	if len(data) > 0 {
+		if data[0] != '/' {
+			return PrimaryDataStoreKey{}, ErrInvalidKey
+		}
+		data, docShortID, err := DecodeDocShortIDPrefix(data[1:])
 		if err != nil {
 			return PrimaryDataStoreKey{}, err
+		}
+		if len(data) != 0 {
+			return PrimaryDataStoreKey{}, ErrInvalidKey
 		}
 		result.DocShortID = docShortID
 	}
