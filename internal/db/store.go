@@ -253,7 +253,12 @@ func (db *DB) PatchCollection(
 func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
 	if txn.explicit {
 		for _, fn := range deferred {
-			txn.OnSuccess(func() { _ = fn(ctx) })
+			fn := fn
+			txn.OnSuccess(func() {
+				if err := fn(ctx); err != nil {
+					log.ErrorE("deferred operation after commit failed", err)
+				}
+			})
 		}
 		return nil
 	}

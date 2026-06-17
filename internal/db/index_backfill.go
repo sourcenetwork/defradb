@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -22,18 +23,22 @@ import (
 )
 
 // indexBackfillBatchSize is the number of documents indexed per batch transaction
-// during backfill. Index keys embed field values and keys are capped at ~65 KB,
-// so 100 docs per batch stays well under the storage engine's transaction size limit.
-// It is a var so tests can lower it to exercise multi-batch runs.
+// during backfill. 100 entries per batch stays well under the storage engine's
+// transaction size limit. It is a var so tests can lower it to exercise multi-batch runs.
 var indexBackfillBatchSize = 100
 
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context
 // and commits it afterwards. When the attempt or the commit fails with a transaction
 // conflict, the attempt is re-run with a new transaction, up to db.MaxTxnRetries() times;
 // the last conflict error is returned if retries run out. Other errors abort immediately.
+// At least one attempt is always made, even if MaxTxnRetries() returns 0.
 func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Context) error) error {
 	var lastErr error
-	for i := 0; i < db.MaxTxnRetries(); i++ {
+	max := db.MaxTxnRetries()
+	if max < 1 {
+		max = 1
+	}
+	for i := 0; i < max; i++ {
 		rawTxn, err := db.NewTxn(false)
 		if err != nil {
 			return err
@@ -70,6 +75,11 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 // startAfter resumes the build after the given docID, used by startup recovery to
 // continue an interrupted build from its persisted watermark; pass None to build
 // the whole collection.
+//
+// Batches run concurrently with live writes and are serialized only by the storage
+// engine's optimistic conflict detection: a live write to a doc a batch already read
+// conflicts at commit, so the batch retries and re-reads the latest state. This is why
+// each batch builds a fresh collection and the loop retries on conflict.
 func (db *DB) backfillIndex(
 	ctx context.Context,
 	def client.CollectionVersion,
@@ -128,7 +138,21 @@ func (db *DB) backfillIndex(
 		})
 
 		if batchErr != nil {
+			// A transaction conflict means a concurrent write raced with this batch.
+			// The building state and watermark are still valid, so leave the index
+			// resumable rather than recording a permanent failure. Only non-retryable
+			// errors represent a genuine problem that warrants marking the index failed.
+			if errors.Is(batchErr, corekv.ErrTxnConflict) {
+				return NewErrIndexBackfillInterrupted(batchErr, desc.Name)
+			}
 			markErr := db.markIndexFailed(ctx, def, desc, batchErr)
+			if markErr != nil {
+				log.ErrorE("failed to record index failure",
+					markErr,
+					corelog.String("collectionID", def.CollectionID),
+					corelog.Any("indexID", desc.ID),
+				)
+			}
 			return errors.Join(NewErrIndexBackfillFailed(batchErr, desc.Name), markErr)
 		}
 
@@ -145,7 +169,19 @@ func (db *DB) backfillIndex(
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
 		return deleteIndexState(c, def.CollectionID, desc.ID)
 	}); err != nil {
+		// A conflict here means entries are all written; state is still building and resumable.
+		// Only a non-retryable error warrants marking the index failed.
+		if errors.Is(err, corekv.ErrTxnConflict) {
+			return NewErrIndexBackfillInterrupted(err, desc.Name)
+		}
 		markErr := db.markIndexFailed(ctx, def, desc, err)
+		if markErr != nil {
+			log.ErrorE("failed to record index failure",
+				markErr,
+				corelog.String("collectionID", def.CollectionID),
+				corelog.Any("indexID", desc.ID),
+			)
+		}
 		return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
 	}
 	return nil

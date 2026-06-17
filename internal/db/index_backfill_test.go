@@ -25,8 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// setupUserCollection opens a new DB, registers a cleanup to close it, adds the
-// `type User { name: String }` schema, and returns the open DB and User collection.
+// setupUserCollection opens a DB with a `User { name: String }` collection, closed on cleanup.
 func setupUserCollection(t *testing.T, ctx context.Context) (*DB, client.Collection) {
 	t.Helper()
 	db, err := newBadgerDB(ctx)
@@ -41,7 +40,7 @@ func setupUserCollection(t *testing.T, ctx context.Context) (*DB, client.Collect
 	return db, col
 }
 
-// addUserDoc creates a User document with the given name and saves it to col.
+// addUserDoc saves a User document with the given name.
 func addUserDoc(t *testing.T, ctx context.Context, col client.Collection, name string) *client.Document {
 	t.Helper()
 	doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":%q}`, name), col.Version())
@@ -50,8 +49,7 @@ func addUserDoc(t *testing.T, ctx context.Context, col client.Collection, name s
 	return doc
 }
 
-// readIndexState opens a read-only transaction, reads the index state for the given
-// collection and index IDs, and returns it. The transaction is discarded on cleanup.
+// readIndexState returns the stored state for an index. Fails if no record exists.
 func readIndexState(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) indexState {
 	t.Helper()
 	rawTxn, err := db.NewTxn(true)
@@ -64,8 +62,7 @@ func readIndexState(t *testing.T, ctx context.Context, db *DB, collectionID stri
 	return state
 }
 
-// requireNoIndexState asserts that no state record exists for the given index.
-// A missing record means the index is ready.
+// requireNoIndexState asserts the index has no state record (i.e. it is ready).
 func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) {
 	t.Helper()
 	rawTxn, err := db.NewTxn(true)
@@ -78,8 +75,7 @@ func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID
 		"expected no state record, got err: %v", err)
 }
 
-// queryUserByName executes a filtered query for User documents with the given name
-// and returns the result rows. The test fails immediately on any GQL error.
+// queryUserByName returns the rows from a name-filtered User query.
 func queryUserByName(t *testing.T, db *DB, ctx context.Context, name string) []map[string]any {
 	t.Helper()
 	res := db.ExecRequest(ctx, fmt.Sprintf(`query { User(filter: {name: {_eq: %q}}) { name } }`, name))
@@ -102,8 +98,7 @@ func queryUserByName(t *testing.T, db *DB, ctx context.Context, name string) []m
 	return slice
 }
 
-// newNameIndex creates an index on the "name" field of col. The error is returned
-// to the caller so tests that expect failure can assert on it.
+// newNameIndex creates an index on "name", returning the error for the caller to assert.
 func newNameIndex(t *testing.T, ctx context.Context, col client.Collection) (client.IndexDescription, error) {
 	t.Helper()
 	return col.NewIndex(ctx, client.NewIndexRequest{
@@ -111,13 +106,9 @@ func newNameIndex(t *testing.T, ctx context.Context, col client.Collection) (cli
 	})
 }
 
-// TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState creates 10 documents and then
-// runs NewIndex with indexBackfillBatchSize overridden to 3.  This exercises 4 batches
-// (3+3+3+1) and verifies:
-//   - The state record is deleted on completion (missing record means ready).
-//   - Every document is reachable through the index (filtered queries succeed).
+// TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState builds an index over 10 docs in
+// batches of 3, then checks the state record is cleared and every doc is queryable.
 func TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState(t *testing.T) {
-	// Override batch size so 10 docs trigger multiple batches.
 	origBatchSize := indexBackfillBatchSize
 	indexBackfillBatchSize = 3
 	defer func() { indexBackfillBatchSize = origBatchSize }()
@@ -143,8 +134,8 @@ func TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState(t *testing.T) {
 	}
 }
 
-// TestBackfillIndex_EmptyCollection_ClearsState ensures that creating an index on a
-// collection with no documents completes without error and leaves no state record.
+// TestBackfillIndex_EmptyCollection_ClearsState builds an index on an empty collection
+// and checks it leaves no state record.
 func TestBackfillIndex_EmptyCollection_ClearsState(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -155,8 +146,8 @@ func TestBackfillIndex_EmptyCollection_ClearsState(t *testing.T) {
 	requireNoIndexState(t, ctx, db, col.Version().CollectionID, desc.ID)
 }
 
-// TestWithTxnRetries_ConflictThenSuccess verifies that withTxnRetries retries after a
-// conflict and succeeds on the second attempt, persisting the work from that attempt.
+// TestWithTxnRetries_ConflictThenSuccess checks a conflict is retried and the second
+// attempt's work is persisted.
 func TestWithTxnRetries_ConflictThenSuccess(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -177,8 +168,8 @@ func TestWithTxnRetries_ConflictThenSuccess(t *testing.T) {
 	assert.Equal(t, client.IndexStatusBuilding, state.Status)
 }
 
-// TestWithTxnRetries_ConflictEveryAttempt_ReturnsConflict verifies that when every attempt
-// conflicts, withTxnRetries exhausts MaxTxnRetries and returns the conflict error.
+// TestWithTxnRetries_ConflictEveryAttempt_ReturnsConflict checks that persistent conflicts
+// exhaust MaxTxnRetries and return the conflict error.
 func TestWithTxnRetries_ConflictEveryAttempt_ReturnsConflict(t *testing.T) {
 	ctx := context.Background()
 	db, _ := setupUserCollection(t, ctx)
@@ -192,8 +183,8 @@ func TestWithTxnRetries_ConflictEveryAttempt_ReturnsConflict(t *testing.T) {
 	assert.Equal(t, db.MaxTxnRetries(), attempts)
 }
 
-// TestWithTxnRetries_NonRetryableError_NoRetry verifies that a non-conflict error causes
-// withTxnRetries to abort immediately with no further retries.
+// TestWithTxnRetries_NonRetryableError_NoRetry checks a non-conflict error aborts on the
+// first attempt with no retry.
 func TestWithTxnRetries_NonRetryableError_NoRetry(t *testing.T) {
 	ctx := context.Background()
 	db, _ := setupUserCollection(t, ctx)
@@ -208,10 +199,9 @@ func TestWithTxnRetries_NonRetryableError_NoRetry(t *testing.T) {
 	assert.Equal(t, 1, attempts)
 }
 
-// TestBackfillIndex_ConflictOnEveryAttempt_FailsAndMarksFailed verifies that when
-// backfill fails (here via a unique-constraint violation on every attempt), the index
-// definition remains listed with a failed state record instead of being rolled back.
-func TestBackfillIndex_ConflictOnEveryAttempt_FailsAndMarksFailed(t *testing.T) {
+// TestBackfillIndex_NonRetryableError_MarksFailed checks that a unique-violation backfill
+// (non-retryable) leaves the definition listed with a failed state, not rolled back.
+func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -223,7 +213,7 @@ func TestBackfillIndex_ConflictOnEveryAttempt_FailsAndMarksFailed(t *testing.T) 
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	// Add two documents with the same age to trigger a unique violation during backfill.
+	// Two docs sharing an age violate the unique index during backfill.
 	doc1, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":21}`), col.Version())
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc1))
@@ -237,37 +227,93 @@ func TestBackfillIndex_ConflictOnEveryAttempt_FailsAndMarksFailed(t *testing.T) 
 		Unique: true,
 	})
 
-	// Backfill must fail due to the uniqueness violation.
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "can not index a doc's field(s) that violates unique index")
 
-	// The index definition must still be listed — it was not rolled back.
 	indexes, listErr := col.ListIndexes(ctx)
 	require.NoError(t, listErr)
 	require.Len(t, indexes, 1, "index definition must persist after failed backfill")
 
-	// The state record must reflect the failure with a non-empty reason.
 	state := readIndexState(t, ctx, db, col.Version().CollectionID, indexes[0].ID)
 	assert.Equal(t, client.IndexStatusFailed, state.Status)
 	assert.NotEmpty(t, state.Reason)
 }
 
-// TestBackfillBatchTxn_ConflictsWhenReadDocIsModified verifies that a backfill batch
-// transaction conflicts when a document it read is updated before commit.
-//
-// Backfill batches always write (index entries + state), so conflict detection at the
-// storage level applies. This test replicates the exact batch body: iterateDocsBatch
-// feeds docs into colIndex.Save, which writes an index entry into txn1. A concurrent
-// update to the same document must cause txn1.Commit to return ErrTxnConflict.
+// TestBackfillIndex_DocUpdatedAfterIndexing_NoStaleEntry checks the write path replaces an
+// index entry on update: after "old"→"new" exactly one entry remains and "old" is gone.
+// This is the deterministic stand-in for the concurrent live-write-vs-backfill race, which
+// the conflict and withTxnRetries tests cover structurally.
+func TestBackfillIndex_DocUpdatedAfterIndexing_NoStaleEntry(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	doc := addUserDoc(t, ctx, col, "old")
+
+	desc, err := newNameIndex(t, ctx, col)
+	require.NoError(t, err)
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
+
+	require.NoError(t, doc.Set(ctx, "name", "new"))
+	require.NoError(t, col.UpdateDocument(ctx, doc))
+
+	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
+
+	require.Empty(t, queryUserByName(t, db, ctx, "old"), "stale entry must not be queryable")
+	require.Len(t, queryUserByName(t, db, ctx, "new"), 1, "updated name must be queryable")
+}
+
+// TestBackfillIndex_UniqueIndex_ToleratesSameDocEntry checks saveUniqueKey's tolerateSameDoc
+// branch: re-running backfill over a doc whose unique entry already exists (same docID, as if
+// a live write got there first) skips it without error and adds no duplicate.
+func TestBackfillIndex_UniqueIndex_ToleratesSameDocEntry(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, "type User { name: String\n age: Int }")
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	addUserDoc(t, ctx, col, "alice")
+
+	desc, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
+	})
+	require.NoError(t, err)
+
+	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
+	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
+
+	// Re-fetch to get the version carrying the index definition.
+	col, err = db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	// Re-run backfill: the entry already exists for the same docID, so it must be skipped.
+	err = db.backfillIndex(ctx, col.Version(), desc, immutable.None[string]())
+	require.NoError(t, err, "re-running backfill over an already-indexed doc must not error")
+
+	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
+}
+
+// TestBackfillBatchTxn_ConflictsWhenReadDocIsModified checks that a batch txn, which reads a
+// doc and writes its index entry, conflicts on commit when that doc is updated concurrently.
+// This is the storage-level guarantee the backfill retry loop relies on.
 func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
 	doc := addUserDoc(t, ctx, col, "old")
 
-	// Build a CollectionVersion that carries a staged index definition so that
-	// NewCollectionIndex can resolve the "name" field. The definition is not
-	// persisted — this test exercises storage-level conflict behavior, not the API.
+	// Stage an in-memory index definition so NewCollectionIndex can resolve "name";
+	// it is not persisted — this exercises storage-level conflict behavior, not the API.
 	nameDesc := client.IndexDescription{
 		Name:   "name_idx",
 		ID:     1,
@@ -276,7 +322,7 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	colVersion := col.Version()
 	colVersion.Indexes = append(colVersion.Indexes, nameDesc)
 
-	// Open a read-write transaction that will act as the backfill batch transaction.
+	// txn1 stands in for the backfill batch transaction.
 	rawTxn1, err := db.NewTxn(false)
 	require.NoError(t, err)
 	txn1 := rawTxn1.(*Txn)
@@ -288,23 +334,19 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	colIndex, err := NewCollectionIndex(col1, nameDesc)
 	require.NoError(t, err)
 
-	// Replicate the backfill batch body: scan docs and write an index entry for each.
-	// This puts the doc's key range in txn1's read set AND produces a write, which
-	// is what makes conflict detection fire at commit time.
+	// Run the batch body: reading the docs and writing entries puts the doc key range
+	// in txn1's read set and produces a write, both needed for a commit-time conflict.
 	fields := col1.Version().CollectIndexedFields()
 	_, _, err = col1.iterateDocsBatch(ctx1, fields, immutable.None[string](), 10, func(d *client.Document) error {
 		return colIndex.Save(ctx1, d)
 	})
 	require.NoError(t, err)
 
-	// Update the same document through the public API using the original col handle,
-	// which has no index definition, so the update touches only document storage keys
-	// and does not attempt to maintain the staged index.
+	// Update via the original handle (no index definition), touching only document keys.
 	require.NoError(t, doc.Set(ctx, "name", "new"))
 	require.NoError(t, col.UpdateDocument(ctx, doc))
 
-	// txn1 read the doc's storage keys and wrote an index entry; the intervening
-	// document update overlaps that read set, so commit must conflict.
+	// The update overlaps txn1's read set, so its commit must conflict.
 	commitErr := txn1.Commit()
 	require.True(t, errors.Is(commitErr, corekv.ErrTxnConflict),
 		"expected ErrTxnConflict but got: %v", commitErr)

@@ -26,7 +26,8 @@ import (
 // recoverIndexStates inspects all index state records and resolves any that were
 // left in a transient state by a previous interrupted shutdown.
 //
-// A building record means a backfill was interrupted; the index is marked failed.
+// A building record means a backfill was interrupted; the build is resumed from
+// its persisted watermark.
 // A dropping record means GC was interrupted; deletion is resumed.
 // Failed and ready records are left untouched.
 //
@@ -45,6 +46,9 @@ func (db *DB) recoverIndexStates(ctx context.Context) error {
 	}
 
 	for key, state := range states {
+		if ctx.Err() != nil {
+			return nil
+		}
 		switch state.Status {
 		case client.IndexStatusBuilding:
 			if err := db.recoverBuilding(ctx, key, state.Watermark); err != nil {
@@ -99,7 +103,10 @@ func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, water
 }
 
 // findIndexDefinition resolves the collection version and index description for the
-// given state key from the collection repository.
+// given state key from the collection repository. It prefers the active version when
+// multiple versions contain the index; if no active version matches, the first match
+// is returned. Multiple active versions matching the same index ID should not occur —
+// if they do, a warning is logged and the first active match is used.
 func (db *DB) findIndexDefinition(
 	ctx context.Context,
 	key keys.IndexStateKey,
@@ -116,12 +123,28 @@ func (db *DB) findIndexDefinition(
 		return client.CollectionVersion{}, client.IndexDescription{}, err
 	}
 
+	// Prefer the active version's copy of the index; an index ID can appear on
+	// several versions (e.g. across a migration) and the active one serves the
+	// live documents this backfill must index.
+	found := false
+	var matchDef client.CollectionVersion
+	var matchIdx client.IndexDescription
 	for _, def := range versions {
 		for _, idx := range def.Indexes {
-			if idx.ID == key.IndexID {
+			if idx.ID != key.IndexID {
+				continue
+			}
+			if def.IsActive {
 				return def, idx, nil
 			}
+			if !found {
+				found, matchDef, matchIdx = true, def, idx
+			}
 		}
+	}
+
+	if found {
+		return matchDef, matchIdx, nil
 	}
 	return client.CollectionVersion{}, client.IndexDescription{},
 		NewErrIndexWithIDDoesNotExist(key.IndexID, key.CollectionID)

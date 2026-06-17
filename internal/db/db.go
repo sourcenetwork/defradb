@@ -66,6 +66,11 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
+	// recoveryWG tracks the background index-state recovery goroutine started by newDB.
+	// Close waits on this before tearing down storage so the goroutine does not outlive
+	// the rootstore.
+	recoveryWG sync.WaitGroup
+
 	rootstore corekv.TxnStore
 
 	events event.Bus
@@ -219,6 +224,12 @@ func newDB(
 		return nil, err
 	}
 
+	db.recoveryWG.Go(func() {
+		if err := db.recoverIndexStates(db.ctx); err != nil {
+			log.ErrorE("index state recovery failed", err)
+		}
+	})
+
 	return db, nil
 }
 
@@ -292,10 +303,6 @@ func (db *DB) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	// Preserve the original context before ensureContextTxn binds a transaction to it.
-	// Recovery helpers open their own transactions and must not inherit the init txn.
-	baseCtx := ctx
-
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -335,10 +342,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.
-		if err := txn.Commit(); err != nil {
-			return err
-		}
-		return db.recoverIndexStates(baseCtx)
+		return txn.Commit()
 	}
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
@@ -346,10 +350,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	return db.recoverIndexStates(baseCtx)
+	return txn.Commit()
 }
 
 func (db *DB) Rootstore() corekv.TxnStore {
@@ -400,6 +401,10 @@ func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
 
 	db.ctxCancel()
+
+	// Wait for the background recovery goroutine to exit before tearing down storage.
+	// The goroutine observes cancellation via db.ctx and will stop promptly.
+	db.recoveryWG.Wait()
 
 	db.events.Close()
 

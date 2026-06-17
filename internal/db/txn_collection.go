@@ -286,13 +286,13 @@ func (col *txnCollection) Truncate(
 }
 
 // QueryableIndexes forwards to the inner collection's QueryableIndexes if it implements
-// the queryableIndexesProvider interface. Returns nil if the inner collection does not
-// track index lifecycle status.
+// the queryableIndexesProvider interface. Falls back to all indexes from the version
+// definition when the inner collection does not track index lifecycle status.
 func (col *txnCollection) QueryableIndexes() []client.IndexDescription {
 	if p, ok := col.inner.(interface {
 		QueryableIndexes() []client.IndexDescription
 	}); ok {
 		return p.QueryableIndexes()
 	}
-	return nil
+	return col.inner.Version().Indexes
 }

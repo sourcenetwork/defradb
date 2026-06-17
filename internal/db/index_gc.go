@@ -65,6 +65,7 @@ func (db *DB) gcIndex(
 // gcIndexBatch deletes up to indexBackfillBatchSize raw index keys under prefixKey
 // in a single committed transaction. It returns the number of keys deleted.
 // A return value smaller than indexBackfillBatchSize means no more keys remain.
+// The backfill batch size is reused as the GC delete-batch size (single tunable).
 func (db *DB) gcIndexBatch(ctx context.Context, prefixKey *keys.IndexDataStoreKey) (int, error) {
 	var n int
 	err := db.withTxnRetries(ctx, func(batchCtx context.Context) error {

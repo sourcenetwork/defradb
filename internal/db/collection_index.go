@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"slices"
@@ -209,7 +210,16 @@ func (c *collection) NewIndex(
 	}
 
 	if txn.explicit {
-		txn.OnSuccess(func() { _ = backfill(ctx) })
+		collectionID := c.def.CollectionID
+		indexID := indexDesc.ID
+		txn.OnSuccess(func() {
+			if err := backfill(ctx); err != nil {
+				log.ErrorE("deferred index backfill failed", err,
+					corelog.String("collectionID", collectionID),
+					corelog.Any("indexID", indexID),
+				)
+			}
+		})
 		return indexDesc, nil
 	}
 
@@ -297,6 +307,11 @@ func (c *collection) newIndex(
 		return client.IndexDescription{}, nil, err
 	}
 	c.indexes = append(c.indexes, colIndex)
+
+	if c.indexStatuses == nil {
+		c.indexStatuses = make(map[uint32]client.IndexStatus)
+	}
+	c.indexStatuses[desc.ID] = client.IndexStatusBuilding
 
 	// Backfill builds a fresh collection from this snapshot per batch,
 	// so each retry re-reads documents.
@@ -587,6 +602,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 			break
 		}
 	}
+	delete(c.indexStatuses, desc.ID)
 
 	// Remove the definition so the planner and writers immediately stop seeing it.
 	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))

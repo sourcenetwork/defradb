@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,9 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// TestRecoverIndexStates_BuildingResumesAndCompletes simulates a shutdown mid-backfill
-// by clearing the index entries and seeding a building record, then asserts that recovery
-// rebuilds every entry and clears the record (a completed build keeps no record).
+// TestRecoverIndexStates_BuildingResumesAndCompletes checks recovery rebuilds an interrupted
+// build (wiped entries + building record) and clears the record on completion.
 func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -38,8 +38,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	// Wipe the entries and seed a building record with no watermark, mimicking a build
-	// that committed its definition and state but was interrupted before indexing docs.
+	// Empty watermark: the build committed its record but indexed no docs before interruption.
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
 			return err
@@ -53,7 +52,6 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 
 	require.NoError(t, db.recoverIndexStates(context.Background()))
 
-	// The resumed build indexes every document and clears the record (missing == ready).
 	assert.Equal(t, len(names), countIndexEntries(t, ctx, db, shortID, desc.ID))
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
 	for _, name := range names {
@@ -61,9 +59,8 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	}
 }
 
-// TestRecoverIndexStates_DroppingResumesGC simulates a shutdown mid-GC by seeding a
-// dropping record while leaving index entries in place, then asserts that recovery
-// deletes all entries and removes the state record.
+// TestRecoverIndexStates_DroppingResumesGC checks recovery finishes an interrupted GC
+// (dropping record + leftover entries), removing both the entries and the record.
 func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -78,11 +75,10 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	// Confirm entries exist before simulating interrupted GC.
 	before := countIndexEntries(t, ctx, db, shortID, desc.ID)
 	assert.Equal(t, 5, before, "expected 5 index entries before recovery")
 
-	// Seed a dropping record to simulate an interrupted GC run.
+	// A dropping record with entries still present is the interrupted-GC state.
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusDropping,
@@ -92,16 +88,125 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 
 	require.NoError(t, db.recoverIndexStates(context.Background()))
 
-	// All entries must be gone.
 	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
 	assert.Equal(t, 0, after, "expected 0 index entries after recovery")
-
-	// The state record must be removed.
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
 }
 
-// TestRecoverIndexStates_FailedAndNoRecords_NoOp verifies that a failed record is left
-// untouched and that recovery on a fresh collection with no records returns nil.
+// TestRecoverIndexStates_BuildingResumesFromWatermark checks the non-empty watermark branch:
+// recovery re-indexes only docs whose docID sorts strictly after the watermark, treating those
+// at or before it as already done. Guards against an off-by-one at the resume boundary.
+func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	docs := make([]*client.Document, 6)
+	for i := range 6 {
+		docs[i] = addUserDoc(t, ctx, col, "name"+string(rune('0'+i)))
+	}
+
+	desc, err := newNameIndex(t, ctx, col)
+	require.NoError(t, err)
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	// docIDs sort lexicographically, matching storage order.
+	docIDs := make([]string, len(docs))
+	for i, d := range docs {
+		docIDs[i] = d.ID().String()
+	}
+	sort.Strings(docIDs)
+
+	// Watermark at the midpoint: docs 0-2 count as done, 3-5 must be re-indexed.
+	watermark := docIDs[2]
+	docsAfterWatermark := 3
+
+	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
+			return err
+		}
+		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+			Status:    client.IndexStatusBuilding,
+			Watermark: watermark,
+		})
+	})
+	require.NoError(t, err)
+	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
+
+	require.NoError(t, db.recoverIndexStates(context.Background()))
+
+	assert.Equal(t, docsAfterWatermark, countIndexEntries(t, ctx, db, shortID, desc.ID),
+		"only docs after the watermark should be re-indexed")
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+}
+
+// TestRecoverIndexStates_OrphanedBuildingRecord_Skipped checks that a building record with no
+// matching index definition is skipped (not propagated as an error) and leaves the DB usable.
+func TestRecoverIndexStates_OrphanedBuildingRecord_Skipped(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	collectionID := col.Version().CollectionID
+
+	// No index has this ID, so findIndexDefinition fails and recovery must skip it.
+	const orphanIndexID = uint32(999)
+	err := db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		return setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
+			Status: client.IndexStatusBuilding,
+		})
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, db.recoverIndexStates(context.Background()))
+
+	_, err = newNameIndex(t, ctx, col)
+	require.NoError(t, err, "system must remain usable after skipping orphan record")
+}
+
+// TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled checks the recovery loop
+// continues past a per-record error: an orphan building record errors while a valid dropping
+// record alongside it is still processed.
+func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	addUserDoc(t, ctx, col, "Alice")
+	addUserDoc(t, ctx, col, "Bob")
+
+	desc, err := newNameIndex(t, ctx, col)
+	require.NoError(t, err)
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	before := countIndexEntries(t, ctx, db, shortID, desc.ID)
+	assert.Equal(t, 2, before, "expected 2 entries before recovery")
+
+	const orphanIndexID = uint32(998)
+	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		// Orphan building record (errors) alongside a valid dropping record.
+		if err := setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
+			Status: client.IndexStatusBuilding,
+		}); err != nil {
+			return err
+		}
+		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+			Status: client.IndexStatusDropping,
+		})
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, db.recoverIndexStates(context.Background()))
+
+	// The dropping record was still processed despite the orphan erroring.
+	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
+	assert.Equal(t, 0, after, "expected dropping index entries to be GC'd")
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+}
+
+// TestRecoverIndexStates_FailedAndNoRecords_NoOp checks recovery leaves a failed record
+// untouched and is a no-op when there are no records.
 func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -111,7 +216,6 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 
 	collectionID := col.Version().CollectionID
 
-	// Seed a failed record.
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusFailed,
@@ -122,12 +226,11 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 
 	require.NoError(t, db.recoverIndexStates(context.Background()))
 
-	// Failed record must remain untouched.
 	state := readIndexState(t, ctx, db, collectionID, desc.ID)
 	assert.Equal(t, client.IndexStatusFailed, state.Status)
 	assert.Equal(t, "some previous error", state.Reason)
 
-	// Recovery on a db with no records must also be a no-op.
+	// A db with no records: recovery is a no-op.
 	db2, _ := setupUserCollection(t, ctx)
 	require.NoError(t, db2.recoverIndexStates(context.Background()))
 }

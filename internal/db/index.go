@@ -239,6 +239,8 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
 }
 
+// deleteIndexKey removes a single index entry. While the index is building, a missing
+// entry is tolerated, since not every document has been backfilled yet.
 func (index *collectionBaseIndex) deleteIndexKey(
 	ctx context.Context,
 	key keys.IndexDataStoreKey,

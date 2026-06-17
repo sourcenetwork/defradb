@@ -135,6 +135,7 @@ const (
 	errIndexBackfillFailed                 string = "index backfill failed"
 	errIndexGCFailed                       string = "index garbage collection failed"
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -1175,6 +1176,12 @@ func NewErrIndexBackfillFailed(inner error, indexName string) error {
 // NewErrIndexGCFailed returns a new error indicating that the index GC failed.
 func NewErrIndexGCFailed(inner error, indexName string) error {
 	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
 }
 
 // NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
