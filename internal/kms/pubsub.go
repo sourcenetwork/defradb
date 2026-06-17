@@ -292,6 +292,12 @@ func (s *pubSubService) handleFetchEncryptionKeyResponses(
 			if !ok {
 				continue
 			}
+
+			// TODO: If multi-key requests become common, aggregate partial
+			// responses from multiple peers until every requested link is found or
+			// the timeout fires. A single valid response may contain fewer blocks
+			// than the request asked for.
+			// https://github.com/sourcenetwork/defradb/issues/4947
 			result <- encryption.Result{Items: items}
 			return
 
@@ -406,6 +412,9 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 			return nil, false
 		}
 
+		// todo: verify incoming response order block/CIDs match the request
+		// current implementation assumes trusted response ordering
+		// https://github.com/sourcenetwork/defradb/issues/4948
 		resultEncItems = append(resultEncItems, encryption.Item{
 			Link:  keyResp.Links[i],
 			Block: decryptedData,
