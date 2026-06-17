@@ -53,10 +53,11 @@ func TestAuth_AudienceDerivedFromURL_IsAccepted(t *testing.T) {
 }
 
 // Overriding the audience with a host the server is not reached at produces a token
-// whose audience cannot match the request host, so the server must reject it.
+// whose audience cannot match the request host, so the server must reject it with the
+// descriptive audience-mismatch reason.
 func TestAuth_AudienceMismatch_IsForbidden(t *testing.T) {
 	describeCollection := &action.DescribeCollection{
-		ExpectError: "forbidden",
+		ExpectError: "auth token audience does not match the request host",
 	}
 	describeCollection.AddArgs(
 		"--identity", testIdentityKeyHex,
