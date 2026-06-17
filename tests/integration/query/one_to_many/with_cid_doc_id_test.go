@@ -127,6 +127,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -205,6 +206,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -279,6 +281,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -353,5 +356,6 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }

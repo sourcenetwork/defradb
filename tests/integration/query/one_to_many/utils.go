@@ -40,7 +40,43 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 				SDL: bookAuthorGQLSchema,
 			},
 		},
-		test.Actions...,
+		orderInitialDocs(test.Actions)...,
 	)
 	testUtils.ExecuteTestCase(t, test)
+}
+
+func orderInitialDocs(actions []any) []any {
+	start := 0
+	if len(actions) > 0 {
+		if _, ok := actions[0].(*action.AddCollection); ok {
+			start = 1
+		}
+	}
+
+	firstNonAdd := start
+	for firstNonAdd < len(actions) {
+		if _, ok := actions[firstNonAdd].(*action.AddDoc); !ok {
+			break
+		}
+		firstNonAdd++
+	}
+	if firstNonAdd == start {
+		return actions
+	}
+
+	ordered := make([]any, 0, len(actions))
+	ordered = append(ordered, actions[:start]...)
+	for _, item := range actions[start:firstNonAdd] {
+		add := item.(*action.AddDoc)
+		if add.CollectionID == 1 {
+			ordered = append(ordered, item)
+		}
+	}
+	for _, item := range actions[start:firstNonAdd] {
+		add := item.(*action.AddDoc)
+		if add.CollectionID != 1 {
+			ordered = append(ordered, item)
+		}
+	}
+	return append(ordered, actions[firstNonAdd:]...)
 }

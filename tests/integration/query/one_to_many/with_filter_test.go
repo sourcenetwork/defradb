@@ -101,6 +101,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -170,6 +171,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -251,6 +253,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -354,6 +357,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -466,6 +470,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 		},
 	}
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -560,6 +565,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 			},
 		},
 	}
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -646,5 +652,6 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }

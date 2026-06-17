@@ -164,7 +164,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "{{.DocID1_0}}"
+					"_authorID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			&action.Request{
