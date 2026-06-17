@@ -22,74 +22,66 @@ type LocalDocID struct {
 	DocShortID        uint32
 }
 
-// EncodeCollectionShortID returns the sortable path encoding for a local collection ID.
-func EncodeCollectionShortID(collectionShortID uint32) []byte {
-	if collectionShortID == 0 {
+func encodeShortID(shortID uint32) []byte {
+	if shortID == 0 {
 		return nil
 	}
-	return encoding.EncodeUvarintAscending(nil, uint64(collectionShortID))
+	return encoding.EncodeUvarintAscending(nil, uint64(shortID))
+}
+
+func decodeShortID(data []byte) (uint32, error) {
+	rest, shortID, err := decodeShortIDPrefix(data)
+	if err != nil {
+		return 0, err
+	}
+	if len(rest) > 0 {
+		return 0, ErrInvalidKey
+	}
+	return shortID, nil
+}
+
+func decodeShortIDPrefix(data []byte) ([]byte, uint32, error) {
+	if len(data) == 0 {
+		return nil, 0, ErrInvalidKey
+	}
+	rest, shortID, err := encoding.DecodeUvarintAscending(data)
+	if err != nil {
+		return nil, 0, err
+	}
+	if shortID == 0 || shortID > math.MaxUint32 {
+		return nil, 0, ErrInvalidKey
+	}
+	return rest, uint32(shortID), nil
+}
+
+// EncodeCollectionShortID returns the sortable path encoding for a local collection ID.
+func EncodeCollectionShortID(collectionShortID uint32) []byte {
+	return encodeShortID(collectionShortID)
 }
 
 // DecodeCollectionShortID decodes a local collection ID from a single encoded key segment.
 func DecodeCollectionShortID(data []byte) (uint32, error) {
-	rest, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
-	if err != nil {
-		return 0, err
-	}
-	if len(rest) > 0 {
-		return 0, ErrInvalidKey
-	}
-	return collectionShortID, nil
+	return decodeShortID(data)
 }
 
 // DecodeCollectionShortIDPrefix decodes a local collection ID from the start of data.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
-	if len(data) == 0 {
-		return nil, 0, ErrInvalidKey
-	}
-	rest, collectionShortID, err := encoding.DecodeUvarintAscending(data)
-	if err != nil {
-		return nil, 0, err
-	}
-	if collectionShortID == 0 || collectionShortID > math.MaxUint32 {
-		return nil, 0, ErrInvalidKey
-	}
-	return rest, uint32(collectionShortID), nil
+	return decodeShortIDPrefix(data)
 }
 
 // EncodeDocShortID returns the sortable path encoding for a local document storage ID.
 func EncodeDocShortID(docShortID uint32) []byte {
-	if docShortID == 0 {
-		return nil
-	}
-	return encoding.EncodeUvarintAscending(nil, uint64(docShortID))
+	return encodeShortID(docShortID)
 }
 
 // DecodeDocShortID decodes a local document storage ID from a single encoded key segment.
 func DecodeDocShortID(data []byte) (uint32, error) {
-	rest, docShortID, err := DecodeDocShortIDPrefix(data)
-	if err != nil {
-		return 0, err
-	}
-	if len(rest) > 0 {
-		return 0, ErrInvalidKey
-	}
-	return docShortID, nil
+	return decodeShortID(data)
 }
 
 // DecodeDocShortIDPrefix decodes a local document storage ID from the start of data.
 func DecodeDocShortIDPrefix(data []byte) ([]byte, uint32, error) {
-	if len(data) == 0 {
-		return nil, 0, ErrInvalidKey
-	}
-	rest, docShortID, err := encoding.DecodeUvarintAscending(data)
-	if err != nil {
-		return nil, 0, err
-	}
-	if docShortID == 0 || docShortID > math.MaxUint32 {
-		return nil, 0, ErrInvalidKey
-	}
-	return rest, uint32(docShortID), nil
+	return decodeShortIDPrefix(data)
 }
 
 // EncodeLocalDocID encodes a local collection/doc pair as a compact systemstore value.

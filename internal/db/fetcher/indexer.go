@@ -97,6 +97,7 @@ func newIndexFetcher(
 
 	for _, indexedField := range f.indexDesc.Fields {
 		if indexedField.Name == request.DocIDFieldName {
+			// _docID uses DefraDB's reserved internal index, not a user-defined index.
 			f.indexedFields = append(f.indexedFields, client.CollectionFieldDescription{
 				Name: indexedField.Name,
 				Kind: client.FieldKind_DocID,
@@ -140,7 +141,7 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		if err != nil {
 			return immutable.None[string](), err
 		}
-		docID, err := f.publicDocID(shortDocID)
+		docID, err := f.docIDFromShortDocID(shortDocID)
 		if err != nil {
 			return immutable.None[string](), err
 		}
@@ -148,10 +149,10 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		f.currentShortDocID = immutable.Some(shortDocID)
 	} else {
 		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-		if shortDocID, ok, err := normalShortDocID(lastVal); err != nil {
+		if shortDocID, ok, err := shortDocID(lastVal); err != nil {
 			return immutable.None[string](), err
 		} else if ok {
-			docID, err := f.publicDocID(shortDocID)
+			docID, err := f.docIDFromShortDocID(shortDocID)
 			if err != nil {
 				return immutable.None[string](), err
 			}
@@ -164,7 +165,7 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	return f.currentDocID, nil
 }
 
-func normalShortDocID(val client.NormalValue) (uint32, bool, error) {
+func shortDocID(val client.NormalValue) (uint32, bool, error) {
 	encodedShortDocID, ok := val.Bytes()
 	if !ok {
 		return 0, false, nil
@@ -176,13 +177,13 @@ func normalShortDocID(val client.NormalValue) (uint32, bool, error) {
 	return shortDocID, true, nil
 }
 
-func (f *indexFetcher) publicDocID(shortDocID uint32) (string, error) {
-	publicDocID, found, err := id.GetDocID(f.ctx, f.collectionShortID, shortDocID)
+func (f *indexFetcher) docIDFromShortDocID(shortDocID uint32) (string, error) {
+	docID, found, err := id.GetDocID(f.ctx, f.collectionShortID, shortDocID)
 	if err != nil {
 		return "", err
 	}
 	if found {
-		return publicDocID, nil
+		return docID, nil
 	}
 	return "", nil
 }

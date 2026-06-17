@@ -422,7 +422,7 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		} else {
 			lastField := &res.key.Fields[len(res.key.Fields)-1]
 			var ok bool
-			docShortID, ok, err = normalShortDocID(lastField.Value)
+			docShortID, ok, err = shortDocID(lastField.Value)
 			if err != nil {
 				return indexIterResult{}, err
 			}

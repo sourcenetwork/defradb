@@ -19,7 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// DocIDIndexID is reserved for the internal public DocID to short doc ID index.
+// DocIDIndexID is reserved for DefraDB's internal _docID index.
+// Primary keys are ordered by short doc ID, so this index preserves efficient
+// filtering and ordering by the user-facing DocID.
 const DocIDIndexID = math.MaxUint32
 
 // IndexedField contains information necessary for storing a single
@@ -29,6 +31,8 @@ type IndexedField struct {
 	Value client.NormalValue
 	// Descending is true if the field is sorted in descending order
 	Descending bool
+	// docShortID is the raw hidden suffix for non-unique index keys. Value keeps
+	// generic index iteration working; this field keeps key encoding compact.
 	docShortID uint32
 }
 
@@ -101,7 +105,7 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 	return true
 }
 
-// NewDocShortIDIndexedField returns the hidden document suffix used by non-unique index keys.
+// NewDocShortIDIndexedField returns the hidden document suffix used by index keys.
 func NewDocShortIDIndexedField(shortDocID uint32) IndexedField {
 	return IndexedField{
 		Value:      client.NewNormalBytes(EncodeDocShortID(shortDocID)),
