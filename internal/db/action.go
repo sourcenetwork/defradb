@@ -34,7 +34,7 @@ func (db *DB) ListActions(
 		return nil, err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
