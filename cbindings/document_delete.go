@@ -58,6 +58,7 @@ func DeleteDocument(nodePtr C.uintptr_t,
 	docID := C.GoString(docIDStr)
 	filter := C.GoString(filterStr)
 	switch {
+	// If docID is provided, delete the document by docID
 	case docID != "":
 		ID, err := client.NewDocIDFromString(docID)
 		if err != nil {
@@ -68,6 +69,8 @@ func DeleteDocument(nodePtr C.uintptr_t,
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(returnGoC(0, "", ""))
+
+	// If docID is not provided, next try to delete by filter
 	case filter != "":
 		var filterValue any
 		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
@@ -83,6 +86,8 @@ func DeleteDocument(nodePtr C.uintptr_t,
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(returnGoC(0, "", string(jsonBytes)))
+
+	// If neither docID nor filter is provided, that must be an error
 	default:
 		return returnC(returnGoC(1, errNoDocIDOrFilter, ""))
 	}

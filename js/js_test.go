@@ -16,12 +16,22 @@ import (
 	"syscall/js"
 	"testing"
 
+	"github.com/sourcenetwork/goji"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestSetGlobal(t *testing.T) {
+func TestGlobalAndOpen(t *testing.T) {
 	SetGlobal()
 
 	defradb := js.Global().Get("defradb")
-	assert.Equal(t, defradb.Type(), js.TypeObject)
+	require.Equal(t, js.TypeObject, defradb.Type())
+
+	opts := map[string]any{"Store": map[string]any{"Store": "memory"}}
+	prom := defradb.Call("open", opts)
+	res, err := goji.Await(goji.PromiseValue(prom))
+	require.NoError(t, err)
+
+	require.Len(t, res, 1)
+	assert.Equal(t, js.TypeObject, res[0].Type())
 }
