@@ -105,6 +105,41 @@ func TestTryHandleFetchEncryptionKeyResponse_UsesReplySenderForAAD(t *testing.T)
 	assert.Equal(t, plainBlock, items[0].Block)
 }
 
+func TestTryHandleFetchEncryptionKeyResponse_RejectsMismatchedLinksAndBlocks(t *testing.T) {
+	ctx := context.Background()
+
+	requesterPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+
+	req := &fetchEncryptionKeyRequest{
+		Links:              [][]byte{[]byte("encryption-block-link")},
+		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
+	}
+
+	reply := &fetchEncryptionKeyReply{
+		Links:  req.Links,
+		Blocks: [][]byte{[]byte("encrypted-block"), []byte("extra-encrypted-block")},
+	}
+	data, err := cbor.Marshal(reply)
+	require.NoError(t, err)
+
+	service := &pubSubService{
+		ctx:      ctx,
+		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
+	}
+	items, ok := service.tryHandleFetchEncryptionKeyResponse(
+		client.PubsubResponse{
+			From: "holder-peer",
+			Data: data,
+		},
+		req,
+		requesterPrivKey,
+	)
+
+	require.False(t, ok)
+	assert.Nil(t, items)
+}
+
 func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
