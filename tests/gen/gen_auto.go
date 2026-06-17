@@ -76,8 +76,6 @@ func newRandomDocGenerator(types map[string]client.CollectionVersion, config con
 }
 
 type genDoc struct {
-	// the docID of the document. Its cached value from doc.ID().String() just to avoid
-	// calculating it multiple times.
 	docID string
 	doc   *client.Document
 }
@@ -161,12 +159,12 @@ func (g *randomDocGenerator) generateRandomDocs(ctx context.Context, order []str
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(ctx, newDoc, typeDef)
+			doc, docID, err := NewDocWithGeneratedID(ctx, newDoc, typeDef)
 			if err != nil {
 				return err
 			}
 			g.generatedDocs[typeName] = append(g.generatedDocs[typeName],
-				genDoc{docID: doc.ID().String(), doc: doc})
+				genDoc{docID: docID, doc: doc})
 		}
 	}
 	return nil

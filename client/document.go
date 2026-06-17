@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/errors"
-	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 func init() {
@@ -154,14 +153,6 @@ func NewDocFromMap(ctx context.Context, data map[string]any, collection Collecti
 		return nil, err
 	}
 
-	// if no DocID was specified, then we assume it doesn't exist and we generate, and set it.
-	if !hasDocID {
-		err = doc.generateAndSetDocID()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return doc, nil
 }
 
@@ -183,10 +174,6 @@ func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersio
 		return nil, err
 	}
 	if err = doc.validateRequiredFields(); err != nil {
-		return nil, err
-	}
-	err = doc.generateAndSetDocID()
-	if err != nil {
 		return nil, err
 	}
 	return doc, nil
@@ -219,10 +206,6 @@ func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersi
 			return nil, err
 		}
 		if err = doc.validateRequiredFields(); err != nil {
-			return nil, err
-		}
-		err = doc.generateAndSetDocID()
-		if err != nil {
 			return nil, err
 		}
 		docs[i] = doc
@@ -981,27 +964,6 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
-// GenerateDocID generates a pre-save DocID from the document content.
-// Saved documents receive their persisted DocID from the genesis composite CID.
-func (doc *Document) GenerateDocID() (DocID, error) {
-	bytes, err := doc.Bytes()
-	if err != nil {
-		return DocID{}, err
-	}
-
-	// The DocID must take into consideration the collection root, this ensures that
-	// otherwise identical documents created using different collections will have different
-	// document IDs - we do not want cross-collection docID collisions.
-	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
-
-	cid, err := ccid.NewSHA256CidV1(bytes)
-	if err != nil {
-		return DocID{}, err
-	}
-
-	return NewDocIDV0(cid), nil
-}
-
 // setDocID sets the `doc.id` (should NOT be public).
 func (doc *Document) setDocID(docID DocID) {
 	doc.mu.Lock()
@@ -1020,24 +982,9 @@ func DocumentIDs(docs []*Document) []string {
 }
 
 // ApplySavedDocumentID applies an ID returned by a DefraDB save operation.
-// It is exported so client adapters can keep AddDocument semantics consistent.
+// Temporary adapter hook; user code should not set document IDs directly.
 func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
-}
-
-// GenerateAndSetDocID assigns a pre-save DocID derived from document content.
-func (doc *Document) GenerateAndSetDocID() error {
-	return doc.generateAndSetDocID()
-}
-
-func (doc *Document) generateAndSetDocID() error {
-	docID, err := doc.GenerateDocID()
-	if err != nil {
-		return err
-	}
-
-	doc.setDocID(docID)
-	return nil
 }
 
 // DocumentStatus represent the state of the document in the DAG store.

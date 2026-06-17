@@ -71,11 +71,11 @@ outer:
 }
 
 func mustGetDocIDFromDocMap(ctx context.Context, docMap map[string]any, collection client.CollectionVersion) string {
-	doc, err := client.NewDocFromMap(ctx, docMap, collection)
+	docID, err := gen.GenerateDocIDFromMap(ctx, docMap, collection)
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
-	return doc.ID().String()
+	return docID.String()
 }
 
 func mustAddDocIDToDoc(ctx context.Context, doc map[string]any, collection client.CollectionVersion) map[string]any {

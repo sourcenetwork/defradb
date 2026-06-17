@@ -495,7 +495,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (c *collection) save(
 			return err
 		}
 		primaryKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: colShortID,
 			DocShortID:        docShortID,
 		}
 	} else {
@@ -519,7 +519,7 @@ func (c *collection) save(
 
 	if isAdd && len(doc.Values()) == 0 {
 		valueKey := keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: colShortID,
 			DocShortID:        primaryKey.DocShortID,
 			InstanceType:      keys.ValueKey,
 		}
@@ -528,10 +528,13 @@ func (c *collection) save(
 		}
 	}
 
-	legacyCreateDocID := ""
-	encryptionDocID := keys.EncodeLocalDocID(shortID, primaryKey.DocShortID)
+	preSaveDocID := ""
+	encryptionDocID := keys.EncodeLocalDocID(colShortID, primaryKey.DocShortID)
 	if isAdd {
-		legacyCreateDocID = doc.ID().String()
+		docIDString := doc.ID().String()
+		if _, err := client.NewDocIDFromString(docIDString); err == nil {
+			preSaveDocID = docIDString
+		}
 	}
 
 	links := make([]coreblock.DAGLink, 0)
@@ -547,12 +550,12 @@ func (c *collection) save(
 				return client.NewErrFieldNotExist(k)
 			}
 
-			fieldID, err := id.GetShortFieldID(ctx, shortID, fieldDescription.FieldID)
+			fieldID, err := id.GetShortFieldID(ctx, colShortID, fieldDescription.FieldID)
 			if err != nil {
 				return err
 			}
 			fieldKey := keys.DataStoreKey{
-				CollectionShortID: shortID,
+				CollectionShortID: colShortID,
 				DocShortID:        primaryKey.DocShortID,
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
@@ -610,13 +613,13 @@ func (c *collection) save(
 	updateDocID := doc.ID().String()
 	if isAdd {
 		docID := client.NewDocIDV0(link.Cid)
-		shortDocID, found, err := id.GetShortDocID(ctx, shortID, docID.String())
+		shortDocID, found, err := id.GetShortDocID(ctx, colShortID, docID.String())
 		if err != nil {
 			return err
 		}
 		if found {
 			existingKey := keys.PrimaryDataStoreKey{
-				CollectionShortID: shortID,
+				CollectionShortID: colShortID,
 				DocShortID:        shortDocID,
 			}
 			exists, isDeleted, err := c.exists(ctx, existingKey)
@@ -630,22 +633,22 @@ func (c *collection) save(
 				return NewErrDocumentAlreadyExists(docID.String())
 			}
 		}
-		if err := id.SetDocIDMapping(ctx, shortID, primaryKey.DocShortID, docID.String()); err != nil {
+		if err := id.SetDocIDMapping(ctx, colShortID, primaryKey.DocShortID, docID.String()); err != nil {
 			return err
 		}
-		if legacyCreateDocID != "" && legacyCreateDocID != docID.String() {
-			if err := id.SetDocIDAlias(ctx, shortID, primaryKey.DocShortID, legacyCreateDocID); err != nil {
+		if preSaveDocID != "" && preSaveDocID != docID.String() {
+			if err := id.SetDocIDAlias(ctx, colShortID, primaryKey.DocShortID, preSaveDocID); err != nil {
 				return err
 			}
 		}
 		client.ApplySavedDocumentID(doc, docID)
 		updateDocID = docID.String()
 	}
-	if err := id.SetBlockDocIDMapping(ctx, shortID, link.Cid, updateDocID); err != nil {
+	if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, updateDocID); err != nil {
 		return err
 	}
 	for _, link := range links {
-		if err := id.SetBlockDocIDMapping(ctx, shortID, link.Cid, updateDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, updateDocID); err != nil {
 			return err
 		}
 	}
