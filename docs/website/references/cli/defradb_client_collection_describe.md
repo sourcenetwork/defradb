@@ -29,7 +29,7 @@ view collection by version id:
 ### Options
 
 ```
-      --collection-id string   Collection P2P identifier
+      --collection-id string   Collection ID
       --get-inactive           Get inactive collections as well as active
   -h, --help                   help for describe
       --name string            Collection name

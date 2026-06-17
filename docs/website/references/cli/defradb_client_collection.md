@@ -9,13 +9,9 @@ Add, describe, patch, set-active, delete, and truncate collections.
 ### Options
 
 ```
-      --collection-id string   Collection ID
-      --get-inactive           Get inactive collections as well as active
-  -h, --help                   help for collection
-  -i, --identity string        Hex formatted private key used to authenticate with ACP
-      --name string            Collection name
-      --tx uint                Transaction ID
-      --version-id string      Collection version ID
+  -h, --help              help for collection
+  -i, --identity string   Hex formatted private key used to authenticate with ACP
+      --tx uint           Transaction ID
 ```
 
 ### Options inherited from parent commands
