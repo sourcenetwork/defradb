@@ -393,6 +393,29 @@ func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
 	require.ErrorIs(t, err, ErrAudienceMismatch)
 }
 
+func TestVerifyAuthToken_WithMatchingAudienceAmongMany_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("second-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	// The token's audience matches the second of the accepted audiences.
+	err = VerifyAuthToken(identity, "first-audience", "second-audience")
+	require.NoError(t, err)
+}
+
+func TestVerifyAuthToken_WithNoneOfManyAudiencesMatching_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("real-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "first-audience", "second-audience")
+	require.ErrorIs(t, err, ErrAudienceMismatch)
+}
+
 func TestVerifyAuthToken_WithMissingAudience_Error(t *testing.T) {
 	identity, err := Generate(crypto.KeyTypeSecp256k1)
 	require.NoError(t, err)

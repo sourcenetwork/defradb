@@ -52,6 +52,7 @@ var ConfigFlags = map[string]string{
 	"log-overrides":              "log.overrides",
 	"no-log-color":               "log.colordisabled",
 	"url":                        "api.address",
+	"audience":                   "api.audience",
 	"max-txn-retries":            "datastore.maxtxnretries",
 	"store":                      "datastore.store",
 	"no-encryption":              "datastore.noencryption",
@@ -82,6 +83,7 @@ var ConfigFlags = map[string]string{
 // ConfigDefaults contains default values for config entries.
 var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
+	"api.audience":                      "",
 	"api.allowed-origins":               []string{},
 	"datastore.badger.path":             "data",
 	"datastore.maxtxnretries":           5,
