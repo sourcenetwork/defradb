@@ -399,6 +399,9 @@ func (w *Wrapper) ListActions(
 ) ([]client.ActionExecution, error) {
 	args := []string{"client", "action", "list"}
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
