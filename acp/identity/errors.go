@@ -40,7 +40,8 @@ var (
 	// ErrMustBeTokenIdentity is returned when used identity does not implement TokenIdentity.
 	ErrMustBeTokenIdentity = errors.New(errMustBeTokenIdentity)
 	// ErrAudienceMismatch is returned when an auth token's audience claim does not match
-	// the expected audience (the request host). This is an operator-actionable cause.
+	// any of the accepted audiences (the request host or an allowed origin).
+	// This is an operator-actionable cause.
 	ErrAudienceMismatch = errors.New(errAudienceMismatch)
 	// ErrMissingAudience is returned when an auth token carries no audience claim.
 	// This is an operator-actionable cause.
