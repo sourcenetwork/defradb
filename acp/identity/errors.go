@@ -20,6 +20,12 @@ const (
 	errInvalidKeyTypeClaimType = "key type claim must be a string"
 	errPrivateKeyNotAvailable  = "private key not available"
 	errMustBeTokenIdentity     = "identity must be a TokenIdentity"
+	errAudienceMismatch        = "auth token audience does not match the request host"
+	errMissingAudience         = "auth token is missing the audience claim"
+	errInvalidAuthToken        = "invalid auth token"
+	errInvalidSubject          = "auth token subject is not a valid public key"
+	errTokenExpired            = "auth token has expired"
+	errTokenNotYetValid        = "auth token is not yet valid"
 )
 
 var (
@@ -33,4 +39,23 @@ var (
 	ErrPrivateKeyNotAvailable = errors.New(errPrivateKeyNotAvailable)
 	// ErrMustBeTokenIdentity is returned when used identity does not implement TokenIdentity.
 	ErrMustBeTokenIdentity = errors.New(errMustBeTokenIdentity)
+	// ErrAudienceMismatch is returned when an auth token's audience claim does not match
+	// the expected audience (the request host). This is an operator-actionable cause.
+	ErrAudienceMismatch = errors.New(errAudienceMismatch)
+	// ErrMissingAudience is returned when an auth token carries no audience claim.
+	// This is an operator-actionable cause.
+	ErrMissingAudience = errors.New(errMissingAudience)
+	// ErrInvalidAuthToken is returned for any auth token that is malformed, structurally
+	// invalid, or whose signature does not verify. Signature failures are deliberately
+	// bucketed here so the cause is not distinguishable, to avoid leaking key validity.
+	ErrInvalidAuthToken = errors.New(errInvalidAuthToken)
+	// ErrInvalidSubject is returned when an auth token's subject claim is not a valid
+	// public key for the declared key type. This is an operator-actionable cause.
+	ErrInvalidSubject = errors.New(errInvalidSubject)
+	// ErrTokenExpired is returned when an auth token's expiry (exp) is in the past.
+	// This is an operator-actionable cause.
+	ErrTokenExpired = errors.New(errTokenExpired)
+	// ErrTokenNotYetValid is returned when an auth token's not-before (nbf) is in the
+	// future. This is an operator-actionable cause.
+	ErrTokenNotYetValid = errors.New(errTokenNotYetValid)
 )

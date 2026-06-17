@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/errors"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -27,6 +28,32 @@ const (
 	// authSchemaPrefix is the prefix added to the
 	// authorization header value.
 	authSchemaPrefix = "Bearer "
+)
+
+// Auth rejection reason strings. These are returned as the 403 response body so
+// callers can distinguish operator-actionable causes from token-integrity ones.
+// They are a stable contract — automation may branch on them, so do not reword
+// without considering downstream consumers.
+const (
+	// authErrAudienceMismatch is returned when the token's audience does not match
+	// the request host. The operator likely minted the token for a different host.
+	authErrAudienceMismatch = "auth token audience does not match the request host"
+	// authErrMissingAudience is returned when the token carries no audience claim.
+	authErrMissingAudience = "auth token is missing the audience claim"
+	// authErrMissingKeyType is returned when the token lacks the key_type claim, or
+	// it is not a string.
+	authErrMissingKeyType = "auth token is missing or has an invalid key type claim"
+	// authErrInvalidSubject is returned when the token's subject is not a valid
+	// public key for the declared key type.
+	authErrInvalidSubject = "auth token subject is not a valid public key"
+	// authErrExpired is returned when the token's expiry (exp) is in the past.
+	authErrExpired = "auth token has expired"
+	// authErrNotYetValid is returned when the token's not-before (nbf) is in the future.
+	authErrNotYetValid = "auth token is not yet valid"
+	// authErrInvalidToken is returned for a malformed token or a token whose
+	// signature does not verify. Signature failures are intentionally not
+	// distinguished here, to avoid leaking information about key validity.
+	authErrInvalidToken = "invalid auth token"
 )
 
 // AuthMiddleware authenticates an actor and sets their identity for all subsequent actions.
@@ -40,17 +67,41 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		ident, err := acpIdentity.FromToken([]byte(token))
 		if err != nil {
-			http.Error(rw, "forbidden", http.StatusForbidden)
+			http.Error(rw, authRejectionReason(err), http.StatusForbidden)
 			return
 		}
 
 		err = acpIdentity.VerifyAuthToken(ident, strings.ToLower(req.Host))
 		if err != nil {
-			http.Error(rw, "forbidden", http.StatusForbidden)
+			http.Error(rw, authRejectionReason(err), http.StatusForbidden)
 			return
 		}
 
 		ctx := iIdentity.WithContext(req.Context(), immutable.Some[acpIdentity.Identity](ident))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
+}
+
+// authRejectionReason maps a token-construction or verification error to the
+// documented 403 body. Any unrecognised cause — including signature failures —
+// falls back to the generic invalid-token reason so no token-integrity detail is
+// leaked.
+func authRejectionReason(err error) string {
+	switch {
+	case errors.Is(err, acpIdentity.ErrMissingKeyType),
+		errors.Is(err, acpIdentity.ErrInvalidKeyTypeClaimType):
+		return authErrMissingKeyType
+	case errors.Is(err, acpIdentity.ErrInvalidSubject):
+		return authErrInvalidSubject
+	case errors.Is(err, acpIdentity.ErrTokenExpired):
+		return authErrExpired
+	case errors.Is(err, acpIdentity.ErrTokenNotYetValid):
+		return authErrNotYetValid
+	case errors.Is(err, acpIdentity.ErrMissingAudience):
+		return authErrMissingAudience
+	case errors.Is(err, acpIdentity.ErrAudienceMismatch):
+		return authErrAudienceMismatch
+	default:
+		return authErrInvalidToken
+	}
 }
