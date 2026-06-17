@@ -936,6 +936,9 @@ type __EnumValue {
 "The `Blob` scalar type represents a binary large object."
 scalar Blob
 
+"The `Any` scalar type represents any value. When used as the value of a `@default` directive, it is coerced at runtime to the type of the field the directive is applied to."
+scalar Any
+
 "These are the set of filter operators available for use when filtering on [Float64] values."
 input Float64ListOperatorBlock {
     """
@@ -3012,15 +3015,7 @@ directive @crdt(
 		Setting a default value on a field within a view has no effect.
 """
 directive @default(
-    bool: Boolean
-    int: Int
-    float32: Float32
-    json: JSON
-    blob: Blob
-    string: String
-    float: Float
-    float64: Float64
-    dateTime: DateTime
+    value: Any
 ) on FIELD_DEFINITION
 
 "@explain is a directive that can be used to explain the query."

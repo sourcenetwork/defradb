@@ -908,6 +908,9 @@ type __InputValue {
 "The `Blob` scalar type represents a binary large object."
 scalar Blob
 
+"The `Any` scalar type represents any value. When used as the value of a `@default` directive, it is coerced at runtime to the type of the field the directive is applied to."
+scalar Any
+
 type Book {
     _authorID: ID
     """
@@ -3060,15 +3063,7 @@ directive @crdt(
 		Setting a default value on a field within a view has no effect.
 """
 directive @default(
-    string: String
-    bool: Boolean
-    int: Int
-    float: Float
-    json: JSON
-    float32: Float32
-    float64: Float64
-    dateTime: DateTime
-    blob: Blob
+    value: Any
 ) on FIELD_DEFINITION
 
 "@explain is a directive that can be used to explain the query."
