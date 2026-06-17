@@ -131,6 +131,11 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		}
 		db.lockSet.CollectionLock(txn, shortID)
 
+		colObject, err := db.newCollection(col, immutable.Some(txn))
+		if err != nil {
+			return err
+		}
+
 		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 
 		// Clear the transaction on the context used to write the action execution information, otherwise
@@ -142,22 +147,33 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			return err
 		}
 
-		colObject, err := db.newCollection(col, immutable.Some(txn))
-		if err != nil {
-			return err
-		}
-
 		// Clearing and then constructing is a bit inefficient, but it should do for now.
 		// Long term we probably want to update inline as much as possible to avoid unnessecarily
 		// moving/adding/deleting keys in storage
 		err = colObject.truncate(ctx)
 		if err != nil {
-			return err
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.TruncateAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
 		}
 
 		err = db.buildViewCache(ctx, col)
 		if err != nil {
-			return err
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.TruncateAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
 		}
 
 		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)

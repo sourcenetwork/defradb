@@ -75,7 +75,15 @@ func (c *collection) Truncate(
 
 	err = c.truncate(ctx)
 	if err != nil {
-		return err
+		errErr := action.Set(
+			txnFreeCtx,
+			multistore,
+			c.db.events,
+			c.def.CollectionID,
+			client.TruncateAction,
+			client.ErroredActionStatus,
+		)
+		return errors.Join(errErr, err)
 	}
 
 	err = action.Complete(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
