@@ -42,10 +42,10 @@ func TestTruncateCollectionListAction_ListsUncompletedTruncates(t *testing.T) {
 				Child: &action.ActionGroup{
 					Children: []action.Action{
 						&action.Wait{
-							// Delay the start of the `ListActions` action until the view refresh has registered the action.
+							// Delay the start of the `ListActions` action until the truncate has registered the action.
 							Action: immutable.Some(client.ActionExecution{
 								CollectionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
-								Action:       client.RefreshDatastoreAction,
+								Action:       client.TruncateAction,
 								Status:       client.InProgressActionStatus,
 							}),
 							Duration: immutable.Some(time.Second),
