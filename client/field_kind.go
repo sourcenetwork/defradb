@@ -441,15 +441,33 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 // MarshalFieldKindToJSON encodes a [FieldKind] into a human-readable JSON form that
 // round-trips back through [parseFieldKind]. Relation kinds are emitted as the object
 // shape rather than a string, as [parseFieldKind] would otherwise read them as a [NamedKind].
+//
+// An unmapped scalar/scalar-array enum has no string name - [FieldKind.String] falls back to
+// the numeric form, which [parseFieldKind] would read back as a [NamedKind]. For those we emit
+// the number directly so the original enum is recovered.
 func MarshalFieldKindToJSON(kind FieldKind) (json.RawMessage, error) {
 	switch k := kind.(type) {
 	case *CollectionKind:
 		return json.Marshal(objectKind{Array: k.Array, CollectionID: k.CollectionID})
 	case *SelfKind:
 		return json.Marshal(objectKind{Array: k.Array, RelativeID: k.RelativeID})
+	case ScalarKind:
+		return marshalScalarKindToJSON(uint8(k), k.String())
+	case ScalarArrayKind:
+		return marshalScalarKindToJSON(uint8(k), k.String())
 	default:
 		return json.Marshal(kind.String())
 	}
+}
+
+// marshalScalarKindToJSON emits the string name for a mapped scalar/scalar-array kind, or the
+// numeric value when the kind is unmapped (its [FieldKind.String] is just the number). The
+// numeric form round-trips via [parseFieldKind]'s integer branch; a numeric string would not.
+func marshalScalarKindToJSON(value uint8, name string) (json.RawMessage, error) {
+	if _, err := strconv.ParseUint(name, 10, 8); err == nil {
+		return json.Marshal(value)
+	}
+	return json.Marshal(name)
 }
 
 // IsVectorEmbeddingCompatible returns true if the FieldKind is an array that contains
