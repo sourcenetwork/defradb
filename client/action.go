@@ -27,7 +27,7 @@ const (
 	NoneActionStatus       ActionStatus = 0
 	InProgressActionStatus ActionStatus = 1
 	ErroredActionStatus    ActionStatus = 2
-	CompletedActionStatus  ActionStatus = 2
+	CompletedActionStatus  ActionStatus = 3
 )
 
 // ActionExecution describes an action execution.
