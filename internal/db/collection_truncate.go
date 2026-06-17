@@ -440,9 +440,9 @@ func (c *collection) deleteDocIDMappings(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
+	docIDIndexKey.DocShortID = shortDocID
 	return deleteDatastoreKeyIfExists(ctx, txn.Datastore(), &docIDIndexKey)
 }
 

@@ -31,9 +31,6 @@ type IndexedField struct {
 	Value client.NormalValue
 	// Descending is true if the field is sorted in descending order
 	Descending bool
-	// docShortID is the raw hidden suffix for non-unique index keys. Value keeps
-	// generic index iteration working; this field keeps key encoding compact.
-	docShortID uint32
 }
 
 // IndexDataStoreKey is key of an indexed document in the database.
@@ -44,6 +41,8 @@ type IndexDataStoreKey struct {
 	IndexID uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
+	// DocShortID is the trailing document suffix used to make index keys unique.
+	DocShortID uint32
 	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
 	// is serialized.
 	//
@@ -77,7 +76,7 @@ func (k *IndexDataStoreKey) ToDS() ds.Key {
 
 // ToString returns the string representation of the key
 // It is in the following format:
-// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)(/[DocShortID])
 // If while composing the string from left to right, a component
 // is empty, the string is returned up to that point
 func (k *IndexDataStoreKey) ToString() string {
@@ -96,27 +95,18 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 
 	for i, field := range k.Fields {
 		if !field.Value.Equal(other.Fields[i].Value) ||
-			field.Descending != other.Fields[i].Descending ||
-			field.docShortID != other.Fields[i].docShortID {
+			field.Descending != other.Fields[i].Descending {
 			return false
 		}
 	}
 
-	return true
-}
-
-// NewDocShortIDIndexedField returns the hidden document suffix used by index keys.
-func NewDocShortIDIndexedField(shortDocID uint32) IndexedField {
-	return IndexedField{
-		Value:      client.NewNormalBytes(EncodeDocShortID(shortDocID)),
-		docShortID: shortDocID,
-	}
+	return k.DocShortID == other.DocShortID
 }
 
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
 // It expects the input bytes is in the following format:
 //
-// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)(/[DocShortID])
 //
 // Where [CollectionID] and [IndexID] are integers
 //
@@ -175,12 +165,13 @@ func DecodeIndexDataStoreKey(
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		} else {
-			var shortDocID uint32
-			data, shortDocID, err = DecodeDocShortIDPrefix(data)
+			if key.DocShortID != 0 {
+				return IndexDataStoreKey{}, ErrInvalidKey
+			}
+			data, key.DocShortID, err = DecodeDocShortIDPrefix(data)
 			if err != nil {
 				return IndexDataStoreKey{}, err
 			}
-			key.Fields = append(key.Fields, NewDocShortIDIndexedField(shortDocID))
 			continue
 		}
 
@@ -218,11 +209,11 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 
 		for _, field := range key.Fields {
 			b = append(b, '/')
-			if field.docShortID != 0 {
-				b = append(b, EncodeDocShortID(field.docShortID)...)
-			} else {
-				b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
-			}
+			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		}
+		if key.DocShortID != 0 {
+			b = append(b, '/')
+			b = append(b, EncodeDocShortID(key.DocShortID)...)
 		}
 	}
 
@@ -244,6 +235,7 @@ func (k *IndexDataStoreKey) PrefixEnd() Walkable {
 		CollectionShortID: k.CollectionShortID,
 		IndexID:           k.IndexID,
 		Fields:            newFields,
+		DocShortID:        k.DocShortID,
 		Offset:            k.Offset + 1,
 	}
 }

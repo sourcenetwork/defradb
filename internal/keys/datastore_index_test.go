@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 func TestIndexDataStoreKey_PrefixEnd(t *testing.T) {
@@ -547,22 +548,27 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
-					NewDocShortIDIndexedField(7),
 				},
+				DocShortID: 7,
 			}),
 			wantErr: nil,
 		},
 		{
 			name: "too many fields",
-			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
-				CollectionShortID: 123,
-				IndexID:           456,
-				Fields: []IndexedField{
-					{Value: client.NewNormalString("test"), Descending: false},
-					NewDocShortIDIndexedField(7),
-					{Value: client.NewNormalString("extra"), Descending: false},
-				},
-			}),
+			data: append(
+				append(
+					EncodeIndexDataStoreKey(&IndexDataStoreKey{
+						CollectionShortID: 123,
+						IndexID:           456,
+						Fields: []IndexedField{
+							{Value: client.NewNormalString("test"), Descending: false},
+						},
+						DocShortID: 7,
+					}),
+					'/',
+				),
+				encoding.EncodeStringAscending(nil, "extra")...,
+			),
 			wantErr: ErrInvalidKey,
 		},
 	}

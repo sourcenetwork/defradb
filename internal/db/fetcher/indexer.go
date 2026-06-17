@@ -148,33 +148,18 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		f.currentDocID = immutable.Some(docID)
 		f.currentShortDocID = immutable.Some(shortDocID)
 	} else {
-		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-		if shortDocID, ok, err := shortDocID(lastVal); err != nil {
-			return immutable.None[string](), err
-		} else if ok {
-			docID, err := f.docIDFromShortDocID(shortDocID)
+		if res.key.DocShortID == 0 {
+			f.currentDocID = immutable.None[string]()
+		} else {
+			docID, err := f.docIDFromShortDocID(res.key.DocShortID)
 			if err != nil {
 				return immutable.None[string](), err
 			}
 			f.currentDocID = immutable.Some(docID)
-			f.currentShortDocID = immutable.Some(shortDocID)
-		} else {
-			f.currentDocID = immutable.None[string]()
+			f.currentShortDocID = immutable.Some(res.key.DocShortID)
 		}
 	}
 	return f.currentDocID, nil
-}
-
-func shortDocID(val client.NormalValue) (uint32, bool, error) {
-	encodedShortDocID, ok := val.Bytes()
-	if !ok {
-		return 0, false, nil
-	}
-	shortDocID, err := keys.DecodeDocShortID(encodedShortDocID)
-	if err != nil {
-		return 0, false, err
-	}
-	return shortDocID, true, nil
 }
 
 func (f *indexFetcher) docIDFromShortDocID(shortDocID uint32) (string, error) {

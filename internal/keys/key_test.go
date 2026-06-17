@@ -133,11 +133,12 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 func TestDecodeIndexDataStoreKey(t *testing.T) {
 	const colID, indexID = 1, 2
 	cases := []struct {
-		name           string
-		desc           client.IndexDescription
-		inputBytes     []byte
-		expectedFields []IndexedField
-		fieldKinds     []client.FieldKind
+		name               string
+		desc               client.IndexDescription
+		inputBytes         []byte
+		expectedFields     []IndexedField
+		expectedDocShortID uint32
+		fieldKinds         []client.FieldKind
 	}{
 		{
 			name: "one field",
@@ -169,15 +170,16 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 			inputBytes: append(append(encodeKey(1, indexID, 5, false), '/'), EncodeDocShortID(7)...),
 			expectedFields: []IndexedField{
 				{Value: client.NewNormalInt(5)},
-				NewDocShortIDIndexedField(7),
 			},
-			fieldKinds: []client.FieldKind{client.FieldKind_NILLABLE_INT},
+			expectedDocShortID: 7,
+			fieldKinds:         []client.FieldKind{client.FieldKind_NILLABLE_INT},
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedKey := NewIndexDataStoreKey(colID, indexID, tc.expectedFields)
+			expectedKey.DocShortID = tc.expectedDocShortID
 			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.Fields))
 			for i := range tc.fieldKinds {
 				fieldDescs[i] = client.CollectionFieldDescription{Kind: tc.fieldKinds[i]}

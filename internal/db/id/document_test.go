@@ -135,9 +135,9 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
+	docIDIndexKey.DocShortID = shortDocID
 	_, err = txn.Datastore().Get(ctx, &docIDIndexKey)
 	require.NoError(t, err)
 }

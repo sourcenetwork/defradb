@@ -59,9 +59,9 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
+	docIDIndexKey.DocShortID = shortDocID
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
 	require.NoError(t, err)
 
@@ -180,9 +180,9 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(publicDocID)},
-			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
+	docIDIndexKey.DocShortID = shortDocID
 	_, err = dbTxn.Datastore().Get(txnCtx, &docIDIndexKey)
 	require.Error(t, err)
 }

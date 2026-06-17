@@ -420,15 +420,10 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 				return indexIterResult{}, err
 			}
 		} else {
-			lastField := &res.key.Fields[len(res.key.Fields)-1]
-			var ok bool
-			docShortID, ok, err = shortDocID(lastField.Value)
-			if err != nil {
-				return indexIterResult{}, err
-			}
-			if !ok {
-				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
-			}
+			docShortID = res.key.DocShortID
+		}
+		if docShortID == 0 {
+			return indexIterResult{}, NewErrUnexpectedTypeValue[uint32](docShortID)
 		}
 		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue

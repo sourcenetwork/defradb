@@ -52,9 +52,9 @@ func SetDocIDMapping(
 		keys.DocIDIndexID,
 		[]keys.IndexedField{
 			{Value: client.NewNormalString(docID)},
-			keys.NewDocShortIDIndexedField(shortDocID),
 		},
 	)
+	docIDIndexKey.DocShortID = shortDocID
 	return txn.Datastore().Set(ctx, &docIDIndexKey, []byte{})
 }
 
