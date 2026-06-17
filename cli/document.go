@@ -27,7 +27,7 @@ func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
-		Use:   "document [--collection-name <name> --collection-id <collectionID> --version-id <versionID>]",
+		Use:   "document",
 		Short: "Interact with documents.",
 		Long:  `Add, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {

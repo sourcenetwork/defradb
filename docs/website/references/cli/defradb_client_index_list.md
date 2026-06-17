@@ -10,7 +10,7 @@ If the --collection flag is provided, only the indexes for that collection will 
 Otherwise, all indexes in the database will be shown.
 
 ```
-defradb client index list [-c --collection <collection>] [flags]
+defradb client index list [flags]
 ```
 
 ### Examples

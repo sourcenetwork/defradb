@@ -11,7 +11,7 @@ This command allows you to sync the collection-level history for branchable coll
 to the collection for future updates.
 
 ```
-defradb client p2p collection sync-branchable [collection-id] [flags]
+defradb client p2p collection sync-branchable <collection-id> [flags]
 ```
 
 ### Examples
