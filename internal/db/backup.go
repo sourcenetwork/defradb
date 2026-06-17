@@ -86,7 +86,6 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				}
 			}
 
-			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
 			doc, err := client.NewDocFromMap(ctx, docMap, col.Version())
@@ -121,9 +120,6 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 }
 
 func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
-	// old key -> new Key
-	keyChangeCache := map[string]string{}
-
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
 		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()), true)
@@ -211,74 +207,35 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 			isSelfReference := false
 			refFieldName := ""
-			// replace any foreign key if it needs to be changed
+			// Clear references to missing documents and hold self-references until after add.
 			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					fieldID := request.ToFieldID(field.Name)
 					if foreignKey, err := doc.Get(fieldID); err == nil {
-						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(ctx, request.ToFieldID(field.Name), newKey)
+						foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
+						if err != nil {
+							return err
+						}
+
+						txnOpt := datastore.CtxTryGetTxnOption(ctx)
+						foreignCol, err := db.newCollection(foreignDef, txnOpt)
+						if err != nil {
+							return err
+						}
+
+						foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
+						if err != nil {
+							return err
+						}
+						foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
+						if err != nil {
+							err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
 							if err != nil {
 								return err
 							}
-							if foreignKey.(string) == doc.ID().String() {
-								isSelfReference = true
-								refFieldName = fieldID
-							}
-						} else {
-							foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
-							if err != nil {
-								return err
-							}
-
-							txnOpt := datastore.CtxTryGetTxnOption(ctx)
-							foreignCol, err := db.newCollection(foreignDef, txnOpt)
-							if err != nil {
-								return err
-							}
-
-							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
-							if err != nil {
-								return err
-							}
-							foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
-							if err != nil {
-								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
-								if err != nil {
-									return err
-								}
-							} else {
-								oldForeignDoc, err := foreignDoc.ToMap()
-								if err != nil {
-									return err
-								}
-
-								delete(oldForeignDoc, request.DocIDFieldName)
-								if foreignDoc.ID().String() == foreignDocID.String() {
-									delete(oldForeignDoc, fieldID)
-								}
-
-								if foreignDoc.ID().String() == doc.ID().String() {
-									isSelfReference = true
-									refFieldName = fieldID
-								}
-
-								newForeignDoc, err := client.NewDocFromMap(ctx, oldForeignDoc, foreignCol.Version())
-								if err != nil {
-									return err
-								}
-
-								if foreignDoc.ID().String() != doc.ID().String() {
-									err = doc.Set(ctx, request.ToFieldID(field.Name), newForeignDoc.ID().String())
-									if err != nil {
-										return err
-									}
-								}
-
-								if newForeignDoc.ID().String() != foreignDoc.ID().String() {
-									keyChangeCache[foreignDoc.ID().String()] = newForeignDoc.ID().String()
-								}
-							}
+						} else if foreignDoc.ID().String() == doc.ID().String() {
+							isSelfReference = true
+							refFieldName = fieldID
 						}
 					}
 				}
@@ -294,21 +251,11 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(ctx, docM, col.Version())
-			if err != nil {
-				return err
-			}
-			// a new docID is needed to let the user know what will be the docID of the imported document.
-			docM[request.NewDocIDFieldName] = newDoc.ID().String()
-			// NewDocFromMap removes the "_docID" map item so we add it back.
+			docM[request.NewDocIDFieldName] = doc.ID().String()
 			docM[request.DocIDFieldName] = doc.ID().String()
 
 			if isSelfReference {
-				docM[refFieldName] = newDoc.ID().String()
-			}
-
-			if newDoc.ID().String() != doc.ID().String() {
-				keyChangeCache[doc.ID().String()] = newDoc.ID().String()
+				docM[refFieldName] = doc.ID().String()
 			}
 
 			var b []byte

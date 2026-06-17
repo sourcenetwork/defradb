@@ -20,8 +20,25 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
+
+func backupTestDocID(
+	t *testing.T,
+	ctx context.Context,
+	doc map[string]any,
+	collection client.CollectionVersion,
+) string {
+	testDoc, err := client.NewDocFromMap(ctx, doc, collection)
+	require.NoError(t, err)
+	bytes, err := testDoc.Bytes()
+	require.NoError(t, err)
+	bytes = append(bytes, []byte(collection.CollectionID)...)
+	cid, err := ccid.NewSHA256CidV1(bytes)
+	require.NoError(t, err)
+	return client.NewDocIDV0(cid).String()
+}
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	ctx := context.Background()
@@ -481,24 +498,16 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	// First, add documents to get their actual docIDs
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
-	require.NoError(t, err)
-	bobID := doc1.ID().String()
-
-	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "John", "age": 30}`), col1.Version())
-	require.NoError(t, err)
-	johnID := doc2.ID().String()
+	bobID := backupTestDocID(t, ctx, map[string]any{"name": "Bob", "age": 40}, col1.Version())
+	johnID := backupTestDocID(t, ctx, map[string]any{"name": "John", "age": 30}, col1.Version())
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
-	require.NoError(t, err)
-	addressID := doc3.ID().String()
+	addressID := backupTestDocID(t, ctx, map[string]any{"street": "101 Maple St", "city": "Toronto"}, col2.Version())
 
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
