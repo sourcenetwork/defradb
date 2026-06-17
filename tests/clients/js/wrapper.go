@@ -454,9 +454,7 @@ func (w *Wrapper) ListActions(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListActionsOptions],
 ) ([]client.ActionExecution, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, w.value, "listActions")
+	res, err := execute(ctx, w.value, "listActions", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}

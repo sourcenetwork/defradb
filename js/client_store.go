@@ -198,19 +198,16 @@ func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 }
 
 func (c *Client) listActions(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
-	if err != nil {
+	var opt options.ListActionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-
-	opt := options.ListActions()
-	setOptIdentity(opt, args, 0)
-	lenses, err := store.ListActions(ctx, opt)
+	lenses, err := store.ListActions(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
