@@ -127,7 +127,6 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{publicDocID, legacyDocID}, aliases)
-
 }
 
 func TestResolveShortDocIDDoesNotCrossCollections(t *testing.T) {

@@ -444,13 +444,6 @@ func deleteRawKeyIfExists(ctx context.Context, store corekv.ReaderWriter, key []
 	return nil
 }
 
-func deleteDatastoreKeyIfExists(ctx context.Context, store datastore.Keyedstore, key keys.Key) error {
-	if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
-	}
-	return nil
-}
-
 func (c *collection) hardDeleteCollectionBlocks(
 	ctx context.Context,
 	shortID uint32,

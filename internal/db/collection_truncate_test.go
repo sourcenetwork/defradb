@@ -160,7 +160,6 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
-
 }
 
 func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {

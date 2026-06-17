@@ -34,7 +34,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+						"_publishedID": "{{.DocID0_0}}"
 					}`,
 			},
 			&action.Request{
@@ -83,7 +83,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+						"_publishedID": "{{.DocID0_0}}"
 					}`,
 			},
 			&action.Request{
