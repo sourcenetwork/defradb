@@ -438,6 +438,20 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 	return NewNamedKind(strKind, isArray), nil
 }
 
+// MarshalFieldKindToJSON encodes a [FieldKind] into a human-readable JSON form that
+// round-trips back through [parseFieldKind]. Relation kinds are emitted as the object
+// shape rather than a string, as [parseFieldKind] would otherwise read them as a [NamedKind].
+func MarshalFieldKindToJSON(kind FieldKind) (json.RawMessage, error) {
+	switch k := kind.(type) {
+	case *CollectionKind:
+		return json.Marshal(objectKind{Array: k.Array, CollectionID: k.CollectionID})
+	case *SelfKind:
+		return json.Marshal(objectKind{Array: k.Array, RelativeID: k.RelativeID})
+	default:
+		return json.Marshal(kind.String())
+	}
+}
+
 // IsVectorEmbeddingCompatible returns true if the FieldKind is an array that contains
 // a supported scalar type for vector embeddings.
 func IsVectorEmbeddingCompatible(kind FieldKind) bool {

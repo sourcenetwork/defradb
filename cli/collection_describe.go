@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -57,7 +58,11 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 			for i, col := range cols {
 				colDesc[i] = col.Version()
 			}
-			return writeJSON(cmd, colDesc)
+			rendered, err := description.RenderCollectionVersions(colDesc)
+			if err != nil {
+				return err
+			}
+			return writeJSON(cmd, rendered)
 		},
 	}
 

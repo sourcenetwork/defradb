@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -387,7 +388,12 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 	for i, col := range cols {
 		colDesc[i] = col.Version()
 	}
-	responseJSON(rw, http.StatusOK, colDesc)
+	rendered, err := description.RenderCollectionVersions(colDesc)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, rendered)
 }
 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {

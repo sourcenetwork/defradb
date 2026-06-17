@@ -10,6 +10,11 @@
 
 package client
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // CType indicates CRDT type.
 type CType byte
 
@@ -67,4 +72,56 @@ func (t CType) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+// CTypeFromString returns the [CType] matching the given string representation,
+// the inverse of [CType.String].
+//
+// The second return value is false if the string does not match a known CRDT type.
+func CTypeFromString(s string) (CType, bool) {
+	switch s {
+	case "none":
+		return NONE_CRDT, true
+	case "lww":
+		return LWW_REGISTER, true
+	case "object":
+		return OBJECT, true
+	case "composite":
+		return COMPOSITE, true
+	case "pncounter":
+		return PN_COUNTER, true
+	case "pcounter":
+		return P_COUNTER, true
+	default:
+		return 0, false
+	}
+}
+
+// UnmarshalJSON accepts both the numeric form (used when persisting and patching
+// collections) and the string form (used by the collection-describe display output),
+// so that a stringified CType round-trips back losslessly while the existing numeric
+// reads keep working unchanged.
+//
+// Note: there is intentionally no MarshalJSON, persistence and JSON-patch evaluation
+// must keep emitting the numeric form. Only the describe display path emits the string.
+func (t *CType) UnmarshalJSON(b []byte) error {
+	if len(b) > 0 && b[0] == '"' {
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		ctype, ok := CTypeFromString(s)
+		if !ok {
+			return fmt.Errorf("unknown CRDT type: %q", s)
+		}
+		*t = ctype
+		return nil
+	}
+
+	var n byte
+	if err := json.Unmarshal(b, &n); err != nil {
+		return err
+	}
+	*t = CType(n)
+	return nil
 }
