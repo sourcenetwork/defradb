@@ -17,7 +17,8 @@ import (
 
 // Encryption contains the encryption information for the block's delta.
 type Encryption struct {
-	// DocID is the ID of the document that is encrypted with the associated encryption key.
+	// DocID is the local document key used to find the associated encryption key.
+	// For new blocks this is the encoded local collection/doc short ID pair, not the public DocID.
 	DocID []byte
 	// FieldName is the name of the field that is encrypted with the associated encryption key.
 	// It is set if encryption is applied to a field instead of the whole doc.

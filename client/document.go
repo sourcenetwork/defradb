@@ -981,7 +981,8 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
-// GenerateDocID generates the DocID corresponding to the document.
+// GenerateDocID generates a pre-save DocID from the document content.
+// Saved documents receive their persisted DocID from the genesis composite CID.
 func (doc *Document) GenerateDocID() (DocID, error) {
 	bytes, err := doc.Bytes()
 	if err != nil {
@@ -1024,7 +1025,7 @@ func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
 }
 
-// GenerateAndSetDocID generates the DocID and then (re)sets `doc.id`.
+// GenerateAndSetDocID assigns a pre-save DocID derived from document content.
 func (doc *Document) GenerateAndSetDocID() error {
 	return doc.generateAndSetDocID()
 }

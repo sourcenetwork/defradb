@@ -99,8 +99,9 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	return cols[0], nil
 }
 
-func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, error) {
-	localDocID, err := keys.DecodeLocalDocID([]byte(docID))
+func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
+	// Encryption blocks carry the encoded local document key; callers can also pass a public DocID or alias.
+	localDocID, err := keys.DecodeLocalDocID([]byte(docKey))
 	if err == nil {
 		publicDocID, found, err := id.GetPublicDocIDFromStore(
 			ctx,
@@ -113,12 +114,12 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docID
 		}
 	}
 
-	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docID)
+	publicDocID, found, err := id.GetNodePublicDocIDFromStore(ctx, store, docKey)
 	if err != nil {
 		return "", err
 	}
 	if found {
 		return publicDocID, nil
 	}
-	return docID, nil
+	return docKey, nil
 }

@@ -127,16 +127,7 @@ func ResolveShortDocID(
 	collectionShortID uint32,
 	docID string,
 ) (uint32, bool, error) {
-	shortDocID, found, err := GetShortDocID(ctx, collectionShortID, docID)
-	if err != nil || found {
-		return shortDocID, found, err
-	}
-
-	shortDocID, found, err = GetNodeShortDocID(ctx, docID)
-	if err != nil || !found {
-		return 0, false, err
-	}
-	return shortDocID, true, nil
+	return GetShortDocID(ctx, collectionShortID, docID)
 }
 
 func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (uint32, bool, error) {
@@ -300,6 +291,8 @@ func GetPublicDocIDForBlockFromStore(
 	if len(docIDs) == 0 {
 		return "", false, nil
 	}
+	// Only use this helper when the caller has surrounding context that makes any
+	// mapped DocID acceptable. Shared genesis field blocks can map to more than one DocID.
 	return docIDs[0], true, nil
 }
 

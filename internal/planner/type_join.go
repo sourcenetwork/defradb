@@ -506,7 +506,7 @@ func resolveDocIDAliasForCollection(ctx context.Context, col client.Collection, 
 		return docID, nil
 	}
 
-	shortDocID, found, err := id.GetNodeShortDocID(ctx, docID)
+	localDocID, found, err := id.GetLocalDocID(ctx, docID)
 	if err != nil {
 		return "", err
 	}
@@ -518,7 +518,11 @@ func resolveDocIDAliasForCollection(ctx context.Context, col client.Collection, 
 	if err != nil {
 		return "", err
 	}
-	publicDocID, found, err := id.GetPublicDocID(ctx, collectionShortID, shortDocID)
+	if localDocID.CollectionShortID != collectionShortID {
+		return docID, nil
+	}
+
+	publicDocID, found, err := id.GetPublicDocID(ctx, collectionShortID, localDocID.DocShortID)
 	if err != nil {
 		return "", err
 	}

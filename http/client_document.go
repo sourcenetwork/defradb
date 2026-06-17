@@ -55,7 +55,7 @@ func (c *Collection) AddDocument(
 	if err := c.http.requestJson(req, &docIDs); err != nil {
 		return err
 	}
-	if err := setDocumentIDs(docs(doc), docIDs); err != nil {
+	if err := setDocumentIDs([]*client.Document{doc}, docIDs); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -107,10 +107,6 @@ func (c *Collection) AddManyDocuments(
 		doc.Clean()
 	}
 	return nil
-}
-
-func docs(doc *client.Document) []*client.Document {
-	return []*client.Document{doc}
 }
 
 func setDocumentIDs(docs []*client.Document, docIDs []string) error {

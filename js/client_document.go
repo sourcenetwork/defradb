@@ -42,7 +42,7 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return goji.MarshalJS([]string{doc.ID().String()})
+	return goji.MarshalJS(client.DocumentIDs([]*client.Document{doc}))
 }
 
 func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.Value, error) {
@@ -68,11 +68,7 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	docIDs := make([]string, len(docs))
-	for i, doc := range docs {
-		docIDs[i] = doc.ID().String()
-	}
-	return goji.MarshalJS(docIDs)
+	return goji.MarshalJS(client.DocumentIDs(docs))
 }
 
 // saveDocument applies the given JSON patch to the document with the given

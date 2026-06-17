@@ -161,11 +161,6 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 		start = s
 	}
 
-	if start.CollectionShortID == 0 || start.DocShortID == 0 {
-		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
-		return
-	}
-
 	n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
 }
 

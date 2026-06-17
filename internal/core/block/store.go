@@ -47,7 +47,7 @@ func putBlock(
 
 // AddDeltaOptions controls storage behavior around a CRDT delta.
 type AddDeltaOptions struct {
-	EncryptionDocID []byte
+	EncryptionDocKey []byte
 }
 
 // AddDelta adds a new delta to the existing DAG.
@@ -97,7 +97,7 @@ func addDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := determineBlockEncryption(ctx, options.EncryptionDocID, fieldName, heads)
+	encBlock, encLink, err := determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
 	}
@@ -139,7 +139,7 @@ func addDelta(
 
 func determineBlockEncryption(
 	ctx context.Context,
-	docID []byte,
+	docKey []byte,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
@@ -147,14 +147,14 @@ func determineBlockEncryption(
 
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &Encryption{DocID: append([]byte(nil), docID...)}
+		encBlock := &Encryption{DocID: append([]byte(nil), docKey...)}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			f := fieldName.Value()
 			encBlock.FieldName = &f
 		}
 		encryptor := encryption.GetEncryptorFromContext(ctx)
 		if encryptor != nil {
-			encKey, err := encryptor.GetOrGenerateEncryptionKey(string(docID), fieldName)
+			encKey, err := encryptor.GetOrGenerateEncryptionKey(string(docKey), fieldName)
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrGetEncryptionKey(err)
 			}

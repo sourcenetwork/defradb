@@ -142,6 +142,37 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestResolveShortDocIDDoesNotCrossCollections(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	const (
+		collectionShortID uint32 = 42
+		otherCollectionID uint32 = 43
+		shortDocID        uint32 = 7
+		publicDocID              = "bae-public-doc"
+		legacyDocID              = "bae-legacy-doc"
+	)
+
+	require.NoError(t, SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID))
+	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
+
+	gotShortDocID, found, err := GetNodeShortDocID(ctx, publicDocID)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, shortDocID, gotShortDocID)
+
+	_, found, err = ResolveShortDocID(ctx, otherCollectionID, publicDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	_, found, err = ResolveShortDocID(ctx, otherCollectionID, legacyDocID)
+	require.NoError(t, err)
+	require.False(t, found)
+}
+
 func TestBlockDocIDMappings(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)

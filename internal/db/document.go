@@ -16,8 +16,6 @@ import (
 	"strconv"
 	"strings"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -583,7 +581,7 @@ func (c *collection) save(
 				signingCtx,
 				merkleCRDT,
 				delta,
-				coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
+				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 			)
 			if err != nil {
 				return err
@@ -598,25 +596,13 @@ func (c *collection) save(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
-	var link cidlink.Link
-	var headNode []byte
-	if isAdd {
-		link, headNode, err = coreblock.AddDeltaWithOptions(
-			signingCtx,
-			merkleCRDT,
-			merkleCRDT.Delta(),
-			coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
-			links...,
-		)
-	} else {
-		link, headNode, err = coreblock.AddDeltaWithOptions(
-			signingCtx,
-			merkleCRDT,
-			merkleCRDT.Delta(),
-			coreblock.AddDeltaOptions{EncryptionDocID: encryptionDocID},
-			links...,
-		)
-	}
+	link, headNode, err := coreblock.AddDeltaWithOptions(
+		signingCtx,
+		merkleCRDT,
+		merkleCRDT.Delta(),
+		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+		links...,
+	)
 	if err != nil {
 		return err
 	}
@@ -839,7 +825,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, strconv.FormatUint(uint64(primaryKey.DocShortID), 10))
+		return false, false, NewErrGetDocStatus(err, publicDocID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil

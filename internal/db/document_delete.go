@@ -180,7 +180,7 @@ func (c *collection) applyDelete(
 		merkleCRDT,
 		merkleCRDT.DeleteDelta(),
 		coreblock.AddDeltaOptions{
-			EncryptionDocID: keys.EncodeLocalDocID(primaryKey.CollectionShortID, primaryKey.DocShortID),
+			EncryptionDocKey: keys.EncodeLocalDocID(primaryKey.CollectionShortID, primaryKey.DocShortID),
 		},
 	)
 	if err != nil {

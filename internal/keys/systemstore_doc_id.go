@@ -32,7 +32,7 @@ import (
 // every document and document block.
 const (
 	SHORT_ID_TO_DOC_ID  = "s"
-	DOC_ID_TO_SHORT_ID  = "p"
+	DOC_ID_TO_LOCAL_ID  = "p"
 	NODE_DOC_ID_INDEX   = "n"
 	BLOCK_CID_TO_DOC_ID = "b"
 	DOC_ID_TO_BLOCK_CID = "pb"
@@ -96,24 +96,7 @@ func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID uint32) ShortIDTo
 	}
 }
 
-// DocIDToShortIDKey maps a public doc ID to its short doc ID.
-type DocIDToShortIDKey struct {
-	systemstoreDocIDKey
-}
-
-var _ Key = (*DocIDToShortIDKey)(nil)
-
-func NewDocIDToShortIDKey(collectionShortID uint32, docID string) DocIDToShortIDKey {
-	return DocIDToShortIDKey{
-		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			collectionShortIDSegment(collectionShortID),
-			[]byte(DOC_ID_TO_SHORT_ID),
-			docIDSegment(docID),
-		),
-	}
-}
-
-// NodeDocIDToShortIDKey maps a public doc ID to this node's local short doc ID.
+// NodeDocIDToShortIDKey maps a public doc ID to this node's local collection/doc IDs.
 type NodeDocIDToShortIDKey struct {
 	systemstoreDocIDKey
 }
@@ -124,7 +107,7 @@ func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 	return NodeDocIDToShortIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			[]byte(NODE_DOC_ID_INDEX),
-			[]byte(DOC_ID_TO_SHORT_ID),
+			[]byte(DOC_ID_TO_LOCAL_ID),
 			docIDSegment(docID),
 		),
 	}

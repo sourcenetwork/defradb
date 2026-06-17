@@ -134,7 +134,7 @@ func (c *collection) getWithACP(
 		return nil, err
 	}
 
-	// construct target DS key from DocID.
+	// construct target datastore key from the resolved short doc ID.
 	targetKey := keys.DataStoreKey{
 		CollectionShortID: shortID,
 		DocShortID:        primaryKey.DocShortID,
