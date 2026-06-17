@@ -186,23 +186,24 @@ func (f *fullIdentity) UpdateToken(
 }
 
 // VerifyAuthToken verifies that the jwt auth token is valid and that the signature
-// matches the identity of the subject.
+// matches the identity of the subject. The token's audience claim must match any
+// one of the given audiences; at least one must be provided.
 //
 // On failure it returns a typed error identifying the cause so callers can
 // distinguish operator-actionable problems from token-integrity ones:
 //   - ErrTokenExpired     — the token's expiry (exp) is in the past.
 //   - ErrTokenNotYetValid — the token's not-before (nbf) is in the future.
 //   - ErrMissingAudience  — the token carries no audience claim.
-//   - ErrAudienceMismatch — the audience claim does not match the given audience.
+//   - ErrAudienceMismatch — the audience claim matches none of the given audiences.
 //   - ErrInvalidAuthToken — the token is malformed/structurally invalid, or its
 //     signature does not verify. Signature failures are intentionally not
 //     distinguished, to avoid leaking information about key validity.
-func VerifyAuthToken(ident TokenIdentity, audience string) error {
+func VerifyAuthToken(ident TokenIdentity, audiences ...string) error {
 	// Parse structurally first, without audience validation. jwx reports a missing
 	// `aud` claim the same way as a mismatched one (both as an audience failure), so
 	// we inspect the claim ourselves to tell the two apart. The temporal claims
 	// (exp/nbf) are validated here by default.
-	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false))
+	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithValidate(true))
 	if err != nil {
 		switch {
 		case errors.Is(err, jwt.ErrTokenExpired()):
@@ -218,7 +219,7 @@ func VerifyAuthToken(ident TokenIdentity, audience string) error {
 	if len(tokenAudience) == 0 {
 		return ErrMissingAudience
 	}
-	if !slices.Contains(tokenAudience, audience) {
+	if !audienceMatches(tokenAudience, audiences) {
 		return ErrAudienceMismatch
 	}
 
@@ -240,6 +241,17 @@ func VerifyAuthToken(ident TokenIdentity, audience string) error {
 	}
 
 	return nil
+}
+
+// audienceMatches reports whether the token's audience claim contains at least
+// one of the accepted audiences.
+func audienceMatches(tokenAudience []string, accepted []string) bool {
+	for _, aud := range accepted {
+		if slices.Contains(tokenAudience, aud) {
+			return true
+		}
+	}
+	return false
 }
 
 // keyTypeToJWK maps a crypto.KeyType to the corresponding JWA signature algorithm.
