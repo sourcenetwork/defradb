@@ -717,6 +717,8 @@ func astTypeToKind(
 				return client.FieldKind_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
+			case typeDateTime:
+				return client.FieldKind_DATETIME_ARRAY, nil
 			default:
 				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
 			}
@@ -733,6 +735,8 @@ func astTypeToKind(
 				return client.FieldKind_NILLABLE_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
+			case typeDateTime:
+				return client.FieldKind_NILLABLE_DATETIME_ARRAY, nil
 			default:
 				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
 			}
