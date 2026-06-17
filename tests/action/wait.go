@@ -36,9 +36,8 @@ func (a *Wait) Execute() {
 	for {
 		select {
 		case <-time.After(orDefault(a.Duration, time.Hour)):
-			if a.Duration.HasValue() {
-				return
-			}
+			return
+
 		case action := <-a.s.Nodes[0].Event.Action.Message():
 			if a.Action.HasValue() {
 				expected := a.Action.Value()
