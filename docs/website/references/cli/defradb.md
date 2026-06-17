@@ -12,6 +12,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 ### Options
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -h, --help                        help for defradb
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
