@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -47,9 +48,9 @@ func TestDocClone_MutatingCloneDoesNotAffectOriginal(t *testing.T) {
 	// These are "unused writes", but this is intentional.
 	clone := original.Clone()
 	clone.Hidden = false             //nolint:ineffassign
-	clone.Status = client.Active     //nolint:ineffassign
-	clone.CollectionVersionID = "v2" //nolint:ineffassign
-	clone.Fields[1] = "mutated"      //nolint:ineffassign
+	clone.Status = client.Active     //nolint:ineffassign,unusedwrite
+	clone.CollectionVersionID = "v2" //nolint:ineffassign,unusedwrite
+	clone.Fields[1] = "mutated"
 
 	assert.True(t, original.Hidden)
 	assert.Equal(t, client.Deleted, original.Status)
@@ -68,10 +69,13 @@ func TestDocClone_DeepCopiesNestedDoc(t *testing.T) {
 	}
 
 	clone := original.Clone()
-	innerClone := clone.Fields[1].(Doc)
+	innerClone, ok := clone.Fields[1].(Doc)
+	require.True(t, ok)
 	innerClone.Fields[1] = "mutated"
 
-	assert.Equal(t, "inner-value", original.Fields[1].(Doc).Fields[1])
+	innerOriginal, ok := original.Fields[1].(Doc)
+	require.True(t, ok)
+	assert.Equal(t, "inner-value", innerOriginal.Fields[1])
 }
 
 // TestDocClone_DeepCopiesNestedDocSlice tests that a []Doc nested inside Fields is deep copied, not shared.
@@ -85,8 +89,11 @@ func TestDocClone_DeepCopiesNestedDocSlice(t *testing.T) {
 	}
 
 	clone := original.Clone()
-	innerClone := clone.Fields[1].([]Doc)
+	innerClone, ok := clone.Fields[1].([]Doc)
+	require.True(t, ok)
 	innerClone[0].Fields[1] = "mutated"
 
-	assert.Equal(t, "inner-value", original.Fields[1].([]Doc)[0].Fields[1])
+	innerOriginal, ok := original.Fields[1].([]Doc)
+	require.True(t, ok)
+	assert.Equal(t, "inner-value", innerOriginal[0].Fields[1])
 }
