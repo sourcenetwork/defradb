@@ -30,19 +30,20 @@ update private docID, with identity:
 ### Options
 
 ```
-      --docID string     Document ID
-      --filter string    Document filter
-  -h, --help             help for update
-      --updater string   Document updater
+      --collection-id string     Collection ID
+      --collection-name string   Collection name
+      --docID string             Document ID
+      --filter string            Document filter
+      --get-inactive             Get inactive collections as well as active
+  -h, --help                     help for update
+      --updater string           Document updater
+      --version-id string        Collection version ID
 ```
 
 ### Options inherited from parent commands
 
 ```
       --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
-      --collection-id string        Collection ID
-      --collection-name string      Collection name
-      --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
@@ -60,7 +61,6 @@ update private docID, with identity:
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO
