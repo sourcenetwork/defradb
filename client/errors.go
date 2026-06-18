@@ -27,6 +27,7 @@ const (
 	errMaxTxnRetries                         string = "reached maximum transaction reties"
 	errCollectionNotFound                    string = "collection not found"
 	errUnknownCRDT                           string = "unknown crdt"
+	errUnknownCRDTString                     string = "unknown crdt string representation"
 	errCRDTKindMismatch                      string = "CRDT type %s can't be assigned to field kind %s"
 	errInvalidCRDTType                       string = "CRDT type not supported"
 	errFailedToUnmarshalCollection           string = "failed to unmarshal collection json"
@@ -213,6 +214,13 @@ func NewErrUnknownCRDT(cType CType) error {
 	return errors.New(
 		errUnknownCRDT,
 		errors.NewKV("Type", cType),
+	)
+}
+
+func NewErrUnknownCRDTString(s string) error {
+	return errors.New(
+		errUnknownCRDTString,
+		errors.NewKV("Type", s),
 	)
 }
 
