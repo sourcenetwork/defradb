@@ -43,7 +43,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
 			return err
 		}
-		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+		return db.setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusBuilding,
 		})
 	})
@@ -80,7 +80,7 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 
 	// A dropping record with entries still present is the interrupted-GC state.
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
-		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+		return db.setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusDropping,
 		})
 	})
@@ -126,7 +126,7 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
 			return err
 		}
-		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+		return db.setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status:    client.IndexStatusBuilding,
 			Watermark: watermark,
 		})
@@ -152,7 +152,7 @@ func TestRecoverIndexStates_OrphanedBuildingRecord_Skipped(t *testing.T) {
 	// No index has this ID, so findIndexDefinition fails and recovery must skip it.
 	const orphanIndexID = uint32(999)
 	err := db.withTxnRetries(ctx, func(txnCtx context.Context) error {
-		return setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
+		return db.setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
 			Status: client.IndexStatusBuilding,
 		})
 	})
@@ -186,12 +186,12 @@ func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T)
 	const orphanIndexID = uint32(998)
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		// Orphan building record (errors) alongside a valid dropping record.
-		if err := setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
+		if err := db.setIndexState(txnCtx, collectionID, orphanIndexID, indexState{
 			Status: client.IndexStatusBuilding,
 		}); err != nil {
 			return err
 		}
-		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+		return db.setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusDropping,
 		})
 	})
@@ -217,7 +217,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	collectionID := col.Version().CollectionID
 
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
-		return setIndexState(txnCtx, collectionID, desc.ID, indexState{
+		return db.setIndexState(txnCtx, collectionID, desc.ID, indexState{
 			Status: client.IndexStatusFailed,
 			Reason: "some previous error",
 		})

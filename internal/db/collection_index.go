@@ -295,7 +295,7 @@ func (c *collection) newIndex(
 		return client.IndexDescription{}, nil, err
 	}
 
-	err = setIndexState(ctx, c.def.CollectionID, desc.ID, indexState{Status: client.IndexStatusBuilding})
+	err = c.db.setIndexState(ctx, c.def.CollectionID, desc.ID, indexState{Status: client.IndexStatusBuilding})
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return client.IndexDescription{}, nil, err
@@ -623,7 +623,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 
 	// Record a dropping state so startup recovery can resume if the process exits
 	// before GC completes.
-	if err := setIndexState(ctx, c.def.CollectionID, desc.ID,
+	if err := c.db.setIndexState(ctx, c.def.CollectionID, desc.ID,
 		indexState{Status: client.IndexStatusDropping}); err != nil {
 		c.def.Indexes = oldIndexes
 		return nil, err

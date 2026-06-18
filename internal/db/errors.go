@@ -138,6 +138,7 @@ const (
 	errIndexGCFailed                       string = "index garbage collection failed"
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errInvalidIndexState                   string = "invalid index state"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -1191,6 +1192,12 @@ func NewErrIndexGCFailed(inner error, indexName string) error {
 // finish because of transaction conflicts. The index stays building and is resumable.
 func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
 	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrInvalidIndexState returns a new error indicating that an index state cannot be
+// persisted because its status has no corresponding action record representation.
+func NewErrInvalidIndexState(status client.IndexStatus) error {
+	return errors.New(errInvalidIndexState, errors.NewKV("Status", status))
 }
 
 // NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the

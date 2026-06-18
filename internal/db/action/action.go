@@ -12,16 +12,46 @@ package action
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 
 	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// Register a new action for execution
+// Envelope is the stored value of an action record. Reason holds an errored action's cause
+// and Payload holds action-specific state such as an index build watermark. DecodeEnvelope
+// also accepts the legacy bare-uvarint encoding.
+type Envelope struct {
+	Status  client.ActionStatus `json:"status"`
+	Reason  string              `json:"reason,omitempty"`
+	Payload json.RawMessage     `json:"payload,omitempty"`
+}
+
+// encodeValue serializes an action record value.
+func encodeValue(status client.ActionStatus, reason string, payload json.RawMessage) ([]byte, error) {
+	return json.Marshal(Envelope{Status: status, Reason: reason, Payload: payload})
+}
+
+// DecodeEnvelope deserializes an action record value, falling back to the legacy bare-uvarint
+// encoding (a status with no reason or payload).
+func DecodeEnvelope(val []byte) (Envelope, error) {
+	var env Envelope
+	if err := json.Unmarshal(val, &env); err == nil {
+		return env, nil
+	}
+	intVal, _ := binary.Uvarint(val)
+	return Envelope{Status: client.ActionStatus(intVal)}, nil
+}
+
+// Register a new action for execution.
+//
+// The write is non-transactional. Use this for collection-wide actions whose work is
+// not performed within a single transaction (truncate, datastore refresh).
 func Register(
 	ctx context.Context,
 	multistore *datastore.Multistore,
@@ -29,7 +59,23 @@ func Register(
 	collectionID string,
 	action client.Action,
 ) error {
-	status, err := getStatus(multistore, collectionID, action)
+	return RegisterSubject(ctx, multistore, events, collectionID, action, "")
+}
+
+// RegisterSubject registers a new per-subject action for execution.
+//
+// Subject distinguishes concurrent executions of the same action on one collection
+// (for example, an index build keyed by index ID). Pass an empty subject for
+// collection-wide actions.
+func RegisterSubject(
+	ctx context.Context,
+	multistore *datastore.Multistore,
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+) error {
+	status, err := getStatus(multistore, collectionID, action, subject)
 	if err != nil {
 		return err
 	}
@@ -37,10 +83,13 @@ func Register(
 		return NewErrActionInProgress(collectionID, action)
 	}
 
-	return Set(ctx, multistore, events, collectionID, action, client.InProgressActionStatus)
+	return setSubject(
+		ctx, multistore, events, collectionID, action, subject,
+		client.InProgressActionStatus, "", nil,
+	)
 }
 
-// Set the status for an existing action
+// Set the status for an existing action. Non-transactional, collection-wide.
 func Set(
 	ctx context.Context,
 	multistore *datastore.Multistore,
@@ -49,28 +98,85 @@ func Set(
 	action client.Action,
 	status client.ActionStatus,
 ) error {
-	val := make([]byte, binary.MaxVarintLen16)
-	binary.PutUvarint(val, uint64(status))
-
-	err := multistore.Systemstore().Set(
-		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
-		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
-		// https://github.com/sourcenetwork/corekv/issues/107
-		context.TODO(),
-		keys.NewActionStatusKey(collectionID, action).Bytes(),
-		val,
-	)
-
-	events.Publish(event.NewMessage(event.ActionExecutionName, event.ActionExecution{
-		CollectionID: collectionID,
-		Action:       action,
-		Status:       status,
-	}))
-
-	return err
+	return setSubject(ctx, multistore, events, collectionID, action, "", status, "", nil)
 }
 
-// Complete an existing action
+// setSubject writes an action record non-transactionally.
+//
+// It passes context.TODO() to force a transaction-free write: corekv otherwise binds the
+// transaction on the context to the write (https://github.com/sourcenetwork/corekv/issues/107).
+func setSubject(
+	ctx context.Context,
+	multistore *datastore.Multistore,
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+	status client.ActionStatus,
+	reason string,
+	payload json.RawMessage,
+) error {
+	val, err := encodeValue(status, reason, payload)
+	if err != nil {
+		return err
+	}
+
+	err = multistore.Systemstore().Set(
+		context.TODO(),
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		val,
+	)
+	if err != nil {
+		return err
+	}
+
+	publish(events, collectionID, action, subject, status)
+	return nil
+}
+
+// SetTxn writes a per-subject action record within the transaction bound to ctx, so the record
+// commits atomically with other writes on it (for example an index build watermark with the
+// index entries of the same batch).
+//
+// publishEvent reports whether an ActionExecution event is published on commit. Pass false for
+// progress-only updates that repeat an already published status, to avoid one event per batch.
+func SetTxn(
+	ctx context.Context,
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+	status client.ActionStatus,
+	reason string,
+	payload json.RawMessage,
+	publishEvent bool,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	val, err := encodeValue(status, reason, payload)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Systemstore().Set(
+		ctx,
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		val,
+	)
+	if err != nil {
+		return err
+	}
+
+	if publishEvent {
+		// Publish on commit so listeners are not told about a record that may roll back.
+		txn.OnSuccess(func() {
+			publish(events, collectionID, action, subject, status)
+		})
+	}
+	return nil
+}
+
+// Complete a collection-wide action by deleting its record. Non-transactional.
 func Complete(
 	ctx context.Context,
 	multistore *datastore.Multistore,
@@ -78,34 +184,84 @@ func Complete(
 	collectionID string,
 	action client.Action,
 ) error {
-	err := multistore.Systemstore().Delete(
-		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
-		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
-		// https://github.com/sourcenetwork/corekv/issues/107
-		context.TODO(),
-		keys.NewActionStatusKey(collectionID, action).Bytes(),
-	)
+	return CompleteSubject(ctx, multistore, events, collectionID, action, "")
+}
 
+// CompleteSubject completes a per-subject action by deleting its record. Non-transactional.
+//
+// A missing record means the action has completed, so completion deletes rather than
+// storing a terminal status.
+func CompleteSubject(
+	ctx context.Context,
+	multistore *datastore.Multistore,
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+) error {
+	err := multistore.Systemstore().Delete(
+		// See setSubject for why this is transaction-free.
+		context.TODO(),
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+	)
+	if err != nil {
+		return err
+	}
+
+	publish(events, collectionID, action, subject, client.CompletedActionStatus)
+	return nil
+}
+
+// CompleteTxn completes a per-subject action within the transaction bound to ctx, deleting
+// its record atomically with other writes on the same transaction.
+func CompleteTxn(
+	ctx context.Context,
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	err := txn.Systemstore().Delete(
+		ctx,
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+	)
+	if err != nil {
+		return err
+	}
+
+	txn.OnSuccess(func() {
+		publish(events, collectionID, action, subject, client.CompletedActionStatus)
+	})
+	return nil
+}
+
+func publish(
+	events event.Bus,
+	collectionID string,
+	action client.Action,
+	subject string,
+	status client.ActionStatus,
+) {
 	events.Publish(event.NewMessage(event.ActionExecutionName, event.ActionExecution{
 		CollectionID: collectionID,
 		Action:       action,
-		Status:       client.CompletedActionStatus,
+		Subject:      subject,
+		Status:       status,
 	}))
-
-	return err
 }
 
 func getStatus(
 	multistore *datastore.Multistore,
 	collectionID string,
 	action client.Action,
+	subject string,
 ) (client.ActionStatus, error) {
 	val, err := multistore.Systemstore().Get(
-		// https://github.com/sourcenetwork/corekv/issues/107 causes a bit of a mess here as we do not want
-		// to use transactions here, but corekv keeps insisting on using one and binding it to the context
-		// https://github.com/sourcenetwork/corekv/issues/107
+		// See setSubject for why this is transaction-free.
 		context.TODO(),
-		keys.NewActionStatusKey(collectionID, action).Bytes(),
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
 	)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
@@ -114,9 +270,8 @@ func getStatus(
 		return 0, err
 	}
 
-	intVal, _ := binary.Uvarint(val)
-
-	return client.ActionStatus(intVal), nil
+	env, _ := DecodeEnvelope(val)
+	return env.Status, nil
 }
 
 // ListExecutions lists all the actions that have not yet successfully completed.
@@ -152,13 +307,12 @@ func ListExecutions(ctx context.Context) ([]client.ActionExecution, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		intVal, _ := binary.Uvarint(val)
-		status := client.ActionStatus(intVal)
-
+		env, _ := DecodeEnvelope(val)
 		results = append(results, client.ActionExecution{
 			CollectionID: key.CollectionID,
 			Action:       key.Action,
-			Status:       status,
+			Subject:      key.Subject,
+			Status:       env.Status,
 		})
 	}
 

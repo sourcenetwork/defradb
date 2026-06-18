@@ -23,8 +23,11 @@ import (
 )
 
 // newIndexStateTestCtx creates a DB, opens a read-write transaction, stores it in the
-// returned context and returns a cleanup function that discards the transaction.
-func newIndexStateTestCtx(t *testing.T) (context.Context, func()) {
+// returned context and returns the DB plus a cleanup function that discards the transaction.
+//
+// Index state is persisted as action records; a ready index has no record at all
+// (missing ⇒ ready), so the tests below seed only the non-ready states.
+func newIndexStateTestCtx(t *testing.T) (*DB, context.Context, func()) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -41,32 +44,31 @@ func newIndexStateTestCtx(t *testing.T) (context.Context, func()) {
 		db.Close()
 	}
 
-	return ctx, cleanup
+	return db, ctx, cleanup
 }
 
-func TestIndexState_SetThenGet_RoundTripsAllFields(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+func TestIndexState_SetThenGet_RoundTripsBuildingWatermark(t *testing.T) {
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
 	want := indexState{
 		Status:    client.IndexStatusBuilding,
 		Watermark: "bafkreidoc1",
-		Reason:    "",
 	}
 
-	err := setIndexState(ctx, "col1", 1, want)
+	err := db.setIndexState(ctx, "col1", 1, want)
 	require.NoError(t, err)
 
 	got, err := getIndexState(ctx, "col1", 1)
 	require.NoError(t, err)
 
-	assert.Equal(t, want.Status, got.Status)
-	assert.Equal(t, want.Watermark, got.Watermark)
-	assert.Equal(t, want.Reason, got.Reason)
+	assert.Equal(t, client.IndexStatusBuilding, got.Status)
+	assert.Equal(t, "bafkreidoc1", got.Watermark)
+	assert.Empty(t, got.Reason)
 }
 
 func TestIndexState_SetThenGet_FailedStateIncludesReason(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
 	want := indexState{
@@ -74,7 +76,7 @@ func TestIndexState_SetThenGet_FailedStateIncludesReason(t *testing.T) {
 		Reason: "disk full",
 	}
 
-	err := setIndexState(ctx, "col2", 7, want)
+	err := db.setIndexState(ctx, "col2", 7, want)
 	require.NoError(t, err)
 
 	got, err := getIndexState(ctx, "col2", 7)
@@ -84,8 +86,29 @@ func TestIndexState_SetThenGet_FailedStateIncludesReason(t *testing.T) {
 	assert.Equal(t, "disk full", got.Reason)
 }
 
+func TestIndexState_SetThenGet_DroppingState(t *testing.T) {
+	db, ctx, cleanup := newIndexStateTestCtx(t)
+	defer cleanup()
+
+	err := db.setIndexState(ctx, "col3", 2, indexState{Status: client.IndexStatusDropping})
+	require.NoError(t, err)
+
+	got, err := getIndexState(ctx, "col3", 2)
+	require.NoError(t, err)
+	assert.Equal(t, client.IndexStatusDropping, got.Status)
+}
+
+func TestIndexState_SetReady_IsRejected(t *testing.T) {
+	db, ctx, cleanup := newIndexStateTestCtx(t)
+	defer cleanup()
+
+	// Ready is represented by the absence of a record, so it cannot be stored.
+	err := db.setIndexState(ctx, "col1", 1, indexState{Status: client.IndexStatusReady})
+	require.Error(t, err)
+}
+
 func TestIndexState_GetMissingRecord_ReturnsErrNotFound(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	_, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
 	_, err := getIndexState(ctx, "doesnotexist", 999)
@@ -94,42 +117,42 @@ func TestIndexState_GetMissingRecord_ReturnsErrNotFound(t *testing.T) {
 }
 
 func TestIndexState_GetIndexStates_ReturnsOnlyGivenCollection(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	// Seed two index states for collection A.
-	err := setIndexState(ctx, "colA", 1, indexState{Status: client.IndexStatusReady})
+	// Seed non-ready index states for collection A. A ready index (index 3) has no record.
+	err := db.setIndexState(ctx, "colA", 1, indexState{Status: client.IndexStatusFailed, Reason: "boom"})
 	require.NoError(t, err)
-	err = setIndexState(ctx, "colA", 2, indexState{Status: client.IndexStatusBuilding, Watermark: "w1"})
-	require.NoError(t, err)
-
-	// Seed two index states for collection B.
-	err = setIndexState(ctx, "colB", 1, indexState{Status: client.IndexStatusReady})
-	require.NoError(t, err)
-	err = setIndexState(ctx, "colB", 3, indexState{Status: client.IndexStatusFailed, Reason: "oops"})
+	err = db.setIndexState(ctx, "colA", 2, indexState{Status: client.IndexStatusBuilding, Watermark: "w1"})
 	require.NoError(t, err)
 
-	// Query for colA only.
+	// Seed for collection B, which must not leak into the colA query.
+	err = db.setIndexState(ctx, "colB", 1, indexState{Status: client.IndexStatusDropping})
+	require.NoError(t, err)
+	err = db.setIndexState(ctx, "colB", 3, indexState{Status: client.IndexStatusFailed, Reason: "oops"})
+	require.NoError(t, err)
+
 	states, err := getIndexStates(ctx, "colA")
 	require.NoError(t, err)
 
 	require.Len(t, states, 2)
-	assert.Equal(t, client.IndexStatusReady, states[1].Status)
+	assert.Equal(t, client.IndexStatusFailed, states[1].Status)
+	assert.Equal(t, "boom", states[1].Reason)
 	assert.Equal(t, client.IndexStatusBuilding, states[2].Status)
 	assert.Equal(t, "w1", states[2].Watermark)
 }
 
 func TestIndexState_ListIndexStates_ReturnsAll(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	err := setIndexState(ctx, "colA", 1, indexState{Status: client.IndexStatusReady})
+	err := db.setIndexState(ctx, "colA", 1, indexState{Status: client.IndexStatusFailed})
 	require.NoError(t, err)
-	err = setIndexState(ctx, "colA", 2, indexState{Status: client.IndexStatusBuilding})
+	err = db.setIndexState(ctx, "colA", 2, indexState{Status: client.IndexStatusBuilding})
 	require.NoError(t, err)
-	err = setIndexState(ctx, "colB", 1, indexState{Status: client.IndexStatusReady})
+	err = db.setIndexState(ctx, "colB", 1, indexState{Status: client.IndexStatusDropping})
 	require.NoError(t, err)
-	err = setIndexState(ctx, "colB", 3, indexState{Status: client.IndexStatusFailed})
+	err = db.setIndexState(ctx, "colB", 3, indexState{Status: client.IndexStatusFailed})
 	require.NoError(t, err)
 
 	all, err := listIndexStates(ctx)
@@ -139,13 +162,13 @@ func TestIndexState_ListIndexStates_ReturnsAll(t *testing.T) {
 }
 
 func TestIndexState_DeleteThenGet_ReturnsErrNotFound(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	err := setIndexState(ctx, "col1", 5, indexState{Status: client.IndexStatusReady})
+	err := db.setIndexState(ctx, "col1", 5, indexState{Status: client.IndexStatusBuilding})
 	require.NoError(t, err)
 
-	err = deleteIndexState(ctx, "col1", 5)
+	err = db.deleteIndexState(ctx, "col1", 5)
 	require.NoError(t, err)
 
 	_, err = getIndexState(ctx, "col1", 5)
@@ -154,19 +177,19 @@ func TestIndexState_DeleteThenGet_ReturnsErrNotFound(t *testing.T) {
 }
 
 func TestIndexState_DeleteReducesGetIndexStatesCount(t *testing.T) {
-	ctx, cleanup := newIndexStateTestCtx(t)
+	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	err := setIndexState(ctx, "colX", 1, indexState{Status: client.IndexStatusReady})
+	err := db.setIndexState(ctx, "colX", 1, indexState{Status: client.IndexStatusFailed})
 	require.NoError(t, err)
-	err = setIndexState(ctx, "colX", 2, indexState{Status: client.IndexStatusBuilding})
+	err = db.setIndexState(ctx, "colX", 2, indexState{Status: client.IndexStatusBuilding})
 	require.NoError(t, err)
 
 	states, err := getIndexStates(ctx, "colX")
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 
-	err = deleteIndexState(ctx, "colX", 1)
+	err = db.deleteIndexState(ctx, "colX", 1)
 	require.NoError(t, err)
 
 	states, err = getIndexStates(ctx, "colX")

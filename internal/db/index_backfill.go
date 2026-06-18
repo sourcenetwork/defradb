@@ -126,12 +126,7 @@ func (db *DB) backfillIndex(
 
 			// The watermark is only meaningful if the batch processed any documents.
 			if n > 0 {
-				return setIndexState(
-					batchCtx,
-					def.CollectionID,
-					desc.ID,
-					indexState{Status: client.IndexStatusBuilding, Watermark: lastDocID},
-				)
+				return db.advanceIndexWatermark(batchCtx, def.CollectionID, desc.ID, lastDocID)
 			}
 			return nil
 		})
@@ -166,7 +161,7 @@ func (db *DB) backfillIndex(
 	// instead of storing a terminal status. Only in-flight and failed
 	// indexes keep a record.
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return deleteIndexState(c, def.CollectionID, desc.ID)
+		return db.deleteIndexState(c, def.CollectionID, desc.ID)
 	}); err != nil {
 		// A conflict here means entries are all written; state is still building and resumable.
 		// Only a non-retryable error warrants marking the index failed.
@@ -195,7 +190,7 @@ func (db *DB) setIndexStateWithRetry(
 	state indexState,
 ) error {
 	return db.withTxnRetries(ctx, func(c context.Context) error {
-		return setIndexState(c, collectionID, indexID, state)
+		return db.setIndexState(c, collectionID, indexID, state)
 	})
 }
 

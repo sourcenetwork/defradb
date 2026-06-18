@@ -159,7 +159,7 @@ func TestWithTxnRetries_ConflictThenSuccess(t *testing.T) {
 		if attempts == 1 {
 			return corekv.ErrTxnConflict
 		}
-		return setIndexState(txnCtx, collectionID, 1, indexState{Status: client.IndexStatusBuilding})
+		return db.setIndexState(txnCtx, collectionID, 1, indexState{Status: client.IndexStatusBuilding})
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, attempts)
