@@ -481,7 +481,7 @@ func (c *collection) save(
 
 	var primaryKey keys.PrimaryDataStoreKey
 	if isAdd {
-		docShortID, err := c.db.nextShortDocID()
+		docShortID, err := c.db.nextShortDocID(ctx, colShortID)
 		if err != nil {
 			return err
 		}

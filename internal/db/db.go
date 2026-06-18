@@ -85,9 +85,6 @@ type DB struct {
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
-	// Local sequence for short document IDs used in datastore keys.
-	docIDSequence atomic.Uint64
-
 	// The identity of the current node.
 	nodeIdentity immutable.Option[identity.Identity]
 
@@ -345,10 +342,6 @@ func (db *DB) initialize(ctx context.Context) error {
 			return err
 		}
 
-		if err := db.seedDocIDSequence(ctx); err != nil {
-			return err
-		}
-
 		err = db.getLensStore(ctx).Reload(ctx)
 		if err != nil {
 			return err
@@ -362,10 +355,6 @@ func (db *DB) initialize(ctx context.Context) error {
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
-		return err
-	}
-
-	if err := db.seedDocIDSequence(ctx); err != nil {
 		return err
 	}
 

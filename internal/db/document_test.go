@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,27 @@ const userDocIDTestSchema = `
 		name: String
 		age: Int
 	}`
+
+const projectDocIDTestSchema = `
+	type Project {
+		name: String
+	}`
+
+func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, col client.Collection, value uint64) {
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn := txn.(*Txn)
+
+	txnCtx := InitContext(ctx, dbTxn)
+	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], value)
+	require.NoError(t, dbTxn.Systemstore().Set(ctx, keys.NewDocIDSequenceKey(collectionShortID).Bytes(), buf[:]))
+	require.NoError(t, txn.Commit())
+}
 
 func TestDocumentAdd_DerivesPublicDocIDFromCompositeCID(t *testing.T) {
 	ctx := context.Background()
@@ -88,7 +110,7 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 	colB, err := dbB.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	dbB.docIDSequence.Store(100)
+	setDocIDSequence(t, ctx, dbB, colB, 100)
 
 	docA, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), colA.Version())
 	require.NoError(t, err)
@@ -126,34 +148,44 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 	require.NotEqual(t, shortIDA, shortIDB)
 }
 
-func TestSeedDocIDSequenceRestoresPrimaryKeyWithSlashEncodedShortID(t *testing.T) {
+func TestNextShortDocIDUsesPerCollectionSequence(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
-	const slashEncodedShortID uint32 = 303
-	require.Contains(t, keys.EncodeDocShortID(slashEncodedShortID), byte('/'))
-
 	_, err = db.AddCollection(ctx, userDocIDTestSchema)
 	require.NoError(t, err)
-	col, err := db.GetCollectionByName(ctx, "User")
+	_, err = db.AddCollection(ctx, projectDocIDTestSchema)
 	require.NoError(t, err)
 
-	db.docIDSequence.Store(uint64(slashEncodedShortID - 1))
-
-	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), col.Version())
+	userCol, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
-	require.NoError(t, col.AddDocument(ctx, doc))
+	projectCol, err := db.GetCollectionByName(ctx, "Project")
+	require.NoError(t, err)
 
-	db.docIDSequence.Store(0)
+	setDocIDSequence(t, ctx, db, userCol, 10)
+	setDocIDSequence(t, ctx, db, projectCol, 20)
+
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
-	txnCtx := InitContext(ctx, txn)
-	require.NoError(t, db.seedDocIDSequence(txnCtx))
-	require.NoError(t, txn.Commit())
+	defer txn.Discard()
 
-	nextShortID, err := db.nextShortDocID()
+	txnCtx := InitContext(ctx, txn)
+	userShortID, err := id.GetShortCollectionID(txnCtx, userCol.CollectionID())
 	require.NoError(t, err)
-	require.Equal(t, slashEncodedShortID+1, nextShortID)
+	projectShortID, err := id.GetShortCollectionID(txnCtx, projectCol.CollectionID())
+	require.NoError(t, err)
+
+	nextShortID, err := db.nextShortDocID(txnCtx, userShortID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(11), nextShortID)
+	nextShortID, err = db.nextShortDocID(txnCtx, projectShortID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(21), nextShortID)
+	nextShortID, err = db.nextShortDocID(txnCtx, userShortID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(12), nextShortID)
+
+	require.NoError(t, txn.Commit())
 }

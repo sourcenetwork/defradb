@@ -22,6 +22,7 @@ const (
 	P2P_DOCUMENT        = "/p2p/document"
 	COLLECTION_SEQ      = "/seq/collection"
 	DOC_ID_INDEX        = "/docid"
+	DOC_ID_SEQ          = "/seq/doc"
 	INDEX_ID_SEQ        = "/seq/index"
 	FIELD_ID_SEQ        = "/seq/field"
 	ACTION_STATUS       = "/a/s"

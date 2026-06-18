@@ -202,7 +202,7 @@ func (mp *mergeProcessor) resolveOrAllocateShortDocID(
 		return shortDocID, nil
 	}
 
-	shortDocID, err = mp.db.nextShortDocID()
+	shortDocID, err = mp.db.nextShortDocID(ctx, collectionShortID)
 	if err != nil {
 		return 0, err
 	}

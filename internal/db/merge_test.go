@@ -113,8 +113,8 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	targetCol, err := targetDB.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	sourceDB.docIDSequence.Store(100)
-	targetDB.docIDSequence.Store(200)
+	setDocIDSequence(t, ctx, sourceDB, sourceCol, 100)
+	setDocIDSequence(t, ctx, targetDB, targetCol, 200)
 
 	sourceDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"John","age":30}`), sourceCol.Version())
 	require.NoError(t, err)
