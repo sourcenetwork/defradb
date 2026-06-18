@@ -47,6 +47,8 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 	if t != json.Delim('{') {
 		return ErrExpectedJSONObject
 	}
+	importedDocIDs := map[string]string{}
+	pendingRelations := []pendingImportRelation{}
 	for d.More() {
 		t, err := d.Token()
 		if err != nil {
@@ -73,33 +75,8 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrJSONDecode(err)
 			}
 
-			// check if self referencing and remove from docMap for key creation
-			resetMap := map[string]any{}
-			for _, field := range col.Version().Fields {
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					fieldID := request.ToFieldID(field.Name)
-					if val, ok := docMap[fieldID]; ok {
-						if docMap[request.NewDocIDFieldName] == val {
-							resetMap[fieldID] = val
-							delete(docMap, fieldID)
-						}
-					}
-				}
-			}
-
-			docIDAliases := map[string]struct{}{}
-			if docID, ok := docMap[request.DocIDFieldName].(string); ok {
-				docIDAliases[docID] = struct{}{}
-			}
-
-			newDocID, hasNewDocID := docMap[request.NewDocIDFieldName]
-			delete(docMap, request.NewDocIDFieldName)
-			if hasNewDocID {
-				if docID, ok := newDocID.(string); ok {
-					docIDAliases[docID] = struct{}{}
-				}
-				docMap[request.DocIDFieldName] = newDocID
-			}
+			docIDAliases := importDocIDAliases(docMap)
+			deferredRelations := rewriteImportRelations(col, docMap, importedDocIDs)
 
 			doc, err := client.NewDocFromMap(ctx, docMap, col.Version())
 			if err != nil {
@@ -117,16 +94,20 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				}
 			}
 
-			// add back the self referencing fields and update doc.
-			for k, v := range resetMap {
-				err := doc.Set(ctx, k, v)
-				if err != nil {
-					return NewErrDocUpdate(err)
+			docID := doc.ID().String()
+			for docIDAlias := range docIDAliases {
+				importedDocIDs[docIDAlias] = docID
+			}
+			for _, relation := range deferredRelations {
+				relation.docID = docID
+				if docID, ok := importedDocIDs[relation.importedDocID]; ok {
+					err := updateImportedRelation(ctx, col, doc, relation.fieldName, docID)
+					if err != nil {
+						return err
+					}
+					continue
 				}
-				err = col.UpdateDocument(ctx, doc)
-				if err != nil {
-					return NewErrDocUpdate(err)
-				}
+				pendingRelations = append(pendingRelations, relation)
 			}
 		}
 		_, err = d.Token()
@@ -135,7 +116,102 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 		}
 	}
 
+	for _, relation := range pendingRelations {
+		docID, ok := importedDocIDs[relation.importedDocID]
+		if !ok {
+			docID = relation.importedDocID
+		}
+		err := updatePendingImportRelation(ctx, relation, docID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+type pendingImportRelation struct {
+	col           client.Collection
+	docID         string
+	fieldName     string
+	importedDocID string
+}
+
+func importDocIDAliases(docMap map[string]any) map[string]struct{} {
+	aliases := map[string]struct{}{}
+	if docID, ok := docMap[request.DocIDFieldName].(string); ok {
+		aliases[docID] = struct{}{}
+	}
+
+	newDocID, hasNewDocID := docMap[request.NewDocIDFieldName]
+	delete(docMap, request.NewDocIDFieldName)
+	if hasNewDocID {
+		if docID, ok := newDocID.(string); ok {
+			aliases[docID] = struct{}{}
+		}
+		docMap[request.DocIDFieldName] = newDocID
+	}
+	return aliases
+}
+
+func rewriteImportRelations(
+	col client.Collection,
+	docMap map[string]any,
+	importedDocIDs map[string]string,
+) []pendingImportRelation {
+	var deferred []pendingImportRelation
+	for _, field := range col.Version().Fields {
+		if !field.Kind.IsObject() || field.Kind.IsArray() {
+			continue
+		}
+		for _, fieldName := range []string{field.Name, request.ToFieldID(field.Name)} {
+			importedDocID, ok := docMap[fieldName].(string)
+			if !ok {
+				continue
+			}
+			if docID, ok := importedDocIDs[importedDocID]; ok {
+				docMap[fieldName] = docID
+				continue
+			}
+			delete(docMap, fieldName)
+			deferred = append(deferred, pendingImportRelation{
+				col:           col,
+				fieldName:     fieldName,
+				importedDocID: importedDocID,
+			})
+		}
+	}
+	return deferred
+}
+
+func updateImportedRelation(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+	fieldName string,
+	docID string,
+) error {
+	err := doc.Set(ctx, fieldName, docID)
+	if err != nil {
+		return NewErrDocUpdate(err)
+	}
+	err = col.UpdateDocument(ctx, doc)
+	if err != nil {
+		return NewErrDocUpdate(err)
+	}
+	return nil
+}
+
+func updatePendingImportRelation(ctx context.Context, relation pendingImportRelation, docID string) error {
+	publicDocID, err := client.NewDocIDFromString(relation.docID)
+	if err != nil {
+		return err
+	}
+	doc, err := relation.col.GetDocument(ctx, publicDocID)
+	if err != nil {
+		return err
+	}
+	return updateImportedRelation(ctx, relation.col, doc, relation.fieldName, docID)
 }
 
 func (db *DB) setImportedDocIDAlias(
