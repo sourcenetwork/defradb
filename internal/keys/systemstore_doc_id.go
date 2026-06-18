@@ -25,8 +25,7 @@ import (
 //
 // Collection-scoped mappings are used by normal document reads and writes.
 // The node-scoped mapping supports paths that only have a public DocID, such as P2P
-// and block-signing lookups. Block indexes are stored in both directions:
-// block CID -> DocID for verification, and DocID -> block CID for cleanup.
+// and block-signing lookups. Block indexes map block CID -> DocID for verification.
 //
 // The path segments are intentionally short because these keys are persisted for
 // every document and document block.
@@ -35,7 +34,6 @@ const (
 	DOC_ID_TO_LOCAL_ID  = "p"
 	NODE_DOC_ID_INDEX   = "n"
 	BLOCK_CID_TO_DOC_ID = "b"
-	DOC_ID_TO_BLOCK_CID = "pb"
 )
 
 type systemstoreDocIDKey struct {
@@ -127,24 +125,6 @@ func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, docID stri
 			[]byte(BLOCK_CID_TO_DOC_ID),
 			docIDSegment(blockCID),
 			docIDSegment(docID),
-		),
-	}
-}
-
-// DocIDToBlockCIDKey maps a public doc ID to one of its document block CIDs.
-type DocIDToBlockCIDKey struct {
-	systemstoreDocIDKey
-}
-
-var _ Key = (*DocIDToBlockCIDKey)(nil)
-
-func NewDocIDToBlockCIDKey(collectionShortID uint32, docID string, blockCID string) DocIDToBlockCIDKey {
-	return DocIDToBlockCIDKey{
-		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			collectionShortIDSegment(collectionShortID),
-			[]byte(DOC_ID_TO_BLOCK_CID),
-			docIDSegment(docID),
-			docIDSegment(blockCID),
 		),
 	}
 }

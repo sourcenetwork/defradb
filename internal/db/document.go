@@ -519,25 +519,7 @@ func (c *collection) save(
 		}
 	}
 
-	if isAdd && len(doc.Values()) == 0 {
-		valueKey := keys.DataStoreKey{
-			CollectionShortID: colShortID,
-			DocShortID:        primaryKey.DocShortID,
-			InstanceType:      keys.ValueKey,
-		}
-		if err := txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker}); err != nil {
-			return err
-		}
-	}
-
-	preSaveDocID := ""
 	encryptionDocID := keys.EncodeLocalDocID(colShortID, primaryKey.DocShortID)
-	if isAdd {
-		docIDString := doc.ID().String()
-		if _, err := client.NewDocIDFromString(docIDString); err == nil {
-			preSaveDocID = docIDString
-		}
-	}
 
 	links := make([]coreblock.DAGLink, 0)
 	encryptionCIDs := make([]cid.Cid, 0)
@@ -646,11 +628,6 @@ func (c *collection) save(
 		}
 		if err := id.SetDocIDMapping(ctx, colShortID, primaryKey.DocShortID, docID.String()); err != nil {
 			return err
-		}
-		if preSaveDocID != "" && preSaveDocID != docID.String() {
-			if err := id.SetDocIDAlias(ctx, colShortID, primaryKey.DocShortID, preSaveDocID); err != nil {
-				return err
-			}
 		}
 		client.ApplySavedDocumentID(doc, docID)
 		updateDocID = docID.String()

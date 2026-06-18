@@ -217,18 +217,9 @@ func SetBlockDocIDMapping(
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	blockCIDStr := blockCID.String()
-	if err := txn.Systemstore().Set(
-		ctx,
-		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCIDStr, docID).Bytes(),
-		[]byte{},
-	); err != nil {
-		return err
-	}
-
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewDocIDToBlockCIDKey(collectionShortID, docID, blockCIDStr).Bytes(),
+		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), docID).Bytes(),
 		[]byte{},
 	)
 }
@@ -297,17 +288,13 @@ func DeleteBlockDocIDMappings(
 		return nil
 	}
 
-	docBlockPrefix := keys.NewDocIDToBlockCIDKey(collectionShortID, publicDocID, "").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(docBlockPrefix)})
+	blockPrefix := keys.NewBlockCIDToDocIDKey(collectionShortID, "", "").ToString() + "/"
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(blockPrefix)})
 	if err != nil {
 		return err
 	}
 
-	type mappingKey struct {
-		docToBlock []byte
-		blockToDoc []byte
-	}
-	mappingKeys := make([]mappingKey, 0)
+	mappingKeys := make([][]byte, 0)
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -317,28 +304,19 @@ func DeleteBlockDocIDMappings(
 			break
 		}
 
-		blockCID := strings.TrimPrefix(string(iter.Key()), docBlockPrefix)
-		if blockCID == "" {
+		key := string(iter.Key())
+		docIDStart := strings.LastIndexByte(key, '/')
+		if docIDStart < 0 || key[docIDStart+1:] != publicDocID {
 			continue
 		}
-		mappingKeys = append(mappingKeys, mappingKey{
-			docToBlock: append([]byte(nil), iter.Key()...),
-			blockToDoc: keys.NewBlockCIDToDocIDKey(
-				collectionShortID,
-				blockCID,
-				publicDocID,
-			).Bytes(),
-		})
+		mappingKeys = append(mappingKeys, append([]byte(nil), iter.Key()...))
 	}
 	if err := iter.Close(); err != nil {
 		return err
 	}
 
 	for _, key := range mappingKeys {
-		if err := store.Delete(ctx, key.docToBlock); err != nil && !errors.Is(err, corekv.ErrNotFound) {
-			return err
-		}
-		if err := store.Delete(ctx, key.blockToDoc); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return err
 		}
 	}
