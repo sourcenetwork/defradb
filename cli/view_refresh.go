@@ -13,9 +13,10 @@ package cli
 import (
 	"context"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
-	"github.com/spf13/cobra"
 )
 
 func MakeViewRefreshCommand(ctx context.Context) *cobra.Command {
