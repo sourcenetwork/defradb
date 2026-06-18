@@ -585,7 +585,8 @@ func (mp *mergeProcessor) resolveCompositeBlockDocID(
 			return resolvedDocID{}, err
 		}
 		if resolved.publicDocID != "" {
-			return mp.resolveOrCacheBlockDocID(ctx, collectionShortID, blockCID, resolved.publicDocID)
+			mp.blockDocIDs[blockCID.String()] = resolved
+			return resolved, nil
 		}
 	}
 

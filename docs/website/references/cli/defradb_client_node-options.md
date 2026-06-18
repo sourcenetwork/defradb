@@ -42,3 +42,4 @@ defradb client node-options [flags]
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+
