@@ -17,13 +17,36 @@ import (
 const (
 	errUnknownKMSType              string = "unknown KMS type"
 	errNoPeerSuppliedEncryptionKey string = "no peer supplied the encryption key"
+
+	errPeerErrorKeyReply           string = "encryption key peer reply carried error"
+	errEncryptionKeyUnmarshal      string = "unmarshal encryption key response"
+	errReplyLinksAndBlocksMismatch string = "encryption key peer reply had mismatched links and blocks"
+	errDecryptEncryptionKey        string = "decrypting encryption key"
+	errDecodingEncryptionKey       string = "decoding encryption key"
+	errEncryptionKeyCIDMismatch    string = "key CID mismatch"
+	errEncryptionKeyStore          string = "store encryption key"
 )
 
 var (
 	ErrUnknownKMSType              = errors.New(errUnknownKMSType)
 	ErrNoPeerSuppliedEncryptionKey = errors.New(errNoPeerSuppliedEncryptionKey)
+
+	ErrPeerErrorKeyReply           = errors.New(errPeerErrorKeyReply)
+	ErrEncryptionKeyUnmarshal      = errors.New(errEncryptionKeyUnmarshal)
+	ErrReplyLinksAndBlocksMismatch = errors.New(errReplyLinksAndBlocksMismatch)
+	ErrDecryptEncryptionKey        = errors.New(errDecryptEncryptionKey)
+	ErrDecodingEncryptionKey       = errors.New(errDecodingEncryptionKey)
+	ErrEncryptionKeyCIDMismatch    = errors.New(errEncryptionKeyCIDMismatch)
+	ErrEncryptionKeyStore          = errors.New(errEncryptionKeyStore)
 )
 
 func NewErrUnknownKMSType(t ServiceType) error {
 	return errors.New(errUnknownKMSType, errors.NewKV("Type", t))
+}
+
+func NewErrReplyLinksAndBlocksMismatch(linkCount, blockCount int) error {
+	return errors.New(errReplyLinksAndBlocksMismatch,
+		errors.NewKV("LinkCount", linkCount),
+		errors.NewKV("BlockCount", blockCount),
+	)
 }
