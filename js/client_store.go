@@ -197,6 +197,23 @@ func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 	return goji.MarshalJS(lenses)
 }
 
+func (c *Client) listActions(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var opt options.ListActionsOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	lenses, err := store.ListActions(context.Background(), asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(lenses)
+}
+
 func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, error) {
 	name, err := stringArg(args, 0, "name")
 	if err != nil {

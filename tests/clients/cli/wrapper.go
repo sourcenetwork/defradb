@@ -393,6 +393,27 @@ func (w *Wrapper) BasicExport(
 	return err
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	args := []string{"client", "action", "list"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var info []client.ActionExecution
+	if err := json.Unmarshal(data, &info); err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
 	sdl string,
@@ -505,7 +526,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	args := []string{"client", "view", "refresh"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())
@@ -623,7 +644,7 @@ func (w *Wrapper) GetCollections(
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())
