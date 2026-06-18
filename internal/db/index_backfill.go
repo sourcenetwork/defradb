@@ -161,7 +161,7 @@ func (db *DB) backfillIndex(
 	// instead of storing a terminal status. Only in-flight and failed
 	// indexes keep a record.
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.deleteIndexState(c, def.CollectionID, desc.ID)
+		return db.completeBackfillState(c, def.CollectionID, desc.ID)
 	}); err != nil {
 		// A conflict here means entries are all written; state is still building and resumable.
 		// Only a non-retryable error warrants marking the index failed.

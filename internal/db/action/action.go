@@ -38,13 +38,17 @@ func encodeValue(status client.ActionStatus, reason string, payload json.RawMess
 }
 
 // DecodeEnvelope deserializes an action record value, falling back to the legacy bare-uvarint
-// encoding (a status with no reason or payload).
+// encoding (a status with no reason or payload). A value that is neither valid JSON nor a
+// valid uvarint is corrupt and returns an error rather than a silent zero status.
 func DecodeEnvelope(val []byte) (Envelope, error) {
 	var env Envelope
 	if err := json.Unmarshal(val, &env); err == nil {
 		return env, nil
 	}
-	intVal, _ := binary.Uvarint(val)
+	intVal, n := binary.Uvarint(val)
+	if n <= 0 {
+		return Envelope{}, NewErrCorruptActionRecord(val)
+	}
 	return Envelope{Status: client.ActionStatus(intVal)}, nil
 }
 
@@ -270,7 +274,10 @@ func getStatus(
 		return 0, err
 	}
 
-	env, _ := DecodeEnvelope(val)
+	env, err := DecodeEnvelope(val)
+	if err != nil {
+		return 0, err
+	}
 	return env.Status, nil
 }
 
@@ -307,7 +314,10 @@ func ListExecutions(ctx context.Context) ([]client.ActionExecution, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		env, _ := DecodeEnvelope(val)
+		env, err := DecodeEnvelope(val)
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
 		results = append(results, client.ActionExecution{
 			CollectionID: key.CollectionID,
 			Action:       key.Action,

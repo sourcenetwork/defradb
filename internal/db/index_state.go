@@ -16,6 +16,7 @@ import (
 	"strconv"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -139,19 +140,25 @@ func (db *DB) writeIndexState(
 	}
 }
 
-// deleteIndexState removes both the build and drop action records for the index, marking it
-// ready (a missing record means ready).
-func (db *DB) deleteIndexState(ctx context.Context, collectionID string, indexID uint32) error {
-	subject := indexSubject(indexID)
-	if err := action.CompleteTxn(ctx, db.events, collectionID, client.BackfillIndexAction, subject); err != nil {
-		return err
-	}
-	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, subject)
+// completeBackfillState removes the build action record for the index, marking it ready
+// (a missing record means ready).
+func (db *DB) completeBackfillState(ctx context.Context, collectionID string, indexID uint32) error {
+	return action.CompleteTxn(ctx, db.events, collectionID, client.BackfillIndexAction, indexSubject(indexID))
+}
+
+// completeDropState removes the drop action record for the index, marking it ready
+// (a missing record means ready).
+func (db *DB) completeDropState(ctx context.Context, collectionID string, indexID uint32) error {
+	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID))
 }
 
 // scanIndexStates scans the action records reachable under the given key prefix and
 // returns those that describe an index lifecycle state, keyed by IndexStateKey.
-func scanIndexStates(ctx context.Context, prefix []byte) (map[keys.IndexStateKey]indexState, error) {
+//
+// When skipCorrupt is true an individually unparseable or undecodable record is logged and
+// skipped rather than failing the whole scan, so one bad record does not deny access to an
+// otherwise healthy collection. Iterator errors are always fatal.
+func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) (map[keys.IndexStateKey]indexState, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -172,8 +179,14 @@ func scanIndexStates(ctx context.Context, prefix []byte) (map[keys.IndexStateKey
 			break
 		}
 
-		k, err := keys.NewActionStatusKeyString(string(iter.Key()))
+		key := string(iter.Key())
+
+		k, err := keys.NewActionStatusKeyString(key)
 		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping unparseable action record key", err, corelog.String("key", key))
+				continue
+			}
 			return nil, errors.Join(err, iter.Close())
 		}
 		// Only index actions carry a subject; collection-wide actions are skipped.
@@ -188,6 +201,10 @@ func scanIndexStates(ctx context.Context, prefix []byte) (map[keys.IndexStateKey
 
 		state, ok, err := decodeIndexAction(k, val)
 		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping undecodable index action record", err, corelog.String("key", key))
+				continue
+			}
 			return nil, errors.Join(err, iter.Close())
 		}
 		if !ok {
@@ -196,6 +213,10 @@ func scanIndexStates(ctx context.Context, prefix []byte) (map[keys.IndexStateKey
 
 		indexID, err := strconv.ParseUint(k.Subject, 10, 32)
 		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping index action record with non-numeric subject", err, corelog.String("key", key))
+				continue
+			}
 			return nil, errors.Join(err, iter.Close())
 		}
 		result[keys.IndexStateKey{CollectionID: k.CollectionID, IndexID: uint32(indexID)}] = state
@@ -230,7 +251,9 @@ func decodeIndexAction(k keys.ActionStatusKey, val []byte) (indexState, bool, er
 //
 // The returned map is keyed by index ID.
 func getIndexStates(ctx context.Context, collectionID string) (map[uint32]indexState, error) {
-	scanned, err := scanIndexStates(ctx, indexActionCollectionPrefix(collectionID))
+	// Lenient: this feeds collection open and listings, so one corrupt record must not deny
+	// access to the whole collection.
+	scanned, err := scanIndexStates(ctx, indexActionCollectionPrefix(collectionID), true)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +269,8 @@ func getIndexStates(ctx context.Context, collectionID string) (map[uint32]indexS
 //
 // The returned map is keyed by the full IndexStateKey.
 func listIndexStates(ctx context.Context) (map[keys.IndexStateKey]indexState, error) {
-	return scanIndexStates(ctx, keys.NewEmptyActionStatusKey().Bytes())
+	// Strict: recovery should surface a corrupt record rather than silently skip resolving it.
+	return scanIndexStates(ctx, keys.NewEmptyActionStatusKey().Bytes(), false)
 }
 
 // indexActionCollectionPrefix returns the systemstore prefix covering every action record

@@ -16,11 +16,13 @@ import (
 )
 
 const (
-	errActionInProgress string = "multiple actions of the same kind and collection cannot be submitted concurrently"
+	errActionInProgress    string = "multiple actions of the same kind and collection cannot be submitted concurrently"
+	errCorruptActionRecord string = "action record value is neither valid JSON nor a valid status"
 )
 
 var (
-	ErrActionInProgress = errors.New(errActionInProgress)
+	ErrActionInProgress    = errors.New(errActionInProgress)
+	ErrCorruptActionRecord = errors.New(errCorruptActionRecord)
 )
 
 func NewErrActionInProgress(collectionID string, action client.Action) error {
@@ -28,5 +30,12 @@ func NewErrActionInProgress(collectionID string, action client.Action) error {
 		errActionInProgress,
 		errors.NewKV("CollectionID", collectionID),
 		errors.NewKV("Action", action),
+	)
+}
+
+func NewErrCorruptActionRecord(value []byte) error {
+	return errors.New(
+		errCorruptActionRecord,
+		errors.NewKV("Value", string(value)),
 	)
 }

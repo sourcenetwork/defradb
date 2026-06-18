@@ -168,7 +168,7 @@ func TestIndexState_DeleteThenGet_ReturnsErrNotFound(t *testing.T) {
 	err := db.setIndexState(ctx, "col1", 5, indexState{Status: client.IndexStatusBuilding})
 	require.NoError(t, err)
 
-	err = db.deleteIndexState(ctx, "col1", 5)
+	err = db.completeBackfillState(ctx, "col1", 5)
 	require.NoError(t, err)
 
 	_, err = getIndexState(ctx, "col1", 5)
@@ -189,7 +189,7 @@ func TestIndexState_DeleteReducesGetIndexStatesCount(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 
-	err = db.deleteIndexState(ctx, "colX", 1)
+	err = db.completeBackfillState(ctx, "colX", 1)
 	require.NoError(t, err)
 
 	states, err = getIndexStates(ctx, "colX")
