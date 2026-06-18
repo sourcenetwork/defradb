@@ -175,6 +175,9 @@ type EventState struct {
 
 	// TopicPeerEvent is the `event.TopicPeerEventName` subscription for peer join/leave events
 	TopicPeerEvent event.Subscription
+
+	// Action is the `event.ActionExecutionName` subscription
+	Action event.Subscription
 }
 
 // NewEventState returns an eventState with all required subscriptions.
@@ -199,12 +202,17 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	action, err := bus.Subscribe(event.ActionExecutionName)
+	if err != nil {
+		return nil, err
+	}
 	return &EventState{
 		Merge:          merge,
 		Update:         update,
 		Replicator:     replicator,
 		SESync:         seSync,
 		TopicPeerEvent: topicPeerEvent,
+		Action:         action,
 	}, nil
 }
 

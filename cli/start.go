@@ -304,7 +304,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
 		cfg.GetStringSlice(config.ConfigFlags["allowed-origins"]),
-		"List of origins to allow for CORS requests",
+		"List of origins to allow for CORS requests. Their hosts are also accepted as auth token audiences",
 	)
 	cmd.PersistentFlags().String(
 		"pubkeypath",

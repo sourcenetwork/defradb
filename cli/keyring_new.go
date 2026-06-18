@@ -103,6 +103,6 @@ WARNING: This will overwrite existing keys in the keyring.`,
 		"Skip generating an encryption key. Encryption at rest will be disabled")
 	cmd.Flags().BoolVar(&noPeerKey, "no-peer-key", false,
 		"Skip generating a peer key.")
-	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing keys without confirmation")
+	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing keys")
 	return cmd
 }

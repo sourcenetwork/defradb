@@ -361,6 +361,14 @@ type Store interface {
 	// The filepath parameter is required and specifies where to write the export file.
 	BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error
 
+	// List information about active action executions.
+	//
+	// An action represents a long running database task, such as collection truncation or refresh, and the rebuilding
+	// of indexes.
+	//
+	// Only executions that have not yet been successfully completed will be returned.
+	ListActions(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]ActionExecution, error)
+
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.
 	P2P

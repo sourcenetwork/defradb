@@ -13,7 +13,7 @@ defradb start [flags]
 ### Options
 
 ```
-      --allowed-origins stringArray       List of origins to allow for CORS requests
+      --allowed-origins stringArray       List of origins to allow for CORS requests. Their hosts are also accepted as auth token audiences
       --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data
@@ -42,9 +42,10 @@ defradb start [flags]
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")

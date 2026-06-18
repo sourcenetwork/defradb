@@ -151,6 +151,16 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		sourcehubAddress = immutable.Some(sourcehubAddressString)
 	}
 
+	// Default the audience to the host of --url (the Host the server checks
+	// against); --audience overrides when the dialed host differs.
+	audience := cfg.GetString("api.audience")
+	if audience == "" {
+		audience, err = http.AuthAudienceForURL(cfg.GetString("api.address"))
+		if err != nil {
+			return err
+		}
+	}
+
 	privKey := secp256k1.PrivKeyFromBytes(data)
 	ident, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	if err != nil {
@@ -158,7 +168,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	}
 	err = ident.UpdateToken(
 		authTokenExpiration,
-		immutable.Some(cfg.GetString("api.address")),
+		immutable.Some(audience),
 		sourcehubAddress)
 	if err != nil {
 		return err

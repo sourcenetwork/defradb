@@ -18,9 +18,10 @@ Execute queries, add collections, obtain node info, etc.
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")
@@ -39,6 +40,7 @@ Execute queries, add collections, obtain node info, etc.
 
 * [defradb](defradb.md)	 - DefraDB Edge Database
 * [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
+* [defradb client action](defradb_client_action.md)	 - Manage DefraDB actions
 * [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
 * [defradb client block](defradb_client_block.md)	 - Manage blocks of a running DefraDB instance
 * [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
