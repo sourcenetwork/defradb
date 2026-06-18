@@ -16,16 +16,22 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// Doc ID mapping keys bridge storage IDs and public DocIDs.
+// Doc ID mapping keys bridge storage IDs, public DocIDs, and block CIDs.
 //
 // Public DocIDs are derived from the genesis composite CID, but the datastore
 // needs a stable key before that CID exists. Document data is therefore written
 // under a local short ID, and these systemstore keys record how that short ID
 // maps to the public DocID once the genesis block has been materialized.
 //
-// Collection-scoped mappings are used by normal document reads and writes.
-// The node-scoped mapping supports paths that only have a public DocID, such as P2P
-// and block-signing lookups. Block indexes map block CID -> DocID for verification.
+// Key shapes:
+//   - /docid/{collectionShortID}/s/{shortDocID} -> public DocID
+//   - /docid/n/p/{publicDocID} -> encoded {collectionShortID, shortDocID}
+//   - /docid/b/{blockCID}/{collectionShortID}/{publicDocID} -> empty value
+//
+// The block-CID mapping is only for document-owned blocks: composite, field,
+// delete, and encryption blocks. It lets CID-only paths such as P2P access
+// checks and signature verification recover the public DocID. collectionShortID
+// is included because identical block CIDs can appear in different collections.
 //
 // The path segments are intentionally short because these keys are persisted for
 // every document and document block.
@@ -70,11 +76,11 @@ func collectionShortIDSegment(collectionShortID uint32) []byte {
 	return encoding.EncodeUvarintAscending(nil, uint64(collectionShortID))
 }
 
-func docIDSegment(docID string) []byte {
-	if docID == "" {
+func stringSegment(value string) []byte {
+	if value == "" {
 		return nil
 	}
-	return []byte(docID)
+	return []byte(value)
 }
 
 // ShortIDToDocIDKey maps a short doc ID to its public doc ID.
@@ -106,25 +112,25 @@ func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			[]byte(NODE_DOC_ID_INDEX),
 			[]byte(DOC_ID_TO_LOCAL_ID),
-			docIDSegment(docID),
+			stringSegment(docID),
 		),
 	}
 }
 
-// BlockCIDToDocIDKey maps a document block CID to one public doc ID that links to it.
+// BlockCIDToDocIDKey maps a document-owned block CID to one public DocID that links to it.
 type BlockCIDToDocIDKey struct {
 	systemstoreDocIDKey
 }
 
 var _ Key = (*BlockCIDToDocIDKey)(nil)
 
-func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, docID string) BlockCIDToDocIDKey {
+func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, publicDocID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			[]byte(BLOCK_CID_TO_DOC_ID),
-			docIDSegment(blockCID),
+			stringSegment(blockCID),
 			collectionShortIDSegment(collectionShortID),
-			docIDSegment(docID),
+			stringSegment(publicDocID),
 		),
 	}
 }

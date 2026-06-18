@@ -48,16 +48,14 @@ type docIDResult struct {
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan docIDResult, error) {
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
+	systemstore := c.db.Multistore().Systemstore()
+	shortID, err := id.GetShortCollectionIDFromStore(ctx, c.Version().CollectionID, systemstore)
 	if err != nil {
 		return nil, err
 	}
-	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionShortID: shortID,
-	}
-	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   prefix,
-		KeysOnly: true,
+	prefix := keys.NewShortIDToDocIDKey(shortID, 0).ToString() + "/"
+	iter, err := systemstore.Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(prefix),
 	})
 	if err != nil {
 		return nil, NewErrGetAllDocIDs(err)
@@ -96,7 +94,7 @@ func (c *collection) getAllDocIDsChan(
 				break
 			}
 
-			key, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
+			value, err := iter.Value()
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{
@@ -105,24 +103,7 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 
-			publicDocID, found, err := id.GetDocIDFromStore(
-				ctx,
-				c.db.Multistore().Systemstore(),
-				shortID,
-				key.DocShortID,
-			)
-			if err != nil {
-				closeIterator()
-				resCh <- docIDResult{
-					Err: err,
-				}
-				return
-			}
-			if !found {
-				continue
-			}
-
-			docID, err := client.NewDocIDFromString(publicDocID)
+			docID, err := client.NewDocIDFromString(string(value))
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{

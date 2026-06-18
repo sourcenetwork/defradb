@@ -108,7 +108,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != 0 {
 			f.currentKV = kv
 			f.execInfo.DocsFetched++
-			docID, err := f.publicDocID(kv.Key.CollectionShortID, kv.Key.DocShortID)
+			docID, _, err := id.GetDocID(f.ctx, kv.Key.CollectionShortID, kv.Key.DocShortID)
 			if err != nil {
 				return immutable.None[string](), err
 			}
@@ -154,7 +154,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 
 	f.execInfo.DocsFetched++
 
-	docID, err := f.publicDocID(f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[string](), err
 	}
@@ -167,7 +167,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	}
 
 	doc := encodedDocument{}
-	docID, err := f.publicDocID(f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}
@@ -222,17 +222,6 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	}
 
 	return immutable.Some[EncodedDocument](&doc), nil
-}
-
-func (f *documentFetcher) publicDocID(collectionShortID uint32, shortDocID uint32) (string, error) {
-	docID, found, err := id.GetDocID(f.ctx, collectionShortID, shortDocID)
-	if err != nil {
-		return "", err
-	}
-	if found {
-		return docID, nil
-	}
-	return "", nil
 }
 
 func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {

@@ -55,13 +55,22 @@ func GetShortCollectionID(
 	ctx context.Context,
 	collectionID string,
 ) (uint32, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	return GetShortCollectionIDFromStore(ctx, collectionID, txn.Systemstore())
+}
+
+// GetShortCollectionIDFromStore returns the cached short collection ID, reading from systemStore on cache miss.
+func GetShortCollectionIDFromStore(
+	ctx context.Context,
+	collectionID string,
+	systemStore corekv.ReaderWriter,
+) (uint32, error) {
 	cache := getCollectionShortIDCache(ctx)
 	shortID, ok := cache[collectionID]
 	if ok {
 		return shortID, nil
 	}
-	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, txn.Systemstore())
+	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, systemStore)
 	if err != nil {
 		return 0, err
 	}

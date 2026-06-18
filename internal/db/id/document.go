@@ -176,16 +176,16 @@ func SetBlockDocIDMapping(
 	ctx context.Context,
 	collectionShortID uint32,
 	blockCID cid.Cid,
-	docID string,
+	publicDocID string,
 ) error {
-	if !blockCID.Defined() || docID == "" {
+	if !blockCID.Defined() || publicDocID == "" {
 		return nil
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), docID).Bytes(),
+		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), publicDocID).Bytes(),
 		[]byte{},
 	)
 }

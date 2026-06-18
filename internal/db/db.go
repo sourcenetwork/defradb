@@ -240,9 +240,8 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
-	publicDocID := docID
 	systemstore := datastore.SystemstoreFrom(db.rootstore)
-	collectionShortID, err := id.GetUncachedShortCollectionID(
+	collectionShortID, err := id.GetShortCollectionIDFromStore(
 		ctx,
 		collection.Version().CollectionID,
 		systemstore,
@@ -279,7 +278,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 
 		updateEvent := event.Update{
-			DocID:        publicDocID,
+			DocID:        docID,
 			Cid:          headsIterator.CurrentCid(),
 			CollectionID: collection.Version().CollectionID,
 			Block:        headsIterator.CurrentRawBlock(),
