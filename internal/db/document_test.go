@@ -37,7 +37,8 @@ func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, col client.Coll
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	defer txn.Discard()
-	dbTxn := txn.(*Txn)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
 
 	txnCtx := InitContext(ctx, dbTxn)
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
