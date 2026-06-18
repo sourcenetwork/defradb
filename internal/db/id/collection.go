@@ -65,16 +65,20 @@ func GetShortCollectionIDFromStore(
 	collectionID string,
 	systemStore corekv.ReaderWriter,
 ) (uint32, error) {
-	cache := getCollectionShortIDCache(ctx)
-	shortID, ok := cache[collectionID]
+	cache, ok := ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache)
 	if ok {
-		return shortID, nil
+		shortID, ok := cache[collectionID]
+		if ok {
+			return shortID, nil
+		}
 	}
 	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, systemStore)
 	if err != nil {
 		return 0, err
 	}
-	cache[collectionID] = shortID
+	if ok {
+		cache[collectionID] = shortID
+	}
 	return shortID, nil
 }
 
