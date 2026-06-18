@@ -108,7 +108,7 @@ func TestScanIndexStates_IgnoresCollectionWideActions(t *testing.T) {
 	defer cleanup()
 
 	// An index state record (per-subject) ...
-	require.NoError(t, db.setIndexState(ctx, "col1", 1, indexState{Status: client.IndexStatusBuilding}))
+	require.NoError(t, db.startIndexBuild(ctx, "col1", 1))
 
 	// ... alongside a collection-wide action record under the same collection prefix.
 	require.NoError(t, action.SetTxn(
@@ -119,7 +119,7 @@ func TestScanIndexStates_IgnoresCollectionWideActions(t *testing.T) {
 	states, err := getIndexStates(ctx, "col1")
 	require.NoError(t, err)
 	require.Len(t, states, 1, "only the per-subject index record must be returned")
-	assert.Equal(t, client.IndexStatusBuilding, states[1].Status)
+	assert.True(t, states[1].isBuilding())
 }
 
 // TestListActions_AfterFailedBuild_ReportsErroredRecordWithSubject checks the observability
@@ -177,43 +177,46 @@ func TestGetIndexStates_SkipsCorruptRecord(t *testing.T) {
 	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	require.NoError(t, db.setIndexState(ctx, "col1", 1, indexState{Status: client.IndexStatusBuilding}))
+	require.NoError(t, db.startIndexBuild(ctx, "col1", 1))
 
-	// Write a record under the same collection prefix whose value is not valid JSON, i.e. a
-	// corrupt index action record.
+	// Index 2 has a valid status record but a payload that is not valid JSON, i.e. corrupt.
+	require.NoError(t, db.startIndexBuild(ctx, "col1", 2))
 	txn := datastore.CtxMustGetTxn(ctx)
-	corruptKey := keys.NewActionStatusSubjectKey("col1", client.BackfillIndexAction, "2").Bytes()
-	require.NoError(t, txn.Systemstore().Set(ctx, corruptKey, []byte{}))
+	payloadKey := keys.NewActionPayloadKey("col1", client.BackfillIndexAction, "2").Bytes()
+	require.NoError(t, txn.Systemstore().Set(ctx, payloadKey, []byte("not json")))
 
 	// Lenient path: the healthy record survives, the corrupt one is skipped.
 	states, err := getIndexStates(ctx, "col1")
 	require.NoError(t, err)
 	require.Len(t, states, 1)
-	assert.Equal(t, client.IndexStatusBuilding, states[1].Status)
+	assert.True(t, states[1].isBuilding())
 
 	// Strict path: recovery surfaces the corruption.
 	_, err = listIndexStates(ctx)
 	require.Error(t, err)
 }
 
-// TestToIndexState_NonIndexStatesAreSkipped checks that action/status combinations that do not
-// describe a live index lifecycle state report ok=false (and so are skipped by scans).
-func TestToIndexState_NonIndexStatesAreSkipped(t *testing.T) {
+// TestIndexState_Predicates classifies (Action, Status) pairs into the building/failed/dropping
+// lifecycle predicates, and confirms unrelated combinations match none of them.
+func TestIndexState_Predicates(t *testing.T) {
 	for _, tc := range []struct {
-		name   string
-		action client.Action
-		status client.ActionStatus
+		name     string
+		state    indexState
+		building bool
+		failed   bool
+		dropping bool
 	}{
-		{"backfill completed", client.BackfillIndexAction, client.CompletedActionStatus},
-		{"backfill none", client.BackfillIndexAction, client.NoneActionStatus},
-		{"drop errored", client.DropIndexAction, client.ErroredActionStatus},
-		{"drop completed", client.DropIndexAction, client.CompletedActionStatus},
-		{"truncate in progress", client.TruncateAction, client.InProgressActionStatus},
+		{"building", indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}, true, false, false},
+		{"failed", indexState{Action: client.BackfillIndexAction, Status: client.ErroredActionStatus}, false, true, false},
+		{"dropping", indexState{Action: client.DropIndexAction, Status: client.InProgressActionStatus}, false, false, true},
+		{"backfill completed", indexState{Action: client.BackfillIndexAction, Status: client.CompletedActionStatus}, false, false, false},
+		{"drop errored", indexState{Action: client.DropIndexAction, Status: client.ErroredActionStatus}, false, false, false},
+		{"truncate", indexState{Action: client.TruncateAction, Status: client.InProgressActionStatus}, false, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			exec := client.ActionExecution{Action: tc.action, Status: tc.status}
-			_, ok := toIndexState(exec, indexBackfillPayload{}, "")
-			assert.False(t, ok, "%s must not project to an index state", tc.name)
+			assert.Equal(t, tc.building, tc.state.isBuilding())
+			assert.Equal(t, tc.failed, tc.state.isFailed())
+			assert.Equal(t, tc.dropping, tc.state.isDropping())
 		})
 	}
 }

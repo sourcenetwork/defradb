@@ -11,6 +11,7 @@ package action
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 
@@ -22,26 +23,16 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// Envelope is the stored value of an action record. Reason holds an errored action's cause
-// and Payload holds action-specific state such as an index build watermark.
-type Envelope struct {
-	Status  client.ActionStatus `json:"status"`
-	Reason  string              `json:"reason,omitempty"`
-	Payload json.RawMessage     `json:"payload,omitempty"`
+func encodeStatus(status client.ActionStatus) []byte {
+	val := make([]byte, binary.MaxVarintLen16)
+	n := binary.PutUvarint(val, uint64(status))
+	return val[:n]
 }
 
-// encodeValue serializes an action record value.
-func encodeValue(status client.ActionStatus, reason string, payload json.RawMessage) ([]byte, error) {
-	return json.Marshal(Envelope{Status: status, Reason: reason, Payload: payload})
-}
-
-// DecodeEnvelope deserializes an action record value.
-func DecodeEnvelope(val []byte) (Envelope, error) {
-	var env Envelope
-	if err := json.Unmarshal(val, &env); err != nil {
-		return Envelope{}, NewErrCorruptActionRecord(val)
-	}
-	return env, nil
+// DecodeStatus decodes an action status value (a bare uvarint).
+func DecodeStatus(val []byte) client.ActionStatus {
+	status, _ := binary.Uvarint(val)
+	return client.ActionStatus(status)
 }
 
 // Register a new action for execution.
@@ -63,10 +54,13 @@ func Register(
 		return NewErrActionInProgress(collectionID, action)
 	}
 
-	return setStatus(ctx, multistore, events, collectionID, action, client.InProgressActionStatus, "", nil)
+	return Set(ctx, multistore, events, collectionID, action, client.InProgressActionStatus)
 }
 
 // Set the status for an existing action. Non-transactional, collection-wide.
+//
+// It passes context.TODO() to force a transaction-free write: corekv otherwise binds the
+// transaction on the context to the write (https://github.com/sourcenetwork/corekv/issues/107).
 func Set(
 	ctx context.Context,
 	multistore *datastore.Multistore,
@@ -75,32 +69,10 @@ func Set(
 	action client.Action,
 	status client.ActionStatus,
 ) error {
-	return setStatus(ctx, multistore, events, collectionID, action, status, "", nil)
-}
-
-// setStatus writes a collection-wide action record non-transactionally.
-//
-// It passes context.TODO() to force a transaction-free write: corekv otherwise binds the
-// transaction on the context to the write (https://github.com/sourcenetwork/corekv/issues/107).
-func setStatus(
-	ctx context.Context,
-	multistore *datastore.Multistore,
-	events event.Bus,
-	collectionID string,
-	action client.Action,
-	status client.ActionStatus,
-	reason string,
-	payload json.RawMessage,
-) error {
-	val, err := encodeValue(status, reason, payload)
-	if err != nil {
-		return err
-	}
-
-	err = multistore.Systemstore().Set(
+	err := multistore.Systemstore().Set(
 		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
-		val,
+		encodeStatus(status),
 	)
 	if err != nil {
 		return err
@@ -110,9 +82,13 @@ func setStatus(
 	return nil
 }
 
-// SetTxn writes a per-subject action record within the transaction bound to ctx, so the record
-// commits atomically with other writes on it (for example an index build watermark with the
-// index entries of the same batch).
+// SetTxn writes a per-subject action's status within the transaction bound to ctx, so the
+// record commits atomically with other writes on it — for example an index build watermark
+// with the index entries of the same batch.
+//
+// reason is the generic error reason (empty unless errored). payload is action-specific opaque
+// data the caller encodes itself (nil when none). Each is stored under its own key, or cleared
+// when empty.
 //
 // publishEvent reports whether an ActionExecution event is published on commit. Pass false for
 // progress-only updates that repeat an already published status, to avoid one event per batch.
@@ -129,17 +105,22 @@ func SetTxn(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	val, err := encodeValue(status, reason, payload)
-	if err != nil {
+	if err := txn.Systemstore().Set(
+		ctx,
+		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		encodeStatus(status),
+	); err != nil {
 		return err
 	}
 
-	err = txn.Systemstore().Set(
-		ctx,
-		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
-		val,
-	)
-	if err != nil {
+	if err := setOrClear(
+		ctx, txn, keys.NewActionReasonKey(collectionID, action, subject).Bytes(), []byte(reason), reason != "",
+	); err != nil {
+		return err
+	}
+	if err := setOrClear(
+		ctx, txn, keys.NewActionPayloadKey(collectionID, action, subject).Bytes(), payload, len(payload) > 0,
+	); err != nil {
 		return err
 	}
 
@@ -150,6 +131,14 @@ func SetTxn(
 		})
 	}
 	return nil
+}
+
+// setOrClear writes value at key when present is true, otherwise deletes any existing value.
+func setOrClear(ctx context.Context, txn datastore.Txn, key, value []byte, present bool) error {
+	if present {
+		return txn.Systemstore().Set(ctx, key, value)
+	}
+	return txn.Systemstore().Delete(ctx, key)
 }
 
 // Complete a collection-wide action by deleting its record. Non-transactional.
@@ -164,7 +153,7 @@ func Complete(
 	action client.Action,
 ) error {
 	err := multistore.Systemstore().Delete(
-		// See setStatus for why this is transaction-free.
+		// See Set for why this is transaction-free.
 		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
@@ -176,8 +165,8 @@ func Complete(
 	return nil
 }
 
-// CompleteTxn completes a per-subject action within the transaction bound to ctx, deleting
-// its record atomically with other writes on the same transaction.
+// CompleteTxn completes a per-subject action within the transaction bound to ctx, deleting its
+// status, reason and payload records atomically with other writes on the same transaction.
 func CompleteTxn(
 	ctx context.Context,
 	events event.Bus,
@@ -187,18 +176,49 @@ func CompleteTxn(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	err := txn.Systemstore().Delete(
-		ctx,
+	for _, key := range [][]byte{
 		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
-	)
-	if err != nil {
-		return err
+		keys.NewActionReasonKey(collectionID, action, subject).Bytes(),
+		keys.NewActionPayloadKey(collectionID, action, subject).Bytes(),
+	} {
+		if err := txn.Systemstore().Delete(ctx, key); err != nil {
+			return err
+		}
 	}
 
 	txn.OnSuccess(func() {
 		publish(events, collectionID, action, subject, client.CompletedActionStatus)
 	})
 	return nil
+}
+
+// GetReason returns the error reason recorded for the given action execution, or "" if none.
+func GetReason(ctx context.Context, collectionID string, action client.Action, subject string) (string, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	val, err := txn.Systemstore().Get(ctx, keys.NewActionReasonKey(collectionID, action, subject).Bytes())
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+	return string(val), nil
+}
+
+// GetPayload returns the opaque payload bytes stored for the given action execution, or nil if
+// none. The caller is responsible for decoding them.
+func GetPayload(ctx context.Context, collectionID string, action client.Action, subject string) (json.RawMessage, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	val, err := txn.Systemstore().Get(ctx, keys.NewActionPayloadKey(collectionID, action, subject).Bytes())
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return json.RawMessage(val), nil
 }
 
 func publish(
@@ -222,7 +242,7 @@ func getStatus(
 	action client.Action,
 ) (client.ActionStatus, error) {
 	val, err := multistore.Systemstore().Get(
-		// See setStatus for why this is transaction-free.
+		// See Set for why this is transaction-free.
 		context.TODO(),
 		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
@@ -233,11 +253,7 @@ func getStatus(
 		return 0, err
 	}
 
-	env, err := DecodeEnvelope(val)
-	if err != nil {
-		return 0, err
-	}
-	return env.Status, nil
+	return DecodeStatus(val), nil
 }
 
 // ListExecutions lists all the actions that have not yet successfully completed.
@@ -273,15 +289,11 @@ func ListExecutions(ctx context.Context) ([]client.ActionExecution, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		env, err := DecodeEnvelope(val)
-		if err != nil {
-			return nil, errors.Join(err, iter.Close())
-		}
 		results = append(results, client.ActionExecution{
 			CollectionID: key.CollectionID,
 			Action:       key.Action,
 			Subject:      key.Subject,
-			Status:       env.Status,
+			Status:       DecodeStatus(val),
 		})
 	}
 

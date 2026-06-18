@@ -33,9 +33,10 @@ type collection struct {
 	db      *DB
 	def     client.CollectionVersion
 	indexes []CollectionIndex
-	// indexStatuses records the lifecycle status of every index defined on this collection.
-	// Populated at construction time from the index state store.
-	indexStatuses  map[uint32]client.IndexStatus
+	// indexStates holds the lifecycle state of the collection's non-ready indexes, keyed by
+	// index ID. An index absent from the map has no action record and so is ready. Populated
+	// at construction time from the index state store.
+	indexStates    map[uint32]indexState
 	fetcherFactory func() fetcher.Fetcher
 	txn            immutable.Option[datastore.Txn]
 }
@@ -52,10 +53,10 @@ type collection struct {
 // failed and dropping indexes are excluded from the write path.
 func (db *DB) newCollection(ctx context.Context, desc client.CollectionVersion, txn immutable.Option[datastore.Txn]) (*collection, error) {
 	col := &collection{
-		db:            db,
-		def:           desc,
-		txn:           txn,
-		indexStatuses: make(map[uint32]client.IndexStatus),
+		db:          db,
+		def:         desc,
+		txn:         txn,
+		indexStates: make(map[uint32]indexState),
 	}
 
 	if len(desc.Indexes) > 0 {
@@ -69,20 +70,17 @@ func (db *DB) newCollection(ctx context.Context, desc client.CollectionVersion, 
 		if err != nil {
 			return nil, err
 		}
+		col.indexStates = states
 
 		for _, index := range desc.Indexes {
-			status := client.IndexStatusReady
-			if state, ok := states[index.ID]; ok {
-				status = state.Status
-			}
-			col.indexStatuses[index.ID] = status
+			state := states[index.ID]
 
 			// Only building and ready indexes participate in the write path.
-			if status == client.IndexStatusFailed || status == client.IndexStatusDropping {
+			if state.isFailed() || state.isDropping() {
 				continue
 			}
 
-			colIndex, err := NewCollectionIndex(col, index, status == client.IndexStatusBuilding)
+			colIndex, err := NewCollectionIndex(col, index, state.isBuilding())
 			if err != nil {
 				return nil, err
 			}
@@ -94,14 +92,14 @@ func (db *DB) newCollection(ctx context.Context, desc client.CollectionVersion, 
 	return col, nil
 }
 
-// QueryableIndexes returns the indexes that are safe for query planning:
-// only indexes whose status is ready. Building, failed and dropping indexes
-// are excluded because their entries may be incomplete.
+// QueryableIndexes returns the indexes that are safe for query planning: only ready indexes.
+// Building, failed and dropping indexes are excluded because their entries may be incomplete.
 func (c *collection) QueryableIndexes() []client.IndexDescription {
 	all := c.Version().Indexes
 	result := make([]client.IndexDescription, 0, len(all))
 	for _, idx := range all {
-		if c.indexStatuses[idx.ID] == client.IndexStatusReady {
+		// A ready index has no state record.
+		if _, ok := c.indexStates[idx.ID]; !ok {
 			result = append(result, idx)
 		}
 	}

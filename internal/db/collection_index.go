@@ -57,14 +57,8 @@ func (db *DB) listIndexDescriptions(
 		}
 		statuses := make([]client.IndexDescriptionStatus, len(col.Indexes))
 		for i, desc := range col.Indexes {
-			s := client.IndexDescriptionStatus{IndexDescription: desc}
-			if state, ok := states[desc.ID]; ok {
-				s.Status = state.Status
-				s.Reason = state.Reason
-			} else {
-				s.Status = client.IndexStatusReady
-			}
-			statuses[i] = s
+			state, ok := states[desc.ID]
+			statuses[i] = state.statusDescription(desc, ok)
 		}
 		indexes[col.Name] = statuses
 	}
@@ -295,10 +289,10 @@ func (c *collection) newIndex(
 		return client.IndexDescription{}, nil, err
 	}
 
-	// This writes the building state without an "already in progress" guard, which is safe
-	// because the index ID keying the record is sequence-allocated and therefore unique per
-	// build; a caller that reused an index ID would need to add one.
-	err = c.db.setIndexState(ctx, c.def.CollectionID, desc.ID, indexState{Status: client.IndexStatusBuilding})
+	// This registers the build without an "already in progress" guard, which is safe because
+	// the index ID keying the record is sequence-allocated and therefore unique per build; a
+	// caller that reused an index ID would need to add one.
+	err = c.db.startIndexBuild(ctx, c.def.CollectionID, desc.ID)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return client.IndexDescription{}, nil, err
@@ -313,10 +307,10 @@ func (c *collection) newIndex(
 	}
 	c.indexes = append(c.indexes, colIndex)
 
-	if c.indexStatuses == nil {
-		c.indexStatuses = make(map[uint32]client.IndexStatus)
+	if c.indexStates == nil {
+		c.indexStates = make(map[uint32]indexState)
 	}
-	c.indexStatuses[desc.ID] = client.IndexStatusBuilding
+	c.indexStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
 
 	// Backfill builds a fresh collection from this snapshot per batch,
 	// so each retry re-reads documents.
@@ -607,7 +601,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 			break
 		}
 	}
-	delete(c.indexStatuses, desc.ID)
+	delete(c.indexStates, desc.ID)
 
 	// Remove the definition so the planner and writers immediately stop seeing it.
 	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))
@@ -626,8 +620,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 
 	// Record a dropping state so startup recovery can resume if the process exits
 	// before GC completes.
-	if err := c.db.setIndexState(ctx, c.def.CollectionID, desc.ID,
-		indexState{Status: client.IndexStatusDropping}); err != nil {
+	if err := c.db.startIndexDrop(ctx, c.def.CollectionID, desc.ID); err != nil {
 		c.def.Indexes = oldIndexes
 		return nil, err
 	}
@@ -676,14 +669,8 @@ func (c *collection) ListIndexes(
 	indexes := c.Version().Indexes
 	result := make([]client.IndexDescriptionStatus, len(indexes))
 	for i, desc := range indexes {
-		s := client.IndexDescriptionStatus{IndexDescription: desc}
-		if state, ok := states[desc.ID]; ok {
-			s.Status = state.Status
-			s.Reason = state.Reason
-		} else {
-			s.Status = client.IndexStatusReady
-		}
-		result[i] = s
+		state, ok := states[desc.ID]
+		result[i] = state.statusDescription(desc, ok)
 	}
 	return result, nil
 }

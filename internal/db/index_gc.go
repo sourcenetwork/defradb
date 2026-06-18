@@ -55,7 +55,7 @@ func (db *DB) gcIndex(
 	}
 
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.completeDropState(c, collectionID, indexID)
+		return db.completeIndexDrop(c, collectionID, indexID)
 	}); err != nil {
 		return NewErrIndexGCFailed(err, indexName)
 	}

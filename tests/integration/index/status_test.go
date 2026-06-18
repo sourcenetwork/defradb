@@ -46,7 +46,7 @@ func TestIndexStatus_NewIndex_IsReady(t *testing.T) {
 				},
 				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
 					"User_name_ASC": {
-						Status: client.IndexStatusReady,
+						Status: client.CompletedActionStatus,
 					},
 				},
 			},
@@ -108,10 +108,11 @@ func TestIndexStatus_ReadyAndFailedInOneCollection_EachReportsOwnStatus(t *testi
 				},
 				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
 					"User_name_ASC": {
-						Status: client.IndexStatusReady,
+						Status: client.CompletedActionStatus,
 					},
 					"User_age_ASC": {
-						Status: client.IndexStatusFailed,
+						Status: client.ErroredActionStatus,
+						Action: client.BackfillIndexAction,
 						Reason: "can not index",
 					},
 				},
@@ -146,7 +147,7 @@ func TestIndexStatus_SDLIndex_IsReady(t *testing.T) {
 				},
 				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
 					"User_name_ASC": {
-						Status: client.IndexStatusReady,
+						Status: client.CompletedActionStatus,
 					},
 				},
 			},

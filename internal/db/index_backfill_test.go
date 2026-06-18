@@ -159,13 +159,13 @@ func TestWithTxnRetries_ConflictThenSuccess(t *testing.T) {
 		if attempts == 1 {
 			return corekv.ErrTxnConflict
 		}
-		return db.setIndexState(txnCtx, collectionID, 1, indexState{Status: client.IndexStatusBuilding})
+		return db.startIndexBuild(txnCtx, collectionID, 1)
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, attempts)
 
 	state := readIndexState(t, ctx, db, collectionID, 1)
-	assert.Equal(t, client.IndexStatusBuilding, state.Status)
+	assert.True(t, state.isBuilding())
 }
 
 // TestWithTxnRetries_ConflictEveryAttempt_ReturnsConflict checks that persistent conflicts
@@ -235,7 +235,7 @@ func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	require.Len(t, indexes, 1, "index definition must persist after failed backfill")
 
 	state := readIndexState(t, ctx, db, col.Version().CollectionID, indexes[0].ID)
-	assert.Equal(t, client.IndexStatusFailed, state.Status)
+	assert.True(t, state.isFailed())
 	assert.NotEmpty(t, state.Reason)
 }
 

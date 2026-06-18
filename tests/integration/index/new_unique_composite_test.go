@@ -70,7 +70,8 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 				},
 				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
 					"User_name_ASC": {
-						Status: client.IndexStatusFailed,
+						Status: client.ErroredActionStatus,
+						Action: client.BackfillIndexAction,
 						Reason: "can not index",
 					},
 				},

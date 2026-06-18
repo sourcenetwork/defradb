@@ -49,15 +49,15 @@ func (db *DB) recoverIndexStates(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return nil
 		}
-		switch state.Status {
-		case client.IndexStatusBuilding:
+		switch {
+		case state.isBuilding():
 			if err := db.recoverBuilding(ctx, key, state.Watermark); err != nil {
 				log.ErrorE("Failed to recover building index", err,
 					corelog.String("collectionID", key.CollectionID),
 					corelog.Any("indexID", key.IndexID),
 				)
 			}
-		case client.IndexStatusDropping:
+		case state.isDropping():
 			if err := db.recoverDropping(ctx, key); err != nil {
 				log.ErrorE("Failed to recover dropping index", err,
 					corelog.String("collectionID", key.CollectionID),
@@ -65,7 +65,7 @@ func (db *DB) recoverIndexStates(ctx context.Context) error {
 				)
 			}
 		default:
-			// IndexStatusFailed and IndexStatusReady require no action.
+			// A failed index requires no recovery action.
 		}
 	}
 	return nil

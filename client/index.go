@@ -62,26 +62,22 @@ type CollectionIndex interface {
 	Description() IndexDescription
 }
 
-// IndexStatus describes the lifecycle state of an index.
-type IndexStatus string
-
-const (
-	// IndexStatusBuilding indicates the index entries are being backfilled from existing documents.
-	IndexStatusBuilding IndexStatus = "building"
-	// IndexStatusReady indicates the index is fully built and queryable.
-	IndexStatusReady IndexStatus = "ready"
-	// IndexStatusFailed indicates the index backfill failed; the Reason field provides details.
-	IndexStatusFailed IndexStatus = "failed"
-	// IndexStatusDropping indicates the index entries are being garbage-collected.
-	IndexStatusDropping IndexStatus = "dropping"
-)
-
 // IndexDescriptionStatus combines the static index description with its mutable runtime state.
+//
+// Status and Action describe the index lifecycle through the action system (see Action and
+// ActionStatus):
+//   - building: Status InProgress, Action BackfillIndexAction
+//   - failed:   Status Errored,    Action BackfillIndexAction (Reason has the cause)
+//   - dropping: Status InProgress, Action DropIndexAction
+//   - ready:    Status Completed   (no in-flight action; Action is unset)
 type IndexDescriptionStatus struct {
 	IndexDescription
-	// Status is the current lifecycle state of the index.
-	Status IndexStatus
-	// Reason is set when Status is IndexStatusFailed, providing a description of the failure.
+	// Status is the status of the index's current (or most recent) lifecycle action.
+	Status ActionStatus
+	// Action is the lifecycle action this status refers to. It disambiguates the two
+	// InProgress states (building vs dropping) and is unset for a ready index.
+	Action Action
+	// Reason is set when Status is Errored, providing a description of the failure.
 	Reason string
 }
 

@@ -22,9 +22,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// indexBackfillBatchSize is the number of documents indexed per batch transaction
-// during backfill. 100 entries per batch stays well under the storage engine's
-// transaction size limit. It is a var so tests can lower it to exercise multi-batch runs.
+// indexBackfillBatchSize is the number of documents indexed per batch transaction during
+// backfill. It is a fixed doc count sized for the worst case: an index key embeds its field
+// value, which can approach the storage engine's per-key limit, so 100 entries stay well
+// under the transaction size limit even when every value is near-maximal. For typical small
+// fields this is conservative; a byte-budget batch (sized by accumulated entry bytes) would
+// pack far more docs per transaction and is tracked as a follow-up. It is a var so tests can
+// lower it to exercise multi-batch runs.
 var indexBackfillBatchSize = 100
 
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context
@@ -161,7 +165,7 @@ func (db *DB) backfillIndex(
 	// instead of storing a terminal status. Only in-flight and failed
 	// indexes keep a record.
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.completeBackfillState(c, def.CollectionID, desc.ID)
+		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
 	}); err != nil {
 		// A conflict here means entries are all written; state is still building and resumable.
 		// Only a non-retryable error warrants marking the index failed.
@@ -181,28 +185,15 @@ func (db *DB) backfillIndex(
 	return nil
 }
 
-// setIndexStateWithRetry writes the index state in its own transaction,
-// retrying on transaction conflicts up to db.MaxTxnRetries() times.
-func (db *DB) setIndexStateWithRetry(
-	ctx context.Context,
-	collectionID string,
-	indexID uint32,
-	state indexState,
-) error {
-	return db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.setIndexState(c, collectionID, indexID, state)
-	})
-}
-
-// markIndexFailed records a failed state for the index with the cause as the reason.
+// markIndexFailed records a failed state for the index with the cause as the reason, in its
+// own transaction, retrying on transaction conflicts up to db.MaxTxnRetries() times.
 func (db *DB) markIndexFailed(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
 	rootErr error,
 ) error {
-	return db.setIndexStateWithRetry(ctx, def.CollectionID, desc.ID, indexState{
-		Status: client.IndexStatusFailed,
-		Reason: rootErr.Error(),
+	return db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.markIndexBuildFailed(c, def.CollectionID, desc.ID, rootErr.Error())
 	})
 }

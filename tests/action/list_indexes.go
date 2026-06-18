@@ -44,8 +44,9 @@ type ListIndexes struct {
 	ExpectedIndexes []client.IndexDescription
 
 	// ExpectedStatuses maps index name to the expected status for that index.
-	// When set for a name, asserts Status and Reason (partial match) instead of the default ready assertion.
-	// When not set for a name, asserts Status == IndexStatusReady.
+	// When set for a name, asserts Status, Action and Reason (partial match) instead of the
+	// default ready assertion.
+	// When not set for a name, asserts Status == CompletedActionStatus (ready).
 	ExpectedStatuses map[string]client.IndexDescriptionStatus
 
 	// Any error expected from the action. Optional.
@@ -144,12 +145,13 @@ func assertIndexesListsEqual(
 	}
 }
 
-// assertIndexStatuses checks Status and Reason for each returned index.
+// assertIndexStatuses checks Status, Action and Reason for each returned index.
 //
 // When expectedStatuses is nil, no status assertions are made.
 // When expectedStatuses is non-nil:
-//   - For names present in the map, asserts the given Status and that Reason contains the expected substring.
-//   - For all other names, asserts Status == IndexStatusReady.
+//   - For names present in the map, asserts the given Status and Action, and that Reason
+//     contains the expected substring.
+//   - For all other names, asserts Status == CompletedActionStatus (ready).
 func assertIndexStatuses(
 	expectedStatuses map[string]client.IndexDescriptionStatus,
 	actualStatuses []client.IndexDescriptionStatus,
@@ -161,11 +163,12 @@ func assertIndexStatuses(
 	for _, actual := range actualStatuses {
 		if expected, ok := expectedStatuses[actual.Name]; ok {
 			assert.Equal(t, expected.Status, actual.Status, "index %s status mismatch", actual.Name)
+			assert.Equal(t, expected.Action, actual.Action, "index %s action mismatch", actual.Name)
 			if expected.Reason != "" {
 				assert.Contains(t, actual.Reason, expected.Reason, "index %s reason mismatch", actual.Name)
 			}
 		} else {
-			assert.Equal(t, client.IndexStatusReady, actual.Status, "index %s expected ready status", actual.Name)
+			assert.Equal(t, client.CompletedActionStatus, actual.Status, "index %s expected ready status", actual.Name)
 		}
 	}
 }
