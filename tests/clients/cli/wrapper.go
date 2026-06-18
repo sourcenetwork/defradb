@@ -526,7 +526,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	args := []string{"client", "view", "refresh"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())
@@ -644,7 +644,7 @@ func (w *Wrapper) GetCollections(
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())

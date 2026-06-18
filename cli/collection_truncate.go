@@ -37,5 +37,6 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 			return col.Truncate(cmd.Context(), opt)
 		},
 	}
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }
