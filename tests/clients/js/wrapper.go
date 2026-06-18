@@ -450,6 +450,21 @@ func (w *Wrapper) ListLenses(
 	return lenses, nil
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	res, err := execute(ctx, w.value, "listActions", jsOpts(opts))
+	if err != nil {
+		return nil, err
+	}
+	var actions []client.ActionExecution
+	if err := goji.UnmarshalJS(res[0], &actions); err != nil {
+		return nil, err
+	}
+	return actions, nil
+}
+
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,

@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/identity"
@@ -135,15 +136,47 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			return err
 		}
 
+		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+
+		// Clear the transaction on the context used to write the action execution information, otherwise
+		// corekv will pick it up again, writing using the transaction.
+		// https://github.com/sourcenetwork/corekv/issues/107
+		txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
+		err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		if err != nil {
+			return err
+		}
+
 		// Clearing and then constructing is a bit inefficient, but it should do for now.
 		// Long term we probably want to update inline as much as possible to avoid unnessecarily
 		// moving/adding/deleting keys in storage
 		err = colObject.truncate(ctx)
 		if err != nil {
-			return err
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.TruncateAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
 		}
 
 		err = db.buildViewCache(ctx, col)
+		if err != nil {
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.TruncateAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
+		}
+
+		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}

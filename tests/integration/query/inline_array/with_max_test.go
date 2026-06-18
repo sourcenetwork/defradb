@@ -277,7 +277,7 @@ func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t 
 			},
 			&action.Request{
 				Request: `query {
-					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
+					Users(docID: "bae-233c17b8-b968-5bf1-b20a-185035aafc1f") {
 						name
 						MAX(pageRatings: {})
 					}

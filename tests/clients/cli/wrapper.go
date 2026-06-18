@@ -393,6 +393,27 @@ func (w *Wrapper) BasicExport(
 	return err
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	args := []string{"client", "action", "list"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var info []client.ActionExecution
+	if err := json.Unmarshal(data, &info); err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
 	sdl string,
