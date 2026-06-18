@@ -111,6 +111,10 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
+		owner, ownerErr := a.clientACP.ObjectOwner(ctx, policyID, resourceName, docID)
+		if ownerErr == nil && owner.HasValue() && owner.Value() == identity.DID() {
+			return nil
+		}
 		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID(), resourceName, docID)
 	}
 
