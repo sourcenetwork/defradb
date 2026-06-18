@@ -175,6 +175,10 @@ func (c *Collection) SaveDocument(
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
 
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	getOpts := options.GetDocument()
@@ -190,15 +194,7 @@ func (c *Collection) SaveDocument(
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		addOpts := options.AddDocument().
-			SetEncryptDoc(opt.EncryptDoc).
-			SetEncryptedFields(opt.EncryptedFields)
-
-		if opt.GetIdentity().HasValue() {
-			addOpts.SetIdentity(opt.GetIdentity().Value())
-		}
-
-		return c.AddDocument(ctx, doc, addOpts)
+		return c.AddDocument(ctx, doc, opts...)
 	}
 	return err
 }

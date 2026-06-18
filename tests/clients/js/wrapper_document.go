@@ -96,6 +96,10 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
 		return err

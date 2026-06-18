@@ -148,6 +148,10 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	getOpts := options.GetDocument()
 	opt := utils.NewOptions(opts...)
 	if opt.Identity.HasValue() {
@@ -163,14 +167,7 @@ func (c *Collection) SaveDocument(
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		opt := utils.NewOptions(opts...)
-		addOpt := options.AddDocument().
-			SetEncryptDoc(opt.EncryptDoc).
-			SetEncryptedFields(opt.EncryptedFields)
-		if opt.GetIdentity().HasValue() {
-			addOpt.SetIdentity(opt.GetIdentity().Value())
-		}
-		return c.AddDocument(ctx, doc, addOpt)
+		return c.AddDocument(ctx, doc, opts...)
 	}
 	return err
 }

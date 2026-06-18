@@ -244,6 +244,10 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	saveOpt := utils.NewOptions(opts...)
 	getOpts := options.GetDocument().SetShowDeleted(true)
 	if saveOpt.Identity.HasValue() {

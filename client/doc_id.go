@@ -85,6 +85,11 @@ func (docID DocID) UUID() uuid.UUID {
 	return docID.uuid
 }
 
+// IsValid returns true if this DocID uses a supported version.
+func (docID DocID) IsValid() bool {
+	return ValidDocIDVersions[docID.version]
+}
+
 // String returns the underlying document identifier in string form.
 func (docID DocID) String() string {
 	buf := make([]byte, 1)
