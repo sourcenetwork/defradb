@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	stderrors "errors"
-	"strings"
 
 	"github.com/ipfs/go-cid"
 
@@ -127,49 +126,6 @@ func GetLocalDocIDFromStore(ctx context.Context, store corekv.Reader, docID stri
 		return keys.LocalDocID{}, false, err
 	}
 	return localDocID, true, nil
-}
-
-func GetNodeDocIDAliasesForShortDocID(
-	ctx context.Context,
-	store corekv.Reader,
-	collectionShortID uint32,
-	shortDocID uint32,
-) ([]string, error) {
-	if collectionShortID == 0 || shortDocID == 0 {
-		return nil, nil
-	}
-
-	prefix := keys.NewNodeDocIDToShortIDKey("").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
-	if err != nil {
-		return nil, err
-	}
-
-	var aliases []string
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-		value, err := iter.Value()
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		localDocID, err := keys.DecodeLocalDocID(value)
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		if localDocID.CollectionShortID == collectionShortID && localDocID.DocShortID == shortDocID {
-			aliases = append(aliases, strings.TrimPrefix(string(iter.Key()), prefix))
-		}
-	}
-	if err := iter.Close(); err != nil {
-		return nil, err
-	}
-	return aliases, nil
 }
 
 func SetBlockDocIDMapping(

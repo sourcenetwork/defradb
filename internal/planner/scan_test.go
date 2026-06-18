@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestDocIDFilterAliasExpansion(t *testing.T) {
+func TestDocIDFilterAliasResolution(t *testing.T) {
 	ctx := context.Background()
 	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
 	defer txn.Discard()
@@ -37,25 +37,29 @@ func TestDocIDFilterAliasExpansion(t *testing.T) {
 		publicDocID       = "bae-public-doc"
 		legacyDocID       = "bae-legacy-doc"
 	)
-	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, publicDocID))
+	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID))
 	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
 
 	values, err := docIDFilterValues(ctx, publicDocID)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []any{publicDocID, legacyDocID}, values)
+	require.Equal(t, []any{publicDocID}, values)
 
-	expandedValues, err := expandDocIDAliasValues(ctx, []any{publicDocID, legacyDocID, 123})
+	values, err = docIDFilterValues(ctx, legacyDocID)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []any{publicDocID, legacyDocID, 123}, expandedValues)
+	require.Equal(t, []any{publicDocID}, values)
+
+	expandedValues, changed, err := expandDocIDAliasValues(ctx, []any{publicDocID, legacyDocID, 123})
+	require.NoError(t, err)
+	require.True(t, changed)
+	require.ElementsMatch(t, []any{publicDocID, 123}, expandedValues)
 
 	opMap := map[connor.FilterKey]any{
-		mapper.FilterEqOp: publicDocID,
+		mapper.FilterEqOp: legacyDocID,
 	}
 	expandedOpMap, changed, err := expandDocIDAliasesInOpMap(ctx, opMap)
 	require.NoError(t, err)
 	require.True(t, changed)
-	require.NotContains(t, expandedOpMap, mapper.FilterEqOp)
-	require.ElementsMatch(t, []any{publicDocID, legacyDocID}, expandedOpMap[mapper.FilterInOp])
+	require.Equal(t, publicDocID, expandedOpMap[mapper.FilterEqOp])
 
 	values, err = docIDFilterValues(ctx, "bae-unknown-doc")
 	require.NoError(t, err)

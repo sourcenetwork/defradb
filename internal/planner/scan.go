@@ -222,6 +222,9 @@ func expandDocIDAliasesInOpMap(
 			if len(values) > 1 {
 				result[mapper.FilterInOp] = values
 				changed = true
+			} else if len(values) == 1 && values[0] != value {
+				result[key] = values[0]
+				changed = true
 			} else {
 				result[key] = value
 			}
@@ -231,12 +234,12 @@ func expandDocIDAliasesInOpMap(
 				result[key] = value
 				continue
 			}
-			expandedValues, err := expandDocIDAliasValues(ctx, values)
+			expandedValues, valuesChanged, err := expandDocIDAliasValues(ctx, values)
 			if err != nil {
 				return nil, false, err
 			}
 			result[key] = expandedValues
-			changed = len(expandedValues) != len(values)
+			changed = changed || valuesChanged
 		default:
 			result[key] = value
 		}
@@ -244,9 +247,10 @@ func expandDocIDAliasesInOpMap(
 	return result, changed, nil
 }
 
-func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, error) {
+func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, bool, error) {
 	expandedValues := make([]any, 0, len(values))
 	seenStrings := map[string]struct{}{}
+	var changed bool
 	for _, value := range values {
 		docID, ok := value.(string)
 		if !ok {
@@ -255,7 +259,7 @@ func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, error) {
 		}
 		aliases, err := docIDFilterValues(ctx, docID)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		for _, alias := range aliases {
 			aliasString, ok := alias.(string)
@@ -264,13 +268,15 @@ func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, error) {
 				continue
 			}
 			if _, exists := seenStrings[aliasString]; exists {
+				changed = true
 				continue
 			}
+			changed = changed || aliasString != docID
 			seenStrings[aliasString] = struct{}{}
 			expandedValues = append(expandedValues, alias)
 		}
 	}
-	return expandedValues, nil
+	return expandedValues, changed, nil
 }
 
 func isDocIDFilterField(col client.Collection, mapping *core.DocumentMapping, fieldIndex int) bool {
@@ -302,25 +308,14 @@ func docIDFilterValues(ctx context.Context, docID string) ([]any, error) {
 		return values, nil
 	}
 
-	aliases, err := id.GetNodeDocIDAliasesForShortDocID(
-		ctx,
-		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		localDocID.CollectionShortID,
-		localDocID.DocShortID,
-	)
+	publicDocID, found, err := id.GetDocID(ctx, localDocID.CollectionShortID, localDocID.DocShortID)
 	if err != nil {
 		return nil, err
 	}
-
-	seen := map[string]struct{}{docID: {}}
-	for _, alias := range aliases {
-		if _, ok := seen[alias]; ok {
-			continue
-		}
-		seen[alias] = struct{}{}
-		values = append(values, alias)
+	if !found {
+		return values, nil
 	}
-	return values, nil
+	return []any{publicDocID}, nil
 }
 
 func (n *scanNode) initCollection(col client.Collection) error {

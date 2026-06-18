@@ -52,10 +52,6 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, 0)
-	require.NoError(t, err)
-	require.Empty(t, aliases)
-
 	undefinedCID := blocks.NewBlock(nil).Cid()
 	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
@@ -112,10 +108,6 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
-
-	aliases, err := GetNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, shortDocID)
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{publicDocID, legacyDocID}, aliases)
 }
 
 func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
