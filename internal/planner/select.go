@@ -332,7 +332,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			prefixes := make([]keys.Walkable, 0, len(n.selectReq.DocIDs.Value()))
 
 			for _, docID := range n.selectReq.DocIDs.Value() {
-				shortDocID, found, err := id.ResolveShortDocID(n.planner.ctx, shortID, docID)
+				shortDocID, found, err := id.GetShortDocID(n.planner.ctx, shortID, docID)
 				if err != nil {
 					return nil, nil, err
 				}

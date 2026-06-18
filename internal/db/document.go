@@ -857,7 +857,7 @@ func (c *collection) getPrimaryKeyFromDocIDString(
 		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
 	}
 
-	shortDocID, found, err := id.ResolveShortDocID(ctx, shortID, docID)
+	shortDocID, found, err := id.GetShortDocID(ctx, shortID, docID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}

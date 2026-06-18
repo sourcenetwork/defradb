@@ -82,11 +82,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetNodeShortDocID(txnCtx, publicDocID)
-	require.NoError(t, err)
-	require.False(t, found)
-
-	_, found, err = id.GetNodeDocID(txnCtx, publicDocID)
+	_, found, err = id.GetLocalDocID(txnCtx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -143,10 +139,10 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	_, found, err = id.GetDocID(txnCtx, collectionShortID, shortDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetNodeShortDocID(txnCtx, publicDocID)
+	_, found, err = id.GetLocalDocID(txnCtx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetNodeShortDocID(txnCtx, legacyDocID)
+	_, found, err = id.GetLocalDocID(txnCtx, legacyDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 

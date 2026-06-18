@@ -109,27 +109,6 @@ func GetShortDocIDFromStore(
 	return localDocID.DocShortID, true, nil
 }
 
-func GetNodeShortDocID(ctx context.Context, docID string) (uint32, bool, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-	return GetNodeShortDocIDFromStore(ctx, txn.Systemstore(), docID)
-}
-
-func ResolveShortDocID(
-	ctx context.Context,
-	collectionShortID uint32,
-	docID string,
-) (uint32, bool, error) {
-	return GetShortDocID(ctx, collectionShortID, docID)
-}
-
-func GetNodeShortDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (uint32, bool, error) {
-	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
-	if err != nil || !found {
-		return 0, found, err
-	}
-	return localDocID.DocShortID, true, nil
-}
-
 func GetLocalDocID(ctx context.Context, docID string) (keys.LocalDocID, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	return GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
@@ -148,20 +127,6 @@ func GetLocalDocIDFromStore(ctx context.Context, store corekv.Reader, docID stri
 		return keys.LocalDocID{}, false, err
 	}
 	return localDocID, true, nil
-}
-
-func GetNodeDocID(ctx context.Context, docID string) (string, bool, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-	return GetNodeDocIDFromStore(ctx, txn.Systemstore(), docID)
-}
-
-func GetNodeDocIDFromStore(ctx context.Context, store corekv.Reader, docID string) (string, bool, error) {
-	localDocID, found, err := GetLocalDocIDFromStore(ctx, store, docID)
-	if err != nil || !found {
-		return "", found, err
-	}
-
-	return GetDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
 }
 
 func GetNodeDocIDAliasesForShortDocID(

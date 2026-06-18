@@ -48,15 +48,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = GetNodeShortDocID(ctx, publicDocID)
-	require.NoError(t, err)
-	require.False(t, found)
-
-	_, found, err = ResolveShortDocID(ctx, collectionShortID, publicDocID)
-	require.NoError(t, err)
-	require.False(t, found)
-
-	_, found, err = GetNodeDocID(ctx, publicDocID)
+	_, found, err = GetLocalDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -101,25 +93,22 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, shortDocID, gotShortDocID)
 
-	gotShortDocID, found, err = GetNodeShortDocID(ctx, publicDocID)
+	gotLocalDocID, found, err := GetLocalDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, shortDocID, gotShortDocID)
-
-	gotPublicDocID, found, err = GetNodeDocID(ctx, publicDocID)
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, publicDocID, gotPublicDocID)
-
-	gotShortDocID, found, err = ResolveShortDocID(ctx, collectionShortID, publicDocID)
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, shortDocID, gotShortDocID)
+	require.Equal(t, collectionShortID, gotLocalDocID.CollectionShortID)
+	require.Equal(t, shortDocID, gotLocalDocID.DocShortID)
 
 	err = SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID)
 	require.NoError(t, err)
 
-	gotPublicDocID, found, err = GetNodeDocID(ctx, legacyDocID)
+	gotLocalDocID, found, err = GetLocalDocID(ctx, legacyDocID)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, collectionShortID, gotLocalDocID.CollectionShortID)
+	require.Equal(t, shortDocID, gotLocalDocID.DocShortID)
+
+	gotPublicDocID, found, err = GetDocID(ctx, gotLocalDocID.CollectionShortID, gotLocalDocID.DocShortID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, publicDocID, gotPublicDocID)
@@ -129,7 +118,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.ElementsMatch(t, []string{publicDocID, legacyDocID}, aliases)
 }
 
-func TestResolveShortDocIDDoesNotCrossCollections(t *testing.T) {
+func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -146,16 +135,17 @@ func TestResolveShortDocIDDoesNotCrossCollections(t *testing.T) {
 	require.NoError(t, SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID))
 	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
 
-	gotShortDocID, found, err := GetNodeShortDocID(ctx, publicDocID)
+	gotLocalDocID, found, err := GetLocalDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, shortDocID, gotShortDocID)
+	require.Equal(t, collectionShortID, gotLocalDocID.CollectionShortID)
+	require.Equal(t, shortDocID, gotLocalDocID.DocShortID)
 
-	_, found, err = ResolveShortDocID(ctx, otherCollectionID, publicDocID)
+	_, found, err = GetShortDocID(ctx, otherCollectionID, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = ResolveShortDocID(ctx, otherCollectionID, legacyDocID)
+	_, found, err = GetShortDocID(ctx, otherCollectionID, legacyDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 }
@@ -227,15 +217,16 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 	err := DeleteNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, shortDocID)
 	require.NoError(t, err)
 
-	_, found, err := GetNodeShortDocID(ctx, publicDocID)
+	_, found, err := GetLocalDocID(ctx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = GetNodeShortDocID(ctx, legacyDocID)
+	_, found, err = GetLocalDocID(ctx, legacyDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	gotShortDocID, found, err := GetNodeShortDocID(ctx, otherDocID)
+	gotLocalDocID, found, err := GetLocalDocID(ctx, otherDocID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, otherShortDocID, gotShortDocID)
+	require.Equal(t, collectionShortID, gotLocalDocID.CollectionShortID)
+	require.Equal(t, otherShortDocID, gotLocalDocID.DocShortID)
 }

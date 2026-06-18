@@ -127,12 +127,14 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKe
 		}
 	}
 
-	publicDocID, found, err := id.GetNodeDocIDFromStore(ctx, store, docKey)
-	if err != nil {
-		return "", err
+	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, store, docKey)
+	if err != nil || !found {
+		return docKey, err
 	}
-	if found {
-		return publicDocID, nil
+	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
+	if err != nil || !found {
+		return docKey, err
 	}
-	return docKey, nil
+
+	return publicDocID, nil
 }
