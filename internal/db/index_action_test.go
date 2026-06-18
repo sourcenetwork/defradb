@@ -179,8 +179,8 @@ func TestGetIndexStates_SkipsCorruptRecord(t *testing.T) {
 
 	require.NoError(t, db.setIndexState(ctx, "col1", 1, indexState{Status: client.IndexStatusBuilding}))
 
-	// Write a record under the same collection prefix whose value is neither valid JSON nor a
-	// valid uvarint, i.e. a corrupt index action record.
+	// Write a record under the same collection prefix whose value is not valid JSON, i.e. a
+	// corrupt index action record.
 	txn := datastore.CtxMustGetTxn(ctx)
 	corruptKey := keys.NewActionStatusSubjectKey("col1", client.BackfillIndexAction, "2").Bytes()
 	require.NoError(t, txn.Systemstore().Set(ctx, corruptKey, []byte{}))

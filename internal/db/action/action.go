@@ -11,7 +11,6 @@ package action
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 
@@ -24,8 +23,7 @@ import (
 )
 
 // Envelope is the stored value of an action record. Reason holds an errored action's cause
-// and Payload holds action-specific state such as an index build watermark. DecodeEnvelope
-// also accepts the legacy bare-uvarint encoding.
+// and Payload holds action-specific state such as an index build watermark.
 type Envelope struct {
 	Status  client.ActionStatus `json:"status"`
 	Reason  string              `json:"reason,omitempty"`
@@ -37,19 +35,13 @@ func encodeValue(status client.ActionStatus, reason string, payload json.RawMess
 	return json.Marshal(Envelope{Status: status, Reason: reason, Payload: payload})
 }
 
-// DecodeEnvelope deserializes an action record value, falling back to the legacy bare-uvarint
-// encoding (a status with no reason or payload). A value that is neither valid JSON nor a
-// valid uvarint is corrupt and returns an error rather than a silent zero status.
+// DecodeEnvelope deserializes an action record value.
 func DecodeEnvelope(val []byte) (Envelope, error) {
 	var env Envelope
-	if err := json.Unmarshal(val, &env); err == nil {
-		return env, nil
-	}
-	intVal, n := binary.Uvarint(val)
-	if n <= 0 {
+	if err := json.Unmarshal(val, &env); err != nil {
 		return Envelope{}, NewErrCorruptActionRecord(val)
 	}
-	return Envelope{Status: client.ActionStatus(intVal)}, nil
+	return env, nil
 }
 
 // Register a new action for execution.

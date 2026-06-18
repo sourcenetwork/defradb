@@ -12,7 +12,6 @@ package action
 
 import (
 	"context"
-	"encoding/binary"
 	"testing"
 
 	"github.com/sourcenetwork/corekv/memory"
@@ -50,24 +49,10 @@ func TestDecodeEnvelope_JSON(t *testing.T) {
 	assert.JSONEq(t, `{"watermark":"w1"}`, string(env.Payload))
 }
 
-// TestDecodeEnvelope_LegacyUvarint checks the fallback that reads a record written by the
-// pre-envelope format: a bare uvarint status with no reason or payload.
-func TestDecodeEnvelope_LegacyUvarint(t *testing.T) {
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, uint64(client.InProgressActionStatus))
-
-	env, err := DecodeEnvelope(buf[:n])
-	require.NoError(t, err)
-	assert.Equal(t, client.InProgressActionStatus, env.Status)
-	assert.Empty(t, env.Reason)
-	assert.Empty(t, env.Payload)
-}
-
-// TestDecodeEnvelope_Corrupt checks a value that is neither valid JSON nor a valid uvarint
-// surfaces an error rather than silently decoding to a zero status.
+// TestDecodeEnvelope_Corrupt checks a value that is not valid JSON surfaces an error rather
+// than silently decoding to a zero status.
 func TestDecodeEnvelope_Corrupt(t *testing.T) {
-	// An empty value yields n<=0 from binary.Uvarint and is not valid JSON.
-	_, err := DecodeEnvelope([]byte{})
+	_, err := DecodeEnvelope([]byte{0x00, 0x01, 0x02})
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrCorruptActionRecord), "expected ErrCorruptActionRecord, got: %v", err)
 }

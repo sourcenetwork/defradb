@@ -17,7 +17,7 @@ import (
 
 const (
 	errActionInProgress    string = "multiple actions of the same kind and collection cannot be submitted concurrently"
-	errCorruptActionRecord string = "action record value is neither valid JSON nor a valid status"
+	errCorruptActionRecord string = "action record value is not valid JSON"
 )
 
 var (
