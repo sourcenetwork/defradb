@@ -117,7 +117,7 @@ func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 	}
 }
 
-// BlockCIDToDocIDKey maps a document-owned block CID to one public DocID that links to it.
+// BlockCIDToDocIDKey records that a public DocID references a document-owned block CID.
 type BlockCIDToDocIDKey struct {
 	systemstoreDocIDKey
 }
