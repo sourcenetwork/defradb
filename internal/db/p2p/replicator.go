@@ -190,11 +190,11 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	type unsafeDatastore interface {
 		Unsafe() corekv.ReaderWriter
 	}
-	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
+	shortCollectionID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return err
 	}
-	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortCollectionID}
 	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
@@ -221,10 +221,10 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if primaryKey.DocShortID == 0 {
 			continue
 		}
-		publicDocID, found, err := id.GetDocIDFromStore(
+		docID, found, err := id.GetDocIDFromStore(
 			ctx,
 			p.db.Multistore().Systemstore(),
-			shortID,
+			shortCollectionID,
 			primaryKey.DocShortID,
 		)
 		if err != nil {
@@ -234,9 +234,9 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			continue
 		}
 
-		err = p.pushHeadsForDoc(ctx, shortID, primaryKey.DocShortID, publicDocID, col.CollectionID(), peerID)
+		err = p.pushHeadsForDoc(ctx, shortCollectionID, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
 		if err != nil {
-			return NewErrPushDocHeads(err, publicDocID)
+			return NewErrPushDocHeads(err, docID)
 		}
 	}
 }
@@ -246,25 +246,25 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
 	collectionShortID uint32,
-	storageDocID uint32,
-	publicDocID string,
+	shortDocID uint32,
+	docID string,
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, storageDocID, publicDocID)
+	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, shortDocID, docID)
 	if err != nil {
 		return err
 	}
 	for _, head := range heads {
 		rawblock, err := head.block.Marshal()
 		if err != nil {
-			return NewErrMarshalBlock(err, publicDocID, head.cid.String())
+			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
-			DocID:        publicDocID,
+			DocID:        docID,
 			CID:          head.cid.Bytes(),
 			CollectionID: collectionID,
 			Creator:      p.host.ID(),
@@ -275,9 +275,9 @@ func (p *P2P) pushHeadsForDoc(
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
-				corelog.Any("DocID", publicDocID),
+				corelog.Any("DocID", docID),
 			)
-			err := p.handleReplicatorFailure(ctx, peerID, publicDocID)
+			err := p.handleReplicatorFailure(ctx, peerID, docID)
 			if err != nil {
 				return err
 			}

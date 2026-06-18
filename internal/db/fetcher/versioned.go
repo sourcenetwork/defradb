@@ -213,7 +213,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable
 
 	vf.ctx = ctx
 
-	if err := vf.seekTo(prefix.Cid); err != nil {
+	if err := vf.seekTo(prefix.Cid, prefix.DocShortID); err != nil {
 		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
@@ -236,7 +236,7 @@ err := VersionFetcher.Start(txn, prefixes) {
 
 // SeekTo exposes the private seekTo.
 func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
-	err := vf.seekTo(c)
+	err := vf.seekTo(c, 0)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 // to the target state, creating the serialized state at the given version. It starts by seeking
 // to the closest existing state snapshot in the transient Versioned stores, which on the first
 // run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
-func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
+func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
 
@@ -272,8 +272,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	/// // CID.
 	// }
 	firstQueued := vf.queuedCids.Front()
-	var shortDocID uint32
-	if firstQueued != nil {
+	if shortDocID == 0 && firstQueued != nil {
 		cc, ok := firstQueued.Value.(cid.Cid)
 		if !ok {
 			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", firstQueued.Value)
@@ -391,12 +390,11 @@ func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
 	}
 
 	type mergeItem struct {
-		cid              cid.Cid
-		createShortDocID uint32
+		cid cid.Cid
 	}
 
 	stack := make([]mergeItem, 0, 64)
-	stack = append(stack, mergeItem{cid: c, createShortDocID: shortDocID})
+	stack = append(stack, mergeItem{cid: c})
 
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
@@ -415,14 +413,16 @@ func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
 			return NewErrEncryptionKeyMissing(current.cid.String())
 		}
 
-		docID, err := vf.storageDocIDForBlock(
-			shortID,
-			block,
-			current.cid,
-			current.createShortDocID,
-		)
-		if err != nil {
-			return err
+		var docID uint32
+		if !block.Delta.IsCollection() {
+			docID = shortDocID
+			if docID == 0 {
+				var err error
+				docID, err = vf.storageDocIDForBlock(shortID, block, current.cid)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		var mcrdt crdt.ReplicatedData
@@ -484,14 +484,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
 			return err
 		}
 
-		childCreateShortDocID := current.createShortDocID
-		if block.Delta.IsComposite() {
-			childCreateShortDocID = docID
-		}
 		for i := len(block.Links) - 1; i >= 0; i-- {
 			stack = append(stack, mergeItem{
-				cid:              block.Links[i].Cid,
-				createShortDocID: childCreateShortDocID,
+				cid: block.Links[i].Cid,
 			})
 		}
 	}
@@ -503,14 +498,9 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
-	createShortDocID uint32,
 ) (uint32, error) {
 	if block.Delta.IsCollection() {
 		return 0, nil
-	}
-
-	if createShortDocID != 0 {
-		return createShortDocID, nil
 	}
 
 	publicDocID, found, err := id.GetDocIDForBlockFromStore(
@@ -562,7 +552,7 @@ func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 		if !headBlock.Delta.IsComposite() {
 			continue
 		}
-		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid, 0)
+		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid)
 		if err != nil {
 			return 0, err
 		}
