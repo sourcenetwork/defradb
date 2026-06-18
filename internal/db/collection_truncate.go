@@ -19,10 +19,12 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -53,7 +55,38 @@ func (c *collection) Truncate(
 
 	defer txn.Discard()
 
+	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	c.db.lockSet.CollectionLock(txn, shortID)
+
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+
+	// Clear the transaction on the context used to write the action execution information, otherwise
+	// corekv will pick it up again, writing using the transaction.
+	// https://github.com/sourcenetwork/corekv/issues/107
+	txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
+	err = action.Register(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
+	if err != nil {
+		return err
+	}
+
 	err = c.truncate(ctx)
+	if err != nil {
+		errErr := action.Set(
+			txnFreeCtx,
+			multistore,
+			c.db.events,
+			c.def.CollectionID,
+			client.TruncateAction,
+			client.ErroredActionStatus,
+		)
+		return errors.Join(errErr, err)
+	}
+
+	err = action.Complete(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 	if err != nil {
 		return err
 	}
@@ -68,9 +101,6 @@ func (c *collection) truncate(
 	if err != nil {
 		return err
 	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-	c.db.lockSet.CollectionLock(txn, shortID)
 
 	// The following operations must be performed without a transaction, due to store-level
 	// transaction size limits.  This lack of protection means that they must be performed

@@ -469,9 +469,6 @@ func performAction(
 	case SyncDocs:
 		syncDocs(s, action)
 
-	case Wait:
-		<-time.After(action.Duration)
-
 	case Benchmark:
 		benchmarkAction(s, testCase, actionIndex, action)
 

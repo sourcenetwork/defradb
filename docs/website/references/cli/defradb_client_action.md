@@ -1,38 +1,31 @@
-## defradb keyring add
+## defradb client action
 
-Add a private key
+Manage DefraDB actions
 
 ### Synopsis
 
-Add a private key.
-Store an externally generated key in the keyring.
+Manage DefraDB actions.
+Manage long running actions such as truncate, RefreshView, and the (re)building of indexes.
 
-The DEFRA_KEYRING_SECRET environment variable is used to unlock the keyring.
-This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag. If it is not set and the command is run in
-an interactive terminal, you will be prompted to enter it.
-
-```
-defradb keyring add <name> <private-key-hex> [flags]
-```
 
 ### Examples
 
 ```
-Add encryption key:  
-  defradb keyring add encryption-key 0000000000000000
+List information about actions:  
+  defradb client action list
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for action
 ```
 
 ### Options inherited from parent commands
 
 ```
       --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
+  -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
@@ -47,10 +40,12 @@ Add encryption key:
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client action list](defradb_client_action_list.md)	 - List action information.
 
