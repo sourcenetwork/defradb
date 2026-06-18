@@ -278,8 +278,6 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents undesirable behaviour, as the documents are not linked.
-// https://github.com/sourcenetwork/defradb/issues/1704
 func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"Author":[` +
@@ -373,8 +371,13 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "John and the sourcerers' stone",
-							"author": nil,
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name": "John",
+								"reviewed": map[string]any{
+									"name": "John and the sourcerers' stone",
+								},
+							},
 						},
 					},
 				},
