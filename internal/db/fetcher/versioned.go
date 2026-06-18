@@ -271,12 +271,34 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	/// // as a cache, we need to swap out states to the parent of the current
 	/// // CID.
 	// }
-	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
+	firstQueued := vf.queuedCids.Front()
+	var shortDocID uint32
+	if firstQueued != nil {
+		cc, ok := firstQueued.Value.(cid.Cid)
+		if !ok {
+			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", firstQueued.Value)
+		}
+		block, err := vf.getDAGBlock(cc)
+		if err != nil {
+			return err
+		}
+		if block.Delta.IsComposite() && len(block.Heads) == 0 {
+			shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
+			if err != nil {
+				return err
+			}
+			shortDocID, err = vf.storageDocIDForPublicDocID(shortID, client.NewDocIDV0(cc).String())
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for ccv := firstQueued; ccv != nil; ccv = ccv.Next() {
 		cc, ok := ccv.Value.(cid.Cid)
 		if !ok {
 			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
 		}
-		err := vf.merge(cc)
+		err := vf.merge(cc, shortDocID)
 		if err != nil {
 			return NewErrFailedToMergeState(err)
 		}
@@ -362,7 +384,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // gets the existing MerkleClock instance, or creates one.
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
-func (vf *VersionedFetcher) merge(c cid.Cid) error {
+func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
@@ -374,7 +396,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	stack := make([]mergeItem, 0, 64)
-	stack = append(stack, mergeItem{cid: c})
+	stack = append(stack, mergeItem{cid: c, createShortDocID: shortDocID})
 
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
@@ -487,7 +509,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		return 0, nil
 	}
 
-	if createShortDocID != 0 && block.Delta.IsField() {
+	if createShortDocID != 0 {
 		return createShortDocID, nil
 	}
 
