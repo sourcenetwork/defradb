@@ -30,6 +30,16 @@ const (
 	P_COUNTER
 )
 
+// String representations of the CRDT types, used by [CType.String] and [CTypeFromString].
+const (
+	noneCRDTString      = "none"
+	lwwRegisterString   = "lww"
+	objectCRDTString    = "object"
+	compositeCRDTString = "composite"
+	pnCounterString     = "pncounter"
+	pCounterString      = "pcounter"
+)
+
 // IsSupportedFieldCType returns true if the type is supported as a document field type.
 func (t CType) IsSupportedFieldCType() bool {
 	switch t {
@@ -57,17 +67,17 @@ func (t CType) IsCompatibleWith(kind FieldKind) bool {
 func (t CType) String() string {
 	switch t {
 	case NONE_CRDT:
-		return "none"
+		return noneCRDTString
 	case LWW_REGISTER:
-		return "lww"
+		return lwwRegisterString
 	case OBJECT:
-		return "object"
+		return objectCRDTString
 	case COMPOSITE:
-		return "composite"
+		return compositeCRDTString
 	case PN_COUNTER:
-		return "pncounter"
+		return pnCounterString
 	case P_COUNTER:
-		return "pcounter"
+		return pCounterString
 	default:
 		return "unknown"
 	}
@@ -79,17 +89,17 @@ func (t CType) String() string {
 // The second return value is false if the string does not match a known CRDT type.
 func CTypeFromString(s string) (CType, bool) {
 	switch s {
-	case "none":
+	case noneCRDTString:
 		return NONE_CRDT, true
-	case "lww":
+	case lwwRegisterString:
 		return LWW_REGISTER, true
-	case "object":
+	case objectCRDTString:
 		return OBJECT, true
-	case "composite":
+	case compositeCRDTString:
 		return COMPOSITE, true
-	case "pncounter":
+	case pnCounterString:
 		return PN_COUNTER, true
-	case "pcounter":
+	case pCounterString:
 		return P_COUNTER, true
 	default:
 		return 0, false
