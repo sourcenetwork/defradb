@@ -301,7 +301,9 @@ func (c *collection) newIndex(
 		return client.IndexDescription{}, nil, err
 	}
 
-	colIndex, err := NewCollectionIndex(c, desc)
+	// building=true: this instance maintains the index through the backfill that runs
+	// after commit, so writes in that window must use the build-tolerant save/delete.
+	colIndex, err := NewCollectionIndex(c, desc, true)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return client.IndexDescription{}, nil, err
@@ -328,7 +330,7 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
-	colIndex, err := NewCollectionIndex(c, desc)
+	colIndex, err := NewCollectionIndex(c, desc, false)
 	if err != nil {
 		return nil, err
 	}

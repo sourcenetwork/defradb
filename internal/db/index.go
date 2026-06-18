@@ -30,11 +30,6 @@ type CollectionIndex interface {
 	client.CollectionIndex
 	// RemoveAll removes all documents from the index
 	RemoveAll(context.Context) error
-	// setBuilding marks the index as being in the building (backfill) state.
-	//
-	// While building, Save tolerates a unique-index entry already written by a
-	// concurrent live write of the same document, and Delete tolerates a missing entry.
-	setBuilding(bool)
 }
 
 func isSupportedKind(kind client.FieldKind) bool {
@@ -77,10 +72,15 @@ func isSupportedKind(kind client.FieldKind) bool {
 	}
 }
 
-// NewCollectionIndex adds a new collection index
+// NewCollectionIndex adds a new collection index.
+//
+// While building is true the index is being backfilled: Save tolerates a unique-index entry
+// already written by a concurrent live write of the same document, and Delete tolerates a
+// missing entry for a document the backfill has not yet reached.
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
+	building bool,
 ) (CollectionIndex, error) {
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
@@ -88,6 +88,7 @@ func NewCollectionIndex(
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
+		building:        building,
 		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
 	}
@@ -192,10 +193,6 @@ type collectionBaseIndex struct {
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
 	building bool
-}
-
-func (index *collectionBaseIndex) setBuilding(v bool) {
-	index.building = v
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.

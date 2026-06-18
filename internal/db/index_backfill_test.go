@@ -331,7 +331,7 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	col1, err := db.newCollection(ctx1, colVersion, immutable.Some[datastore.Txn](txn1))
 	require.NoError(t, err)
 
-	colIndex, err := NewCollectionIndex(col1, nameDesc)
+	colIndex, err := NewCollectionIndex(col1, nameDesc, true)
 	require.NoError(t, err)
 
 	// Run the batch body: reading the docs and writing entries puts the doc key range

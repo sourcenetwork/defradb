@@ -107,13 +107,12 @@ func (db *DB) backfillIndex(
 				return err
 			}
 
-			colIndex, err := NewCollectionIndex(col, desc)
+			// building=true so Save tolerates entries a concurrent live write
+			// already stored for the same document.
+			colIndex, err := NewCollectionIndex(col, desc, true)
 			if err != nil {
 				return err
 			}
-			// Mark building so Save tolerates entries a concurrent live write
-			// already stored for the same document.
-			colIndex.setBuilding(true)
 
 			lastDocID, n, err = col.iterateDocsBatch(
 				batchCtx, fields, watermark, indexBackfillBatchSize,

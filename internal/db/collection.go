@@ -82,13 +82,9 @@ func (db *DB) newCollection(ctx context.Context, desc client.CollectionVersion, 
 				continue
 			}
 
-			colIndex, err := NewCollectionIndex(col, index)
+			colIndex, err := NewCollectionIndex(col, index, status == client.IndexStatusBuilding)
 			if err != nil {
 				return nil, err
-			}
-
-			if status == client.IndexStatusBuilding {
-				colIndex.setBuilding(true)
 			}
 
 			col.indexes = append(col.indexes, colIndex)

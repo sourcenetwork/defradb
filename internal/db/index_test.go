@@ -480,7 +480,7 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}
-	_, err := NewCollectionIndex(f.users, descWithID)
+	_, err := NewCollectionIndex(f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
 }
 
@@ -495,6 +495,6 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}
-	_, err := NewCollectionIndex(f.users, descWithID)
+	_, err := NewCollectionIndex(f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
 }
