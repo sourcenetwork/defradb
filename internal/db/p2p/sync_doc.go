@@ -306,13 +306,12 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
-	requestedDocID := docID
 	localDocID, found, err := id.GetLocalDocIDFromStore(p.ctx, p.db.Multistore().Systemstore(), docID)
 	if err != nil {
 		return docSyncItem{}, err
 	}
 	if !found {
-		return docSyncItem{}, fmt.Errorf("heads not found for docID %s", requestedDocID)
+		return docSyncItem{}, fmt.Errorf("heads not found for docID %s", docID)
 	}
 
 	key := keys.HeadstoreDocKey{
@@ -335,7 +334,7 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	result := docSyncItem{
-		DocID: requestedDocID,
+		DocID: docID,
 		Heads: make([][]byte, 0, len(cids)),
 	}
 
