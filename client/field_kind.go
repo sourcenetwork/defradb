@@ -172,6 +172,10 @@ func (k ScalarArrayKind) String() string {
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
 		return "[String!]"
+	case FieldKind_NILLABLE_DATETIME_ARRAY:
+		return "[DateTime]"
+	case FieldKind_DATETIME_ARRAY:
+		return "[DateTime!]"
 	default:
 		return strconv.Itoa(int(k))
 	}
@@ -211,6 +215,10 @@ func (k ScalarArrayKind) SubKind() ScalarKind {
 		return FieldKind_NILLABLE_STRING
 	case FieldKind_STRING_ARRAY:
 		return FieldKind_STRING
+	case FieldKind_NILLABLE_DATETIME_ARRAY:
+		return FieldKind_NILLABLE_DATETIME
+	case FieldKind_DATETIME_ARRAY:
+		return FieldKind_DATETIME
 	default:
 		return FieldKind_None
 	}
@@ -303,37 +311,38 @@ func (k *NamedKind) IsArray() bool {
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
-	FieldKind_None                   ScalarKind      = 0
-	FieldKind_DocID                  ScalarKind      = 1
-	FieldKind_NILLABLE_BOOL          ScalarKind      = 2
-	FieldKind_BOOL_ARRAY             ScalarArrayKind = 3
-	FieldKind_NILLABLE_INT           ScalarKind      = 4
-	FieldKind_INT_ARRAY              ScalarArrayKind = 5
-	FieldKind_NILLABLE_FLOAT64       ScalarKind      = 6
-	FieldKind_FLOAT64_ARRAY          ScalarArrayKind = 7
-	FieldKind_NILLABLE_FLOAT32       ScalarKind      = 8
-	FieldKind_FLOAT32_ARRAY          ScalarArrayKind = 9
-	FieldKind_NILLABLE_DATETIME      ScalarKind      = 10
-	FieldKind_NILLABLE_STRING        ScalarKind      = 11
-	FieldKind_STRING_ARRAY           ScalarArrayKind = 12
-	FieldKind_NILLABLE_BLOB          ScalarKind      = 13
-	FieldKind_NILLABLE_JSON          ScalarKind      = 14
-	FieldKind_BOOL                   ScalarKind      = 15 // Repurposed 2026-06-05, was never used
-	_                                ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
-	_                                ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
-	FieldKind_NILLABLE_BOOL_ARRAY    ScalarArrayKind = 18
-	FieldKind_NILLABLE_INT_ARRAY     ScalarArrayKind = 19
-	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
-	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
-	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
-	FieldKind_INT                    ScalarKind      = 23
-	FieldKind_FLOAT64                ScalarKind      = 24
-	FieldKind_FLOAT32                ScalarKind      = 25
-	FieldKind_STRING                 ScalarKind      = 26
-	FieldKind_DATETIME               ScalarKind      = 27
-	FieldKind_BLOB                   ScalarKind      = 28
-	FieldKind_JSON                   ScalarKind      = 29
-	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
+	FieldKind_None                    ScalarKind      = 0
+	FieldKind_DocID                   ScalarKind      = 1
+	FieldKind_NILLABLE_BOOL           ScalarKind      = 2
+	FieldKind_BOOL_ARRAY              ScalarArrayKind = 3
+	FieldKind_NILLABLE_INT            ScalarKind      = 4
+	FieldKind_INT_ARRAY               ScalarArrayKind = 5
+	FieldKind_NILLABLE_FLOAT64        ScalarKind      = 6
+	FieldKind_FLOAT64_ARRAY           ScalarArrayKind = 7
+	FieldKind_NILLABLE_FLOAT32        ScalarKind      = 8
+	FieldKind_FLOAT32_ARRAY           ScalarArrayKind = 9
+	FieldKind_NILLABLE_DATETIME       ScalarKind      = 10
+	FieldKind_NILLABLE_STRING         ScalarKind      = 11
+	FieldKind_STRING_ARRAY            ScalarArrayKind = 12
+	FieldKind_NILLABLE_BLOB           ScalarKind      = 13
+	FieldKind_NILLABLE_JSON           ScalarKind      = 14
+	FieldKind_BOOL                    ScalarKind      = 15 // Repurposed 2026-06-05, was never used
+	_                                 ScalarKind      = 16 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT
+	_                                 ScalarKind      = 17 // Deprecated 2024-03-15, was FieldKind_FOREIGN_OBJECT_ARRAY
+	FieldKind_NILLABLE_BOOL_ARRAY     ScalarArrayKind = 18
+	FieldKind_NILLABLE_INT_ARRAY      ScalarArrayKind = 19
+	FieldKind_NILLABLE_FLOAT64_ARRAY  ScalarArrayKind = 20
+	FieldKind_NILLABLE_STRING_ARRAY   ScalarArrayKind = 21
+	FieldKind_NILLABLE_FLOAT32_ARRAY  ScalarArrayKind = 22
+	FieldKind_INT                     ScalarKind      = 23
+	FieldKind_FLOAT64                 ScalarKind      = 24
+	FieldKind_FLOAT32                 ScalarKind      = 25
+	FieldKind_STRING                  ScalarKind      = 26
+	FieldKind_DATETIME                ScalarKind      = 27
+	FieldKind_BLOB                    ScalarKind      = 28
+	FieldKind_JSON                    ScalarKind      = 29
+	FieldKind_DATETIME_ARRAY          ScalarArrayKind = 30
+	FieldKind_NILLABLE_DATETIME_ARRAY ScalarArrayKind = 31
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
@@ -355,6 +364,8 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[Int!]":             FieldKind_INT_ARRAY,
 	"DateTime":           FieldKind_NILLABLE_DATETIME,
 	"DateTime!":          FieldKind_DATETIME,
+	"[DateTime]":         FieldKind_NILLABLE_DATETIME_ARRAY,
+	"[DateTime!]":        FieldKind_DATETIME_ARRAY,
 	"Float":              FieldKind_NILLABLE_FLOAT64,
 	"[Float]":            FieldKind_NILLABLE_FLOAT64_ARRAY,
 	"[Float!]":           FieldKind_FLOAT64_ARRAY,
@@ -438,6 +449,38 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 	return NewNamedKind(strKind, isArray), nil
 }
 
+// MarshalFieldKindToJSON encodes a [FieldKind] into a human-readable JSON form that
+// round-trips back through [parseFieldKind]. Relation kinds are emitted as the object
+// shape rather than a string, as [parseFieldKind] would otherwise read them as a [NamedKind].
+//
+// An unmapped scalar/scalar-array enum has no string name - [FieldKind.String] falls back to
+// the numeric form, which [parseFieldKind] would read back as a [NamedKind]. For those we emit
+// the number directly so the original enum is recovered.
+func MarshalFieldKindToJSON(kind FieldKind) (json.RawMessage, error) {
+	switch k := kind.(type) {
+	case *CollectionKind:
+		return json.Marshal(objectKind{Array: k.Array, CollectionID: k.CollectionID})
+	case *SelfKind:
+		return json.Marshal(objectKind{Array: k.Array, RelativeID: k.RelativeID})
+	case ScalarKind:
+		return marshalScalarKindToJSON(uint8(k), k.String())
+	case ScalarArrayKind:
+		return marshalScalarKindToJSON(uint8(k), k.String())
+	default:
+		return json.Marshal(kind.String())
+	}
+}
+
+// marshalScalarKindToJSON emits the string name for a mapped scalar/scalar-array kind, or the
+// numeric value when the kind is unmapped (its [FieldKind.String] is just the number). The
+// numeric form round-trips via [parseFieldKind]'s integer branch; a numeric string would not.
+func marshalScalarKindToJSON(value uint8, name string) (json.RawMessage, error) {
+	if _, err := strconv.ParseUint(name, 10, 8); err == nil {
+		return json.Marshal(value)
+	}
+	return json.Marshal(name)
+}
+
 // IsVectorEmbeddingCompatible returns true if the FieldKind is an array that contains
 // a supported scalar type for vector embeddings.
 func IsVectorEmbeddingCompatible(kind FieldKind) bool {
@@ -460,7 +503,8 @@ func IntToFieldKind(kind uint8) FieldKind {
 	case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT64_ARRAY),
 		uint8(FieldKind_STRING_ARRAY), uint8(FieldKind_NILLABLE_BOOL_ARRAY), uint8(FieldKind_NILLABLE_INT_ARRAY),
 		uint8(FieldKind_NILLABLE_FLOAT64_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY),
-		uint8(FieldKind_FLOAT32_ARRAY), uint8(FieldKind_NILLABLE_FLOAT32_ARRAY):
+		uint8(FieldKind_FLOAT32_ARRAY), uint8(FieldKind_NILLABLE_FLOAT32_ARRAY),
+		uint8(FieldKind_DATETIME_ARRAY), uint8(FieldKind_NILLABLE_DATETIME_ARRAY):
 		return ScalarArrayKind(kind)
 	default:
 		return ScalarKind(kind)

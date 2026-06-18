@@ -1,6 +1,8 @@
 package connor
 
 import (
+	"time"
+
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -34,6 +36,12 @@ func all(condition, data any) (bool, error) {
 		return allSlice(condition, t)
 
 	case []immutable.Option[float64]:
+		return allSlice(condition, t)
+
+	case []time.Time:
+		return allSlice(condition, t)
+
+	case []immutable.Option[time.Time]:
 		return allSlice(condition, t)
 
 	default:

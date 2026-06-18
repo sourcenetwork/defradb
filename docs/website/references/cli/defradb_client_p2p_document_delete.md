@@ -8,7 +8,7 @@ Delete P2P documents from the followed pubsub topics.
 The removed documents will no longer be synchronized between nodes.
 
 ```
-defradb client p2p document delete [docIDs] [flags]
+defradb client p2p document delete <docIDs> [flags]
 ```
 
 ### Examples

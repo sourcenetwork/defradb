@@ -12,7 +12,7 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.
 
 ```
-defradb client query [-i --identity] [request] [flags]
+defradb client query [request] [flags]
 ```
 
 ### Examples

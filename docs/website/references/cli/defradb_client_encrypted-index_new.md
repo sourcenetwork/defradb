@@ -11,7 +11,7 @@ The --type flag is optional. If not provided, the default value will be "equalit
 Currently only "equality" type is supported.
 
 ```
-defradb client encrypted-index new -c --collection <collection> --field <field> [--type <type>] [flags]
+defradb client encrypted-index new [flags]
 ```
 
 ### Examples

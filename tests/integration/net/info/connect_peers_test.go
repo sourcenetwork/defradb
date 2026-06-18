@@ -99,9 +99,9 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 					"{{.Peer2_Address0}}",
 				},
 			},
-			testUtils.Wait{
+			&action.Wait{
 				// Wait for the connections to propagate
-				Duration: time.Millisecond * 50,
+				Duration: immutable.Some(time.Millisecond * 50),
 			},
 			&action.ActivePeers{
 				NodeID: 1,

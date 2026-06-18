@@ -29,6 +29,7 @@ var openApiSchemas = map[string]any{
 	"get_peer_info":                            &client.PeerInfo{},
 	"request_graphql":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
+	"action_execution":                         &client.ActionExecution{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
 	"new_index":                                &client.NewIndexRequest{},

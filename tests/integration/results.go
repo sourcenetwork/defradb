@@ -346,6 +346,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[string]:
 		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[time.Time]:
+		return areResultOptionsEqual(expectedVal, actual)
 	case []uint8:
 		return areResultsEqual(base64.StdEncoding.EncodeToString(expectedVal), actual)
 	case []int64:
@@ -375,6 +377,10 @@ func areResultsEqual(expected any, actual any) bool {
 	case []immutable.Option[bool]:
 		return areResultArraysEqual(expectedVal, actual)
 	case []immutable.Option[string]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []time.Time:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[time.Time]:
 		return areResultArraysEqual(expectedVal, actual)
 	case time.Time:
 		return areResultsEqual(expectedVal.Format(time.RFC3339Nano), actual)
@@ -474,4 +480,96 @@ func (matcher *CurrentTimestampMatcher) FailureMessage(actual any) string {
 
 func (matcher *CurrentTimestampMatcher) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected timestamp %v not to be within 120 seconds of now", actual)
+}
+
+// ArrayMatcher is a matcher that checks if the actual array of value is a
+// match for all the matchers in the ArrayMatcher's matchers field.
+//
+// The actual value must be an array of the same length as the matchers field,
+// and each element of the actual array must match the corresponding matcher in
+// the matchers field.
+type ArrayMatcher struct {
+	matchers []TestStateMatcher
+	testStateMatcher
+}
+
+var _ TestStateMatcher = (*ArrayMatcher)(nil)
+
+func NewArrayMatcher(matchers ...TestStateMatcher) *ArrayMatcher {
+	return &ArrayMatcher{matchers: matchers}
+}
+
+func (matcher *ArrayMatcher) Match(actual any) (bool, error) {
+	switch v := actual.(type) {
+	case []any:
+		return matchActual(matcher, v)
+
+	case []map[string]any:
+		return matchActual(matcher, v)
+
+	case []string:
+		return matchActual(matcher, v)
+
+	case []int64:
+		return matchActual(matcher, v)
+
+	case []uint64:
+		return matchActual(matcher, v)
+
+	case []float32:
+		return matchActual(matcher, v)
+
+	case []float64:
+		return matchActual(matcher, v)
+
+	case []bool:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[string]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[int64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[uint64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[float32]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[float64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[bool]:
+		return matchActual(matcher, v)
+
+	case []time.Time:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[time.Time]:
+		return matchActual(matcher, v)
+
+	default:
+		return false, fmt.Errorf("expected an array, got %T", actual)
+	}
+}
+
+func matchActual[T any](matcher *ArrayMatcher, actual []T) (bool, error) {
+	if len(actual) != len(matcher.matchers) {
+		return false, fmt.Errorf("expected array of length %d, got %d", len(matcher.matchers), len(actual))
+	}
+	for i, matcher := range matcher.matchers {
+		if ok, err := matcher.Match(actual[i]); err != nil || !ok {
+			return false, fmt.Errorf("element %d: %w", i, err)
+		}
+	}
+	return true, nil
+}
+
+func (matcher *ArrayMatcher) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected array %v to match all elements", actual)
+}
+
+func (matcher *ArrayMatcher) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected array %v not to match all elements", actual)
 }
