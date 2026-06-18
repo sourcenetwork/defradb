@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -52,7 +53,7 @@ func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID strin
 	if err != nil {
 		return docID, nil
 	}
-	cols, err := txn.GetCollections(ctx, options.GetCollections())
+	cols, err := r.db.getCollections(ctx, utils.NewOptions(options.GetCollections()), true)
 	if err != nil {
 		return "", err
 	}
@@ -70,13 +71,12 @@ func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID strin
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
-// The supplied identity is forwarded to the underlying collection lookup, so
-// NAC sees the caller's identity rather than the node's. Pass `immutable.None`
-// for anonymous lookups; NAC will gate the call accordingly.
+// The identity argument is kept for the KMS interface, but collection metadata
+// resolution is internal and must not require the requester to have get-collection access.
 func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
-	ident immutable.Option[identity.Identity],
+	_ immutable.Option[identity.Identity],
 ) (client.Collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
@@ -104,12 +104,11 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		return nil, NewErrDocIDNotFound(docID)
 	}
 
-	opt := options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())
-	if ident.HasValue() {
-		opt = opt.SetIdentity(ident.Value())
-	}
-
-	cols, err := txn.GetCollections(ctx, opt)
+	cols, err := r.db.getCollections(
+		ctx,
+		utils.NewOptions(options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())),
+		true,
+	)
 	if err != nil {
 		return nil, err
 	}
