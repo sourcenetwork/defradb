@@ -182,6 +182,10 @@ func TestBlockDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
 
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), 0, fieldCID)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
+
 	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)

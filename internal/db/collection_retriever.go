@@ -53,19 +53,9 @@ func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID strin
 	if err != nil {
 		return docID, nil
 	}
-	cols, err := r.db.getCollections(ctx, utils.NewOptions(options.GetCollections()), true)
-	if err != nil {
-		return "", err
-	}
-	for _, col := range cols {
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
-		if err != nil {
-			return "", err
-		}
-		publicDocID, found, err := id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), shortID, blockCID)
-		if err != nil || found {
-			return publicDocID, err
-		}
+	publicDocID, found, err := id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, blockCID)
+	if err != nil || found {
+		return publicDocID, err
 	}
 	return docID, nil
 }

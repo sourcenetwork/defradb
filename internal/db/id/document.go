@@ -11,6 +11,7 @@
 package id
 
 import (
+	"bytes"
 	"context"
 	stderrors "errors"
 	"strings"
@@ -249,7 +250,10 @@ func GetDocIDsForBlockFromStore(
 		if !hasNext {
 			break
 		}
-		docID := strings.TrimPrefix(string(iter.Key()), prefix)
+		docID, err := docIDFromBlockMappingSuffix(iter.Key()[len(prefix):], collectionShortID)
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
 		if docID != "" {
 			docIDs = append(docIDs, docID)
 		}
@@ -288,7 +292,7 @@ func DeleteBlockDocIDMappings(
 		return nil
 	}
 
-	blockPrefix := keys.NewBlockCIDToDocIDKey(collectionShortID, "", "").ToString() + "/"
+	blockPrefix := keys.NewBlockCIDToDocIDKey(0, "", "").ToString() + "/"
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(blockPrefix)})
 	if err != nil {
 		return err
@@ -304,9 +308,11 @@ func DeleteBlockDocIDMappings(
 			break
 		}
 
-		key := string(iter.Key())
-		docIDStart := strings.LastIndexByte(key, '/')
-		if docIDStart < 0 || key[docIDStart+1:] != publicDocID {
+		keyCollectionShortID, docID, err := blockMappingKeyDocID(iter.Key()[len(blockPrefix):])
+		if err != nil {
+			return stderrors.Join(err, iter.Close())
+		}
+		if keyCollectionShortID != collectionShortID || docID != publicDocID {
 			continue
 		}
 		mappingKeys = append(mappingKeys, append([]byte(nil), iter.Key()...))
@@ -321,6 +327,35 @@ func DeleteBlockDocIDMappings(
 		}
 	}
 	return nil
+}
+
+func docIDFromBlockMappingSuffix(data []byte, collectionShortID uint32) (string, error) {
+	if collectionShortID == 0 {
+		rest, _, err := keys.DecodeCollectionShortIDPrefix(data)
+		if err != nil {
+			return "", err
+		}
+		if len(rest) == 0 || rest[0] != '/' {
+			return "", keys.ErrInvalidKey
+		}
+		return string(rest[1:]), nil
+	}
+	return string(data), nil
+}
+
+func blockMappingKeyDocID(data []byte) (uint32, string, error) {
+	blockEnd := bytes.IndexByte(data, '/')
+	if blockEnd < 0 {
+		return 0, "", keys.ErrInvalidKey
+	}
+	rest, collectionShortID, err := keys.DecodeCollectionShortIDPrefix(data[blockEnd+1:])
+	if err != nil {
+		return 0, "", err
+	}
+	if len(rest) == 0 || rest[0] != '/' {
+		return 0, "", keys.ErrInvalidKey
+	}
+	return collectionShortID, string(rest[1:]), nil
 }
 
 func DeleteNodeDocIDAliasesForShortDocID(
