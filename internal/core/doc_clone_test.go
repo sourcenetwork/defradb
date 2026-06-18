@@ -35,26 +35,15 @@ func TestDocClone_CopiesScalarFields(t *testing.T) {
 	assert.Equal(t, original.CollectionVersionID, clone.CollectionVersionID)
 }
 
-// TestDocClone_MutatingCloneDoesNotAffectOriginal tests that mutating the clone's fields does not affect the original.
-func TestDocClone_MutatingCloneDoesNotAffectOriginal(t *testing.T) {
+// TestDocClone_MutatingCloneFieldsDoesNotAffectOriginal tests that mutating the clone's Fields slice does not affect the original.
+func TestDocClone_MutatingCloneFieldsDoesNotAffectOriginal(t *testing.T) {
 	original := Doc{
-		Hidden:              true,
-		Status:              client.Deleted,
-		CollectionVersionID: "v1",
-		Fields:              DocFields{"id1", "value"},
+		Fields: DocFields{"id1", "value"},
 	}
 
-	// The following lines intentionally mutate the clone to confirm the original is not affected.
-	// These are "unused writes", but this is intentional.
 	clone := original.Clone()
-	clone.Hidden = false             //nolint:ineffassign
-	clone.Status = client.Active     //nolint:ineffassign,unusedwrite
-	clone.CollectionVersionID = "v2" //nolint:ineffassign,unusedwrite
 	clone.Fields[1] = "mutated"
 
-	assert.True(t, original.Hidden)
-	assert.Equal(t, client.Deleted, original.Status)
-	assert.Equal(t, "v1", original.CollectionVersionID)
 	assert.Equal(t, "value", original.Fields[1])
 }
 
