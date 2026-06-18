@@ -72,6 +72,12 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						},
 					},
 				},
+				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+					"User_age_ASC": {
+						Status: client.IndexStatusFailed,
+						Reason: "can not index",
+					},
+				},
 			},
 		},
 	}
