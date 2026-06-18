@@ -65,7 +65,8 @@ const (
 	// PurgeName is the name of the purge event.
 	PurgeName = Name("purge")
 	// TopicPeerEventName is the name of the topic peer join/leave event.
-	TopicPeerEventName = Name("topic-peer-event")
+	TopicPeerEventName  = Name("topic-peer-event")
+	ActionExecutionName = Name("action-execution")
 )
 
 // PubSub is an event that is published when
@@ -182,4 +183,15 @@ type TopicPeerEvent struct {
 	Topic string
 	// EventType is the type of event: "JOINED" or "LEFT".
 	EventType string
+}
+
+type ActionExecution struct {
+	// The ID of the collection that this action is executing on.
+	CollectionID string
+
+	// The current action being executed.
+	Action client.Action
+
+	// The current status of this action execution.
+	Status client.ActionStatus
 }

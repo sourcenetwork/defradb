@@ -24,7 +24,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
+		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
 		Long:  `Delete documents by docID or filter and lists the number of documents deleted.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,5 +73,6 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

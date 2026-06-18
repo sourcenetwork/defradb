@@ -8,7 +8,7 @@ Delete P2P collections from the followed pubsub topics.
 The removed collections will no longer be synchronized between nodes.
 
 ```
-defradb client p2p collection delete [collectionNames] [flags]
+defradb client p2p collection delete <collectionNames> [flags]
 ```
 
 ### Examples
