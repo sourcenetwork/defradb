@@ -22,149 +22,123 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
+	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed creates an index over
-// ~12.5 MB of existing data: 250 documents, each with a ~50 KB indexed value.
-// Index keys embed the field value, so this cannot fit in one ~11 MB transaction,
-// while each individual key stays below the ~65 KB key cap.
-func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
-	const numDocs = 250
-	const valuePadLen = 50 * 1024
+// largeDocCount × largeNameValue gives ~12.5 MB of data. Index keys embed the field value,
+// so the backfill cannot fit in one ~11 MB transaction, while each key stays below the
+// ~65 KB key cap. The name is unique per doc and derived from the doc index so the query
+// target below is deterministic.
+const largeDocCount = 250
+const largeValuePadLen = 50 * 1024
 
-	actions := make([]any, 0, numDocs+5)
+func largeNameValue(i int) string {
+	return fmt.Sprintf("%04d", i) + strings.Repeat("a", largeValuePadLen)
+}
 
-	actions = append(actions, &action.AddCollection{
-		SDL: `
-			type User {
-				name: String
-				age:  Int
-			}
-		`,
-	})
-
-	// One AddDoc action per document, so each insert runs in its own transaction
-	// and only the backfill is put under pressure.
-	for i := 0; i < numDocs; i++ {
-		name := fmt.Sprintf("%04d", i) + strings.Repeat("a", valuePadLen)
-		doc := fmt.Sprintf(`{"name": %q, "age": %d}`, name, i)
-		actions = append(actions, &action.AddDoc{
-			Doc: doc,
-		})
+// genLargeUsers generates largeDocCount User docs. Each doc's name is a unique ~50 KB value
+// and its age equals the doc index, both derived from i so the query target is deterministic.
+func genLargeUsers() testUtils.GenerateDocs {
+	return testUtils.GenerateDocs{
+		Options: []gen.Option{
+			gen.WithTypeDemand("User", largeDocCount),
+			gen.WithFieldGenerator("User", "name", func(i int, _ func() any) any {
+				return largeNameValue(i)
+			}),
+			gen.WithFieldGenerator("User", "age", func(i int, _ func() any) any {
+				return i
+			}),
+		},
 	}
+}
 
-	actions = append(actions, &action.NewIndex{
-		IndexName: "User_name",
-		FieldName: "name",
-	})
-
-	actions = append(actions, &action.ListIndexes{
-		ExpectedIndexes: []client.IndexDescription{
-			{
-				Name: "User_name",
-				ID:   1,
-				Fields: []client.IndexedFieldDescription{
-					{Name: "name"},
-				},
-			},
-		},
-	})
-
-	// Querying one document by its value proves the index was backfilled correctly.
-	targetName := fmt.Sprintf("%04d", 42) + strings.Repeat("a", valuePadLen)
-	req := fmt.Sprintf(
-		`query { User(filter: {name: {_eq: %q}}) { age } }`,
-		targetName,
-	)
-
-	actions = append(actions, &action.Request{
-		Request: req,
-		Results: map[string]any{
-			"User": []map[string]any{
-				{"age": int64(42)},
-			},
-		},
-	})
-
-	// The planner must use the index, not a full scan.
-	actions = append(actions, &action.Request{
-		Request:  makeExplainQuery(req),
-		Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
-	})
+// TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed builds an index over ~12.5 MB of
+// existing data and checks the index is ready and a filtered query uses it.
+func TestIndexCreate_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
+	req := fmt.Sprintf(`query { User(filter: {name: {_eq: %q}}) { age } }`, largeNameValue(42))
 
 	test := testUtils.TestCase{
-		Actions: actions,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age:  Int
+					}
+				`,
+			},
+			genLargeUsers(),
+			&action.NewIndex{
+				IndexName: "User_name",
+				FieldName: "name",
+			},
+			&action.ListIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "User_name",
+						ID:     1,
+						Fields: []client.IndexedFieldDescription{{Name: "name"}},
+					},
+				},
+			},
+			// Querying one document by its value proves the index was backfilled correctly.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{{"age": int64(42)}},
+				},
+			},
+			// The planner must use the index, not a full scan.
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestIndexDelete_WithManyLargeExistingDocs_ShouldSucceed is the deletion half of the
-// #4907 regression test. It creates an index over ~12.5 MB of data (250 docs × ~50 KB),
-// then deletes it. Without batched GC this would exceed the transaction size limit.
+// TestIndexDelete_WithManyLargeExistingDocs_ShouldSucceed is the deletion half of the #4907
+// regression test: deleting an index over ~12.5 MB of data must not exceed the transaction
+// size limit, after which the query falls back to a full scan.
 func TestIndexDelete_WithManyLargeExistingDocs_ShouldSucceed(t *testing.T) {
-	const numDocs = 250
-	const valuePadLen = 50 * 1024
-
-	actions := make([]any, 0, numDocs+6)
-
-	actions = append(actions, &action.AddCollection{
-		SDL: `
-			type User {
-				name: String
-				age:  Int
-			}
-		`,
-	})
-
-	for i := 0; i < numDocs; i++ {
-		name := fmt.Sprintf("%04d", i) + strings.Repeat("a", valuePadLen)
-		doc := fmt.Sprintf(`{"name": %q, "age": %d}`, name, i)
-		actions = append(actions, &action.AddDoc{
-			Doc: doc,
-		})
-	}
-
-	actions = append(actions, &action.NewIndex{
-		IndexName: "User_name",
-		FieldName: "name",
-	})
-
-	// Delete the index — this must not exceed the transaction size limit.
-	actions = append(actions, &action.DeleteIndex{
-		IndexName: "User_name",
-	})
-
-	// Index must be gone.
-	actions = append(actions, &action.ListIndexes{
-		ExpectedIndexes: []client.IndexDescription{},
-	})
-
-	// The filtered query still returns the correct document via a full scan.
-	targetName := fmt.Sprintf("%04d", 42) + strings.Repeat("a", valuePadLen)
-	req := fmt.Sprintf(
-		`query { User(filter: {name: {_eq: %q}}) { age } }`,
-		targetName,
-	)
-
-	actions = append(actions, &action.Request{
-		Request: req,
-		Results: map[string]any{
-			"User": []map[string]any{
-				{"age": int64(42)},
-			},
-		},
-	})
-
-	// No index fetches — the planner must use a full scan now.
-	actions = append(actions, &action.Request{
-		Request:  makeExplainQuery(req),
-		Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
-	})
+	req := fmt.Sprintf(`query { User(filter: {name: {_eq: %q}}) { age } }`, largeNameValue(42))
 
 	test := testUtils.TestCase{
-		Actions: actions,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age:  Int
+					}
+				`,
+			},
+			genLargeUsers(),
+			&action.NewIndex{
+				IndexName: "User_name",
+				FieldName: "name",
+			},
+			&action.DeleteIndex{
+				IndexName: "User_name",
+			},
+			&action.ListIndexes{
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+			// The filtered query still returns the correct document via a full scan.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{{"age": int64(42)}},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
