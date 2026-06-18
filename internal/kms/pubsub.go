@@ -22,7 +22,6 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	grpcpeer "google.golang.org/grpc/peer"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
@@ -31,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -290,8 +290,11 @@ func (s *pubSubService) handleFetchEncryptionKeyResponses(
 				respChan = nextRespChan
 				continue
 			}
-			items, ok := s.tryHandleFetchEncryptionKeyResponse(resp, req, privateKey)
+			items, ok, err := s.tryHandleFetchEncryptionKeyResponse(resp, req, privateKey, false /* skipVerify */)
 			if !ok {
+				if err != nil {
+					log.ErrorContextE(s.ctx, "Failed handling of encryption key response", err)
+				}
 				continue
 			}
 
@@ -364,30 +367,23 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 	resp client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
-) ([]encryption.Item, bool) {
+	skipVerify bool,
+) ([]encryption.Item, bool, error) {
 	if resp.Err != nil {
-		log.ErrorContextE(s.ctx, "encryption key peer reply carried error", resp.Err)
-		return nil, false
+		return nil, false, errors.Join(ErrPeerErrorKeyReply, resp.Err)
 	}
 
 	var keyResp fetchEncryptionKeyReply
 	if err := cbor.Unmarshal(resp.Data, &keyResp); err != nil {
-		log.ErrorContextE(s.ctx, "Failed to unmarshal encryption key response", err)
-		return nil, false
+		return nil, false, errors.Join(ErrEncryptionKeyUnmarshal, err)
 	}
 
 	if len(keyResp.Blocks) == 0 {
 		// Peer didn't have the key; keep waiting for the one that does.
-		return nil, false
+		return nil, false, nil
 	}
 	if len(keyResp.Links) != len(keyResp.Blocks) {
-		log.ErrorContext(
-			s.ctx,
-			"encryption key peer reply had mismatched links and blocks",
-			corelog.Int("LinkCount", len(keyResp.Links)),
-			corelog.Int("BlockCount", len(keyResp.Blocks)),
-		)
-		return nil, false
+		return nil, false, NewErrReplyLinksAndBlocksMismatch(len(keyResp.Links), len(keyResp.Blocks))
 	}
 
 	senderID := keyResp.Sender
@@ -405,13 +401,24 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 			crypto.WithPubKeyPrepended(false),
 		)
 		if err != nil {
-			log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
-			return nil, false
+			return nil, false, errors.Join(ErrDecryptEncryptionKey, err)
 		}
 
-		if _, err := s.encStore.put(context.Background(), decryptedData); err != nil {
-			log.ErrorContextE(s.ctx, "Failed to store encryption key", err)
-			return nil, false
+		var encBlock coreblock.Encryption
+		err = encBlock.Unmarshal(decryptedData)
+		if err != nil {
+			return nil, false, errors.Join(ErrDecodingEncryptionKey, err)
+		}
+
+		if !skipVerify {
+			link, err := s.encStore.computeBlockLink(s.ctx, encBlock)
+			if !bytes.Equal(keyResp.Links[i], link) {
+				return nil, false, errors.Join(ErrEncryptionKeyCIDMismatch, err)
+			}
+		}
+
+		if _, err := s.encStore.putBlock(context.Background(), encBlock); err != nil {
+			return nil, false, errors.Join(ErrEncryptionKeyStore, err)
 		}
 
 		// todo: verify incoming response order block/CIDs match the request
@@ -423,7 +430,7 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 		})
 	}
 
-	return resultEncItems, true
+	return resultEncItems, true, nil
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
