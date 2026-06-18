@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -86,9 +87,17 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				}
 			}
 
+			docIDAliases := map[string]struct{}{}
+			if docID, ok := docMap[request.DocIDFieldName].(string); ok {
+				docIDAliases[docID] = struct{}{}
+			}
+
 			newDocID, hasNewDocID := docMap[request.NewDocIDFieldName]
 			delete(docMap, request.NewDocIDFieldName)
 			if hasNewDocID {
+				if docID, ok := newDocID.(string); ok {
+					docIDAliases[docID] = struct{}{}
+				}
 				docMap[request.DocIDFieldName] = newDocID
 			}
 
@@ -100,6 +109,12 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			err = col.AddDocument(ctx, doc)
 			if err != nil {
 				return NewErrDocAdd(err)
+			}
+			for docID := range docIDAliases {
+				err = db.setImportedDocIDAlias(ctx, col, doc, docID)
+				if err != nil {
+					return err
+				}
 			}
 
 			// add back the self referencing fields and update doc.
@@ -121,6 +136,39 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 	}
 
 	return nil
+}
+
+func (db *DB) setImportedDocIDAlias(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+	importedDocID string,
+) error {
+	if importedDocID == "" || importedDocID == doc.ID().String() {
+		return nil
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	colShortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
+	if err != nil {
+		return err
+	}
+	shortDocID, found, err := id.GetShortDocID(ctx, colShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return NewErrDocIDNotFound(doc.ID().String())
+	}
+	if err := id.SetDocIDAlias(ctx, colShortID, shortDocID, importedDocID); err != nil {
+		return err
+	}
+	return txn.Commit()
 }
 
 func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
