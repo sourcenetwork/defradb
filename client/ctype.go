@@ -12,7 +12,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // CType indicates CRDT type.
@@ -112,7 +111,7 @@ func (t *CType) UnmarshalJSON(b []byte) error {
 		}
 		ctype, ok := CTypeFromString(s)
 		if !ok {
-			return fmt.Errorf("unknown CRDT type: %q", s)
+			return NewErrUnknownCRDTString(s)
 		}
 		*t = ctype
 		return nil
