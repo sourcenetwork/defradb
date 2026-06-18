@@ -183,7 +183,7 @@ func (n *maxNode) Next() (bool, error) {
 						case float64:
 							res = res.SetFloat64(v)
 						default:
-							return value
+							return nil
 						}
 						if value == nil || res.Cmp(value) > 0 {
 							return res
