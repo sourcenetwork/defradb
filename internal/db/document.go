@@ -301,11 +301,7 @@ func (c *collection) UpdateDocument(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
-		if err != nil {
-			return err
-		}
-		return NewErrDocumentDeleted(publicDocID)
+		return NewErrDocumentDeleted(doc.ID().String())
 	}
 
 	err = c.update(ctx, doc)
