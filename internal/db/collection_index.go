@@ -295,10 +295,9 @@ func (c *collection) newIndex(
 		return client.IndexDescription{}, nil, err
 	}
 
-	// This writes the building state directly rather than through action.RegisterSubject, so it
-	// skips that helper's "an action of this kind is already in progress" guard. That is safe
-	// because the subject is the index ID, which is sequence-allocated and therefore unique per
-	// build; a caller that reused a subject would need to restore the guard.
+	// This writes the building state without an "already in progress" guard, which is safe
+	// because the index ID keying the record is sequence-allocated and therefore unique per
+	// build; a caller that reused an index ID would need to add one.
 	err = c.db.setIndexState(ctx, c.def.CollectionID, desc.ID, indexState{Status: client.IndexStatusBuilding})
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]

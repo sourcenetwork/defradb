@@ -57,37 +57,27 @@ func TestDecodeEnvelope_Corrupt(t *testing.T) {
 	assert.True(t, errors.Is(err, ErrCorruptActionRecord), "expected ErrCorruptActionRecord, got: %v", err)
 }
 
-// TestRegisterSubject_SecondRegistrationWhileInProgress_Errors checks the guard that prevents
-// two concurrent executions of the same action+subject on one collection.
-func TestRegisterSubject_SecondRegistrationWhileInProgress_Errors(t *testing.T) {
+// TestRegister_SecondRegistrationWhileInProgress_Errors checks the guard that prevents two
+// concurrent executions of the same action on one collection.
+func TestRegister_SecondRegistrationWhileInProgress_Errors(t *testing.T) {
 	ctx := context.Background()
 	ms, events := newTestMultistore(t)
 
-	err := RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1")
+	err := Register(ctx, ms, events, "col1", client.TruncateAction)
 	require.NoError(t, err)
 
-	err = RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1")
+	err = Register(ctx, ms, events, "col1", client.TruncateAction)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrActionInProgress), "expected ErrActionInProgress, got: %v", err)
 }
 
-// TestRegisterSubject_DistinctSubjects_DoNotCollide checks two builds with different subjects
-// (e.g. distinct index IDs) on the same collection both register independently.
-func TestRegisterSubject_DistinctSubjects_DoNotCollide(t *testing.T) {
+// TestRegister_AfterComplete_Succeeds checks the guard releases once the prior execution
+// completes (its record is deleted).
+func TestRegister_AfterComplete_Succeeds(t *testing.T) {
 	ctx := context.Background()
 	ms, events := newTestMultistore(t)
 
-	require.NoError(t, RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1"))
-	require.NoError(t, RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "2"))
-}
-
-// TestRegisterSubject_AfterComplete_Succeeds checks the guard releases once the prior
-// execution completes (its record is deleted).
-func TestRegisterSubject_AfterComplete_Succeeds(t *testing.T) {
-	ctx := context.Background()
-	ms, events := newTestMultistore(t)
-
-	require.NoError(t, RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1"))
-	require.NoError(t, CompleteSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1"))
-	require.NoError(t, RegisterSubject(ctx, ms, events, "col1", client.BackfillIndexAction, "1"))
+	require.NoError(t, Register(ctx, ms, events, "col1", client.TruncateAction))
+	require.NoError(t, Complete(ctx, ms, events, "col1", client.TruncateAction))
+	require.NoError(t, Register(ctx, ms, events, "col1", client.TruncateAction))
 }

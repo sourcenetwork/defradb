@@ -55,23 +55,7 @@ func Register(
 	collectionID string,
 	action client.Action,
 ) error {
-	return RegisterSubject(ctx, multistore, events, collectionID, action, "")
-}
-
-// RegisterSubject registers a new per-subject action for execution.
-//
-// Subject distinguishes concurrent executions of the same action on one collection
-// (for example, an index build keyed by index ID). Pass an empty subject for
-// collection-wide actions.
-func RegisterSubject(
-	ctx context.Context,
-	multistore *datastore.Multistore,
-	events event.Bus,
-	collectionID string,
-	action client.Action,
-	subject string,
-) error {
-	status, err := getStatus(multistore, collectionID, action, subject)
+	status, err := getStatus(multistore, collectionID, action)
 	if err != nil {
 		return err
 	}
@@ -79,10 +63,7 @@ func RegisterSubject(
 		return NewErrActionInProgress(collectionID, action)
 	}
 
-	return setSubject(
-		ctx, multistore, events, collectionID, action, subject,
-		client.InProgressActionStatus, "", nil,
-	)
+	return setStatus(ctx, multistore, events, collectionID, action, client.InProgressActionStatus, "", nil)
 }
 
 // Set the status for an existing action. Non-transactional, collection-wide.
@@ -94,20 +75,19 @@ func Set(
 	action client.Action,
 	status client.ActionStatus,
 ) error {
-	return setSubject(ctx, multistore, events, collectionID, action, "", status, "", nil)
+	return setStatus(ctx, multistore, events, collectionID, action, status, "", nil)
 }
 
-// setSubject writes an action record non-transactionally.
+// setStatus writes a collection-wide action record non-transactionally.
 //
 // It passes context.TODO() to force a transaction-free write: corekv otherwise binds the
 // transaction on the context to the write (https://github.com/sourcenetwork/corekv/issues/107).
-func setSubject(
+func setStatus(
 	ctx context.Context,
 	multistore *datastore.Multistore,
 	events event.Bus,
 	collectionID string,
 	action client.Action,
-	subject string,
 	status client.ActionStatus,
 	reason string,
 	payload json.RawMessage,
@@ -119,14 +99,14 @@ func setSubject(
 
 	err = multistore.Systemstore().Set(
 		context.TODO(),
-		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		keys.NewActionStatusKey(collectionID, action).Bytes(),
 		val,
 	)
 	if err != nil {
 		return err
 	}
 
-	publish(events, collectionID, action, subject, status)
+	publish(events, collectionID, action, "", status)
 	return nil
 }
 
@@ -173,6 +153,9 @@ func SetTxn(
 }
 
 // Complete a collection-wide action by deleting its record. Non-transactional.
+//
+// A missing record means the action has completed, so completion deletes rather than
+// storing a terminal status.
 func Complete(
 	ctx context.Context,
 	multistore *datastore.Multistore,
@@ -180,31 +163,16 @@ func Complete(
 	collectionID string,
 	action client.Action,
 ) error {
-	return CompleteSubject(ctx, multistore, events, collectionID, action, "")
-}
-
-// CompleteSubject completes a per-subject action by deleting its record. Non-transactional.
-//
-// A missing record means the action has completed, so completion deletes rather than
-// storing a terminal status.
-func CompleteSubject(
-	ctx context.Context,
-	multistore *datastore.Multistore,
-	events event.Bus,
-	collectionID string,
-	action client.Action,
-	subject string,
-) error {
 	err := multistore.Systemstore().Delete(
-		// See setSubject for why this is transaction-free.
+		// See setStatus for why this is transaction-free.
 		context.TODO(),
-		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
 	if err != nil {
 		return err
 	}
 
-	publish(events, collectionID, action, subject, client.CompletedActionStatus)
+	publish(events, collectionID, action, "", client.CompletedActionStatus)
 	return nil
 }
 
@@ -252,12 +220,11 @@ func getStatus(
 	multistore *datastore.Multistore,
 	collectionID string,
 	action client.Action,
-	subject string,
 ) (client.ActionStatus, error) {
 	val, err := multistore.Systemstore().Get(
-		// See setSubject for why this is transaction-free.
+		// See setStatus for why this is transaction-free.
 		context.TODO(),
-		keys.NewActionStatusSubjectKey(collectionID, action, subject).Bytes(),
+		keys.NewActionStatusKey(collectionID, action).Bytes(),
 	)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
