@@ -8,7 +8,8 @@
 # The linked policy id and resource correspond to an uploaded policy, some policy examples can be
 # found under: `examples/policy/`
 # 
-# Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
+# Learn more about the
+# [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",

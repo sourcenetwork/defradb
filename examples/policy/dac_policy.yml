@@ -1,7 +1,8 @@
 # The below policy contains a valid document acp resource interface that can be linked to a collection
 # object during the collection add command to have access control enabled for documents of that collection.
 #
-# Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
+# Learn more about the
+# [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 name: An Example Document ACP Policy
 

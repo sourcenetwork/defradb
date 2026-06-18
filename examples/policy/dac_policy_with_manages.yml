@@ -4,7 +4,8 @@
 # This policy specifically has the manages attribute defined under admin relation which gives admin
 # of a resource, the ability to add/remove relationships with `reader` relation name.
 #
-# Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
+# Learn more about the
+# [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 name: An Example Document ACP Policy With Manages
 
