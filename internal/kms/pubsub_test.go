@@ -90,15 +90,17 @@ func TestTryHandleFetchEncryptionKeyResponse_UsesReplySenderForAAD(t *testing.T)
 		ctx:      ctx,
 		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
 	}
-	items, ok := service.tryHandleFetchEncryptionKeyResponse(
+	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
 		client.PubsubResponse{
 			From: "relay-peer",
 			Data: data,
 		},
 		req,
 		requesterPrivKey,
+		true,
 	)
 
+	require.NoError(t, err)
 	require.True(t, ok)
 	require.Len(t, items, 1)
 	assert.Equal(t, req.Links[0], items[0].Link)
@@ -127,15 +129,17 @@ func TestTryHandleFetchEncryptionKeyResponse_RejectsMismatchedLinksAndBlocks(t *
 		ctx:      ctx,
 		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
 	}
-	items, ok := service.tryHandleFetchEncryptionKeyResponse(
+	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
 		client.PubsubResponse{
 			From: "holder-peer",
 			Data: data,
 		},
 		req,
 		requesterPrivKey,
+		true,
 	)
 
+	require.Error(t, err)
 	require.False(t, ok)
 	assert.Nil(t, items)
 }
@@ -172,6 +176,126 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	foundBlockBytes, err := foundBlock.Marshal()
 	require.NoError(t, err)
 	assert.Equal(t, foundBlockBytes, blocks[0])
+}
+
+func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.T) {
+	ctx := context.Background()
+
+	requesterPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+	holderPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+
+	req := &fetchEncryptionKeyRequest{
+		Links:              [][]byte{[]byte("encryption-block-link")},
+		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
+	}
+
+	encBlock := &coreblock.Encryption{
+		DocID: []byte("doc1"),
+		Key:   []byte("doc-key"),
+	}
+	plainBlock, err := encBlock.Marshal()
+	require.NoError(t, err)
+
+	encryptedBlock, err := crypto.EncryptECIES(
+		plainBlock,
+		requesterPrivKey.PublicKey(),
+		crypto.WithAAD(makeAssociatedData(req, "holder-peer")),
+		crypto.WithPrivKey(holderPrivKey),
+		crypto.WithPubKeyPrepended(false),
+	)
+	require.NoError(t, err)
+
+	reply := &fetchEncryptionKeyReply{
+		Links:              req.Links,
+		Blocks:             [][]byte{encryptedBlock},
+		EphemeralPublicKey: holderPrivKey.PublicKey().Bytes(),
+	}
+	data, err := cbor.Marshal(reply)
+	require.NoError(t, err)
+
+	service := &pubSubService{
+		ctx:      ctx,
+		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
+	}
+
+	// service.encStore.computeLink([]byte("encrypted-block"))
+
+	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
+		client.PubsubResponse{
+			From: "holder-peer",
+			Data: data,
+		},
+		req,
+		requesterPrivKey,
+		false,
+	)
+
+	require.Error(t, err)
+	require.False(t, ok)
+	require.Len(t, items, 0)
+}
+
+func TestTryHandleFetchEncryptionKeyResponse_AcceptsVerifiedBlocks(t *testing.T) {
+	ctx := context.Background()
+
+	service := &pubSubService{
+		ctx:      ctx,
+		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
+	}
+
+	requesterPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+	holderPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+
+	req := &fetchEncryptionKeyRequest{
+		Links:              [][]byte{[]byte("bafyreidq2l2x5zntplo7hebxmj2w6uyw7srv2psrz6pjfgmaaesrb4jauu")},
+		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
+	}
+
+	encBlock := &coreblock.Encryption{
+		DocID: []byte("doc1"),
+		Key:   []byte("doc-key"),
+	}
+	plainBlock, err := encBlock.Marshal()
+	require.NoError(t, err)
+
+	encryptedBlock, err := crypto.EncryptECIES(
+		plainBlock,
+		requesterPrivKey.PublicKey(),
+		crypto.WithAAD(makeAssociatedData(req, "holder-peer")),
+		crypto.WithPrivKey(holderPrivKey),
+		crypto.WithPubKeyPrepended(false),
+	)
+	require.NoError(t, err)
+
+	reply := &fetchEncryptionKeyReply{
+		Links:              req.Links,
+		Blocks:             [][]byte{encryptedBlock},
+		EphemeralPublicKey: holderPrivKey.PublicKey().Bytes(),
+	}
+	data, err := cbor.Marshal(reply)
+	require.NoError(t, err)
+
+	// service.encStore.computeLink([]byte("encrypted-block"))
+
+	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
+		client.PubsubResponse{
+			From: "holder-peer",
+			Data: data,
+		},
+		req,
+		requesterPrivKey,
+		false,
+	)
+
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Len(t, items, 1)
+	assert.Equal(t, req.Links[0], items[0].Link)
+	assert.Equal(t, plainBlock, items[0].Block)
 }
 
 func storeEncryptionBlock(
