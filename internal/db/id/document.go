@@ -358,6 +358,33 @@ func blockMappingKeyDocID(data []byte) (uint32, string, error) {
 	return collectionShortID, string(rest[1:]), nil
 }
 
+func DeleteDocIDMappings(
+	ctx context.Context,
+	store corekv.ReaderWriter,
+	collectionShortID uint32,
+	shortDocID uint32,
+) error {
+	if collectionShortID == 0 || shortDocID == 0 {
+		return nil
+	}
+
+	publicDocID, found, err := GetDocIDFromStore(ctx, store, collectionShortID, shortDocID)
+	if err != nil {
+		return err
+	}
+
+	if err := deleteKeyIfExists(ctx, store, keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes()); err != nil {
+		return err
+	}
+	if err := DeleteNodeDocIDAliasesForShortDocID(ctx, store, collectionShortID, shortDocID); err != nil {
+		return err
+	}
+	if found {
+		return DeleteBlockDocIDMappings(ctx, store, collectionShortID, publicDocID)
+	}
+	return nil
+}
+
 func DeleteNodeDocIDAliasesForShortDocID(
 	ctx context.Context,
 	store corekv.ReaderWriter,
@@ -403,6 +430,13 @@ func DeleteNodeDocIDAliasesForShortDocID(
 		if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return err
 		}
+	}
+	return nil
+}
+
+func deleteKeyIfExists(ctx context.Context, store corekv.ReaderWriter, key []byte) error {
+	if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return err
 	}
 	return nil
 }

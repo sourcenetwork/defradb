@@ -110,8 +110,6 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
-	c, ok := col.(*collection)
-	require.True(t, ok)
 
 	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), col.Version())
 	require.NoError(t, err)
@@ -137,7 +135,7 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	const legacyDocID = "bae-legacy-doc"
 	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
 
-	require.NoError(t, c.deleteDocIDMappings(txnCtx, collectionShortID, shortDocID, ""))
+	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), collectionShortID, shortDocID))
 
 	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)

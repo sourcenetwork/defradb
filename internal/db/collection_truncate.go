@@ -34,6 +34,12 @@ import (
 // our deletes.
 const hardDeleteChunkSize int = 10000
 
+type truncatePrefix []byte
+
+func (p truncatePrefix) Bytes() []byte {
+	return p
+}
+
 func (c *collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
@@ -158,138 +164,93 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ctx context.Context,
 	colShortID uint32,
 ) error {
-	prefix := keys.DataStoreKey{
-		CollectionShortID: colShortID,
-	}
-
 	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
+	systemstore := datastore.CtxMustGetTxn(ctx).Systemstore()
 
 	deletedDocIDs := make(map[uint32]struct{})
-	// If there are more keys than we wish to load into memory at once, this will be set to
-	// true, and we'll continue the delete in another pass.
-	hasMore := true
-
-	for hasMore {
-		iter, err := ds.Iterator(ctx, datastore.IterOptions{
-			Prefix:   prefix,
-			KeysOnly: true,
-		})
-		if err != nil {
-			return NewErrCreateTruncateIterator(err)
+	for _, instanceType := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
+		instancePrefix := keys.DataStoreKey{
+			CollectionShortID: colShortID,
+			InstanceType:      instanceType,
+		}
+		if err := ds.Delete(ctx, instancePrefix); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+			return NewErrTruncateDatastoreKey(err, instancePrefix.ToString())
 		}
 
-		keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
+		// If there are more keys than we wish to load into memory at once, this will be set to
+		// true, and we'll continue the delete in another pass.
+		hasMore := true
 
-		for i := 0; i < hardDeleteChunkSize; i++ {
-			hasNext, err := iter.Next()
+		for hasMore {
+			iter, err := ds.Iterator(ctx, datastore.IterOptions{
+				Prefix:   truncatePrefix(append(instancePrefix.Bytes(), '/')),
+				KeysOnly: true,
+			})
 			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-			if !hasNext {
-				hasMore = false
-				break
+				return NewErrCreateTruncateIterator(err)
 			}
 
-			shortDocID, isDocKey, err := docShortIDFromCollectionDataKey(iter.Key())
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-			if !isDocKey {
-				continue
-			}
+			keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
 
-			key, err := keys.NewDataStoreKey(string(iter.Key()))
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-			key.DocShortID = shortDocID
-			keysToDelete = append(keysToDelete, key)
-		}
-
-		err = iter.Close()
-		if err != nil {
-			return err
-		}
-
-		for _, key := range keysToDelete {
-			// Headstore keys are implicitly protected by the lockset on the datastore, as
-			// any document-head writes are done in the same transaction as the datastore-document
-			// writes.
-			//
-			// Because the datastore read-locks are only ever released when the transaction closes,
-			// we do not need to worry about timing or order-of-operation issues, *unless* we change
-			// when the datastore read-locks are released.
-			// Every stored document key under this prefix should identify a document.
-			if key.DocShortID == 0 {
-				return NewErrTruncateDatastoreKey(errors.New("missing document short ID"), key.ToString())
-			}
-			if _, done := deletedDocIDs[key.DocShortID]; !done {
-				publicDocID, found, err := id.GetDocID(ctx, colShortID, key.DocShortID)
+			for i := 0; i < hardDeleteChunkSize; i++ {
+				hasNext, err := iter.Next()
 				if err != nil {
-					return err
+					return errors.Join(err, iter.Close())
 				}
-				if !found {
-					publicDocID = ""
+				if !hasNext {
+					hasMore = false
+					break
 				}
 
-				err = c.hardDeleteDocumentBlocks(ctx, colShortID, key.DocShortID)
+				key, err := keys.DecodeDataStoreKey(iter.Key())
 				if err != nil {
-					return err
+					return errors.Join(err, iter.Close())
 				}
-				if err := c.deleteDocIDMappings(ctx, colShortID, key.DocShortID, publicDocID); err != nil {
-					return err
-				}
-				deletedDocIDs[key.DocShortID] = struct{}{}
+				keysToDelete = append(keysToDelete, key)
 			}
 
-			// Not all store implementations support mutations whilst iterating, so whilst it would
-			// be simpler and probably more efficient to delete whilst iterating, it would not work
-			// with all supported corekv store implementations.
-			//
-			// The deletion of the datastore key should be done after deleting the blocks - this way if
-			// deleting a block errors, the index provided by the datastore key is preserved, and the
-			// truncate can be resumed later.
-			err := ds.Delete(ctx, key)
+			err = iter.Close()
 			if err != nil {
-				return NewErrTruncateDatastoreKey(err, key.ToString())
+				return err
+			}
+
+			for _, key := range keysToDelete {
+				// Headstore keys are implicitly protected by the lockset on the datastore, as
+				// any document-head writes are done in the same transaction as the datastore-document
+				// writes.
+				//
+				// Because the datastore read-locks are only ever released when the transaction closes,
+				// we do not need to worry about timing or order-of-operation issues, *unless* we change
+				// when the datastore read-locks are released.
+				if key.DocShortID != 0 {
+					if _, done := deletedDocIDs[key.DocShortID]; !done {
+						err = c.hardDeleteDocumentBlocks(ctx, colShortID, key.DocShortID)
+						if err != nil {
+							return err
+						}
+						if err := id.DeleteDocIDMappings(ctx, systemstore, colShortID, key.DocShortID); err != nil {
+							return err
+						}
+						deletedDocIDs[key.DocShortID] = struct{}{}
+					}
+				}
+
+				// Not all store implementations support mutations whilst iterating, so whilst it would
+				// be simpler and probably more efficient to delete whilst iterating, it would not work
+				// with all supported corekv store implementations.
+				//
+				// The deletion of the datastore key should be done after deleting the blocks - this way if
+				// deleting a block errors, the index provided by the datastore key is preserved, and the
+				// truncate can be resumed later.
+				err := ds.Delete(ctx, key)
+				if err != nil {
+					return NewErrTruncateDatastoreKey(err, key.ToString())
+				}
 			}
 		}
 	}
 
 	return nil
-}
-
-func docShortIDFromCollectionDataKey(rawKey []byte) (uint32, bool, error) {
-	if len(rawKey) == 0 || rawKey[0] != '/' {
-		return 0, false, nil
-	}
-	rest, _, err := keys.DecodeCollectionShortIDPrefix(rawKey[1:])
-	if err != nil {
-		return 0, false, err
-	}
-	if len(rest) < 3 || rest[0] != '/' || rest[2] != '/' {
-		return 0, false, nil
-	}
-
-	instanceType := keys.InstanceType(rest[1])
-	switch instanceType {
-	case keys.ValueKey, keys.PriorityKey, keys.DeletedKey:
-	default:
-		return 0, false, nil
-	}
-
-	key, err := keys.DecodeDataStoreKey(rawKey)
-	if err != nil {
-		return 0, false, err
-	}
-	if key.DocShortID == 0 {
-		return 0, false, nil
-	}
-
-	if key.InstanceType != instanceType {
-		return 0, false, nil
-	}
-	return key.DocShortID, true, nil
 }
 
 func (c *collection) hardDeleteDatastorePrefix(
@@ -429,48 +390,6 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 	}
 
-	return nil
-}
-
-func (c *collection) deleteDocIDMappings(
-	ctx context.Context,
-	collectionShortID uint32,
-	shortDocID uint32,
-	publicDocID string,
-) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-	systemstore := txn.Systemstore()
-
-	if publicDocID == "" {
-		var found bool
-		var err error
-		publicDocID, found, err = id.GetDocID(ctx, collectionShortID, shortDocID)
-		if err != nil {
-			return err
-		}
-		if !found {
-			publicDocID = ""
-		}
-	}
-
-	shortToPublicKey := keys.NewShortIDToDocIDKey(collectionShortID, shortDocID).Bytes()
-	if err := deleteRawKeyIfExists(ctx, systemstore, shortToPublicKey); err != nil {
-		return err
-	}
-	if err := id.DeleteNodeDocIDAliasesForShortDocID(ctx, systemstore, collectionShortID, shortDocID); err != nil {
-		return err
-	}
-	if err := id.DeleteBlockDocIDMappings(ctx, systemstore, collectionShortID, publicDocID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func deleteRawKeyIfExists(ctx context.Context, store corekv.ReaderWriter, key []byte) error {
-	if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
-	}
 	return nil
 }
 
