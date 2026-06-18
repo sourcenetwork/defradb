@@ -1103,7 +1103,7 @@ func DocumentIDs(docs []*Document) []string {
 }
 
 // ApplySavedDocumentID applies an ID returned by a DefraDB save operation.
-// It is exported for client adapters; user code should not call it.
+// Exported only for client adapters, user code should not call it.
 func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
 }
