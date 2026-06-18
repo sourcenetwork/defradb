@@ -36,3 +36,21 @@ func TestTruncateCollection(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestTruncateCollection_TruncateTwice(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.Truncate{},
+			&action.Truncate{},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

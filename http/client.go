@@ -117,6 +117,28 @@ func (c *Client) BasicExport(
 	return err
 }
 
+func (c *Client) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("actions")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []client.ActionExecution
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (c *Client) AddCollection(
 	ctx context.Context,
 	sdl string,

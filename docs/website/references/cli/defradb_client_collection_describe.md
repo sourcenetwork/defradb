@@ -17,7 +17,7 @@ view all collections:
   defradb client collection describe
 
 view collection by name:  
-  defradb client collection describe --name User
+  defradb client collection describe --collection-name User
 
 view collection by collection id:  
   defradb client collection describe --collection-id bae123
@@ -29,11 +29,11 @@ view collection by version id:
 ### Options
 
 ```
-      --collection-id string   Collection P2P identifier
-      --get-inactive           Get inactive collections as well as active
-  -h, --help                   help for describe
-      --name string            Collection name
-      --version-id string      Collection version ID
+      --collection-id string     Collection ID
+      --collection-name string   Collection name
+      --get-inactive             Get inactive collections as well as active
+  -h, --help                     help for describe
+      --version-id string        Collection version ID
 ```
 
 ### Options inherited from parent commands

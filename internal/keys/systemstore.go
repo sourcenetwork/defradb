@@ -24,4 +24,5 @@ const (
 	INDEX_ID_SEQ        = "/seq/index"
 	FIELD_ID_SEQ        = "/seq/field"
 	INDEX_STATE         = "/index/state"
+	ACTION_STATUS       = "/a/s"
 )

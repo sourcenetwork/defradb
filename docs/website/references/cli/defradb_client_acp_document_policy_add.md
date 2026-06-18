@@ -16,7 +16,7 @@ Notes:
 
 
 ```
-defradb client acp document policy add [-i --identity] [policy] [flags]
+defradb client acp document policy add [policy] [flags]
 ```
 
 ### Examples

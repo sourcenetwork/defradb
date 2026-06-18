@@ -12,8 +12,6 @@
 package tests
 
 import (
-	"time"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -581,12 +579,6 @@ type GetNodeIdentity struct {
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[state.Identity]
-}
-
-// Wait is an action that will wait for the given duration.
-type Wait struct {
-	// Duration is the duration to wait.
-	Duration time.Duration
 }
 
 // VerifyBlockSignature is an action that will verify the signature of the given block.
