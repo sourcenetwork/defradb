@@ -134,5 +134,6 @@ Options:
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
 	cmd.Flags().Lookup("return-ids").Hidden = true
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }
