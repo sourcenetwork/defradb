@@ -121,9 +121,9 @@ var _ Key = (*BlockCIDToDocIDKey)(nil)
 func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, docID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			collectionShortIDSegment(collectionShortID),
 			[]byte(BLOCK_CID_TO_DOC_ID),
 			docIDSegment(blockCID),
+			collectionShortIDSegment(collectionShortID),
 			docIDSegment(docID),
 		),
 	}

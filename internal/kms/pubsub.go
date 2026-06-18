@@ -506,16 +506,17 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		_, encCID, err := cid.CidFromBytes(link)
+		_, encBlockCID, err := cid.CidFromBytes(link)
 		if err != nil {
 			return nil, nil, err
 		}
-		docID, err := s.colRetriever.ResolvePublicDocID(ctx, encCID.String())
+		encBlockCIDString := encBlockCID.String()
+		publicDocID, err := s.colRetriever.ResolvePublicDocID(ctx, encBlockCIDString)
 		if err != nil {
 			return nil, nil, err
 		}
-		if docID != encCID.String() {
-			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+		if publicDocID != encBlockCIDString {
+			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, publicDocID)
 			if err != nil {
 				return nil, nil, err
 			}
