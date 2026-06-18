@@ -8,7 +8,7 @@
 # The linked policy id and resource correspond to an uploaded policy, some policy examples can be
 # found under: `examples/policy/`
 #
-# Learn more about the DefraDB [ACP System](/acp/README.md)
+# Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 type Book @policy(id:"7dc51aabc0248cf106265c902bf56faa1989ec41a6bbd36b6e438cfade7aee4a", resource:"book") {
     name: String
