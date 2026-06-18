@@ -147,15 +147,15 @@ func determineBlockEncryption(
 
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &Encryption{}
 		encryptor := encryption.GetEncryptorFromContext(ctx)
 		if encryptor != nil {
 			encKey, err := encryptor.GetOrGenerateEncryptionKey(string(docKey), fieldName)
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrGetEncryptionKey(err)
 			}
-			if len(encKey) > 0 {
-				encBlock.Key = encKey
+			encBlock := newEncryptionBlock(encKey)
+			if encBlock == nil {
+				return nil, cidlink.Link{}, nil
 			}
 
 			link, err := putBlock(ctx, txn.Encstore(), encBlock)
@@ -192,6 +192,13 @@ func determineBlockEncryption(
 	}
 
 	return nil, cidlink.Link{}, nil
+}
+
+func newEncryptionBlock(encKey []byte) *Encryption {
+	if len(encKey) == 0 {
+		return nil
+	}
+	return &Encryption{Key: encKey}
 }
 
 func encryptBlock(
