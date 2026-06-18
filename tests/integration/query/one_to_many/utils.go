@@ -67,14 +67,12 @@ func orderInitialDocs(actions []any) []any {
 	ordered := make([]any, 0, len(actions))
 	ordered = append(ordered, actions[:start]...)
 	for _, item := range actions[start:firstNonAdd] {
-		add := item.(*action.AddDoc)
-		if add.CollectionID == 1 {
+		if add, ok := item.(*action.AddDoc); ok && add.CollectionID == 1 {
 			ordered = append(ordered, item)
 		}
 	}
 	for _, item := range actions[start:firstNonAdd] {
-		add := item.(*action.AddDoc)
-		if add.CollectionID != 1 {
+		if add, ok := item.(*action.AddDoc); ok && add.CollectionID != 1 {
 			ordered = append(ordered, item)
 		}
 	}

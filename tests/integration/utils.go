@@ -1748,14 +1748,14 @@ func importBackup(
 		action.Filepath = s.T.TempDir() + testJSONFile
 	}
 
-	// we can avoid checking the error here as this would mean the filepath is invalid
-	// and we want to make sure that `BasicImport` fails in this case.
-	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
-
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
+		// we can avoid checking the error here as this would mean the filepath is invalid
+		// and we want to make sure that `BasicImport` fails in this case.
+		_ = os.WriteFile(action.Filepath, []byte(replace(s, nodeIDs[i], action.ImportContent)), 0664)
+
 		err := withRetryOnNode(
 			node,
 			func() error { return node.BasicImport(s.Ctx, action.Filepath) },

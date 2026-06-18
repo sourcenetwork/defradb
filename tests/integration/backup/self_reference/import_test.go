@@ -76,9 +76,9 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_bossID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
-		`"_docID":"bae-1706de90-8842-5d6e-9702-5c45bebff330",` +
-		`"_docIDNew":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_bossID":"{{.DocID0_0}}",` +
+		`"_docID":"{{.DocID0_0}}",` +
+		`"_docIDNew":"{{.DocID0_0}}",` +
 		`"age":31,` +
 		`"name":"Bob"` +
 		`}` +
@@ -103,7 +103,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
+					"_bossID": "{{.DocID0_0}}"
 				}`,
 			},
 			testUtils.ExportBackup{
@@ -163,6 +163,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 				ImportContent: `{
 					"Author":[
 						{
+							"_docID":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"_docIDNew":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
 							"name":"John"
 						}
 					],
@@ -236,6 +238,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					],
 					"Author":[
 						{
+							"_docID":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"_docIDNew":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
 							"name":"John"
 						}
 					]

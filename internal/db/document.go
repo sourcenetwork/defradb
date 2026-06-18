@@ -17,9 +17,8 @@ import (
 	"strings"
 
 	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
@@ -37,6 +36,7 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 // docIDResult wraps the result of an attempt at a DocID retrieval operation.

@@ -14,14 +14,14 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/immutable"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.

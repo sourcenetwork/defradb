@@ -86,7 +86,11 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				}
 			}
 
+			newDocID, hasNewDocID := docMap[request.NewDocIDFieldName]
 			delete(docMap, request.NewDocIDFieldName)
+			if hasNewDocID {
+				docMap[request.DocIDFieldName] = newDocID
+			}
 
 			doc, err := client.NewDocFromMap(ctx, docMap, col.Version())
 			if err != nil {
