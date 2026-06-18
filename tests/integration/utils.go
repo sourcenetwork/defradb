@@ -497,16 +497,52 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
 	}
+	generatedDocIDs := make(map[string]string)
 	for _, doc := range docs {
-		docJSON, err := doc.Doc.String()
+		collectionID := nameToInd[doc.Col.Name]
+		docMap, err := doc.Doc.ToMap()
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
+		generatedDocID, _ := docMap[request.DocIDFieldName].(string)
+		replaceGeneratedDocIDs(docMap, generatedDocIDs)
+		if state.ActiveMutationType == state.GQLRequestMutationType {
+			delete(docMap, request.DocIDFieldName)
+		}
 
-		a := &action.AddDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a := &action.AddDoc{CollectionID: collectionID, DocMap: docMap, NodeID: nodeID}
 		a.SetState(s)
 		a.Execute()
+
+		if generatedDocID != "" {
+			s.DocIDsLock.RLock()
+			docIDs := s.DocIDs[collectionID]
+			generatedDocIDs[generatedDocID] = docIDs[len(docIDs)-1].String()
+			s.DocIDsLock.RUnlock()
+		}
 	}
+}
+
+func replaceGeneratedDocIDs(docMap map[string]any, generatedDocIDs map[string]string) {
+	for key, value := range docMap {
+		docMap[key] = replaceGeneratedDocID(value, generatedDocIDs)
+	}
+}
+
+func replaceGeneratedDocID(value any, generatedDocIDs map[string]string) any {
+	switch value := value.(type) {
+	case string:
+		if docID, ok := generatedDocIDs[value]; ok {
+			return docID
+		}
+	case []any:
+		for i, item := range value {
+			value[i] = replaceGeneratedDocID(item, generatedDocIDs)
+		}
+	case map[string]any:
+		replaceGeneratedDocIDs(value, generatedDocIDs)
+	}
+	return value
 }
 
 func generateDocs(s *state.State, action GenerateDocs) {

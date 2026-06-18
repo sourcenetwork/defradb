@@ -140,7 +140,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
-	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	authorID := "{{.DocID1_0}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -177,7 +177,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
-	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	authorID := "{{.DocID1_0}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -254,7 +254,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -298,7 +298,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
