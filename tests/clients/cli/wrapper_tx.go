@@ -207,7 +207,7 @@ func (txn *Transaction) GetCollections(
 func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ListIndexes(ctx, opts...)
 }

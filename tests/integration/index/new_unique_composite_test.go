@@ -68,7 +68,7 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 						},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_name_ASC": {
 						Status: client.ErroredActionStatus,
 						Action: client.BackfillIndexAction,

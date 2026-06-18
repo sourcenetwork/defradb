@@ -216,7 +216,7 @@ func (col *txnCollection) DeleteIndex(
 func (col *txnCollection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescriptionStatus, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx, unlock := lockForTxn(ctx, col.txn)
 	defer unlock()
 

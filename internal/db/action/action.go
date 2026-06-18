@@ -289,11 +289,17 @@ func ListExecutions(ctx context.Context) ([]client.ActionExecution, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
+		reason, err := GetReason(ctx, key.CollectionID, key.Action, key.Subject)
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
 		results = append(results, client.ActionExecution{
 			CollectionID: key.CollectionID,
 			Action:       key.Action,
 			Subject:      key.Subject,
 			Status:       DecodeStatus(val),
+			Reason:       reason,
 		})
 	}
 

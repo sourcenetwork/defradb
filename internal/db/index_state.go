@@ -58,18 +58,21 @@ func (s indexState) isDropping() bool {
 	return s.Action == client.DropIndexAction && s.Status == client.InProgressActionStatus
 }
 
-// statusDescription builds the public status view of the index from its state.
-func (s indexState) statusDescription(desc client.IndexDescription, hasState bool) client.IndexDescriptionStatus {
-	result := client.IndexDescriptionStatus{IndexDescription: desc}
-	if !hasState {
-		// No record means ready.
-		result.Status = client.CompletedActionStatus
-		return result
+// listResult builds the public ListIndexes entry for the index from its state. hasState is
+// false for a ready index (no action record), reported as a Completed execution.
+func (s indexState) listResult(collectionID string, desc client.IndexDescription, hasState bool) client.ListIndexesResult {
+	exec := client.ActionExecution{
+		CollectionID: collectionID,
+		Subject:      indexSubject(desc.ID),
 	}
-	result.Status = s.Status
-	result.Action = s.Action
-	result.Reason = s.Reason
-	return result
+	if !hasState {
+		exec.Status = client.CompletedActionStatus
+	} else {
+		exec.Action = s.Action
+		exec.Status = s.Status
+		exec.Reason = s.Reason
+	}
+	return client.ListIndexesResult{Description: desc, Execution: exec}
 }
 
 // indexSubject is the action subject segment for an index action: the index ID.

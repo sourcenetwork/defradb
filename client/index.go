@@ -62,23 +62,20 @@ type CollectionIndex interface {
 	Description() IndexDescription
 }
 
-// IndexDescriptionStatus combines the static index description with its mutable runtime state.
+// ListIndexesResult is a single entry returned by ListIndexes: an index's static description
+// together with its runtime lifecycle, kept as separate values rather than blended into one.
 //
-// Status and Action describe the index lifecycle through the action system (see Action and
-// ActionStatus):
-//   - building: Status InProgress, Action BackfillIndexAction
-//   - failed:   Status Errored,    Action BackfillIndexAction (Reason has the cause)
-//   - dropping: Status InProgress, Action DropIndexAction
-//   - ready:    Status Completed   (no in-flight action; Action is unset)
-type IndexDescriptionStatus struct {
-	IndexDescription
-	// Status is the status of the index's current (or most recent) lifecycle action.
-	Status ActionStatus
-	// Action is the lifecycle action this status refers to. It disambiguates the two
-	// InProgress states (building vs dropping) and is unset for a ready index.
-	Action Action
-	// Reason is set when Status is Errored, providing a description of the failure.
-	Reason string
+// Execution reports the lifecycle through the action system (Execution.Action and
+// Execution.Status):
+//   - building: InProgress + BackfillIndexAction
+//   - failed:   Errored    + BackfillIndexAction (Execution.Reason has the cause)
+//   - dropping: InProgress + DropIndexAction
+//   - ready:    Completed  (no in-flight action; Execution.Action is unset)
+type ListIndexesResult struct {
+	// Description is the static index specification.
+	Description IndexDescription
+	// Execution is the index's current (or most recent) lifecycle action.
+	Execution ActionExecution
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.

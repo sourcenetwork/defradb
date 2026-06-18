@@ -43,11 +43,11 @@ type ListIndexes struct {
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
 
-	// ExpectedStatuses maps index name to the expected status for that index.
+	// ExpectedStatuses maps index name to the expected execution for that index.
 	// When set for a name, asserts Status, Action and Reason (partial match) instead of the
 	// default ready assertion.
 	// When not set for a name, asserts Status == CompletedActionStatus (ready).
-	ExpectedStatuses map[string]client.IndexDescriptionStatus
+	ExpectedStatuses map[string]client.ActionExecution
 
 	// Any error expected from the action. Optional.
 	//
@@ -109,7 +109,7 @@ func (a *ListIndexes) Execute() {
 
 func assertIndexesListsEqual(
 	expectedIndexes []client.IndexDescription,
-	actualStatuses []client.IndexDescriptionStatus,
+	actualResults []client.ListIndexesResult,
 	t require.TestingT,
 ) {
 	toNamesFromExpected := func(indexes []client.IndexDescription) []string {
@@ -120,19 +120,19 @@ func assertIndexesListsEqual(
 		return names
 	}
 
-	toNamesFromActual := func(statuses []client.IndexDescriptionStatus) []string {
-		names := make([]string, len(statuses))
-		for i, s := range statuses {
-			names[i] = s.Name
+	toNamesFromActual := func(results []client.ListIndexesResult) []string {
+		names := make([]string, len(results))
+		for i, r := range results {
+			names[i] = r.Description.Name
 		}
 		return names
 	}
 
-	require.ElementsMatch(t, toNamesFromExpected(expectedIndexes), toNamesFromActual(actualStatuses))
+	require.ElementsMatch(t, toNamesFromExpected(expectedIndexes), toNamesFromActual(actualResults))
 
-	actualMap := map[string]client.IndexDescriptionStatus{}
-	for _, s := range actualStatuses {
-		actualMap[s.Name] = s
+	actualMap := map[string]client.IndexDescription{}
+	for _, r := range actualResults {
+		actualMap[r.Description.Name] = r.Description
 	}
 
 	expectedMap := map[string]client.IndexDescription{}
@@ -141,7 +141,7 @@ func assertIndexesListsEqual(
 	}
 
 	for key := range expectedMap {
-		assertIndexesEqual(expectedMap[key], actualMap[key].IndexDescription, t)
+		assertIndexesEqual(expectedMap[key], actualMap[key], t)
 	}
 }
 
@@ -153,22 +153,23 @@ func assertIndexesListsEqual(
 //     contains the expected substring.
 //   - For all other names, asserts Status == CompletedActionStatus (ready).
 func assertIndexStatuses(
-	expectedStatuses map[string]client.IndexDescriptionStatus,
-	actualStatuses []client.IndexDescriptionStatus,
+	expectedStatuses map[string]client.ActionExecution,
+	actualResults []client.ListIndexesResult,
 	t require.TestingT,
 ) {
 	if expectedStatuses == nil {
 		return
 	}
-	for _, actual := range actualStatuses {
-		if expected, ok := expectedStatuses[actual.Name]; ok {
-			assert.Equal(t, expected.Status, actual.Status, "index %s status mismatch", actual.Name)
-			assert.Equal(t, expected.Action, actual.Action, "index %s action mismatch", actual.Name)
+	for _, actual := range actualResults {
+		name := actual.Description.Name
+		if expected, ok := expectedStatuses[name]; ok {
+			assert.Equal(t, expected.Status, actual.Execution.Status, "index %s status mismatch", name)
+			assert.Equal(t, expected.Action, actual.Execution.Action, "index %s action mismatch", name)
 			if expected.Reason != "" {
-				assert.Contains(t, actual.Reason, expected.Reason, "index %s reason mismatch", actual.Name)
+				assert.Contains(t, actual.Execution.Reason, expected.Reason, "index %s reason mismatch", name)
 			}
 		} else {
-			assert.Equal(t, client.CompletedActionStatus, actual.Status, "index %s expected ready status", actual.Name)
+			assert.Equal(t, client.CompletedActionStatus, actual.Execution.Status, "index %s expected ready status", name)
 		}
 	}
 }

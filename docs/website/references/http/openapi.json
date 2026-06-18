@@ -37,6 +37,9 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "Reason": {
+                        "type": "string"
+                    },
                     "Status": {
                         "maximum": 65535,
                         "minimum": 0,

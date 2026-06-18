@@ -125,7 +125,7 @@ func (db *DB) GetCollections(
 func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

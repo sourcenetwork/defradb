@@ -70,7 +70,7 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 						},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_age_ASC": {
 						Status: client.ErroredActionStatus,
 						Action: client.BackfillIndexAction,
@@ -126,7 +126,7 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 						},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_age_ASC": {
 						Status: client.CompletedActionStatus,
 					},

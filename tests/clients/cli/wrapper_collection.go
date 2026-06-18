@@ -142,7 +142,7 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescriptionStatus, error) {
+) ([]client.ListIndexesResult, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
 
@@ -154,7 +154,7 @@ func (c *Collection) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes []client.IndexDescriptionStatus
+	var indexes []client.ListIndexesResult
 	if err := json.Unmarshal(data, &indexes); err != nil {
 		return nil, err
 	}

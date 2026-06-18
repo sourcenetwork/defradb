@@ -50,7 +50,7 @@ func (a *ListIndexes) Execute() {
 
 	if a.Collection != "" {
 		// Listing indexes for a specific collection
-		result, err := executeJson[[]client.IndexDescriptionStatus](a.s.Ctx, args)
+		result, err := executeJson[[]client.ListIndexesResult](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)
@@ -64,7 +64,7 @@ func (a *ListIndexes) Execute() {
 			require.Equal(a.s.T, len(a.ExpectedIndexes), len(result))
 
 			for i, expected := range a.ExpectedIndexes {
-				actual := result[i]
+				actual := result[i].Description
 
 				if expected.ID != 0 {
 					require.Equal(a.s.T, expected.ID, actual.ID)
@@ -76,7 +76,7 @@ func (a *ListIndexes) Execute() {
 		}
 	} else {
 		// Listing all indexes
-		result, err := executeJson[map[client.CollectionName][]client.IndexDescriptionStatus](a.s.Ctx, args)
+		result, err := executeJson[map[client.CollectionName][]client.ListIndexesResult](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)
@@ -95,7 +95,7 @@ func (a *ListIndexes) Execute() {
 				require.Equal(a.s.T, len(expectedIndexes), len(actualIndexes))
 
 				for i, expected := range expectedIndexes {
-					actual := actualIndexes[i]
+					actual := actualIndexes[i].Description
 
 					if expected.ID != 0 {
 						require.Equal(a.s.T, expected.ID, actual.ID)

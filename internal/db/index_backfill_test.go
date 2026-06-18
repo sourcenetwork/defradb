@@ -234,7 +234,7 @@ func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	require.NoError(t, listErr)
 	require.Len(t, indexes, 1, "index definition must persist after failed backfill")
 
-	state := readIndexState(t, ctx, db, col.Version().CollectionID, indexes[0].ID)
+	state := readIndexState(t, ctx, db, col.Version().CollectionID, indexes[0].Description.ID)
 	assert.True(t, state.isFailed())
 	assert.NotEmpty(t, state.Reason)
 }

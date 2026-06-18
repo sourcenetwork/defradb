@@ -97,12 +97,12 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescriptionStatus, error) {
+) ([]client.ListIndexesResult, error) {
 	res, err := execute(ctx, c.client, "listIndexes", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
-	var out []client.IndexDescriptionStatus
+	var out []client.ListIndexesResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}

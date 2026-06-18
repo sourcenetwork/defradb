@@ -311,7 +311,7 @@ func TestListCollectionIndexes_ShouldReturnIndexes(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.Equal(t, 1, len(indexes))
-	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+	assert.Equal(t, testUsersColIndexName, indexes[0].Description.Name)
 }
 
 func TestListCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
@@ -326,9 +326,9 @@ func TestListCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) 
 	require.Len(t, indexes, 2)
 	require.ElementsMatch(t,
 		[]string{testUsersColIndexName, testUsersColIndexAge},
-		[]string{indexes[0].Name, indexes[1].Name},
+		[]string{indexes[0].Description.Name, indexes[1].Description.Name},
 	)
-	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
+	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].Description.ID, indexes[1].Description.ID})
 }
 
 func TestListCollectionIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
@@ -366,7 +366,7 @@ func TestListCollectionIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T
 	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
-	assert.Equal(t, indexes[0].Name, testUsersColIndexAge)
+	assert.Equal(t, indexes[0].Description.Name, testUsersColIndexAge)
 
 	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	assert.NoError(t, err)
@@ -433,7 +433,7 @@ func TestListCollectionIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) 
 	require.Len(t, indexes, num)
 
 	for i := 1; i <= num; i++ {
-		assert.Equal(t, indexNamePrefix+toSuffix(i), indexes[i-1].Name, "i = %d", i)
+		assert.Equal(t, indexNamePrefix+toSuffix(i), indexes[i-1].Description.Name, "i = %d", i)
 	}
 }
 

@@ -777,7 +777,7 @@ func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx contex
 }
 
 // ListIndexes provides a mock function for the type Collection
-func (_mock *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescriptionStatus, error) {
+func (_mock *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.ListIndexesResult, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, opts)
@@ -790,16 +790,16 @@ func (_mock *Collection) ListIndexes(ctx context.Context, opts ...options.Enumer
 		panic("no return value specified for ListIndexes")
 	}
 
-	var r0 []client.IndexDescriptionStatus
+	var r0 []client.ListIndexesResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescriptionStatus, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.ListIndexesResult, error)); ok {
 		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) []client.IndexDescriptionStatus); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) []client.ListIndexesResult); ok {
 		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.IndexDescriptionStatus)
+			r0 = ret.Get(0).([]client.ListIndexesResult)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListCollectionIndexesOptions]) error); ok {
@@ -843,12 +843,12 @@ func (_c *Collection_ListIndexes_Call) Run(run func(ctx context.Context, opts ..
 	return _c
 }
 
-func (_c *Collection_ListIndexes_Call) Return(indexDescriptionStatuses []client.IndexDescriptionStatus, err error) *Collection_ListIndexes_Call {
+func (_c *Collection_ListIndexes_Call) Return(indexDescriptionStatuses []client.ListIndexesResult, err error) *Collection_ListIndexes_Call {
 	_c.Call.Return(indexDescriptionStatuses, err)
 	return _c
 }
 
-func (_c *Collection_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescriptionStatus, error)) *Collection_ListIndexes_Call {
+func (_c *Collection_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.ListIndexesResult, error)) *Collection_ListIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

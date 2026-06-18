@@ -499,12 +499,12 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	res, err := execute(ctx, w.value, "listIndexes", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
-	var out map[client.CollectionName][]client.IndexDescriptionStatus
+	var out map[client.CollectionName][]client.ListIndexesResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}

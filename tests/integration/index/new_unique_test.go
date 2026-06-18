@@ -72,7 +72,7 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_age_ASC": {
 						Status: client.ErroredActionStatus,
 						Action: client.BackfillIndexAction,

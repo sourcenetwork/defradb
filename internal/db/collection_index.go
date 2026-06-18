@@ -39,13 +39,13 @@ import (
 // listIndexDescriptions returns all index descriptions in the database joined with their runtime state.
 func (db *DB) listIndexDescriptions(
 	ctx context.Context,
-) (map[client.CollectionName][]client.IndexDescriptionStatus, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	collections, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return nil, err
 	}
 
-	indexes := make(map[client.CollectionName][]client.IndexDescriptionStatus)
+	indexes := make(map[client.CollectionName][]client.ListIndexesResult)
 
 	for _, col := range collections {
 		if len(col.Indexes) == 0 {
@@ -55,12 +55,12 @@ func (db *DB) listIndexDescriptions(
 		if err != nil {
 			return nil, err
 		}
-		statuses := make([]client.IndexDescriptionStatus, len(col.Indexes))
+		results := make([]client.ListIndexesResult, len(col.Indexes))
 		for i, desc := range col.Indexes {
 			state, ok := states[desc.ID]
-			statuses[i] = state.statusDescription(desc, ok)
+			results[i] = state.listResult(col.CollectionID, desc, ok)
 		}
-		indexes[col.Name] = statuses
+		indexes[col.Name] = results
 	}
 
 	return indexes, nil
@@ -646,7 +646,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 func (c *collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescriptionStatus, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
 
 	opt := utils.NewOptions(opts...)
@@ -667,10 +667,10 @@ func (c *collection) ListIndexes(
 	}
 
 	indexes := c.Version().Indexes
-	result := make([]client.IndexDescriptionStatus, len(indexes))
+	result := make([]client.ListIndexesResult, len(indexes))
 	for i, desc := range indexes {
 		state, ok := states[desc.ID]
-		result[i] = state.statusDescription(desc, ok)
+		result[i] = state.listResult(c.def.CollectionID, desc, ok)
 	}
 	return result, nil
 }

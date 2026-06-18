@@ -157,7 +157,7 @@ func TestListActions_AfterFailedBuild_ReportsErroredRecordWithSubject(t *testing
 	indexes, err := col.ListIndexes(ctx)
 	require.NoError(t, err)
 	require.Len(t, indexes, 1)
-	failedIndexID := indexes[0].ID
+	failedIndexID := indexes[0].Description.ID
 
 	actions, err := db.ListActions(ctx)
 	require.NoError(t, err)

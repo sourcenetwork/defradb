@@ -47,4 +47,7 @@ type ActionExecution struct {
 
 	// The current status of this action execution.
 	Status ActionStatus
+
+	// Reason describes why the action errored. It is empty unless Status is Errored.
+	Reason string
 }

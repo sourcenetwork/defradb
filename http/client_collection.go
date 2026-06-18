@@ -106,7 +106,7 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescriptionStatus, error) {
+) ([]client.ListIndexesResult, error) {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
@@ -120,7 +120,7 @@ func (c *Collection) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes []client.IndexDescriptionStatus
+	var indexes []client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}

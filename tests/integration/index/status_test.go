@@ -44,7 +44,7 @@ func TestIndexStatus_NewIndex_IsReady(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{{Name: "name"}},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_name_ASC": {
 						Status: client.CompletedActionStatus,
 					},
@@ -106,7 +106,7 @@ func TestIndexStatus_ReadyAndFailedInOneCollection_EachReportsOwnStatus(t *testi
 						Fields: []client.IndexedFieldDescription{{Name: "age"}},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_name_ASC": {
 						Status: client.CompletedActionStatus,
 					},
@@ -145,7 +145,7 @@ func TestIndexStatus_SDLIndex_IsReady(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{{Name: "name"}},
 					},
 				},
-				ExpectedStatuses: map[string]client.IndexDescriptionStatus{
+				ExpectedStatuses: map[string]client.ActionExecution{
 					"User_name_ASC": {
 						Status: client.CompletedActionStatus,
 					},
