@@ -270,6 +270,8 @@ func executeTestCase(
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	}
 
+	skipIfUnsupportedLevelDBAction(t, dbt, testCase.Actions)
+
 	if kms != NoneKMSType {
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
@@ -2106,6 +2108,32 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	}
 	if !runVectorEmbeddingTests && hasVectorEmbedding {
 		t.Skip("test involves vector embedding generation")
+	}
+}
+
+// skipIfUnsupportedLevelDBAction skips the test if it contains an action that leveldb does
+// not support.
+func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, actions []any) {
+	if dbt != LevelStoreType {
+		return
+	}
+
+	for _, act := range actions {
+		switch a := act.(type) {
+		case *action.Truncate, *action.RefreshViews, *action.AddView:
+			// These actions are skipped due to:
+			// https://github.com/sourcenetwork/defradb/issues/4959
+			t.Skip("truncate and RefreshView does not yet support the leveldb store")
+		case *action.Parallel:
+			for _, inner := range a.Children {
+				switch inner.(type) {
+				case *action.Truncate, *action.RefreshViews, *action.AddView:
+					// These actions are skipped due to:
+					// https://github.com/sourcenetwork/defradb/issues/4959
+					t.Skip("truncate and RefreshView does not yet support the leveldb store")
+				}
+			}
+		}
 	}
 }
 
