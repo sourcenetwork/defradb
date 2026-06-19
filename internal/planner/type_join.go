@@ -699,11 +699,11 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	targetDocIDs, err := docIDFilterValues(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
+	targetDocID, _, err := publicDocIDForFilterValue(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
 	if err != nil {
 		return nil, err
 	}
-	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), targetDocIDs)
+	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), []any{targetDocID})
 
 	// When the join is inverted, the parent becomes the primary (second) side.
 	// Its scan may still hold scalar filter conditions (e.g., rating > 4.5) that

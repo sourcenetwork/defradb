@@ -216,19 +216,12 @@ func expandDocIDAliasesInOpMap(
 				result[key] = value
 				continue
 			}
-			values, err := docIDFilterValues(ctx, docID)
+			docID, docIDChanged, err := publicDocIDForFilterValue(ctx, docID)
 			if err != nil {
 				return nil, false, err
 			}
-			if len(values) > 1 {
-				result[mapper.FilterInOp] = values
-				changed = true
-			} else if len(values) == 1 && values[0] != value {
-				result[key] = values[0]
-				changed = true
-			} else {
-				result[key] = value
-			}
+			result[key] = docID
+			changed = changed || docIDChanged
 		case connor.InOp:
 			values, ok := value.([]any)
 			if !ok {
@@ -258,24 +251,17 @@ func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, bool, err
 			expandedValues = append(expandedValues, value)
 			continue
 		}
-		aliases, err := docIDFilterValues(ctx, docID)
+		docID, docIDChanged, err := publicDocIDForFilterValue(ctx, docID)
 		if err != nil {
 			return nil, false, err
 		}
-		for _, alias := range aliases {
-			aliasString, ok := alias.(string)
-			if !ok {
-				expandedValues = append(expandedValues, alias)
-				continue
-			}
-			if _, exists := seenStrings[aliasString]; exists {
-				changed = true
-				continue
-			}
-			changed = changed || aliasString != docID
-			seenStrings[aliasString] = struct{}{}
-			expandedValues = append(expandedValues, alias)
+		if _, exists := seenStrings[docID]; exists {
+			changed = true
+			continue
 		}
+		seenStrings[docID] = struct{}{}
+		expandedValues = append(expandedValues, docID)
+		changed = changed || docIDChanged
 	}
 	return expandedValues, changed, nil
 }
@@ -295,28 +281,27 @@ func isDocIDFilterField(col client.Collection, mapping *core.DocumentMapping, fi
 	return ok && fieldDef.Kind == client.FieldKind_DocID
 }
 
-func docIDFilterValues(ctx context.Context, docID string) ([]any, error) {
-	values := []any{docID}
+func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool, error) {
 	if docID == "" {
-		return values, nil
+		return docID, false, nil
 	}
 
 	localDocID, found, err := id.GetLocalDocID(ctx, docID)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 	if !found {
-		return values, nil
+		return docID, false, nil
 	}
 
 	publicDocID, found, err := id.GetDocID(ctx, localDocID.CollectionShortID, localDocID.DocShortID)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
-	if !found {
-		return values, nil
+	if !found || publicDocID == docID {
+		return docID, false, nil
 	}
-	return []any{publicDocID}, nil
+	return publicDocID, true, nil
 }
 
 func (n *scanNode) initCollection(col client.Collection) error {

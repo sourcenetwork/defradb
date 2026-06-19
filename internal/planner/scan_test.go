@@ -40,13 +40,15 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID))
 	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
 
-	values, err := docIDFilterValues(ctx, publicDocID)
+	resolvedDocID, changed, err := publicDocIDForFilterValue(ctx, publicDocID)
 	require.NoError(t, err)
-	require.Equal(t, []any{publicDocID}, values)
+	require.False(t, changed)
+	require.Equal(t, publicDocID, resolvedDocID)
 
-	values, err = docIDFilterValues(ctx, legacyDocID)
+	resolvedDocID, changed, err = publicDocIDForFilterValue(ctx, legacyDocID)
 	require.NoError(t, err)
-	require.Equal(t, []any{publicDocID}, values)
+	require.True(t, changed)
+	require.Equal(t, publicDocID, resolvedDocID)
 
 	expandedValues, changed, err := expandDocIDAliasValues(ctx, []any{publicDocID, legacyDocID, 123})
 	require.NoError(t, err)
@@ -61,7 +63,8 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 	require.True(t, changed)
 	require.Equal(t, publicDocID, expandedOpMap[mapper.FilterEqOp])
 
-	values, err = docIDFilterValues(ctx, "bae-unknown-doc")
+	resolvedDocID, changed, err = publicDocIDForFilterValue(ctx, "bae-unknown-doc")
 	require.NoError(t, err)
-	require.Equal(t, []any{"bae-unknown-doc"}, values)
+	require.False(t, changed)
+	require.Equal(t, "bae-unknown-doc", resolvedDocID)
 }
