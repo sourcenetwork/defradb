@@ -238,6 +238,74 @@ func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.
 	require.Len(t, items, 0)
 }
 
+func TestTryHandleFetchEncryptionKeyResponse_RejectsUnrequestedVerifiedBlocks(t *testing.T) {
+	ctx := context.Background()
+
+	service := &pubSubService{
+		ctx:      ctx,
+		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
+	}
+
+	requesterPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+	holderPrivKey, err := crypto.GenerateX25519()
+	require.NoError(t, err)
+
+	requestedBlock := coreblock.Encryption{
+		DocID: []byte("requested-doc"),
+		Key:   []byte("requested-doc-key"),
+	}
+	requestedLink, err := service.encStore.computeBlockLink(ctx, requestedBlock)
+	require.NoError(t, err)
+
+	unrequestedBlock := coreblock.Encryption{
+		DocID: []byte("unrequested-doc"),
+		Key:   []byte("unrequested-doc-key"),
+	}
+	unrequestedLink, err := service.encStore.computeBlockLink(ctx, unrequestedBlock)
+	require.NoError(t, err)
+	require.NotEqual(t, requestedLink, unrequestedLink)
+
+	req := &fetchEncryptionKeyRequest{
+		Links:              [][]byte{requestedLink},
+		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
+	}
+
+	plainBlock, err := unrequestedBlock.Marshal()
+	require.NoError(t, err)
+
+	encryptedBlock, err := crypto.EncryptECIES(
+		plainBlock,
+		requesterPrivKey.PublicKey(),
+		crypto.WithAAD(makeAssociatedData(req, "holder-peer")),
+		crypto.WithPrivKey(holderPrivKey),
+		crypto.WithPubKeyPrepended(false),
+	)
+	require.NoError(t, err)
+
+	reply := &fetchEncryptionKeyReply{
+		Links:              [][]byte{unrequestedLink},
+		Blocks:             [][]byte{encryptedBlock},
+		EphemeralPublicKey: holderPrivKey.PublicKey().Bytes(),
+	}
+	data, err := cbor.Marshal(reply)
+	require.NoError(t, err)
+
+	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
+		client.PubsubResponse{
+			From: "holder-peer",
+			Data: data,
+		},
+		req,
+		requesterPrivKey,
+		false,
+	)
+
+	require.ErrorIs(t, err, ErrEncryptionKeyCIDMismatch)
+	require.False(t, ok)
+	require.Empty(t, items)
+}
+
 func TestTryHandleFetchEncryptionKeyResponse_AcceptsVerifiedBlocks(t *testing.T) {
 	ctx := context.Background()
 
