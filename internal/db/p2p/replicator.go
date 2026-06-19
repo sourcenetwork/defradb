@@ -222,9 +222,6 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if err != nil {
 			return err
 		}
-		if primaryKey.DocShortID == 0 {
-			continue
-		}
 		docID, found, err := id.GetDocIDFromStore(
 			ctx,
 			p.db.Multistore().Systemstore(),
@@ -235,7 +232,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			return err
 		}
 		if !found {
-			continue
+			return client.ErrDocumentNotFoundOrNotAuthorized
 		}
 
 		err = p.pushHeadsForDoc(ctx, shortCollectionID, primaryKey.DocShortID, docID, col.CollectionID(), peerID)

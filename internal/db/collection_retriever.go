@@ -80,36 +80,34 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		return nil, err
 	}
 
-	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
+	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
-
-	hasValue, err := headIterator.Next()
-	if err != nil {
-		return nil, err
-	}
-
-	if !hasValue {
+	if !found {
 		return nil, NewErrDocIDNotFound(docID)
 	}
 
 	cols, err := r.db.getCollections(
 		ctx,
-		utils.NewOptions(options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())),
+		utils.NewOptions(options.GetCollections().SetGetInactive(true)),
 		true,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForCollectionVersion(
-			headIterator.CurrentBlock().Delta.GetCollectionVersionID(),
-		)
+	for _, col := range cols {
+		collectionShortID, err := id.GetShortCollectionIDFromStore(ctx, col.CollectionID(), txn.Systemstore())
+		if err != nil {
+			return nil, err
+		}
+		if collectionShortID == localDocID.CollectionShortID {
+			return col, nil
+		}
 	}
 
-	return cols[0], nil
+	return nil, client.ErrCollectionNotFound
 }
 
 func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {

@@ -94,6 +94,7 @@ func (n *scanNode) Init() error {
 	return n.initScan()
 }
 
+// filterWithDocIDAliases rewrites _docID and DocID-field filters from saved aliases to current public DocIDs.
 func filterWithDocIDAliases(
 	ctx context.Context,
 	col client.Collection,

@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"context"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -461,12 +459,6 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	var err error
-	docID, err = resolveDocIDAliasForCollection(scan.p.ctx, scan.col, docID)
-	if err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
 	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
@@ -505,37 +497,6 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	}
 
 	return immutable.Some(node.Value()), nil
-}
-
-func resolveDocIDAliasForCollection(ctx context.Context, col client.Collection, docID string) (string, error) {
-	if docID == "" {
-		return docID, nil
-	}
-
-	localDocID, found, err := id.GetLocalDocID(ctx, docID)
-	if err != nil {
-		return "", err
-	}
-	if !found {
-		return docID, nil
-	}
-
-	collectionShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
-	if err != nil {
-		return "", err
-	}
-	if localDocID.CollectionShortID != collectionShortID {
-		return docID, nil
-	}
-
-	publicDocID, found, err := id.GetDocID(ctx, collectionShortID, localDocID.DocShortID)
-	if err != nil {
-		return "", err
-	}
-	if !found {
-		return docID, nil
-	}
-	return publicDocID, nil
 }
 
 // joinIterationState holds the mutable state that changes during iteration.
@@ -978,15 +939,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		}
 		return join.Next()
 	}
-	var err error
-	secondScan := getNode[*scanNode](secondSide.plan)
-	if secondScan != nil {
-		secondaryDocID, err = resolveDocIDAliasForCollection(secondScan.p.ctx, secondSide.col, secondaryDocID)
-	}
-	if err != nil {
-		return false, err
-	}
-
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
