@@ -671,6 +671,20 @@ func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 		pipe.source = sourceNode
 	}
 
+	// Move parent filter into pipe source so both parent and child sources see
+	// filtered data. Without this, only parentSource filters while childSource
+	// creates groups from all docs.
+	if topNodeSelect.selectNode.filter != nil {
+		filterSelect := &selectNode{
+			planner:   p,
+			source:    pipe.source,
+			filter:    topNodeSelect.selectNode.filter,
+			docMapper: docMapper{pipe.source.DocumentMap()},
+		}
+		pipe.source = filterSelect
+		topNodeSelect.selectNode.filter = nil
+	}
+
 	if len(topNodeSelect.group.childSelects) == 0 {
 		dataSource := topNodeSelect.group.dataSources[0]
 		dataSource.parentSource = topNodeSelect.planNode
