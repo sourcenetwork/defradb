@@ -33,9 +33,15 @@ import (
 //
 // Errors from individual recoveries are logged and skipped so that a partially
 // recoverable database can still open.
+//
+// Indexes are the only action recovered on startup for v1; truncate and datastore refresh
+// are not yet resumed (tracked by https://github.com/sourcenetwork/defradb/issues/4874). They
+// are recovered because a half-built index returns incomplete query results.
 func (db *DB) recoverIndexStates(ctx context.Context) error {
-	// Each recovery helper opens its own transaction, so the listing below is read
-	// in a separate short-lived transaction that is discarded before any mutation.
+	// Each recovery helper opens its own transaction, so the listing below is read in a
+	// separate short-lived transaction that is discarded before any mutation. Recovery thus
+	// never holds two transactions at once, keeping it safe on stores that forbid concurrent
+	// transactions (leveldb).
 	states, err := db.listAllIndexStates(ctx)
 	if err != nil {
 		log.ErrorE("Failed to list index states during recovery", err)

@@ -36,7 +36,9 @@ func TestIndexCreate_WithExplicitTxn_BackfillRunsOnCommit(t *testing.T) {
 	}`)
 
 	test := testUtils.TestCase{
-		// LevelDB does not support concurrent transactions.
+		// LevelDB does not support concurrent transactions: this test holds an explicit
+		// transaction open while the backfill runs on commit. Tracked by
+		// https://github.com/sourcenetwork/defradb/issues/4959.
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
@@ -121,7 +123,9 @@ func TestIndexCreate_WithExplicitTxnDiscard_NoIndexNoBackfill(t *testing.T) {
 	}`)
 
 	test := testUtils.TestCase{
-		// LevelDB does not support concurrent transactions.
+		// LevelDB does not support concurrent transactions: this test holds an explicit
+		// transaction open while the backfill runs on commit. Tracked by
+		// https://github.com/sourcenetwork/defradb/issues/4959.
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
