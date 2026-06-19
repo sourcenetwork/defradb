@@ -298,11 +298,6 @@ func (s *pubSubService) handleFetchEncryptionKeyResponses(
 				continue
 			}
 
-			// TODO: If multi-key requests become common, aggregate partial
-			// responses from multiple peers until every requested link is found or
-			// the timeout fires. A single valid response may contain fewer blocks
-			// than the request asked for.
-			// https://github.com/sourcenetwork/defradb/issues/4947
 			result <- encryption.Result{Items: items}
 			return
 
@@ -391,6 +386,11 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 		senderID = resp.From
 	}
 
+	reqSet := make(map[string]struct{}, len(req.Links))
+	for _, l := range req.Links {
+		reqSet[string(l)] = struct{}{}
+	}
+
 	resultEncItems := make([]encryption.Item, 0, len(keyResp.Blocks))
 	for i, block := range keyResp.Blocks {
 		decryptedData, err := crypto.DecryptECIES(
@@ -416,8 +416,11 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 				return nil, false, errors.Join(ErrKeyCIDGeneration, err)
 			}
 
-			if !bytes.Equal(keyResp.Links[i], link) ||
-				!bytes.Equal(req.Links[i], link) {
+			if !bytes.Equal(keyResp.Links[i], link) {
+				return nil, false, ErrEncryptionKeyCIDMismatch
+			}
+
+			if _, ok := reqSet[string(link)]; !ok {
 				return nil, false, ErrEncryptionKeyCIDMismatch
 			}
 		}
