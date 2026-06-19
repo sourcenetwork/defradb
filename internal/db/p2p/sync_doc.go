@@ -311,7 +311,7 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 		return docSyncItem{}, err
 	}
 	if !found {
-		return docSyncItem{}, fmt.Errorf("heads not found for docID %s", docID)
+		return docSyncItem{}, nil
 	}
 
 	key := keys.HeadstoreDocKey{

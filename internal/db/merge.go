@@ -179,9 +179,9 @@ type mergeProcessor struct {
 	// composites is a list of composites that need to be merged.
 	composites *list.List
 
-	blockDocIDs        map[string]resolvedDocID
-	currentCreateDocID *resolvedDocID
-	newDocCreateMode   bool
+	blockDocIDs           map[string]resolvedDocID
+	currentCompositeDocID *resolvedDocID
+	newDocCreateMode      bool
 }
 
 type resolvedDocID struct {
@@ -363,17 +363,17 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		var previousCreateDocID *resolvedDocID
+		var previousCompositeDocID *resolvedDocID
 		if block.Delta.IsComposite() && docID.publicDocID != "" {
-			previousCreateDocID = mp.currentCreateDocID
+			previousCompositeDocID = mp.currentCompositeDocID
 			resolved := docID
-			mp.currentCreateDocID = &resolved
+			mp.currentCompositeDocID = &resolved
 			defer func() {
-				mp.currentCreateDocID = previousCreateDocID
+				mp.currentCompositeDocID = previousCompositeDocID
 			}()
 		}
 
-		err = mp.processCRDTBlock(ctx, crdt, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
@@ -411,15 +411,6 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	return nil
-}
-
-func (mp *mergeProcessor) processCRDTBlock(
-	ctx context.Context,
-	crdtData crdt.ReplicatedData,
-	block *coreblock.Block,
-	blockLink cidlink.Link,
-) error {
-	return coreblock.ProcessBlock(ctx, crdtData, block, blockLink)
 }
 
 func (mp *mergeProcessor) setBlockDocIDMapping(
@@ -598,8 +589,8 @@ func (mp *mergeProcessor) resolveFieldBlockDocID(
 	collectionShortID uint32,
 	blockCID cid.Cid,
 ) (resolvedDocID, error) {
-	if mp.currentCreateDocID != nil {
-		return *mp.currentCreateDocID, nil
+	if mp.currentCompositeDocID != nil {
+		return *mp.currentCompositeDocID, nil
 	}
 
 	if resolved, ok := mp.blockDocIDs[blockCID.String()]; ok {

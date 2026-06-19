@@ -206,7 +206,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.NotEmpty(t, resolved.shortDocID)
 	require.NotZero(t, resolved.shortDocID)
 
-	mp.currentCreateDocID = &resolved
+	mp.currentCompositeDocID = &resolved
 	fieldResolved, err := mp.resolveFieldBlockDocID(txnCtx, collectionShortID, cid.Undef)
 	require.NoError(t, err)
 	require.Equal(t, genesisPublicDocID, fieldResolved.publicDocID)
@@ -218,7 +218,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()
 	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, mappedFieldCID, existingPublicDocID))
 
-	mp.currentCreateDocID = nil
+	mp.currentCompositeDocID = nil
 	fieldResolved, err = mp.resolveFieldBlockDocID(txnCtx, collectionShortID, mappedFieldCID)
 	require.NoError(t, err)
 	require.Equal(t, existingPublicDocID, fieldResolved.publicDocID)
