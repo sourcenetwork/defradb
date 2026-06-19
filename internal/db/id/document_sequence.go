@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package id
 
 import (
 	"context"
@@ -19,8 +19,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// nextShortDocID returns the next local storage key segment.
-func (db *DB) nextShortDocID(ctx context.Context, collectionShortID uint32) (uint32, error) {
+// NextDocShortID returns the next local document storage ID for the collection.
+func NextDocShortID(ctx context.Context, collectionShortID uint32) (uint32, error) {
 	seq, err := sequence.Get(ctx, keys.NewDocIDSequenceKey(collectionShortID))
 	if err != nil {
 		return 0, err

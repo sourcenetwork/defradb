@@ -178,13 +178,13 @@ func TestNextShortDocIDUsesPerCollectionSequence(t *testing.T) {
 	projectShortID, err := id.GetShortCollectionID(txnCtx, projectCol.CollectionID())
 	require.NoError(t, err)
 
-	nextShortID, err := db.nextShortDocID(txnCtx, userShortID)
+	nextShortID, err := id.NextDocShortID(txnCtx, userShortID)
 	require.NoError(t, err)
 	require.Equal(t, uint32(11), nextShortID)
-	nextShortID, err = db.nextShortDocID(txnCtx, projectShortID)
+	nextShortID, err = id.NextDocShortID(txnCtx, projectShortID)
 	require.NoError(t, err)
 	require.Equal(t, uint32(21), nextShortID)
-	nextShortID, err = db.nextShortDocID(txnCtx, userShortID)
+	nextShortID, err = id.NextDocShortID(txnCtx, userShortID)
 	require.NoError(t, err)
 	require.Equal(t, uint32(12), nextShortID)
 
