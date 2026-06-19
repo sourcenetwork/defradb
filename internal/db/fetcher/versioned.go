@@ -234,16 +234,6 @@ err := VersionFetcher.Start(txn, prefixes) {
 }
 */
 
-// SeekTo exposes the private seekTo.
-func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
-	err := vf.seekTo(c, 0)
-	if err != nil {
-		return err
-	}
-
-	return vf.Fetcher.Start(ctx)
-}
-
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
 // to the target state, creating the serialized state at the given version. It starts by seeking
 // to the closest existing state snapshot in the transient Versioned stores, which on the first
@@ -286,7 +276,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
 			if err != nil {
 				return err
 			}
-			shortDocID, err = vf.storageDocIDForPublicDocID(shortID, client.NewDocIDV0(cc).String())
+			shortDocID, err = vf.storageDocIDForBlock(shortID, block, cc)
 			if err != nil {
 				return err
 			}
@@ -512,32 +502,26 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	if err != nil {
 		return 0, err
 	}
-	if found {
-		return vf.storageDocIDForPublicDocID(collectionShortID, publicDocID)
-	}
-
-	if block.Delta.IsComposite() {
-		if len(block.Heads) == 0 {
-			return vf.storageDocIDForPublicDocID(collectionShortID, client.NewDocIDV0(blockCID).String())
+	if !found {
+		if block.Delta.IsComposite() {
+			if len(block.Heads) == 0 {
+				publicDocID = client.NewDocIDV0(blockCID).String()
+			} else {
+				return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
+			}
+		} else {
+			return 0, client.ErrMalformedDocID
 		}
-		return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
 	}
 
-	return 0, client.ErrMalformedDocID
-}
-
-func (vf *VersionedFetcher) storageDocIDForPublicDocID(
-	collectionShortID uint32,
-	publicDocID string,
-) (uint32, error) {
 	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
 	if err != nil {
 		return 0, err
 	}
-	if found {
-		return shortDocID, nil
+	if !found {
+		return 0, client.ErrMalformedDocID
 	}
-	return 0, client.ErrMalformedDocID
+	return shortDocID, nil
 }
 
 func (vf *VersionedFetcher) storageDocIDForCompositeHead(
