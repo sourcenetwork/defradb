@@ -43,6 +43,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_BOOL_ARRAY,
 		client.FieldKind_FLOAT32_ARRAY,
 		client.FieldKind_FLOAT64_ARRAY,
+		client.FieldKind_DATETIME_ARRAY,
 		client.FieldKind_NILLABLE_JSON,
 		client.FieldKind_NILLABLE_STRING,
 		client.FieldKind_NILLABLE_INT,
@@ -55,7 +56,16 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_NILLABLE_INT_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT32_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT64_ARRAY,
-		client.FieldKind_NILLABLE_STRING_ARRAY:
+		client.FieldKind_NILLABLE_STRING_ARRAY,
+		client.FieldKind_NILLABLE_DATETIME_ARRAY,
+		client.FieldKind_JSON,
+		client.FieldKind_STRING,
+		client.FieldKind_INT,
+		client.FieldKind_FLOAT32,
+		client.FieldKind_FLOAT64,
+		client.FieldKind_BOOL,
+		client.FieldKind_BLOB,
+		client.FieldKind_DATETIME:
 		return true
 	default:
 		return false
@@ -161,7 +171,7 @@ func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
 	if kind.IsArray() {
 		return &ArrayFieldGenerator{}
 	}
-	if kind == client.FieldKind_NILLABLE_JSON {
+	if kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON {
 		return &JSONFieldGenerator{}
 	}
 	return &SimpleFieldGenerator{}

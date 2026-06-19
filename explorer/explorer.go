@@ -8,11 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build playground && !windows
+//go:build explorer && !windows
 
-//go:generate ../tools/scripts/download_playground.sh
+//go:generate ../tools/scripts/download_explorer.sh
 
-package playground
+package explorer
 
 import (
 	"embed"

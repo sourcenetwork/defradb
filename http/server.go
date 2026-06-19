@@ -23,9 +23,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// PlaygroundEnabled is used to detect if the playground is enabled
+// ExplorerEnabled is used to detect if the explorer is enabled
 // on the current http server instance.
-var PlaygroundEnabled = false
+var ExplorerEnabled = false
 
 // We only allow cipher suites that are marked secure
 // by ssllabs
@@ -38,7 +38,8 @@ var tlsCipherSuites = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
-const defaultHTTPAddress = "127.0.0.1:9181"
+// DefaultHTTPAddress is the default address for the HTTP server.
+const DefaultHTTPAddress = "127.0.0.1:9181"
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
@@ -51,10 +52,11 @@ type Server struct {
 
 // NewServer instantiates a new server with the given http.Handler.
 func NewServer(handler http.Handler, opts ...options.Enumerable[options.NodeHTTPOptions]) (*Server, error) {
-	cfg := options.NodeHTTPOptions{
-		Address: defaultHTTPAddress,
-	}
+	var cfg options.NodeHTTPOptions
 	utils.ApplyOptions(&cfg, opts...)
+	if cfg.Address == "" {
+		cfg.Address = DefaultHTTPAddress
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// setup a mux with the default middleware stack

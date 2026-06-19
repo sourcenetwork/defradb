@@ -21,25 +21,27 @@ import (
 )
 
 const (
-	errFailedToGetHeads                          string = "failed to get document heads"
-	errFailedToCreateCollectionQuery             string = "failed to create collection prefix query"
-	errFailedToGetCollection                     string = "failed to get collection"
-	errFailedToGetAllCollections                 string = "failed to get all collections"
-	errDocVerification                           string = "the document verification failed"
-	errAddingP2PCollection                       string = "cannot add collection ID"
-	errRemovingP2PCollection                     string = "cannot remove collection ID"
-	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
-	errRemoveReferencedCollection                string = "cannot remove a collection while another field references it"
-	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
-	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
-	errCannotSetVersionID                        string = "setting the VersionID is not supported"
-	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
-	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
-	errRelationalFieldIDInvalidType              string = "relational id field of invalid kind"
-	errDuplicateField                            string = "duplicate field"
-	errCannotMutateField                         string = "mutating an existing field is not supported"
-	errCannotMoveField                           string = "moving fields is not currently supported"
-	errCannotDeleteField                         string = "deleting an existing field is not supported"
+	errFailedToGetHeads              string = "failed to get document heads"
+	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
+	errFailedToGetCollection         string = "failed to get collection"
+	errFailedToGetAllCollections     string = "failed to get all collections"
+	errDocVerification               string = "the document verification failed"
+	errAddingP2PCollection           string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot remove collection ID"
+	errAddCollectionWithPatch        string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection    string = "cannot remove a collection while another field references it"
+	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
+	errCollectionRootDoesntMatch     string = "CollectionRoot does not match existing"
+	errCannotSetVersionID            string = "setting the VersionID is not supported"
+	errRelationalFieldMissingIDField string = "missing id field for relation object field"
+	errRelatedFieldKindMismatch      string = "invalid Kind of the related field"
+	errRelationalFieldIDInvalidType  string = "relational id field of invalid kind"
+	errDuplicateField                string = "duplicate field"
+	errCannotMutateField             string = "mutating an existing field is not supported"
+	errCannotMoveField               string = "moving fields is not currently supported"
+	errCannotDeleteField             string = "deleting an existing field is not supported"
+	errCannotAddNonNillableField     string = "adding a non-nillable field to an existing collection " +
+		"is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
@@ -152,7 +154,6 @@ const (
 	errLoadChildBlock         string = "failed to load child block for merge"
 	errDecodeChildBlock       string = "failed to decode child block for merge"
 	errProcessChildBlock      string = "failed to process child block for merge"
-	errLoadEncryptionBlock    string = "failed to load encryption block"
 	errGetHeadsForMerge       string = "failed to get heads for merge target"
 	errLoadBlockFromStore     string = "failed to get block from blockstore"
 	errDecodeBlockFromStore   string = "failed to decode block from bytes"
@@ -190,6 +191,8 @@ const (
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
 	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
+	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
+		" first truncate it and then try again."
 )
 
 var (
@@ -263,6 +266,7 @@ var (
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
 	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
+	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -484,6 +488,13 @@ func NewErrCanNotEncryptBuiltinField(name string) error {
 func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCannotAddNonNillableField(name string) error {
+	return errors.New(
+		errCannotAddNonNillableField,
 		errors.NewKV("Name", name),
 	)
 }
@@ -1036,10 +1047,6 @@ func NewErrProcessChildBlock(inner error, cid string) error {
 	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
 }
 
-func NewErrLoadEncryptionBlock(inner error, cid string) error {
-	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
-}
-
 func NewErrGetHeadsForMerge(inner error, key string) error {
 	return errors.Wrap(errGetHeadsForMerge, inner, errors.NewKV("Key", key))
 }
@@ -1156,4 +1163,12 @@ func NewErrDeleteViewCacheItem(inner error) error {
 
 func NewErrParseViewCacheKey(inner error) error {
 	return errors.Wrap(errParseViewCacheKey, inner)
+}
+
+func NewErrDematerializePopulatedView(name string, version string) error {
+	return errors.New(
+		errDematerializePopulatedView,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", version),
+	)
 }

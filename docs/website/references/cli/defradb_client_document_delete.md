@@ -7,7 +7,7 @@ Delete documents by docID or filter.
 Delete documents by docID or filter and lists the number of documents deleted.
 
 ```
-defradb client document delete [-i --identity] [--filter <filter> --docID <docID>] [flags]
+defradb client document delete [flags]
 ```
 
 ### Examples
@@ -27,21 +27,23 @@ delete by filter:
 ### Options
 
 ```
-      --docID string    Document ID
-      --filter string   Document filter
-  -h, --help            help for delete
+      --collection-id string     Collection ID
+      --collection-name string   Collection name
+      --docID string             Document ID
+      --filter string            Document filter
+      --get-inactive             Get inactive collections as well as active
+  -h, --help                     help for delete
+      --version-id string        Collection version ID
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --collection-id string        Collection ID
-      --collection-name string      Collection name
-      --get-inactive                Get inactive collections as well as active
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")
@@ -55,7 +57,6 @@ delete by filter:
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

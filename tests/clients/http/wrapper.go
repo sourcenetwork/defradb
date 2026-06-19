@@ -42,7 +42,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +81,14 @@ func (w *Wrapper) Connect(
 	opts ...options.Enumerable[options.ConnectOptions],
 ) error {
 	return w.client.Connect(ctx, addresses, opts...)
+}
+
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	return w.client.Disconnect(ctx, addresses, opts...)
 }
 
 func (w *Wrapper) AddReplicator(
@@ -186,6 +194,13 @@ func (w *Wrapper) BasicExport(
 	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	return w.client.BasicExport(ctx, filepath, opts...)
+}
+
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return w.client.ListActions(ctx, opts...)
 }
 
 func (w *Wrapper) AddCollection(

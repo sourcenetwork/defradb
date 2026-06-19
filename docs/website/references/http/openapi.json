@@ -27,6 +27,24 @@
             }
         },
         "schemas": {
+            "action_execution": {
+                "properties": {
+                    "Action": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "CollectionID": {
+                        "type": "string"
+                    },
+                    "Status": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "add_acp_document_relationship_request": {
                 "properties": {
                     "CollectionName": {
@@ -867,6 +885,40 @@
                 },
                 "tags": [
                     "acp_node_status"
+                ]
+            }
+        },
+        "/actions": {
+            "get": {
+                "description": "List information pertaining to long running actions",
+                "operationId": "list_actions",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/action_execution"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/action_execution"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "Information on incomplete action executions"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "action"
                 ]
             }
         },
@@ -1921,7 +1973,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -1969,7 +2045,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2060,6 +2160,26 @@
                 "tags": [
                     "node",
                     "identity"
+                ]
+            }
+        },
+        "/node/options": {
+            "get": {
+                "description": "Get node configuration options",
+                "operationId": "get_node_options",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "node"
                 ]
             }
         },
@@ -2254,6 +2374,22 @@
         "/p2p/connect": {
             "post": {
                 "operationId": "connect",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/disconnect": {
+            "post": {
+                "operationId": "disconnect",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"

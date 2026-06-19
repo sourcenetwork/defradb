@@ -14,20 +14,13 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client/options"
-	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 	var txID uint64
 	var identity string
-	var collection string
-	var collectionID string
-	var versionID string
-	var getInactive bool
 	var cmd = &cobra.Command{
-		Use:   "document [--collection-name <name> --collection-id <collectionID> --version-id <versionID>]",
+		Use:   "document",
 		Short: "Interact with documents.",
 		Long:  `Add, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -48,21 +41,7 @@ func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 			cliClient := mustGetContextCLIClient(cmd)
-
-			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
-			if versionID != "" {
-				opt.SetVersionID(versionID)
-			}
-			if collectionID != "" {
-				opt.SetCollectionID(collectionID)
-			}
-			if collection != "" {
-				opt.SetCollectionName(collection)
-			}
-			if getInactive {
-				opt.SetGetInactive(getInactive)
-			}
-
+			opt := getCollectionSelectorOptions(cmd)
 			cols, err := cliClient.GetCollections(cmd.Context(), opt)
 			if err != nil {
 				return err
@@ -82,9 +61,5 @@ func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().StringVar(&collection, "collection-name", "", "Collection name")
-	cmd.PersistentFlags().StringVar(&collectionID, "collection-id", "", "Collection ID")
-	cmd.PersistentFlags().StringVar(&versionID, "version-id", "", "Collection version ID")
-	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }

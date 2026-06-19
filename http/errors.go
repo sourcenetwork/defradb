@@ -30,6 +30,7 @@ const (
 	errFailedToGetContext       string = "failed to get context"
 	errMissingRequiredParameter string = "required parameter %s is missing"
 	errCollectionNotFound       string = "collection not found"
+	errNoHostInURL              string = "could not derive a host from the url"
 )
 
 // Errors returnable from this package.
@@ -58,6 +59,27 @@ type errorResponse struct {
 
 func (e errorResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{"error": e.Error.Error()})
+}
+
+// gqlErrorResponse is the GraphQL-over-HTTP compliant error envelope used by
+// ExecRequest handlers. Unlike errorResponse (which serialises to
+// {"error":"..."}), this marshals to
+//
+//	{"errors": [{"message": "..."}]}
+//
+// which is what GraphQL clients inspect when the request fails before the
+// resolver runs (e.g. bad JSON body, missing query field, subscription
+// framing mismatch). Without this, those clients see a non-GraphQL payload
+// and fall through to "unknown transport error" branches instead of
+// surfacing the actual cause to the user.
+type gqlErrorResponse struct {
+	Error error `json:"-"`
+}
+
+func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"errors": []map[string]any{{"message": e.Error.Error()}},
+	})
 }
 
 func (e *errorResponse) UnmarshalJSON(data []byte) error {
@@ -98,6 +120,13 @@ func NewErrCollectionNotFound(collectionName string) error {
 	return errors.New(
 		errCollectionNotFound,
 		errors.NewKV("CollectionName", collectionName),
+	)
+}
+
+func NewErrNoHostInURL(rawURL string) error {
+	return errors.New(
+		errNoHostInURL,
+		errors.NewKV("URL", rawURL),
 	)
 }
 

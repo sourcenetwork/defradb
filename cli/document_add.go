@@ -27,7 +27,7 @@ func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var cmd = &cobra.Command{
-		Use:   "add [-i --identity] [-e --encrypt] [--encrypt-fields] <document>",
+		Use:   "add [<document>]",
 		Short: "Add a new document.",
 		Long: `Add a new document.
 
@@ -119,5 +119,6 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

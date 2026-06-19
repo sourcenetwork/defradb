@@ -282,6 +282,10 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
+	//
+	// This function will lock the selected views until it completes.  Its writes are not protected by transactions,
+	// so if it errors, the database may be left in a state where the view has been partially refreshed - in this case,
+	// it is recommeded to retry the refresh.
 	RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error
 
 	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
@@ -356,6 +360,14 @@ type Store interface {
 	// BasicExport exports the current data or subset of data to file in json format.
 	// The filepath parameter is required and specifies where to write the export file.
 	BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error
+
+	// List information about active action executions.
+	//
+	// An action represents a long running database task, such as collection truncation or refresh, and the rebuilding
+	// of indexes.
+	//
+	// Only executions that have not yet been successfully completed will be returned.
+	ListActions(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]ActionExecution, error)
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.

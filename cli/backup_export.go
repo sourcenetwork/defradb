@@ -26,9 +26,14 @@ func MakeBackupExportCommand(ctx context.Context) *cobra.Command {
 	var pretty bool
 	var format string
 	var cmd = &cobra.Command{
-		Use:   "export  [-c --collections | -p --pretty | -f --format] <output_path>",
+		Use:   "export <output_path>",
 		Short: "Export the database to a file",
 		Long: `Export the database to a file.
+
+The backup captures a snapshot of documents in the database, but does not include their
+history or ownership information, and docIDs may not be preserved.
+
+The instance must be running in development mode for a backup to be exported.
 
 If a file exists at the ` + "`<output_path>`" + ` location, it will be overwritten.
 

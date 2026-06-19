@@ -373,6 +373,9 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
+	case DisconnectPeers:
+		disconnectPeers(s, action)
+
 	case AddReplicator:
 		addReplicator(s, action)
 
@@ -465,9 +468,6 @@ func performAction(
 
 	case SyncDocs:
 		syncDocs(s, action)
-
-	case Wait:
-		<-time.After(action.Duration)
 
 	case Benchmark:
 		benchmarkAction(s, testCase, actionIndex, action)

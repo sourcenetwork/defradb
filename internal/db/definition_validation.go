@@ -21,6 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // definitionState holds collection descriptions in easily accessible
@@ -141,6 +143,8 @@ var updateOnlyValidators = []definitionValidator{
 	validateFieldNotMutated,
 	validateFieldNotMoved,
 	validateCollectionNameNotMutated,
+	validateDematerializedViewHasNoData,
+	validateNonNillableFieldNotAdded,
 }
 
 var collectionUpdateValidators = append(
@@ -895,6 +899,38 @@ func validateFieldNotMutated(
 	return errors.Join(errs...)
 }
 
+func validateNonNillableFieldNotAdded(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.activeCollectionsByColID {
+		oldCol, ok := oldState.activeCollectionsByColID[newCol.CollectionID]
+		if !ok {
+			continue
+		}
+
+		oldFieldIDs := map[string]struct{}{}
+		for _, field := range oldCol.Fields {
+			if field.FieldID != "" {
+				oldFieldIDs[field.FieldID] = struct{}{}
+			}
+		}
+
+		for _, field := range newCol.Fields {
+			if _, exists := oldFieldIDs[field.FieldID]; !exists {
+				if !field.Kind.IsNillable() {
+					errs = append(errs, NewErrCannotAddNonNillableField(field.Name))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func validateFieldNotDuplicated(
 	ctx context.Context,
 	db *DB,
@@ -1174,7 +1210,7 @@ func validateCollectionFieldDefaultValue(
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
 		_, err := client.NewDocFromMap(ctx, map[string]any{}, col)
-		if err != nil {
+		if err != nil && !errors.Is(err, client.ErrMissingRequiredField) {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}
 	}
@@ -1285,6 +1321,62 @@ func validateEncryptedIndexes(
 	for _, newCol := range newState.collections {
 		if err := validateEncryptedIndexesOnCollection(newCol); err != nil {
 			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateDematerializedViewHasNoData(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		if col.IsMaterialized {
+			continue
+		}
+
+		oldCol, ok := oldState.collectionsByID[col.VersionID]
+		if !ok {
+			continue
+		}
+
+		if !oldCol.IsMaterialized {
+			continue
+		}
+
+		txn := datastore.CtxMustGetTxn(ctx)
+
+		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+			Prefix:   keys.NewViewCacheColPrefix(shortID),
+			KeysOnly: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		hasValue, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if hasValue {
+			errs = append(errs,
+				NewErrDematerializePopulatedView(col.Name, col.VersionID),
+			)
+		}
+
+		err = iter.Close()
+		if err != nil {
+			return err
 		}
 	}
 

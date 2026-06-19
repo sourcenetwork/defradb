@@ -21,6 +21,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corekv"
 
@@ -275,6 +276,30 @@ func (p *P2P) ActivePeers(ctx context.Context) ([]string, error) {
 // Connect initiates a connection to the peer with the given addresses.
 func (p *P2P) Connect(ctx context.Context, addresses []string) error {
 	return p.host.Connect(ctx, addresses)
+}
+
+// Disconnect closes the connection to the peer(s) identified by the given addresses.
+func (p *P2P) Disconnect(ctx context.Context, addresses []string) error {
+	seen := make(map[string]struct{})
+	for _, addr := range addresses {
+		maddr, err := multiaddr.NewMultiaddr(addr)
+		if err != nil {
+			return err
+		}
+		_, p2ppart := multiaddr.SplitLast(maddr)
+		if p2ppart == nil || p2ppart.Protocol().Code != multiaddr.P_P2P {
+			return errors.New("multiaddr does not contain peer ID")
+		}
+		peerID := p2ppart.Value()
+		if _, ok := seen[peerID]; ok {
+			continue
+		}
+		seen[peerID] = struct{}{}
+		if err := p.host.Disconnect(ctx, peerID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p *P2P) updateReplicators(ctx context.Context, id string, addresses []string, collectionIDs map[string]struct{}) {

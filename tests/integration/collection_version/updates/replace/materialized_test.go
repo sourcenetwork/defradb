@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t *testing.T) {
@@ -41,6 +42,54 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t 
 					]
 				`,
 				ExpectedError: "non-materialized collections are not supported. Collection: User",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView_ErrorsIfNotTruncated(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "replace",
+							"path": "/UserView/IsMaterialized",
+							"value": false
+						}
+					]
+				`,
+				ExpectedError: "cannot dematerialize a materialized view that has data, first truncate it and then try again.",
 			},
 		},
 	}
@@ -75,6 +124,10 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 				DocMap: map[string]any{
 					"name": "John",
 				},
+			},
+			&action.Truncate{
+				// Truncate the view before setting IsMaterialized to false
+				CollectionIndex: 1,
 			},
 			&action.PatchCollection{
 				Patch: `
