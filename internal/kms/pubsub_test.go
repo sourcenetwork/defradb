@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/assert"
@@ -250,8 +251,11 @@ func TestTryHandleFetchEncryptionKeyResponse_AcceptsVerifiedBlocks(t *testing.T)
 	holderPrivKey, err := crypto.GenerateX25519()
 	require.NoError(t, err)
 
+	link, err := cid.Decode("bafyreidq2l2x5zntplo7hebxmj2w6uyw7srv2psrz6pjfgmaaesrb4jauu")
+	require.NoError(t, err)
+
 	req := &fetchEncryptionKeyRequest{
-		Links:              [][]byte{[]byte("bafyreidq2l2x5zntplo7hebxmj2w6uyw7srv2psrz6pjfgmaaesrb4jauu")},
+		Links:              [][]byte{link.Bytes()},
 		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
 	}
 

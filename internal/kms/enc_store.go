@@ -114,5 +114,5 @@ func (s *ipldEncStorage) computeBlockLink(ctx context.Context, block coreblock.E
 		return nil, err
 	}
 
-	return []byte(link.String()), nil
+	return []byte(link.Binary()), nil
 }

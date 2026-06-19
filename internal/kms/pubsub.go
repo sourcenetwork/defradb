@@ -412,7 +412,12 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 
 		if !skipVerify {
 			link, err := s.encStore.computeBlockLink(s.ctx, encBlock)
-			if !bytes.Equal(keyResp.Links[i], link) {
+			if err != nil {
+				return nil, false, errors.New("key cid")
+			}
+
+			if !bytes.Equal(keyResp.Links[i], link) &&
+				!bytes.Equal(req.Links[i], link) {
 				return nil, false, errors.Join(ErrEncryptionKeyCIDMismatch, err)
 			}
 		}
