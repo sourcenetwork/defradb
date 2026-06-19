@@ -533,9 +533,6 @@ func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 		if err != nil {
 			return 0, err
 		}
-		if !headBlock.Delta.IsComposite() {
-			continue
-		}
 		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid)
 		if err != nil {
 			return 0, err

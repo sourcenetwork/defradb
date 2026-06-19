@@ -141,48 +141,9 @@ func SetBlockDocIDMapping(
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), publicDocID).Bytes(),
-		[]byte{},
+		keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String()).Bytes(),
+		[]byte(publicDocID),
 	)
-}
-
-func GetDocIDsForBlockFromStore(
-	ctx context.Context,
-	store corekv.Reader,
-	collectionShortID uint32,
-	blockCID cid.Cid,
-) ([]string, error) {
-	if !blockCID.Defined() {
-		return nil, nil
-	}
-
-	prefix := keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String(), "").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
-	if err != nil {
-		return nil, err
-	}
-
-	var docIDs []string
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-		docID, err := docIDFromBlockMappingSuffix(iter.Key()[len(prefix):], collectionShortID)
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		if docID != "" {
-			docIDs = append(docIDs, docID)
-		}
-	}
-	if err := iter.Close(); err != nil {
-		return nil, err
-	}
-	return docIDs, nil
 }
 
 func GetDocIDForBlockFromStore(
@@ -191,16 +152,40 @@ func GetDocIDForBlockFromStore(
 	collectionShortID uint32,
 	blockCID cid.Cid,
 ) (string, bool, error) {
-	docIDs, err := GetDocIDsForBlockFromStore(ctx, store, collectionShortID, blockCID)
+	if !blockCID.Defined() {
+		return "", false, nil
+	}
+	if collectionShortID != 0 {
+		value, err := store.Get(ctx, keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String()).Bytes())
+		if errors.Is(err, corekv.ErrNotFound) {
+			return "", false, nil
+		}
+		if err != nil {
+			return "", false, err
+		}
+		return string(value), true, nil
+	}
+	prefix := keys.NewBlockCIDToDocIDKey(0, blockCID.String()).ToString() + "/"
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
 	if err != nil {
 		return "", false, err
 	}
-	if len(docIDs) == 0 {
-		return "", false, nil
+	hasNext, err := iter.Next()
+	if err != nil {
+		return "", false, stderrors.Join(err, iter.Close())
 	}
-	// Only use this helper when the caller has surrounding context that makes any
-	// mapped DocID acceptable. Shared genesis field blocks can map to more than one DocID.
-	return docIDs[0], true, nil
+	if !hasNext {
+		return "", false, iter.Close()
+	}
+	value, err := iter.Value()
+	if err != nil {
+		return "", false, stderrors.Join(err, iter.Close())
+	}
+	docID := string(value)
+	if err := iter.Close(); err != nil {
+		return "", false, err
+	}
+	return docID, true, nil
 }
 
 func DeleteBlockDocIDMappings(
@@ -209,16 +194,18 @@ func DeleteBlockDocIDMappings(
 	collectionShortID uint32,
 	publicDocID string,
 ) error {
-	if publicDocID == "" {
+	if collectionShortID == 0 || publicDocID == "" {
 		return nil
 	}
 
-	blockPrefix := keys.NewBlockCIDToDocIDKey(0, "", "").ToString() + "/"
+	blockPrefix := keys.NewBlockCIDToDocIDKey(0, "").ToString() + "/"
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(blockPrefix)})
 	if err != nil {
 		return err
 	}
 
+	collectionSuffix := append([]byte{'/'}, keys.EncodeCollectionShortID(collectionShortID)...)
+	publicDocIDBytes := []byte(publicDocID)
 	mappingKeys := make([][]byte, 0)
 	for {
 		hasNext, err := iter.Next()
@@ -229,11 +216,11 @@ func DeleteBlockDocIDMappings(
 			break
 		}
 
-		keyCollectionShortID, docID, err := blockMappingKeyDocID(iter.Key()[len(blockPrefix):])
+		value, err := iter.Value()
 		if err != nil {
 			return stderrors.Join(err, iter.Close())
 		}
-		if keyCollectionShortID != collectionShortID || docID != publicDocID {
+		if !bytes.Equal(value, publicDocIDBytes) || !bytes.HasSuffix(iter.Key(), collectionSuffix) {
 			continue
 		}
 		mappingKeys = append(mappingKeys, append([]byte(nil), iter.Key()...))
@@ -248,35 +235,6 @@ func DeleteBlockDocIDMappings(
 		}
 	}
 	return nil
-}
-
-func docIDFromBlockMappingSuffix(data []byte, collectionShortID uint32) (string, error) {
-	if collectionShortID == 0 {
-		rest, _, err := keys.DecodeCollectionShortIDPrefix(data)
-		if err != nil {
-			return "", err
-		}
-		if len(rest) == 0 || rest[0] != '/' {
-			return "", keys.ErrInvalidKey
-		}
-		return string(rest[1:]), nil
-	}
-	return string(data), nil
-}
-
-func blockMappingKeyDocID(data []byte) (uint32, string, error) {
-	blockEnd := bytes.IndexByte(data, '/')
-	if blockEnd < 0 {
-		return 0, "", keys.ErrInvalidKey
-	}
-	rest, collectionShortID, err := keys.DecodeCollectionShortIDPrefix(data[blockEnd+1:])
-	if err != nil {
-		return 0, "", err
-	}
-	if len(rest) == 0 || rest[0] != '/' {
-		return 0, "", keys.ErrInvalidKey
-	}
-	return collectionShortID, string(rest[1:]), nil
 }
 
 func DeleteDocIDMappings(

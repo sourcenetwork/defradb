@@ -158,9 +158,10 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	require.True(t, found)
 	require.NotEqual(t, sourceDoc.ID().String(), shortDocID)
 
-	docIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
+	blockDocID, found, err := id.GetDocIDForBlockFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
-	require.Equal(t, []string{sourceDoc.ID().String()}, docIDs)
+	require.True(t, found)
+	require.Equal(t, sourceDoc.ID().String(), blockDocID)
 }
 
 func TestMergeResolveBlockDocID(t *testing.T) {

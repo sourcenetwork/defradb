@@ -54,14 +54,15 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	blockDocID, found, err := id.GetDocIDForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
 		genesisFieldCID,
 	)
 	require.NoError(t, err)
-	require.Equal(t, []string{publicDocID}, docIDs)
+	require.True(t, found)
+	require.Equal(t, publicDocID, blockDocID)
 	txn.Discard()
 
 	err = col.Truncate(ctx)
@@ -86,14 +87,14 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err = id.GetDocIDsForBlockFromStore(
+	_, found, err = id.GetDocIDForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
 		genesisFieldCID,
 	)
 	require.NoError(t, err)
-	require.Empty(t, docIDs)
+	require.False(t, found)
 }
 
 func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
@@ -146,14 +147,14 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	_, found, err = id.GetDocIDForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
 		genesisFieldCID,
 	)
 	require.NoError(t, err)
-	require.Empty(t, docIDs)
+	require.False(t, found)
 }
 
 func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {

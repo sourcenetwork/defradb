@@ -90,28 +90,22 @@ func (db *DB) VerifySignature(
 		}
 		collection := collections[0]
 
-		docIDs, err := db.publicDocIDsForSignatureBlock(ctx, parsedCid, block, collection)
+		docID, err := db.publicDocIDForSignatureBlock(ctx, parsedCid, block, collection)
 		if err != nil {
 			return err
 		}
 
-		var hasPerm bool
-		for _, docID := range docIDs {
-			hasPerm, err = acpDB.CheckAccessOfDocOnCollectionWithACP(
-				ctx,
-				opt.Identity,
-				db.nodeACP,
-				db.documentACP.Value(),
-				collection,
-				acpTypes.DocumentReadPerm,
-				docID,
-			)
-			if err != nil {
-				return err
-			}
-			if hasPerm {
-				break
-			}
+		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+			ctx,
+			opt.Identity,
+			db.nodeACP,
+			db.documentACP.Value(),
+			collection,
+			acpTypes.DocumentReadPerm,
+			docID,
+		)
+		if err != nil {
+			return err
 		}
 
 		if !hasPerm {
@@ -123,41 +117,38 @@ func (db *DB) VerifySignature(
 	return err
 }
 
-// publicDocIDsForSignatureBlock resolves the public DocIDs that ACP may check for a signed block.
-func (db *DB) publicDocIDsForSignatureBlock(
+// publicDocIDForSignatureBlock resolves the public DocID that ACP may check for a signed block.
+func (db *DB) publicDocIDForSignatureBlock(
 	ctx context.Context,
 	blockCID cid.Cid,
 	block *coreblock.Block,
 	collection client.Collection,
-) ([]string, error) {
+) (string, error) {
 	if block.Delta.IsCollection() {
-		return []string{""}, nil
+		return "", nil
 	}
-
 	shortID, err := id.GetUncachedShortCollectionID(
 		ctx,
 		collection.Version().CollectionID,
 		datastore.SystemstoreFrom(db.rootstore),
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.SystemstoreFrom(db.rootstore),
 		shortID,
 		blockCID,
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if len(docIDs) > 0 {
-		return docIDs, nil
+	if found {
+		return docID, nil
 	}
-
 	if block.Delta.IsComposite() && len(block.Heads) == 0 {
-		return []string{client.NewDocIDV0(blockCID).String()}, nil
+		return client.NewDocIDV0(blockCID).String(), nil
 	}
-	return []string{""}, nil
+	return "", nil
 }

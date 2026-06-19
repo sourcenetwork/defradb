@@ -53,10 +53,6 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.False(t, found)
 
 	undefinedCID := blocks.NewBlock(nil).Cid()
-	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
-	require.NoError(t, err)
-	require.Empty(t, docIDs)
-
 	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
 	require.NoError(t, err)
 	require.False(t, found)
@@ -160,31 +156,30 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID2)
 	require.NoError(t, err)
 
-	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
-
-	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), 0, fieldCID)
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
-
 	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Contains(t, []string{docID1, docID2}, docID)
+	require.Equal(t, docID2, docID)
+
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, fieldCID)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, docID2, docID)
 
 	err = DeleteBlockDocIDMappings(ctx, txn.Systemstore(), collectionShortID, docID1)
 	require.NoError(t, err)
 
-	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
-	require.Equal(t, []string{docID2}, docIDs)
+	require.True(t, found)
+	require.Equal(t, docID2, docID)
 
 	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, "")
 	require.NoError(t, err)
-	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
-	require.Equal(t, []string{docID2}, docIDs)
+	require.True(t, found)
+	require.Equal(t, docID2, docID)
 }
 
 func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {

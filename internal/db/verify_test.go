@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-func TestPublicDocIDsForSignatureBlockResolvesGenesisCompositeAndField(t *testing.T) {
+func TestPublicDocIDForSignatureBlockResolvesGenesisCompositeAndField(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -40,21 +40,21 @@ func TestPublicDocIDsForSignatureBlockResolvesGenesisCompositeAndField(t *testin
 	require.NoError(t, err)
 
 	compositeBlock := loadTestBlock(t, ctx, db, doc.Head())
-	docIDs, err := db.publicDocIDsForSignatureBlock(ctx, doc.Head(), compositeBlock, col)
+	docID, err := db.publicDocIDForSignatureBlock(ctx, doc.Head(), compositeBlock, col)
 	require.NoError(t, err)
-	require.Equal(t, []string{doc.ID().String()}, docIDs)
+	require.Equal(t, doc.ID().String(), docID)
 	require.NotEmpty(t, compositeBlock.Links)
 
 	fieldCID := compositeBlock.Links[0].Cid
 	fieldBlock := loadTestBlock(t, ctx, db, fieldCID)
 	require.True(t, fieldBlock.Delta.IsField())
 
-	docIDs, err = db.publicDocIDsForSignatureBlock(ctx, fieldCID, fieldBlock, col)
+	docID, err = db.publicDocIDForSignatureBlock(ctx, fieldCID, fieldBlock, col)
 	require.NoError(t, err)
-	require.Equal(t, []string{doc.ID().String()}, docIDs)
+	require.Equal(t, doc.ID().String(), docID)
 }
 
-func TestPublicDocIDsForSignatureBlockMapsStoredBlockCID(t *testing.T) {
+func TestPublicDocIDForSignatureBlockMapsStoredBlockCID(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -77,9 +77,9 @@ func TestPublicDocIDsForSignatureBlockMapsStoredBlockCID(t *testing.T) {
 		}),
 	}
 
-	docIDs, err := db.publicDocIDsForSignatureBlock(ctx, doc.Head(), block, col)
+	docID, err := db.publicDocIDForSignatureBlock(ctx, doc.Head(), block, col)
 	require.NoError(t, err)
-	require.Equal(t, []string{doc.ID().String()}, docIDs)
+	require.Equal(t, doc.ID().String(), docID)
 }
 
 func loadTestBlock(t *testing.T, ctx context.Context, db *DB, blockCID cid.Cid) *coreblock.Block {

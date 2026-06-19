@@ -443,30 +443,24 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	docIDs, err := p.publicDocIDsForBlock(ctx, cols[0], c, block, "")
+	docID, err := p.publicDocIDForBlockCID(ctx, cols[0], c, block)
 	if err != nil {
-		log.ErrorE("Failed to resolve block doc IDs", err)
+		log.ErrorE("Failed to resolve block doc ID", err)
 		return false
 	}
 
-	var peerHasAccess bool
-	for _, docID := range docIDs {
-		peerHasAccess, err = acpDB.CheckDocAccessWithIdentityFunc(
-			ctx,
-			identFunc,
-			p.db.NodeACP(),
-			p.db.DocumentACP().Value(),
-			cols[0], // For now we assume there is only one collection.
-			acpTypes.DocumentReadPerm,
-			docID,
-		)
-		if err != nil {
-			log.ErrorE("Failed to check access", err)
-			return false
-		}
-		if peerHasAccess {
-			break
-		}
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+		ctx,
+		identFunc,
+		p.db.NodeACP(),
+		p.db.DocumentACP().Value(),
+		cols[0], // For now we assume there is only one collection.
+		acpTypes.DocumentReadPerm,
+		docID,
+	)
+	if err != nil {
+		log.ErrorE("Failed to check access", err)
+		return false
 	}
 
 	return peerHasAccess
@@ -510,48 +504,39 @@ func (p *P2P) trySelfHasAccess(
 		return true, nil
 	}
 
-	docIDs, err := p.publicDocIDsForBlock(ctx, cols[0], blockCID, block, docID)
-	if err != nil {
-		return false, err
-	}
-
-	var peerHasAccess bool
-	for _, docID := range docIDs {
-		peerHasAccess, err = acpDB.CheckDocAccessWithIdentityFunc(
-			ctx,
-			func() immutable.Option[identity.Identity] {
-				return immutable.Some(identity.FromDID(ident.Value().DID))
-			},
-			p.db.NodeACP(),
-			p.db.DocumentACP().Value(),
-			cols[0], // For now we assume there is only one collection.
-			acpTypes.DocumentReadPerm,
-			docID,
-		)
+	if docID == "" {
+		docID, err = p.publicDocIDForBlockCID(ctx, cols[0], blockCID, block)
 		if err != nil {
 			return false, err
 		}
-		if peerHasAccess {
-			break
-		}
+	}
+
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+		ctx,
+		func() immutable.Option[identity.Identity] {
+			return immutable.Some(identity.FromDID(ident.Value().DID))
+		},
+		p.db.NodeACP(),
+		p.db.DocumentACP().Value(),
+		cols[0], // For now we assume there is only one collection.
+		acpTypes.DocumentReadPerm,
+		docID,
+	)
+	if err != nil {
+		return false, err
 	}
 
 	return peerHasAccess, nil
 }
 
-func (p *P2P) publicDocIDsForBlock(
+func (p *P2P) publicDocIDForBlockCID(
 	ctx context.Context,
 	col client.Collection,
 	blockCID cid.Cid,
 	block *coreblock.Block,
-	docID string,
-) ([]string, error) {
-	if docID != "" {
-		return []string{docID}, nil
-	}
-
+) (string, error) {
 	if block.Delta.IsCollection() {
-		return []string{""}, nil
+		return "", nil
 	}
 
 	collectionShortID, err := id.GetUncachedShortCollectionID(
@@ -560,24 +545,24 @@ func (p *P2P) publicDocIDsForBlock(
 		p.db.Multistore().Systemstore(),
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		p.db.Multistore().Systemstore(),
 		collectionShortID,
 		blockCID,
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if len(docIDs) > 0 {
-		return docIDs, nil
+	if found {
+		return docID, nil
 	}
 	if block.Delta.IsComposite() && len(block.Heads) == 0 {
-		return []string{client.NewDocIDV0(blockCID).String()}, nil
+		return client.NewDocIDV0(blockCID).String(), nil
 	}
-	return []string{""}, nil
+	return "", nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.

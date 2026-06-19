@@ -26,7 +26,7 @@ import (
 // Key shapes:
 //   - /docid/{collectionShortID}/s/{shortDocID} -> public DocID
 //   - /docid/n/p/{publicDocID} -> encoded {collectionShortID, shortDocID}
-//   - /docid/b/{blockCID}/{collectionShortID}/{publicDocID} -> empty value
+//   - /docid/b/{blockCID}/{collectionShortID} -> public DocID
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
 // delete, and encryption blocks. It lets CID-only paths such as P2P access
@@ -117,20 +117,19 @@ func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 	}
 }
 
-// BlockCIDToDocIDKey records that a public DocID references a document-owned block CID.
+// BlockCIDToDocIDKey maps a document-owned block CID to the public DocID that owns it.
 type BlockCIDToDocIDKey struct {
 	systemstoreDocIDKey
 }
 
 var _ Key = (*BlockCIDToDocIDKey)(nil)
 
-func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string, publicDocID string) BlockCIDToDocIDKey {
+func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			[]byte(BLOCK_CID_TO_DOC_ID),
 			stringSegment(blockCID),
 			collectionShortIDSegment(collectionShortID),
-			stringSegment(publicDocID),
 		),
 	}
 }
