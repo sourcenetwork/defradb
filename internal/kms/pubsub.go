@@ -413,12 +413,12 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 		if !skipVerify {
 			link, err := s.encStore.computeBlockLink(s.ctx, encBlock)
 			if err != nil {
-				return nil, false, errors.New("key cid")
+				return nil, false, errors.Join(ErrKeyCIDGeneration, err)
 			}
 
-			if !bytes.Equal(keyResp.Links[i], link) &&
+			if !bytes.Equal(keyResp.Links[i], link) ||
 				!bytes.Equal(req.Links[i], link) {
-				return nil, false, errors.Join(ErrEncryptionKeyCIDMismatch, err)
+				return nil, false, ErrEncryptionKeyCIDMismatch
 			}
 		}
 
@@ -426,9 +426,6 @@ func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
 			return nil, false, errors.Join(ErrEncryptionKeyStore, err)
 		}
 
-		// todo: verify incoming response order block/CIDs match the request
-		// current implementation assumes trusted response ordering
-		// https://github.com/sourcenetwork/defradb/issues/4948
 		resultEncItems = append(resultEncItems, encryption.Item{
 			Link:  keyResp.Links[i],
 			Block: decryptedData,

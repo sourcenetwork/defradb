@@ -25,6 +25,7 @@ const (
 	errDecodingEncryptionKey       string = "decoding encryption key"
 	errEncryptionKeyCIDMismatch    string = "key CID mismatch"
 	errEncryptionKeyStore          string = "store encryption key"
+	errKeyCIDGeneration            string = "key cid generation"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	ErrDecodingEncryptionKey       = errors.New(errDecodingEncryptionKey)
 	ErrEncryptionKeyCIDMismatch    = errors.New(errEncryptionKeyCIDMismatch)
 	ErrEncryptionKeyStore          = errors.New(errEncryptionKeyStore)
+	ErrKeyCIDGeneration            = errors.New(errKeyCIDGeneration)
 )
 
 func NewErrUnknownKMSType(t ServiceType) error {
