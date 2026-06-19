@@ -234,14 +234,14 @@ func (db *DB) setImportedDocIDAlias(
 	if err != nil {
 		return err
 	}
-	shortDocID, found, err := id.GetShortDocID(ctx, colShortID, doc.ID().String())
+	docShortID, found, err := id.GetShortDocID(ctx, colShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}
 	if !found {
 		return NewErrDocIDNotFound(doc.ID().String())
 	}
-	if err := id.SetDocIDAlias(ctx, colShortID, shortDocID, importedDocID); err != nil {
+	if err := id.SetDocIDAlias(ctx, colShortID, docShortID, importedDocID); err != nil {
 		return err
 	}
 	return txn.Commit()

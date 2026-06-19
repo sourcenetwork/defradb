@@ -86,8 +86,8 @@ func encryptedCBORValueWithKey(
 	}
 }
 
-func localDocIDKey(collectionShortID uint32, docShortID uint32) string {
-	return string(keys.EncodeLocalDocID(collectionShortID, docShortID))
+func docRefKey(collectionShortID uint32, docShortID uint32) string {
+	return string(keys.EncodeDocRef(collectionShortID, docShortID))
 }
 
 func notPlainCBORValue(plaintext []byte) *notPlainCBORValueMatcher {

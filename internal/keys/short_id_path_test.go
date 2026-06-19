@@ -79,9 +79,9 @@ func TestDecodeDocShortIDPrefix(t *testing.T) {
 	encoded := EncodeDocShortID(slashEncodedShortID)
 	data := append(append([]byte{}, encoded...), '/', '2')
 
-	rest, shortDocID, err := DecodeDocShortIDPrefix(data)
+	rest, docShortID, err := DecodeDocShortIDPrefix(data)
 
 	require.NoError(t, err)
-	require.Equal(t, slashEncodedShortID, shortDocID)
+	require.Equal(t, slashEncodedShortID, docShortID)
 	require.True(t, bytes.Equal([]byte{'/', '2'}, rest))
 }

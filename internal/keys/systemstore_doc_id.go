@@ -24,8 +24,8 @@ import (
 // maps to the public DocID once the genesis block has been materialized.
 //
 // Key shapes:
-//   - /docid/{collectionShortID}/s/{shortDocID} -> public DocID
-//   - /docid/n/p/{publicDocID} -> encoded {collectionShortID, shortDocID}
+//   - /docid/{collectionShortID}/s/{docShortID} -> public DocID
+//   - /docid/n/p/{docID} -> encoded {collectionShortID, docShortID}
 //   - /docid/b/{blockCID}/{collectionShortID} -> public DocID
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
@@ -90,12 +90,12 @@ type ShortIDToDocIDKey struct {
 
 var _ Key = (*ShortIDToDocIDKey)(nil)
 
-func NewShortIDToDocIDKey(collectionShortID uint32, shortDocID uint32) ShortIDToDocIDKey {
+func NewShortIDToDocIDKey(collectionShortID uint32, docShortID uint32) ShortIDToDocIDKey {
 	return ShortIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
 			collectionShortIDSegment(collectionShortID),
 			[]byte(SHORT_ID_TO_DOC_ID),
-			EncodeDocShortID(shortDocID),
+			EncodeDocShortID(docShortID),
 		),
 	}
 }

@@ -128,16 +128,16 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	if f.indexDesc.Unique && !hasNilField {
-		shortDocID, err := keys.DecodeDocShortID(res.value)
+		docShortID, err := keys.DecodeDocShortID(res.value)
 		if err != nil {
 			return immutable.None[string](), err
 		}
-		docID, err := f.docIDFromShortDocID(shortDocID)
+		docID, err := f.docIDFromShortDocID(docShortID)
 		if err != nil {
 			return immutable.None[string](), err
 		}
 		f.currentDocID = immutable.Some(docID)
-		f.currentShortDocID = immutable.Some(shortDocID)
+		f.currentShortDocID = immutable.Some(docShortID)
 	} else {
 		if res.key.DocShortID == 0 {
 			f.currentDocID = immutable.None[string]()
@@ -153,8 +153,8 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	return f.currentDocID, nil
 }
 
-func (f *indexFetcher) docIDFromShortDocID(shortDocID uint32) (string, error) {
-	docID, found, err := id.GetDocID(f.ctx, f.collectionShortID, shortDocID)
+func (f *indexFetcher) docIDFromShortDocID(docShortID uint32) (string, error) {
+	docID, found, err := id.GetDocID(f.ctx, f.collectionShortID, docShortID)
 	if err != nil {
 		return "", err
 	}
@@ -170,14 +170,14 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	}
 
 	docID := ""
-	var shortDocID uint32
+	var docShortID uint32
 	if f.currentShortDocID.HasValue() {
-		shortDocID = f.currentShortDocID.Value()
+		docShortID = f.currentShortDocID.Value()
 	} else {
 		var err error
 		docID = f.currentDocID.Value()
 		var found bool
-		shortDocID, found, err = id.GetShortDocID(f.ctx, f.collectionShortID, docID)
+		docShortID, found, err = id.GetShortDocID(f.ctx, f.collectionShortID, docID)
 		if err != nil {
 			return immutable.None[EncodedDocument](), err
 		}
@@ -188,7 +188,7 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 
 	prefix := keys.DataStoreKey{
 		CollectionShortID: f.collectionShortID,
-		DocShortID:        shortDocID,
+		DocShortID:        docShortID,
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)

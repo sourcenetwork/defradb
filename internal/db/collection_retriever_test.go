@@ -50,12 +50,12 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 
 	blockCID := blocks.NewBlock([]byte("encryption-key")).Cid()
-	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, docShortID, legacyDocID))
 	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, blockCID, publicDocID))
 	require.NoError(t, txn.Commit())
 
@@ -67,7 +67,7 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 
 	resolvedDocID, err = retriever.ResolvePublicDocID(
 		ctx,
-		string(keys.EncodeLocalDocID(collectionShortID, shortDocID)),
+		string(keys.EncodeDocRef(collectionShortID, docShortID)),
 	)
 	require.NoError(t, err)
 	require.Equal(t, publicDocID, resolvedDocID)

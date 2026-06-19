@@ -66,7 +66,7 @@ func NewHeadBlocksIteratorFromTxn(
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
+	docRef, found, err := id.GetDocRefFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +80,8 @@ func NewHeadBlocksIteratorFromTxn(
 		ctx,
 		txn.Headstore(),
 		txn.Blockstore(),
-		localDocID.CollectionShortID,
-		localDocID.DocShortID,
+		docRef.CollectionShortID,
+		docRef.DocShortID,
 	)
 }
 

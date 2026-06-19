@@ -21,12 +21,12 @@ import (
 func TestSystemstoreDocIDKeys(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
-		shortDocID        uint32 = 7
-		publicDocID              = "bae-public-doc"
+		docShortID        uint32 = 7
+		docID                    = "bae-public-doc"
 		fieldCID                 = "bafy-field-cid"
 	)
 	collectionSegment := string(encoding.EncodeUvarintAscending(nil, uint64(collectionShortID)))
-	shortDocIDSegment := string(EncodeDocShortID(shortDocID))
+	docShortIDSegment := string(EncodeDocShortID(docShortID))
 
 	tests := []struct {
 		name string
@@ -35,13 +35,13 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 	}{
 		{
 			name: "short to public",
-			key:  NewShortIDToDocIDKey(collectionShortID, shortDocID),
-			want: "/docid/" + collectionSegment + "/s/" + shortDocIDSegment,
+			key:  NewShortIDToDocIDKey(collectionShortID, docShortID),
+			want: "/docid/" + collectionSegment + "/s/" + docShortIDSegment,
 		},
 		{
 			name: "node public to short",
-			key:  NewNodeDocIDToShortIDKey(publicDocID),
-			want: "/docid/n/p/" + publicDocID,
+			key:  NewNodeDocIDToShortIDKey(docID),
+			want: "/docid/n/p/" + docID,
 		},
 		{
 			name: "block to public",

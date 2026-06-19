@@ -286,7 +286,7 @@ func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool,
 		return docID, false, nil
 	}
 
-	localDocID, found, err := id.GetLocalDocID(ctx, docID)
+	docRef, found, err := id.GetDocRef(ctx, docID)
 	if err != nil {
 		return "", false, err
 	}
@@ -294,7 +294,7 @@ func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool,
 		return docID, false, nil
 	}
 
-	publicDocID, found, err := id.GetDocID(ctx, localDocID.CollectionShortID, localDocID.DocShortID)
+	publicDocID, found, err := id.GetDocID(ctx, docRef.CollectionShortID, docRef.DocShortID)
 	if err != nil {
 		return "", false, err
 	}

@@ -153,10 +153,10 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, targetCol.CollectionID())
 	require.NoError(t, err)
 
-	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, sourceDoc.ID().String())
+	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, sourceDoc.ID().String())
 	require.NoError(t, err)
 	require.True(t, found)
-	require.NotEqual(t, sourceDoc.ID().String(), shortDocID)
+	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
 
 	blockDocID, found, err := id.GetDocIDForBlockFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
@@ -200,31 +200,31 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 			Status:              client.Active,
 		}),
 	}
-	resolved, err := mp.resolveCompositeBlockDocID(txnCtx, collectionShortID, genesisBlock, genesisCID)
+	resolved, err := mp.resolveCompositeBlockDocRef(txnCtx, collectionShortID, genesisBlock, genesisCID)
 	require.NoError(t, err)
-	require.Equal(t, genesisPublicDocID, resolved.publicDocID)
-	require.NotEmpty(t, resolved.shortDocID)
-	require.NotZero(t, resolved.shortDocID)
+	require.Equal(t, genesisPublicDocID, resolved.docID)
+	require.NotEmpty(t, resolved.docShortID)
+	require.NotZero(t, resolved.docShortID)
 
-	mp.currentCompositeDocID = &resolved
-	fieldResolved, err := mp.resolveFieldBlockDocID(txnCtx, collectionShortID, cid.Undef)
+	mp.currentCompositeDocRef = &resolved
+	fieldResolved, err := mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, cid.Undef)
 	require.NoError(t, err)
-	require.Equal(t, genesisPublicDocID, fieldResolved.publicDocID)
-	require.Equal(t, resolved.shortDocID, fieldResolved.shortDocID)
+	require.Equal(t, genesisPublicDocID, fieldResolved.docID)
+	require.Equal(t, resolved.docShortID, fieldResolved.docShortID)
 
-	const existingShortDocID uint32 = 42
+	const existingDocShortID uint32 = 42
 	existingPublicDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
-	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingShortDocID, existingPublicDocID))
+	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingDocShortID, existingPublicDocID))
 	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()
 	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, mappedFieldCID, existingPublicDocID))
 
-	mp.currentCompositeDocID = nil
-	fieldResolved, err = mp.resolveFieldBlockDocID(txnCtx, collectionShortID, mappedFieldCID)
+	mp.currentCompositeDocRef = nil
+	fieldResolved, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, mappedFieldCID)
 	require.NoError(t, err)
-	require.Equal(t, existingPublicDocID, fieldResolved.publicDocID)
-	require.Equal(t, existingShortDocID, fieldResolved.shortDocID)
+	require.Equal(t, existingPublicDocID, fieldResolved.docID)
+	require.Equal(t, existingDocShortID, fieldResolved.docShortID)
 
-	_, err = mp.resolveFieldBlockDocID(txnCtx, collectionShortID, blocks.NewBlock([]byte("unknown field")).Cid())
+	_, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, blocks.NewBlock([]byte("unknown field")).Cid())
 	require.ErrorIs(t, err, client.ErrMalformedDocID)
 }
 

@@ -33,12 +33,12 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 
 	const (
 		collectionShortID = uint32(1)
-		shortDocID        = uint32(7)
+		docShortID        = uint32(7)
 		publicDocID       = "bae-public-doc"
 		legacyDocID       = "bae-legacy-doc"
 	)
-	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID))
-	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, docShortID, publicDocID))
+	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, docShortID, legacyDocID))
 
 	resolvedDocID, changed, err := publicDocIDForFilterValue(ctx, publicDocID)
 	require.NoError(t, err)

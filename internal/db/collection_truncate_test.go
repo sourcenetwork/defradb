@@ -50,7 +50,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -79,11 +79,11 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetDocID(txnCtx, collectionShortID, shortDocID)
+	_, found, err = id.GetDocID(txnCtx, collectionShortID, docShortID)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetLocalDocID(txnCtx, publicDocID)
+	_, found, err = id.GetDocRef(txnCtx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -125,25 +125,25 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 
 	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	shortDocID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 
 	const legacyDocID = "bae-legacy-doc"
-	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, shortDocID, legacyDocID))
+	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, docShortID, legacyDocID))
 
-	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), collectionShortID, shortDocID))
+	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), collectionShortID, docShortID))
 
 	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetDocID(txnCtx, collectionShortID, shortDocID)
+	_, found, err = id.GetDocID(txnCtx, collectionShortID, docShortID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetLocalDocID(txnCtx, publicDocID)
+	_, found, err = id.GetDocRef(txnCtx, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetLocalDocID(txnCtx, legacyDocID)
+	_, found, err = id.GetDocRef(txnCtx, legacyDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 

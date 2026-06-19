@@ -111,7 +111,7 @@ func (n *dagScanNode) Init() error {
 
 	if !n.prefix.HasValue() && !n.commitSelect.Cids.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-			localDocID, found, err := n.getHeadstoreLocalDocID(n.commitSelect.DocIDs.Value()[0])
+			docRef, found, err := n.getHeadstoreDocRef(n.commitSelect.DocIDs.Value()[0])
 			if err != nil {
 				return err
 			}
@@ -120,8 +120,8 @@ func (n *dagScanNode) Init() error {
 				return nil
 			}
 			key := keys.HeadstoreDocKey{}.
-				WithCollectionShortID(localDocID.CollectionShortID).
-				WithDocShortID(localDocID.DocShortID)
+				WithCollectionShortID(docRef.CollectionShortID).
+				WithDocShortID(docRef.DocShortID)
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
@@ -164,15 +164,15 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 	n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
 }
 
-func (n *dagScanNode) getHeadstoreLocalDocID(docID string) (keys.LocalDocID, bool, error) {
+func (n *dagScanNode) getHeadstoreDocRef(docID string) (keys.DocRef, bool, error) {
 	if docID == "" {
-		return keys.LocalDocID{}, false, nil
+		return keys.DocRef{}, false, nil
 	}
-	localDocID, found, err := id.GetLocalDocID(n.planner.ctx, docID)
+	docRef, found, err := id.GetDocRef(n.planner.ctx, docID)
 	if err != nil {
-		return keys.LocalDocID{}, false, err
+		return keys.DocRef{}, false, err
 	}
-	return localDocID, found, nil
+	return docRef, found, nil
 }
 
 func (n *dagScanNode) Close() error {

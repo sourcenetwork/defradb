@@ -246,7 +246,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	if err != nil {
 		return err
 	}
-	shortDocID, found, err := id.GetShortDocIDFromStore(ctx, systemstore, collectionShortID, docID)
+	docShortID, found, err := id.GetShortDocIDFromStore(ctx, systemstore, collectionShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
 		collectionShortID,
-		shortDocID,
+		docShortID,
 	)
 	if err != nil {
 		return err

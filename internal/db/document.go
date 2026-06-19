@@ -496,7 +496,7 @@ func (c *collection) save(
 		}
 	}
 
-	encryptionDocID := keys.EncodeLocalDocID(colShortID, primaryKey.DocShortID)
+	encryptionDocID := keys.EncodeDocRef(colShortID, primaryKey.DocShortID)
 
 	links := make([]coreblock.DAGLink, 0)
 	encryptionCIDs := make([]cid.Cid, 0)
@@ -583,14 +583,14 @@ func (c *collection) save(
 	updateDocID := doc.ID().String()
 	if isAdd {
 		docID := client.NewDocIDV0(link.Cid)
-		shortDocID, found, err := id.GetShortDocID(ctx, colShortID, docID.String())
+		docShortID, found, err := id.GetShortDocID(ctx, colShortID, docID.String())
 		if err != nil {
 			return err
 		}
 		if found {
 			existingKey := keys.PrimaryDataStoreKey{
 				CollectionShortID: colShortID,
-				DocShortID:        shortDocID,
+				DocShortID:        docShortID,
 			}
 			exists, isDeleted, err := c.exists(ctx, existingKey)
 			if err != nil {
@@ -599,7 +599,7 @@ func (c *collection) save(
 			if isDeleted {
 				return NewErrDocumentDeleted(docID.String())
 			}
-			if exists || shortDocID != primaryKey.DocShortID {
+			if exists || docShortID != primaryKey.DocShortID {
 				return NewErrDocumentAlreadyExists(docID.String())
 			}
 		}
@@ -834,14 +834,14 @@ func (c *collection) getPrimaryKeyFromDocIDString(
 		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
 	}
 
-	shortDocID, found, err := id.GetShortDocID(ctx, shortID, docID)
+	docShortID, found, err := id.GetShortDocID(ctx, shortID, docID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}
 	if found {
 		return keys.PrimaryDataStoreKey{
 			CollectionShortID: shortID,
-			DocShortID:        shortDocID,
+			DocShortID:        docShortID,
 		}, nil
 	}
 

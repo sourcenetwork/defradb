@@ -247,12 +247,12 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID uint32,
+	docShortID uint32,
 	docID string,
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, shortDocID, docID)
+	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, docShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -793,7 +793,7 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
-	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, p.db.Multistore().Systemstore(), docID)
+	docRef, found, err := id.GetDocRefFromStore(ctx, p.db.Multistore().Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -801,13 +801,13 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
 	}
 
-	return p.getHeadsForShortDocID(ctx, localDocID.CollectionShortID, localDocID.DocShortID, docID)
+	return p.getHeadsForShortDocID(ctx, docRef.CollectionShortID, docRef.DocShortID, docID)
 }
 
 func (p *P2P) getHeadsForShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
-	shortDocID uint32,
+	docShortID uint32,
 	docID string,
 ) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
@@ -815,7 +815,7 @@ func (p *P2P) getHeadsForShortDocID(
 
 	prefix := keys.HeadstoreDocKey{
 		CollectionShortID: collectionShortID,
-		DocShortID:        shortDocID,
+		DocShortID:        docShortID,
 		FieldID:           core.COMPOSITE_NAMESPACE,
 	}
 

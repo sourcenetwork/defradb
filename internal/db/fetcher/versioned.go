@@ -238,7 +238,7 @@ err := VersionFetcher.Start(txn, prefixes) {
 // to the target state, creating the serialized state at the given version. It starts by seeking
 // to the closest existing state snapshot in the transient Versioned stores, which on the first
 // run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
-func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
+func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint32) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
 
@@ -262,7 +262,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
 	/// // CID.
 	// }
 	firstQueued := vf.queuedCids.Front()
-	if shortDocID == 0 && firstQueued != nil {
+	if docShortID == 0 && firstQueued != nil {
 		cc, ok := firstQueued.Value.(cid.Cid)
 		if !ok {
 			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", firstQueued.Value)
@@ -276,7 +276,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
 			if err != nil {
 				return err
 			}
-			shortDocID, err = vf.storageDocIDForBlock(shortID, block, cc)
+			docShortID, err = vf.storageDocIDForBlock(shortID, block, cc)
 			if err != nil {
 				return err
 			}
@@ -287,7 +287,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, shortDocID uint32) error {
 		if !ok {
 			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
 		}
-		err := vf.merge(cc, shortDocID)
+		err := vf.merge(cc, docShortID)
 		if err != nil {
 			return NewErrFailedToMergeState(err)
 		}
@@ -373,7 +373,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // gets the existing MerkleClock instance, or creates one.
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
-func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
+func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint32) error {
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
@@ -405,7 +405,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, shortDocID uint32) error {
 
 		var docID uint32
 		if !block.Delta.IsCollection() {
-			docID = shortDocID
+			docID = docShortID
 			if docID == 0 {
 				var err error
 				docID, err = vf.storageDocIDForBlock(shortID, block, current.cid)
@@ -514,14 +514,14 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		}
 	}
 
-	shortDocID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
 	if err != nil {
 		return 0, err
 	}
 	if !found {
 		return 0, client.ErrMalformedDocID
 	}
-	return shortDocID, nil
+	return docShortID, nil
 }
 
 func (vf *VersionedFetcher) storageDocIDForCompositeHead(

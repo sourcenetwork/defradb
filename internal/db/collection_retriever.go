@@ -80,7 +80,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		return nil, err
 	}
 
-	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, txn.Systemstore(), docID)
+	docRef, found, err := id.GetDocRefFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 		if err != nil {
 			return nil, err
 		}
-		if collectionShortID == localDocID.CollectionShortID {
+		if collectionShortID == docRef.CollectionShortID {
 			return col, nil
 		}
 	}
@@ -112,24 +112,24 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 
 func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
 	// Old encryption blocks may carry an encoded local document key.
-	localDocID, err := keys.DecodeLocalDocID([]byte(docKey))
+	docRef, err := keys.DecodeDocRef([]byte(docKey))
 	if err == nil {
 		publicDocID, found, err := id.GetDocIDFromStore(
 			ctx,
 			store,
-			localDocID.CollectionShortID,
-			localDocID.DocShortID,
+			docRef.CollectionShortID,
+			docRef.DocShortID,
 		)
 		if err != nil || found {
 			return publicDocID, err
 		}
 	}
 
-	localDocID, found, err := id.GetLocalDocIDFromStore(ctx, store, docKey)
+	docRef, found, err := id.GetDocRefFromStore(ctx, store, docKey)
 	if err != nil || !found {
 		return docKey, err
 	}
-	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, localDocID.CollectionShortID, localDocID.DocShortID)
+	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, docRef.CollectionShortID, docRef.DocShortID)
 	if err != nil || !found {
 		return docKey, err
 	}

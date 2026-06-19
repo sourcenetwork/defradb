@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// LocalDocID is this node's storage address for a public document ID.
-type LocalDocID struct {
+// DocRef is this node's storage address for a public document ID.
+type DocRef struct {
 	CollectionShortID uint32
 	DocShortID        uint32
 }
@@ -84,8 +84,8 @@ func DecodeDocShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return decodeShortIDPrefix(data)
 }
 
-// EncodeLocalDocID encodes a local collection/doc pair as a compact systemstore value.
-func EncodeLocalDocID(collectionShortID uint32, docShortID uint32) []byte {
+// EncodeDocRef encodes a local collection/doc pair as a compact systemstore value.
+func EncodeDocRef(collectionShortID uint32, docShortID uint32) []byte {
 	if collectionShortID == 0 || docShortID == 0 {
 		return nil
 	}
@@ -93,20 +93,20 @@ func EncodeLocalDocID(collectionShortID uint32, docShortID uint32) []byte {
 	return append(result, EncodeDocShortID(docShortID)...)
 }
 
-// DecodeLocalDocID decodes a local collection/doc pair from a compact systemstore value.
-func DecodeLocalDocID(data []byte) (LocalDocID, error) {
+// DecodeDocRef decodes a local collection/doc pair from a compact systemstore value.
+func DecodeDocRef(data []byte) (DocRef, error) {
 	rest, collectionShortID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {
-		return LocalDocID{}, err
+		return DocRef{}, err
 	}
 	docShortID, err := DecodeDocShortID(rest)
 	if err != nil {
-		return LocalDocID{}, err
+		return DocRef{}, err
 	}
 	if collectionShortID == 0 || collectionShortID > math.MaxUint32 {
-		return LocalDocID{}, ErrInvalidKey
+		return DocRef{}, ErrInvalidKey
 	}
-	return LocalDocID{
+	return DocRef{
 		CollectionShortID: uint32(collectionShortID),
 		DocShortID:        docShortID,
 	}, nil

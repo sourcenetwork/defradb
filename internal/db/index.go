@@ -227,10 +227,10 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
-	var shortDocID uint32
+	var docShortID uint32
 	if appendDocID {
 		var found bool
-		shortDocID, found, err = id.GetShortDocID(ctx, shortID, doc.ID().String())
+		docShortID, found, err = id.GetShortDocID(ctx, shortID, doc.ID().String())
 		if err != nil {
 			return keys.IndexDataStoreKey{}, err
 		}
@@ -240,7 +240,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	}
 
 	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields)
-	key.DocShortID = shortDocID
+	key.DocShortID = docShortID
 	return key, nil
 }
 
@@ -464,11 +464,11 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	shortDocID uint32,
+	docShortID uint32,
 ) (keys.IndexDataStoreKey, []byte, error) {
-	encodedShortDocID := keys.EncodeDocShortID(shortDocID)
+	encodedShortDocID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {
-		key.DocShortID = shortDocID
+		key.DocShortID = docShortID
 		return key, []byte{}, nil
 	} else {
 		return key, encodedShortDocID, nil
@@ -504,14 +504,14 @@ func addNewUniqueKey(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	shortDocID, found, err := id.GetShortDocID(ctx, key.CollectionShortID, doc.ID().String())
+	docShortID, found, err := id.GetShortDocID(ctx, key.CollectionShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}
 	if !found {
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
-	key, val, err := makeUniqueKeyValueRecord(key, shortDocID)
+	key, val, err := makeUniqueKeyValueRecord(key, docShortID)
 	if err != nil {
 		return err
 	}
@@ -535,7 +535,7 @@ func (index *collectionUniqueIndex) Delete(
 	if err != nil {
 		return err
 	}
-	shortDocID, found, err := id.GetShortDocID(ctx, shortID, doc.ID().String())
+	docShortID, found, err := id.GetShortDocID(ctx, shortID, doc.ID().String())
 	if err != nil {
 		return err
 	}
@@ -543,7 +543,7 @@ func (index *collectionUniqueIndex) Delete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		key, _, err := makeUniqueKeyValueRecord(key, shortDocID)
+		key, _, err := makeUniqueKeyValueRecord(key, docShortID)
 		if err != nil {
 			return err
 		}

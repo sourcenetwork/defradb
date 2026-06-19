@@ -179,37 +179,37 @@ type mergeProcessor struct {
 	// composites is a list of composites that need to be merged.
 	composites *list.List
 
-	blockDocIDs           map[string]resolvedDocID
-	currentCompositeDocID *resolvedDocID
-	newDocCreateMode      bool
+	blockDocRefs           map[string]resolvedDocRef
+	currentCompositeDocRef *resolvedDocRef
+	newDocCreateMode       bool
 }
 
-type resolvedDocID struct {
-	publicDocID string
-	shortDocID  uint32
+type resolvedDocRef struct {
+	docID      string
+	docShortID uint32
 }
 
-func (mp *mergeProcessor) resolveOrAllocateShortDocID(
+func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 	ctx context.Context,
 	collectionShortID uint32,
-	publicDocID string,
+	docID string,
 ) (uint32, error) {
-	shortDocID, found, err := id.GetShortDocID(ctx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetShortDocID(ctx, collectionShortID, docID)
 	if err != nil {
 		return 0, err
 	}
 	if found {
-		return shortDocID, nil
+		return docShortID, nil
 	}
 
-	shortDocID, err = mp.db.nextShortDocID(ctx, collectionShortID)
+	docShortID, err = mp.db.nextShortDocID(ctx, collectionShortID)
 	if err != nil {
 		return 0, err
 	}
-	if err := id.SetDocIDMapping(ctx, collectionShortID, shortDocID, publicDocID); err != nil {
+	if err := id.SetDocIDMapping(ctx, collectionShortID, docShortID, docID); err != nil {
 		return 0, err
 	}
-	return shortDocID, nil
+	return docShortID, nil
 }
 
 func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (keys.HeadstoreKey, error) {
@@ -225,11 +225,11 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 		}, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
-	return keys.NewHeadstoreColKey(shortID), nil
+	return keys.NewHeadstoreColKey(colShortID), nil
 }
 
 func (db *DB) newMergeProcessor(
@@ -252,7 +252,7 @@ func (db *DB) newMergeProcessor(
 		db:               db,
 		docIDs:           make(map[client.DocID]*client.Document),
 		composites:       list.New(),
-		blockDocIDs:      make(map[string]resolvedDocID),
+		blockDocRefs:     make(map[string]resolvedDocRef),
 		newDocCreateMode: newDocCreateMode,
 	}, nil
 }
@@ -352,7 +352,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, docID, err := mp.initCRDTForType(ctx, block, blockLink)
+		crdt, docRef, err := mp.initCRDTForType(ctx, block, blockLink)
 		if err != nil {
 			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
@@ -363,13 +363,13 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		var previousCompositeDocID *resolvedDocID
-		if block.Delta.IsComposite() && docID.publicDocID != "" {
-			previousCompositeDocID = mp.currentCompositeDocID
-			resolved := docID
-			mp.currentCompositeDocID = &resolved
+		var previousCompositeDocRef *resolvedDocRef
+		if block.Delta.IsComposite() && docRef.docID != "" {
+			previousCompositeDocRef = mp.currentCompositeDocRef
+			resolved := docRef
+			mp.currentCompositeDocRef = &resolved
 			defer func() {
-				mp.currentCompositeDocID = previousCompositeDocID
+				mp.currentCompositeDocRef = previousCompositeDocRef
 			}()
 		}
 
@@ -377,18 +377,18 @@ func (mp *mergeProcessor) processBlock(
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
-		if docID.publicDocID != "" {
-			if err := mp.setBlockDocIDMapping(ctx, docID.publicDocID, blockLink.Cid); err != nil {
+		if docRef.docID != "" {
+			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, blockLink.Cid); err != nil {
 				return err
 			}
 			if dagBlock.Encryption != nil {
-				if err := mp.setBlockDocIDMapping(ctx, docID.publicDocID, dagBlock.Encryption.Cid); err != nil {
+				if err := mp.setBlockDocIDMapping(ctx, docRef.docID, dagBlock.Encryption.Cid); err != nil {
 					return err
 				}
 			}
 		}
-		if block.Delta.IsComposite() && docID.publicDocID != "" {
-			if err := mp.setLinkedBlockDocIDMappings(ctx, docID.publicDocID, dagBlock.Links); err != nil {
+		if block.Delta.IsComposite() && docRef.docID != "" {
+			if err := mp.setLinkedBlockDocIDMappings(ctx, docRef.docID, dagBlock.Links); err != nil {
 				return err
 			}
 		}
@@ -415,35 +415,35 @@ func (mp *mergeProcessor) processBlock(
 
 func (mp *mergeProcessor) setBlockDocIDMapping(
 	ctx context.Context,
-	publicDocID string,
+	docID string,
 	blockCID cid.Cid,
 ) error {
-	if publicDocID == "" || !blockCID.Defined() {
+	if docID == "" || !blockCID.Defined() {
 		return nil
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
-	return id.SetBlockDocIDMapping(ctx, shortID, blockCID, publicDocID)
+	return id.SetBlockDocIDMapping(ctx, colShortID, blockCID, docID)
 }
 
 func (mp *mergeProcessor) setLinkedBlockDocIDMappings(
 	ctx context.Context,
-	publicDocID string,
+	docID string,
 	links []coreblock.DAGLink,
 ) error {
-	if publicDocID == "" || len(links) == 0 {
+	if docID == "" || len(links) == 0 {
 		return nil
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 	for _, link := range links {
-		if err := id.SetBlockDocIDMapping(ctx, shortID, link.Cid, publicDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, docID); err != nil {
 			return err
 		}
 	}
@@ -454,77 +454,77 @@ func (mp *mergeProcessor) initCRDTForType(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
-) (crdt.ReplicatedData, resolvedDocID, error) {
+) (crdt.ReplicatedData, resolvedDocRef, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	crdtUnion := block.Delta
 
-	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, resolvedDocID{}, NewErrGetShortIDForMerge(err, mp.col.Version().CollectionID)
+		return nil, resolvedDocRef{}, NewErrGetShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {
 	case crdtUnion.IsComposite():
-		docID, err := mp.resolveCompositeBlockDocID(
+		docRef, err := mp.resolveCompositeBlockDocRef(
 			ctx,
-			shortID,
+			colShortID,
 			block,
 			blockLink.Cid,
 		)
 		if err != nil {
-			return nil, resolvedDocID{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
+			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
 		}
-		publicDocID, err := client.NewDocIDFromString(docID.publicDocID)
+		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
-			return nil, resolvedDocID{}, err
+			return nil, resolvedDocRef{}, err
 		}
-		err = mp.trackMergedDocument(ctx, publicDocID)
+		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, resolvedDocID{}, err
+			return nil, resolvedDocRef{}, err
 		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocShortID:        docID.shortDocID,
+				CollectionShortID: colShortID,
+				DocShortID:        docRef.docShortID,
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
-		), docID, nil
+		), docRef, nil
 
 	case crdtUnion.IsCollection():
 		return crdt.NewCollection(
 			mp.col.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		), resolvedDocID{}, nil
+			keys.NewHeadstoreColKey(colShortID),
+		), resolvedDocRef{}, nil
 
 	default:
-		docID, err := mp.resolveFieldBlockDocID(
+		docRef, err := mp.resolveFieldBlockDocRef(
 			ctx,
-			shortID,
+			colShortID,
 			blockLink.Cid,
 		)
 		if err != nil {
-			return nil, resolvedDocID{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
+			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
 		}
-		publicDocID, err := client.NewDocIDFromString(docID.publicDocID)
+		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
-			return nil, resolvedDocID{}, err
+			return nil, resolvedDocRef{}, err
 		}
-		err = mp.trackMergedDocument(ctx, publicDocID)
+		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, resolvedDocID{}, err
+			return nil, resolvedDocRef{}, err
 		}
 
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the collection definition, we can safely ignore it.
-			return nil, resolvedDocID{}, nil
+			return nil, resolvedDocRef{}, nil
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
+		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, fd.FieldID)
 		if err != nil {
-			return nil, resolvedDocID{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
+			return nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
 		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
@@ -533,133 +533,133 @@ func (mp *mergeProcessor) initCRDTForType(
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocShortID:        docID.shortDocID,
+				CollectionShortID: colShortID,
+				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 		if err != nil {
-			return nil, resolvedDocID{}, err
+			return nil, resolvedDocRef{}, err
 		}
-		return fieldCRDT, docID, nil
+		return fieldCRDT, docRef, nil
 	}
 }
 
-func (mp *mergeProcessor) resolveCompositeBlockDocID(
+func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 	ctx context.Context,
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
-) (resolvedDocID, error) {
-	if resolved, ok := mp.blockDocIDs[blockCID.String()]; ok {
+) (resolvedDocRef, error) {
+	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
 		return resolved, nil
 	}
 
-	if publicDocID, found, err := id.GetDocIDForBlockFromStore(
+	if docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,
 		blockCID,
 	); err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	} else if found {
-		return mp.resolveOrCacheBlockDocID(ctx, collectionShortID, blockCID, publicDocID)
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
 	}
 
 	if len(block.Heads) == 0 {
-		return mp.resolveOrCacheBlockDocID(ctx, collectionShortID, blockCID, client.NewDocIDV0(blockCID).String())
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, client.NewDocIDV0(blockCID).String())
 	}
 
 	for _, head := range block.Heads {
-		resolved, err := mp.resolveDocIDForCompositeCID(ctx, collectionShortID, head.Cid)
+		resolved, err := mp.resolveDocRefForCompositeCID(ctx, collectionShortID, head.Cid)
 		if err != nil {
-			return resolvedDocID{}, err
+			return resolvedDocRef{}, err
 		}
-		if resolved.publicDocID != "" {
-			mp.blockDocIDs[blockCID.String()] = resolved
+		if resolved.docID != "" {
+			mp.blockDocRefs[blockCID.String()] = resolved
 			return resolved, nil
 		}
 	}
 
-	return resolvedDocID{}, client.ErrMalformedDocID
+	return resolvedDocRef{}, client.ErrMalformedDocID
 }
 
-func (mp *mergeProcessor) resolveFieldBlockDocID(
+func (mp *mergeProcessor) resolveFieldBlockDocRef(
 	ctx context.Context,
 	collectionShortID uint32,
 	blockCID cid.Cid,
-) (resolvedDocID, error) {
-	if mp.currentCompositeDocID != nil {
-		return *mp.currentCompositeDocID, nil
+) (resolvedDocRef, error) {
+	if mp.currentCompositeDocRef != nil {
+		return *mp.currentCompositeDocRef, nil
 	}
 
-	if resolved, ok := mp.blockDocIDs[blockCID.String()]; ok {
+	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
 		return resolved, nil
 	}
 
-	publicDocID, found, err := id.GetDocIDForBlockFromStore(
+	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,
 		blockCID,
 	)
 	if err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	} else if found {
-		return mp.resolveOrCacheBlockDocID(ctx, collectionShortID, blockCID, publicDocID)
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
 	}
 
-	return resolvedDocID{}, client.ErrMalformedDocID
+	return resolvedDocRef{}, client.ErrMalformedDocID
 }
 
-func (mp *mergeProcessor) resolveDocIDForCompositeCID(
+func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	ctx context.Context,
 	collectionShortID uint32,
 	blockCID cid.Cid,
-) (resolvedDocID, error) {
-	if resolved, ok := mp.blockDocIDs[blockCID.String()]; ok {
+) (resolvedDocRef, error) {
+	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
 		return resolved, nil
 	}
 
-	publicDocID, found, err := id.GetDocIDForBlockFromStore(
+	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		collectionShortID,
 		blockCID,
 	)
 	if err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	}
 	if found {
-		return mp.resolveOrCacheBlockDocID(ctx, collectionShortID, blockCID, publicDocID)
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
 	}
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCID}, coreblock.BlockSchemaPrototype)
 	if err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	}
 	block, err := coreblock.GetFromNode(nd)
 	if err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	}
 	if !block.Delta.IsComposite() {
-		return resolvedDocID{}, client.ErrMalformedDocID
+		return resolvedDocRef{}, client.ErrMalformedDocID
 	}
-	return mp.resolveCompositeBlockDocID(ctx, collectionShortID, block, blockCID)
+	return mp.resolveCompositeBlockDocRef(ctx, collectionShortID, block, blockCID)
 }
 
-func (mp *mergeProcessor) resolveOrCacheBlockDocID(
+func (mp *mergeProcessor) resolveOrCacheBlockDocRef(
 	ctx context.Context,
 	collectionShortID uint32,
 	blockCID cid.Cid,
-	publicDocID string,
-) (resolvedDocID, error) {
-	shortDocID, err := mp.resolveOrAllocateShortDocID(ctx, collectionShortID, publicDocID)
+	docID string,
+) (resolvedDocRef, error) {
+	docShortID, err := mp.resolveOrAllocateDocShortID(ctx, collectionShortID, docID)
 	if err != nil {
-		return resolvedDocID{}, err
+		return resolvedDocRef{}, err
 	}
-	resolved := resolvedDocID{publicDocID: publicDocID, shortDocID: shortDocID}
-	mp.blockDocIDs[blockCID.String()] = resolved
+	resolved := resolvedDocRef{docID: docID, docShortID: docShortID}
+	mp.blockDocRefs[blockCID.String()] = resolved
 	return resolved, nil
 }
 
