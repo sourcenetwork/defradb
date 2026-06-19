@@ -39,6 +39,9 @@ func (db *DB) gcIndex(
 	indexID uint32,
 	indexName string,
 ) error {
+	// Epoch is left at the legacy namespace (0), which scans the whole index. When
+	// rebuilds become epoch-namespaced this must target the superseded epoch so a
+	// flip can GC the old entries while the new epoch stays live.
 	prefixKey := &keys.IndexDataStoreKey{
 		CollectionShortID: shortID,
 		IndexID:           indexID,

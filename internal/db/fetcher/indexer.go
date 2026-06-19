@@ -41,6 +41,9 @@ type indexFetcher struct {
 	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
 	ordering      []mapper.OrderCondition
+	// epoch is the index entry namespace this fetcher scans. It is the index's active epoch;
+	// zero is the legacy namespace for indexes that predate epochs.
+	epoch uint32
 }
 
 var _ fetcher = (*indexFetcher)(nil)

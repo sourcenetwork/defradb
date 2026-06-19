@@ -76,7 +76,10 @@ type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.CollectionFieldDescription
-	execInfo      *ExecInfo
+	// epoch is the index entry namespace this iterator scans, used to decode keys back into
+	// their epoch. It is the fetcher's active epoch; zero is the legacy namespace.
+	epoch    uint32
+	execInfo *ExecInfo
 
 	// Iterator state
 	resultIter corekv.Iterator
@@ -157,7 +160,7 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 		iter.resultIter.Key(),
 		&iter.indexDesc,
 		iter.indexedFields,
-		0,
+		iter.epoch,
 	)
 	if err != nil {
 		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
@@ -187,6 +190,7 @@ func (f *indexFetcher) newPrefixBaseMatchIterator(
 	return &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      execInfo,
 		prefixKey:     &indexKey,
 		matchers:      matchers,
@@ -524,7 +528,7 @@ func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
+	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
@@ -539,7 +543,9 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
+	key := keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields)
+	key.Epoch = f.epoch
+	return key, nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.
@@ -658,6 +664,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	iter := &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      f.execInfo,
 		reverse:       false,
 		startKey:      startKey,

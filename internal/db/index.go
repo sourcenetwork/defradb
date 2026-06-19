@@ -195,6 +195,10 @@ type collectionBaseIndex struct {
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
 	building bool
+	// epoch is the index entry namespace this instance reads and writes. Live writes and
+	// reads use the active epoch; a rebuild writes into the building epoch. Zero is the
+	// legacy namespace, so an index that predates epochs keeps its existing on-disk entries.
+	epoch uint32
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -243,7 +247,9 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
+	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields)
+	key.Epoch = index.epoch
+	return key, nil
 }
 
 // deleteIndexKey removes a single index entry. While the index is building, a missing
@@ -283,6 +289,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
 	prefixKey := keys.IndexDataStoreKey{}
 	prefixKey.CollectionShortID = shortID
 	prefixKey.IndexID = index.desc.ID
+	prefixKey.Epoch = index.epoch
 
 	txn := datastore.CtxMustGetTxn(ctx)
 

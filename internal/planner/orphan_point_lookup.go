@@ -257,6 +257,8 @@ func (n *orphanPointLookupNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, e
 
 		doc := n.parentClone.Value()
 
+		// Epoch is left at the legacy namespace (0). When index rebuilds become
+		// epoch-namespaced this must read the child index's active epoch.
 		indexKey := keys.NewIndexDataStoreKey(n.childShortID, n.childFKIndex.ID, []keys.IndexedField{
 			{Value: client.NewNormalString(doc.GetID()), Descending: n.childFKIndex.Fields[0].Descending},
 		})
