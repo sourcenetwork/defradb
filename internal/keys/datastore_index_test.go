@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 func TestIndexDataStoreKey_PrefixEnd(t *testing.T) {
@@ -475,6 +476,26 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "with epoch and no fields",
+			key: IndexDataStoreKey{
+				CollectionShortID: 123,
+				IndexID:           456,
+				Epoch:             7,
+			},
+		},
+		{
+			name: "with epoch and fields",
+			key: IndexDataStoreKey{
+				CollectionShortID: 123,
+				IndexID:           456,
+				Epoch:             7,
+				Fields: []IndexedField{
+					{Value: client.NewNormalString("test"), Descending: false},
+					{Value: client.NewNormalInt(42), Descending: true},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -486,7 +507,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 				return
 			}
 
-			decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs)
+			decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, tt.key.Epoch)
 
 			if tt.wantError {
 				assert.Error(t, err)
@@ -497,6 +518,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 
 			assert.Equal(t, tt.key.CollectionShortID, decoded.CollectionShortID)
 			assert.Equal(t, tt.key.IndexID, decoded.IndexID)
+			assert.Equal(t, tt.key.Epoch, decoded.Epoch)
 			assert.Equal(t, len(tt.key.Fields), len(decoded.Fields))
 
 			for i := range tt.key.Fields {
@@ -569,8 +591,61 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := DecodeIndexDataStoreKey(tt.data, indexDesc, fieldDefs)
+			_, err := DecodeIndexDataStoreKey(tt.data, indexDesc, fieldDefs, 0)
 			assert.ErrorIs(t, err, tt.wantErr)
 		})
 	}
+}
+
+// TestIndexDataStoreKey_Epoch_GoldenBytes locks in the load-bearing invariant:
+// an Epoch of 0 must encode byte-identically to a key that has no epoch at all,
+// so existing on-disk entries stay readable. A non-zero epoch adds exactly one
+// component between the index ID and the fields.
+func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
+	base := IndexDataStoreKey{
+		CollectionShortID: 1,
+		IndexID:           2,
+		Fields: []IndexedField{
+			{Value: client.NewNormalString("a"), Descending: false},
+		},
+	}
+
+	// Epoch 0 is byte-identical to the legacy key with no epoch set.
+	withZeroEpoch := base
+	withZeroEpoch.Epoch = 0
+	assert.Equal(t, EncodeIndexDataStoreKey(&base), EncodeIndexDataStoreKey(&withZeroEpoch),
+		"Epoch 0 must encode identically to a key with no epoch")
+
+	// A non-zero epoch inserts its component immediately after the index ID. The
+	// epoch-bearing key shares the /col/index prefix and the trailing field with
+	// the legacy key, differing only by the inserted /epoch component.
+	withEpoch := base
+	withEpoch.Epoch = 5
+	legacy := EncodeIndexDataStoreKey(&base)
+	encoded := EncodeIndexDataStoreKey(&withEpoch)
+
+	prefix := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(base.CollectionShortID))
+	prefix = append(prefix, '/')
+	prefix = encoding.EncodeUvarintAscending(prefix, uint64(base.IndexID))
+	epochComponent := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(withEpoch.Epoch))
+	fieldSuffix := legacy[len(prefix):]
+
+	want := append(append(append([]byte{}, prefix...), epochComponent...), fieldSuffix...)
+	assert.Equal(t, want, encoded, "non-zero epoch must insert /epoch after the index ID")
+
+	// The epoch-bearing keyspace must be disjoint from the legacy keyspace and
+	// sort consistently, so an epoch scan never reads another epoch's entries.
+	assert.NotEqual(t, legacy, encoded)
+
+	indexDesc := &client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Descending: false}},
+	}
+	fieldDefs := []client.CollectionFieldDescription{{Kind: client.FieldKind_NILLABLE_STRING}}
+	decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, withEpoch.Epoch)
+	require.NoError(t, err)
+	assert.Equal(t, withEpoch.Epoch, decoded.Epoch)
+	assert.Equal(t, withEpoch.CollectionShortID, decoded.CollectionShortID)
+	assert.Equal(t, withEpoch.IndexID, decoded.IndexID)
+	require.Len(t, decoded.Fields, 1)
+	assert.True(t, decoded.Fields[0].Value.Equal(client.NewNormalString("a")))
 }

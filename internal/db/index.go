@@ -304,7 +304,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
 			break
 		}
 
-		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs)
+		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs, prefixKey.Epoch)
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}

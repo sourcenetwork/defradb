@@ -182,7 +182,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 			for i := range tc.fieldKinds {
 				fieldDescs[i] = client.CollectionFieldDescription{Kind: tc.fieldKinds[i]}
 			}
-			key, err := DecodeIndexDataStoreKey(tc.inputBytes, &tc.desc, fieldDescs)
+			key, err := DecodeIndexDataStoreKey(tc.inputBytes, &tc.desc, fieldDescs, 0)
 			assert.NoError(t, err)
 			assert.Equal(t, expectedKey, key)
 		})
@@ -256,7 +256,7 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 			for i := 0; i < c.numFields; i++ {
 				fieldDescs[i] = client.CollectionFieldDescription{Kind: client.FieldKind_NILLABLE_INT}
 			}
-			_, err := DecodeIndexDataStoreKey(c.val, &indexDesc, fieldDescs)
+			_, err := DecodeIndexDataStoreKey(c.val, &indexDesc, fieldDescs, 0)
 			assert.Error(t, err, c.name)
 		})
 	}

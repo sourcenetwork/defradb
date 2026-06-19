@@ -157,6 +157,7 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 		iter.resultIter.Key(),
 		&iter.indexDesc,
 		iter.indexedFields,
+		0,
 	)
 	if err != nil {
 		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
