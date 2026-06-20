@@ -37,7 +37,7 @@ const hardDeleteChunkSize int = 10000
 func (c *collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
-	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hadTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -48,18 +48,58 @@ func (c *collection) Truncate(
 		return err
 	}
 
+	// Truncate performs txn-free writes: it deletes more key-values than a single store transaction
+	// may safely hold, and it records its action-execution markers outside any transaction (so they
+	// survive a rollback). leveldb blocks non-transactional writes while a transaction is open, so
+	// when no explicit transaction is in play we hold the collection write lock with a lock token
+	// rather than an open store transaction, and write everything directly to the rootstore.
+	//
+	// When the caller supplied an explicit transaction we must honour it. That path is unsupported on
+	// leveldb (a txn-free write would block on the open transaction - see issue #4959).
+	if hadTxn {
+		return c.truncateInTxn(ctx)
+	}
+	return c.truncateTxnFree(ctx)
+}
+
+// truncateTxnFree truncates the collection without opening a store transaction. The collection write
+// lock - which is what provides reader isolation - is held by a lock token for the duration, and
+// every read and write goes directly to the rootstore. This is the path that supports leveldb.
+func (c *collection) truncateTxnFree(ctx context.Context) error {
+	token := c.db.newLockToken()
+	defer token.release()
+
+	// The token serves reads (it satisfies datastore.Txn), and clearing the corekv transaction
+	// ensures every write goes straight to the rootstore with no transaction open. The short-id
+	// caches are normally initialised by InitContext; we initialise them here as we bypass it.
+	ctx = datastore.CtxSetTxn(ctx, token)
+	ctx = corekv.SetCtxTxn(ctx, nil)
+	ctx = id.InitCollectionShortIDCache(ctx)
+	ctx = id.InitFieldShortIDCache(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	if err != nil {
+		return err
+	}
+	c.db.lockSet.CollectionLock(token, shortID)
+
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+	return c.runTruncate(ctx, ctx, multistore)
+}
+
+// truncateInTxn truncates the collection through the explicit transaction already on the context.
+// The action-execution markers are still written txn-free (corekv issue #107).
+func (c *collection) truncateInTxn(ctx context.Context) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-
 	defer txn.Discard()
 
 	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
 	if err != nil {
 		return err
 	}
-
 	c.db.lockSet.CollectionLock(txn, shortID)
 
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
@@ -68,15 +108,28 @@ func (c *collection) Truncate(
 	// corekv will pick it up again, writing using the transaction.
 	// https://github.com/sourcenetwork/corekv/issues/107
 	txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
-	err = action.Register(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
+	if err := c.runTruncate(ctx, txnFreeCtx, multistore); err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
+// runTruncate registers the truncate action, performs the deletion using deleteCtx, and records
+// completion. The action-execution markers are written using writeCtx, which must be txn-free.
+func (c *collection) runTruncate(
+	deleteCtx, writeCtx context.Context,
+	multistore *datastore.Multistore,
+) error {
+	err := action.Register(writeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 	if err != nil {
 		return err
 	}
 
-	err = c.truncate(ctx)
+	err = c.truncate(deleteCtx)
 	if err != nil {
 		errErr := action.Set(
-			txnFreeCtx,
+			writeCtx,
 			multistore,
 			c.db.events,
 			c.def.CollectionID,
@@ -86,12 +139,7 @@ func (c *collection) Truncate(
 		return errors.Join(errErr, err)
 	}
 
-	err = action.Complete(txnFreeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
+	return action.Complete(writeCtx, multistore, c.db.events, c.def.CollectionID, client.TruncateAction)
 }
 
 func (c *collection) truncate(

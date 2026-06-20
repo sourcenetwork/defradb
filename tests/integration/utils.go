@@ -2121,7 +2121,7 @@ func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, action
 	for _, act := range actions {
 		if p, ok := act.(*action.Parallel); ok {
 			for _, inner := range p.Children {
-				if levelDBActionUnsupported(inner) {
+				if levelDBActionUnsupportedInParallel(inner) {
 					t.Skip("action does not yet support the leveldb store: " +
 						"https://github.com/sourcenetwork/defradb/issues/4959")
 				}
@@ -2147,6 +2147,18 @@ func levelDBActionUnsupported(act any) bool {
 		return true // TODO(#4959): narrow to explicit-txn only once the refresh fix lands.
 	case *action.AddView:
 		return true // TODO(#4959): narrow to explicit-txn only once the AddView fix lands.
+	}
+	return false
+}
+
+// levelDBActionUnsupportedInParallel reports whether the given action cannot run against the leveldb
+// store when executed concurrently with other actions. Truncate/RefreshView/AddView perform txn-free
+// writes; run alongside operations that open their own transactions, they require leveldb to support
+// concurrent transactions, which it does not (issue #4959, "manifestation 2").
+func levelDBActionUnsupportedInParallel(act any) bool {
+	switch act.(type) {
+	case *action.Truncate, *action.RefreshViews, *action.AddView:
+		return true
 	}
 	return false
 }
