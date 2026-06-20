@@ -73,3 +73,7 @@ crash.log
 
 # Ignore direnv environment files (developer-local).
 .envrc
+
+# Go execution traces (DEFRA_TRACE=1)
+*.trace
+traces/
