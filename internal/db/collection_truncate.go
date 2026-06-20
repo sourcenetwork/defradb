@@ -66,16 +66,8 @@ func (c *collection) Truncate(
 // lock - which is what provides reader isolation - is held by a lock token for the duration, and
 // every read and write goes directly to the rootstore. This is the path that supports leveldb.
 func (c *collection) truncateTxnFree(ctx context.Context) error {
-	token := c.db.newLockToken()
+	ctx, token := c.db.beginTxnFree(ctx)
 	defer token.release()
-
-	// The token serves reads (it satisfies datastore.Txn), and clearing the corekv transaction
-	// ensures every write goes straight to the rootstore with no transaction open. The short-id
-	// caches are normally initialised by InitContext; we initialise them here as we bypass it.
-	ctx = datastore.CtxSetTxn(ctx, token)
-	ctx = corekv.SetCtxTxn(ctx, nil)
-	ctx = id.InitCollectionShortIDCache(ctx)
-	ctx = id.InitFieldShortIDCache(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
 	if err != nil {

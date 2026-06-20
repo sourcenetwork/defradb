@@ -11,9 +11,13 @@
 package db
 
 import (
+	"context"
 	"time"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 // lockToken is a rootstore-backed pseudo-transaction used to hold a collection write lock
@@ -58,6 +62,24 @@ func (db *DB) newLockToken() *lockToken {
 		id:         db.previousTxnID.Add(1),
 		ts:         time.Now(),
 	}
+}
+
+// beginTxnFree returns a context wired for txn-free access - reads are served by a fresh lock token
+// (which satisfies datastore.Txn), and writes are routed straight to the rootstore with no
+// transaction open - together with that token. The caller acquires whatever collection lock it needs
+// under the token and must defer token.release() to free it.
+//
+// This is the entry point for operations (Truncate, RefreshView) that must perform txn-free writes
+// while still holding a collection write lock, on stores such as leveldb that cannot write outside a
+// transaction while one is open. See https://github.com/sourcenetwork/defradb/issues/4959.
+func (db *DB) beginTxnFree(ctx context.Context) (context.Context, *lockToken) {
+	token := db.newLockToken()
+	ctx = datastore.CtxSetTxn(ctx, token)
+	ctx = corekv.SetCtxTxn(ctx, nil)
+	// The short-id caches are normally initialised by InitContext, which this path bypasses.
+	ctx = id.InitCollectionShortIDCache(ctx)
+	ctx = id.InitFieldShortIDCache(ctx)
+	return ctx, token
 }
 
 func (t *lockToken) ID() uint64         { return t.id }
