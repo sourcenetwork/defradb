@@ -57,7 +57,15 @@ type UpdateDoc struct {
 
 	// The document update, in JSON string format. Will only update the properties
 	// provided.
+	//
+	// If [DocMap] is provided this value will be ignored.
 	Doc string
+
+	// DocMap is an alternative to Doc that allows relation fields to be referenced by
+	// [DocIndex] without hardcoding DocID strings.  Any value of type [DocIndex] will be
+	// substituted with the corresponding document's actual DocID at test-execution time.
+	// Only simple (non-array) top-level fields are supported.
+	DocMap map[string]any
 
 	// Any error expected from the action. Optional.
 	//
@@ -82,6 +90,19 @@ var _ Action = (*UpdateDoc)(nil)
 var _ Stateful = (*UpdateDoc)(nil)
 
 func (a *UpdateDoc) Execute() {
+	if a.DocMap != nil {
+		for k, v := range a.DocMap {
+			if index, ok := v.(DocIndex); ok {
+				a.s.DocIDsLock.RLock()
+				a.DocMap[k] = a.s.DocIDs[index.CollectionIndex][index.Index].String()
+				a.s.DocIDsLock.RUnlock()
+			}
+		}
+		data, err := json.Marshal(a.DocMap)
+		require.NoError(a.s.T, err)
+		a.Doc = string(data)
+	}
+
 	var mutation func(
 		*state.State,
 		*UpdateDoc,

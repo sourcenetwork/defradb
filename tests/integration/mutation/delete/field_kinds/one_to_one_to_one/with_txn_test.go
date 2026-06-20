@@ -94,6 +94,15 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// publishers
+				CollectionID: 2,
+				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+				Doc: `{
+					"name": "Website",
+					"address": "Manning Publications"
+				}`,
+			},
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -101,15 +110,6 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 					"name": "Book By Website",
 					"rating": 4.0,
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
-				}`,
-			},
-			&action.AddDoc{
-				// publishers
-				CollectionID: 2,
-				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
-				Doc: `{
-					"name": "Website",
-					"address": "Manning Publications"
 				}`,
 			},
 			&action.Request{
@@ -164,6 +164,15 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 		}),
 		Actions: []any{
 			&action.AddDoc{
+				// publishers
+				CollectionID: 2,
+				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+				Doc: `{
+					"name": "Website",
+					"address": "Manning Publications"
+				}`,
+			},
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -171,15 +180,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 					"name": "Book By Website",
 					"rating": 4.0,
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
-				}`,
-			},
-			&action.AddDoc{
-				// publishers
-				CollectionID: 2,
-				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
-				Doc: `{
-					"name": "Website",
-					"address": "Manning Publications"
 				}`,
 			},
 			&action.Request{
@@ -266,6 +266,15 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 		}),
 		Actions: []any{
 			&action.AddDoc{
+				// publishers
+				CollectionID: 2,
+				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+				Doc: `{
+					"name": "Website",
+					"address": "Manning Publications"
+				}`,
+			},
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -273,15 +282,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					"name": "Book By Website",
 					"rating": 4.0,
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
-				}`,
-			},
-			&action.AddDoc{
-				// publishers
-				CollectionID: 2,
-				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
-				Doc: `{
-					"name": "Website",
-					"address": "Manning Publications"
 				}`,
 			},
 			&action.Request{
@@ -355,6 +355,15 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// publishers
+				CollectionID: 2,
+				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
+				Doc: `{
+					"name": "Online",
+					"address": "Manning Early Access Program (MEAP)"
+				}`,
+			},
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
@@ -362,15 +371,6 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 					"name": "Book By Online",
 					"rating": 4.0,
 					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
-				}`,
-			},
-			&action.AddDoc{
-				// publishers
-				CollectionID: 2,
-				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
-				Doc: `{
-					"name": "Online",
-					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
 			&action.Request{
@@ -419,6 +419,15 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
+				// publishers
+				CollectionID: 2,
+				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
+				Doc: `{
+					"name": "Online",
+					"address": "Manning Early Access Program (MEAP)"
+				}`,
+			},
+			&action.AddDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
@@ -426,15 +435,6 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 					"name": "Book By Online",
 					"rating": 4.0,
 					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
-				}`,
-			},
-			&action.AddDoc{
-				// publishers
-				CollectionID: 2,
-				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
-				Doc: `{
-					"name": "Online",
-					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
 			&action.Request{

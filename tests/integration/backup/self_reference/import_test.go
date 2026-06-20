@@ -319,7 +319,6 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
-				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
 				Doc: `{
 					"name": "John and the sourcerers' stone"
 				}`,
@@ -327,18 +326,10 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
-				Doc: `{
+				DocMap: map[string]any{
 					"name": "John",
-					"book": "bae-89136f56-3779-5656-b8a6-f76a1c262f37"
-				}`,
-			},
-			&action.UpdateDoc{
-				NodeID:       immutable.Some(0),
-				CollectionID: 1,
-				DocID:        0,
-				Doc: `{
-					"_reviewedByID": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
-				}`,
+					"book": action.DocIndex{CollectionIndex: 1, Index: 0},
+				},
 			},
 			/*
 				This fails due to the linked ticket.

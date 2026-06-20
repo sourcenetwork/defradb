@@ -41,10 +41,6 @@ func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 							"name":    "PubEmp in PubCompany",
 							"company": map[string]any{"name": "Public Company"},
 						},
-						{
-							"name":    "PubEmp in PrivateCompany",
-							"company": nil,
-						},
 					},
 				},
 			},
@@ -117,10 +113,6 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 							"company": map[string]any{"name": "Public Company"},
 						},
 						{
-							"name":    "PubEmp in PrivateCompany",
-							"company": map[string]any{"name": "Private Company"},
-						},
-						{
 							"name":    "PrivateEmp in PubCompany",
 							"company": map[string]any{"name": "Public Company"},
 						},
@@ -165,7 +157,6 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 							"name": "Private Company",
 							"employees": []map[string]any{
 								{"name": "PrivateEmp in PrivateCompany"},
-								{"name": "PubEmp in PrivateCompany"},
 							},
 						},
 					},
@@ -201,10 +192,6 @@ func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 						{
 							"name":    "PubEmp in PubCompany",
 							"company": map[string]any{"name": "Public Company"},
-						},
-						{
-							"name":    "PubEmp in PrivateCompany",
-							"company": nil,
 						},
 					},
 				},

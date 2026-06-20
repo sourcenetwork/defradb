@@ -94,18 +94,19 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.AddDocument(ctx, doc)
+			err = col.AddDocument(skipRelationValidationContext(ctx), doc)
 			if err != nil {
 				return NewErrDocAdd(err)
 			}
 
 			// add back the self referencing fields and update doc.
+			skipCtx := skipRelationValidationContext(ctx)
 			for k, v := range resetMap {
 				err := doc.Set(ctx, k, v)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
-				err = col.UpdateDocument(ctx, doc)
+				err = col.UpdateDocument(skipCtx, doc)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}

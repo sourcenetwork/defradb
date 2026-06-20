@@ -17,11 +17,13 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -274,6 +276,10 @@ func (c *collection) add(
 		}
 	}
 
+	if err = c.validateRelationDocIDs(ctx, doc); err != nil {
+		return err
+	}
+
 	ctx = setContextDocEncryption(ctx, opt)
 
 	err = c.save(ctx, doc, true)
@@ -374,6 +380,10 @@ func (c *collection) update(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
+	if err = c.validateRelationDocIDs(ctx, doc); err != nil {
+		return err
+	}
+
 	err = c.setEmbedding(ctx, doc, false)
 	if err != nil {
 		return err
@@ -464,6 +474,156 @@ func (c *collection) validateEncryptedFields(ctx context.Context) error {
 		}
 		if strings.HasPrefix(field, "_") {
 			return NewErrCanNotEncryptBuiltinField(field)
+		}
+	}
+	return nil
+}
+
+// validateRelationDocIDs checks that every dirty primary DocID relation field in doc
+// points to an existing, non-deleted document in the correct target collection.
+func (c *collection) validateRelationDocIDs(ctx context.Context, doc *client.Document) error {
+	if shouldSkipRelationValidation(ctx) {
+		return nil
+	}
+
+	for field, value := range doc.Values() {
+		if !value.IsDirty() {
+			continue
+		}
+
+		fieldName := field.Name()
+		fd, ok := c.Version().GetFieldByName(fieldName)
+		if !ok || fd.Kind != client.FieldKind_DocID || !fd.IsPrimary {
+			continue
+		}
+
+		docIDStr, ok := value.Value().(string)
+		if !ok || docIDStr == "" {
+			continue
+		}
+
+		targetDocID, err := client.NewDocIDFromString(docIDStr)
+		if err != nil {
+			// already validated by Set; skip
+			continue
+		}
+
+		objFieldName, ok := request.ToRelatedObjectName(fieldName)
+		if !ok {
+			continue
+		}
+
+		objFd, ok := c.Version().GetFieldByName(objFieldName)
+		if !ok {
+			continue
+		}
+
+		targetColVersion, found, err := description.GetRelatedCollection(
+			ctx, c.db.collectionRepository, c.Version(), objFd.Kind,
+		)
+		if err != nil {
+			return err
+		}
+		if !found {
+			continue
+		}
+
+		var targetCol *collection
+		var targetColName string
+
+		if targetColVersion.VersionID == c.Version().VersionID {
+			targetCol = c
+		} else {
+			targetCol, err = c.db.newCollection(targetColVersion, immutable.None[datastore.Txn]())
+			if err != nil {
+				return err
+			}
+		}
+		targetColName = targetColVersion.Name
+
+		primaryKey, err := targetCol.getPrimaryKeyFromDocID(ctx, targetDocID)
+		if err != nil {
+			return err
+		}
+
+		exists, err := targetCol.docExistsAndNotDeleted(ctx, primaryKey)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return NewErrRelationTargetNotFound(fieldName, docIDStr, targetColName)
+		}
+
+		// ACP: the caller must also be able to read the target document.
+		// We return the same "not found" error to avoid leaking existence of private documents.
+		hasAccess, err := targetCol.checkAccessOfDocWithACP(ctx, acpTypes.DocumentReadPerm, docIDStr)
+		if err != nil {
+			return err
+		}
+		if !hasAccess {
+			return NewErrRelationTargetNotFound(fieldName, docIDStr, targetColName)
+		}
+	}
+	return nil
+}
+
+// validateMergeRelationDocIDs is the P2P-merge variant of validateRelationDocIDs.
+// It performs the same checks but treats a missing target document as a skip rather
+// than an error, because the referenced document may simply not have arrived yet.
+func (c *collection) validateMergeRelationDocIDs(ctx context.Context, doc *client.Document) error {
+	for field, value := range doc.Values() {
+		fieldName := field.Name()
+		fd, ok := c.Version().GetFieldByName(fieldName)
+		if !ok || fd.Kind != client.FieldKind_DocID || !fd.IsPrimary {
+			continue
+		}
+
+		docIDStr, ok := value.Value().(string)
+		if !ok || docIDStr == "" {
+			continue
+		}
+
+		targetDocID, err := client.NewDocIDFromString(docIDStr)
+		if err != nil {
+			continue
+		}
+
+		objFieldName, ok := request.ToRelatedObjectName(fieldName)
+		if !ok {
+			continue
+		}
+
+		objFd, ok := c.Version().GetFieldByName(objFieldName)
+		if !ok {
+			continue
+		}
+
+		targetColVersion, found, err := description.GetRelatedCollection(
+			ctx, c.db.collectionRepository, c.Version(), objFd.Kind,
+		)
+		if err != nil || !found {
+			continue
+		}
+
+		var targetCol *collection
+		if targetColVersion.VersionID == c.Version().VersionID {
+			targetCol = c
+		} else {
+			targetCol, err = c.db.newCollection(targetColVersion, immutable.None[datastore.Txn]())
+			if err != nil {
+				continue
+			}
+		}
+
+		primaryKey, err := targetCol.getPrimaryKeyFromDocID(ctx, targetDocID)
+		if err != nil {
+			continue
+		}
+
+		exists, err := targetCol.docExistsAndNotDeleted(ctx, primaryKey) //nolint:staticcheck
+		if err != nil || !exists {
+			// Skip: the referenced doc may not have arrived yet via P2P.
+			continue
 		}
 	}
 	return nil
@@ -758,6 +918,20 @@ func (c *collection) exists(
 	}
 
 	return true, false, nil
+}
+
+// docExistsAndNotDeleted checks the datastore directly for a document, bypassing ACP.
+// Used for referential integrity validation where the caller may not have read permission
+// on the referenced document.
+func (c *collection) docExistsAndNotDeleted(ctx context.Context, primaryKey keys.PrimaryDataStoreKey) (bool, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	val, err := txn.Datastore().Get(ctx, primaryKey)
+	if err != nil && errors.Is(err, corekv.ErrNotFound) {
+		return false, nil
+	} else if err != nil {
+		return false, NewErrGetDocStatus(err, primaryKey.DocID)
+	}
+	return !bytes.Equal(val, []byte{base.DeletedObjectMarker}), nil
 }
 
 func (c *collection) getPrimaryKeyFromDocID(

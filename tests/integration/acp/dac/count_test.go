@@ -31,7 +31,7 @@ func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"COUNT": int(2),
+					"COUNT": int(1),
 				},
 			},
 		},
@@ -83,7 +83,7 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"COUNT": int(4),
+					"COUNT": int(3),
 				},
 			},
 		},
@@ -113,10 +113,11 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 							"COUNT": int(2),
 						},
 						{
-							"COUNT": int(2),
+							"COUNT": int(1),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -138,7 +139,7 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"COUNT": int(2),
+					"COUNT": int(1),
 				},
 			},
 		},

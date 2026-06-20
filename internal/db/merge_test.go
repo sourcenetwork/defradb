@@ -937,3 +937,98 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 
 	require.Equal(t, expectedDocMap, docMap)
 }
+
+// --- validateMergedRelationDocIDs ---
+
+// newMergeProcessorForTest creates a mergeProcessor for the given collection using a
+// fresh transaction. The caller is responsible for discarding the returned txn.
+func newMergeProcessorForTest(
+	t *testing.T,
+	ctx context.Context,
+	db *DB,
+	col client.Collection,
+) (*mergeProcessor, *Txn, context.Context) {
+	t.Helper()
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	txnCtx := InitContext(ctx, txn)
+	mp, err := db.newMergeProcessor(txnCtx, col.(*collection))
+	require.NoError(t, err)
+	return mp, txn.(*Txn), txnCtx
+}
+
+func TestValidateMergedRelationDocIDs_AllValid_NoError(t *testing.T) {
+	ctx := context.Background()
+	db, empCol, companyCol := setupEmployeeCompanyDB(t)
+	defer db.Close()
+
+	companyDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Acme"}`), companyCol.Version())
+	require.NoError(t, err)
+	require.NoError(t, companyCol.AddDocument(ctx, companyDoc))
+
+	empDoc, err := client.NewDocFromMap(ctx, map[string]any{
+		"name":       "Alice",
+		"_companyID": companyDoc.ID().String(),
+	}, empCol.Version())
+	require.NoError(t, err)
+	require.NoError(t, empCol.AddDocument(ctx, empDoc))
+
+	mp, txn, txnCtx := newMergeProcessorForTest(t, ctx, db, empCol)
+	defer txn.Discard()
+
+	mp.docIDs[empDoc.ID()] = nil
+	require.NoError(t, mp.validateMergedRelationDocIDs(txnCtx))
+}
+
+func TestValidateMergedRelationDocIDs_DeletedDoc_Skipped(t *testing.T) {
+	ctx := context.Background()
+	db, empCol, companyCol := setupEmployeeCompanyDB(t)
+	defer db.Close()
+
+	companyDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Acme"}`), companyCol.Version())
+	require.NoError(t, err)
+	require.NoError(t, companyCol.AddDocument(ctx, companyDoc))
+
+	empDoc, err := client.NewDocFromMap(ctx, map[string]any{
+		"name":       "Alice",
+		"_companyID": companyDoc.ID().String(),
+	}, empCol.Version())
+	require.NoError(t, err)
+	require.NoError(t, empCol.AddDocument(ctx, empDoc))
+
+	// Delete the employee so GetDocument returns ErrDocumentNotFoundOrNotAuthorized.
+	_, err = empCol.DeleteDocument(ctx, empDoc.ID())
+	require.NoError(t, err)
+
+	mp, txn, txnCtx := newMergeProcessorForTest(t, ctx, db, empCol)
+	defer txn.Discard()
+
+	mp.docIDs[empDoc.ID()] = nil
+	// Outer loop skips deleted (not found) documents silently — no error expected.
+	require.NoError(t, mp.validateMergedRelationDocIDs(txnCtx))
+}
+
+func TestValidateMergedRelationDocIDs_MissingRelationTarget_Skipped(t *testing.T) {
+	ctx := context.Background()
+	db, empCol, companyCol := setupEmployeeCompanyDB(t)
+	defer db.Close()
+
+	// Phantom company: never saved, so _companyID will be dangling.
+	phantomCompany, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Ghost Inc"}`), companyCol.Version())
+	require.NoError(t, err)
+
+	empDoc, err := client.NewDocFromMap(ctx, map[string]any{
+		"name":       "Alice",
+		"_companyID": phantomCompany.ID().String(),
+	}, empCol.Version())
+	require.NoError(t, err)
+	// skipRelationValidationContext lets us save a dangling relation for this test.
+	require.NoError(t, empCol.AddDocument(skipRelationValidationContext(ctx), empDoc))
+
+	mp, txn, txnCtx := newMergeProcessorForTest(t, ctx, db, empCol)
+	defer txn.Discard()
+
+	mp.docIDs[empDoc.ID()] = nil
+	// Inner validateMergeRelationDocIDs treats a missing target as a skip — no error.
+	require.NoError(t, mp.validateMergedRelationDocIDs(txnCtx))
+}
