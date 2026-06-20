@@ -2119,22 +2119,36 @@ func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, action
 	}
 
 	for _, act := range actions {
-		switch a := act.(type) {
-		case *action.Truncate, *action.RefreshViews, *action.AddView:
-			// These actions are skipped due to:
-			// https://github.com/sourcenetwork/defradb/issues/4959
-			t.Skip("truncate and RefreshView does not yet support the leveldb store")
-		case *action.Parallel:
-			for _, inner := range a.Children {
-				switch inner.(type) {
-				case *action.Truncate, *action.RefreshViews, *action.AddView:
-					// These actions are skipped due to:
-					// https://github.com/sourcenetwork/defradb/issues/4959
-					t.Skip("truncate and RefreshView does not yet support the leveldb store")
+		if p, ok := act.(*action.Parallel); ok {
+			for _, inner := range p.Children {
+				if levelDBActionUnsupported(inner) {
+					t.Skip("action does not yet support the leveldb store: " +
+						"https://github.com/sourcenetwork/defradb/issues/4959")
 				}
 			}
+			continue
+		}
+		if levelDBActionUnsupported(act) {
+			t.Skip("action does not yet support the leveldb store: " +
+				"https://github.com/sourcenetwork/defradb/issues/4959")
 		}
 	}
+}
+
+// levelDBActionUnsupported reports whether the given action cannot yet run against the leveldb
+// store. See https://github.com/sourcenetwork/defradb/issues/4959.
+func levelDBActionUnsupported(act any) bool {
+	switch a := act.(type) {
+	case *action.Truncate:
+		// Implicit Truncate is supported. An explicit transaction would require holding a leveldb
+		// transaction open across the txn-free truncate writes, which leveldb does not allow.
+		return a.TransactionID.HasValue()
+	case *action.RefreshViews:
+		return true // TODO(#4959): narrow to explicit-txn only once the refresh fix lands.
+	case *action.AddView:
+		return true // TODO(#4959): narrow to explicit-txn only once the AddView fix lands.
+	}
+	return false
 }
 
 func MustParseTime(timeString string) time.Time {
