@@ -2144,9 +2144,11 @@ func levelDBActionUnsupported(act any) bool {
 		// transaction open across the txn-free truncate writes, which leveldb does not allow.
 		return a.TransactionID.HasValue()
 	case *action.RefreshViews:
-		return true // TODO(#4959): narrow to explicit-txn only once the refresh fix lands.
+		// Implicit RefreshViews is supported; an explicit transaction is not (see Truncate above).
+		return a.TransactionID.HasValue()
 	case *action.AddView:
-		return true // TODO(#4959): narrow to explicit-txn only once the AddView fix lands.
+		// Implicit AddView is supported; an explicit transaction is not (see Truncate above).
+		return a.TransactionID.HasValue()
 	}
 	return false
 }
