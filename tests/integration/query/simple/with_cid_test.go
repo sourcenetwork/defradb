@@ -45,7 +45,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 func TestQuerySimpleWithCid(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -110,7 +110,7 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -155,7 +155,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -198,7 +198,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -242,8 +242,8 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 
 func TestQuerySimple_ListOfOneCID(t *testing.T) {
 	test := testUtils.TestCase{
-		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		// hardcoded CIDs would change under encryption or signing
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -282,7 +282,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 func TestQuerySimple_MultipleCIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -334,7 +334,7 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -381,7 +381,7 @@ func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
