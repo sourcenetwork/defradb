@@ -459,19 +459,42 @@ func (db *DB) AddView(
 
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard()
 
+	// Phase 1: create the view metadata atomically within the transaction.
 	defs, err := db.addView(ctx, query, sdl, opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}
 
+	if hadTxn {
+		// The caller owns the transaction; refresh within it (unsupported on leveldb) and let the
+		// caller commit.
+		if err := db.refreshNewMaterializedViews(ctx, defs, false); err != nil {
+			return nil, err
+		}
+		return defs, nil
+	}
+
+	// Phase 2: commit the metadata so no transaction is open, then refresh the materialized view
+	// caches txn-free. This avoids holding a leveldb transaction open across the txn-free refresh
+	// writes. See https://github.com/sourcenetwork/defradb/issues/4959.
 	err = txn.Commit()
 	if err != nil {
+		return nil, err
+	}
+
+	// The committed transaction is still referenced by ctx; clear it so the refresh opens its own
+	// fresh transactions rather than reusing the closed one.
+	ctx = datastore.CtxSetTxn(ctx, nil)
+
+	if err := db.refreshNewMaterializedViews(ctx, defs, true); err != nil {
 		return nil, err
 	}
 
@@ -490,24 +513,23 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return err
+	if _, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
+		// The caller owns the transaction; refresh within it (unsupported on leveldb).
+		ctx, txn, err := ensureContextTxn(ctx, db, false)
+		if err != nil {
+			return err
+		}
+		defer txn.Discard()
+
+		if err := db.refreshViewsInTxn(ctx, opt); err != nil {
+			return err
+		}
+		return txn.Commit()
 	}
 
-	defer txn.Discard()
-
-	err = db.refreshViews(ctx, opt)
-	if err != nil {
-		return err
-	}
-
-	err = txn.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// No explicit transaction: refresh per-view so the action markers are never written while a
+	// transaction is open. See https://github.com/sourcenetwork/defradb/issues/4959.
+	return db.refreshViewsImplicit(ctx, opt)
 }
 
 // BasicImport imports a json dataset.

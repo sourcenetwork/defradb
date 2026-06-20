@@ -98,19 +98,17 @@ func (db *DB) addView(
 		return nil, err
 	}
 
-	for _, view := range returnDescriptions {
-		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
+	// The materialized view caches are refreshed by the caller (AddView) after the collection
+	// metadata has been committed, so the refresh - which writes txn-free - never runs while a
+	// transaction is open. See https://github.com/sourcenetwork/defradb/issues/4959.
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
+// refreshViewsInTxn refreshes views using the explicit transaction already on the context. The
+// action-execution markers are written txn-free (corekv issue #107) while that transaction is open,
+// so this path is unsupported on leveldb - the txn-free write blocks on the open transaction (see
+// issue #4959). It preserves the original behaviour for the other stores.
+func (db *DB) refreshViewsInTxn(ctx context.Context, opts *options.GetCollectionsOptions) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -118,6 +116,11 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
+
+	// Clear the transaction on the context used to write the action execution information, otherwise
+	// corekv will pick it up again, writing using the transaction.
+	// https://github.com/sourcenetwork/corekv/issues/107
+	writeCtx := datastore.CtxSetTxn(ctx, nil)
 
 	for _, col := range cols {
 		if !col.IsMaterialized {
@@ -138,11 +141,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 
 		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 
-		// Clear the transaction on the context used to write the action execution information, otherwise
-		// corekv will pick it up again, writing using the transaction.
-		// https://github.com/sourcenetwork/corekv/issues/107
-		txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
-		err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		err = action.Register(writeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}
@@ -153,7 +152,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		err = colObject.truncate(ctx)
 		if err != nil {
 			errErr := action.Set(
-				txnFreeCtx,
+				writeCtx,
 				multistore,
 				db.events,
 				col.CollectionID,
@@ -166,7 +165,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		err = db.buildViewCache(ctx, col)
 		if err != nil {
 			errErr := action.Set(
-				txnFreeCtx,
+				writeCtx,
 				multistore,
 				db.events,
 				col.CollectionID,
@@ -176,7 +175,137 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			return errors.Join(errErr, err)
 		}
 
-		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		err = action.Complete(writeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// refreshViewsImplicit refreshes views without an explicit transaction. Each view's action-execution
+// markers are written with no transaction open, and the truncate-and-rebuild runs inside its own
+// transaction. This keeps txn-free writes and an open transaction from ever overlapping, which is
+// what leveldb requires (issue #4959), while still giving the rebuild planner a real transaction.
+func (db *DB) refreshViewsImplicit(ctx context.Context, opts *options.GetCollectionsOptions) error {
+	cols, err := db.listViewsToRefresh(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range cols {
+		if !col.IsMaterialized {
+			// We only care about materialized views here, so skip any that aren't
+			continue
+		}
+		if err := db.refreshViewImplicit(ctx, col); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// listViewsToRefresh reads the set of views to refresh under a short-lived read transaction that is
+// closed before any refresh begins, so no transaction is open when the action markers are written.
+func (db *DB) listViewsToRefresh(
+	ctx context.Context,
+	opts *options.GetCollectionsOptions,
+) ([]client.CollectionVersion, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	return db.getViews(ctx, opts)
+}
+
+// refreshViewImplicit registers the refresh action (txn-free, with no transaction open), rebuilds the
+// view inside its own transaction, then records completion (also txn-free, after the transaction has
+// closed).
+func (db *DB) refreshViewImplicit(ctx context.Context, col client.CollectionVersion) (err error) {
+	multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+
+	err = action.Register(ctx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			errErr := action.Set(
+				ctx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.TruncateAction,
+				client.ErroredActionStatus,
+			)
+			err = errors.Join(errErr, err)
+			return
+		}
+		err = action.Complete(ctx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+	}()
+
+	return db.rebuildMaterializedView(ctx, col)
+}
+
+// rebuildMaterializedView clears and rebuilds a materialized view's cache inside its own transaction.
+// The planner used by buildViewCache re-enters public APIs that require a real transaction, so this
+// must run under one - which is fine, as it performs no txn-free writes.
+func (db *DB) rebuildMaterializedView(ctx context.Context, col client.CollectionVersion) error {
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+	if err != nil {
+		return err
+	}
+	db.lockSet.CollectionLock(txn, shortID)
+
+	colObject, err := db.newCollection(col, immutable.Some[datastore.Txn](txn))
+	if err != nil {
+		return err
+	}
+
+	// Clearing and then constructing is a bit inefficient, but it should do for now.
+	// Long term we probably want to update inline as much as possible to avoid unnessecarily
+	// moving/adding/deleting keys in storage
+	if err := colObject.truncate(ctx); err != nil {
+		return err
+	}
+
+	if err := db.buildViewCache(ctx, col); err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
+// refreshNewMaterializedViews refreshes the caches of the materialized views among defs, after
+// AddView has created (and, in the implicit case, committed) their metadata.
+func (db *DB) refreshNewMaterializedViews(
+	ctx context.Context,
+	defs []client.CollectionVersion,
+	implicit bool,
+) error {
+	for _, view := range defs {
+		if !view.Query.HasValue() || !view.IsMaterialized {
+			continue
+		}
+
+		opts := utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID))
+
+		var err error
+		if implicit {
+			err = db.refreshViewsImplicit(ctx, opts)
+		} else {
+			err = db.refreshViewsInTxn(ctx, opts)
+		}
 		if err != nil {
 			return err
 		}
