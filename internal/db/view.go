@@ -128,17 +128,6 @@ func (db *DB) refreshViewsInTxn(ctx context.Context, opts *options.GetCollection
 			continue
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
-		if err != nil {
-			return err
-		}
-		db.lockSet.CollectionLock(txn, shortID)
-
-		colObject, err := db.newCollection(col, immutable.Some(txn))
-		if err != nil {
-			return err
-		}
-
 		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 
 		err = action.Register(writeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
@@ -146,24 +135,7 @@ func (db *DB) refreshViewsInTxn(ctx context.Context, opts *options.GetCollection
 			return err
 		}
 
-		// Clearing and then constructing is a bit inefficient, but it should do for now.
-		// Long term we probably want to update inline as much as possible to avoid unnessecarily
-		// moving/adding/deleting keys in storage
-		err = colObject.truncate(ctx)
-		if err != nil {
-			errErr := action.Set(
-				writeCtx,
-				multistore,
-				db.events,
-				col.CollectionID,
-				client.TruncateAction,
-				client.ErroredActionStatus,
-			)
-			return errors.Join(errErr, err)
-		}
-
-		err = db.buildViewCache(ctx, col)
-		if err != nil {
+		if err := db.rebuildView(ctx, txn, col); err != nil {
 			errErr := action.Set(
 				writeCtx,
 				multistore,
@@ -182,6 +154,30 @@ func (db *DB) refreshViewsInTxn(ctx context.Context, opts *options.GetCollection
 	}
 
 	return nil
+}
+
+// rebuildView clears and reconstructs a single materialized view's cache using txn. It manages
+// neither the action-execution markers nor the transaction lifecycle - the caller owns both.
+func (db *DB) rebuildView(ctx context.Context, txn datastore.Txn, col client.CollectionVersion) error {
+	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+	if err != nil {
+		return err
+	}
+	db.lockSet.CollectionLock(txn, shortID)
+
+	colObject, err := db.newCollection(col, immutable.Some(txn))
+	if err != nil {
+		return err
+	}
+
+	// Clearing and then constructing is a bit inefficient, but it should do for now.
+	// Long term we probably want to update inline as much as possible to avoid unnessecarily
+	// moving/adding/deleting keys in storage
+	if err := colObject.truncate(ctx); err != nil {
+		return err
+	}
+
+	return db.buildViewCache(ctx, col)
 }
 
 // refreshViewsImplicit refreshes views without an explicit transaction. Each view's action-execution
@@ -261,25 +257,7 @@ func (db *DB) rebuildMaterializedView(ctx context.Context, col client.Collection
 	}
 	defer txn.Discard()
 
-	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
-	if err != nil {
-		return err
-	}
-	db.lockSet.CollectionLock(txn, shortID)
-
-	colObject, err := db.newCollection(col, immutable.Some[datastore.Txn](txn))
-	if err != nil {
-		return err
-	}
-
-	// Clearing and then constructing is a bit inefficient, but it should do for now.
-	// Long term we probably want to update inline as much as possible to avoid unnessecarily
-	// moving/adding/deleting keys in storage
-	if err := colObject.truncate(ctx); err != nil {
-		return err
-	}
-
-	if err := db.buildViewCache(ctx, col); err != nil {
+	if err := db.rebuildView(ctx, txn, col); err != nil {
 		return err
 	}
 
