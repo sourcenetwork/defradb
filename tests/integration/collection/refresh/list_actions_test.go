@@ -96,6 +96,67 @@ func TestRefreshCollectionListAction_ListsUncompletedRefresh(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestRefreshCollectionListAction_RecordsErrorAgainstRefreshAction is a regression test for
+// https://github.com/sourcenetwork/defradb/issues/4963 - a failed view refresh must record its
+// error status against `RefreshDatastoreAction` (the action it registered), not `TruncateAction`.
+//
+// The backing collection is removed so the subsequent refresh fails inside `buildViewCache`. With
+// the bug present, `ListActions` reports two entries: an orphaned `RefreshDatastoreAction` stuck
+// `InProgress` plus an `Errored` `TruncateAction`. With the fix, it reports a single `Errored`
+// `RefreshDatastoreAction`.
+func TestRefreshCollectionListAction_RecordsErrorAgainstRefreshAction(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddView{
+				Query: `
+					Users {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "remove",
+							"path": "/Users"
+						}
+					]
+				`,
+			},
+			&action.RefreshViews{
+				ExpectedError: "collection not found",
+			},
+			&action.ListActions{
+				ExpectedInfo: []client.ActionExecution{
+					{
+						CollectionID: "bafyreiex5xc3do2a42ymbt7tscfx7ifsdmgwkty6dbnfnktyiplqgeap4q",
+						Action:       client.RefreshDatastoreAction,
+						Status:       client.ErroredActionStatus,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestRefreshCollectionListAction_DoesNotListCompletedRefreshes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
