@@ -259,12 +259,29 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	if _, err := allocateIndexEpoch(ctx, def.CollectionID, uint32(indexID)); err != nil {
+		return client.IndexDescription{}, err
+	}
+
 	return client.IndexDescription{
 		Name:   indexName,
 		ID:     uint32(indexID),
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}, nil
+}
+
+// allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.
+func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(collectionID, indexID))
+	if err != nil {
+		return 0, err
+	}
+	next, err := seq.Next(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(next), nil
 }
 
 // newIndex stages the index definition in the current transaction and returns a
@@ -300,7 +317,7 @@ func (c *collection) newIndex(
 
 	// building=true: this instance maintains the index through the backfill that runs
 	// after commit, so writes in that window must use the build-tolerant save/delete.
-	colIndex, err := NewCollectionIndex(c, desc, true)
+	colIndex, err := NewCollectionIndex(ctx, c, desc, true)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return client.IndexDescription{}, nil, err
@@ -327,7 +344,7 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
-	colIndex, err := NewCollectionIndex(c, desc, false)
+	colIndex, err := NewCollectionIndex(ctx, c, desc, false)
 	if err != nil {
 		return nil, err
 	}
@@ -994,27 +1011,55 @@ func (db *DB) listAllEncryptedIndexDescriptions(
 	return indexes, nil
 }
 
-// reindexNewActiveVersion reindexes all documents in the collection for the new active version.
-func (db *DB) reindexNewActiveVersion(ctx context.Context, col client.CollectionVersion) error {
+// reindexNewActiveVersion stages a rebuild of every index in the new active version on the
+// transaction bound to ctx, so the staging commits with the version switch, and returns a
+// function that runs the rebuilds. It must run after the commit, as each rebuild drives its own
+// batched transactions. A building index is excluded from query planning, so queries full scan
+// until the rebuild completes and flips it back to ready.
+func (db *DB) reindexNewActiveVersion(
+	ctx context.Context,
+	col client.CollectionVersion,
+) (func(context.Context) error, error) {
 	if !col.IsActive {
+		return func(context.Context) error { return nil }, nil
+	}
+
+	type rebuild struct {
+		desc          client.IndexDescription
+		buildingEpoch uint32
+		oldEpoch      uint32
+	}
+	rebuilds := make([]rebuild, 0, len(col.Indexes))
+
+	for _, desc := range col.Indexes {
+		// The current sequence value is the epoch being superseded; the next value is the
+		// disjoint epoch the rebuild fills.
+		oldEpoch, err := getIndexEpoch(ctx, col.CollectionID, desc.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		buildingEpoch, err := allocateIndexEpoch(ctx, col.CollectionID, desc.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = db.startIndexRebuild(ctx, col.CollectionID, desc.ID, buildingEpoch, oldEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		rebuilds = append(rebuilds, rebuild{desc: desc, buildingEpoch: buildingEpoch, oldEpoch: oldEpoch})
+	}
+
+	run := func(runCtx context.Context) error {
+		for _, r := range rebuilds {
+			err := db.runIndexRebuild(runCtx, col, r.desc, immutable.None[string](), r.buildingEpoch, r.oldEpoch)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
-
-	txnOpt := datastore.CtxTryGetTxnOption(ctx)
-	collection, err := db.newCollection(ctx, col, txnOpt)
-	if err != nil {
-		return err
-	}
-	for _, colIndex := range collection.indexes {
-		err = colIndex.RemoveAll(ctx)
-		if err != nil {
-			return err
-		}
-		err = collection.indexExistingDocs(ctx, colIndex)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return run, nil
 }

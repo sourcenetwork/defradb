@@ -24,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // setupUserCollection opens a DB with a `User { name: String }` collection, closed on cleanup.
@@ -323,6 +325,17 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	colVersion := col.Version()
 	colVersion.Indexes = append(colVersion.Indexes, nameDesc)
 
+	// Seed the index's epoch sequence as real index creation does, so the index resolves to
+	// epoch 1; without it a created index could not exist.
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		seq, err := sequence.Get(c, keys.NewIndexEpochSequenceKey(colVersion.CollectionID, nameDesc.ID))
+		if err != nil {
+			return err
+		}
+		_, err = seq.Next(c)
+		return err
+	}))
+
 	// txn1 stands in for the backfill batch transaction.
 	rawTxn1, err := db.NewTxn(false)
 	require.NoError(t, err)
@@ -333,7 +346,7 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	col1, err := db.newCollection(ctx1, colVersion, immutable.Some[datastore.Txn](txn1))
 	require.NoError(t, err)
 
-	colIndex, err := NewCollectionIndex(col1, nameDesc, true)
+	colIndex, err := NewCollectionIndex(ctx1, col1, nameDesc, true)
 	require.NoError(t, err)
 
 	// Run the batch body: reading the docs and writing entries puts the doc key range

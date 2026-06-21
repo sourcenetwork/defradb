@@ -122,7 +122,7 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
 			return err
 		}
-		return db.advanceIndexWatermark(txnCtx, collectionID, desc.ID, watermark)
+		return db.advanceIndexWatermark(txnCtx, collectionID, desc.ID, watermark, 0, 0)
 	})
 	require.NoError(t, err)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))

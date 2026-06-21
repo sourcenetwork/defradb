@@ -51,7 +51,7 @@ func TestIndexState_BuildThenGet_RoundTripsWatermark(t *testing.T) {
 	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	require.NoError(t, db.advanceIndexWatermark(ctx, "col1", 1, "bafkreidoc1"))
+	require.NoError(t, db.advanceIndexWatermark(ctx, "col1", 1, "bafkreidoc1", 0, 0))
 
 	got, err := getIndexState(ctx, "col1", 1)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestIndexState_GetIndexStates_ReturnsOnlyGivenCollection(t *testing.T) {
 
 	// Seed non-ready index states for collection A. A ready index (index 3) has no record.
 	require.NoError(t, db.markIndexBuildFailed(ctx, "colA", 1, "boom"))
-	require.NoError(t, db.advanceIndexWatermark(ctx, "colA", 2, "w1"))
+	require.NoError(t, db.advanceIndexWatermark(ctx, "colA", 2, "w1", 0, 0))
 
 	// Seed for collection B, which must not leak into the colA query.
 	require.NoError(t, db.startIndexDrop(ctx, "colB", 1))

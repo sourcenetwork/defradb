@@ -84,7 +84,7 @@ func (db *DB) newCollection(
 				continue
 			}
 
-			colIndex, err := NewCollectionIndex(col, index, state.isBuilding())
+			colIndex, err := NewCollectionIndex(ctx, col, index, state.isBuilding())
 			if err != nil {
 				return nil, err
 			}

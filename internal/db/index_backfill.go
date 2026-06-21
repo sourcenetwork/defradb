@@ -75,23 +75,62 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 	return lastErr
 }
 
-// backfillIndex indexes all existing documents in def for the given index desc,
-// running the work in batched transactions so that no single transaction exceeds
-// the storage engine's transaction size limit.
+// backfillIndex performs an index's initial build, indexing every existing document in batched
+// transactions, then completing the build. A rebuild uses runIndexRebuild instead.
 //
-// startAfter resumes the build after the given docID, used by startup recovery to
-// continue an interrupted build from its persisted watermark; pass None to build
-// the whole collection.
-//
-// Batches run concurrently with live writes and are serialized only by the storage
-// engine's optimistic conflict detection: a live write to a doc a batch already read
-// conflicts at commit, so the batch retries and re-reads the latest state. This is why
-// each batch builds a fresh collection and the loop retries on conflict.
+// startAfter resumes after the given docID from a persisted watermark; pass None to build the
+// whole collection.
 func (db *DB) backfillIndex(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
 	startAfter immutable.Option[string],
+) error {
+	if err := db.fillIndexBatches(ctx, def, desc, startAfter, 0, 0); err != nil {
+		return err
+	}
+
+	return db.completeBuildOrFail(ctx, def, desc)
+}
+
+// completeBuildOrFail deletes the index's build record to mark it ready, in a retried
+// transaction. A conflict means the entries are written but the record could not yet be cleared,
+// so the build is left resumable; any other error marks the index failed.
+func (db *DB) completeBuildOrFail(ctx context.Context, def client.CollectionVersion, desc client.IndexDescription) error {
+	err := db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
+	})
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, corekv.ErrTxnConflict) {
+		return NewErrIndexBackfillInterrupted(err, desc.Name)
+	}
+	markErr := db.markIndexFailed(ctx, def, desc, err)
+	if markErr != nil {
+		log.ErrorE("failed to record index failure", markErr,
+			corelog.String("collectionID", def.CollectionID),
+			corelog.Any("indexID", desc.ID),
+		)
+	}
+	return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
+}
+
+// fillIndexBatches indexes every document from startAfter to the end of the collection in batched
+// transactions. The index writes the epoch resolved from its sequence; buildingEpoch/oldEpoch are
+// recorded in each watermark so an interrupted rebuild resumes into the same epoch (both zero for
+// an initial backfill).
+//
+// A non-retryable error marks the index failed; a conflict leaves it resumable. It does not
+// complete the build — the caller does (delete the record for a backfill, flip then delete for a
+// rebuild).
+func (db *DB) fillIndexBatches(
+	ctx context.Context,
+	def client.CollectionVersion,
+	desc client.IndexDescription,
+	startAfter immutable.Option[string],
+	buildingEpoch uint32,
+	oldEpoch uint32,
 ) error {
 	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
 	for _, f := range desc.Fields {
@@ -116,7 +155,7 @@ func (db *DB) backfillIndex(
 
 			// building=true so Save tolerates entries a concurrent live write
 			// already stored for the same document.
-			colIndex, err := NewCollectionIndex(col, desc, true)
+			colIndex, err := NewCollectionIndex(batchCtx, col, desc, true)
 			if err != nil {
 				return err
 			}
@@ -133,7 +172,9 @@ func (db *DB) backfillIndex(
 
 			// The watermark is only meaningful if the batch processed any documents.
 			if n > 0 {
-				return db.advanceIndexWatermark(batchCtx, def.CollectionID, desc.ID, lastDocID)
+				return db.advanceIndexWatermark(
+					batchCtx, def.CollectionID, desc.ID, lastDocID, buildingEpoch, oldEpoch,
+				)
 			}
 			return nil
 		})
@@ -164,27 +205,6 @@ func (db *DB) backfillIndex(
 		watermark = immutable.Some(lastDocID)
 	}
 
-	// A missing state record means ready, so completion deletes the record
-	// instead of storing a terminal status. Only in-flight and failed
-	// indexes keep a record.
-	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
-	}); err != nil {
-		// A conflict here means entries are all written; state is still building and resumable.
-		// Only a non-retryable error warrants marking the index failed.
-		if errors.Is(err, corekv.ErrTxnConflict) {
-			return NewErrIndexBackfillInterrupted(err, desc.Name)
-		}
-		markErr := db.markIndexFailed(ctx, def, desc, err)
-		if markErr != nil {
-			log.ErrorE("failed to record index failure",
-				markErr,
-				corelog.String("collectionID", def.CollectionID),
-				corelog.Any("indexID", desc.ID),
-			)
-		}
-		return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
-	}
 	return nil
 }
 
@@ -199,4 +219,38 @@ func (db *DB) markIndexFailed(
 	return db.withTxnRetries(ctx, func(c context.Context) error {
 		return db.markIndexBuildFailed(c, def.CollectionID, desc.ID, rootErr.Error())
 	})
+}
+
+// runIndexRebuild fills the building epoch, flips to it, then collects the superseded oldEpoch.
+// Documents are read through def's pipeline, so the rebuild reflects the migration that triggered
+// it.
+//
+// buildingEpoch was allocated from the index's epoch sequence before the rebuild began, so the
+// index reads and writes it throughout. While building, the index is off-limits to queries (they
+// full scan). Deleting the build record is the flip: it makes the index ready, and the sequence
+// already names buildingEpoch, so reads resolve to it at once.
+//
+// Resumable: the build record carries the epochs, and both the flip (record delete) and the
+// old-epoch GC are idempotent, so recovery re-enters here and converges.
+func (db *DB) runIndexRebuild(
+	ctx context.Context,
+	def client.CollectionVersion,
+	desc client.IndexDescription,
+	startAfter immutable.Option[string],
+	buildingEpoch uint32,
+	oldEpoch uint32,
+) error {
+	if err := db.fillIndexBatches(ctx, def, desc, startAfter, buildingEpoch, oldEpoch); err != nil {
+		return err
+	}
+
+	if err := db.completeBuildOrFail(ctx, def, desc); err != nil {
+		return err
+	}
+
+	shortID, err := db.resolveShortCollectionID(ctx, def.CollectionID)
+	if err != nil {
+		return err
+	}
+	return db.gcIndexEntries(ctx, shortID, desc.ID, oldEpoch, desc.Name)
 }

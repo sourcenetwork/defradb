@@ -80,6 +80,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 // already written by a concurrent live write of the same document, and Delete tolerates a
 // missing entry for a document the backfill has not yet reached.
 func NewCollectionIndex(
+	ctx context.Context,
 	collection client.Collection,
 	desc client.IndexDescription,
 	building bool,
@@ -108,6 +109,12 @@ func NewCollectionIndex(
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
+
+	epoch, err := getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
+	if err != nil {
+		return nil, err
+	}
+	base.epoch = epoch
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	}
@@ -195,9 +202,9 @@ type collectionBaseIndex struct {
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
 	building bool
-	// epoch is the index entry namespace this instance reads and writes. Live writes and
-	// reads use the active epoch; a rebuild writes into the building epoch. Zero is the
-	// legacy namespace, so an index that predates epochs keeps its existing on-disk entries.
+	// epoch is the namespace this instance reads and writes, resolved from the index's epoch
+	// sequence at construction. During a rebuild the sequence names the epoch being built, so
+	// live writes maintain it.
 	epoch uint32
 }
 

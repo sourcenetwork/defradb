@@ -12,6 +12,7 @@ package fetcher
 
 import (
 	"context"
+	"encoding/binary"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -25,6 +26,18 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
+
+// ReadIndexEpoch returns the index's current epoch: the value of its epoch sequence.
+//
+// The sequence is seeded when the index is created, so a missing sequence is an inconsistent
+// state and returns an error rather than defaulting, which would scan the wrong namespace.
+func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionID, indexID).Bytes())
+	if err != nil {
+		return 0, err
+	}
+	return uint32(binary.BigEndian.Uint64(val)), nil
+}
 
 // indexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
@@ -41,8 +54,7 @@ type indexFetcher struct {
 	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
 	ordering      []mapper.OrderCondition
-	// epoch is the index entry namespace this fetcher scans. It is the index's active epoch;
-	// zero is the legacy namespace for indexes that predate epochs.
+	// epoch is the namespace this fetcher scans, resolved from the index's epoch sequence.
 	epoch uint32
 }
 
@@ -68,12 +80,18 @@ func newIndexFetcher(
 		return nil, nil
 	}
 
+	epoch, err := ReadIndexEpoch(ctx, txn, col.Version().CollectionID, indexDesc.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	f := &indexFetcher{
 		ctx:        ctx,
 		txn:        txn,
 		col:        col,
 		mapping:    docMapper,
 		indexDesc:  indexDesc,
+		epoch:      epoch,
 		fieldsByID: fieldsByID,
 		execInfo:   execInfo,
 		ordering:   ordering,

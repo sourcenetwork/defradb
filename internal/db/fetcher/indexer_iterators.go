@@ -76,8 +76,7 @@ type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.CollectionFieldDescription
-	// epoch is the index entry namespace this iterator scans, used to decode keys back into
-	// their epoch. It is the fetcher's active epoch; zero is the legacy namespace.
+	// epoch is the namespace this iterator scans, used to decode its keys back into their epoch.
 	epoch    uint32
 	execInfo *ExecInfo
 

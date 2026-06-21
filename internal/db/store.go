@@ -367,12 +367,18 @@ func (db *DB) SetActiveCollectionVersion(
 
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
+	runRebuild, err := db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+
+	// The rebuild drives its own batched transactions, so it runs after the commit that
+	// recorded the builds.
+	return runRebuild(ctx)
 }
 
 func (db *DB) SetMigration(
@@ -396,13 +402,19 @@ func (db *DB) SetMigration(
 	}
 	defer txn.Discard()
 
-	lensID, err := db.setMigration(ctx, cfg)
+	lensID, runRebuild, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
 	err = txn.Commit()
 	if err != nil {
+		return "", err
+	}
+
+	// The rebuild drives its own batched transactions, so it runs after the commit that
+	// recorded the builds.
+	if err := runRebuild(ctx); err != nil {
 		return "", err
 	}
 

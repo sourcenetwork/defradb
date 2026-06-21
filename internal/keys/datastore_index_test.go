@@ -597,10 +597,9 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 	}
 }
 
-// TestIndexDataStoreKey_Epoch_GoldenBytes locks in the load-bearing invariant:
-// an Epoch of 0 must encode byte-identically to a key that has no epoch at all,
-// so existing on-disk entries stay readable. A non-zero epoch adds exactly one
-// component between the index ID and the fields.
+// TestIndexDataStoreKey_Epoch_GoldenBytes pins the epoch wire layout: an Epoch of 0 carries no
+// component and so forms a prefix over every epoch of the index, while a non-zero epoch adds
+// exactly one component between the index ID and the fields, giving each epoch a disjoint keyspace.
 func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
 	base := IndexDataStoreKey{
 		CollectionShortID: 1,
@@ -610,32 +609,33 @@ func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
 		},
 	}
 
-	// Epoch 0 is byte-identical to the legacy key with no epoch set.
+	// Epoch 0 carries no component: it encodes identically to a key with no epoch set, so it
+	// serves as the whole-index prefix used to scan or drop the index.
 	withZeroEpoch := base
 	withZeroEpoch.Epoch = 0
 	assert.Equal(t, EncodeIndexDataStoreKey(&base), EncodeIndexDataStoreKey(&withZeroEpoch),
 		"Epoch 0 must encode identically to a key with no epoch")
 
-	// A non-zero epoch inserts its component immediately after the index ID. The
-	// epoch-bearing key shares the /col/index prefix and the trailing field with
-	// the legacy key, differing only by the inserted /epoch component.
+	// A non-zero epoch inserts its component immediately after the index ID. The epoch-bearing
+	// key shares the /col/index prefix and the trailing field with the epoch-0 prefix key,
+	// differing only by the inserted /epoch component.
 	withEpoch := base
 	withEpoch.Epoch = 5
-	legacy := EncodeIndexDataStoreKey(&base)
+	prefixKey := EncodeIndexDataStoreKey(&base)
 	encoded := EncodeIndexDataStoreKey(&withEpoch)
 
 	prefix := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(base.CollectionShortID))
 	prefix = append(prefix, '/')
 	prefix = encoding.EncodeUvarintAscending(prefix, uint64(base.IndexID))
 	epochComponent := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(withEpoch.Epoch))
-	fieldSuffix := legacy[len(prefix):]
+	fieldSuffix := prefixKey[len(prefix):]
 
 	want := append(append(append([]byte{}, prefix...), epochComponent...), fieldSuffix...)
 	assert.Equal(t, want, encoded, "non-zero epoch must insert /epoch after the index ID")
 
-	// The epoch-bearing keyspace must be disjoint from the legacy keyspace and
-	// sort consistently, so an epoch scan never reads another epoch's entries.
-	assert.NotEqual(t, legacy, encoded)
+	// Each epoch's keyspace is disjoint and sorts consistently, so an epoch scan never reads
+	// another epoch's entries.
+	assert.NotEqual(t, prefixKey, encoded)
 
 	indexDesc := &client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{{Descending: false}},
