@@ -47,39 +47,43 @@ func (db *DB) recoverIndexStates(ctx context.Context) error {
 		log.ErrorE("Failed to list index states during recovery", err)
 		return nil
 	}
-	if len(states) == 0 {
-		return nil
-	}
 
-	for key, state := range states {
+	for _, rec := range states {
 		if ctx.Err() != nil {
 			return nil
 		}
 		switch {
-		case state.isBuilding():
-			if err := db.recoverBuilding(ctx, key, state.Watermark); err != nil {
+		case rec.State.isBuilding():
+			if err := db.recoverBuilding(ctx, rec.Key, rec.State); err != nil {
 				log.ErrorE("Failed to recover building index", err,
-					corelog.String("collectionID", key.CollectionID),
-					corelog.Any("indexID", key.IndexID),
+					corelog.String("collectionID", rec.Key.CollectionID),
+					corelog.Any("indexID", rec.Key.IndexID),
 				)
 			}
-		case state.isDropping():
-			if err := db.recoverDropping(ctx, key); err != nil {
+		case rec.State.isDropping():
+			if err := db.recoverDropping(ctx, rec.Key); err != nil {
 				log.ErrorE("Failed to recover dropping index", err,
-					corelog.String("collectionID", key.CollectionID),
-					corelog.Any("indexID", key.IndexID),
+					corelog.String("collectionID", rec.Key.CollectionID),
+					corelog.Any("indexID", rec.Key.IndexID),
 				)
 			}
 		default:
 			// A failed index requires no recovery action.
 		}
 	}
+
+	// A rebuild leaves superseded epochs with no record, and may have crashed after its build
+	// finished but before collecting them. Sweep every index so any such stale entries are
+	// collected; it is a no-op for an index with only its live epoch present.
+	if err := db.recoverStaleEpochs(ctx); err != nil {
+		log.ErrorE("Failed to collect stale index epochs during recovery", err)
+	}
 	return nil
 }
 
 // listAllIndexStates opens a read-only transaction, scans all index state records,
 // and returns them. The transaction is discarded before returning.
-func (db *DB) listAllIndexStates(ctx context.Context) (map[keys.IndexStateKey]indexState, error) {
+func (db *DB) listAllIndexStates(ctx context.Context) ([]indexStateRecord, error) {
 	rawTxn, err := db.NewTxn(true)
 	if err != nil {
 		return nil, err
@@ -90,20 +94,19 @@ func (db *DB) listAllIndexStates(ctx context.Context) (map[keys.IndexStateKey]in
 	return listIndexStates(txnCtx)
 }
 
-// recoverBuilding resumes an interrupted backfill from its persisted watermark.
-// An interrupted build is not itself a problem with the index, so the build is
-// continued rather than abandoned. If the resumed build hits a non-retryable error
-// (e.g. the data violates a unique constraint), backfillIndex records the failed
-// state itself, so this returns that error without further action.
-func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, watermark string) error {
+// recoverBuilding resumes an interrupted build from its persisted watermark rather than
+// abandoning it. The build fills the epoch the sequence already names, whether it is a fresh
+// index or a rebuild's new epoch. A non-retryable error (e.g. a unique-constraint violation) is
+// recorded as the failed state by backfillIndex and returned here.
+func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state indexState) error {
 	def, desc, err := db.findIndexDefinition(ctx, key)
 	if err != nil {
 		return err
 	}
 
 	startAfter := immutable.None[string]()
-	if watermark != "" {
-		startAfter = immutable.Some(watermark)
+	if state.Watermark != "" {
+		startAfter = immutable.Some(state.Watermark)
 	}
 	return db.backfillIndex(ctx, def, desc, startAfter)
 }
@@ -156,9 +159,9 @@ func (db *DB) findIndexDefinition(
 		NewErrIndexWithIDDoesNotExist(key.IndexID, key.CollectionID)
 }
 
-// recoverDropping resumes an interrupted GC run for the given index. The short
-// collection ID is resolved from the systemstore and gcIndex is called to delete
-// the remaining entries and remove the state record.
+// recoverDropping resumes an interrupted whole-index drop, deleting the remaining entries and the
+// drop record. Rebuilds leave no drop record — their superseded epochs are collected by
+// recoverStaleEpochs instead.
 func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error {
 	shortID, err := db.resolveShortCollectionID(ctx, key.CollectionID)
 	if err != nil {
@@ -166,6 +169,54 @@ func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error
 	}
 	name := fmt.Sprintf("index %d", key.IndexID)
 	return db.gcIndex(ctx, key.CollectionID, shortID, key.IndexID, name)
+}
+
+// recoverStaleEpochs collects superseded epochs left by interrupted rebuilds across every active
+// index. Each index keeps only its live epoch (the sequence value); everything below it is stale
+// and deleted. It is a no-op for an index that has only its live epoch.
+func (db *DB) recoverStaleEpochs(ctx context.Context) error {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return err
+	}
+	txnCtx := InitContext(ctx, rawTxn)
+	cols, err := description.GetActiveCollections(txnCtx, db.collectionRepository)
+	rawTxn.Discard()
+	if err != nil {
+		return err
+	}
+
+	for _, col := range cols {
+		if len(col.Indexes) == 0 {
+			continue
+		}
+		shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+		for _, desc := range col.Indexes {
+			liveEpoch, err := db.indexLiveEpoch(ctx, col.CollectionID, desc.ID)
+			if err != nil {
+				return err
+			}
+			name := fmt.Sprintf("index %d", desc.ID)
+			if err := db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, name); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// indexLiveEpoch reads an index's live epoch (its sequence value) in a short read-only
+// transaction.
+func (db *DB) indexLiveEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return 0, err
+	}
+	defer rawTxn.Discard()
+	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
 }
 
 // resolveShortCollectionID opens a read-only transaction to look up the short

@@ -14,12 +14,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -60,10 +59,23 @@ func readEpoch(t *testing.T, ctx context.Context, db *DB, collectionID string, i
 	return epoch
 }
 
-// TestRunIndexRebuild_FillsNewEpochFlipsAndGCsOld drives a rebuild directly and checks the epoch
-// mechanics: a fresh epoch is filled, the index flips to it (ready, no state record), the old
-// epoch's entries are collected, and every doc stays queryable through the index.
-func TestRunIndexRebuild_FillsNewEpochFlipsAndGCsOld(t *testing.T) {
+// stageRebuild stages the build+drop records for a rebuild of every index in col the way
+// reindexNewActiveVersion does, and returns the deferred run function.
+func stageRebuild(t *testing.T, ctx context.Context, db *DB, col client.CollectionVersion) func(context.Context) error {
+	t.Helper()
+	var run func(context.Context) error
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		var err error
+		run, err = db.reindexNewActiveVersion(c, col)
+		return err
+	}))
+	return run
+}
+
+// TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld checks the rebuild mechanics: a fresh
+// epoch is filled, the old epoch's entries are collected, the index resolves to the new epoch and
+// is ready, and every doc is queryable.
+func TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 	collectionID := col.Version().CollectionID
@@ -76,7 +88,6 @@ func TestRunIndexRebuild_FillsNewEpochFlipsAndGCsOld(t *testing.T) {
 	desc, err := newNameIndex(t, ctx, col)
 	require.NoError(t, err)
 
-	// The initial build occupies epoch 1; the whole-index prefix and epoch 1 agree.
 	oldEpoch := readEpoch(t, ctx, db, collectionID, desc.ID)
 	require.Equal(t, uint32(1), oldEpoch)
 	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
@@ -84,34 +95,73 @@ func TestRunIndexRebuild_FillsNewEpochFlipsAndGCsOld(t *testing.T) {
 	def, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	// Stage the rebuild epochs the way reindexNewActiveVersion does, then run it.
-	var buildingEpoch uint32
-	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
-		seq, err := sequence.Get(c, keys.NewIndexEpochSequenceKey(collectionID, desc.ID))
-		if err != nil {
-			return err
-		}
-		next, err := seq.Next(c)
-		if err != nil {
-			return err
-		}
-		buildingEpoch = uint32(next)
-		return db.startIndexRebuild(c, collectionID, desc.ID, buildingEpoch, oldEpoch)
-	}))
-	require.Equal(t, uint32(2), buildingEpoch)
+	run := stageRebuild(t, ctx, db, def.Version())
+	require.NoError(t, run(ctx))
 
-	require.NoError(t, db.runIndexRebuild(
-		ctx, def.Version(), desc, immutable.None[string](), buildingEpoch, oldEpoch,
-	))
-
-	// New epoch holds every doc; old epoch is collected; the index resolves to the new epoch
-	// and is ready (no state record).
-	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, buildingEpoch))
+	// New epoch (2) holds every doc; old epoch is collected; the index resolves to the new epoch
+	// and is ready.
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
 	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
-	assert.Equal(t, buildingEpoch, readEpoch(t, ctx, db, collectionID, desc.ID))
+	assert.Equal(t, uint32(2), readEpoch(t, ctx, db, collectionID, desc.ID))
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
 
 	for _, name := range []string{"a", "b", "c"} {
 		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable after rebuild", name)
+	}
+}
+
+// TestReindexNewActiveVersion_RecoversStaleEpochs reproduces a crash after a rebuild's build
+// finished but before its superseded epoch was collected: epoch 2 is live and complete, epoch 1 is
+// stale, and there is NO record of either (the build record was deleted at completion, and a
+// rebuild writes no drop record). Recovery must collect the stale epoch by scanning, leave the
+// live one intact, and the index stays queryable throughout.
+func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	for _, name := range []string{"a", "b", "c"} {
+		addUserDoc(t, ctx, col, name)
+	}
+
+	desc, err := newNameIndex(t, ctx, col)
+	require.NoError(t, err)
+	oldEpoch := readEpoch(t, ctx, db, collectionID, desc.ID) // epoch 1
+
+	// Reproduce the interrupted state: advance to epoch 2 and build its entries, leaving epoch 1
+	// stale and no action record at all.
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		newEpoch, err := allocateIndexEpoch(c, collectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		require.Equal(t, uint32(2), newEpoch)
+		coll, err := db.newCollection(c, col.Version(), datastore.CtxTryGetTxnOption(c))
+		if err != nil {
+			return err
+		}
+		colIndex, err := NewCollectionIndex(c, coll, desc, false)
+		if err != nil {
+			return err
+		}
+		return coll.indexExistingDocs(c, colIndex)
+	}))
+
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+
+	// Queryable while the stale epoch is still present.
+	for _, name := range []string{"a", "b", "c"} {
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable with stale epoch", name)
+	}
+
+	require.NoError(t, db.recoverIndexStates(context.Background()))
+
+	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+	for _, name := range []string{"a", "b", "c"} {
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable after recovery", name)
 	}
 }

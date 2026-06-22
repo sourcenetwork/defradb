@@ -1011,11 +1011,13 @@ func (db *DB) listAllEncryptedIndexDescriptions(
 	return indexes, nil
 }
 
-// reindexNewActiveVersion stages a rebuild of every index in the new active version on the
-// transaction bound to ctx, so the staging commits with the version switch, and returns a
-// function that runs the rebuilds. It must run after the commit, as each rebuild drives its own
-// batched transactions. A building index is excluded from query planning, so queries full scan
-// until the rebuild completes and flips it back to ready.
+// reindexNewActiveVersion stages, for every index in the new active version, a build of a fresh
+// epoch on the transaction bound to ctx so it commits with the version switch. The returned
+// function runs the builds after the commit, as each drives its own batched transactions.
+//
+// Each build advances the index's epoch sequence and fills the new epoch, then collects every
+// superseded epoch below the live one. A building index is excluded from query planning, so
+// queries full scan until its build finishes.
 func (db *DB) reindexNewActiveVersion(
 	ctx context.Context,
 	col client.CollectionVersion,
@@ -1024,42 +1026,46 @@ func (db *DB) reindexNewActiveVersion(
 		return func(context.Context) error { return nil }, nil
 	}
 
-	type rebuild struct {
-		desc          client.IndexDescription
-		buildingEpoch uint32
-		oldEpoch      uint32
-	}
-	rebuilds := make([]rebuild, 0, len(col.Indexes))
-
+	descs := make([]client.IndexDescription, 0, len(col.Indexes))
 	for _, desc := range col.Indexes {
-		// The current sequence value is the epoch being superseded; the next value is the
-		// disjoint epoch the rebuild fills.
-		oldEpoch, err := getIndexEpoch(ctx, col.CollectionID, desc.ID)
-		if err != nil {
+		// Advance the sequence to the new epoch the build will fill; reads resolve the epoch
+		// from the sequence, so the build needs no epoch in its own record.
+		if _, err := allocateIndexEpoch(ctx, col.CollectionID, desc.ID); err != nil {
 			return nil, err
 		}
 
-		buildingEpoch, err := allocateIndexEpoch(ctx, col.CollectionID, desc.ID)
-		if err != nil {
+		if err := db.startIndexBuild(ctx, col.CollectionID, desc.ID); err != nil {
 			return nil, err
 		}
 
-		err = db.startIndexRebuild(ctx, col.CollectionID, desc.ID, buildingEpoch, oldEpoch)
-		if err != nil {
-			return nil, err
-		}
-
-		rebuilds = append(rebuilds, rebuild{desc: desc, buildingEpoch: buildingEpoch, oldEpoch: oldEpoch})
+		descs = append(descs, desc)
 	}
 
 	run := func(runCtx context.Context) error {
-		for _, r := range rebuilds {
-			err := db.runIndexRebuild(runCtx, col, r.desc, immutable.None[string](), r.buildingEpoch, r.oldEpoch)
-			if err != nil {
+		for _, desc := range descs {
+			if err := db.rebuildIndex(runCtx, col, desc); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 	return run, nil
+}
+
+// rebuildIndex fills the index's new epoch, then deletes every superseded epoch below the live
+// one. The stale-epoch GC needs no record: the entries left below the live epoch are themselves
+// the to-do list, so a crash mid-collection is recovered by simply repeating it.
+func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, desc client.IndexDescription) error {
+	if err := db.backfillIndex(ctx, col, desc, immutable.None[string]()); err != nil {
+		return err
+	}
+	shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
+	if err != nil {
+		return err
+	}
+	liveEpoch, err := db.indexLiveEpoch(ctx, col.CollectionID, desc.ID)
+	if err != nil {
+		return err
+	}
+	return db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, desc.Name)
 }

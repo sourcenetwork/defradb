@@ -32,12 +32,11 @@ type IndexDataStoreKey struct {
 	CollectionShortID uint32
 	// IndexID is the id of the index
 	IndexID uint32
-	// Epoch namespaces the index entries belonging to a single build of the index.
-	// A rebuild populates a fresh epoch disjoint from the active one and flips the
-	// active epoch once the build completes, replacing the previous entries.
+	// Epoch namespaces the entries of a single index build; a rebuild fills a fresh epoch
+	// disjoint from the current one. Stored entries always carry an epoch of 1 or greater.
 	//
-	// Epoch 0 is the legacy namespace: entries written before epochs existed carry
-	// no epoch component, and an Epoch of 0 encodes byte-identically to those keys.
+	// Epoch 0 carries no component, forming a prefix over every epoch — used to scan or drop
+	// the whole index.
 	Epoch uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
@@ -108,13 +107,11 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 //
 // Where [CollectionID], [IndexID] and [Epoch] are integers.
 //
-// An epoch component is present on disk only for entries written under a non-zero
-// epoch. Because the component is indistinguishable from a field value by structure,
-// the caller supplies the epoch of the keyspace it is scanning so the decoder knows
-// whether to consume one. Pass 0 to decode legacy keys that carry no epoch.
+// The epoch component is indistinguishable from a field value by structure, so the caller
+// supplies the epoch of the keyspace it is scanning; the decoder consumes a component only when
+// it is non-zero.
 //
-// All values of the fields are converted to standardized Defra Go type
-// according to fields description.
+// Field values are decoded to standardized Defra Go types per the field descriptions.
 func DecodeIndexDataStoreKey(
 	data []byte,
 	indexDesc *client.IndexDescription,
@@ -156,9 +153,8 @@ func DecodeIndexDataStoreKey(
 		return key, nil
 	}
 
-	// A non-zero epoch is encoded as a component between the index ID and the
-	// fields. Legacy keys carry no epoch, so consume one only when the caller
-	// is scanning a non-zero epoch keyspace.
+	// A non-zero epoch is a component between the index ID and the fields; consume it only
+	// when scanning a non-zero epoch keyspace.
 	if epoch != 0 {
 		if data[0] != '/' {
 			return IndexDataStoreKey{}, ErrInvalidKey
@@ -226,7 +222,7 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 		b = append(b, '/')
 		b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
 
-		// Epoch 0 carries no component, so legacy keys encode byte-identically.
+		// Epoch 0 carries no component, forming a prefix over every epoch of the index.
 		if key.Epoch != 0 {
 			b = append(b, '/')
 			b = encoding.EncodeUvarintAscending(b, uint64(key.Epoch))

@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -54,6 +55,7 @@ type orphanPointLookupNode struct {
 	// Initialized once in initPointLookupState, reused for every parent doc.
 	childFKIndex client.IndexDescription
 	childShortID uint32
+	childEpoch   uint32
 	planner      *Planner
 
 	execInfo orphanExecInfo
@@ -209,6 +211,17 @@ func (n *orphanPointLookupNode) initPointLookupState() error {
 	}
 	n.childShortID = shortID
 
+	epoch, err := fetcher.ReadIndexEpoch(
+		n.planner.ctx,
+		datastore.CtxMustGetTxn(n.planner.ctx),
+		n.join.childSide.col.Version().CollectionID,
+		n.childFKIndex.ID,
+	)
+	if err != nil {
+		return err
+	}
+	n.childEpoch = epoch
+
 	// Use subQueryFilter when set (nested join scoped to one target doc),
 	// otherwise use the top-level subFilter.
 	parentFilter := n.join.subFilter
@@ -257,11 +270,10 @@ func (n *orphanPointLookupNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, e
 
 		doc := n.parentClone.Value()
 
-		// Epoch is left at the legacy namespace (0). When index rebuilds become
-		// epoch-namespaced this must read the child index's active epoch.
 		indexKey := keys.NewIndexDataStoreKey(n.childShortID, n.childFKIndex.ID, []keys.IndexedField{
 			{Value: client.NewNormalString(doc.GetID()), Descending: n.childFKIndex.Fields[0].Descending},
 		})
+		indexKey.Epoch = n.childEpoch
 
 		hasChild, err := ds.Has(n.planner.ctx, &indexKey)
 		if err != nil {

@@ -65,7 +65,8 @@ func readIndexState(t *testing.T, ctx context.Context, db *DB, collectionID stri
 	return state
 }
 
-// requireNoIndexState asserts the index has no state record (i.e. it is ready).
+// requireNoIndexState asserts the index has no action record of any kind (build or drop),
+// i.e. it is fully ready with nothing in flight.
 func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) {
 	t.Helper()
 	rawTxn, err := db.NewTxn(true)
@@ -73,9 +74,11 @@ func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID
 	t.Cleanup(func() { rawTxn.Discard() })
 	txnCtx := InitContext(ctx, rawTxn)
 
-	_, err = getIndexState(txnCtx, collectionID, indexID)
-	require.True(t, errors.Is(err, corekv.ErrNotFound),
-		"expected no state record, got err: %v", err)
+	records, err := scanIndexStates(txnCtx, indexActionCollectionPrefix(collectionID), false)
+	require.NoError(t, err)
+	for _, rec := range records {
+		require.NotEqual(t, indexID, rec.Key.IndexID, "expected no state record, found %+v", rec.State)
+	}
 }
 
 // queryUserByName returns the rows from a name-filtered User query.

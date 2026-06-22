@@ -79,8 +79,9 @@ func (db *DB) newCollection(
 		for _, index := range desc.Indexes {
 			state := states[index.ID]
 
-			// Only building and ready indexes participate in the write path.
-			if state.isFailed() || state.isDropping() {
+			// A failed index is not maintained by writes. states holds only build records, so a
+			// rebuild's concurrent drop does not appear here and does not affect the write path.
+			if state.isFailed() {
 				continue
 			}
 
@@ -96,13 +97,14 @@ func (db *DB) newCollection(
 	return col, nil
 }
 
-// QueryableIndexes returns the indexes that are safe for query planning: only ready indexes.
-// Building, failed and dropping indexes are excluded because their entries may be incomplete.
+// QueryableIndexes returns the indexes that are safe for query planning. An index is excluded
+// while it has a build record (building or failed), since its entries may be incomplete.
+// c.indexStates holds only build records, so an index collecting a superseded epoch after a
+// rebuild is absent here and stays queryable — it is already complete on its new epoch.
 func (c *collection) QueryableIndexes() []client.IndexDescription {
 	all := c.Version().Indexes
 	result := make([]client.IndexDescription, 0, len(all))
 	for _, idx := range all {
-		// A ready index has no state record.
 		if _, ok := c.indexStates[idx.ID]; !ok {
 			result = append(result, idx)
 		}
