@@ -57,20 +57,26 @@ func (s *ipldEncStorage) get(ctx context.Context, cidBytes []byte) (*coreblock.E
 	return coreblock.GetEncryptionBlockFromNode(nd)
 }
 
-func (s *ipldEncStorage) put(ctx context.Context, blockBytes []byte) ([]byte, error) {
+func (s *ipldEncStorage) putBlock(ctx context.Context, block coreblock.Encryption) ([]byte, error) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(blockstore.NewIPLDStore(s.encstore))
 
-	var encBlock coreblock.Encryption
-	err := encBlock.Unmarshal(blockBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), encBlock.GenerateNode())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return nil, err
 	}
 
 	return []byte(link.String()), nil
+}
+
+func (s *ipldEncStorage) computeBlockLink(ctx context.Context, block coreblock.Encryption) ([]byte, error) {
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(s.encstore))
+
+	link, err := lsys.ComputeLink(coreblock.GetLinkPrototype(), block.GenerateNode())
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(link.Binary()), nil
 }

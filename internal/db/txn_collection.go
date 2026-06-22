@@ -216,7 +216,7 @@ func (col *txnCollection) DeleteIndex(
 func (col *txnCollection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx, unlock := lockForTxn(ctx, col.txn)
 	defer unlock()
 
@@ -283,4 +283,16 @@ func (col *txnCollection) Truncate(
 	}
 
 	return col.inner.Truncate(ctx, opts...)
+}
+
+// QueryableIndexes forwards to the inner collection's QueryableIndexes if it implements
+// the queryableIndexesProvider interface. Falls back to all indexes from the version
+// definition when the inner collection does not track index lifecycle status.
+func (col *txnCollection) QueryableIndexes() []client.IndexDescription {
+	if p, ok := col.inner.(interface {
+		QueryableIndexes() []client.IndexDescription
+	}); ok {
+		return p.QueryableIndexes()
+	}
+	return col.inner.Version().Indexes
 }

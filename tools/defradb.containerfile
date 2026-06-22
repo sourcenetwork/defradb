@@ -13,8 +13,9 @@ COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
 RUN make deps:explorer
+ARG VERSION
 ENV BUILD_TAGS=explorer,telemetry
-RUN make build
+RUN VERSION_GITRELEASE="$VERSION" make build
 
 # Stage: RUN
 FROM debian:bookworm-slim

@@ -37,10 +37,16 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "Reason": {
+                        "type": "string"
+                    },
                     "Status": {
                         "maximum": 65535,
                         "minimum": 0,
                         "type": "integer"
+                    },
+                    "Subject": {
+                        "type": "string"
                     }
                 },
                 "type": "object"

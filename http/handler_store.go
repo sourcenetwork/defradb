@@ -397,11 +397,15 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
-	colDesc := make([]client.CollectionVersion, len(cols))
+	display := make([]json.RawMessage, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Version()
+		display[i], err = col.Version().Display()
+		if err != nil {
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+			return
+		}
 	}
-	responseJSON(rw, http.StatusOK, colDesc)
+	responseJSON(rw, http.StatusOK, display)
 }
 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
@@ -452,7 +456,7 @@ func (h *storeHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 	txn, hadTxn := datastore.CtxTryGetClientTxn(req.Context())
 
 	// If there is an explicit transaction, use it. Otherwise use the db.
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	var err error
 	if !hadTxn {
 		indexes, err = db.ListIndexes(req.Context())

@@ -462,6 +462,7 @@ func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
 
 func TestQueryInlineArrayWithDateTime_UTC_NOW(t *testing.T) {
 	test := testUtils.TestCase{
+		SkipChangeDetector: true,
 		Actions: []any{
 			&action.AddDoc{
 				Doc: `{

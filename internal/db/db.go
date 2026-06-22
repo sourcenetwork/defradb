@@ -66,6 +66,11 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
+	// recoveryWG tracks the background index-state recovery goroutine started by newDB.
+	// Close waits on this before tearing down storage so the goroutine does not outlive
+	// the rootstore.
+	recoveryWG sync.WaitGroup
+
 	rootstore corekv.TxnStore
 
 	events event.Bus
@@ -218,6 +223,12 @@ func newDB(
 	if err != nil {
 		return nil, err
 	}
+
+	db.recoveryWG.Go(func() {
+		if err := db.recoverIndexStates(db.ctx); err != nil {
+			log.ErrorE("index state recovery failed", err)
+		}
+	})
 
 	return db, nil
 }
@@ -390,6 +401,10 @@ func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
 
 	db.ctxCancel()
+
+	// Wait for the background recovery goroutine to exit before tearing down storage.
+	// The goroutine observes cancellation via db.ctx and will stop promptly.
+	db.recoveryWG.Wait()
 
 	db.events.Close()
 
