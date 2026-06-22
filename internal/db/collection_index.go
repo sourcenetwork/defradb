@@ -51,7 +51,7 @@ func (db *DB) listIndexDescriptions(
 		if len(col.Indexes) == 0 {
 			continue
 		}
-		states, err := getIndexStates(ctx, col.CollectionID)
+		states, err := getIndexBuildStates(ctx, col.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -677,7 +677,7 @@ func (c *collection) ListIndexes(
 	}
 	defer txn.Discard()
 
-	states, err := getIndexStates(ctx, c.def.CollectionID)
+	states, err := getIndexBuildStates(ctx, c.def.CollectionID)
 	if err != nil {
 		return nil, err
 	}

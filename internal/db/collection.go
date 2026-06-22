@@ -64,13 +64,13 @@ func (db *DB) newCollection(
 	}
 
 	if len(desc.Indexes) > 0 {
-		// Build a read context that has a txn set so getIndexStates can call CtxMustGetTxn.
+		// Build a read context that has a txn set so getIndexBuildStates can call CtxMustGetTxn.
 		stateCtx := ctx
 		if txn.HasValue() {
 			stateCtx = datastore.CtxSetTxn(ctx, txn.Value())
 		}
 
-		states, err := getIndexStates(stateCtx, desc.CollectionID)
+		states, err := getIndexBuildStates(stateCtx, desc.CollectionID)
 		if err != nil {
 			return nil, err
 		}

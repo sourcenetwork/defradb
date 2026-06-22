@@ -109,7 +109,7 @@ func TestIndexState_GetIndexStates_ReturnsOnlyGivenCollection(t *testing.T) {
 	require.NoError(t, db.startIndexDrop(ctx, "colB", 1))
 	require.NoError(t, db.markIndexBuildFailed(ctx, "colB", 3, "oops"))
 
-	states, err := getIndexStates(ctx, "colA")
+	states, err := getIndexBuildStates(ctx, "colA")
 	require.NoError(t, err)
 
 	require.Len(t, states, 2)
@@ -154,13 +154,13 @@ func TestIndexState_CompleteReducesGetIndexStatesCount(t *testing.T) {
 	require.NoError(t, db.markIndexBuildFailed(ctx, "colX", 1, ""))
 	require.NoError(t, db.startIndexBuild(ctx, "colX", 2))
 
-	states, err := getIndexStates(ctx, "colX")
+	states, err := getIndexBuildStates(ctx, "colX")
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 
 	require.NoError(t, db.completeIndexBuild(ctx, "colX", 1))
 
-	states, err = getIndexStates(ctx, "colX")
+	states, err = getIndexBuildStates(ctx, "colX")
 	require.NoError(t, err)
 	assert.Len(t, states, 1)
 	assert.True(t, states[2].isBuilding())

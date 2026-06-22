@@ -273,11 +273,11 @@ func loadIndexState(ctx context.Context, k keys.ActionStatusKey, status client.A
 	return state, nil
 }
 
-// getIndexStates returns the build/backfill state of every index in the given collection, keyed
-// by index ID. It reports only the backfill action, which is what determines whether an index is
-// ready, failed or building; a concurrent drop (collecting a superseded epoch) is irrelevant to
-// callers of this function and is omitted.
-func getIndexStates(ctx context.Context, collectionID string) (map[uint32]indexState, error) {
+// getIndexBuildStates returns the build (backfill) state of every index in the given collection
+// that has one, keyed by index ID. It reports only the backfill action, which is what determines
+// whether an index is ready, failed or building; a concurrent drop (collecting a superseded epoch)
+// is irrelevant to callers of this function and is omitted.
+func getIndexBuildStates(ctx context.Context, collectionID string) (map[uint32]indexState, error) {
 	// Lenient: this feeds collection open and listings, so one corrupt record must not deny
 	// access to the whole collection.
 	scanned, err := scanIndexStates(ctx, indexActionCollectionPrefix(collectionID), true)
