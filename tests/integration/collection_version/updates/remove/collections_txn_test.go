@@ -63,9 +63,10 @@ func TestColVersionUpdateRemoveCollection_DeadlocksIfOtherTxnWriting(t *testing.
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			// Badger file fails after the tests successfully completes, probably caused by the
 			// leaked database instance.  It is not worth the time to chase down at the moment.
+			//
+			// LevelDB does not support concurrent transactions, and so is skipped for this test
 			testUtils.BadgerIMType,
 			testUtils.DefraIMType,
-			testUtils.LevelStoreType,
 		}),
 		Actions: []any{
 			&action.AddCollection{
@@ -113,9 +114,10 @@ func TestColVersionUpdateRemoveCollection_DeadlockIfDeletingVersionWithNewFieldW
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			// Badger file fails after the tests successfully completes, probably caused by the
 			// leaked database instance.  It is not worth the time to chase down at the moment.
+			//
+			// LevelDB does not support concurrent transactions, and so is skipped for this test
 			testUtils.BadgerIMType,
 			testUtils.DefraIMType,
-			testUtils.LevelStoreType,
 		}),
 		Actions: []any{
 			&action.AddCollection{
@@ -167,6 +169,13 @@ func TestColVersionUpdateRemoveCollection_DeadlockIfDeletingVersionWithNewFieldW
 
 func TestColVersionUpdateRemoveCollection_GetCollectionsShouldNotReturnCollectionDeletedWhilstTxnWasOpen(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -227,6 +236,13 @@ func TestColVersionUpdateRemoveCollection_GetCollectionsShouldNotReturnCollectio
 
 func TestColVersionUpdateRemoveCollection_CollectionMayBeRedeclaredAndUsedByTxn(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

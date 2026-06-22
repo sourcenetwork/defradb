@@ -21,7 +21,7 @@ import (
 
 func MakeP2PDocumentSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "sync [collection-name] [docID...]",
+		Use:   "sync <collection-name> <docID...>",
 		Short: "Synchronize specific documents from the network",
 		Long: `Synchronize specific documents from the network.
 

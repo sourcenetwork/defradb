@@ -43,7 +43,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: fmt.Sprintf(
 					`{

@@ -37,7 +37,7 @@ func TestTxn_DeleteIndex_WithCommit_Succeeds(t *testing.T) {
 				TransactionID: immutable.Some(1),
 				IndexName:     "User_name_ASC",
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.ListIndexes{

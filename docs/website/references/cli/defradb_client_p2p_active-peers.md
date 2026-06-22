@@ -6,7 +6,7 @@ Get list of active peer connections
 
 Get a list of peers that this node is currently connected to.
 
-Results are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
+Results are returned in the multiaddr format (e.g. `/ip4/127.0.0.1/tcp/4001/p2p/<PeerID>`).
 
 ```
 defradb client p2p active-peers [flags]
@@ -21,10 +21,11 @@ defradb client p2p active-peers [flags]
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")

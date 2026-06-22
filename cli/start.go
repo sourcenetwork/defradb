@@ -93,7 +93,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
 				SetPath(cfg.GetString("datastore.badger.path")).
-				SetBadgerInMemory(inMem)
+				SetBadgerInMemory(inMem).
+				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
@@ -101,7 +102,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			opts.P2P().
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
-				SetEnableRelay(cfg.GetBool("net.relayEnabled")).
+				SetEnableRelay(cfg.GetBool("net.relay")).
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
 			opts.HTTP().
 				SetAddress(cfg.GetString("api.address")).
@@ -131,7 +132,10 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
-				kr, err := openKeyring(cmd)
+				// The first startup generates the keyring, so confirm the secret to
+				// guard against a typo that would lock the node out of its keys.
+				confirm := !keyring.FileKeyringExists(cfg.GetString("keyring.path"))
+				kr, err := openKeyring(cmd, confirm)
 				if err != nil {
 					return err
 				}
@@ -245,6 +249,9 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			case <-cmd.Context().Done():
 				log.InfoContext(cmd.Context(), "Received context cancellation; shutting down...")
 
+			case err := <-n.APIError():
+				log.ErrorContextE(cmd.Context(), "API server exited unexpectedly; shutting down", err)
+
 			case <-signalCh:
 				log.InfoContext(cmd.Context(), "Received interrupt; shutting down...")
 			}
@@ -284,10 +291,20 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		cfg.GetBool(config.ConfigFlags["no-p2p"]),
 		"Disable the peer-to-peer network synchronization system",
 	)
+	cmd.PersistentFlags().Bool(
+		"pubsub",
+		cfg.GetBool(config.ConfigFlags["pubsub"]),
+		"Enable the pubsub system",
+	)
+	cmd.PersistentFlags().Bool(
+		"relay",
+		cfg.GetBool(config.ConfigFlags["relay"]),
+		"Enable the p2p relay",
+	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
 		cfg.GetStringSlice(config.ConfigFlags["allowed-origins"]),
-		"List of origins to allow for CORS requests",
+		"List of origins to allow for CORS requests. Their hosts are also accepted as auth token audiences",
 	)
 	cmd.PersistentFlags().String(
 		"pubkeypath",
@@ -343,7 +360,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(config.ConfigFlags["document-acp-type"]),
-		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
+		"Specify the document acp engine to use (supported: local (default), source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),

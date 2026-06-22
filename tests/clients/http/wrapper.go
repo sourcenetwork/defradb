@@ -42,7 +42,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +81,14 @@ func (w *Wrapper) Connect(
 	opts ...options.Enumerable[options.ConnectOptions],
 ) error {
 	return w.client.Connect(ctx, addresses, opts...)
+}
+
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	return w.client.Disconnect(ctx, addresses, opts...)
 }
 
 func (w *Wrapper) AddReplicator(
@@ -188,6 +196,13 @@ func (w *Wrapper) BasicExport(
 	return w.client.BasicExport(ctx, filepath, opts...)
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return w.client.ListActions(ctx, opts...)
+}
+
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
 	sdl string,
@@ -292,6 +307,14 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	return w.client.DeleteCollection(ctx, names, opts...)
+}
+
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
@@ -352,7 +375,7 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	return w.client.ListIndexes(ctx, opts...)
 }
 

@@ -56,7 +56,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,
@@ -95,7 +95,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndMultipleDocUpdate_NoError(t *
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"age": 31}`,

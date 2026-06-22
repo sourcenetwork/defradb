@@ -20,6 +20,9 @@ import (
 
 func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// See branchableCollectionCidExcludes (with_cid_branchable_test.go) — pending
+		// https://github.com/sourcenetwork/defradb/issues/4744.
+		MultiplierExcludes: branchableCollectionCidExcludes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -38,7 +41,7 @@ func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,

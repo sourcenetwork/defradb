@@ -70,6 +70,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 							}
 						}
 					}`,
+				NonOrderedResults: true,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
@@ -171,6 +172,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 							}
 						}
 					}`,
+				NonOrderedResults: true,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{

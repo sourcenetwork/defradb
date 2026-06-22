@@ -100,7 +100,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 					"age": 31
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
@@ -332,7 +332,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					"book": "bae-89136f56-3779-5656-b8a6-f76a1c262f37"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				DocID:        0,

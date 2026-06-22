@@ -55,7 +55,7 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

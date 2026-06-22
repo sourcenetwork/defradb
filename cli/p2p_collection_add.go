@@ -22,7 +22,7 @@ import (
 
 func MakeP2PCollectionAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "add [collectionNames]",
+		Use:   "add <collectionNames>",
 		Short: "Add P2P collections",
 		Long: `Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.`,

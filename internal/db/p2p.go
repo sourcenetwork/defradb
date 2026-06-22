@@ -58,6 +58,22 @@ func (db *DB) Connect(
 	return db.p2p.Connect(ctx, addresses)
 }
 
+// Disconnect closes the connection to the peer(s) identified by the given addresses.
+func (db *DB) Disconnect(
+	ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDisconnectP2PPeerPerm); err != nil {
+		return err
+	}
+
+	if db.p2p == nil {
+		return ErrNoP2P
+	}
+	return db.p2p.Disconnect(ctx, addresses)
+}
+
 // AddReplicator adds a replicator to the persisted list or adds
 // collections if the replicator already exists.
 func (db *DB) AddReplicator(

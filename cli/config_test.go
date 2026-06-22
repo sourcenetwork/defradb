@@ -48,6 +48,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
 
 	assert.Equal(t, "127.0.0.1:9181", cfg.GetString("api.address"))
+	assert.Equal(t, "", cfg.GetString("api.audience"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("api.allowed-origins"))
 	assert.Equal(t, "", cfg.GetString("api.pubkeypath"))
 	assert.Equal(t, "", cfg.GetString("api.privkeypath"))

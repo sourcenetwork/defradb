@@ -122,6 +122,15 @@ func (txn *Transaction) PatchCollection(
 	return txn.Wrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (txn *Transaction) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteCollection(ctx, names, opts...)
+}
+
 func (txn *Transaction) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
@@ -192,7 +201,7 @@ func (txn *Transaction) GetCollections(
 func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ListIndexes(ctx, opts...)
 }

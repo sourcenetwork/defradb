@@ -16,10 +16,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
+
+// Hardcoded collection-level commit CIDs; no template placeholder yet.
+// See https://github.com/sourcenetwork/defradb/issues/4744.
+var branchableCollectionCidExcludes = []string{multiplier.EncryptedDocs, multiplier.SignedDocs}
 
 func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: branchableCollectionCidExcludes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -33,7 +39,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,
@@ -67,6 +73,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 
 func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: branchableCollectionCidExcludes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -80,7 +87,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,
@@ -114,6 +121,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 
 func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: branchableCollectionCidExcludes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -127,7 +135,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Freddddd"
 				}`,

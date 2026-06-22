@@ -12,6 +12,7 @@ package identity
 
 import (
 	"encoding/hex"
+	"slices"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -20,6 +21,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -184,11 +186,41 @@ func (f *fullIdentity) UpdateToken(
 }
 
 // VerifyAuthToken verifies that the jwt auth token is valid and that the signature
-// matches the identity of the subject.
-func VerifyAuthToken(ident TokenIdentity, audience string) error {
-	_, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithAudience(audience))
+// matches the identity of the subject. The token's audience claim must match any
+// one of the given audiences; at least one must be provided.
+//
+// On failure it returns a typed error identifying the cause so callers can
+// distinguish operator-actionable problems from token-integrity ones:
+//   - ErrTokenExpired     — the token's expiry (exp) is in the past.
+//   - ErrTokenNotYetValid — the token's not-before (nbf) is in the future.
+//   - ErrMissingAudience  — the token carries no audience claim.
+//   - ErrAudienceMismatch — the audience claim matches none of the given audiences.
+//   - ErrInvalidAuthToken — the token is malformed/structurally invalid, or its
+//     signature does not verify. Signature failures are intentionally not
+//     distinguished, to avoid leaking information about key validity.
+func VerifyAuthToken(ident TokenIdentity, audiences ...string) error {
+	// Parse structurally first, without audience validation. jwx reports a missing
+	// `aud` claim the same way as a mismatched one (both as an audience failure), so
+	// we inspect the claim ourselves to tell the two apart. The temporal claims
+	// (exp/nbf) are validated here by default.
+	token, err := jwt.Parse([]byte(ident.BearerToken()), jwt.WithVerify(false), jwt.WithValidate(true))
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, jwt.ErrTokenExpired()):
+			return ErrTokenExpired
+		case errors.Is(err, jwt.ErrTokenNotYetValid()):
+			return ErrTokenNotYetValid
+		default:
+			return errors.Wrap(errInvalidAuthToken, err)
+		}
+	}
+
+	tokenAudience := token.Audience()
+	if len(tokenAudience) == 0 {
+		return ErrMissingAudience
+	}
+	if !audienceMatches(tokenAudience, audiences) {
+		return ErrAudienceMismatch
 	}
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
@@ -203,10 +235,23 @@ func VerifyAuthToken(ident TokenIdentity, audience string) error {
 
 	_, err = jws.Verify([]byte(ident.BearerToken()), jws.WithKey(keyTypeToJWK(ident.PublicKey().Type()), pubKey))
 	if err != nil {
-		return err
+		// Bucket signature failures under the generic invalid-token error so the
+		// cause is not distinguishable from a malformed token.
+		return errors.Wrap(errInvalidAuthToken, err)
 	}
 
 	return nil
+}
+
+// audienceMatches reports whether the token's audience claim contains at least
+// one of the accepted audiences.
+func audienceMatches(tokenAudience []string, accepted []string) bool {
+	for _, aud := range accepted {
+		if slices.Contains(tokenAudience, aud) {
+			return true
+		}
+	}
+	return false
 }
 
 // keyTypeToJWK maps a crypto.KeyType to the corresponding JWA signature algorithm.
@@ -234,7 +279,7 @@ func cloneFullIdentity(orig *fullIdentity) *fullIdentity {
 
 // CloneIdentity creates a deep copy of the given identity.
 // This exists so as to allow parallel test actions to avoid race conditions.
-// Specifically, the GetCanonicallyOrderedCollections function requires this functionality
+// Specifically, the MustGetCanonicallyOrderedCollections function requires this functionality
 func CloneIdentity(orig Identity) Identity {
 	if f, ok := orig.(*fullIdentity); ok {
 		return cloneFullIdentity(f)

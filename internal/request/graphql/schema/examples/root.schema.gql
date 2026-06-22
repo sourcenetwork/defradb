@@ -12,9 +12,9 @@ enum ValueOperatorInput {
     _eq     # Equal to
     _neq    # Not equal to
     _gt     # Greater than
-    _gte    # Greater than or equal to
+    _geq    # Greater than or equal to
     _lt     # Less than
-    _lte    # Less than or equal to
+    _leq    # Less than or equal to
     _in     # In the list
     _nin    # Non in the list
 }
@@ -63,9 +63,9 @@ input IntOperatorBlock {
     _eq: Int
     _neq: Int
     _gt: Int
-    _gte: Int
+    _geq: Int
     _lt: Int
-    _lte: Int
+    _leq: Int
     _in: [Int!]
     _nin: [Int!]
 }
@@ -75,9 +75,9 @@ input FloatOperatorBlock {
     _eq: Float
     _neq: Float
     _gt: Float
-    _gte: Float
+    _geq: Float
     _lt: Float
-    _lte: Float
+    _leq: Float
     _in: [Float!]
     _nin: [Float!]
 }
@@ -101,9 +101,9 @@ input DateTimeOperatorBlock {
     _eq: DateTime
     _neq: DateTime
     _gt: DateTime
-    _gte: DateTime
+    _geq: DateTime
     _lt: DateTime
-    _lte: DateTime
+    _leq: DateTime
     _in: [DateTime!]
     _nin: [DateTime!]
 }

@@ -60,7 +60,7 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 			// the restart that the create events are handled, resulting in flaky tests
 			testUtils.WaitForSync{},
 			testUtils.Restart{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

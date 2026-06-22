@@ -205,6 +205,23 @@ type Store interface {
 		opts ...options.Enumerable[options.PatchCollectionOptions],
 	) error
 
+	// DeleteCollection deletes the active versions of the collections with the given names.
+	//
+	// All names are removed atomically in a single patch; if any removal leaves the schema
+	// in an invalid state (e.g. one of the remaining collections still references a deleted
+	// one via a relation) the entire operation is rolled back.
+	//
+	// Only the latest (head) version of each named collection is deleted per call. If a
+	// collection has multiple versions, earlier versions must be deleted separately after
+	// each head is removed.
+	//
+	// It will error if any named collection contains documents - they must be deleted first.
+	DeleteCollection(
+		ctx context.Context,
+		names []string,
+		opts ...options.Enumerable[options.DeleteCollectionOptions],
+	) error
+
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
 	// those share the same CollectionID as the activated CollectionVersion.
 	//
@@ -265,6 +282,10 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
+	//
+	// This function will lock the selected views until it completes.  Its writes are not protected by transactions,
+	// so if it errors, the database may be left in a state where the view has been partially refreshed - in this case,
+	// it is recommeded to retry the refresh.
 	RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error
 
 	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
@@ -321,7 +342,7 @@ type Store interface {
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListIndexesOptions],
-	) (map[CollectionName][]IndexDescription, error)
+	) (map[CollectionName][]ListIndexesResult, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
 	ListAllEncryptedIndexes(
@@ -339,6 +360,14 @@ type Store interface {
 	// BasicExport exports the current data or subset of data to file in json format.
 	// The filepath parameter is required and specifies where to write the export file.
 	BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error
+
+	// List information about active action executions.
+	//
+	// An action represents a long running database task, such as collection truncation or refresh, and the rebuilding
+	// of indexes.
+	//
+	// Only executions that have not yet been successfully completed will be returned.
+	ListActions(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]ActionExecution, error)
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.

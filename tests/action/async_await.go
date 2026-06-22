@@ -49,10 +49,9 @@ func (a *Async) Execute() {
 	childReady.Add(1)
 	go func() {
 		childReady.Done()
+		defer a.s.AsyncWG.Done()
 
 		a.Child.Execute()
-
-		a.s.AsyncWG.Done()
 	}()
 
 	// Wait for all the children to be ready before returning.
@@ -74,5 +73,33 @@ func (a *Await) Execute() {
 		// Child actions cannot skip the test from within their own routine, so we must check here
 		// to see if they want to.
 		a.s.T.Skip(a.s.SkipTest)
+	}
+}
+
+// ActionGroup executes its children synchronously and serially, in the order in which they
+// are declared.
+type ActionGroup struct {
+	s *state.State
+
+	// The child actions that should be executed serially.
+	Children []Action
+}
+
+var _ Action = (*ActionGroup)(nil)
+var _ Stateful = (*ActionGroup)(nil)
+
+func (a *ActionGroup) Execute() {
+	for _, childAction := range a.Children {
+		childAction.Execute()
+	}
+}
+
+func (a *ActionGroup) SetState(s *state.State) {
+	a.s = s
+
+	for _, childAction := range a.Children {
+		if stateful, ok := childAction.(Stateful); ok {
+			stateful.SetState(s)
+		}
 	}
 }

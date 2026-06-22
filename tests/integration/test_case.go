@@ -12,8 +12,6 @@
 package tests
 
 import (
-	"time"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -97,6 +95,11 @@ type TestCase struct {
 	// A value of N means the test will be attempted up to N+1 times total
 	// (1 initial + N retries).
 	FlakeRetries uint
+
+	// SkipChangeDetector will skip this test when the change detector is active.
+	// Use this for tests whose results are inherently non-deterministic across the
+	// two change detector phases, such as tests that rely on the current time.
+	SkipChangeDetector bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -251,54 +254,6 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
-
-	// TransactionID to use for the action. Optional.
-	TransactionID immutable.Option[int]
-}
-
-// UpdateDoc will attempt to update the given document using the set [state.MutationType].
-type UpdateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
-	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only update public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then
-	// can also update private document(s) that are owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection in which this document exists.
-	CollectionID int
-
-	// The index-identifier of the document within the collection.  This is based on
-	// the order in which it was created, not the ordering of the document within the
-	// database.
-	DocID int
-
-	// The document update, in JSON string format. Will only update the properties
-	// provided.
-	Doc string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-
-	// Skip waiting for an update event on the local event bus.
-	//
-	// This should only be used for tests that do not correctly
-	// publish an update event to the local event bus.
-	SkipLocalUpdateEvent bool
 
 	// TransactionID to use for the action. Optional.
 	TransactionID immutable.Option[int]
@@ -529,18 +484,6 @@ type AddPredefinedDocs struct {
 	Docs predefined.DocsList
 }
 
-// CommitTransaction represents a commit request for a transaction of the given id.
-type CommitTransaction struct {
-	// Used to identify the transaction to commit.
-	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 type IntrospectionRequest struct {
 	// NodeID is the node ID (index) of the node in which to introspect.
 	NodeID immutable.Option[int]
@@ -641,12 +584,6 @@ type GetNodeIdentity struct {
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[state.Identity]
-}
-
-// Wait is an action that will wait for the given duration.
-type Wait struct {
-	// Duration is the duration to wait.
-	Duration time.Duration
 }
 
 // VerifyBlockSignature is an action that will verify the signature of the given block.

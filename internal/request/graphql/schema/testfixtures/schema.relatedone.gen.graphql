@@ -359,7 +359,7 @@ showDeleted: Boolean): [Book]
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    AVG(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    AVG(Author: Author__NumericSelector, Book: Book__NumericSelector): Float!
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
@@ -422,7 +422,7 @@ order: [commitsOrderArg]): [Commit]
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    COUNT(Author: Author__CountSelector, Book: Book__CountSelector): Int
+    COUNT(Author: Author__CountSelector, Book: Book__CountSelector): Int!
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
@@ -446,7 +446,7 @@ order: [commitsOrderArg]): [Commit]
     a single value.
 
     """
-    SUM(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    SUM(Author: Author__NumericSelector, Book: Book__NumericSelector): Float!
 }
 
 """
@@ -2056,14 +2056,14 @@ type Author {
     The scalar field selection type for aggregate input arguments.
 
     """
-age: ScalarAggregateNumericBlock): Float
+age: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the total number of items within the specified child sets. If multiple child
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    COUNT(GROUP: Author__CountSelector, _version: Author___version__CountSelector): Int
+    COUNT(GROUP: Author__CountSelector, _version: Author___version__CountSelector): Int!
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -2170,9 +2170,9 @@ age: ScalarAggregateNumericBlock): Float
     The scalar field selection type for aggregate input arguments.
 
     """
-age: ScalarAggregateNumericBlock): Float
+age: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the head commit for this document.
 
     """
@@ -2575,14 +2575,14 @@ type Book {
     The scalar field selection type for aggregate input arguments.
 
     """
-rating: ScalarAggregateNumericBlock): Float
+rating: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the total number of items within the specified child sets. If multiple child
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    COUNT(GROUP: Book__CountSelector, _version: Book___version__CountSelector): Int
+    COUNT(GROUP: Book__CountSelector, _version: Book___version__CountSelector): Int!
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -2688,9 +2688,9 @@ rating: ScalarAggregateNumericBlock): Float
     The scalar field selection type for aggregate input arguments.
 
     """
-rating: ScalarAggregateNumericBlock): Float
+rating: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the head commit for this document.
 
     """

@@ -16,14 +16,12 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
-
-// IsDevMode is a global variable for the development mode flag
-// This is checked by the http/handler_extras.go/Purge function to determine which response to send
-var IsDevMode bool = false
 
 const (
 	// VersionV0 is the identifier for the v0 API version.
@@ -35,8 +33,8 @@ const (
 	Version string = "v1"
 )
 
-// playgroundHandler is set when building with the playground build tag
-var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
+// explorerHandler is set when building with the explorer build tag
+var explorerHandler http.Handler = http.HandlerFunc(http.NotFound)
 
 func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
@@ -87,18 +85,30 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db DB) (*Handler, error) {
+func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
 	}
 	txs := &sync.Map{}
+
 	mux := chi.NewMux()
+	// Normalize trailing slashes so that, for example, `/collections` and
+	// `/collections/` resolve to the same route instead of the latter missing
+	// chi's router and returning a bare 404. StripSlashes rewrites the routing
+	// path in place (no redirect), preserving the request method and body.
+	// It is registered before any routes so every HTTP route on this handler
+	// is normalized consistently.
+	mux.Use(middleware.StripSlashes)
+	var allowedOrigins []string
+	if nodeOpts != nil {
+		allowedOrigins = nodeOpts.HTTP.AllowedOrigins
+	}
 	mux.Route("/api", func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs),
+			ApiMiddleware(db, txs, nodeOpts),
 			TransactionMiddleware,
-			AuthMiddleware,
+			AuthMiddleware(allowedOrigins),
 		)
 		// This is left in for backwards compatibility as we
 		// transition to v1 and should be removed in v2.
@@ -112,7 +122,7 @@ func NewHandler(db DB) (*Handler, error) {
 	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, "Healthy")
 	})
-	mux.Handle("/*", playgroundHandler)
+	mux.Handle("/*", explorerHandler)
 	return &Handler{
 		mux: mux,
 		txs: txs,

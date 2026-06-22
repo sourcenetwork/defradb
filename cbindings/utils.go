@@ -32,6 +32,7 @@ type GoCOptions struct {
 }
 
 type GoNodeInitOptions struct {
+	// Core / node-level
 	DbPath                   string
 	ListeningAddresses       string
 	ReplicatorRetryIntervals string
@@ -42,6 +43,43 @@ type GoNodeInitOptions struct {
 	DisableAPI               int
 	MaxTransactionRetries    int
 	EnableNodeACP            int
+
+	// Store options
+	StoreType           string
+	BadgerFileSize      int64
+	BadgerEncryptionKey []byte
+
+	// DB options
+	EnableSigning           int
+	SearchableEncryptionKey []byte
+	P2PBlockSyncTimeoutMs   int64
+	LensPoolSize            int
+	ChunkSize               int
+
+	// P2P options
+	EnablePubSub              int
+	EnableRelay               int
+	EnableClearBackoffOnRetry int
+	P2PPrivateKey             []byte
+
+	// HTTP options
+	HTTPAddress        string
+	HTTPAllowedOrigins string // comma-separated
+	TLSCertPath        string
+	TLSKeyPath         string
+	HTTPReadTimeoutMs  int64
+	HTTPWriteTimeoutMs int64
+	HTTPIdleTimeoutMs  int64
+
+	// Document ACP options
+	DocumentACPType          string
+	DocumentACPPath          string
+	SourceHubChainID         string
+	SourceHubGRPCAddress     string
+	SourceHubCometRPCAddress string
+
+	// Node ACP options
+	NodeACPPath string
 }
 
 // returnGoC is a helper function that wraps a status, error, and value into a return object

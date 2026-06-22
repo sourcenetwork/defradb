@@ -24,7 +24,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
+		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
 		Long: `Delete documents by docID or filter and list the number of documents deleted.
 
@@ -73,9 +73,10 @@ or the showDeleted parameter on GraphQL queries.`,
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
 
 	EmbedCLIExample(ctx, cmd, "delete by filter",
-		`defradb client document delete --collection-name User --filter '{ "_gte": { "points": 100 } }'`)
+		`defradb client document delete --collection-name User --filter '{ "_geq": { "points": 100 } }'`)
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }
