@@ -375,7 +375,7 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	return w.client.ListIndexes(ctx, opts...)
 }
 
