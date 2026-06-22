@@ -447,7 +447,7 @@ func (c *Client) GetCollections(
 func (c *Client) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -457,7 +457,7 @@ func (c *Client) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}

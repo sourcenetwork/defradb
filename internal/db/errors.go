@@ -134,6 +134,11 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -205,6 +210,7 @@ var (
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
+	ErrUnexpectedTxnType                         = errors.New("unexpected transaction type")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
@@ -1170,5 +1176,37 @@ func NewErrDematerializePopulatedView(name string, version string) error {
 		errDematerializePopulatedView,
 		errors.NewKV("Name", name),
 		errors.NewKV("VersionID", version),
+	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrCorruptIndexPayload returns a new error indicating that an index action's payload
+// could not be decoded.
+func NewErrCorruptIndexPayload(value []byte) error {
+	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
 	)
 }
