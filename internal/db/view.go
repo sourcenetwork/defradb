@@ -131,7 +131,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 		}
 		db.lockSet.CollectionLock(txn, shortID)
 
-		colObject, err := db.newCollection(col, immutable.Some(txn))
+		colObject, err := db.newCollection(ctx, col, immutable.Some(txn))
 		if err != nil {
 			return err
 		}
