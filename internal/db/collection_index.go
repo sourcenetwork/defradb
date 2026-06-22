@@ -594,15 +594,6 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 		return nil, NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
-	// Remove the active index instance so this collection handle stops maintaining it.
-	for i := range c.indexes {
-		if c.indexes[i].Name() == indexName {
-			c.indexes = slices.Delete(c.indexes, i, i+1)
-			break
-		}
-	}
-	delete(c.indexStates, desc.ID)
-
 	// Remove the definition so the planner and writers immediately stop seeing it.
 	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))
 	copy(oldIndexes, c.Version().Indexes)
@@ -632,6 +623,14 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 		c.def.Indexes = oldIndexes
 		return nil, err
 	}
+
+	for i := range c.indexes {
+		if c.indexes[i].Name() == indexName {
+			c.indexes = slices.Delete(c.indexes, i, i+1)
+			break
+		}
+	}
+	delete(c.indexStates, desc.ID)
 
 	collectionID := c.def.CollectionID
 	indexID := desc.ID

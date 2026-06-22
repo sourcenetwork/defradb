@@ -160,8 +160,10 @@ func assertIndexStatuses(
 	if expectedStatuses == nil {
 		return
 	}
+	actualByName := make(map[string]struct{}, len(actualResults))
 	for _, actual := range actualResults {
 		name := actual.Description.Name
+		actualByName[name] = struct{}{}
 		if expected, ok := expectedStatuses[name]; ok {
 			assert.Equal(t, expected.Status, actual.Execution.Status, "index %s status mismatch", name)
 			assert.Equal(t, expected.Action, actual.Execution.Action, "index %s action mismatch", name)
@@ -171,6 +173,11 @@ func assertIndexStatuses(
 		} else {
 			assert.Equal(t, client.CompletedActionStatus, actual.Execution.Status, "index %s expected ready status", name)
 		}
+	}
+	// Every configured expectation must match a returned index, so a misspelled or missing
+	// index name fails rather than silently passing.
+	for name := range expectedStatuses {
+		assert.Contains(t, actualByName, name, "expected status configured for missing index %s", name)
 	}
 }
 
