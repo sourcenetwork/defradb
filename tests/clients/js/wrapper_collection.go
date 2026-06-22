@@ -156,3 +156,21 @@ func (c *Collection) Truncate(
 	_, err := execute(ctx, c.client, "truncate", jsOpts(opts))
 	return err
 }
+
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	rawIDs := make([]string, len(docIDs))
+	for i, id := range docIDs {
+		rawIDs[i] = id.String()
+	}
+	args := map[string]any{
+		"docIDs":       rawIDs,
+		"pruneHistory": pruneHistory,
+	}
+	_, err := execute(ctx, c.client, "purgeByDocIDs", args)
+	return err
+}

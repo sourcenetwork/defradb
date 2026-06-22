@@ -77,6 +77,21 @@ func (col *txnCollection) AddManyDocuments(
 	return col.inner.AddManyDocuments(ctx, docs, opts...)
 }
 
+func (col *txnCollection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	ctx, unlock := lockForTxn(ctx, col.txn)
+	defer unlock()
+
+	if col.txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
+	return col.inner.SaveManyDocuments(ctx, docs, opts...)
+}
+
 func (col *txnCollection) UpdateDocument(
 	ctx context.Context,
 	doc *client.Document,
@@ -283,6 +298,22 @@ func (col *txnCollection) Truncate(
 	}
 
 	return col.inner.Truncate(ctx, opts...)
+}
+
+func (col *txnCollection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	ctx, unlock := lockForTxn(ctx, col.txn)
+	defer unlock()
+
+	if col.txn.isClosed {
+		return ErrTxnDiscarded
+	}
+
+	return col.inner.PurgeByDocIDs(ctx, docIDs, pruneHistory, opts...)
 }
 
 // QueryableIndexes forwards to the inner collection's QueryableIndexes if it implements

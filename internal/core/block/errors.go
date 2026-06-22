@@ -40,6 +40,7 @@ const (
 	errFailedToGetNextQResult             = "failed to get next query result"
 	errCouldNotGetEncKey                  = "could not get encryption key"
 	errUnsupportedKeyForSigning           = "unsupported key type for signing"
+	errBatchSigningNoIdentity             = "batch signing requires an identity in context"
 	errDetermineBlockEncryption    string = "failed to determine block encryption"
 	errEncryptBlock                string = "failed to encrypt block"
 	errSignBlock                   string = "failed to sign block"
@@ -169,6 +170,10 @@ func NewErrFailedToGetNextQResult(inner error) error {
 
 func NewErrUnsupportedKeyForSigning(keyType crypto.KeyType) error {
 	return errors.New(errUnsupportedKeyForSigning, errors.NewKV("KeyType", keyType))
+}
+
+func newErrBatchSigningNoIdentity() error {
+	return errors.New(errBatchSigningNoIdentity)
 }
 
 func NewErrMarkingAsMerged(cid cid.Cid, inner error) error {

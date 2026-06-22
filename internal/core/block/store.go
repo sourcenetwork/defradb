@@ -127,6 +127,10 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
 
+	if collector := BatchSigningCollectorFromContext(ctx); collector != nil {
+		collector.Add(link.Cid)
+	}
+
 	// merge the delta and update the state
 	err = ProcessBlock(ctx, crdtData, block, link)
 	if err != nil {

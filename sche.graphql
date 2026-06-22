@@ -1,0 +1,78 @@
+package defra
+
+// collections defines the GraphQL SDL schemas loaded into DefraDB at node startup.
+// Each type maps directly to a domain entity. Indexed fields are marked with @index
+// to support efficient epoch- and pool-scoped queries.
+const collections = `
+type Attestation {
+    attestedDocID:    String   @index
+    poolID:           String   @index
+    indexerAddress:   String   @index
+    hostAddress:      String
+    blockNumber:      Int      @index
+    blockHash:        String
+    cid:              String
+    indexerSignature: Blob
+    createdAt:        DateTime
+}
+
+type RequestSignature {
+    poolID:         String   @index
+    gatewayAddress: String
+    queryHash:      String   @index
+    hostAddress:    String
+    epochNumber:    Int      @index
+    createdAt:      DateTime
+}
+
+type ResponseSignature {
+    poolID:      String   @index
+    hostAddress: String
+    queryHash:   String   @index
+    epochNumber: Int      @index
+    createdAt:   DateTime
+}
+
+type FaultProof {
+    epochNumber:      Int      @index
+    poolID:           String   @index
+    submitterAddress: String
+    proofData:        Blob
+    submittedAt:      DateTime
+    status:           String
+}
+
+type Settlement {
+    epochNumber:       Int      @index
+    poolID:            String   @index
+    totalReward:       String
+    shinzoFee:         String
+    indexerPoolReward: String
+    hostPoolReward:    String
+    indexerRewards:    String
+    hostRewards:       String
+    disputeDeadline:   DateTime
+    status:            String   @index
+    submittedAt:       DateTime
+}
+
+type Epoch {
+    number:     Int      @index
+    startBlock: Int
+    endBlock:   Int
+    startTime:  DateTime
+    endTime:    DateTime
+    status:     String   @index
+}
+`
+
+// loadSchemas adds the collection definitions to the DefraDB node if they do not
+// already exist. Safe to call on every startup — DefraDB ignores already-registered
+// schemas with identical definitions.
+func loadSchemas( /* TODO(draft-3): ctx context.Context, db client.DB */ ) error {
+	// TODO(draft-3): implement:
+	//   _, err := db.AddSchema(ctx, collections)
+	//   return err
+	return nil
+}
+

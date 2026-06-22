@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -48,6 +49,12 @@ type DB interface {
 	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
+	// ExportDocKVs writes raw KV pairs for the given documents to w.
+	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	// ImportRawKVs reads raw KV pairs from r and writes them to the rootstore.
+	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	// RebuildCollectionIndexes rebuilds secondary indexes for the named collection.
+	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 }
 
 // Node is a DefraDB instance with optional sub-systems.

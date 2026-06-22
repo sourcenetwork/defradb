@@ -217,6 +217,19 @@ func (c *Collection) SaveDocument(
 	return err
 }
 
+func (c *Collection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	for _, doc := range docs {
+		if err := c.SaveDocument(ctx, doc, opts...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Collection) DeleteDocument(
 	ctx context.Context,
 	docID client.DocID,

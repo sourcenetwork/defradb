@@ -1,0 +1,55 @@
+"": ./
+acp:
+    document:
+        sourcehub:
+            address: ""
+        type: none
+api:
+    address: 127.0.0.1:9181
+    allowed-origins: []
+    privkeypath: ""
+    pubkeypath: ""
+datastore:
+    badger:
+        path: data
+        valuelogfilesize: 1073741824
+    defaultkeytype: secp256k1
+    maxtxnretries: 5
+    noencryption: false
+    nosearchableencryption: false
+    nosigning: false
+    store: badger
+development: false
+keyring:
+    backend: file
+    disabled: false
+    namespace: defradb
+    path: keys
+log:
+    caller: false
+    colordisabled: false
+    format: text
+    level: info
+    output: stderr
+    overrides: ""
+    source: false
+    stacktrace: false
+net:
+    p2paddresses:
+        - /ip4/127.0.0.1/tcp/9171
+    p2pdisabled: false
+    peers: []
+    pubsubenabled: true
+    relay: false
+replicator:
+    retryintervals:
+        - 30
+        - 60
+        - 120
+        - 240
+        - 480
+        - 960
+        - 1920
+secretfile: .env
+telemetry:
+    disabled: false

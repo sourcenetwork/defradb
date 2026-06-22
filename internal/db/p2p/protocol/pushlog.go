@@ -22,6 +22,9 @@ type PushLogRequest struct {
 	CollectionID string
 	Creator      string
 	Block        []byte
+	// CAR contains a Content Addressable aRchive of the full DAG rooted at CID.
+	// When present, the receiver imports it directly without a round-trip DAG sync.
+	CAR []byte `cbor:"car,omitempty"`
 }
 
 // PushLogReply is the expected response struct that should be received after

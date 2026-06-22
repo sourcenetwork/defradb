@@ -247,6 +247,42 @@ func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) 
 	rw.WriteHeader(http.StatusOK)
 }
 
+type purgeDocIDsRequest struct {
+	DocIDs      []string `json:"docIDs"`
+	PruneHistory bool   `json:"pruneHistory"`
+}
+
+func (h *collectionHandler) PurgeDocuments(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
+
+	var body purgeDocIDsRequest
+	if err := requestJSON(req, &body); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	docIDs := make([]client.DocID, 0, len(body.DocIDs))
+	for _, raw := range body.DocIDs {
+		docID, err := client.NewDocIDFromString(raw)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		docIDs = append(docIDs, docID)
+	}
+
+	truncateOpt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(ctx))
+
+	err := col.PurgeByDocIDs(ctx, docIDs, body.PruneHistory, truncateOpt)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *collectionHandler) bindRoutes(router *Router) {
 	errorResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/error",
@@ -519,6 +555,17 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
 	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
+
+	purgeDocuments := openapi3.NewOperation()
+	purgeDocuments.OperationID = "purgeDocuments"
+	purgeDocuments.Description = "Permanently remove a set of documents by DocID, including all headstore and blockstore state."
+	purgeDocuments.Tags = []string{"purge"}
+	purgeDocuments.AddParameter(collectionNamePathParam)
+	purgeDocuments.Responses = openapi3.NewResponses()
+	purgeDocuments.Responses.Set("200", successResponse)
+	purgeDocuments.Responses.Set("400", errorResponse)
+
+	router.AddRoute("/collections/{name}/documents/purge", http.MethodDelete, purgeDocuments, h.PurgeDocuments)
 
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodGet, getDocument, h.GetDocument)
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, updateDocument, h.UpdateDocument)

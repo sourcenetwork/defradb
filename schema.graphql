@@ -1,0 +1,61 @@
+type Attestation {
+    attestedDocID:    String   @index
+    poolID:           String   @index
+    indexerAddress:   String   @index
+    hostAddress:      String
+    blockNumber:      Int      @index
+    blockHash:        String
+    cid:              String
+    indexerSignature: Blob
+    createdAt:        DateTime
+}
+
+type RequestSignature {
+    poolID:         String   @index
+    gatewayAddress: String
+    queryHash:      String   @index
+    hostAddress:    String
+    epochNumber:    Int      @index
+    createdAt:      DateTime
+}
+
+type ResponseSignature {
+    poolID:      String   @index
+    hostAddress: String
+    queryHash:   String   @index
+    epochNumber: Int      @index
+    createdAt:   DateTime
+}
+
+type FaultProof {
+    epochNumber:      Int      @index
+    poolID:           String   @index
+    submitterAddress: String
+    proofData:        Blob
+    submittedAt:      DateTime
+    status:           String
+}
+
+type Settlement {
+    epochNumber:       Int      @index
+    poolID:            String   @index
+    totalReward:       String
+    shinzoFee:         String
+    indexerPoolReward: JSON
+    hostPoolReward:    JSON
+    indexerRewards:    String
+    hostRewards:       String
+    disputeDeadline:   DateTime
+    status:            String   @index
+    submittedAt:       DateTime
+}
+
+type Epoch {
+    number:     Int      @index
+    startBlock: Int
+    endBlock:   Int
+    startTime:  DateTime
+    endTime:    DateTime
+    status:     String   @index
+}
+

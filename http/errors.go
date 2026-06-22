@@ -46,6 +46,7 @@ var (
 	ErrMissingRequest               = errors.New("missing request")
 	ErrInvalidTransactionId         = errors.New("invalid transaction id")
 	ErrP2PDisabled                  = errors.New("p2p network is disabled")
+	ErrNotSupportedViaHTTP          = errors.New("operation not supported via HTTP client; use direct node access")
 	ErrMethodIsNotImplemented       = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")

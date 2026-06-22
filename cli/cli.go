@@ -15,6 +15,7 @@ package cli
 
 import (
 	"context"
+	"io"
 
 	"github.com/spf13/cobra"
 
@@ -30,6 +31,9 @@ type CLI interface {
 	client.P2P
 	Purge(ctx context.Context) error
 	GetNodeOptions(ctx context.Context) (map[string]any, error)
+	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 }
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
@@ -139,6 +143,12 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeBackupImportCommand(ctx),
 	)
 
+	kv := MakeKVCommand(ctx)
+	kv.AddCommand(
+		MakeKVExportCommand(ctx),
+		MakeKVImportCommand(ctx),
+	)
+
 	tx := MakeTxCommand(ctx)
 	tx.AddCommand(
 		MakeTxNewCommand(ctx),
@@ -154,11 +164,13 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
 		MakeCollectionTruncateCommand(ctx),
+		MakeCollectionPurgeDocsCommand(ctx),
 	)
 
 	document := MakeDocumentCommand(ctx)
 	document.AddCommand(
 		MakeDocumentAddCommand(ctx),
+		MakeDocumentAddManyCommand(ctx),
 		MakeDocumentGetCommand(ctx),
 		MakeDocumentUpdateCommand(ctx),
 		MakeDocumentDeleteCommand(ctx),
@@ -187,6 +199,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		encrypted_index,
 		p2p,
 		backup,
+		kv,
 		tx,
 		collection,
 		document,

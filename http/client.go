@@ -673,6 +673,18 @@ func (c *Client) GetNodeOptions(ctx context.Context) (map[string]any, error) {
 	return opts, nil
 }
 
+func (c *Client) ExportDocKVs(_ context.Context, _ string, _ []string, _ io.Writer, _ bool) (int, error) {
+	return 0, ErrNotSupportedViaHTTP
+}
+
+func (c *Client) ImportRawKVs(_ context.Context, _ io.Reader) (int, error) {
+	return 0, ErrNotSupportedViaHTTP
+}
+
+func (c *Client) RebuildCollectionIndexes(_ context.Context, _ string) error {
+	return ErrNotSupportedViaHTTP
+}
+
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	methodURL := c.http.apiURL.JoinPath("node", "identity")
 

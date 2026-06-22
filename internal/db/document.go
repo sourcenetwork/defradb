@@ -413,6 +413,28 @@ func (c *collection) SaveDocument(
 	return txn.Commit()
 }
 
+func (c *collection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	for _, doc := range docs {
+		if err := c.SaveDocument(ctx, doc, opts...); err != nil {
+			return err
+		}
+	}
+
+	return txn.Commit()
+}
+
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
 func hasPrivateKey(ident identity.Identity) bool {
 	if fullIdent, ok := ident.(identity.FullIdentity); ok {
