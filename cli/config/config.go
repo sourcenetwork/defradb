@@ -32,7 +32,19 @@ const (
 	ConfigLogLevelDebug = "debug"
 	ConfigLogLevelError = "error"
 	ConfigLogLevelFatal = "fatal"
+
+	// defaultTLSCertDir is the directory, relative to the rootdir, that is
+	// searched for the default TLS certificate and key files.
+	defaultTLSCertDir = "certs"
+	// defaultTLSCertFile and defaultTLSKeyFile are the certificate and private
+	// key file names looked up under <rootdir>/certs to automatically enable
+	// TLS for the HTTP API.
+	defaultTLSCertFile = "server.crt"
+	defaultTLSKeyFile  = "server.key"
 )
+
+// log is the logger for the config package.
+var log = corelog.NewLogger("config")
 
 // ConfigPaths are config keys that will be made relative to the rootdir
 var ConfigPaths = []string{
@@ -199,7 +211,54 @@ func LoadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	// set logging config overrides
 	corelog.SetConfigOverrides(cfg.GetString("log.overrides"))
 
+	// Automatically enable TLS when the default certificate files are present
+	// and the user has not configured certificate paths explicitly. Done after
+	// the logging config is applied so any warning is formatted as configured.
+	autoDetectTLSCertPaths(cfg, rootdir)
+
 	return cfg, nil
+}
+
+// autoDetectTLSCertPaths enables TLS automatically when the user has not
+// configured certificate paths but both default certificate files are present
+// under <rootdir>/certs (server.crt and server.key). If exactly one of the two
+// files is present it logs a warning and leaves TLS disabled, since both are
+// required.
+func autoDetectTLSCertPaths(cfg *viper.Viper, rootdir string) {
+	// Respect explicitly-configured paths (flag, config file, or env var); if
+	// either is set the user is in control of TLS and we must not override it.
+	if cfg.GetString("api.pubkeypath") != "" || cfg.GetString("api.privkeypath") != "" {
+		return
+	}
+
+	certPath := filepath.Join(rootdir, defaultTLSCertDir, defaultTLSCertFile)
+	keyPath := filepath.Join(rootdir, defaultTLSCertDir, defaultTLSKeyFile)
+	certFound := isRegularFile(certPath)
+	keyFound := isRegularFile(keyPath)
+
+	switch {
+	case certFound && keyFound:
+		// Resolve the paths silently; the node logs the resulting https endpoint
+		// on start, and this runs for every command so a success log here would
+		// be noise on commands that never start a server.
+		cfg.Set("api.pubkeypath", certPath)
+		cfg.Set("api.privkeypath", keyPath)
+	case certFound != keyFound:
+		// Only one of the pair is present; both are required to enable TLS. Warn
+		// so a half-configured certificate directory is not silently ignored.
+		log.Info(
+			"Found an incomplete TLS certificate pair in the default directory; "+
+				"both server.crt and server.key are required, so TLS will not be enabled",
+			corelog.String("dir", filepath.Join(rootdir, defaultTLSCertDir)),
+		)
+	}
+}
+
+// isRegularFile reports whether the path exists and is a regular file
+// (symlinks are followed). Directories and other irregular files return false.
+func isRegularFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 
 // bindConfigFlags binds the set of cli flags to config values.

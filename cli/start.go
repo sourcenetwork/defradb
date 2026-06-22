@@ -104,11 +104,27 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
 				SetEnableRelay(cfg.GetBool("net.relay")).
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
+			// TLS is enabled when both the certificate (pubkeypath) and key
+			// (privkeypath) paths are set, either explicitly (flag/config/env) or
+			// by config.LoadConfig auto-detecting both default certificate files.
+			// Both are required, so reject an explicitly-incomplete pair here with
+			// a clear error rather than letting the node fail to start later when
+			// it cannot load the certificate.
+			//
+			// A partial *default* cert directory is handled differently by
+			// config.autoDetectTLSCertPaths, which leaves TLS disabled: an
+			// incomplete default directory is not an explicit request for TLS,
+			// so it must not block startup.
+			tlsCertPath := cfg.GetString("api.pubkeypath")
+			tlsKeyPath := cfg.GetString("api.privkeypath")
+			if (tlsCertPath == "") != (tlsKeyPath == "") {
+				return ErrIncompleteTLSKeyPair
+			}
 			opts.HTTP().
 				SetAddress(cfg.GetString("api.address")).
 				SetAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...).
-				SetCertPath(cfg.GetString("api.pubKeyPath")).
-				SetKeyPath(cfg.GetString("api.privKeyPath"))
+				SetCertPath(tlsCertPath).
+				SetKeyPath(tlsKeyPath)
 			opts.DocumentACP().
 				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
 				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
