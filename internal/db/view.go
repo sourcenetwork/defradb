@@ -157,7 +157,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 				multistore,
 				db.events,
 				col.CollectionID,
-				client.TruncateAction,
+				client.RefreshDatastoreAction,
 				client.ErroredActionStatus,
 			)
 			return errors.Join(errErr, err)
@@ -170,7 +170,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 				multistore,
 				db.events,
 				col.CollectionID,
-				client.TruncateAction,
+				client.RefreshDatastoreAction,
 				client.ErroredActionStatus,
 			)
 			return errors.Join(errErr, err)
