@@ -843,8 +843,8 @@ func (_c *Collection_ListIndexes_Call) Run(run func(ctx context.Context, opts ..
 	return _c
 }
 
-func (_c *Collection_ListIndexes_Call) Return(indexDescriptionStatuses []client.ListIndexesResult, err error) *Collection_ListIndexes_Call {
-	_c.Call.Return(indexDescriptionStatuses, err)
+func (_c *Collection_ListIndexes_Call) Return(listIndexesResults []client.ListIndexesResult, err error) *Collection_ListIndexes_Call {
+	_c.Call.Return(listIndexesResults, err)
 	return _c
 }
 

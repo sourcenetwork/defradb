@@ -2381,8 +2381,8 @@ func (_c *Txn_ListIndexes_Call) Run(run func(ctx context.Context, opts ...option
 	return _c
 }
 
-func (_c *Txn_ListIndexes_Call) Return(vToIndexDescriptionStatuses map[client.CollectionName][]client.ListIndexesResult, err error) *Txn_ListIndexes_Call {
-	_c.Call.Return(vToIndexDescriptionStatuses, err)
+func (_c *Txn_ListIndexes_Call) Return(vToListIndexesResults map[client.CollectionName][]client.ListIndexesResult, err error) *Txn_ListIndexes_Call {
+	_c.Call.Return(vToListIndexesResults, err)
 	return _c
 }
 
