@@ -192,6 +192,11 @@ type ActionExecution struct {
 	// The current action being executed.
 	Action client.Action
 
+	// Subject identifies the specific target of a per-subject action within the
+	// collection (for example, the index ID of an index build). It is empty for
+	// collection-wide actions such as truncate and datastore refresh.
+	Subject string
+
 	// The current status of this action execution.
 	Status client.ActionStatus
 }

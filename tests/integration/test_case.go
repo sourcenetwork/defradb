@@ -95,6 +95,11 @@ type TestCase struct {
 	// A value of N means the test will be attempted up to N+1 times total
 	// (1 initial + N retries).
 	FlakeRetries uint
+
+	// SkipChangeDetector will skip this test when the change detector is active.
+	// Use this for tests whose results are inherently non-deterministic across the
+	// two change detector phases, such as tests that rely on the current time.
+	SkipChangeDetector bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
