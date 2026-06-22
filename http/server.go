@@ -46,7 +46,6 @@ type Server struct {
 	options   *options.NodeHTTPOptions
 	server    *http.Server
 	listener  net.Listener
-	isTLS     bool
 	ctxCancel context.CancelFunc
 }
 
@@ -100,7 +99,6 @@ func (s *Server) Serve() error {
 	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
 		return s.serve()
 	}
-	s.isTLS = true
 	return s.serveTLS()
 }
 
@@ -131,7 +129,7 @@ func (s *Server) serveTLS() error {
 }
 
 func (s *Server) Address() string {
-	if s.isTLS {
+	if s.options.TLSCertPath != "" && s.options.TLSKeyPath != "" {
 		return "https://" + s.listener.Addr().String()
 	}
 	return "http://" + s.listener.Addr().String()
