@@ -69,8 +69,6 @@ var booksByThreeAuthors = []any{
 	},
 }
 
-// Regression test for https://github.com/sourcenetwork/defradb/issues/4954 for the related-id
-// field. Grouping by the foreign-key id must still occur even when the id is not rendered.
 func TestQueryOneToManyWithGroupByRelatedIDWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: append(
@@ -107,9 +105,6 @@ func TestQueryOneToManyWithGroupByRelatedIDWithoutRenderedGroupField(t *testing.
 	executeTestCase(t, test)
 }
 
-// Grouping by the relation object field name while also rendering the foreign-key id. This
-// exercises the path where the fetched group-by dependency and an explicitly selected field
-// resolve to the same underlying field, ensuring the id is rendered exactly once per group.
 func TestQueryOneToManyWithGroupByRelationObjectRenderingRelatedID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: append(

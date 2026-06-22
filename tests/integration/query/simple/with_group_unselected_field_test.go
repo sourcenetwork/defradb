@@ -18,11 +18,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This is a regression test for https://github.com/sourcenetwork/defradb/issues/4954.
-//
-// Grouping must still occur on the grouped-by field even when that field is not part of
-// the parent's selection set. Previously the field was never fetched, so every document
-// produced an identical (nil) group key and all documents collapsed into a single group.
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -86,8 +81,6 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// Companion to the above using a String grouped-by field (matching the genre field in the
-// original issue report), ensuring the fix is not specific to a single field kind.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
