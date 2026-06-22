@@ -33,12 +33,13 @@ type collection struct {
 	db      *DB
 	def     client.CollectionVersion
 	indexes []CollectionIndex
-	// indexStates holds the lifecycle state of the collection's non-ready indexes, keyed by
-	// index ID. An index absent from the map has no action record and so is ready. Populated
-	// at construction time from the index state store.
-	indexStates    map[uint32]indexState
-	fetcherFactory func() fetcher.Fetcher
-	txn            immutable.Option[datastore.Txn]
+	// indexBuildStates holds the build (backfill) state of the collection's indexes that have one,
+	// keyed by index ID: an index is present while it is building or failed, and absent once ready.
+	// Presence therefore means "not yet queryable". Populated at construction time from the index
+	// state store; a rebuild's concurrent drop is not a build record and never appears here.
+	indexBuildStates map[uint32]indexState
+	fetcherFactory   func() fetcher.Fetcher
+	txn              immutable.Option[datastore.Txn]
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -57,10 +58,10 @@ func (db *DB) newCollection(
 	txn immutable.Option[datastore.Txn],
 ) (*collection, error) {
 	col := &collection{
-		db:          db,
-		def:         desc,
-		txn:         txn,
-		indexStates: make(map[uint32]indexState),
+		db:               db,
+		def:              desc,
+		txn:              txn,
+		indexBuildStates: make(map[uint32]indexState),
 	}
 
 	if len(desc.Indexes) > 0 {
@@ -74,13 +75,14 @@ func (db *DB) newCollection(
 		if err != nil {
 			return nil, err
 		}
-		col.indexStates = states
+		col.indexBuildStates = states
 
 		for _, index := range desc.Indexes {
 			state := states[index.ID]
 
-			// A failed index is not maintained by writes. states holds only build records, so a
-			// rebuild's concurrent drop does not appear here and does not affect the write path.
+			// A failed index is abandoned: it is not maintained by writes, so it is left out of
+			// c.indexes. A building index is kept, so its new epoch keeps receiving concurrent
+			// writes while the backfill runs.
 			if state.isFailed() {
 				continue
 			}
@@ -99,13 +101,13 @@ func (db *DB) newCollection(
 
 // QueryableIndexes returns the indexes that are safe for query planning. An index is excluded
 // while it has a build record (building or failed), since its entries may be incomplete.
-// c.indexStates holds only build records, so an index collecting a superseded epoch after a
+// c.indexBuildStates holds only build records, so an index collecting a superseded epoch after a
 // rebuild is absent here and stays queryable — it is already complete on its new epoch.
 func (c *collection) QueryableIndexes() []client.IndexDescription {
 	all := c.Version().Indexes
 	result := make([]client.IndexDescription, 0, len(all))
 	for _, idx := range all {
-		if _, ok := c.indexStates[idx.ID]; !ok {
+		if _, ok := c.indexBuildStates[idx.ID]; !ok {
 			result = append(result, idx)
 		}
 	}

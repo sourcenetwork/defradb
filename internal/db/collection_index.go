@@ -324,10 +324,10 @@ func (c *collection) newIndex(
 	}
 	c.indexes = append(c.indexes, colIndex)
 
-	if c.indexStates == nil {
-		c.indexStates = make(map[uint32]indexState)
+	if c.indexBuildStates == nil {
+		c.indexBuildStates = make(map[uint32]indexState)
 	}
-	c.indexStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
+	c.indexBuildStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
 
 	// Backfill builds a fresh collection from this snapshot per batch,
 	// so each retry re-reads documents.
@@ -647,7 +647,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 			break
 		}
 	}
-	delete(c.indexStates, desc.ID)
+	delete(c.indexBuildStates, desc.ID)
 
 	collectionID := c.def.CollectionID
 	indexID := desc.ID
