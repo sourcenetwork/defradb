@@ -196,6 +196,13 @@ func (w *Wrapper) BasicExport(
 	return w.client.BasicExport(ctx, filepath, opts...)
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return w.client.ListActions(ctx, opts...)
+}
+
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
 	sdl string,
@@ -368,7 +375,7 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	return w.client.ListIndexes(ctx, opts...)
 }
 

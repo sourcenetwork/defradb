@@ -77,9 +77,13 @@ func DatabaseDir(t testing.TB) string {
 }
 
 // PreTestChecks skips any test that can't be run by the change detector.
-func PreTestChecks(t testing.TB, collectionNames []string) {
+func PreTestChecks(t testing.TB, collectionNames []string, skipChangeDetector bool) {
 	if !Enabled {
 		return
+	}
+
+	if skipChangeDetector {
+		t.Skip("skipping test that is incompatible with the change detector")
 	}
 
 	if previousTestCaseTestName == t.Name() {

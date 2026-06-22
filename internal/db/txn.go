@@ -529,7 +529,7 @@ func (txn *Txn) GetCollections(
 func (txn *Txn) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = InitContext(ctx, txn)
 
 	ctx, unlock := lockForTxn(ctx, txn)
@@ -607,6 +607,22 @@ func (txn *Txn) BasicExport(
 	}
 
 	return txn.db.BasicExport(ctx, filepath, opts...)
+}
+
+func (txn *Txn) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, ErrTxnDiscarded
+	}
+
+	return txn.db.ListActions(ctx, opts...)
 }
 
 func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {

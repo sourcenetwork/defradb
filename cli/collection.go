@@ -22,10 +22,6 @@ import (
 func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	var txID uint64
 	var identity string
-	var name string
-	var collectionID string
-	var versionID string
-	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "collection",
 		Short: "Interact with a collection.",
@@ -57,21 +53,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-
-			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
-			if versionID != "" {
-				opt.SetVersionID(versionID)
-			}
-			if collectionID != "" {
-				opt.SetCollectionID(collectionID)
-			}
-			if name != "" {
-				opt.SetCollectionName(name)
-			}
-			if getInactive {
-				opt.SetGetInactive(getInactive)
-			}
-
+			opt := getCollectionSelectorOptions(cmd)
 			cols, err := cliClient.GetCollections(cmd.Context(), opt)
 			if err != nil {
 				return err
@@ -91,9 +73,34 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
-	cmd.PersistentFlags().StringVar(&collectionID, "collection-id", "", "Collection ID")
-	cmd.PersistentFlags().StringVar(&versionID, "version-id", "", "Collection version ID")
-	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
+}
+
+func setCollectionSelectorFlags(cmd *cobra.Command) {
+	cmd.Flags().String("collection-name", "", "Collection name")
+	cmd.Flags().String("collection-id", "", "Collection ID")
+	cmd.Flags().String("version-id", "", "Collection version ID")
+	cmd.Flags().Bool("get-inactive", false, "Get inactive collections as well as active")
+}
+
+func getCollectionSelectorOptions(cmd *cobra.Command) *options.GetCollectionsOptionsBuilder {
+	name, _ := cmd.Flags().GetString("collection-name")
+	collectionID, _ := cmd.Flags().GetString("collection-id")
+	versionID, _ := cmd.Flags().GetString("version-id")
+	getInactive, _ := cmd.Flags().GetBool("get-inactive")
+
+	opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
+	if versionID != "" {
+		opt.SetVersionID(versionID)
+	}
+	if collectionID != "" {
+		opt.SetCollectionID(collectionID)
+	}
+	if name != "" {
+		opt.SetCollectionName(name)
+	}
+	if getInactive {
+		opt.SetGetInactive(getInactive)
+	}
+	return opt
 }

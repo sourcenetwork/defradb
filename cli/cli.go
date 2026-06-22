@@ -169,6 +169,11 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeBlockVerifySignatureCommand(ctx),
 	)
 
+	action := MakeActionCommand(ctx)
+	action.AddCommand(
+		MakeActionListCommand(ctx),
+	)
+
 	client := MakeClientCommand(ctx)
 	client.AddCommand(
 		MakePurgeCommand(ctx),
@@ -187,6 +192,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		document,
 		lens,
 		block,
+		action,
 	)
 
 	keyring := MakeKeyringCommand(ctx)

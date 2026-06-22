@@ -342,7 +342,7 @@ type Store interface {
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListIndexesOptions],
-	) (map[CollectionName][]IndexDescription, error)
+	) (map[CollectionName][]ListIndexesResult, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
 	ListAllEncryptedIndexes(
@@ -360,6 +360,14 @@ type Store interface {
 	// BasicExport exports the current data or subset of data to file in json format.
 	// The filepath parameter is required and specifies where to write the export file.
 	BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error
+
+	// List information about active action executions.
+	//
+	// An action represents a long running database task, such as collection truncation or refresh, and the rebuilding
+	// of indexes.
+	//
+	// Only executions that have not yet been successfully completed will be returned.
+	ListActions(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]ActionExecution, error)
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.

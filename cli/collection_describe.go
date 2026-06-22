@@ -12,19 +12,12 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
-	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
-	var name string
-	var collectionID string
-	var versionID string
-	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "describe",
 		Short: "View collection version.",
@@ -32,20 +25,7 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
-			if versionID != "" {
-				opt.SetVersionID(versionID)
-			}
-			if collectionID != "" {
-				opt.SetCollectionID(collectionID)
-			}
-			if name != "" {
-				opt.SetCollectionName(name)
-			}
-			if getInactive {
-				opt.SetGetInactive(getInactive)
-			}
-
+			opt := getCollectionSelectorOptions(cmd)
 			cols, err := cliClient.GetCollections(
 				cmd.Context(),
 				opt,
@@ -53,11 +33,14 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			colDesc := make([]client.CollectionVersion, len(cols))
+			display := make([]json.RawMessage, len(cols))
 			for i, col := range cols {
-				colDesc[i] = col.Version()
+				display[i], err = col.Version().Display()
+				if err != nil {
+					return err
+				}
 			}
-			return writeJSON(cmd, colDesc)
+			return writeJSON(cmd, display)
 		},
 	}
 
@@ -65,7 +48,7 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 		`defradb client collection describe`)
 
 	EmbedCLIExample(ctx, cmd, "view collection by name",
-		`defradb client collection describe --name User`)
+		`defradb client collection describe --collection-name User`)
 
 	EmbedCLIExample(ctx, cmd, "view collection by collection id",
 		`defradb client collection describe --collection-id bae123`)
@@ -73,9 +56,6 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 	EmbedCLIExample(ctx, cmd, "view collection by version id",
 		`defradb client collection describe --version-id bae123`)
 
-	cmd.Flags().StringVar(&name, "name", "", "Collection name")
-	cmd.Flags().StringVar(&collectionID, "collection-id", "", "Collection P2P identifier")
-	cmd.Flags().StringVar(&versionID, "version-id", "", "Collection version ID")
-	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }
