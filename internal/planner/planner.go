@@ -489,10 +489,9 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 	)
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
 
 	for subFieldName, subFieldInd := range filteredSubFields {
-		indexes := desc.GetIndexesOnField(subFieldName)
+		indexes := queryableIndexesOnField(slct.collection, subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
 			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
@@ -556,8 +555,7 @@ func (p *Planner) tryOptimizeJoinDirectionByOrder(
 	}
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
-	indexes := desc.GetIndexesOnField(childFieldName)
+	indexes := queryableIndexesOnField(slct.collection, childFieldName)
 
 	if len(indexes) == 0 {
 		return immutable.None[mapper.SortDirection](), nil

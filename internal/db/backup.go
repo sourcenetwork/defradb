@@ -346,7 +346,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 						}
 
 						txnOpt := datastore.CtxTryGetTxnOption(ctx)
-						foreignCol, err := db.newCollection(foreignDef, txnOpt)
+						foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
 						if err != nil {
 							return err
 						}

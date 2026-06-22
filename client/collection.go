@@ -133,7 +133,7 @@ type Collection interface {
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-	) ([]IndexDescription, error)
+	) ([]ListIndexesResult, error)
 
 	// NewEncryptedIndex makes a new encrypted index on the collection.
 	NewEncryptedIndex(

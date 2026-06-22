@@ -152,7 +152,7 @@ func ExecuteTestCase(
 	flattenActions(&testCase)
 	applyMultipliers(t, &testCase)
 	collectionNames := getCollectionNames(testCase)
-	changeDetector.PreTestChecks(t, collectionNames)
+	changeDetector.PreTestChecks(t, collectionNames, testCase.SkipChangeDetector)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
