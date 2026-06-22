@@ -14,9 +14,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/errors"
 )

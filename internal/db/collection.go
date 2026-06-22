@@ -51,7 +51,11 @@ type collection struct {
 //
 // Index instances are only constructed for indexes whose status is building or ready;
 // failed and dropping indexes are excluded from the write path.
-func (db *DB) newCollection(ctx context.Context, desc client.CollectionVersion, txn immutable.Option[datastore.Txn]) (*collection, error) {
+func (db *DB) newCollection(
+	ctx context.Context,
+	desc client.CollectionVersion,
+	txn immutable.Option[datastore.Txn],
+) (*collection, error) {
 	col := &collection{
 		db:          db,
 		def:         desc,

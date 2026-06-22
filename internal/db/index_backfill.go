@@ -47,7 +47,10 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 		if err != nil {
 			return err
 		}
-		txn := rawTxn.(*Txn)
+		txn, ok := rawTxn.(*Txn)
+		if !ok {
+			return ErrUnexpectedTxnType
+		}
 		txnCtx := InitContext(ctx, txn)
 
 		if err := attempt(txnCtx); err != nil {

@@ -208,7 +208,12 @@ func GetReason(ctx context.Context, collectionID string, action client.Action, s
 
 // GetPayload returns the opaque payload bytes stored for the given action execution, or nil if
 // none. The caller is responsible for decoding them.
-func GetPayload(ctx context.Context, collectionID string, action client.Action, subject string) (json.RawMessage, error) {
+func GetPayload(
+	ctx context.Context,
+	collectionID string,
+	action client.Action,
+	subject string,
+) (json.RawMessage, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	val, err := txn.Systemstore().Get(ctx, keys.NewActionPayloadKey(collectionID, action, subject).Bytes())

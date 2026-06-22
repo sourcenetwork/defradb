@@ -304,7 +304,11 @@ func (db *DB) DeleteCollection(
 	return commitAndRunDeferred(ctx, txn, backfills)
 }
 
-func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) ([]func(context.Context) error, error) {
+func (db *DB) deleteCollection(
+	ctx context.Context,
+	names []string,
+	activeOnly bool,
+) ([]func(context.Context) error, error) {
 	if len(names) == 0 {
 		return nil, client.ErrCollectionNameRequired
 	}

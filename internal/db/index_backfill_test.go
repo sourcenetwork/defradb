@@ -15,10 +15,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -325,7 +326,8 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	// txn1 stands in for the backfill batch transaction.
 	rawTxn1, err := db.NewTxn(false)
 	require.NoError(t, err)
-	txn1 := rawTxn1.(*Txn)
+	txn1, ok := rawTxn1.(*Txn)
+	require.True(t, ok, "expected *Txn")
 	ctx1 := InitContext(ctx, txn1)
 
 	col1, err := db.newCollection(ctx1, colVersion, immutable.Some[datastore.Txn](txn1))

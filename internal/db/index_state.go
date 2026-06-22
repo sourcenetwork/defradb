@@ -60,7 +60,11 @@ func (s indexState) isDropping() bool {
 
 // listResult builds the public ListIndexes entry for the index from its state. hasState is
 // false for a ready index (no action record), reported as a Completed execution.
-func (s indexState) listResult(collectionID string, desc client.IndexDescription, hasState bool) client.ListIndexesResult {
+func (s indexState) listResult(
+	collectionID string,
+	desc client.IndexDescription,
+	hasState bool,
+) client.ListIndexesResult {
 	exec := client.ActionExecution{
 		CollectionID: collectionID,
 		Subject:      indexSubject(desc.ID),

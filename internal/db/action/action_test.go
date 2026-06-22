@@ -15,10 +15,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sourcenetwork/corekv/memory"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
