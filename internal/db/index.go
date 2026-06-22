@@ -23,13 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
 
-// CollectionIndex is an interface for collection indexes
-// It abstracts away common index functionality to be implemented
-// by different index types: non-unique, unique, and composite
-type CollectionIndex interface {
-	client.CollectionIndex
-}
-
 func isSupportedKind(kind client.FieldKind) bool {
 	if kind.IsObject() && !kind.IsArray() {
 		return true
@@ -82,7 +75,7 @@ func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
 	building bool,
-) (CollectionIndex, error) {
+) (client.CollectionIndex, error) {
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
@@ -343,7 +336,7 @@ type collectionSimpleIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+var _ client.CollectionIndex = (*collectionSimpleIndex)(nil)
 
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
@@ -399,7 +392,7 @@ type collectionUniqueIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionUniqueIndex)(nil)
+var _ client.CollectionIndex = (*collectionUniqueIndex)(nil)
 
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
@@ -519,7 +512,7 @@ func (index *collectionUniqueIndex) Update(
 	return nil
 }
 
-func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
 	for _, indexedFields := range index.Description().Fields {
 		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
 		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)

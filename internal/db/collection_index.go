@@ -343,7 +343,7 @@ func (c *collection) newIndex(
 func (c *collection) appendNewIndexAndIndexExistingDocs(
 	ctx context.Context,
 	desc client.IndexDescription,
-) (CollectionIndex, error) {
+) (client.CollectionIndex, error) {
 	colIndex, err := NewCollectionIndex(ctx, c, desc, false)
 	if err != nil {
 		return nil, err
@@ -541,7 +541,7 @@ func (c *collection) iterateAllDocs(
 
 func (c *collection) indexExistingDocs(
 	ctx context.Context,
-	index CollectionIndex,
+	index client.CollectionIndex,
 ) error {
 	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
 	for _, field := range index.Description().Fields {

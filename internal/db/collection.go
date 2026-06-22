@@ -32,7 +32,7 @@ var _ client.Collection = (*collection)(nil)
 type collection struct {
 	db      *DB
 	def     client.CollectionVersion
-	indexes []CollectionIndex
+	indexes []client.CollectionIndex
 	// indexBuildStates holds the build (backfill) state of the collection's indexes that have one,
 	// keyed by index ID: an index is present while it is building or failed, and absent once ready.
 	// Presence therefore means "not yet queryable". Populated at construction time from the index
