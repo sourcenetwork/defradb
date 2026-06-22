@@ -80,7 +80,7 @@ func TestStartAPIWithTLS(t *testing.T) {
 
 	err = n.Start(ctx)
 	require.NoError(t, err)
-	defer n.Close(ctx) //nolint:errcheck
+	defer n.Close(ctx)
 
 	assert.True(t, strings.HasPrefix(n.APIURL, "https://"), "expected https:// APIURL, got %s", n.APIURL)
 }

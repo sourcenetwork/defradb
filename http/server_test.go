@@ -207,7 +207,7 @@ func TestServerAddressWithTLSBeforeServe(t *testing.T) {
 
 	err = srv.SetListener()
 	require.NoError(t, err)
-	defer srv.listener.Close() //nolint:errcheck
+	defer srv.listener.Close()
 
 	// Address() must return https:// based on options alone, without Serve() ever
 	// being called. Previously isTLS was only set inside Serve(), so calling
@@ -222,7 +222,7 @@ func TestServerAddressWithoutTLS(t *testing.T) {
 
 	err = srv.SetListener()
 	require.NoError(t, err)
-	defer srv.listener.Close() //nolint:errcheck
+	defer srv.listener.Close()
 
 	assert.True(t, strings.HasPrefix(srv.Address(), "http://"), "expected http:// prefix, got %s", srv.Address())
 }
