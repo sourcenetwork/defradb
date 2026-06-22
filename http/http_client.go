@@ -11,6 +11,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,6 +37,25 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	}
 	return &httpClient{
 		client:  http.DefaultClient,
+		baseURL: baseURL,
+		apiURL:  baseURL.JoinPath("/api/" + Version),
+	}, nil
+}
+
+// newInsecureHttpClient returns an httpClient that skips TLS certificate
+// verification. Only use for loopback health checks against a server whose
+// cert is not trusted by the system CA pool (e.g. self-signed certs).
+func newInsecureHttpClient(rawURL string) (*httpClient, error) {
+	baseURL, err := parseBaseURL(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &httpClient{
+		client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		},
 		baseURL: baseURL,
 		apiURL:  baseURL.JoinPath("/api/" + Version),
 	}, nil
