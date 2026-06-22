@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -197,6 +198,33 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 
 	err = srv.Shutdown(context.Background())
 	require.NoError(t, err)
+}
+
+func TestServerAddressWithTLSBeforeServe(t *testing.T) {
+	certPath, keyPath := writeTestCerts(t)
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("127.0.0.1:0").SetCertPath(certPath).SetKeyPath(keyPath))
+	require.NoError(t, err)
+
+	err = srv.SetListener()
+	require.NoError(t, err)
+	defer srv.listener.Close() //nolint:errcheck
+
+	// Address() must return https:// based on options alone, without Serve() ever
+	// being called. Previously isTLS was only set inside Serve(), so calling
+	// Address() before the serve goroutine ran returned "http://" and caused the
+	// startup health check to send plain HTTP to a TLS listener.
+	assert.True(t, strings.HasPrefix(srv.Address(), "https://"), "expected https:// prefix, got %s", srv.Address())
+}
+
+func TestServerAddressWithoutTLS(t *testing.T) {
+	srv, err := NewServer(testHandler, options.NodeHTTP().SetAddress("127.0.0.1:0"))
+	require.NoError(t, err)
+
+	err = srv.SetListener()
+	require.NoError(t, err)
+	defer srv.listener.Close() //nolint:errcheck
+
+	assert.True(t, strings.HasPrefix(srv.Address(), "http://"), "expected http:// prefix, got %s", srv.Address())
 }
 
 func TestServerWithReadTimeout(t *testing.T) {
