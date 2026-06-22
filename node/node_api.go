@@ -63,7 +63,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 	// not trusted by the system CA pool, so we skip certificate verification for
 	// this loopback health check only.
 	var c *http.Client
-	if n.opts.HTTP.TLSCertPath != "" {
+	if n.opts.HTTP.TLSCertPath != "" && n.opts.HTTP.TLSKeyPath != "" {
 		c, err = http.NewInsecureClient(n.APIURL)
 	} else {
 		c, err = http.NewClient(n.APIURL)
