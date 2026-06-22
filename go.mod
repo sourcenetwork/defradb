@@ -63,7 +63,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/valyala/fastjson v1.6.10
 	github.com/vito/go-sse v1.1.3
-	github.com/wundergraph/graphql-go-tools/v2 v2.4.1
+	github.com/wundergraph/graphql-go-tools/v2 v2.5.0
 	github.com/zalando/go-keyring v0.2.8
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.68.0
 	go.opentelemetry.io/otel v1.44.0
@@ -434,7 +434,7 @@ require (
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	github.com/woodsbury/decimal128 v1.3.0 // indirect
-	github.com/wundergraph/go-arena v1.1.0 // indirect
+	github.com/wundergraph/go-arena v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
