@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupField(t *testing.T) {
+func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -81,7 +81,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithoutRenderedGroupField(t *testing.T) {
+func TestQuerySimple_WithGroupByStringWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{

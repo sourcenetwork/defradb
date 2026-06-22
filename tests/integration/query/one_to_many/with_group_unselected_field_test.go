@@ -69,7 +69,7 @@ var booksByThreeAuthors = []any{
 	},
 }
 
-func TestQueryOneToManyWithGroupByRelatedIDWithoutRenderedGroupField(t *testing.T) {
+func TestQueryOneToMany_WithGroupByRelatedIDWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: append(
 			append([]any{}, booksByThreeAuthors...),
@@ -105,7 +105,7 @@ func TestQueryOneToManyWithGroupByRelatedIDWithoutRenderedGroupField(t *testing.
 	executeTestCase(t, test)
 }
 
-func TestQueryOneToManyWithGroupByRelationObjectRenderingRelatedID(t *testing.T) {
+func TestQueryOneToMany_WithGroupByRelationObjectRenderingRelatedID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: append(
 			append([]any{}, booksByThreeAuthors...),
@@ -144,9 +144,7 @@ func TestQueryOneToManyWithGroupByRelationObjectRenderingRelatedID(t *testing.T)
 	executeTestCase(t, test)
 }
 
-// As above but grouping by the relation object field name (which is internally remapped to its
-// foreign-key id) rather than the id field directly.
-func TestQueryOneToManyWithGroupByRelationObjectWithoutRenderedGroupField(t *testing.T) {
+func TestQueryOneToMany_WithGroupByRelationObjectWithoutRenderedGroupField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: append(
 			append([]any{}, booksByThreeAuthors...),
