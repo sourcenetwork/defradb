@@ -351,10 +351,10 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 
 	c.indexes = append(c.indexes, colIndex)
 
-	err = c.indexExistingDocs(ctx, colIndex)
-	if err != nil {
-		removeErr := colIndex.RemoveAll(ctx)
-		return nil, errors.Join(err, removeErr)
+	// This runs inside the collection-definition transaction, so a failure here discards every
+	// index write along with the rest of that transaction; no explicit rollback is needed.
+	if err := c.indexExistingDocs(ctx, colIndex); err != nil {
+		return nil, err
 	}
 
 	return colIndex, nil

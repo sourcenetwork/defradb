@@ -28,8 +28,6 @@ import (
 // by different index types: non-unique, unique, and composite
 type CollectionIndex interface {
 	client.CollectionIndex
-	// RemoveAll removes all documents from the index
-	RemoveAll(context.Context) error
 }
 
 func isSupportedKind(kind client.FieldKind) bool {
@@ -282,60 +280,6 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	if err != nil {
 		return NewErrDeleteIndexKey(err)
 	}
-	return nil
-}
-
-// RemoveAll remove all artifacts of the index from the storage, i.e. all index
-// field values for all documents.
-func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionShortID = shortID
-	prefixKey.IndexID = index.desc.ID
-	prefixKey.Epoch = index.epoch
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   &prefixKey,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateDeleteIndexIterator(err)
-	}
-
-	keysToDelete := make([]keys.IndexDataStoreKey, 0)
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs, prefixKey.Epoch)
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		keysToDelete = append(keysToDelete, key)
-	}
-	if err := iter.Close(); err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		err := txn.Datastore().Delete(ctx, &key)
-		if err != nil {
-			return NewCanNotDeleteIndexedField(err)
-		}
-	}
-
 	return nil
 }
 

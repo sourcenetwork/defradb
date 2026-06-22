@@ -655,9 +655,9 @@ func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
 // the caller must pass the epoch of the keyspace it is scanning. Decoding an epoch>=1 key with
 // epoch=0 does not transparently work — the decoder does not consume an epoch component, so the
 // stored epoch value is misread as the first field value. Every reader therefore decodes with the
-// same epoch it scanned (the fetcher with f.epoch, RemoveAll with its prefix epoch); the GC paths
-// use KeysOnly and never decode. This test catches any future change that would make epoch=0
-// accidentally consume an epoch component.
+// same epoch it scanned (e.g. the fetcher with f.epoch); the GC paths use KeysOnly and never
+// decode. This test catches any future change that would make epoch=0 accidentally consume an
+// epoch component.
 func TestDecodeIndexDataStoreKey_WrongEpochMisreadsComponent(t *testing.T) {
 	indexDesc := &client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{{Descending: false}},

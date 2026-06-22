@@ -55,7 +55,6 @@ const (
 	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
-	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
 	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
@@ -315,11 +314,6 @@ func NewErrFailedToStoreIndexedField(key string, inner error) error {
 // description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
-}
-
-// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
-func NewCanNotDeleteIndexedField(inner error) error {
-	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was
