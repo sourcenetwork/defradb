@@ -36,7 +36,7 @@ const (
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
-	if !IsDevMode {
+	if !isDevMode(req) {
 		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
 		return
 	}
@@ -57,7 +57,7 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
-	if !IsDevMode {
+	if !isDevMode(req) {
 		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
 		return
 	}
