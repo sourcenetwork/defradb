@@ -39,10 +39,12 @@ else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
 VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
+ifeq ($(VERSION_GITRELEASE),)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
+endif
 endif
 
 $(info ----------------------------------------);
