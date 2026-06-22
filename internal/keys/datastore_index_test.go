@@ -649,3 +649,45 @@ func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
 	require.Len(t, decoded.Fields, 1)
 	assert.True(t, decoded.Fields[0].Value.Equal(client.NewNormalString("a")))
 }
+
+// TestDecodeIndexDataStoreKey_WrongEpochMisreadsComponent documents the load-bearing contract of
+// the epoch parameter: the epoch component is indistinguishable from a field value by structure, so
+// the caller must pass the epoch of the keyspace it is scanning. Decoding an epoch>=1 key with
+// epoch=0 does not transparently work — the decoder does not consume an epoch component, so the
+// stored epoch value is misread as the first field value. Every reader therefore decodes with the
+// same epoch it scanned (the fetcher with f.epoch, RemoveAll with its prefix epoch); the GC paths
+// use KeysOnly and never decode. This test catches any future change that would make epoch=0
+// accidentally consume an epoch component.
+func TestDecodeIndexDataStoreKey_WrongEpochMisreadsComponent(t *testing.T) {
+	indexDesc := &client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Descending: false}},
+	}
+	fieldDefs := []client.CollectionFieldDescription{{Kind: client.FieldKind_NILLABLE_STRING}}
+
+	key := IndexDataStoreKey{
+		CollectionShortID: 1,
+		IndexID:           2,
+		Epoch:             5,
+		Fields: []IndexedField{
+			{Value: client.NewNormalString("a"), Descending: false},
+		},
+	}
+	encoded := EncodeIndexDataStoreKey(&key)
+
+	// Decoded with the correct epoch: epoch and field both come back right.
+	correct, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, 5)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(5), correct.Epoch)
+	require.Len(t, correct.Fields, 1)
+	assert.True(t, correct.Fields[0].Value.Equal(client.NewNormalString("a")))
+
+	// Decoded with epoch=0: the epoch component is not consumed. The result must NOT equal the
+	// correctly-decoded key — epoch=0 cannot transparently read an epoched key. It either reports
+	// epoch 0 with a misread/extra field, or fails outright; in every case it differs from correct.
+	wrong, wrongErr := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, 0)
+	if wrongErr == nil {
+		assert.Equal(t, uint32(0), wrong.Epoch, "epoch=0 must not recover the stored epoch")
+		assert.False(t, wrong.Equal(correct),
+			"decoding an epoched key with epoch=0 must not reproduce the correct key")
+	}
+}

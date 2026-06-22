@@ -27,8 +27,8 @@ import (
 // value, which can approach the storage engine's per-key limit, so 100 entries stay well
 // under the transaction size limit even when every value is near-maximal. For typical small
 // fields this is conservative; a byte-budget batch (sized by accumulated entry bytes) would
-// pack far more docs per transaction and is tracked as a follow-up. It is a var so tests can
-// lower it to exercise multi-batch runs.
+// pack far more docs per transaction and is tracked as a follow-up. Tests lower it to exercise
+// multi-batch runs.
 var indexBackfillBatchSize = 100
 
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context

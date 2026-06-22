@@ -249,7 +249,7 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) ([]in
 }
 
 // loadIndexState builds an indexState for the given action record, fetching the generic reason
-// and decoding the action's own payload: a build carries a watermark, a drop carries an epoch.
+// and decoding the action's own payload: a build carries a watermark; a drop carries none.
 func loadIndexState(ctx context.Context, k keys.ActionStatusKey, status client.ActionStatus) (indexState, error) {
 	reason, err := action.GetReason(ctx, k.CollectionID, k.Action, k.Subject)
 	if err != nil {

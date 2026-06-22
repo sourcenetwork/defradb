@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,9 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 )
 
 // newIndexStateTestCtx creates a DB, opens a read-write transaction, stores it in the
@@ -161,4 +164,36 @@ func TestIndexState_CompleteReducesGetIndexStatesCount(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, states, 1)
 	assert.True(t, states[2].isBuilding())
+}
+
+// TestScanIndexStates_CorruptPayload_StrictVsLenient pins the two error policies of scanIndexStates
+// against an undecodable build payload. The lenient scan (skipCorrupt=true, used by collection open
+// and listings) skips the bad record so one corrupt entry does not deny access to the collection;
+// the strict scan (skipCorrupt=false, used by recovery via listIndexStates) surfaces the error so a
+// corrupt record is not silently left unrecovered.
+func TestScanIndexStates_CorruptPayload_StrictVsLenient(t *testing.T) {
+	db, ctx, cleanup := newIndexStateTestCtx(t)
+	defer cleanup()
+
+	const collectionID = "colCorrupt"
+	const indexID = uint32(1)
+
+	// A build record whose payload is not valid JSON, so loadIndexState fails to decode it.
+	require.NoError(t, action.SetTxn(
+		ctx, db.events, collectionID, client.BackfillIndexAction, indexSubject(indexID),
+		client.InProgressActionStatus, "", json.RawMessage("}not json{"), false,
+	))
+
+	prefix := indexActionCollectionPrefix(collectionID)
+
+	// Lenient: the corrupt record is skipped, leaving a successful (record-free) result.
+	lenient, err := scanIndexStates(ctx, prefix, true)
+	require.NoError(t, err, "lenient scan must not fail on a corrupt payload")
+	for _, rec := range lenient {
+		assert.NotEqual(t, indexID, rec.Key.IndexID, "corrupt record must be skipped by the lenient scan")
+	}
+
+	// Strict: the corrupt record aborts the scan with the corrupt-payload error.
+	_, err = scanIndexStates(ctx, prefix, false)
+	require.ErrorIs(t, err, NewErrCorruptIndexPayload(nil), "strict scan must surface a corrupt payload")
 }

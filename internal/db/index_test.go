@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
@@ -497,4 +499,27 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
+}
+
+// TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError checks that constructing an index whose
+// epoch sequence was never seeded surfaces the lookup error rather than silently defaulting to a
+// wrong epoch. A real index always seeds its sequence at creation (processNewIndexRequest), so the
+// missing-sequence state is an inconsistency the read path must not paper over: defaulting to epoch
+// 0 would scan a different namespace and return wrong results. The same lookup backs the query
+// fetcher (ReadIndexEpoch), so this also pins that path's no-silent-fallback contract.
+func TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	// Valid field so construction passes field validation and reaches the epoch lookup; an ID that
+	// no NewIndex ever allocated, so its epoch sequence does not exist.
+	descWithID := client.IndexDescription{
+		Name:   testUsersColIndexName,
+		ID:     12345,
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
+	}
+
+	ctx := InitContext(f.ctx, f.txn)
+	_, err := NewCollectionIndex(ctx, f.users, descWithID, false)
+	require.ErrorIs(t, err, corekv.ErrNotFound)
 }

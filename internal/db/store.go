@@ -250,13 +250,19 @@ func (db *DB) PatchCollection(
 // commitAndRunDeferred commits the transaction and then runs each deferred function
 // sequentially. If the transaction is explicit (caller-provided), the functions are
 // instead registered as OnSuccess callbacks so they run when the caller commits.
+//
+// On the explicit-transaction path a deferred failure cannot be returned to the caller (the
+// commit it rode has already succeeded), so it is only logged. A failing index backfill/rebuild
+// records a failed index state of its own, so the index is left out of query planning and the
+// failure is observable through the index status; explicit-transaction callers must check that
+// status after commit rather than relying on the commit's return value.
 func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
 	if txn.explicit {
 		for _, fn := range deferred {
 			fn := fn
 			txn.OnSuccess(func() {
 				if err := fn(ctx); err != nil {
-					log.ErrorE("deferred operation after commit failed", err)
+					log.ErrorE("deferred operation after commit failed; check index status", err)
 				}
 			})
 		}

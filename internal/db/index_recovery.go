@@ -174,6 +174,11 @@ func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error
 // recoverStaleEpochs collects superseded epochs left by interrupted rebuilds across every active
 // index. Each index keeps only its live epoch (the sequence value); everything below it is stale
 // and deleted. It is a no-op for an index that has only its live epoch.
+//
+// The delete range is bounded strictly below the live epoch, so it never touches an in-progress
+// build (which fills the live epoch itself). A superseded epoch holds pre-migration values that no
+// query reads — a building index is excluded from planning and full-scans instead — so collecting
+// it while a rebuild is still in flight is safe.
 func (db *DB) recoverStaleEpochs(ctx context.Context) error {
 	rawTxn, err := db.NewTxn(true)
 	if err != nil {
@@ -187,6 +192,9 @@ func (db *DB) recoverStaleEpochs(ctx context.Context) error {
 	}
 
 	for _, col := range cols {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if len(col.Indexes) == 0 {
 			continue
 		}
