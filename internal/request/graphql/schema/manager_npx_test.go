@@ -15,6 +15,7 @@ package schema
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -94,6 +95,14 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 	sdlResult := outBuf.Bytes()
 
 	testFixturePath := getFullFixturePath(fixtureName)
+
+	// Regenerate the committed SDL fixtures from the current generator output.
+	// Run via `make sdl-fixtures` rather than setting this directly. This path
+	// exits before the npx diff, so node is not required.
+	if os.Getenv("DEFRA_UPDATE_SDL_FIXTURES") != "" {
+		require.NoError(t, os.WriteFile(testFixturePath, sdlResult, 0o644))
+		return
+	}
 
 	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
 		"diff",

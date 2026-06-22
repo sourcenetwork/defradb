@@ -208,6 +208,12 @@ mocks:
 	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
+# Regenerates the committed SDL test fixtures from the current generator output.
+# Uses the npx-tagged test but exits before the npx diff, so node is not required.
+.PHONY: sdl-fixtures
+sdl-fixtures:
+	DEFRA_UPDATE_SDL_FIXTURES=1 go test -tags npx -run TestWriteSDL ./internal/request/graphql/schema/...
+
 .PHONY: ollama
 ollama:
 # run ollama in the background
@@ -462,6 +468,7 @@ fix:
 	@$(MAKE) lint\:fix
 	@$(MAKE) tidy
 	@$(MAKE) mocks
+	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
 
 .PHONY: build-c-static-windows
