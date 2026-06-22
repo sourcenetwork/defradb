@@ -15,6 +15,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,6 +49,10 @@ var (
 	databaseDir      string
 	badgerEncryption bool
 	encryptionKey    []byte
+	// encryptionKeyOnce guards the lazy, process-wide initialization of
+	// encryptionKey so concurrent node setups don't race on it.
+	encryptionKeyOnce sync.Once
+	encryptionKeyErr  error
 )
 
 func init() {
