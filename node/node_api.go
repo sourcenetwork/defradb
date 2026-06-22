@@ -58,7 +58,16 @@ func (n *Node) startAPI(ctx context.Context) error {
 	n.APIURL = n.server.Address()
 	// Check that the server is ready before returning. We do this to ensure that
 	// subsequent operation will behave as expected.
-	c, err := http.NewClient(n.APIURL)
+	//
+	// When TLS is configured the server uses a self-signed certificate that is
+	// not trusted by the system CA pool, so we skip certificate verification for
+	// this loopback health check only.
+	var c *http.Client
+	if n.opts.HTTP.TLSCertPath != "" && n.opts.HTTP.TLSKeyPath != "" {
+		c, err = http.NewInsecureClient(n.APIURL)
+	} else {
+		c, err = http.NewClient(n.APIURL)
+	}
 	if err != nil {
 		return err
 	}
