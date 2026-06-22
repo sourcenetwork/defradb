@@ -93,7 +93,7 @@ func (db *DB) addCollections(
 
 		txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
-		col, err := db.newCollection(def.Definition, txnOpt)
+		col, err := db.newCollection(ctx, def.Definition, txnOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -139,14 +139,16 @@ func (db *DB) patchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
-) error {
+) ([]func(context.Context) error, error) {
+	var backfills []func(context.Context) error
+
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	existingCols, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	existingColsByName := map[string]client.CollectionVersion{}
@@ -161,17 +163,17 @@ func (db *DB) patchCollection(
 	// Here we swap out any string representations of enums for their integer values
 	patch, err = substituteCollectionPatch(patch, existingColsByName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var newColsByID map[string]client.CollectionVersion
@@ -179,7 +181,7 @@ func (db *DB) patchCollection(
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&newColsByID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	removedCollectionVersions := []client.CollectionVersion{}
@@ -217,7 +219,7 @@ existingVersionLoop:
 
 	oneToOneIndexRequests, err := getOneToOneIndexRequestsForPatch(newColsByID, existingColsByName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, col := range newColsByID {
@@ -239,7 +241,7 @@ existingVersionLoop:
 
 	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingCols)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, existingCol := range existingColsByName {
@@ -301,12 +303,12 @@ existingVersionLoop:
 
 	err = db.validateCollectionChanges(ctx, existingCols, newCollections)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = db.deleteCollectionVersions(ctx, removedCollectionVersions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, col := range newCollections {
@@ -334,20 +336,22 @@ existingVersionLoop:
 
 		err := description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
 				txnOpt := datastore.CtxTryGetTxnOption(ctx)
-				colObj, err := db.newCollection(col, txnOpt)
+				colObj, err := db.newCollection(ctx, col, txnOpt)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				for _, indexReq := range indexReqs {
-					if _, err := colObj.newIndex(ctx, indexReq); err != nil {
-						return err
+					_, backfill, err := colObj.newIndex(ctx, indexReq)
+					if err != nil {
+						return nil, err
 					}
+					backfills = append(backfills, backfill)
 				}
 				col = colObj.Version()
 			}
@@ -360,7 +364,7 @@ existingVersionLoop:
 				Lens:                           migration.Value(),
 			})
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -370,12 +374,12 @@ existingVersionLoop:
 		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
 			err = db.reindexNewActiveVersion(ctx, col)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return db.loadCollectionDefinitions(ctx)
+	return backfills, db.loadCollectionDefinitions(ctx)
 }
 
 const (
