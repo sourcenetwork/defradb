@@ -18,7 +18,7 @@ import (
 
 // TestIndexEpochSequenceKey_Format pins the wire format of the epoch sequence key. The format is
 // load-bearing: a change to the prefix or the segment order silently moves epochs to a different
-// keyspace, making every ReadIndexEpoch miss. ToString, Bytes and ToDS must agree.
+// keyspace, making every epoch read miss. ToString, Bytes and ToDS must agree.
 func TestIndexEpochSequenceKey_Format(t *testing.T) {
 	key := NewIndexEpochSequenceKey("bafycollection", 7)
 

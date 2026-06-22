@@ -505,8 +505,8 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 // epoch sequence was never seeded surfaces the lookup error rather than silently defaulting to a
 // wrong epoch. A real index always seeds its sequence at creation (processNewIndexRequest), so the
 // missing-sequence state is an inconsistency the read path must not paper over: defaulting to epoch
-// 0 would scan a different namespace and return wrong results. The same lookup backs the query
-// fetcher (ReadIndexEpoch), so this also pins that path's no-silent-fallback contract.
+// 0 would scan a different namespace and return wrong results. The same epoch read backs the query
+// fetcher, so this also pins that path's no-silent-fallback contract.
 func TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
