@@ -569,7 +569,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return acpDB.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollection(
 		ctx,
 		actorIdentity,
 		s.nodeACP(),

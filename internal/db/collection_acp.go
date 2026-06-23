@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-// registerDocWithACP handles the registration of the document with acp.
+// registerDoc handles the registration of the document with acp.
 // The registering is done at document creation on the collection.
 //
 // According to our access logic we have these components to worry about:
@@ -29,7 +29,7 @@ import (
 // The document is only registered if all (1) (2) and (3) are true.
 //
 // Otherwise, nothing is registered with the acp system.
-func (c *collection) registerDocWithACP(
+func (c *collection) registerDoc(
 	ctx context.Context,
 	docID string,
 ) error {
@@ -46,7 +46,7 @@ func (c *collection) registerDocWithACP(
 	)
 }
 
-// registerCollectionWithACP handles the registration of the collection itself with document acp.
+// registerCollection handles the registration of the collection itself with document acp.
 //
 // This is only relevant for branchable collections, which maintain a collection-level commit DAG.
 // Registering the collection as an acp object lets us gate read access to that collection-level
@@ -55,7 +55,7 @@ func (c *collection) registerDocWithACP(
 // The registration is a no-op unless document acp is available, the collection is branchable, the
 // collection has a policy, and the request carries an identity (see
 // [acpDB.RegisterCollectionObject]).
-func (c *collection) registerCollectionWithACP(
+func (c *collection) registerCollection(
 	ctx context.Context,
 ) error {
 	if !c.db.documentACP.HasValue() {
@@ -69,7 +69,7 @@ func (c *collection) registerCollectionWithACP(
 	)
 }
 
-func (c *collection) checkAccessOfDocWithACP(
+func (c *collection) checkAccessOfDoc(
 	ctx context.Context,
 	resourcePermission acpTypes.ResourceInterfacePermission,
 	docID string,
@@ -82,7 +82,7 @@ func (c *collection) checkAccessOfDocWithACP(
 	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID() == c.db.nodeIdentity.Value().DID() {
 		return true, nil
 	}
-	return acpDB.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollection(
 		ctx,
 		ident,
 		c.db.nodeACP,

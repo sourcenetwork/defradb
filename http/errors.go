@@ -154,7 +154,7 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrCollectionRootNotFound) ||
 		errors.Is(err, db.ErrLensCIDNotFound) ||
 		errors.Is(err, p2p.ErrReplicatorNotFound) ||
-		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExist) ||
 		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
 		return http.StatusNotFound
 	}

@@ -250,7 +250,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
 	// doc-mapping cost. We only check when document acp is configured.
 	// Note:
-	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
+	// - [CheckAccessOfDocOnCollection] itself further short-circuits when
 	// the collection has no policy or the object is public (unregistered).
 	// - Document-level commits carry a docID and are gated on the document object.
 	// - Collection-level commits of a branchable collection carry no docID and
@@ -279,7 +279,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		if objectID != "" {
-			hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+			hasPermission, err := acpDB.CheckAccessOfDocOnCollection(
 				n.planner.ctx,
 				n.planner.identity,
 				n.planner.nodeACP,

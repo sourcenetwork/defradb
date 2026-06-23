@@ -81,7 +81,7 @@ func (db *DB) VerifySignature(
 			return err
 		}
 
-		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+		hasPerm, err := acpDB.CheckAccessOfDocOnCollection(
 			ctx,
 			opt.Identity,
 			db.nodeACP,

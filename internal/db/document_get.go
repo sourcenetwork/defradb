@@ -85,7 +85,7 @@ func (c *collection) get(
 	fields []client.CollectionFieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
-	return c.getWithACP(ctx, primaryKey, fields, showDeleted, c.db.documentACP)
+	return c.getDocument(ctx, primaryKey, fields, showDeleted, c.db.documentACP)
 }
 
 // getInternal fetches a doc without the document ACP read filter.
@@ -96,10 +96,10 @@ func (c *collection) getInternal(
 	fields []client.CollectionFieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
-	return c.getWithACP(ctx, primaryKey, fields, showDeleted, immutable.None[dac.DocumentACP]())
+	return c.getDocument(ctx, primaryKey, fields, showDeleted, immutable.None[dac.DocumentACP]())
 }
 
-func (c *collection) getWithACP(
+func (c *collection) getDocument(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 	fields []client.CollectionFieldDescription,

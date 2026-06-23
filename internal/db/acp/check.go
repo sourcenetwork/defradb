@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// CheckAccessOfDocOnCollectionWithACP handles the check, which tells us if access to the target
+// CheckAccessOfDocOnCollection handles the check, which tells us if access to the target
 // document is valid, with respect to the permission type, and the specified collection.
 //
 // This function should only be called if acp is available. As we have unrestricted
@@ -37,7 +37,7 @@ import (
 // - (2) is false.
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
 // - (3) is true.
-func CheckAccessOfDocOnCollectionWithACP(
+func CheckAccessOfDocOnCollection(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	nodeACP NACInfo,
@@ -222,7 +222,7 @@ func CheckNodeOperationAccess(
 	)
 
 	if err != nil {
-		return acp.NewErrFailedToVerifyNodeAccessWithACP(
+		return acp.NewErrFailedToVerifyNodeAccess(
 			err,
 			permission.String(),
 			policyID,

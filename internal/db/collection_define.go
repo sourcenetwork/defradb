@@ -100,7 +100,7 @@ func (db *DB) addCollections(
 
 		// Register branchable, permissioned collections as an acp object so that access to their
 		// collection-level commit DAG can be gated. This is a no-op for all other collections.
-		if err := col.registerCollectionWithACP(ctx); err != nil {
+		if err := col.registerCollection(ctx); err != nil {
 			return nil, err
 		}
 

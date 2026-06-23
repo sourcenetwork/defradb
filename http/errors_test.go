@@ -50,7 +50,7 @@ func TestHttpStatusFromError(t *testing.T) {
 		{"collection root not found", db.ErrCollectionRootNotFound, http.StatusNotFound},
 		{"lens CID not found", db.ErrLensCIDNotFound, http.StatusNotFound},
 		{"replicator not found", p2p.ErrReplicatorNotFound, http.StatusNotFound},
-		{"policy not found", acp.ErrPolicyDoesNotExistWithACP, http.StatusNotFound},
+		{"policy not found", acp.ErrPolicyDoesNotExist, http.StatusNotFound},
 		{"resource not found on policy", acp.ErrResourceDoesNotExistOnTargetPolicy, http.StatusNotFound},
 
 		// 409
