@@ -16,9 +16,11 @@ import (
 	"fmt"
 
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
@@ -102,6 +104,10 @@ type VersionedFetcher struct {
 	root  corekv.TxnStore
 	store datastore.Txn
 
+	// Link system over the txn's encryption blockstore. Used to load encryption blocks
+	// when replaying encrypted blocks during version traversal. Initialized lazily.
+	encBlockLS *linking.LinkSystem
+
 	queuedCids *list.List
 
 	nodeACP     acpDB.NACInfo
@@ -139,7 +145,7 @@ func (vf *VersionedFetcher) Init(
 	// such as collection definitions and short-ids are available.
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrCreateVersionIterator(err)
 	}
 	dst := datastore.SystemstoreFrom(root)
 	for {
@@ -159,7 +165,7 @@ func (vf *VersionedFetcher) Init(
 
 		err = dst.Set(ctx, iter.Key(), value)
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrCopyVersionedData(err), iter.Close())
 		}
 	}
 	err = iter.Close()
@@ -363,6 +369,19 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
+	// If the block is encrypted, decrypt it before replaying its delta into the
+	// transient store. The live merge processor (internal/db.mergeProcessor) does
+	// the equivalent step before its own ProcessBlock call; without it the
+	// transient store ends up with ciphertext bytes and downstream CBOR decoding
+	// of field values fails.
+	block, canRead, err := coreblock.ProcessEncryptedBlock(vf.ctx, vf.getEncBlockLS(), block)
+	if err != nil {
+		return NewErrDecryptVersionedBlock(err, c.String())
+	}
+	if !canRead {
+		return NewErrEncryptionKeyMissing(c.String())
+	}
+
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
@@ -450,10 +469,26 @@ func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 	return coreblock.GetFromBytes(blk.RawData())
 }
 
+// getEncBlockLS lazily builds (and caches) a link system over the txn's encryption
+// blockstore. Used for loading encryption blocks when replaying encrypted blocks.
+func (vf *VersionedFetcher) getEncBlockLS() linking.LinkSystem {
+	if vf.encBlockLS == nil {
+		ls := cidlink.DefaultLinkSystem()
+		ls.SetReadStorage(blockstore.NewIPLDStore(vf.txn.Encstore()))
+		vf.encBlockLS = &ls
+	}
+	return *vf.encBlockLS
+}
+
 // Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
-	if err := vf.root.Close(); err != nil {
-		return err
+	// vf.root may be nil if Init failed (or was never called) before
+	// allocating it. Close is reachable in that state through the
+	// MultiVersioned cleanup path that tracks children eagerly.
+	if vf.root != nil {
+		if err := vf.root.Close(); err != nil {
+			return err
+		}
 	}
 
 	if vf.Fetcher != nil {

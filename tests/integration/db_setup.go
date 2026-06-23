@@ -33,15 +33,13 @@ import (
 )
 
 func createBadgerEncryptionKey() error {
-	if !badgerEncryption || encryptionKey != nil {
+	if !badgerEncryption {
 		return nil
 	}
-	key, err := crypto.GenerateAES256()
-	if err != nil {
-		return err
-	}
-	encryptionKey = key
-	return nil
+	encryptionKeyOnce.Do(func() {
+		encryptionKey, encryptionKeyErr = crypto.GenerateAES256()
+	})
+	return encryptionKeyErr
 }
 
 // setupNode returns the database implementation for the current

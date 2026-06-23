@@ -24,6 +24,7 @@ const (
 	errEmptyCollectionSDL           string = "collection definition cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
+	errStoreEncryptionKey           string = "failed to store encryption key"
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 	ErrViewAddMissingArgs               = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty       = errors.New("policy file argument can not be empty")
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")
+	ErrKeyringSecretMismatch            = errors.New("keyring secrets do not match")
 	ErrEmptyCollectionSDL               = errors.New(errEmptyCollectionSDL)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
 	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
@@ -91,4 +93,8 @@ func NewErrMissingRequiredFlag(flag string) error {
 
 func NewErrMissingRequiredParameter(paramName string) error {
 	return errors.New(fmt.Sprintf(errMissingRequiredParameter, paramName))
+}
+
+func NewErrStoreEncryptionKey(inner error) error {
+	return errors.Wrap(errStoreEncryptionKey, inner)
 }

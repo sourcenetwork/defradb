@@ -540,22 +540,31 @@ func (join *invertibleTypeJoin) Init() error {
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Init()
+	if err := join.parentSide.plan.Init(); err != nil {
+		// Roll back childSide: its Init may have opened resources
+		// (e.g. iterators on the parent txn) that the outer Close
+		// would otherwise miss.
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Start() error {
 	if err := join.childSide.plan.Start(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Start()
+	if err := join.parentSide.plan.Start(); err != nil {
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Close() error {
-	if err := join.parentSide.plan.Close(); err != nil {
-		return err
-	}
-
-	return join.childSide.plan.Close()
+	// Close both sides regardless of intermediate error so resources
+	// on either side are released.
+	parentErr := join.parentSide.plan.Close()
+	childErr := join.childSide.plan.Close()
+	return errors.Join(parentErr, childErr)
 }
 
 func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
@@ -610,22 +619,17 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 	return nil
 }
 
-func (r *primaryObjectsRetriever) collectDocs() ([]core.Doc, error) {
-	p := r.primarySide.plan
-	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
-	// consumer (one, not multiple) of it.
-	if multiScan, ok := p.(*multiScanNode); ok {
-		p = multiScan.Source()
-	}
-
-	if err := p.Init(); err != nil {
+// collectDocs initializes the given plan node, iterates it to collect all documents,
+// and returns them. The caller is responsible for closing the plan node.
+func collectDocs(plan planNode) ([]core.Doc, error) {
+	if err := plan.Init(); err != nil {
 		return nil, NewErrSubTypeInit(err)
 	}
 
 	var docs []core.Doc
 
 	for {
-		hasValue, err := p.Next()
+		hasValue, err := plan.Next()
 
 		if err != nil {
 			return nil, err
@@ -635,16 +639,60 @@ func (r *primaryObjectsRetriever) collectDocs() ([]core.Doc, error) {
 			break
 		}
 
-		docs = append(docs, p.Value())
+		docs = append(docs, plan.Value())
 	}
 
 	return docs, nil
 }
 
+func (r *primaryObjectsRetriever) collectDocsFromPlan() ([]core.Doc, error) {
+	p := r.primarySide.plan
+	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
+	// consumer (one, not multiple) of it.
+	if multiScan, ok := p.(*multiScanNode); ok {
+		p = multiScan.Source()
+	}
+
+	return collectDocs(p)
+}
+
+func (r *primaryObjectsRetriever) collectDocsWithClone(
+	docFilter *mapper.Filter,
+	index immutable.Option[client.IndexDescription],
+	ordering []mapper.OrderCondition,
+	canSatisfyOrder bool,
+) ([]core.Doc, error) {
+	clone := r.primaryScan.cloneWithFilter(docFilter, index, ordering)
+
+	var source planNode = clone
+	if len(ordering) > 0 && !canSatisfyOrder {
+		source = &orderNode{
+			p:         r.primaryScan.p,
+			plan:      clone,
+			ordering:  ordering,
+			needSort:  true,
+			docMapper: docMapper{r.primaryScan.documentMapping},
+		}
+	}
+
+	docs, err := collectDocs(source)
+
+	r.primaryScan.execInfo.iterations += clone.execInfo.iterations
+	r.primaryScan.execInfo.fetches.Add(clone.execInfo.fetches)
+
+	if orderNode, ok := source.(*orderNode); ok {
+		r.primaryScan.execInfo.iterations += orderNode.execInfo.iterations
+	}
+
+	closeErr := source.Close()
+
+	return docs, errors.Join(err, closeErr)
+}
+
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	scanFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+	docFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
 		r.targetSecondaryDoc.GetID())
 
 	// When the join is inverted, the parent becomes the primary (second) side.
@@ -653,38 +701,16 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	// iterated in the inverted path, merge those conditions so they are applied
 	// during retrieval.
 	if r.primarySide.isParent && r.primaryScan.filter != nil {
-		scanFilter = filter.Merge(scanFilter, r.primaryScan.filter)
+		docFilter = filter.Merge(docFilter, r.primaryScan.filter)
 	}
-
-	oldFilter := r.primaryScan.filter
-	oldFetcher := r.primaryScan.fetcher
-	oldIndex := r.primaryScan.index
-	oldOrdering := r.primaryScan.ordering
-
-	r.primaryScan.filter = scanFilter
 
 	result := selectIndex(selectIndexOptions{
 		collection:          r.primaryScan.col,
-		filter:              r.primaryScan.filter,
+		filter:              docFilter,
 		ordering:            r.ordering,
 		relationIDFieldName: r.relIDFieldDef.Name,
 		docMapping:          r.primaryScan.documentMapping,
 	})
-
-	r.primaryScan.index = result.index
-
-	if result.canSatisfyOrder {
-		r.primaryScan.ordering = r.ordering
-	} else {
-		// Clear ordering so the fetcher doesn't try to use it with an incompatible index.
-		// The orderNode (added during plan expansion) will handle in-memory sorting.
-		r.primaryScan.ordering = nil
-	}
-
-	r.primaryScan.initFetcher(immutable.None[[]string]())
-
-	var docs []core.Doc
-	var err error
 
 	if r.exhaustive && r.isOrderingByRelation() {
 		if r.orderingRelFieldIsPrimary() {
@@ -694,17 +720,44 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 				relFieldName, _ := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
 				relIDFieldName := request.ToFieldID(relFieldName)
 				relIDFieldMapIndex := r.primaryScan.documentMapping.FirstIndexOfName(relIDFieldName)
-				orphan.setSubQueryContext(r.filter, relIDFieldName, relIDFieldMapIndex)
+				orphan.setSubQueryContext(docFilter, relIDFieldName, relIDFieldMapIndex)
 			}
 		} else {
 			orphan := getNode[*orphanPointLookupNode](r.primarySide.plan)
 			if orphan != nil {
-				orphan.setSubQueryFilter(r.filter)
+				orphan.setSubQueryFilter(docFilter)
 			}
 		}
 	}
 
-	docs, err = r.collectDocs()
+	// When the primary side is the first side (inverted join), its plan tree is shared
+	// with the outer iteration loop. Using the plan tree here would corrupt stateful
+	// intermediate nodes (orderNode, etc.) that have already consumed their input.
+	// Use a cloned scanNode wrapped in an orderNode instead.
+	if r.primarySide.isFirst {
+		return r.collectDocsWithClone(docFilter, result.index, r.ordering, result.canSatisfyOrder)
+	}
+
+	// Non-inverted path: the plan tree is not shared, so we can safely reinitialize
+	// and iterate it. Temporarily modify the scanNode, use the plan, then restore.
+	oldFilter := r.primaryScan.filter
+	oldFetcher := r.primaryScan.fetcher
+	oldIndex := r.primaryScan.index
+	oldOrdering := r.primaryScan.ordering
+
+	r.primaryScan.filter = docFilter
+
+	r.primaryScan.index = result.index
+
+	if result.canSatisfyOrder {
+		r.primaryScan.ordering = r.ordering
+	} else {
+		r.primaryScan.ordering = nil
+	}
+
+	r.primaryScan.initFetcher(immutable.None[[]string]())
+
+	docs, err := r.collectDocsFromPlan()
 
 	closeErr := r.primaryScan.fetcher.Close()
 	r.primaryScan.filter = oldFilter

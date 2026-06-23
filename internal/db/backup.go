@@ -226,13 +226,13 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								refFieldName = fieldID
 							}
 						} else {
-							foreignDef, _, err := description.GetRelatedCollection(ctx, col.Version(), field.Kind)
+							foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
 							if err != nil {
 								return err
 							}
 
-							txnOpt := datastore.CtxTryGetClientTxnOption(ctx)
-							foreignCol, err := db.newCollection(foreignDef, txnOpt)
+							txnOpt := datastore.CtxTryGetTxnOption(ctx)
+							foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
 							if err != nil {
 								return err
 							}

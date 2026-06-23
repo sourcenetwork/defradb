@@ -12,6 +12,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -20,24 +21,27 @@ import (
 )
 
 const (
-	errFailedToGetHeads                          string = "failed to get document heads"
-	errFailedToCreateCollectionQuery             string = "failed to create collection prefix query"
-	errFailedToGetCollection                     string = "failed to get collection"
-	errFailedToGetAllCollections                 string = "failed to get all collections"
-	errDocVerification                           string = "the document verification failed"
-	errAddingP2PCollection                       string = "cannot add collection ID"
-	errRemovingP2PCollection                     string = "cannot remove collection ID"
-	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
-	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
-	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
-	errCannotSetVersionID                        string = "setting the VersionID is not supported"
-	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
-	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
-	errRelationalFieldIDInvalidType              string = "relational id field of invalid kind"
-	errDuplicateField                            string = "duplicate field"
-	errCannotMutateField                         string = "mutating an existing field is not supported"
-	errCannotMoveField                           string = "moving fields is not currently supported"
-	errCannotDeleteField                         string = "deleting an existing field is not supported"
+	errFailedToGetHeads              string = "failed to get document heads"
+	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
+	errFailedToGetCollection         string = "failed to get collection"
+	errFailedToGetAllCollections     string = "failed to get all collections"
+	errDocVerification               string = "the document verification failed"
+	errAddingP2PCollection           string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot remove collection ID"
+	errAddCollectionWithPatch        string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection    string = "cannot remove a collection while another field references it"
+	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
+	errCollectionRootDoesntMatch     string = "CollectionRoot does not match existing"
+	errCannotSetVersionID            string = "setting the VersionID is not supported"
+	errRelationalFieldMissingIDField string = "missing id field for relation object field"
+	errRelatedFieldKindMismatch      string = "invalid Kind of the related field"
+	errRelationalFieldIDInvalidType  string = "relational id field of invalid kind"
+	errDuplicateField                string = "duplicate field"
+	errCannotMutateField             string = "mutating an existing field is not supported"
+	errCannotMoveField               string = "moving fields is not currently supported"
+	errCannotDeleteField             string = "deleting an existing field is not supported"
+	errCannotAddNonNillableField     string = "adding a non-nillable field to an existing collection " +
+		"is not supported"
 	errFieldKindNotFound                         string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
 	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
@@ -71,6 +75,8 @@ const (
 	errDocFromMap                                string = "failed to create a new doc from map"
 	errDocAdd                                    string = "failed to add a new doc to collection"
 	errDocUpdate                                 string = "failed to update doc to collection"
+	errEmptyFilter                               string = "filter cannot be empty"
+	errUnsupportedFilterType                     string = "unsupported filter type"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
 	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
@@ -89,15 +95,13 @@ const (
 	errCollectionIDCannotBeEmpty                 string = "collection ID cannot be empty"
 	errCannotDeleteOldVersion                    string = "cannot delete a version that is used by a newer version, " +
 		"first delete the new version"
-	errCannotDeleteCollectionWithDocs string = "cannot delete a collection that has documents, first " +
-		"delete the documents and then delete the version"
 	errCanNotHavePolicyWithoutACP          string = "can not specify policy on collection, without acp"
 	errRelationMissingField                string = "relation missing field"
 	errMultipleRelationPrimaries           string = "relation can only have a single field set as primary"
 	errP2PColHasPolicy                     string = "p2p collection specified has a policy on it"
 	errReplicatorColHasPolicy              string = "replicator collection specified has a policy on it"
 	errNoTransactionInContext              string = "no transaction in context"
-	errReplicatorExists                    string = "replicator already exists for %s with peerID %s"
+	errReplicatorExists                    string = "replicator already exists"
 	errReplicatorDocID                     string = "failed to get docID for replicator"
 	errCanNotEncryptBuiltinField           string = "can not encrypt build-in field"
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
@@ -123,23 +127,90 @@ const (
 	errNACIsAlreadyEnabled                 string = "node acp is already enabled"
 	errNACIsNotConfigured                  string = "node acp is not configured"
 	errRelationNameEmpty                   string = "relation name cannot be empty"
+	errRelationNameNotUnique               string = "relation name is not unique within collection"
 	errInvalidCID                          string = "invalid CID"
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
+
+	errCreateMergeTxn         string = "failed to create merge transaction"
+	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
+	errGetMergeTargetHeads    string = "failed to get merge target heads"
+	errLoadComposites         string = "failed to load composites for merge"
+	errMergeComposites        string = "failed to merge composites"
+	errSyncIndexedDoc         string = "failed to sync indexed document after merge"
+	errLoadBlockForMerge      string = "failed to load block for merge"
+	errDecodeBlockForMerge    string = "failed to decode block for merge"
+	errLoadParentComposite    string = "failed to load parent composite for merge"
+	errLoadMergeTargetBlock   string = "failed to load merge target block"
+	errDecodeMergeTargetBlock string = "failed to decode merge target block"
+	errGenerateMergeLink      string = "failed to generate link for merge composite"
+	errProcessBlockMerge      string = "failed to process block during merge"
+	errProcessEncryptedBlock  string = "failed to process encrypted block"
+	errInitCRDTForMerge       string = "failed to init CRDT for merge"
+	errProcessCRDTBlock       string = "failed to process CRDT block"
+	errLoadChildBlock         string = "failed to load child block for merge"
+	errDecodeChildBlock       string = "failed to decode child block for merge"
+	errProcessChildBlock      string = "failed to process child block for merge"
+	errGetHeadsForMerge       string = "failed to get heads for merge target"
+	errLoadBlockFromStore     string = "failed to get block from blockstore"
+	errDecodeBlockFromStore   string = "failed to decode block from bytes"
+	errParseDocIDMerge        string = "failed to parse doc ID during merge"
+	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
+	errGetDocStatus           string = "failed to get document status"
+	errGetShortIDForDoc       string = "failed to get short collection ID for document"
+
+	errDeleteNACState             string = "failed to delete NAC state"
+	errCommitNACTransaction       string = "failed to commit NAC transaction"
+	errParseDatastoreKey          string = "failed to parse datastore key"
+	errStoreViewCacheItem         string = "failed to store view cache item"
+	errStoreDocMarker             string = "failed to store document marker"
+	errSetEmbeddingField          string = "failed to set embedding field"
+	errStoreIndexKey              string = "failed to store index key"
+	errDeleteIndexedDoc           string = "failed to delete indexed document"
+	errDeleteIndexKey             string = "failed to delete index key"
+	errUpdateIndex                string = "failed to update index"
+	errTruncateDatastoreKey       string = "failed to delete key during truncate"
+	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
+	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errDeleteViewCacheItem        string = "failed to delete view cache item"
+	errParseViewCacheKey          string = "failed to parse view cache key"
+	errStoreNACState              string = "failed to store NAC state"
+	errMarshalNACState            string = "failed to marshal NAC state"
+	errCheckNACState              string = "failed to check NAC state"
+	errCheckDBInitialized         string = "failed to check if database is initialized"
+	errCheckCIDExists             string = "failed to check if CID exists in blockstore"
+	errCheckIndexKeyExists        string = "failed to check if index key exists"
+	errCheckUniqueIndexConstraint string = "failed to check unique index constraint"
+	errCheckCollectionDocs        string = "failed to check if collection has documents"
+	errCreateTruncateIterator     string = "failed to create iterator for truncate"
+	errDumpDBState                string = "failed to iterate datastore during dump"
+	errGetAllDocIDs               string = "failed to get all document IDs"
+	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
+	errCreateViewCacheIterator    string = "failed to create view cache iterator"
+	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
+	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
+		" first truncate it and then try again."
 )
 
 var (
 	ErrFailedToGetCollection                     = errors.New(errFailedToGetCollection)
 	ErrSubscriptionsNotAllowed                   = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter                             = errors.New("invalid filter")
+	ErrEmptyFilter                               = errors.New(errEmptyFilter)
+	ErrUnsupportedFilterType                     = errors.New(errUnsupportedFilterType)
 	ErrCollectionAlreadyExists                   = errors.New(errCollectionAlreadyExists)
 	ErrCollectionNameEmpty                       = errors.New("collection name can't be empty")
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
+	ErrUnexpectedTxnType                         = errors.New("unexpected transaction type")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
@@ -158,8 +229,8 @@ var (
 	ErrCollectionVersionIDCannotBeMutated        = errors.New(errCollectionVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
-	ErrCannotDeleteCollectionWithDocs            = errors.New(errCannotDeleteCollectionWithDocs)
 	ErrCanNotHavePolicyWithoutACP                = errors.New(errCanNotHavePolicyWithoutACP)
+	ErrRemoveReferencedCollection                = errors.New(errRemoveReferencedCollection)
 	ErrRelationMissingField                      = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                 = errors.New(errMultipleRelationPrimaries)
 	ErrP2PColHasPolicy                           = errors.New(errP2PColHasPolicy)
@@ -186,6 +257,7 @@ var (
 	ErrNACIsNotConfigured                        = errors.New(errNACIsNotConfigured)
 	ErrNACRelationshipOperationRequiresIdentity  = errors.New("node acp relationship operation requires identity")
 	ErrRelationNameEmpty                         = errors.New(errRelationNameEmpty)
+	ErrRelationNameNotUnique                     = errors.New(errRelationNameNotUnique)
 	ErrInvalidCID                                = errors.New(errInvalidCID)
 	ErrUnknownCID                                = errors.New(errUnknownCID)
 	ErrNoP2P                                     = errors.New("no p2p system configured")
@@ -193,6 +265,14 @@ var (
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
 	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
+	ErrDocumentAlreadyExists                     = errors.New(errDocumentAlreadyExists)
+	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
+	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
+	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
+	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
+	ErrReplicatorExists                          = errors.New(errReplicatorExists)
+	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
+	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -291,6 +371,27 @@ func NewErrAddCollectionWithPatch(name string) error {
 	)
 }
 
+func NewErrRemoveReferencedCollection(inner error, removed []string) error {
+	return errors.Wrap(
+		errRemoveReferencedCollection,
+		inner,
+		errors.NewKV("Removed", strings.Join(removed, ",")),
+	)
+}
+
+// NewErrRemoveReferencedCollectionFromField errors when a patch removes a collection
+// that is still being referenced by a field on another collection in the post-patch
+// state. It identifies which removed collection is still in use and the host
+// collection/field doing the referencing.
+func NewErrRemoveReferencedCollectionFromField(removedName, hostCollection, hostField string) error {
+	return errors.New(
+		errRemoveReferencedCollection,
+		errors.NewKV("Removed", removedName),
+		errors.NewKV("ReferencedBy", hostCollection),
+		errors.NewKV("Field", hostField),
+	)
+}
+
 func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID string) error {
 	return errors.New(
 		errCollectionIDDoesntMatch,
@@ -342,6 +443,14 @@ func NewErrRelationNameEmpty(name string) error {
 	)
 }
 
+func NewErrRelationNameNotUnique(name string, relationName string) error {
+	return errors.New(
+		errRelationNameNotUnique,
+		errors.NewKV("Field", name),
+		errors.NewKV("RelationName", relationName),
+	)
+}
+
 func NewErrFieldKindNotFound(name string, kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
@@ -385,6 +494,13 @@ func NewErrCanNotEncryptBuiltinField(name string) error {
 func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCannotAddNonNillableField(name string) error {
+	return errors.New(
+		errCannotAddNonNillableField,
 		errors.NewKV("Name", name),
 	)
 }
@@ -669,14 +785,6 @@ func NewErrCannotDeleteOldVersion(old, new string) error {
 	)
 }
 
-func NewErrCannotDeleteCollectionWithDocs(name, versionID string) error {
-	return errors.New(
-		errCannotDeleteCollectionWithDocs,
-		errors.NewKV("Name", name),
-		errors.NewKV("VersionID", versionID),
-	)
-}
-
 func NewErrRelationMissingField(objectName, relationName string) error {
 	return errors.New(
 		errRelationMissingField,
@@ -828,6 +936,30 @@ func NewErrLensCIDNotFound(cid string) error {
 	return errors.New(errLensCIDNotFound, errors.NewKV("CID", cid))
 }
 
+func NewErrCheckCollectionDocs(inner error) error {
+	return errors.Wrap(errCheckCollectionDocs, inner)
+}
+
+func NewErrCreateTruncateIterator(inner error) error {
+	return errors.Wrap(errCreateTruncateIterator, inner)
+}
+
+func NewErrDumpDBState(inner error) error {
+	return errors.Wrap(errDumpDBState, inner)
+}
+
+func NewErrGetAllDocIDs(inner error) error {
+	return errors.Wrap(errGetAllDocIDs, inner)
+}
+
+func NewErrCreateDeleteIndexIterator(inner error) error {
+	return errors.Wrap(errCreateDeleteIndexIterator, inner)
+}
+
+func NewErrCreateViewCacheIterator(inner error) error {
+	return errors.Wrap(errCreateViewCacheIterator, inner)
+}
+
 // NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one
 // relation field cannot have a non-unique index.
 func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
@@ -835,5 +967,246 @@ func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
 		errOneToOneMustBeUnique,
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrUnsupportedFilterType returns a new error indicating that the given filter type is not supported.
+func NewErrUnsupportedFilterType(actualType string) error {
+	return errors.New(errUnsupportedFilterType, errors.NewKV("ActualType", actualType))
+}
+
+func NewErrCreateMergeTxn(inner error, docID string, cid string) error {
+	return errors.Wrap(errCreateMergeTxn, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
+}
+
+func NewErrGetShortIDForMerge(inner error, collectionID string) error {
+	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrGetMergeTargetHeads(inner error, docID string, key string) error {
+	return errors.Wrap(errGetMergeTargetHeads, inner, errors.NewKV("DocID", docID), errors.NewKV("Key", key))
+}
+
+func NewErrLoadComposites(inner error, cid string, docID string) error {
+	return errors.Wrap(errLoadComposites, inner,
+		errors.NewKV("CID", cid), errors.NewKV("DocID", docID))
+}
+
+func NewErrMergeComposites(inner error, docID string) error {
+	return errors.Wrap(errMergeComposites, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSyncIndexedDoc(inner error, docID string) error {
+	return errors.Wrap(errSyncIndexedDoc, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrLoadBlockForMerge(inner error, cid string) error {
+	return errors.Wrap(errLoadBlockForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeBlockForMerge(inner error, cid string) error {
+	return errors.Wrap(errDecodeBlockForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadParentComposite(inner error, cid string) error {
+	return errors.Wrap(errLoadParentComposite, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadMergeTargetBlock(inner error, link string) error {
+	return errors.Wrap(errLoadMergeTargetBlock, inner, errors.NewKV("Link", link))
+}
+
+func NewErrDecodeMergeTargetBlock(inner error, link string) error {
+	return errors.Wrap(errDecodeMergeTargetBlock, inner, errors.NewKV("Link", link))
+}
+
+func NewErrGenerateMergeLink(inner error) error {
+	return errors.Wrap(errGenerateMergeLink, inner)
+}
+
+func NewErrProcessBlockMerge(inner error, cid string) error {
+	return errors.Wrap(errProcessBlockMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessEncryptedBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessEncryptedBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrInitCRDTForMerge(inner error, cid string) error {
+	return errors.Wrap(errInitCRDTForMerge, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessCRDTBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessCRDTBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrLoadChildBlock(inner error, cid string) error {
+	return errors.Wrap(errLoadChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeChildBlock(inner error, cid string) error {
+	return errors.Wrap(errDecodeChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrProcessChildBlock(inner error, cid string) error {
+	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrGetHeadsForMerge(inner error, key string) error {
+	return errors.Wrap(errGetHeadsForMerge, inner, errors.NewKV("Key", key))
+}
+
+func NewErrLoadBlockFromStore(inner error, cid string) error {
+	return errors.Wrap(errLoadBlockFromStore, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDecodeBlockFromStore(inner error, cid string) error {
+	return errors.Wrap(errDecodeBlockFromStore, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrParseDocIDMerge(inner error, rawDocID string) error {
+	return errors.Wrap(errParseDocIDMerge, inner, errors.NewKV("RawDocID", rawDocID))
+}
+
+func NewErrGetShortFieldIDMerge(inner error, fieldID string, field string) error {
+	return errors.Wrap(errGetShortFieldIDMerge, inner,
+		errors.NewKV("FieldID", fieldID), errors.NewKV("Field", field))
+}
+
+func NewErrGetDocStatus(inner error, docID string) error {
+	return errors.Wrap(errGetDocStatus, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrGetShortIDForDoc(inner error, collectionID string) error {
+	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrStoreViewCacheItem(inner error) error {
+	return errors.Wrap(errStoreViewCacheItem, inner)
+}
+
+func NewErrStoreDocMarker(inner error, docID string) error {
+	return errors.Wrap(errStoreDocMarker, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrSetEmbeddingField(inner error, fieldName string) error {
+	return errors.Wrap(errSetEmbeddingField, inner, errors.NewKV("Field", fieldName))
+}
+
+func NewErrStoreIndexKey(inner error) error {
+	return errors.Wrap(errStoreIndexKey, inner)
+}
+
+func NewErrStoreNACState(inner error) error {
+	return errors.Wrap(errStoreNACState, inner)
+}
+
+func NewErrMarshalNACState(inner error) error {
+	return errors.Wrap(errMarshalNACState, inner)
+}
+
+func NewErrCheckNACState(inner error) error {
+	return errors.Wrap(errCheckNACState, inner)
+}
+
+func NewErrCheckDBInitialized(inner error) error {
+	return errors.Wrap(errCheckDBInitialized, inner)
+}
+
+func NewErrCheckCIDExists(inner error, cidType string, cidValue string) error {
+	return errors.Wrap(errCheckCIDExists, inner,
+		errors.NewKV("Type", cidType), errors.NewKV("CID", cidValue))
+}
+
+func NewErrCheckIndexKeyExists(inner error, indexName string) error {
+	return errors.Wrap(errCheckIndexKeyExists, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrCheckUniqueIndexConstraint(inner error) error {
+	return errors.Wrap(errCheckUniqueIndexConstraint, inner)
+}
+
+func NewErrDeleteNACState(inner error) error {
+	return errors.Wrap(errDeleteNACState, inner)
+}
+
+func NewErrCommitNACTransaction(inner error) error {
+	return errors.Wrap(errCommitNACTransaction, inner)
+}
+
+func NewErrParseDatastoreKey(inner error) error {
+	return errors.Wrap(errParseDatastoreKey, inner)
+}
+
+func NewErrDeleteIndexedDoc(inner error, indexName string) error {
+	return errors.Wrap(errDeleteIndexedDoc, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrDeleteIndexKey(inner error) error {
+	return errors.Wrap(errDeleteIndexKey, inner)
+}
+
+func NewErrUpdateIndex(inner error, indexName string) error {
+	return errors.Wrap(errUpdateIndex, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrTruncateDatastoreKey(inner error, key string) error {
+	return errors.Wrap(errTruncateDatastoreKey, inner, errors.NewKV("Key", key))
+}
+
+func NewErrTruncateHeadstoreKey(inner error, key string) error {
+	return errors.Wrap(errTruncateHeadstoreKey, inner, errors.NewKV("Key", key))
+}
+
+func NewErrTruncateDeleteBlocks(inner error, cid string) error {
+	return errors.Wrap(errTruncateDeleteBlocks, inner, errors.NewKV("CID", cid))
+}
+
+func NewErrDeleteViewCacheItem(inner error) error {
+	return errors.Wrap(errDeleteViewCacheItem, inner)
+}
+
+func NewErrParseViewCacheKey(inner error) error {
+	return errors.Wrap(errParseViewCacheKey, inner)
+}
+
+func NewErrDematerializePopulatedView(name string, version string) error {
+	return errors.New(
+		errDematerializePopulatedView,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", version),
+	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrCorruptIndexPayload returns a new error indicating that an index action's payload
+// could not be decoded.
+func NewErrCorruptIndexPayload(value []byte) error {
+	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
 	)
 }

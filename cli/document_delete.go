@@ -24,9 +24,13 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "delete [-i --identity] [--filter <filter> --docID <docID>]",
+		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
-		Long:  `Delete documents by docID or filter and lists the number of documents deleted.`,
+		Long: `Delete documents by docID or filter and list the number of documents deleted.
+
+This is a soft delete. The document's data and commit history remain available locally
+and can be accessed using the --show-deleted flag on the 'document get' command
+or the showDeleted parameter on GraphQL queries.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
@@ -69,9 +73,10 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
   	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
 
 	EmbedCLIExample(ctx, cmd, "delete by filter",
-		`defradb client document delete --collection-name User --filter '{ "_gte": { "points": 100 } }'`)
+		`defradb client document delete --collection-name User --filter '{ "_geq": { "points": 100 } }'`)
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

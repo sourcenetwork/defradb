@@ -190,7 +190,7 @@ func TestPatchRelation_OneToMany_DoesNotAddUniqueIndex(t *testing.T) {
 func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *testing.T) {
 	const (
 		authorV1 = "bafyreibvcavbxqwimz5vdxe5q5href63g3skc6ytg45hm4fqh6wsx57wmq"
-		authorV2 = "bafyreihr72os6adcvjpsex4phzeefe6k32szyuqdgmyj7vfgvadxulyw5i"
+		authorV2 = "bafyreihv2jdbz3sipc7tqdoycerkcjn6gehr5aleiroqlewvsmjd26unfq"
 	)
 
 	test := testUtils.TestCase{

@@ -13,9 +13,15 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
+	"github.com/sourcenetwork/corekv"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 )
 
 const (
@@ -24,6 +30,7 @@ const (
 	errFailedToGetContext       string = "failed to get context"
 	errMissingRequiredParameter string = "required parameter %s is missing"
 	errCollectionNotFound       string = "collection not found"
+	errNoHostInURL              string = "could not derive a host from the url"
 )
 
 // Errors returnable from this package.
@@ -43,6 +50,7 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
+	ErrTransactionNotFound          = errors.New("transaction not found")
 )
 
 type errorResponse struct {
@@ -51,6 +59,27 @@ type errorResponse struct {
 
 func (e errorResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{"error": e.Error.Error()})
+}
+
+// gqlErrorResponse is the GraphQL-over-HTTP compliant error envelope used by
+// ExecRequest handlers. Unlike errorResponse (which serialises to
+// {"error":"..."}), this marshals to
+//
+//	{"errors": [{"message": "..."}]}
+//
+// which is what GraphQL clients inspect when the request fails before the
+// resolver runs (e.g. bad JSON body, missing query field, subscription
+// framing mismatch). Without this, those clients see a non-GraphQL payload
+// and fall through to "unknown transport error" branches instead of
+// surfacing the actual cause to the user.
+type gqlErrorResponse struct {
+	Error error `json:"-"`
+}
+
+func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"errors": []map[string]any{{"message": e.Error.Error()}},
+	})
 }
 
 func (e *errorResponse) UnmarshalJSON(data []byte) error {
@@ -92,4 +121,76 @@ func NewErrCollectionNotFound(collectionName string) error {
 		errCollectionNotFound,
 		errors.NewKV("CollectionName", collectionName),
 	)
+}
+
+func NewErrNoHostInURL(rawURL string) error {
+	return errors.New(
+		errNoHostInURL,
+		errors.NewKV("URL", rawURL),
+	)
+}
+
+// httpStatusFromError maps known error types to appropriate HTTP status codes.
+func httpStatusFromError(err error) int {
+	// 401 Unauthorized
+	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
+		return http.StatusUnauthorized
+	}
+
+	// 403 Forbidden
+	if errors.Is(err, client.ErrOperationRequiresDeveloperMode) ||
+		errors.Is(err, client.ErrCanNotDoThisNACOpWithNACIsDisabled) ||
+		errors.Is(err, db.ErrMissingPermission) ||
+		errors.Is(err, acp.ErrResourceIsMissingRequiredPermission) {
+		return http.StatusForbidden
+	}
+
+	// 404 Not Found
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
+		errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, db.ErrDocIDNotFound) ||
+		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
+		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||
+		errors.Is(err, db.ErrCollectionRootNotFound) ||
+		errors.Is(err, db.ErrLensCIDNotFound) ||
+		errors.Is(err, p2p.ErrReplicatorNotFound) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
+		return http.StatusNotFound
+	}
+
+	// 409 Conflict
+	if errors.Is(err, db.ErrCollectionAlreadyExists) ||
+		errors.Is(err, db.ErrDocumentAlreadyExists) ||
+		errors.Is(err, db.ErrIndexWithNameAlreadyExists) ||
+		errors.Is(err, db.ErrEncryptedIndexAlreadyExists) ||
+		errors.Is(err, db.ErrReplicatorExists) ||
+		errors.Is(err, db.ErrMultipleActiveCollectionVersions) ||
+		errors.Is(err, corekv.ErrTxnConflict) {
+		return http.StatusConflict
+	}
+
+	// 422 Unprocessable Entity
+	if errors.Is(err, db.ErrCanNotHavePolicyWithoutACP) ||
+		errors.Is(err, db.ErrMaterializedViewAndACPNotSupported) ||
+		errors.Is(err, db.ErrColNotMaterialized) ||
+		errors.Is(err, db.ErrColMutatingIsBranchable) ||
+		errors.Is(err, db.ErrP2PColHasPolicy) ||
+		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
+		errors.Is(err, db.ErrCollectionNameMutated) ||
+		errors.Is(err, db.ErrCannotDeleteOldVersion) ||
+		errors.Is(err, db.ErrMigrationBetweenNonAdjacentVersions) ||
+		errors.Is(err, db.ErrNACIsAlreadyDisabled) ||
+		errors.Is(err, db.ErrNACIsAlreadyEnabled) ||
+		errors.Is(err, client.ErrACPOperationButACPNotAvailable) {
+		return http.StatusUnprocessableEntity
+	}
+
+	// 503 Service Unavailable
+	if errors.Is(err, ErrP2PDisabled) {
+		return http.StatusServiceUnavailable
+	}
+
+	// 400 Bad Request (default)
+	return http.StatusBadRequest
 }

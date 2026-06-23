@@ -128,14 +128,14 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	// initial dag block of a document can be reproducible.
 	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil {
-		return nil, err
+		return nil, NewErrCheckCounterExists(err, c.key.DocID, c.fieldName)
 	}
 
 	var nonce int64
 	if exists {
 		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 		if err != nil {
-			return nil, err
+			return nil, NewErrGenerateCounterNonce(err)
 		}
 		nonce = r.Int64()
 	}
@@ -168,7 +168,7 @@ func (c *Counter) incrementValue(
 	key := c.key.WithValueFlag()
 	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
+		return NewErrGetCounterStatus(err, c.key.DocID, c.fieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
@@ -180,17 +180,17 @@ func (c *Counter) incrementValue(
 	case client.FieldKind_NILLABLE_INT:
 		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return err
+			return NewErrIncrementCounter(err, c.key.DocID, c.fieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT32:
 		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return err
+			return NewErrIncrementCounter(err, c.key.DocID, c.fieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT64:
 		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
-			return err
+			return NewErrIncrementCounter(err, c.key.DocID, c.fieldName, c.kind.String())
 		}
 	default:
 		return NewErrUnsupportedCounterType(c.kind)
@@ -220,7 +220,7 @@ func validateAndIncrement[T Incrementable](
 ) ([]byte, error) {
 	value, err := getNumericFromBytes[T](valueAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, NewErrDecodeCounterValue(err)
 	}
 
 	if !allowDecrement && value < 0 {
@@ -229,7 +229,7 @@ func validateAndIncrement[T Incrementable](
 
 	curValue, err := getCurrentValue[T](ctx, store, key)
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetCurrentCounterValue(err)
 	}
 
 	newValue := curValue + value

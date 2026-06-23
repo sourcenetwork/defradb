@@ -28,7 +28,7 @@ func MakeDocumentACPRelationshipDeleteCommand(ctx context.Context) *cobra.Comman
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity]",
+		Use:   "delete",
 		Short: "Delete relationship",
 		Long: `Delete relationship
 
@@ -46,7 +46,9 @@ Notes:
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the relationship record was not found, then it will be a no-op.
-  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+  - Learn more about the
+[Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+system.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)

@@ -14,12 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeTxNewCommand(ctx context.Context) *cobra.Command {
-	var concurrent bool
 	var readOnly bool
 	var cmd = &cobra.Command{
 		Use:   "new",
@@ -28,19 +25,13 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			var tx client.Txn
-			if concurrent {
-				tx, err = cliClient.NewConcurrentTxn(readOnly)
-			} else {
-				tx, err = cliClient.NewTxn(readOnly)
-			}
+			tx, err := cliClient.NewTxn(readOnly)
 			if err != nil {
 				return err
 			}
 			return writeJSON(cmd, map[string]any{"id": tx.ID()})
 		},
 	}
-	cmd.Flags().BoolVar(&concurrent, "concurrent", false, "Transaction is concurrent")
 	cmd.Flags().BoolVar(&readOnly, "read-only", false, "Transaction is read only")
 	return cmd
 }

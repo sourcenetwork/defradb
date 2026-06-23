@@ -26,7 +26,10 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		//
+		// Signed counter deltas are double-applied across peers.
+		// https://github.com/sourcenetwork/defradb/issues/4742
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -55,7 +58,7 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 				Doc: `{
@@ -136,19 +139,19 @@ func TestP2PUpdate_WithPCounterThreeNodeSimultaneousUpdate_NoError(t *testing.T)
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"points": 10
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"points": 20
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(2),
 				Doc: `{
 					"points": 30
@@ -214,13 +217,13 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Age": 45
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 45

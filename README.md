@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -40,7 +40,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Community](#community)
-   * [Playground](#playground)
+   * [Explorer](#explorer)
    * [Licensing](#licensing)
    * [Contributors](#contributors)
 <!--te-->
@@ -153,7 +153,7 @@ In this document, we use the default configuration, which has the following beha
 
 - `~/.defradb/` is DefraDB's configuration and data directory
 - `client` command interacts with the locally running node
-- The GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
+- The GraphQL endpoint is provided at <http://localhost:9181/api/graphql> and a versioned API endpoint is provided at <http://localhost:9181/api/v1/graphql>
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
@@ -465,7 +465,7 @@ As we add or update documents in the Article collection on *nodeA*, they will be
 
 ## Securing the HTTP API with TLS
 
-By default, DefraDB will expose its HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
+By default, DefraDB will expose its HTTP API at `http://localhost:9181/api`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
 
 To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
 being the public key and `server.crt` being the private key, just do:
@@ -486,7 +486,7 @@ defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-pr
 ```
 
 ## Access Control System
-Read more about the DefraDB ACP System [here](/acp/README.md)
+Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 ## Supporting CORS
 
@@ -533,9 +533,9 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
 
-## Playground
+## Explorer
 
-Instructions for the playground can be found [here](./playground/README.md).
+Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 

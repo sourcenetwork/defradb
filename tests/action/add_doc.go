@@ -85,6 +85,9 @@ type AddDoc struct {
 
 	// Used to identify the transaction for this to be executed in. Optional.
 	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*AddDoc)(nil)
@@ -117,7 +120,6 @@ func (a *AddDoc) Execute() {
 
 	var expectedErrorRaised bool
 	var docIDs []client.DocID
-	var collections []client.Collection
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
@@ -134,24 +136,48 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections = GetCanonicallyOrderedCollections(a.s, node, txnOption)
-		collection := collections[a.CollectionID]
+		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
 
-		err := withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					a,
-					node,
-					nodeID,
-					collection,
-					txnOption,
-				)
-				return err
-			},
-		)
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		// getCanonicallyOrderedCollections returns a nil slot for any collection
+		// name that is no longer present in the database (documented on
+		// RefreshCollections). A concurrent PatchCollection removal therefore
+		// leaves the target slot nil, which is the expected "collection absent"
+		// signal rather than a hidden failure. Surface the same not-found error
+		// the production lookup-by-name path returns so the mutation is not
+		// handed a nil collection to dereference.
+		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
+			err = client.NewErrCollectionNotFoundForName(a.s.CollectionNames[a.CollectionID])
+		} else {
+			collection := collections[a.CollectionID]
+
+			err = withRetryOnNode(
+				node,
+				func() error {
+					var err error
+					docIDs, err = mutation(
+						a,
+						node,
+						nodeID,
+						collection,
+						txnOption,
+					)
+					return err
+				},
+			)
+		}
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

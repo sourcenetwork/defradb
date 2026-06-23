@@ -1102,6 +1102,78 @@ func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses
 	return _c
 }
 
+// DeleteCollection provides a mock function for the type Txn
+func (_mock *Txn) DeleteCollection(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, names, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, names)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteCollection")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Enumerable[options.DeleteCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, names, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_DeleteCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteCollection'
+type Txn_DeleteCollection_Call struct {
+	*mock.Call
+}
+
+// DeleteCollection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - names []string
+//   - opts ...options.Enumerable[options.DeleteCollectionOptions]
+func (_e *Txn_Expecter) DeleteCollection(ctx interface{}, names interface{}, opts ...interface{}) *Txn_DeleteCollection_Call {
+	return &Txn_DeleteCollection_Call{Call: _e.mock.On("DeleteCollection",
+		append([]interface{}{ctx, names}, opts...)...)}
+}
+
+func (_c *Txn_DeleteCollection_Call) Run(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions])) *Txn_DeleteCollection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		var arg2 []options.Enumerable[options.DeleteCollectionOptions]
+		var variadicArgs []options.Enumerable[options.DeleteCollectionOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteCollectionOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_DeleteCollection_Call) Return(err error) *Txn_DeleteCollection_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_DeleteCollection_Call) RunAndReturn(run func(ctx context.Context, names []string, opts ...options.Enumerable[options.DeleteCollectionOptions]) error) *Txn_DeleteCollection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error) {
 	var tmpRet mock.Arguments
@@ -1603,6 +1675,78 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func()) *Txn_Discard_Call {
 	return _c
 }
 
+// Disconnect provides a mock function for the type Txn
+func (_mock *Txn) Disconnect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, addresses, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, addresses)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for Disconnect")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Enumerable[options.DisconnectOptions]) error); ok {
+		r0 = returnFunc(ctx, addresses, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_Disconnect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Disconnect'
+type Txn_Disconnect_Call struct {
+	*mock.Call
+}
+
+// Disconnect is a helper method to define mock.On call
+//   - ctx context.Context
+//   - addresses []string
+//   - opts ...options.Enumerable[options.DisconnectOptions]
+func (_e *Txn_Expecter) Disconnect(ctx interface{}, addresses interface{}, opts ...interface{}) *Txn_Disconnect_Call {
+	return &Txn_Disconnect_Call{Call: _e.mock.On("Disconnect",
+		append([]interface{}{ctx, addresses}, opts...)...)}
+}
+
+func (_c *Txn_Disconnect_Call) Run(run func(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions])) *Txn_Disconnect_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		var arg2 []options.Enumerable[options.DisconnectOptions]
+		var variadicArgs []options.Enumerable[options.DisconnectOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DisconnectOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_Disconnect_Call) Return(err error) *Txn_Disconnect_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_Disconnect_Call) RunAndReturn(run func(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error) *Txn_Disconnect_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExecRequest provides a mock function for the type Txn
 func (_mock *Txn) ExecRequest(ctx context.Context, request string, opts ...options.Enumerable[options.ExecRequestOptions]) *client.RequestResult {
 	var tmpRet mock.Arguments
@@ -2016,6 +2160,83 @@ func (_c *Txn_ID_Call) RunAndReturn(run func() uint64) *Txn_ID_Call {
 	return _c
 }
 
+// ListActions provides a mock function for the type Txn
+func (_mock *Txn) ListActions(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]client.ActionExecution, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListActions")
+	}
+
+	var r0 []client.ActionExecution
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListActionsOptions]) ([]client.ActionExecution, error)); ok {
+		return returnFunc(ctx, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListActionsOptions]) []client.ActionExecution); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.ActionExecution)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListActionsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListActions'
+type Txn_ListActions_Call struct {
+	*mock.Call
+}
+
+// ListActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Enumerable[options.ListActionsOptions]
+func (_e *Txn_Expecter) ListActions(ctx interface{}, opts ...interface{}) *Txn_ListActions_Call {
+	return &Txn_ListActions_Call{Call: _e.mock.On("ListActions",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Txn_ListActions_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions])) *Txn_ListActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Enumerable[options.ListActionsOptions]
+		var variadicArgs []options.Enumerable[options.ListActionsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.ListActionsOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListActions_Call) Return(actionExecutions []client.ActionExecution, err error) *Txn_ListActions_Call {
+	_c.Call.Return(actionExecutions, err)
+	return _c
+}
+
+func (_c *Txn_ListActions_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListActionsOptions]) ([]client.ActionExecution, error)) *Txn_ListActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListAllEncryptedIndexes provides a mock function for the type Txn
 func (_mock *Txn) ListAllEncryptedIndexes(context1 context.Context, vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	var tmpRet mock.Arguments
@@ -2094,7 +2315,7 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 conte
 }
 
 // ListIndexes provides a mock function for the type Txn
-func (_mock *Txn) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
+func (_mock *Txn) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, opts)
@@ -2107,16 +2328,16 @@ func (_mock *Txn) ListIndexes(ctx context.Context, opts ...options.Enumerable[op
 		panic("no return value specified for ListIndexes")
 	}
 
-	var r0 map[client.CollectionName][]client.IndexDescription
+	var r0 map[client.CollectionName][]client.ListIndexesResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.ListIndexesResult, error)); ok {
 		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) map[client.CollectionName][]client.IndexDescription); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) map[client.CollectionName][]client.ListIndexesResult); ok {
 		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[client.CollectionName][]client.IndexDescription)
+			r0 = ret.Get(0).(map[client.CollectionName][]client.ListIndexesResult)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) error); ok {
@@ -2160,12 +2381,12 @@ func (_c *Txn_ListIndexes_Call) Run(run func(ctx context.Context, opts ...option
 	return _c
 }
 
-func (_c *Txn_ListIndexes_Call) Return(vToIndexDescriptions map[client.CollectionName][]client.IndexDescription, err error) *Txn_ListIndexes_Call {
-	_c.Call.Return(vToIndexDescriptions, err)
+func (_c *Txn_ListIndexes_Call) Return(vToListIndexesResults map[client.CollectionName][]client.ListIndexesResult, err error) *Txn_ListIndexes_Call {
+	_c.Call.Return(vToListIndexesResults, err)
 	return _c
 }
 
-func (_c *Txn_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_ListIndexes_Call {
+func (_c *Txn_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.ListIndexesResult, error)) *Txn_ListIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

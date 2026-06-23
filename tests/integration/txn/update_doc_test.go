@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package txn_testing
 
@@ -38,13 +39,13 @@ func TestTxn_UpdateDoc_WithCommit_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -97,7 +98,7 @@ func TestTxn_UpdateDoc_WithoutCommit_DoesNotUpdateDocument(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28
@@ -155,13 +156,13 @@ func TestTxn_UpdateDoc_ExhibitsTransactionalIsolation_Succeeds(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				TransactionID: immutable.Some(1),
 				Doc: `{
 					"age": 28
 				}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -212,7 +213,7 @@ func TestTxn_UpdateDocWithFilter_WithCommit_Succeeds(t *testing.T) {
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{
@@ -320,7 +321,7 @@ func TestTxn_UpdateWithFilter_ExhibitsTransactionalIsolation_Succeeds(t *testing
 				Filter:        `{name: {_eq: "John"}}`,
 				Updater:       `{"name": "Chris"}`,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 			},
 			&action.Request{

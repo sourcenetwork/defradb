@@ -38,7 +38,7 @@ func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -142,7 +142,7 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(req.Context()))
 	err := db.ReEnableNAC(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -168,7 +168,7 @@ func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.DisableNAC(), identity.FromContext(req.Context()))
 	err := db.DisableNAC(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.GetNACStatus(), identity.FromContext(req.Context()))
 	statusNACResult, err := db.GetNACStatus(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 

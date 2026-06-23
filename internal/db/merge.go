@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
+
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -33,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -41,11 +41,6 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to execute merge",
-			err,
-			corelog.Any("Event", evt))
 		return err
 	}
 
@@ -81,7 +76,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return NewErrCreateMergeTxn(err, dagMerge.DocID, dagMerge.Cid.String())
 	}
 
 	defer txn.Discard()
@@ -95,7 +90,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	} else {
 		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 		if err != nil {
-			return err
+			return NewErrGetShortIDForMerge(err, col.Version().CollectionID)
 		}
 
 		key = keys.NewHeadstoreColKey(shortID)
@@ -103,7 +98,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	mt, err := getHeadsAsMergeTarget(ctx, key)
 	if err != nil {
-		return err
+		return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
 	}
 
 	mp, err := db.newMergeProcessor(ctx, col)
@@ -113,18 +108,18 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 	if err != nil {
-		return err
+		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
 	err = mp.mergeComposites(ctx)
 	if err != nil {
-		return err
+		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
 		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
-			return err
+			return NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
 
@@ -240,12 +235,12 @@ func (mp *mergeProcessor) loadComposites(
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
-		return err
+		return NewErrLoadBlockForMerge(err, blockCid.String())
 	}
 
 	block, err := coreblock.GetFromNode(nd)
 	if err != nil {
-		return err
+		return NewErrDecodeBlockForMerge(err, blockCid.String())
 	}
 
 	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
@@ -256,7 +251,7 @@ func (mp *mergeProcessor) loadComposites(
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
 			if err != nil {
-				return err
+				return NewErrLoadParentComposite(err, head.Cid.String())
 			}
 		}
 	} else {
@@ -265,12 +260,12 @@ func (mp *mergeProcessor) loadComposites(
 			for _, link := range b.Heads {
 				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
 				if err != nil {
-					return err
+					return NewErrLoadMergeTargetBlock(err, link.String())
 				}
 
 				childBlock, err := coreblock.GetFromNode(nd)
 				if err != nil {
-					return err
+					return NewErrDecodeMergeTargetBlock(err, link.String())
 				}
 
 				newMT.heads[link.Cid] = childBlock
@@ -287,56 +282,15 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
-			return err
+			return NewErrGenerateMergeLink(err)
 		}
 		err = mp.processBlock(ctx, block, link)
 		if err != nil {
-			return err
+			return NewErrProcessBlockMerge(err, link.String())
 		}
 	}
 
 	return nil
-}
-
-func (mp *mergeProcessor) loadEncryptionBlock(
-	ctx context.Context,
-	encLink cidlink.Link,
-) (*coreblock.Encryption, error) {
-	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
-	if err != nil {
-		return nil, err
-	}
-
-	return coreblock.GetEncryptionBlockFromNode(nd)
-}
-
-// processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
-// If the block is encrypted and we were not able to decrypt it, it returns false as the second return value
-// which indicates that the we can't read the block.
-// If we were able to decrypt the block, we return the decrypted block and true as the second return value.
-func (mp *mergeProcessor) processEncryptedBlock(
-	ctx context.Context,
-	dagBlock *coreblock.Block,
-) (*coreblock.Block, bool, error) {
-	if dagBlock.IsEncrypted() {
-		encBlock, err := mp.loadEncryptionBlock(ctx, *dagBlock.Encryption)
-		if err != nil {
-			return nil, false, err
-		}
-
-		if encBlock == nil {
-			return dagBlock, false, nil
-		}
-
-		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
-		if err != nil {
-			return nil, false, err
-		}
-		if plainTextBlock != nil {
-			return plainTextBlock, true, nil
-		}
-	}
-	return dagBlock, true, nil
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
@@ -345,15 +299,15 @@ func (mp *mergeProcessor) processBlock(
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
+	block, canRead, err := coreblock.ProcessEncryptedBlock(ctx, mp.encBlockLS, dagBlock)
 	if err != nil {
-		return err
+		return NewErrProcessEncryptedBlock(err, blockLink.String())
 	}
 
 	if canRead {
 		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
-			return err
+			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
 		// If the CRDT is nil, it means the field is not part
@@ -364,51 +318,27 @@ func (mp *mergeProcessor) processBlock(
 
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
-			return err
+			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
 	}
 
 	for _, link := range dagBlock.Links {
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
-			return err
+			return NewErrLoadChildBlock(err, link.Link.String())
 		}
 
 		childBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return NewErrDecodeChildBlock(err, link.Link.String())
 		}
 
 		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
-			return err
+			return NewErrProcessChildBlock(err, link.Link.String())
 		}
 	}
 
 	return nil
-}
-
-func decryptBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
-	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
-
-	if block.Delta.IsComposite() || block.Delta.IsCollection() {
-		// for composite blocks there is nothing to decrypt
-		return block, nil
-	}
-
-	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
-	if err != nil {
-		return nil, err
-	}
-	if len(bytes) == 0 {
-		return nil, nil
-	}
-	newBlock := block.Clone()
-	newBlock.Delta.SetData(bytes)
-	return newBlock, nil
 }
 
 func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (crdt.ReplicatedData, error) {
@@ -416,14 +346,14 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {
 	case crdtUnion.IsComposite():
 		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
 		if err != nil {
-			return nil, err
+			return nil, NewErrParseDocIDMerge(err, string(crdtUnion.GetDocID()))
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
@@ -447,7 +377,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 	default:
 		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
 		if err != nil {
-			return nil, err
+			return nil, NewErrParseDocIDMerge(err, string(crdtUnion.GetDocID()))
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
@@ -463,7 +393,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
 		if err != nil {
-			return nil, err
+			return nil, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
@@ -487,12 +417,28 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.GetDocument(ctx, docID)
+	doc, err := getDocForMerge(ctx, mp.col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return nil
+		return err
 	}
 	mp.docIDs[docID] = doc
 	return nil
+}
+
+// getDocForMerge fetches a doc during inbound merge without the ACP read filter.
+// The merge ctx has no caller identity, so GetDocument would deny access and
+// return nil, silently skipping the secondary-index Save. Access was already
+// gated at the P2P boundary, so we read directly.
+func getDocForMerge(
+	ctx context.Context,
+	col *collection,
+	docID client.DocID,
+) (*client.Document, error) {
+	primaryKey, err := col.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
+	return col.getInternal(ctx, primaryKey, nil, false)
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
@@ -524,7 +470,7 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 	cids, err := getHeads(ctx, key)
 
 	if err != nil {
-		return mergeTarget{}, err
+		return mergeTarget{}, NewErrGetHeadsForMerge(err, string(key.Bytes()))
 	}
 
 	mt := newMergeTarget()
@@ -559,12 +505,12 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 	txn := datastore.CtxMustGetTxn(ctx)
 	b, err := txn.Blockstore().Get(ctx, cid)
 	if err != nil {
-		return nil, err
+		return nil, NewErrLoadBlockFromStore(err, cid.String())
 	}
 
 	block, err := coreblock.GetFromBytes(b.RawData())
 	if err != nil {
-		return nil, err
+		return nil, NewErrDecodeBlockFromStore(err, cid.String())
 	}
 
 	return block, nil
@@ -576,9 +522,15 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.GetDocument(ctx, docID)
+	newDoc, err := getDocForMerge(ctx, col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
+	}
+	// Both can be nil during concurrent P2P operations (e.g. delete + update)
+	// where the document was already deleted and no prior indexed state exists.
+	if oldDoc == nil && newDoc == nil {
+		log.InfoContext(ctx, "skipping index update: no document found", corelog.String("docID", docID.String()))
+		return nil
 	}
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)

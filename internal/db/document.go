@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
@@ -57,7 +58,7 @@ func (c *collection) getAllDocIDsChan(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllDocIDs(err)
 	}
 
 	resCh := make(chan docIDResult)
@@ -243,11 +244,13 @@ func (c *collection) add(
 	if err != nil {
 		return err
 	}
-	if exists {
-		return NewErrDocumentAlreadyExists(primaryKey.DocID)
-	}
+	// isDeleted is checked before exists because a tombstoned doc
+	// still satisfies exists, and the deleted error is more informative.
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
+	}
+	if exists {
+		return NewErrDocumentAlreadyExists(primaryKey.DocID)
 	}
 
 	// write value object marker if we have an empty doc
@@ -267,7 +270,7 @@ func (c *collection) add(
 
 		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
 		if err != nil {
-			return err
+			return NewErrStoreDocMarker(err, docID.String())
 		}
 	}
 
@@ -629,6 +632,17 @@ func (c *collection) save(
 		})
 	}
 
+	_, stillExists, err := c.db.collectionRepository.TryGet(ctx, description.CollectionIndex{
+		Kind:  description.CollectionID,
+		Value: c.def.CollectionID,
+	})
+	if err != nil {
+		return err
+	}
+	if !stillExists {
+		return client.ErrCollectionNotFound
+	}
+
 	return nil
 }
 
@@ -737,7 +751,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, err
+		return false, false, NewErrGetDocStatus(err, primaryKey.DocID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -752,7 +766,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 ) (keys.PrimaryDataStoreKey, error) {
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
-		return keys.PrimaryDataStoreKey{}, err
+		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
 	}
 
 	return keys.PrimaryDataStoreKey{

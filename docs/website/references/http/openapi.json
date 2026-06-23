@@ -27,6 +27,30 @@
             }
         },
         "schemas": {
+            "action_execution": {
+                "properties": {
+                    "Action": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "CollectionID": {
+                        "type": "string"
+                    },
+                    "Reason": {
+                        "type": "string"
+                    },
+                    "Status": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Subject": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "add_acp_document_relationship_request": {
                 "properties": {
                     "CollectionName": {
@@ -642,7 +666,7 @@
     },
     "info": {
         "title": "DefraDB API",
-        "version": "0"
+        "version": "1"
     },
     "openapi": "3.0.3",
     "paths": {
@@ -673,9 +697,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -710,9 +731,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -745,9 +763,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -765,9 +780,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -785,9 +797,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -822,9 +831,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -857,9 +863,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -884,13 +887,44 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
                     "acp_node_status"
+                ]
+            }
+        },
+        "/actions": {
+            "get": {
+                "description": "List information pertaining to long running actions",
+                "operationId": "list_actions",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/action_execution"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/action_execution"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "Information on incomplete action executions"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "action"
                 ]
             }
         },
@@ -914,9 +948,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -944,9 +975,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -992,9 +1020,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1029,8 +1054,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1076,8 +1101,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1086,6 +1111,38 @@
             }
         },
         "/collections": {
+            "delete": {
+                "description": "Delete one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names. By default every version of each named collection is deleted; set 'active-only=true' to delete only the active head version and keep earlier versions intact.",
+                "operationId": "delete_collection",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "active-only",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "describe_collection",
@@ -1146,9 +1203,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1173,9 +1227,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1210,9 +1261,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1239,9 +1287,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1272,9 +1317,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1309,9 +1351,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1357,9 +1396,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1403,9 +1439,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1453,8 +1486,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1492,8 +1525,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1536,8 +1569,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1573,8 +1606,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1613,9 +1646,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1660,8 +1690,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1700,8 +1730,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1740,9 +1770,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1787,8 +1814,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1826,8 +1853,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1856,9 +1883,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1876,9 +1900,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1909,9 +1930,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1961,10 +1979,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2012,10 +2051,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2045,9 +2105,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2080,9 +2137,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2107,14 +2161,31 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
                     "node",
                     "identity"
+                ]
+            }
+        },
+        "/node/options": {
+            "get": {
+                "description": "Get node configuration options",
+                "operationId": "get_node_options",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "node"
                 ]
             }
         },
@@ -2137,9 +2208,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2170,9 +2238,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2198,9 +2263,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2229,9 +2291,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2270,9 +2329,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2314,9 +2370,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2333,9 +2386,22 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/disconnect": {
+            "post": {
+                "operationId": "disconnect",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
                     },
-                    "default": {
-                        "description": ""
+                    "400": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2366,9 +2432,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2394,9 +2457,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2425,9 +2485,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2472,9 +2529,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2498,9 +2552,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2528,9 +2579,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2556,9 +2604,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2584,9 +2629,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2602,11 +2644,8 @@
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
-                    "400": {
+                    "403": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 }
             }
@@ -2639,47 +2678,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "transaction"
-                ]
-            }
-        },
-        "/tx/concurrent": {
-            "post": {
-                "description": "Create a new concurrent transaction",
-                "operationId": "new_concurrent_transaction",
-                "parameters": [
-                    {
-                        "description": "Read only transaction",
-                        "in": "query",
-                        "name": "read_only",
-                        "schema": {
-                            "default": false,
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/create_tx"
-                                }
-                            }
-                        },
-                        "description": "Transaction info"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2709,8 +2707,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2738,8 +2736,11 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2784,9 +2785,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2838,9 +2836,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2851,8 +2846,16 @@
     },
     "servers": [
         {
-            "description": "Local DefraDB instance",
+            "description": "DefraDB latest version",
+            "url": "/api"
+        },
+        {
+            "description": "DefraDB version 0",
             "url": "/api/v0"
+        },
+        {
+            "description": "DefraDB version 1",
+            "url": "/api/v1"
         }
     ],
     "tags": [

@@ -21,6 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // definitionState holds collection descriptions in easily accessible
@@ -98,10 +100,6 @@ func (s *definitionState) getCollection(
 		}
 
 		for _, col := range s.collections {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}
@@ -145,6 +143,8 @@ var updateOnlyValidators = []definitionValidator{
 	validateFieldNotMutated,
 	validateFieldNotMoved,
 	validateCollectionNameNotMutated,
+	validateDematerializedViewHasNoData,
+	validateNonNillableFieldNotAdded,
 }
 
 var collectionUpdateValidators = append(
@@ -173,6 +173,7 @@ var globalValidators = []definitionValidator{
 	validateTypeSupported,
 	validateTypeAndKindCompatible,
 	validateFieldNotDuplicated,
+	validateRelationNameUnique,
 	validateSelfReferences,
 	validateCollectionMaterialized,
 	validateMaterializedHasNoPolicy,
@@ -240,10 +241,20 @@ func validateRelationPointsToValidKind(
 				continue
 			}
 
-			_, ok := newState.getCollection(col, field.Kind)
-			if !ok {
-				errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
+			if _, ok := newState.getCollection(col, field.Kind); ok {
+				continue
 			}
+
+			// The kind cannot be resolved in the new state. If it could be resolved in the
+			// old state then the patch is removing a collection that another field still
+			// references; surface that with a more specific error so the caller knows what
+			// they need to remove or repoint first.
+			if removed, wasPresent := oldState.getCollection(col, field.Kind); wasPresent {
+				errs = append(errs, NewErrRemoveReferencedCollectionFromField(removed.Name, col.Name, field.Name))
+				continue
+			}
+
+			errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
 		}
 	}
 
@@ -888,6 +899,38 @@ func validateFieldNotMutated(
 	return errors.Join(errs...)
 }
 
+func validateNonNillableFieldNotAdded(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.activeCollectionsByColID {
+		oldCol, ok := oldState.activeCollectionsByColID[newCol.CollectionID]
+		if !ok {
+			continue
+		}
+
+		oldFieldIDs := map[string]struct{}{}
+		for _, field := range oldCol.Fields {
+			if field.FieldID != "" {
+				oldFieldIDs[field.FieldID] = struct{}{}
+			}
+		}
+
+		for _, field := range newCol.Fields {
+			if _, exists := oldFieldIDs[field.FieldID]; !exists {
+				if !field.Kind.IsNillable() {
+					errs = append(errs, NewErrCannotAddNonNillableField(field.Name))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func validateFieldNotDuplicated(
 	ctx context.Context,
 	db *DB,
@@ -903,6 +946,64 @@ func validateFieldNotDuplicated(
 				errs = append(errs, NewErrDuplicateField(field.Name))
 			}
 			fieldNames[field.Name] = struct{}{}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateRelationNameUnique(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		// Track fields per relation name: [relationName] -> list of (fieldName, isPrimary)
+		type fieldInfo struct {
+			name      string
+			isPrimary bool
+		}
+		relationFields := map[string][]fieldInfo{}
+
+		for _, field := range col.Fields {
+			if !field.RelationName.HasValue() {
+				continue
+			}
+
+			if field.Kind == client.FieldKind_DocID {
+				continue
+			}
+
+			relationName := field.RelationName.Value()
+			relationFields[relationName] = append(relationFields[relationName], fieldInfo{
+				name:      field.Name,
+				isPrimary: field.IsPrimary,
+			})
+		}
+
+		for relationName, fields := range relationFields {
+			if len(fields) <= 1 {
+				continue
+			}
+
+			// Check if this is a legitimate self-relation pair:
+			// exactly one primary field and one or more secondary fields sharing the same relation name.
+			primaryCount := 0
+			for _, f := range fields {
+				if f.isPrimary {
+					primaryCount++
+				}
+			}
+
+			if primaryCount == 1 && len(fields) == 2 {
+				// This is a valid primary/secondary self-relation pair, skip.
+				continue
+			}
+
+			// Otherwise, it's a conflict.
+			errs = append(errs, NewErrRelationNameNotUnique(fields[0].name, relationName))
 		}
 	}
 
@@ -1109,7 +1210,7 @@ func validateCollectionFieldDefaultValue(
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
 		_, err := client.NewDocFromMap(ctx, map[string]any{}, col)
-		if err != nil {
+		if err != nil && !errors.Is(err, client.ErrMissingRequiredField) {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}
 	}
@@ -1163,7 +1264,7 @@ func validateVersionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "VersionID", col.VersionID))
 			continue
 		}
 
@@ -1197,7 +1298,7 @@ func validateCollectionID(
 
 		exists, err := txn.Blockstore().Has(ctx, key)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, NewErrCheckCIDExists(err, "CollectionID", col.CollectionID))
 			continue
 		}
 
@@ -1220,6 +1321,62 @@ func validateEncryptedIndexes(
 	for _, newCol := range newState.collections {
 		if err := validateEncryptedIndexesOnCollection(newCol); err != nil {
 			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateDematerializedViewHasNoData(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		if col.IsMaterialized {
+			continue
+		}
+
+		oldCol, ok := oldState.collectionsByID[col.VersionID]
+		if !ok {
+			continue
+		}
+
+		if !oldCol.IsMaterialized {
+			continue
+		}
+
+		txn := datastore.CtxMustGetTxn(ctx)
+
+		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+			Prefix:   keys.NewViewCacheColPrefix(shortID),
+			KeysOnly: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		hasValue, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if hasValue {
+			errs = append(errs,
+				NewErrDematerializePopulatedView(col.Name, col.VersionID),
+			)
+		}
+
+		err = iter.Close()
+		if err != nil {
+			return err
 		}
 	}
 

@@ -36,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -64,6 +65,11 @@ const (
 // DB is the main struct for DefraDB's storage layer.
 type DB struct {
 	glock sync.RWMutex
+
+	// recoveryWG tracks the background index-state recovery goroutine started by newDB.
+	// Close waits on this before tearing down storage so the goroutine does not outlive
+	// the rootstore.
+	recoveryWG sync.WaitGroup
 
 	rootstore corekv.TxnStore
 
@@ -115,6 +121,8 @@ type DB struct {
 
 	// lockSet contains and manages the set of locks held and available to this Defra instance.
 	lockSet *lock.LockSet
+
+	collectionRepository *description.CollectionRepository
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -145,6 +153,8 @@ func newDB(
 
 	ctx, cancel := context.WithCancel(ctx)
 
+	lockSet := lock.NewLockSet()
+
 	db := &DB{
 		rootstore:               rootstore,
 		blockStoreChunkSize:     cfg.ChunkSize,
@@ -162,7 +172,8 @@ func newDB(
 		colMergeQueue:           newMergeQueue(),
 		retryIntervals:          cfg.RetryIntervals,
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
-		lockSet:                 lock.NewLockSet(),
+		lockSet:                 lockSet,
+		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
@@ -194,7 +205,14 @@ func newDB(
 	db.lensNode = node
 
 	if cfg.P2P.HasValue() {
-		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+		p, err := p2p.New(
+			ctx,
+			db,
+			node, cfg.P2P.Value(),
+			db.nodeIdentity,
+			NewCollectionRetriever(db),
+			db.collectionRepository,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -206,6 +224,12 @@ func newDB(
 		return nil, err
 	}
 
+	db.recoveryWG.Go(func() {
+		if err := db.recoverIndexStates(db.ctx); err != nil {
+			log.ErrorE("index state recovery failed", err)
+		}
+	})
+
 	return db, nil
 }
 
@@ -216,16 +240,6 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	}
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
-	return wrapDatastoreTxn(txn, db), nil
-}
-
-// NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
-	if db.ctx.Err() != nil {
-		return nil, db.ctx.Err()
-	}
-	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
@@ -310,7 +324,7 @@ func (db *DB) initialize(ctx context.Context) error {
 
 	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
 	if err != nil {
-		return err
+		return NewErrCheckDBInitialized(err)
 	}
 	// if we're loading an existing database, just load the collection definitions
 	// and migrations and finish initialization
@@ -388,6 +402,10 @@ func (db *DB) Close() {
 
 	db.ctxCancel()
 
+	// Wait for the background recovery goroutine to exit before tearing down storage.
+	// The goroutine observes cancellation via db.ctx and will stop promptly.
+	db.recoveryWG.Wait()
+
 	db.events.Close()
 
 	if db.nodeACP.NodeACP != nil {
@@ -417,7 +435,7 @@ func (db *DB) Close() {
 func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
-		return err
+		return NewErrDumpDBState(err)
 	}
 
 	for {
@@ -437,7 +455,7 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 
 		key, err := datastore.HumanReadableKey(iter.Key())
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return errors.Join(NewErrParseDatastoreKey(err), iter.Close())
 		}
 
 		log.InfoContext(ctx, "", corelog.Any(key, value))

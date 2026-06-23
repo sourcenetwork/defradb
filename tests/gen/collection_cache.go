@@ -69,10 +69,6 @@ func GetCollection(
 		}
 
 		for _, col := range cache.Collections {
-			if col.CollectionID == host.CollectionID {
-				continue
-			}
-
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}

@@ -52,6 +52,7 @@ var ConfigFlags = map[string]string{
 	"log-overrides":              "log.overrides",
 	"no-log-color":               "log.colordisabled",
 	"url":                        "api.address",
+	"audience":                   "api.audience",
 	"max-txn-retries":            "datastore.maxtxnretries",
 	"store":                      "datastore.store",
 	"no-encryption":              "datastore.noencryption",
@@ -62,6 +63,8 @@ var ConfigFlags = map[string]string{
 	"peers":                      "net.peers",
 	"p2paddr":                    "net.p2paddresses",
 	"no-p2p":                     "net.p2pdisabled",
+	"pubsub":                     "net.pubsubenabled",
+	"relay":                      "net.relay",
 	"allowed-origins":            "api.allowed-origins",
 	"pubkeypath":                 "api.pubkeypath",
 	"privkeypath":                "api.privkeypath",
@@ -80,6 +83,7 @@ var ConfigFlags = map[string]string{
 // ConfigDefaults contains default values for config entries.
 var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
+	"api.audience":                      "",
 	"api.allowed-origins":               []string{},
 	"datastore.badger.path":             "data",
 	"datastore.maxtxnretries":           5,
@@ -107,7 +111,7 @@ var ConfigDefaults = map[string]any{
 	"datastore.nosigning":               false,
 	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.document.type":                 "none",
+	"acp.document.type":                 "local",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 

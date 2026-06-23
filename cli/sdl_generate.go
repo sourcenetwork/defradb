@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -34,12 +33,11 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	var yesOverwrite bool
 	var searchableEncryption bool
 	var cmd = &cobra.Command{
-		Use:   "generate --output schema.graphql <input schema files...>",
+		Use:   "generate <input schema files...>",
 		Short: "Generate full GraphQL formatted schema.",
 		Long: `Generates the fully formatted GraphQL schema from a given user type definition(s).
 
-		Accepts multiple input files as well as "-" to use stdin.
-		`,
+Accepts multiple input files as well as "-" to use stdin.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sdlBuf string
@@ -107,10 +105,6 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			for i, c := range cols {
 				collections[i] = c.Definition
 			}
-
-			cache := description.NewCollectionCache()
-			cache.AddAll(collections)
-			ctx := description.ContextWithCollectionCache(ctx, cache)
 
 			_, err = schemaManager.Generator.Generate(ctx, collections)
 			if err != nil {

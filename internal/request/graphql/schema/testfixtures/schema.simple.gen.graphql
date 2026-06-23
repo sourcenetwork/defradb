@@ -90,14 +90,14 @@ age: ScalarAggregateNumericBlock,     """
     The scalar field selection type for aggregate input arguments.
 
     """
-points: ScalarAggregateNumericBlock): Float
+points: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the total number of items within the specified child sets. If multiple child
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    COUNT(GROUP: User__CountSelector, _version: User___version__CountSelector): Int
+    COUNT(GROUP: User__CountSelector, _version: User___version__CountSelector): Int!
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -218,9 +218,9 @@ age: ScalarAggregateNumericBlock,     """
     The scalar field selection type for aggregate input arguments.
 
     """
-points: ScalarAggregateNumericBlock): Float
+points: ScalarAggregateNumericBlock): Float!
     """
-    
+
     Returns the head commit for this document.
 
     """
@@ -883,7 +883,7 @@ showDeleted: Boolean): [User]
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    AVG(User: User__NumericSelector): Float
+    AVG(User: User__NumericSelector): Float!
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
@@ -946,7 +946,7 @@ order: [commitsOrderArg]): [Commit]
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    COUNT(User: User__CountSelector): Int
+    COUNT(User: User__CountSelector): Int!
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
@@ -970,7 +970,7 @@ order: [commitsOrderArg]): [Commit]
     a single value.
 
     """
-    SUM(User: User__NumericSelector): Float
+    SUM(User: User__NumericSelector): Float!
 }
 
 "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text."
@@ -2634,3 +2634,7 @@ directive @encryptedIndex(
     "The type of searchable encryption (currently only 'equality' is supported)."
     type: String = "equality"
 ) on FIELD_DEFINITION
+
+
+"@exhaustive signals that complete/exhaustive results are desired even at performance cost."
+directive @exhaustive on QUERY

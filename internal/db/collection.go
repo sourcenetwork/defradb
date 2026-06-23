@@ -30,11 +30,15 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *DB
-	def            client.CollectionVersion
-	indexes        []CollectionIndex
+	db      *DB
+	def     client.CollectionVersion
+	indexes []CollectionIndex
+	// indexStates holds the lifecycle state of the collection's non-ready indexes, keyed by
+	// index ID. An index absent from the map has no action record and so is ready. Populated
+	// at construction time from the index state store.
+	indexStates    map[uint32]indexState
 	fetcherFactory func() fetcher.Fetcher
-	txn            immutable.Option[client.Txn]
+	txn            immutable.Option[datastore.Txn]
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -43,21 +47,67 @@ type collection struct {
 // to be auto generated based on a more controllable and user friendly
 // CollectionOptions object.
 
-// newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[client.Txn]) (*collection, error) {
+// newCollection returns a pointer to a newly instantiated DB Collection.
+//
+// Index instances are only constructed for indexes whose status is building or ready;
+// failed and dropping indexes are excluded from the write path.
+func (db *DB) newCollection(
+	ctx context.Context,
+	desc client.CollectionVersion,
+	txn immutable.Option[datastore.Txn],
+) (*collection, error) {
 	col := &collection{
-		db:  db,
-		def: desc,
-		txn: txn,
+		db:          db,
+		def:         desc,
+		txn:         txn,
+		indexStates: make(map[uint32]indexState),
 	}
-	for _, index := range desc.Indexes {
-		colIndex, err := NewCollectionIndex(col, index)
+
+	if len(desc.Indexes) > 0 {
+		// Build a read context that has a txn set so getIndexStates can call CtxMustGetTxn.
+		stateCtx := ctx
+		if txn.HasValue() {
+			stateCtx = datastore.CtxSetTxn(ctx, txn.Value())
+		}
+
+		states, err := getIndexStates(stateCtx, desc.CollectionID)
 		if err != nil {
 			return nil, err
 		}
-		col.indexes = append(col.indexes, colIndex)
+		col.indexStates = states
+
+		for _, index := range desc.Indexes {
+			state := states[index.ID]
+
+			// Only building and ready indexes participate in the write path.
+			if state.isFailed() || state.isDropping() {
+				continue
+			}
+
+			colIndex, err := NewCollectionIndex(col, index, state.isBuilding())
+			if err != nil {
+				return nil, err
+			}
+
+			col.indexes = append(col.indexes, colIndex)
+		}
 	}
+
 	return col, nil
+}
+
+// QueryableIndexes returns the indexes that are safe for query planning: only ready indexes.
+// Building, failed and dropping indexes are excluded because their entries may be incomplete.
+func (c *collection) QueryableIndexes() []client.IndexDescription {
+	all := c.Version().Indexes
+	result := make([]client.IndexDescription, 0, len(all))
+	for _, idx := range all {
+		// A ready index has no state record.
+		if _, ok := c.indexStates[idx.ID]; !ok {
+			result = append(result, idx)
+		}
+	}
+	return result
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -72,7 +122,7 @@ func (c *collection) newFetcher(ctx context.Context) fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx))
+	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx), c.db.collectionRepository)
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -113,24 +163,34 @@ func (db *DB) getCollections(
 	var cols []client.CollectionVersion
 	switch {
 	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
-		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
+		col, err := description.GetCollectionByName(ctx, db.collectionRepository, opts.CollectionName.Value())
 		if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case opts.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, opts.VersionID.Value())
+		col, err := description.GetCollectionByID(ctx, db.collectionRepository, opts.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case opts.CollectionID.HasValue():
-		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, opts.CollectionID.Value())
-		if err != nil {
-			return nil, err
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
+			var err error
+			cols, err = description.GetCollectionsByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// GetActiveCollectionByCollectionID is quite a lot more efficient than GetCollectionsByCollectionID
+			// so we use it when we can.
+			col, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
+			if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
+				return nil, err
+			}
+			cols = append(cols, col)
 		}
 
 	// Multi-collection self-referencing relations are the only time the collection set id option
@@ -143,13 +203,13 @@ func (db *DB) getCollections(
 	default:
 		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
 			var err error
-			cols, err = description.GetCollections(ctx)
+			cols, err = description.GetCollections(ctx, db.collectionRepository)
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			var err error
-			cols, err = description.GetActiveCollections(ctx)
+			cols, err = description.GetActiveCollections(ctx, db.collectionRepository)
 			if err != nil {
 				return nil, err
 			}
@@ -187,13 +247,13 @@ func (db *DB) getCollections(
 
 		// In the case that the txn was ephemeral, we will not save a reference to it
 		// attached to the collection.
-		var txnOpt immutable.Option[client.Txn]
+		var txnOpt immutable.Option[datastore.Txn]
 		if txnIsEphemeral {
-			txnOpt = immutable.None[client.Txn]()
+			txnOpt = immutable.None[datastore.Txn]()
 		} else {
-			txnOpt = datastore.CtxTryGetClientTxnOption(ctx)
+			txnOpt = datastore.CtxTryGetTxnOption(ctx)
 		}
-		collection, err := db.newCollection(col, txnOpt)
+		collection, err := db.newCollection(ctx, col, txnOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +288,7 @@ func (db *DB) addCollection(
 }
 
 func (db *DB) loadCollectionDefinitions(ctx context.Context) error {
-	definitions, err := description.GetActiveCollections(ctx)
+	definitions, err := description.GetActiveCollections(ctx, db.collectionRepository)
 	if err != nil {
 		return err
 	}
@@ -243,7 +303,7 @@ func getTxnAndSetCtxForCollection(ctx context.Context, c *collection) (context.C
 	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
 	if !hadTxn && c.txn.HasValue() {
 		hadTxn = true
-		txn = c.txn.Value().(datastore.Txn)
+		txn = c.txn.Value()
 		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
 	return ctx, txn, hadTxn

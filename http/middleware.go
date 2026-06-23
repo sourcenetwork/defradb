@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,7 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -45,12 +44,15 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.TxnStore, txs *sync.Map) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.TxnStore, txs *sync.Map, nodeOpts *options.NodeOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
+			if nodeOpts != nil {
+				ctx = context.WithValue(ctx, nodeOptsContextKey, nodeOpts)
+			}
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}
@@ -73,7 +75,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			next.ServeHTTP(rw, req)
+			responseJSON(rw, httpStatusFromError(db.ErrTxnDiscarded), errorResponse{db.ErrTxnDiscarded})
 			return
 		}
 		ctx := req.Context()
@@ -87,18 +89,18 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := mustGetContextClientDB(req)
+		var store client.Store
+		txn, ok := datastore.CtxTryGetClientTxn(req.Context())
+		if ok {
+			store = txn
+		} else {
+			store = mustGetContextClientDB(req)
+		}
 
 		opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(req.Context()))
-		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
+		col, err := store.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
-			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-				rw.WriteHeader(http.StatusUnauthorized)
-				_, _ = fmt.Fprintln(rw, err.Error())
-				return
-			}
-			rw.WriteHeader(http.StatusNotFound)
-			_, _ = fmt.Fprintln(rw, err.Error())
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
 

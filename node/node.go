@@ -62,6 +62,28 @@ type Node struct {
 	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
+	// apiErrCh fires once when the HTTP/API server goroutine exits with a
+	// non-ErrServerClosed error (typically a bad TLS key path, port bind
+	// failure, etc). Callers can select on APIError() to trigger their
+	// shutdown path rather than leaving a half-alive process for the user
+	// to SIGKILL. Buffered so startAPI never blocks on a missing reader.
+	apiErrCh chan error
+}
+
+// APIError returns a buffered, never-closed channel that receives at most one
+// error describing why the API server goroutine stopped unexpectedly. It stays
+// silent on a clean shutdown (http.ErrServerClosed) and only fires once over
+// the lifetime of the Node, so callers should receive with a non-blocking
+// select and must not rely on channel-closed semantics:
+//
+//	select {
+//	case err := <-n.APIError():
+//	    // startup failed
+//	default:
+//	    // still healthy
+//	}
+func (n *Node) APIError() <-chan error {
+	return n.apiErrCh
 }
 
 // DefaultNodeOptions returns default NodeOptions values.
@@ -96,8 +118,10 @@ func DefaultNodeOptions() options.NodeOptions {
 			P2PBlockSyncTimeout: time.Second * 5,
 			LensRuntime:         options.NodeDefaultLensRuntime,
 		},
-		P2P:  options.NodeP2POptions{},
-		HTTP: options.NodeHTTPOptions{},
+		P2P: options.NodeP2POptions{},
+		HTTP: options.NodeHTTPOptions{
+			Address: http.DefaultHTTPAddress,
+		},
 	}
 }
 
@@ -106,9 +130,15 @@ func New(ctx context.Context, opts ...options.Enumerable[options.NodeOptions]) (
 	nodeOpts := DefaultNodeOptions()
 	utils.ApplyOptions(&nodeOpts, opts...)
 	n := Node{
-		opts: &nodeOpts,
+		opts:     &nodeOpts,
+		apiErrCh: make(chan error, 1),
 	}
 	return &n, nil
+}
+
+// Options returns the node's resolved options.
+func (n *Node) Options() *options.NodeOptions {
+	return n.opts
 }
 
 // Start starts the node sub-systems.

@@ -66,6 +66,7 @@ var (
 	ErrPolicyIDMustNotBeEmpty                      = errors.New(errPolicyIDMustNotBeEmpty)
 	ErrResourceNameMustNotBeEmpty                  = errors.New(errResourceNameMustNotBeEmpty)
 	ErrInvalidActorID                              = errors.New(errInvalidActorID)
+	ErrResourceIsMissingRequiredPermission         = errors.New(errResourceIsMissingRequiredPermission)
 )
 
 func NewErrInitializationOfACPFailed(

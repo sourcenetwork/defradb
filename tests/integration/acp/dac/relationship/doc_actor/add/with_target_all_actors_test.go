@@ -125,7 +125,7 @@ resources:
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
+			&action.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -203,7 +203,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // But doesn't mean they can update.
+			&action.UpdateDoc{ // But doesn't mean they can update.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -338,7 +338,7 @@ resources:
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.UpdateDoc{ // Since can't read without identity, can't update either.
+			&action.UpdateDoc{ // Since can't read without identity, can't update either.
 				CollectionID: 0,
 
 				Identity: testUtils.NoIdentity(),
@@ -392,7 +392,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // But doesn't mean they can update.
+			&action.UpdateDoc{ // But doesn't mean they can update.
 				CollectionID: 0,
 
 				Identity: testUtils.NoIdentity(),

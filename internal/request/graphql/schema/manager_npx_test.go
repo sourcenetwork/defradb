@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/stretchr/testify/require"
 )
 
@@ -86,10 +85,6 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 		collections[i] = c.Definition
 	}
 
-	cache := description.NewCollectionCache()
-	cache.AddAll(collections)
-	ctx = description.ContextWithCollectionCache(ctx, cache)
-
 	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
 
@@ -100,7 +95,7 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 
 	testFixturePath := getFullFixturePath(fixtureName)
 
-	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli",
+	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
 		"diff",
 		string(sdlResult),
 		testFixturePath)

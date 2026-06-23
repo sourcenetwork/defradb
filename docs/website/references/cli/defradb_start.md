@@ -13,12 +13,12 @@ defradb start [flags]
 ### Options
 
 ```
-      --allowed-origins stringArray       List of origins to allow for CORS requests
+      --allowed-origins stringArray       List of origins to allow for CORS requests. Their hosts are also accepted as auth token audiences
       --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data
                                            - generates temporary node identity if one doesn't exist in the keyring
-      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub) (default "none")
+      --document-acp-type string          Specify the document acp engine to use (supported: local (default), source-hub) (default "local")
   -h, --help                              help for start
   -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
@@ -32,6 +32,8 @@ defradb start [flags]
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
+      --pubsub                            Enable the pubsub system (default true)
+      --relay                             Enable the p2p relay
       --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
@@ -40,9 +42,10 @@ defradb start [flags]
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")

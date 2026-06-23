@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -35,6 +35,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/immutable"
 )
@@ -44,7 +45,7 @@ var _ client.Collection = (*Collection)(nil)
 type Collection struct {
 	def client.CollectionVersion
 	w   *CWrapper
-	txn immutable.Option[client.Txn]
+	txn immutable.Option[datastore.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -168,7 +169,7 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	cName := C.CString(c.def.Name)
@@ -191,12 +192,12 @@ func (c *Collection) ListIndexes(
 	res := ConvertAndFreeCResult(C.ListIndexes(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
-		return []client.IndexDescription{}, errors.New(res.Error)
+		return []client.ListIndexesResult{}, errors.New(res.Error)
 	}
 
-	retRes, err := unmarshalResult[[]client.IndexDescription](res.Value)
+	retRes, err := unmarshalResult[[]client.ListIndexesResult](res.Value)
 	if err != nil {
-		return []client.IndexDescription{}, err
+		return []client.ListIndexesResult{}, err
 	}
 
 	return retRes, nil

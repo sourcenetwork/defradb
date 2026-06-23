@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build !js
+
 package node
 
 import (
@@ -24,11 +26,10 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if n.opts.DisableAPI {
 		return nil
 	}
-	handler, err := http.NewHandler(n.DB)
+	handler, err := http.NewHandler(n.DB, n.opts)
 	if err != nil {
 		return err
 	}
-	http.IsDevMode = n.opts.EnableDevelopment
 
 	n.server, err = http.NewServer(handler, options.NodeHTTP().SetAll(n.opts.HTTP))
 	if err != nil {
@@ -39,17 +40,33 @@ func (n *Node) startAPI(ctx context.Context) error {
 		return err
 	}
 	log.InfoContext(ctx,
-		fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.server.Address(), http.PlaygroundEnabled))
-	log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/v0/graphql", n.server.Address()))
+		fmt.Sprintf("Providing HTTP API at %s ExplorerEnabled=%t", n.server.Address(), http.ExplorerEnabled))
+	log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/graphql", n.server.Address()))
 	go func() {
 		if err := n.server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
 			log.ErrorContextE(ctx, "HTTP server stopped", err)
+			// Surface the error once so the CLI / embedding application
+			// can trigger shutdown instead of waiting on a signal for
+			// a process that is already half-dead. #4735.
+			select {
+			case n.apiErrCh <- err:
+			default:
+			}
 		}
 	}()
 	n.APIURL = n.server.Address()
 	// Check that the server is ready before returning. We do this to ensure that
 	// subsequent operation will behave as expected.
-	c, err := http.NewClient(n.APIURL)
+	//
+	// When TLS is configured the server uses a self-signed certificate that is
+	// not trusted by the system CA pool, so we skip certificate verification for
+	// this loopback health check only.
+	var c *http.Client
+	if n.opts.HTTP.TLSCertPath != "" && n.opts.HTTP.TLSKeyPath != "" {
+		c, err = http.NewInsecureClient(n.APIURL)
+	} else {
+		c, err = http.NewClient(n.APIURL)
+	}
 	if err != nil {
 		return err
 	}

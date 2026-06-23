@@ -73,7 +73,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			txn, err := db.NewTxn(false)
 			if err != nil {
-				log.ErrorContext(ctx, err.Error())
+				log.ErrorContextE(ctx, "Failed to create transaction for subscription", err)
 				continue
 			}
 			ctx := InitContext(ctx, txn)
@@ -86,6 +86,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				db,
 				db.p2p,
 				db.getLensStore(ctx),
+				db.collectionRepository,
 			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
@@ -112,12 +113,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				}
 			}
 
-			// now that weve filtered empty result sets, lets recheck
-			if len(result) == 0 {
-				txn.Discard()
-				continue
-			}
-
 			// ignore incorrect CID for DocID error. This is specific to
 			// subscription API. Only the DocID is externally configurable for
 			// this API, but the CID comes from the event, which means theres a
@@ -125,6 +120,15 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			// to falsely report errors to the subscription.
 			if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
 				res.Errors = append(res.Errors, err)
+			}
+
+			// now that weve filtered empty result sets, lets recheck. If the result is
+			// empty AND there is no error to forward, drop. Otherwise (e.g. RunSelection
+			// returned (empty, err)) deliver the GQLResult so the subscriber sees the
+			// error instead of timing out.
+			if len(result) == 0 && len(res.Errors) == 0 {
+				txn.Discard()
+				continue
 			}
 			res.Data = result
 

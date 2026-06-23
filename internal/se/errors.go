@@ -21,6 +21,9 @@ const (
 	errFailedToDeserializeBlock    = "failed to deserialize block"
 	errFailedToGenerateSEArtifacts = "failed to generate SE artifacts"
 	errCollectionNotFound          = "collection not found"
+	errStoreSEArtifact             = "failed to store SE artifact"
+	errGetCollectionIDForSE        = "failed to get collection ID for SE query"
+	errCreateSEQueryIterator       = "failed to create SE query iterator"
 )
 
 func NewErrEmptyDocID(key string) error {
@@ -45,4 +48,17 @@ func NewErrFailedToGenerateSEArtifacts(inner error) error {
 
 func NewErrCollectionNotFound(collectionID string) error {
 	return errors.New(errCollectionNotFound, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrStoreSEArtifact(inner error, docID string, collectionID string) error {
+	return errors.Wrap(errStoreSEArtifact, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrGetCollectionIDForSE(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionIDForSE, inner, errors.NewKV("CollectionID", collectionID))
+}
+
+func NewErrCreateSEQueryIterator(inner error) error {
+	return errors.Wrap(errCreateSEQueryIterator, inner)
 }

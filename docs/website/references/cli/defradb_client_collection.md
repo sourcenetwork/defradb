@@ -4,26 +4,23 @@ Interact with a collection.
 
 ### Synopsis
 
-Add, describe, patch, set-active, and truncate collections.
+Add, describe, patch, set-active, delete, and truncate collections.
 
 ### Options
 
 ```
-      --collection-id string   Collection ID
-      --get-inactive           Get inactive collections as well as active
-  -h, --help                   help for collection
-  -i, --identity string        Hex formatted private key used to authenticate with ACP
-      --name string            Collection name
-      --tx uint                Transaction ID
-      --version-id string      Collection version ID
+  -h, --help              help for collection
+  -i, --identity string   Hex formatted private key used to authenticate with ACP
+      --tx uint           Transaction ID
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")
@@ -42,6 +39,7 @@ Add, describe, patch, set-active, and truncate collections.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client collection add](defradb_client_collection_add.md)	 - Add new collection
+* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete collections
 * [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
 * [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
 * [defradb client collection set-active](defradb_client_collection_set-active.md)	 - Set the active collection version

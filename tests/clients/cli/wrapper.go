@@ -53,7 +53,7 @@ type Wrapper struct {
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
 func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +117,22 @@ func (w *Wrapper) Connect(
 	args := []string{"client", "p2p", "connect"}
 
 	args = append(args, strings.Join(addresses, ","))
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	args := []string{"client", "p2p", "disconnect"}
+
+	args = append(args, addresses...)
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
@@ -377,6 +393,27 @@ func (w *Wrapper) BasicExport(
 	return err
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	args := []string{"client", "action", "list"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var info []client.ActionExecution
+	if err := json.Unmarshal(data, &info); err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
 func (w *Wrapper) AddCollection(
 	ctx context.Context,
 	sdl string,
@@ -417,6 +454,24 @@ func (w *Wrapper) PatchCollection(
 	}
 
 	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	args := []string{"client", "collection", "delete"}
+
+	opt := utils.NewOptions(opts...)
+	if opt.ActiveOnly {
+		args = append(args, "--active-only")
+	}
+	args = append(args, strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -471,7 +526,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	args := []string{"client", "view", "refresh"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())
@@ -589,7 +644,7 @@ func (w *Wrapper) GetCollections(
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
-		args = append(args, "--name", opt.CollectionName.Value())
+		args = append(args, "--collection-name", opt.CollectionName.Value())
 	}
 	if opt.VersionID.HasValue() {
 		args = append(args, "--version-id", opt.VersionID.Value())
@@ -628,14 +683,14 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	args := []string{"client", "index", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := json.Unmarshal(data, &indexes); err != nil {
 		return nil, err
 	}
@@ -739,29 +794,6 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "new"}
-	if readOnly {
-		args = append(args, "--read-only")
-	}
-
-	data, err := w.cmd.execute(context.Background(), args)
-	if err != nil {
-		return nil, err
-	}
-	var res http.CreateTxResponse
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
-}
-
-func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	args := []string{"client", "tx", "new"}
-	args = append(args, "--concurrent")
-
 	if readOnly {
 		args = append(args, "--read-only")
 	}

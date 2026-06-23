@@ -117,7 +117,7 @@ resources:
 
 			testUtils.WaitForSync{},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
@@ -133,7 +133,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(1),
