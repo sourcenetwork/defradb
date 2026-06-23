@@ -400,12 +400,15 @@ func (g *Generator) createExpandedFieldAggregate(
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
 
+		// The COUNT aggregate supports groupBy, so we need to add it to the input object
 		if f.Name == request.CountFieldName {
+			// groupByTypeName is only set for real collections, not scalar arrays
 			if groupByType, canHaveGroupBy := g.manager.schema.TypeMap()[groupByTypeName]; canHaveGroupBy {
 				expandedField := &gql.InputObjectFieldConfig{
 					Description: schemaTypes.GroupByArgDescription,
 					Type:        gql.NewList(gql.NewNonNull(groupByType)),
 				}
+				// Add the groupBy argument to the COUNT input object.
 				aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.GroupByClause, expandedField)
 			}
 		}

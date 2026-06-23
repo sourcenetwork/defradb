@@ -562,26 +562,38 @@ func resolveAggregates(
 					return nil, err
 				}
 
-				// If groupBy is specified, remap object relation field names and ensure the
-				// GROUP field is in the mapping so the groupNode has a valid data source index.
+				// convertedGroupBy holds the planner-internal form of the aggregate's groupBy
+				// argument, with field names translated to the numeric indices the planner uses
+				// internally. It is nil when no groupBy was requested.
 				var convertedGroupBy *GroupBy
 				if target.groupBy.HasValue() {
+					// Work on a copy so we don't mutate the original request.
 					groupByFields := make([]string, len(target.groupBy.Value().Fields))
 					copy(groupByFields, target.groupBy.Value().Fields)
+
 					for i, groupByField := range groupByFields {
 						fieldDesc, ok := childDef.GetFieldByName(groupByField)
 						if ok && fieldDesc.Kind.IsObject() {
+							// Grouping by a multi-valued (array) relation is not meaningful.
 							if fieldDesc.Kind.IsArray() {
 								return nil, NewErrInvalidFieldToGroupBy(groupByField)
 							}
+							// The planner stores relation fields under their ID form (e.g. "author_id"
+							// rather than "author"), so rewrite the name to match.
 							groupByFields[i] = request.ToFieldID(groupByField)
 						}
 					}
+
 					remappedGroupBy := immutable.Some(request.GroupBy{Fields: groupByFields})
+
+					// The groupNode requires a slot in the mapping for the special GROUP field so
+					// it has a valid data-source index to read from. If one doees not exist, it will be added.
 					if _, isGroupFieldMapped := childMapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
 						groupIndex := childMapping.GetNextIndex()
 						childMapping.Add(groupIndex, request.GroupFieldName)
 					}
+
+					// Translate the (now-remapped) field names into their numeric mapping indices.
 					convertedGroupBy = toGroupBy(remappedGroupBy, childMapping)
 				}
 
