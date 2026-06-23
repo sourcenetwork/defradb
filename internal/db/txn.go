@@ -643,7 +643,6 @@ func (txn *Txn) BasicExport(
 
 	if txn.isClosed {
 		return client.ErrTransactionNotFound
-
 	}
 
 	return txn.db.BasicExport(ctx, filepath, opts...)
