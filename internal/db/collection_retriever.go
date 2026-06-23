@@ -37,27 +37,14 @@ func NewCollectionRetriever(db *DB) collectionRetriever {
 	}
 }
 
-func (r collectionRetriever) ResolvePublicDocID(ctx context.Context, docID string) (string, error) {
+func (r collectionRetriever) ResolveBlockDocID(ctx context.Context, blockCID cid.Cid) (string, bool, error) {
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	defer txn.Discard()
 
-	publicDocID, err := resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
-	if err != nil || publicDocID != docID {
-		return publicDocID, err
-	}
-
-	blockCID, err := cid.Decode(docID)
-	if err != nil {
-		return docID, nil
-	}
-	publicDocID, found, err := id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, blockCID)
-	if err != nil || found {
-		return publicDocID, err
-	}
-	return docID, nil
+	return id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, blockCID)
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.

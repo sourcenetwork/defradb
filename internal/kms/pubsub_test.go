@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/assert"
@@ -149,16 +150,21 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	encstore := datastore.EncstoreFrom(rootstore)
-	service := &pubSubService{
-		ctx:          ctx,
-		encStore:     newIPLDEncryptionStorage(encstore),
-		colRetriever: testCollectionRetriever{},
-	}
 
 	foundBlock := &coreblock.Encryption{
 		Key: []byte("doc-key"),
 	}
 	foundLink := storeEncryptionBlock(t, ctx, encstore, foundBlock)
+	_, foundCID, err := cid.CidFromBytes(foundLink)
+	require.NoError(t, err)
+
+	service := &pubSubService{
+		ctx:      ctx,
+		encStore: newIPLDEncryptionStorage(encstore),
+		colRetriever: testCollectionRetriever{
+			docIDsByBlockCID: map[string]string{foundCID.String(): "doc-id"},
+		},
+	}
 
 	missingBlock := &coreblock.Encryption{
 		Key: []byte("other-doc-key"),
@@ -178,7 +184,33 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	assert.Equal(t, foundBlockBytes, blocks[0])
 }
 
-type testCollectionRetriever struct{}
+func TestGetEncryptionKeysLocally_SkipsBlockWithoutDocMapping(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	encstore := datastore.EncstoreFrom(rootstore)
+	service := &pubSubService{
+		ctx:          ctx,
+		encStore:     newIPLDEncryptionStorage(encstore),
+		colRetriever: testCollectionRetriever{},
+	}
+
+	block := &coreblock.Encryption{
+		Key: []byte("doc-key"),
+	}
+	link := storeEncryptionBlock(t, ctx, encstore, block)
+
+	links, blocks, err := service.getEncryptionKeysLocally(ctx, &fetchEncryptionKeyRequest{
+		Links: [][]byte{link},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, links)
+	require.Empty(t, blocks)
+}
+
+type testCollectionRetriever struct {
+	docIDsByBlockCID map[string]string
+}
 
 func (testCollectionRetriever) RetrieveCollectionFromDocID(
 	context.Context,
@@ -188,8 +220,9 @@ func (testCollectionRetriever) RetrieveCollectionFromDocID(
 	return nil, nil
 }
 
-func (testCollectionRetriever) ResolvePublicDocID(_ context.Context, docID string) (string, error) {
-	return "doc-" + docID, nil
+func (r testCollectionRetriever) ResolveBlockDocID(_ context.Context, blockCID cid.Cid) (string, bool, error) {
+	docID, ok := r.docIDsByBlockCID[blockCID.String()]
+	return docID, ok, nil
 }
 
 func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.T) {

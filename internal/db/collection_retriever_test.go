@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
+func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -61,24 +61,22 @@ func TestCollectionRetrieverResolvesPublicDocIDAliases(t *testing.T) {
 
 	retriever := NewCollectionRetriever(db)
 
-	resolvedDocID, err := retriever.ResolvePublicDocID(ctx, legacyDocID)
+	resolvedDocID, found, err := retriever.ResolveBlockDocID(ctx, blockCID)
 	require.NoError(t, err)
-	require.Equal(t, publicDocID, resolvedDocID)
-
-	resolvedDocID, err = retriever.ResolvePublicDocID(
-		ctx,
-		string(keys.EncodeDocRef(collectionShortID, docShortID)),
-	)
-	require.NoError(t, err)
-	require.Equal(t, publicDocID, resolvedDocID)
-
-	resolvedDocID, err = retriever.ResolvePublicDocID(ctx, blockCID.String())
-	require.NoError(t, err)
+	require.True(t, found)
 	require.Equal(t, publicDocID, resolvedDocID)
 
 	retrievedCol, err := retriever.RetrieveCollectionFromDocID(
 		ctx,
 		legacyDocID,
+		immutable.None[identity.Identity](),
+	)
+	require.NoError(t, err)
+	require.Equal(t, col.CollectionID(), retrievedCol.CollectionID())
+
+	retrievedCol, err = retriever.RetrieveCollectionFromDocID(
+		ctx,
+		string(keys.EncodeDocRef(collectionShortID, docShortID)),
 		immutable.None[identity.Identity](),
 	)
 	require.NoError(t, err)

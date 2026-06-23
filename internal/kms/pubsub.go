@@ -70,7 +70,7 @@ type CollectionRetriever interface {
 		string,
 		immutable.Option[identity.Identity],
 	) (client.Collection, error)
-	ResolvePublicDocID(context.Context, string) (string, error)
+	ResolveBlockDocID(context.Context, cid.Cid) (string, bool, error)
 }
 
 type pubSubService struct {
@@ -522,12 +522,11 @@ func (s *pubSubService) getEncryptionKeysLocally(
 		if err != nil {
 			return nil, nil, err
 		}
-		encBlockCIDString := encBlockCID.String()
-		publicDocID, err := s.colRetriever.ResolvePublicDocID(ctx, encBlockCIDString)
+		publicDocID, found, err := s.colRetriever.ResolveBlockDocID(ctx, encBlockCID)
 		if err != nil {
 			return nil, nil, err
 		}
-		if publicDocID != encBlockCIDString {
+		if found {
 			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, publicDocID)
 			if err != nil {
 				return nil, nil, err
@@ -536,13 +535,7 @@ func (s *pubSubService) getEncryptionKeysLocally(
 				continue
 			}
 		} else {
-			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
-			if err != nil {
-				return nil, nil, err
-			}
-			if !hasNodeAccess {
-				continue
-			}
+			continue
 		}
 
 		encBlockBytes, err := encBlock.Marshal()
@@ -582,36 +575,6 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		acpTypes.DocumentReadPerm,
 		publicDocID,
 	)
-}
-
-// doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to
-// perform a read on this node, used as a fallback gate for encryption blocks
-// that have no DocID (e.g. a `@branchable` collection's own head, where there
-// is no per-doc ACL to consult). Returns true unconditionally when NAC is not
-// enabled.
-func (s *pubSubService) doesIdentityHaveNodeReadAccess(
-	ctx context.Context,
-	actorIdentity immutable.Option[identity.Identity],
-) (bool, error) {
-	var actorDID string
-	if actorIdentity.HasValue() {
-		actorDID = actorIdentity.Value().DID()
-	}
-
-	err := acpDB.CheckNodeOperationAccess(
-		ctx,
-		actorDID,
-		s.nodeACP(),
-		acpTypes.NodeReadDocumentPerm,
-		acpTypes.NodeACPObject,
-	)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-		return false, nil
-	}
-	return false, err
 }
 
 func encodeToBase64(data []byte) []byte {
