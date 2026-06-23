@@ -54,21 +54,21 @@ func (c *collection) Truncate(
 		return err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	ctx, txn, err := ensureContextTxnShim(ctx, c.db)
 	if err != nil {
 		return err
 	}
 
 	defer txn.Discard()
 
-	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+
+	shortID, err := id.GetUncachedShortCollectionID(ctx, c.def.CollectionID, multistore.Systemstore())
 	if err != nil {
 		return err
 	}
 
 	c.db.lockSet.CollectionLock(txn, shortID)
-
-	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 
 	// Clear the transaction on the context used to write the action execution information, otherwise
 	// corekv will pick it up again, writing using the transaction.
@@ -103,7 +103,8 @@ func (c *collection) Truncate(
 func (c *collection) truncate(
 	ctx context.Context,
 ) error {
-	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	sysStore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Systemstore()
+	shortID, err := id.GetUncachedShortCollectionID(ctx, c.def.CollectionID, sysStore)
 	if err != nil {
 		return err
 	}

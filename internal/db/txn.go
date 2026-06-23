@@ -20,6 +20,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -63,6 +64,44 @@ func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Conte
 	}
 
 	return InitContext(ctx, txn), txn, nil
+}
+
+func ensureContextTxnShim(ctx context.Context, db *DB) (context.Context, datastore.Txn, error) {
+	var clientTxn datastore.Txn
+	ctxTxn, existsOnCtx := datastore.CtxTryGetTxn(ctx)
+	if !existsOnCtx {
+		txnId := db.previousTxnID.Add(1)
+		txn := datastore.NewTxnShim(txnId)
+		ctxTxn = txn
+	}
+
+	switch txn := ctxTxn.(type) {
+	case *Txn:
+		// If the txn has already been set on the context but it hasn't already been set as explicit,
+		// we create a copy of the txn and mark it as an explicit txn.
+		if !txn.explicit && existsOnCtx {
+			txn = &Txn{
+				BasicTxn: txn.BasicTxn,
+				db:       txn.db,
+				explicit: true,
+				isClosed: txn.isClosed,
+				// We do not need to copy the mutex (or a pointer to it), as if we are doing this,
+				// we can be sure that this txn clone is a child of the parent context, and so
+				// should not be locking anyway.
+			}
+		}
+		clientTxn = txn
+		return InitContext(ctx, txn), clientTxn, nil
+
+	case *datastore.TxnShim:
+		clientTxn = txn
+		ctx = datastore.CtxSetTxn(ctx, txn)
+		ctx = clock.WithTime(ctx, txn.StartTS())
+		return ctx, clientTxn, nil
+
+	default:
+		return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
+	}
 }
 
 func lockForTxn(ctx context.Context, txn *Txn) (context.Context, func()) {

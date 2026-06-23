@@ -2198,17 +2198,23 @@ func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, action
 
 	for _, act := range actions {
 		switch a := act.(type) {
-		case *action.Truncate, *action.RefreshViews, *action.AddView:
+		case *action.Truncate:
+			if a.TransactionID.HasValue() {
+				// https://github.com/sourcenetwork/defradb/issues/4983
+				t.Skip("explicit transactions for truncate with leveldb are not supported")
+			}
+		case *action.RefreshViews, *action.AddView:
 			// These actions are skipped due to:
 			// https://github.com/sourcenetwork/defradb/issues/4959
-			t.Skip("truncate and RefreshView does not yet support the leveldb store")
+			t.Skip("RefreshViews does not yet support the leveldb store")
 		case *action.Parallel:
 			for _, inner := range a.Children {
 				switch inner.(type) {
 				case *action.Truncate, *action.RefreshViews, *action.AddView:
-					// These actions are skipped due to:
-					// https://github.com/sourcenetwork/defradb/issues/4959
-					t.Skip("truncate and RefreshView does not yet support the leveldb store")
+					t.Skip("write actions that acquire write locks are unsupported with leveldb in" +
+						" the test framework.  Another action may lock the store by opening a transaction" +
+						" after one of these acquires the write lock, but before it itself locks the leveldb" +
+						" store - causing a deadlock.")
 				}
 			}
 		}
