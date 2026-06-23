@@ -1766,7 +1766,6 @@ func (t Targetable) equal(other Targetable) bool {
 	return true
 }
 
-
 func (l *Limit) equal(other *Limit) bool {
 	if l == nil {
 		return other == nil
