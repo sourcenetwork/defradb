@@ -476,13 +476,11 @@ func resolveAggregates(
 					if err != nil {
 						return nil, err
 					}
-					convertedGroupBy := toGroupBy(target.groupBy, childMapping)
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
 						target.limit,
 						orderBy,
-						convertedGroupBy,
 						fields,
 					)
 				}
@@ -1765,30 +1763,9 @@ func (t Targetable) equal(other Targetable) bool {
 		return false
 	}
 
-	if !t.GroupBy.equal(other.GroupBy) {
-		return false
-	}
-
 	return true
 }
 
-func (g *GroupBy) equal(other *GroupBy) bool {
-	if g == nil {
-		return other == nil
-	}
-	if other == nil {
-		return false
-	}
-	if len(g.Fields) != len(other.Fields) {
-		return false
-	}
-	for i, f := range g.Fields {
-		if f.Index != other.Fields[i].Index || f.Name != other.Fields[i].Name {
-			return false
-		}
-	}
-	return true
-}
 
 func (l *Limit) equal(other *Limit) bool {
 	if l == nil {
@@ -2012,7 +1989,6 @@ func tryGetTarget(
 	filter *Filter,
 	limit *Limit,
 	order *OrderBy,
-	groupBy *GroupBy,
 	collection []Requestable,
 ) (Requestable, bool) {
 	dummyTarget := Targetable{
@@ -2022,7 +1998,6 @@ func tryGetTarget(
 		Filter:  filter,
 		Limit:   limit,
 		OrderBy: order,
-		GroupBy: groupBy,
 	}
 
 	for _, field := range collection {
