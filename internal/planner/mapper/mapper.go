@@ -476,11 +476,13 @@ func resolveAggregates(
 					if err != nil {
 						return nil, err
 					}
+					convertedGroupBy := toGroupBy(target.groupBy, childMapping)
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
 						target.limit,
 						orderBy,
+						convertedGroupBy,
 						fields,
 					)
 				}
@@ -511,7 +513,7 @@ func resolveAggregates(
 				}
 				mapAggregateNestedTargets(target, hostSelectRequest)
 
-				childMapping, _, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
+				childMapping, childDef, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -562,6 +564,29 @@ func resolveAggregates(
 					return nil, err
 				}
 
+				// If groupBy is specified, remap object relation field names and ensure the
+				// GROUP field is in the mapping so the groupNode has a valid data source index.
+				var convertedGroupBy *GroupBy
+				if target.groupBy.HasValue() {
+					groupByFields := make([]string, len(target.groupBy.Value().Fields))
+					copy(groupByFields, target.groupBy.Value().Fields)
+					for i, groupByField := range groupByFields {
+						fieldDesc, ok := childDef.GetFieldByName(groupByField)
+						if ok && fieldDesc.Kind.IsObject() {
+							if fieldDesc.Kind.IsArray() {
+								return nil, NewErrInvalidFieldToGroupBy(groupByField)
+							}
+							groupByFields[i] = request.ToFieldID(groupByField)
+						}
+					}
+					remappedGroupBy := immutable.Some(request.GroupBy{Fields: groupByFields})
+					if _, isGroupFieldMapped := childMapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
+						groupIndex := childMapping.GetNextIndex()
+						childMapping.Add(groupIndex, request.GroupFieldName)
+					}
+					convertedGroupBy = toGroupBy(remappedGroupBy, childMapping)
+				}
+
 				var dummyJoin Requestable
 				dummyJoinSelect := &Select{
 					Targetable: Targetable{
@@ -572,6 +597,7 @@ func resolveAggregates(
 						Filter:  convertedFilter,
 						Limit:   target.limit,
 						OrderBy: orderBy,
+						GroupBy: convertedGroupBy,
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: childMapping,
@@ -1739,6 +1765,28 @@ func (t Targetable) equal(other Targetable) bool {
 		return false
 	}
 
+	if !t.GroupBy.equal(other.GroupBy) {
+		return false
+	}
+
+	return true
+}
+
+func (g *GroupBy) equal(other *GroupBy) bool {
+	if g == nil {
+		return other == nil
+	}
+	if other == nil {
+		return false
+	}
+	if len(g.Fields) != len(other.Fields) {
+		return false
+	}
+	for i, f := range g.Fields {
+		if f.Index != other.Fields[i].Index || f.Name != other.Fields[i].Name {
+			return false
+		}
+	}
 	return true
 }
 
@@ -1880,6 +1928,9 @@ type aggregateRequestTarget struct {
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
 	order immutable.Option[request.OrderBy]
+
+	// The groupBy specified by the consumer for this target. Optional.
+	groupBy immutable.Option[request.GroupBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -1893,6 +1944,7 @@ func getAggregateSources(field *request.Aggregate) ([]*aggregateRequestTarget, e
 			filter:            target.Filter,
 			limit:             toLimit(target.Limit, target.Offset),
 			order:             target.OrderBy,
+			groupBy:           target.GroupBy,
 		}
 	}
 
@@ -1960,6 +2012,7 @@ func tryGetTarget(
 	filter *Filter,
 	limit *Limit,
 	order *OrderBy,
+	groupBy *GroupBy,
 	collection []Requestable,
 ) (Requestable, bool) {
 	dummyTarget := Targetable{
@@ -1969,6 +2022,7 @@ func tryGetTarget(
 		Filter:  filter,
 		Limit:   limit,
 		OrderBy: order,
+		GroupBy: groupBy,
 	}
 
 	for _, field := range collection {
