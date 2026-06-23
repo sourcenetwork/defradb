@@ -27,11 +27,9 @@ type TxnShim struct {
 	ts time.Time
 
 	successFns []func()
-	errorFns   []func()
 	discardFns []func()
 
 	successAsyncFns []func()
-	errorAsyncFns   []func()
 	discardAsyncFns []func()
 }
 
@@ -90,7 +88,7 @@ func (t *TxnShim) OnSuccess(fn func()) {
 }
 
 func (t *TxnShim) OnError(fn func()) {
-	t.errorFns = append(t.errorFns, fn)
+	// no-op, commit cannot error on this type
 }
 
 func (t *TxnShim) OnDiscard(fn func()) {
@@ -102,7 +100,7 @@ func (t *TxnShim) OnSuccessAsync(fn func()) {
 }
 
 func (t *TxnShim) OnErrorAsync(fn func()) {
-	t.errorAsyncFns = append(t.errorAsyncFns, fn)
+	// no-op, commit cannot error on this type
 }
 
 func (t *TxnShim) OnDiscardAsync(fn func()) {
