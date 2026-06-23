@@ -42,7 +42,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, nil)
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}

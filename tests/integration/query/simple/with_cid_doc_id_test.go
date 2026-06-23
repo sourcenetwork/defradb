@@ -78,7 +78,7 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -118,7 +118,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -163,7 +163,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -208,7 +208,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -270,7 +270,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -325,7 +325,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -381,7 +381,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -437,7 +437,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -488,7 +488,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

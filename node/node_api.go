@@ -30,7 +30,6 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	http.IsDevMode = n.opts.EnableDevelopment
 
 	n.server, err = http.NewServer(handler, options.NodeHTTP().SetAll(n.opts.HTTP))
 	if err != nil {

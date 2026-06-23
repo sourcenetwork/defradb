@@ -22,7 +22,7 @@ import (
 func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

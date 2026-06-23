@@ -21,7 +21,7 @@ import (
 
 // Hardcoded collection-level commit CIDs; no template placeholder yet.
 // See https://github.com/sourcenetwork/defradb/issues/4744.
-var branchableCollectionCidExcludes = []string{multiplier.EncryptedDocs}
+var branchableCollectionCidExcludes = []string{multiplier.EncryptedDocs, multiplier.SignedDocs}
 
 func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{

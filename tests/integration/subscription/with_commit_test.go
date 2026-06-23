@@ -24,7 +24,7 @@ func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -80,6 +80,10 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 	create2Heads := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
