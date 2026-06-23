@@ -25,7 +25,6 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/immutable"
@@ -575,18 +574,6 @@ func (c *Client) ExecRequest(
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
-	}
-	// In the unlikely event the server returns ErrTxnDiscarded, convert it to ErrTransactionNotFound.
-	//
-	// This is defensive against the following unlikely (but possible) situation:
-	//
-	// Goroutine A - UpdateDoc calls txs.Load(id)
-	// Goroutine B - CommitTransaction completes, and the transaction is commited/discarded
-	// Goroutine A - The handler executes, calling into a transaction object that is now stale
-	for i, e := range result.GQL.Errors {
-		if strings.Contains(e.Error(), db.ErrTxnDiscarded.Error()) {
-			result.GQL.Errors[i] = ErrTransactionNotFound
-		}
 	}
 	return result
 }

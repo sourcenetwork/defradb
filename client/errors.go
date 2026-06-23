@@ -57,6 +57,7 @@ const (
 	errSetDocFieldValue                      string = "failed to set document field value"
 	errNullValueForNonNillableField          string = "null value provided for non-nillable field"
 	errMissingRequiredField                  string = "value not provided for non-nillable field"
+	errTransactionNotFound                   string = "transaction not found"
 )
 
 // Errors returnable from this package.
@@ -105,6 +106,7 @@ var (
 	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 	ErrNullValueForNonNillableField          = errors.New(errNullValueForNonNillableField)
 	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
+	ErrTransactionNotFound                   = errors.New(errTransactionNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

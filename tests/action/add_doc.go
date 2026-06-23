@@ -88,9 +88,6 @@ type AddDoc struct {
 
 	// If the given error is received, ignore the error and pretend the action succeeded.
 	IgnoreError string
-
-	// If any of the given errors is received, ignore the error and pretend the action succeeded.
-	IgnoreErrors []string
 }
 
 var _ Action = (*AddDoc)(nil)
@@ -141,14 +138,7 @@ func (a *AddDoc) Execute() {
 		nodeID := nodeIDs[index]
 		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
 		if err != nil {
-			ignored := len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)
-			for _, ie := range a.IgnoreErrors {
-				if strings.Contains(err.Error(), ie) {
-					ignored = true
-					break
-				}
-			}
-			if ignored {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
 			}
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
@@ -185,14 +175,7 @@ func (a *AddDoc) Execute() {
 				},
 			)
 		}
-		ignored := err != nil && len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)
-		for _, ie := range a.IgnoreErrors {
-			if err != nil && strings.Contains(err.Error(), ie) {
-				ignored = true
-				break
-			}
-		}
-		if err == nil || !ignored {
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 		}
 	}

@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -134,17 +133,6 @@ func (c *httpClient) request(req *http.Request) ([]byte, error) {
 	var errRes errorResponse
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return nil, fmt.Errorf("%v: %s", res.StatusCode, data)
-	}
-	// A discarded/committed transaction is indistinguishable from one that was never
-	// created from the caller's perspective, so surface the same error in both cases.
-	//
-	// This is defensive against the following unlikely (but possible) situation:
-	//
-	// Goroutine A - UpdateDoc calls txs.Load(id)
-	// Goroutine B - CommitTransaction completes, and the transaction is commited/discarded
-	// Goroutine A - The handler executes, calling into a transaction object that is now stale
-	if errRes.Error != nil && strings.Contains(errRes.Error.Error(), db.ErrTxnDiscarded.Error()) {
-		return nil, ErrTransactionNotFound
 	}
 	return nil, errRes.Error
 }

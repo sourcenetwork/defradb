@@ -50,7 +50,7 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
-	ErrTransactionNotFound          = errors.New("transaction not found")
+	ErrTransactionNotFound          = client.ErrTransactionNotFound
 )
 
 type errorResponse struct {
