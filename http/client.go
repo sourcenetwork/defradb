@@ -558,6 +558,19 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
+	// Non-200 responses from middleware (e.g. invalid/unknown transaction ID) use
+	// the {"error": "..."} envelope rather than the GraphQL {"errors": [...]} one.
+	// Convert those so the error surfaces to the caller instead of being silently
+	// swallowed as {"data": null}.
+	if res.StatusCode != http.StatusOK {
+		var raw map[string]any
+		if jsonErr := json.Unmarshal(data, &raw); jsonErr == nil {
+			if errMsg, ok := raw["error"].(string); ok {
+				result.GQL.Errors = append(result.GQL.Errors, client.ReviveError(errMsg))
+				return result
+			}
+		}
+	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
