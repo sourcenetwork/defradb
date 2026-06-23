@@ -59,11 +59,6 @@ func EncodeCollectionShortID(collectionShortID uint32) []byte {
 	return encodeShortID(collectionShortID)
 }
 
-// DecodeCollectionShortID decodes a local collection ID from a single encoded key segment.
-func DecodeCollectionShortID(data []byte) (uint32, error) {
-	return decodeShortID(data)
-}
-
 // DecodeCollectionShortIDPrefix decodes a local collection ID from the start of data.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return decodeShortIDPrefix(data)

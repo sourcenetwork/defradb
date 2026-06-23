@@ -58,12 +58,6 @@ func MustNewDataStoreKey(key string) DataStoreKey {
 	return dsKey
 }
 
-func DataStoreKeyFromDocShortID(docShortID uint32) DataStoreKey {
-	return DataStoreKey{
-		DocShortID: docShortID,
-	}
-}
-
 func (k DataStoreKey) WithValueFlag() DataStoreKey {
 	newKey := k
 	newKey.InstanceType = ValueKey
