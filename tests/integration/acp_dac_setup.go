@@ -59,6 +59,7 @@ func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACP
 		case
 			AddDACPolicy,
 			AddDACActorRelationship,
+			AddDACCollectionActorRelationship,
 			DeleteDACActorRelationship:
 			isDocumentACPTest = true
 		}

@@ -248,14 +248,16 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// We want to enforce DAC, so we skip commits the caller has no read access to.
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
-	// doc-mapping cost. We only check when document acp is configured,
+	// doc-mapping cost. We only check when document acp is configured.
 	// Note:
 	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
-	// the collection has no policy or the doc is public.
-	// - Collection-level deltas (e.g. schema changes) carry no docID and
-	// are not DAC-gated, only doc-level deltas need an access check.
-	docIDBytes := dagBlock.Delta.GetDocID()
-	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+	// the collection has no policy or the object is public (unregistered).
+	// - Document-level commits carry a docID and are gated on the document object.
+	// - Collection-level commits of a branchable collection carry no docID and
+	// are gated on the collection object (using the collection id as the object
+	// id). Any other no-docID delta (e.g. schema-definition changes) is not
+	// DAC-gated.
+	if n.planner.documentACP.HasValue() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
 		cols, err := n.planner.db.GetCollections(
@@ -269,23 +271,32 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
-		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			n.planner.ctx,
-			n.planner.identity,
-			n.planner.nodeACP,
-			n.planner.documentACP.Value(),
-			cols[0],
-			acpTypes.DocumentReadPerm,
-			string(docIDBytes),
-		)
-		if err != nil {
-			return false, err
+		// Determine the acp object id to check access against. Document commits use their
+		// docID, branchable collection-level commits use the collection id.
+		objectID := string(dagBlock.Delta.GetDocID())
+		if objectID == "" && cols[0].Version().IsBranchable {
+			objectID = cols[0].Version().CollectionID
 		}
-		if !hasPermission {
-			// Mark visited so the same denied cid is not re-checked if it
-			// reappears via a links/heads queue elsewhere in the traversal.
-			n.visitedNodes[currentCid.String()] = true
-			return n.Next()
+
+		if objectID != "" {
+			hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+				n.planner.ctx,
+				n.planner.identity,
+				n.planner.nodeACP,
+				n.planner.documentACP.Value(),
+				cols[0],
+				acpTypes.DocumentReadPerm,
+				objectID,
+			)
+			if err != nil {
+				return false, err
+			}
+			if !hasPermission {
+				// Mark visited so the same denied cid is not re-checked if it
+				// reappears via a links/heads queue elsewhere in the traversal.
+				n.visitedNodes[currentCid.String()] = true
+				return n.Next()
+			}
 		}
 	}
 

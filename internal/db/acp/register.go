@@ -49,3 +49,38 @@ func RegisterDocOnCollectionWithDocumentACP(
 
 	return nil
 }
+
+// RegisterCollectionObject registers a branchable collection itself as an object with
+// the document acp system, so that access to the collection-level commit DAG can be gated.
+//
+// The collection's [client.CollectionVersion.CollectionID] is used as the acp object id. This is
+// analogous to how a document is registered using its docID, but at the collection granularity.
+//
+// The collection object is only registered if all of the following are true:
+// (1) the collection is branchable (only branchable collections have a collection-level commit DAG),
+// (2) the collection is permissioned (has a policy),
+// (3) the request is permissioned (has an identity, which becomes the object owner).
+//
+// Otherwise, nothing is registered with document acp (the collection-level commits remain public).
+func RegisterCollectionObject(
+	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
+	documentACP dac.DocumentACP,
+	collection client.Collection,
+) error {
+	if !collection.Version().IsBranchable {
+		return nil
+	}
+
+	if policyID, resourceName, hasPolicy := IsPermissioned(collection); hasPolicy && identity.HasValue() {
+		return documentACP.RegisterDocObject(
+			ctx,
+			identity.Value(),
+			policyID,
+			resourceName,
+			collection.Version().CollectionID,
+		)
+	}
+
+	return nil
+}
