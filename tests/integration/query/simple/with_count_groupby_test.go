@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimple_WithCountWithGroupBy_OnEmptyCollection_ReturnsZero(t *testing.T) {
+func TestQuerySimple_WithCountWithGroupBy_OnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.Request{
@@ -35,7 +35,7 @@ func TestQuerySimple_WithCountWithGroupBy_OnEmptyCollection_ReturnsZero(t *testi
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithCountWithGroupBy_OnSingleField_CountsDistinctValues(t *testing.T) {
+func TestQuerySimple_WithCountWithGroupBy_OnSingleField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -70,7 +70,7 @@ func TestQuerySimple_WithCountWithGroupBy_OnSingleField_CountsDistinctValues(t *
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithCountWithGroupBy_OnMultipleFields_CountsDistinctCombinations(t *testing.T) {
+func TestQuerySimple_WithCountWithGroupBy_OnMultipleFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -105,7 +105,7 @@ func TestQuerySimple_WithCountWithGroupBy_OnMultipleFields_CountsDistinctCombina
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithCountWithGroupBy_AllSameGroupValue_ReturnsOne(t *testing.T) {
+func TestQuerySimple_WithCountWithGroupBy_AllSameGroupValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
@@ -140,7 +140,7 @@ func TestQuerySimple_WithCountWithGroupBy_AllSameGroupValue_ReturnsOne(t *testin
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithCountWithGroupByAndFilter_CountsDistinctValuesAfterFilter(t *testing.T) {
+func TestQuerySimple_WithCountWithGroupByAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddDoc{
