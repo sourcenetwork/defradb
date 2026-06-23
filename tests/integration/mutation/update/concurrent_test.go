@@ -136,7 +136,8 @@ func TestMutationUpdate_ConcurrentCommit(t *testing.T) {
 					}`,
 					// This error will occur if the commit txn action completes before the update document action.
 					// It should not impact the test execution.
-					IgnoreError: "transaction not found",
+					// HTTP/CLI clients return "transaction not found"; the Go client returns the raw db error.
+					IgnoreErrors: []string{"transaction not found", "this transaction has been discarded. Create a new one"},
 				},
 			},
 			&action.Async{
@@ -218,7 +219,8 @@ func TestMutationUpdate_ConcurrentDiscard(t *testing.T) {
 					},
 					// This error will occur if the commit txn action completes before the add document action.
 					// It should not impact the test execution.
-					IgnoreError: "transaction not found",
+					// HTTP/CLI clients return "transaction not found"; the Go client returns the raw db error.
+					IgnoreErrors: []string{"transaction not found", "this transaction has been discarded. Create a new one"},
 				},
 			},
 			&action.Async{
