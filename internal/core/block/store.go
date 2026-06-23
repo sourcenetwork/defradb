@@ -97,9 +97,13 @@ func addDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
-	if err != nil {
-		return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
+	var encBlock *Encryption
+	var encLink cidlink.Link
+	if !block.Delta.IsCollection() {
+		encBlock, encLink, err = determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
+		if err != nil {
+			return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
+		}
 	}
 
 	dagBlock := block
