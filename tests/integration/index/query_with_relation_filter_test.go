@@ -1188,6 +1188,142 @@ func TestQueryWithIndex_WithScalarAndRelationFilterAtTopLevel_ShouldApplyBothAsA
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans verifies
+// that @exhaustive with relation ordering still respects same-object (non-relation) filters
+// on the primary type, including for orphan documents (documents without a related record).
+func TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilter_ShouldFilterOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			// Linked publisher — passes filter, has a related book
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			// Orphan publisher — passes filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc:          `{"name": "IncludedOrphan"}`,
+			},
+			// Orphan publisher — should be excluded by filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc:          `{"name": "ExcludedOrphan"}`,
+			},
+			// @exhaustive includes orphans. ASC ordering puts orphans (no book) first.
+			// The scalar filter should exclude "ExcludedOrphan" even from the orphan scan.
+			&action.Request{
+				Request: `query @exhaustive {
+					Publisher(
+						filter: {name: {_neq: "ExcludedOrphan"}},
+						order: {book: {rating: ASC}}
+					) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{"name": "IncludedOrphan"},
+						{"name": "LinkedPublisher"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilterDescending_ShouldFilterOrphans verifies
+// that @exhaustive with relation ordering still respects same-object (non-relation) filters
+// on the primary type, including for orphan documents, when ordering descending.
+func TestQueryWithIndex_ExhaustiveOrderByRelationWithScalarFilterDescending_ShouldFilterOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			// Linked publisher — passes filter, has a related book
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			// Orphan publisher — passes filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc:          `{"name": "IncludedOrphan"}`,
+			},
+			// Orphan publisher — should be excluded by filter, no related book
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc:          `{"name": "ExcludedOrphan"}`,
+			},
+			// @exhaustive includes orphans. DESC ordering puts orphans (no book) last.
+			// The scalar filter should exclude "ExcludedOrphan" even from the orphan scan.
+			&action.Request{
+				Request: `query @exhaustive {
+					Publisher(
+						filter: {name: {_neq: "ExcludedOrphan"}},
+						order: {book: {rating: DESC}}
+					) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{"name": "LinkedPublisher"},
+						{"name": "IncludedOrphan"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_WithMultipleScalarsAndRelationFilter_ShouldApplyAllAsAnd(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

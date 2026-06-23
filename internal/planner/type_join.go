@@ -706,8 +706,8 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), []any{targetDocID})
 
 	// When the join is inverted, the parent becomes the primary (second) side.
-	// Its scan may still hold scalar filter conditions (e.g., rating > 4.5) that
-	// prepareScanNodeFilterForTypeJoin left there. Since the original scan is not
+	// Its scan may still hold non-relation filter conditions (scalar, JSON, or inline-array
+	// fields, e.g., rating > 4.5) that prepareScanNodeFilterForTypeJoin left there. Since the original scan is not
 	// iterated in the inverted path, merge those conditions so they are applied
 	// during retrieval.
 	if r.primarySide.isParent && r.primaryScan.filter != nil {
