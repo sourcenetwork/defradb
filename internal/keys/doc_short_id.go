@@ -16,7 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// DocRef is this node's storage address for a public document ID.
+// DocRef is this node's local storage address for a DocID.
+// DocShortID is scoped to CollectionShortID, so both values are needed.
 type DocRef struct {
 	CollectionShortID uint32
 	DocShortID        uint32
