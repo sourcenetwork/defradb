@@ -30,9 +30,13 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *DB
-	def            client.CollectionVersion
-	indexes        []CollectionIndex
+	db      *DB
+	def     client.CollectionVersion
+	indexes []CollectionIndex
+	// indexStates holds the lifecycle state of the collection's non-ready indexes, keyed by
+	// index ID. An index absent from the map has no action record and so is ready. Populated
+	// at construction time from the index state store.
+	indexStates    map[uint32]indexState
 	fetcherFactory func() fetcher.Fetcher
 	txn            immutable.Option[datastore.Txn]
 }
@@ -43,21 +47,67 @@ type collection struct {
 // to be auto generated based on a more controllable and user friendly
 // CollectionOptions object.
 
-// newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[datastore.Txn]) (*collection, error) {
+// newCollection returns a pointer to a newly instantiated DB Collection.
+//
+// Index instances are only constructed for indexes whose status is building or ready;
+// failed and dropping indexes are excluded from the write path.
+func (db *DB) newCollection(
+	ctx context.Context,
+	desc client.CollectionVersion,
+	txn immutable.Option[datastore.Txn],
+) (*collection, error) {
 	col := &collection{
-		db:  db,
-		def: desc,
-		txn: txn,
+		db:          db,
+		def:         desc,
+		txn:         txn,
+		indexStates: make(map[uint32]indexState),
 	}
-	for _, index := range desc.Indexes {
-		colIndex, err := NewCollectionIndex(col, index)
+
+	if len(desc.Indexes) > 0 {
+		// Build a read context that has a txn set so getIndexStates can call CtxMustGetTxn.
+		stateCtx := ctx
+		if txn.HasValue() {
+			stateCtx = datastore.CtxSetTxn(ctx, txn.Value())
+		}
+
+		states, err := getIndexStates(stateCtx, desc.CollectionID)
 		if err != nil {
 			return nil, err
 		}
-		col.indexes = append(col.indexes, colIndex)
+		col.indexStates = states
+
+		for _, index := range desc.Indexes {
+			state := states[index.ID]
+
+			// Only building and ready indexes participate in the write path.
+			if state.isFailed() || state.isDropping() {
+				continue
+			}
+
+			colIndex, err := NewCollectionIndex(col, index, state.isBuilding())
+			if err != nil {
+				return nil, err
+			}
+
+			col.indexes = append(col.indexes, colIndex)
+		}
 	}
+
 	return col, nil
+}
+
+// QueryableIndexes returns the indexes that are safe for query planning: only ready indexes.
+// Building, failed and dropping indexes are excluded because their entries may be incomplete.
+func (c *collection) QueryableIndexes() []client.IndexDescription {
+	all := c.Version().Indexes
+	result := make([]client.IndexDescription, 0, len(all))
+	for _, idx := range all {
+		// A ready index has no state record.
+		if _, ok := c.indexStates[idx.ID]; !ok {
+			result = append(result, idx)
+		}
+	}
+	return result
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -203,7 +253,7 @@ func (db *DB) getCollections(
 		} else {
 			txnOpt = datastore.CtxTryGetTxnOption(ctx)
 		}
-		collection, err := db.newCollection(col, txnOpt)
+		collection, err := db.newCollection(ctx, col, txnOpt)
 		if err != nil {
 			return nil, err
 		}

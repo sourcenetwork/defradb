@@ -24,7 +24,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 		// The collection-level commit CID is hardcoded in this test, and no
 		// template placeholder exists for it yet.
 		// See https://github.com/sourcenetwork/defradb/issues/4744.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

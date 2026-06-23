@@ -118,8 +118,10 @@ func DefaultNodeOptions() options.NodeOptions {
 			P2PBlockSyncTimeout: time.Second * 5,
 			LensRuntime:         options.NodeDefaultLensRuntime,
 		},
-		P2P:  options.NodeP2POptions{},
-		HTTP: options.NodeHTTPOptions{},
+		P2P: options.NodeP2POptions{},
+		HTTP: options.NodeHTTPOptions{
+			Address: http.DefaultHTTPAddress,
+		},
 	}
 }
 
@@ -132,6 +134,11 @@ func New(ctx context.Context, opts ...options.Enumerable[options.NodeOptions]) (
 		apiErrCh: make(chan error, 1),
 	}
 	return &n, nil
+}
+
+// Options returns the node's resolved options.
+func (n *Node) Options() *options.NodeOptions {
+	return n.opts
 }
 
 // Start starts the node sub-systems.

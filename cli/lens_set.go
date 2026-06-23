@@ -29,7 +29,7 @@ import (
 func MakeLensSetCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
-		Use:   "set [src] [dst] [cfg]",
+		Use:   "set <src> <dst> [cfg]",
 		Short: "Set a collection migration within DefraDB",
 		Long: `Set a migration from a source collection version to a destination collection version for
 all collections that are on the given source collection version within the local DefraDB node.
@@ -92,7 +92,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 	EmbedCLIExample(ctx, cmd, "set from file",
 		`defradb client lens set bae123 bae456 -f collection_migration.lens`)
 
-	EmbedCLIExample(ctx, cmd, "add from stdin",
+	EmbedCLIExample(ctx, cmd, "set from stdin",
 		`cat collection_migration.lens | defradb client lens set bae123 bae456 -`)
 
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

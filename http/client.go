@@ -54,6 +54,16 @@ func NewClient(rawURL string) (*Client, error) {
 	return &Client{httpClient}, nil
 }
 
+// NewInsecureClient returns a Client that skips TLS certificate verification.
+// Only use for loopback health checks against a server with a self-signed cert.
+func NewInsecureClient(rawURL string) (*Client, error) {
+	httpClient, err := newInsecureHttpClient(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{httpClient}, nil
+}
+
 func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
@@ -115,6 +125,28 @@ func (c *Client) BasicExport(
 	}
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Client) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("actions")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []client.ActionExecution
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (c *Client) AddCollection(
@@ -425,7 +457,7 @@ func (c *Client) GetCollections(
 func (c *Client) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -435,7 +467,7 @@ func (c *Client) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
@@ -591,6 +623,20 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Client) GetNodeOptions(ctx context.Context) (map[string]any, error) {
+	methodURL := c.http.apiURL.JoinPath("node", "options")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var opts map[string]any
+	if err := c.http.requestJson(req, &opts); err != nil {
+		return nil, err
+	}
+	return opts, nil
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {

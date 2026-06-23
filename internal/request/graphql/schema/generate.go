@@ -225,7 +225,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
-		case *gql.Scalar:
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[def.Name]; isAggregate {
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
@@ -344,15 +344,14 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-		case *gql.Scalar:
+		// Here, we will check for Scalar and NonNull, because depending on the aggregate operation,
+		// it could be either. COUNT, SUM, and AVG return Int!/Float!, but MIN and MAX return Int/Float.
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[f]; isAggregate {
 				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
 					return err
 				}
 			}
-			// @todo: check if NonNull is possible here
-			//case *gql.NonNull:
-			// get subtype
 		}
 	}
 
@@ -630,6 +629,16 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 					if !ok {
 						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
 					}
+					// Mutation inputs must be nullable even for non-nillable fields so
+					// that application code handles null validation and produces
+					// consistent error messages regardless of mutation type.
+					if nonNull, isNonNull := ttype.(*gql.NonNull); isNonNull {
+						ttype = nonNull.OfType
+					} else if list, isList := ttype.(*gql.List); isList {
+						if nonNull, isNonNull := list.OfType.(*gql.NonNull); isNonNull {
+							ttype = gql.NewList(nonNull.OfType)
+						}
+					}
 				}
 
 				fields[field.Name] = &gql.InputObjectFieldConfig{
@@ -731,7 +740,7 @@ func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Fiel
 	topLevelCountField := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.Int,
+		Type:        gql.NewNonNull(gql.Int),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -746,14 +755,14 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 	topLevelSumField := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
 	topLevelAverageField := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -811,7 +820,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.Int,
+		Type:        gql.NewNonNull(gql.Int),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -826,7 +835,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -871,7 +880,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -1061,7 +1070,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			hasSumableFields := false
 			// generate basic filter operator blocks for all the sumable types
 			for _, field := range obj.Fields() {
-				if field.Type == schemaTypes.Float32 || field.Type == schemaTypes.Float64 || field.Type == gql.Int {
+				if isNumeric(field.Type) {
 					hasSumableFields = true
 					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					continue

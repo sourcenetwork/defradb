@@ -26,7 +26,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater>",
+		Use:   "update",
 		Short: "Update documents by docID or filter.",
 		Long:  `Update documents by docID or filter.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -99,5 +99,6 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	setCollectionSelectorFlags(cmd)
 	return cmd
 }

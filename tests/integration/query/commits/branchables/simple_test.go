@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables(t *testing.T) {
@@ -77,6 +78,8 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 	nameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// asserts plaintext delta bytes; encryption replaces them with ciphertext
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

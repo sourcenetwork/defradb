@@ -37,6 +37,7 @@ var (
 	ErrViewAddMissingArgs               = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty       = errors.New("policy file argument can not be empty")
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")
+	ErrKeyringSecretMismatch            = errors.New("keyring secrets do not match")
 	ErrEmptyCollectionSDL               = errors.New(errEmptyCollectionSDL)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
 	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")

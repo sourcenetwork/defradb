@@ -17,10 +17,11 @@ import (
 	"fmt"
 	"syscall/js"
 
+	"github.com/sourcenetwork/goji"
+
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/goji"
 )
 
 func (c *Client) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) {
@@ -28,19 +29,16 @@ func (c *Client) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1)
+	optsVal := optionsValue(args, 1)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	store, err := contextStoreArg(c.node.DB, args, 1, c.txns)
-	if err != nil {
+	var opt options.AddDACPolicyOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-
-	opt := options.AddDACPolicy()
-	setOptIdentity(opt, args, 1)
-	res, err := store.AddDACPolicy(ctx, policy, opt)
+	res, err := store.AddDACPolicy(context.Background(), policy, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -64,19 +62,16 @@ func (c *Client) addDACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4)
+	optsVal := optionsValue(args, 4)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	store, err := contextStoreArg(c.node.DB, args, 4, c.txns)
-	if err != nil {
+	var opt options.AddDACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-
-	opt := options.AddDACActorRelationship()
-	setOptIdentity(opt, args, 4)
-	res, err := store.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	res, err := store.AddDACActorRelationship(context.Background(), collectionName, docID, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -100,19 +95,16 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 4)
+	optsVal := optionsValue(args, 4)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	store, err := contextStoreArg(c.node.DB, args, 4, c.txns)
-	if err != nil {
+	var opt options.DeleteDACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-
-	opt := options.DeleteDACActorRelationship()
-	setOptIdentity(opt, args, 4)
-	res, err := store.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
+	res, err := store.DeleteDACActorRelationship(context.Background(), collectionName, docID, relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -140,11 +132,6 @@ func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 5)
-	if err != nil {
-		return js.Undefined(), err
-	}
-
 	if !c.node.DB.DocumentACP().HasValue() {
 		return js.Undefined(), fmt.Errorf("ACP system not available")
 	}
@@ -159,27 +146,28 @@ func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, erro
 	default:
 		return js.Undefined(), fmt.Errorf("invalid permission: %s", permission)
 	}
-	hasAccess, err := c.node.DB.DocumentACP().Value().CheckDocAccess(ctx, docPermission, actorID, policyID, resourceName, docID)
+	hasAccess, err := c.node.DB.DocumentACP().Value().CheckDocAccess(
+		context.Background(), docPermission, actorID, policyID, resourceName, docID,
+	)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return goji.MarshalJS(map[string]interface{}{
+	return goji.MarshalJS(map[string]any{
 		"hasAccess": hasAccess,
 	})
 }
 
 func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
-	if err != nil {
+	var opt options.GetNACStatusOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetNACStatus()
-	setOptIdentity(opt, args, 0)
-	res, err := store.GetNACStatus(ctx, opt)
+	res, err := store.GetNACStatus(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -187,33 +175,29 @@ func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 func (c *Client) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
-	if err != nil {
+	var opt options.ReEnableNACOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ReEnableNAC()
-	setOptIdentity(opt, args, 0)
-	err = store.ReEnableNAC(ctx, opt)
-	return js.Undefined(), err
+	return js.Undefined(), store.ReEnableNAC(context.Background(), asOpts(opt))
 }
 
 func (c *Client) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
-	if err != nil {
+	var opt options.DisableNACOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DisableNAC()
-	setOptIdentity(opt, args, 0)
-	err = store.DisableNAC(ctx, opt)
-	return js.Undefined(), err
+	return js.Undefined(), store.DisableNAC(context.Background(), asOpts(opt))
 }
 
 func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
@@ -225,17 +209,16 @@ func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2)
+	optsVal := optionsValue(args, 2)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
-	if err != nil {
+	var opt options.AddNACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.AddNACActorRelationship()
-	setOptIdentity(opt, args, 2)
-	res, err := store.AddNACActorRelationship(ctx, relation, targetActor, opt)
+	res, err := store.AddNACActorRelationship(context.Background(), relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -251,17 +234,16 @@ func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 2)
+	optsVal := optionsValue(args, 2)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	store, err := contextStoreArg(c.node.DB, args, 2, c.txns)
-	if err != nil {
+	var opt options.DeleteNACActorRelationshipOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteNACActorRelationship()
-	setOptIdentity(opt, args, 2)
-	res, err := store.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
+	res, err := store.DeleteNACActorRelationship(context.Background(), relation, targetActor, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -269,17 +251,12 @@ func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.
 }
 
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
+	optsVal := optionsValue(args, 0)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-
-	store, err := contextStoreArg(c.node.DB, args, 0, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-
-	res, err := store.GetNodeIdentity(ctx)
+	res, err := store.GetNodeIdentity(context.Background())
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -304,7 +281,7 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	pubKeyType, err := stringArg(args, 1, "publicKeyType")
+	pubKeyType := optionalStringArg(args, 1)
 	if pubKeyType == "" {
 		pubKeyType = string(crypto.KeyTypeSecp256k1)
 	}
@@ -312,11 +289,8 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	store, err := contextStoreArg(c.node.DB, args, 3, c.txns)
+	optsVal := optionsValue(args, 3)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -324,13 +298,13 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.VerifySignature()
-	setOptIdentity(opt, args, 3)
-	err = store.VerifySignature(ctx, blockCID, pubKey, opt)
-	return js.Undefined(), err
+	var opt options.VerifySignatureOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), store.VerifySignature(context.Background(), blockCID, pubKey, asOpts(opt))
 }
 
 func (c *Client) close(this js.Value, args []js.Value) (js.Value, error) {
-	err := c.node.Close(context.Background())
-	return js.Undefined(), err
+	return js.Undefined(), c.node.Close(context.Background())
 }

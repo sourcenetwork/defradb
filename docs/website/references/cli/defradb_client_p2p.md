@@ -15,10 +15,11 @@ Interact with the DefraDB P2P system
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")
@@ -40,6 +41,7 @@ Interact with the DefraDB P2P system
 * [defradb client p2p active-peers](defradb_client_p2p_active-peers.md)	 - Get list of active peer connections
 * [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 * [defradb client p2p connect](defradb_client_p2p_connect.md)	 - Connect to one or more peers
+* [defradb client p2p disconnect](defradb_client_p2p_disconnect.md)	 - Disconnect from one or more peers
 * [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 * [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
 * [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
