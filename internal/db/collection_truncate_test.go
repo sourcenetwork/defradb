@@ -97,7 +97,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.False(t, found)
 }
 
-func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
+func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -147,14 +147,15 @@ func TestCollectionDeleteDocIDMappingsResolvesPublicDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetDocIDForBlockFromStore(
+	blockDocID, found, err := id.GetDocIDForBlockFromStore(
 		txnCtx,
 		dbTxn.Systemstore(),
 		collectionShortID,
 		genesisFieldCID,
 	)
 	require.NoError(t, err)
-	require.False(t, found)
+	require.True(t, found)
+	require.Equal(t, publicDocID, blockDocID)
 }
 
 func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {

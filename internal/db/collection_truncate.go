@@ -108,6 +108,8 @@ func (c *collection) truncate(
 		return err
 	}
 
+	ctx = corekv.SetCtxTxn(ctx, nil)
+
 	// The following operations must be performed without a transaction, due to store-level
 	// transaction size limits.  This lack of protection means that they must be performed
 	// in the order that will never result in orphaned key-values, so that a reattempt at the
@@ -164,8 +166,9 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ctx context.Context,
 	colShortID uint32,
 ) error {
-	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
-	systemstore := datastore.CtxMustGetTxn(ctx).Systemstore()
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+	ds := multistore.Datastore()
+	systemstore := multistore.Systemstore()
 
 	deletedDocIDs := make(map[uint32]struct{})
 	for _, instanceType := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
@@ -224,7 +227,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, colShortID, key.DocShortID)
+						err = c.hardDeleteDocumentBlocks(ctx, systemstore, colShortID, key.DocShortID)
 						if err != nil {
 							return err
 						}
@@ -295,7 +298,10 @@ func (c *collection) hardDeleteDatastorePrefix(
 		type unsafestore interface {
 			Unsafe() corekv.ReaderWriter
 		}
-		datastore, _ := ds.(unsafestore)
+		datastore, ok := ds.(unsafestore)
+		if !ok {
+			return NewErrTruncateDatastoreKey(errors.New("datastore does not expose unsafe writer"), prefix.ToString())
+		}
 
 		// This `Unsafe` call is not technically required, it just allows us to
 		// write this function using the `keys.Key` interface and call `Delete`
@@ -322,6 +328,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 
 func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
+	systemstore corekv.ReaderWriter,
 	collectionShortID uint32,
 	docShortID uint32,
 ) error {
@@ -371,7 +378,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, key.Cid)
+			err = c.deleteBlocks(ctx, systemstore, collectionShortID, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -442,7 +449,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, key.Cid)
+			err = c.deleteBlocks(ctx, nil, 0, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -468,8 +475,27 @@ func (c *collection) hardDeleteCollectionBlocks(
 // a block with this cid is found.
 //
 // If the block is not found, it will not error.
-func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error {
+func (c *collection) deleteBlocks(
+	ctx context.Context,
+	systemstore corekv.ReaderWriter,
+	collectionShortID uint32,
+	currentCid cid.Cid,
+) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
+
+	deleteBlockMapping := func(blockCID cid.Cid) error {
+		if systemstore == nil || collectionShortID == 0 {
+			return nil
+		}
+		return id.DeleteBlockDocIDMapping(ctx, systemstore, collectionShortID, blockCID)
+	}
+
+	deleteBlock := func(blockCID cid.Cid) error {
+		if err := blockstore.DeleteBlock(ctx, blockCID); err != nil {
+			return err
+		}
+		return deleteBlockMapping(blockCID)
+	}
 
 	type block struct {
 		id    cid.Cid
@@ -481,7 +507,7 @@ func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error
 		return err
 	}
 	if !isFound {
-		return nil
+		return deleteBlockMapping(currentCid)
 	}
 
 	toDelete := []*block{
@@ -526,6 +552,9 @@ func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error
 				return err
 			}
 			if !isFound {
+				if err := deleteBlockMapping(currentBlock.id); err != nil {
+					return err
+				}
 				continue
 			}
 
@@ -533,14 +562,14 @@ func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error
 		}
 
 		if currentBlock.block.Encryption != nil {
-			err := blockstore.DeleteBlock(ctx, currentBlock.block.Encryption.Cid)
+			err := deleteBlock(currentBlock.block.Encryption.Cid)
 			if err != nil {
 				return err
 			}
 		}
 
 		if currentBlock.block.Signature != nil {
-			err := blockstore.DeleteBlock(ctx, currentBlock.block.Signature.Cid)
+			err := deleteBlock(currentBlock.block.Signature.Cid)
 			if err != nil {
 				return err
 			}
@@ -549,7 +578,7 @@ func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error
 		if isReversed {
 			// If we are now iterating in reverse order, all the children of this block should
 			// have been deleted, and we are now free to delete this block.
-			err := blockstore.DeleteBlock(ctx, currentBlock.id)
+			err := deleteBlock(currentBlock.id)
 			if err != nil {
 				return err
 			}
@@ -563,7 +592,7 @@ func (c *collection) deleteBlocks(ctx context.Context, currentCid cid.Cid) error
 			// children will be referenced by the composite commit, which will only be deleted
 			// after all of *its* children, meaning nothing will be orphaned if an error is thrown
 			// at some point during the truncate.
-			err := blockstore.DeleteBlock(ctx, currentBlock.id)
+			err := deleteBlock(currentBlock.id)
 			if err != nil {
 				return err
 			}
