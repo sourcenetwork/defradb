@@ -112,12 +112,29 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 				return nil, err
 			}
 
+		case client.FieldKind_DATETIME_ARRAY:
+			timeArray := make([]time.Time, len(array))
+			for i, untypedValue := range array {
+				t, err := convertToTime(fmt.Sprintf("%s[%v]", fieldDesc.Name, i), untypedValue)
+				if err != nil {
+					return nil, err
+				}
+				timeArray[i] = t
+			}
+			val = timeArray
+
+		case client.FieldKind_NILLABLE_DATETIME_ARRAY:
+			val, err = convertNillableArrayWithConverter(fieldDesc.Name, array, convertToTime)
+			if err != nil {
+				return nil, err
+			}
+
 		case client.FieldKind_NILLABLE_JSON:
 			return convertToJSON(fieldDesc.Name, val)
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {
-		case client.FieldKind_NILLABLE_FLOAT64:
+		case client.FieldKind_NILLABLE_FLOAT64, client.FieldKind_FLOAT64:
 			switch v := val.(type) {
 			case int64:
 				return float64(v), nil
@@ -128,7 +145,7 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case uint:
 				return float64(v), nil
 			}
-		case client.FieldKind_NILLABLE_FLOAT32:
+		case client.FieldKind_NILLABLE_FLOAT32, client.FieldKind_FLOAT32:
 			switch v := val.(type) {
 			case int64:
 				return float32(v), nil
@@ -141,7 +158,7 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case float64:
 				return float32(v), nil
 			}
-		case client.FieldKind_NILLABLE_INT:
+		case client.FieldKind_NILLABLE_INT, client.FieldKind_INT:
 			switch v := val.(type) {
 			case float64:
 				return int64(v), nil
@@ -154,22 +171,22 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 			case uint:
 				return int64(v), nil
 			}
-		case client.FieldKind_NILLABLE_DATETIME:
+		case client.FieldKind_NILLABLE_DATETIME, client.FieldKind_DATETIME:
 			switch v := val.(type) {
 			case string:
 				return time.Parse(time.RFC3339, v)
 			}
-		case client.FieldKind_NILLABLE_BOOL:
+		case client.FieldKind_NILLABLE_BOOL, client.FieldKind_BOOL:
 			switch v := val.(type) {
 			case int64:
 				return v != 0, nil
 			}
-		case client.FieldKind_NILLABLE_STRING:
+		case client.FieldKind_NILLABLE_STRING, client.FieldKind_STRING:
 			switch v := val.(type) {
 			case []byte:
 				return string(v), nil
 			}
-		case client.FieldKind_NILLABLE_JSON:
+		case client.FieldKind_NILLABLE_JSON, client.FieldKind_JSON:
 			return convertToJSON(fieldDesc.Name, val)
 		}
 	}
@@ -238,6 +255,23 @@ func convertToFloat32(propertyName string, untypedValue any) (float32, error) {
 		return float32(value), nil
 	default:
 		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
+	}
+}
+
+// convertToTime converts a value to time.Time.
+// It supports time.Time and RFC3339 strings (used by CBOR/JSON).
+func convertToTime(propertyName string, untypedValue any) (time.Time, error) {
+	switch value := untypedValue.(type) {
+	case time.Time:
+		return value, nil
+	case string:
+		// Support both RFC3339 and RFC3339Nano for flexibility in tests and storage
+		if t, err := time.Parse(time.RFC3339Nano, value); err == nil {
+			return t, nil
+		}
+		return time.Parse(time.RFC3339, value)
+	default:
+		return time.Time{}, client.NewErrUnexpectedType[time.Time](propertyName, untypedValue)
 	}
 }
 

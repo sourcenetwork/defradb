@@ -700,6 +700,10 @@ func astTypeToKind(
 ) (client.FieldKind, error) {
 	switch astTypeVal := field.Type.(type) {
 	case *ast.List:
+		if isNestedListType(astTypeVal.Type) {
+			return client.FieldKind_None, NewErrNestedListTypeNotSupported(hostObjectName, field.Name.Value)
+		}
+
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *ast.NonNull:
 			switch innerAstTypeVal.Type.(*ast.Named).Name.Value {
@@ -713,6 +717,8 @@ func astTypeToKind(
 				return client.FieldKind_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
+			case typeDateTime:
+				return client.FieldKind_DATETIME_ARRAY, nil
 			default:
 				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
 			}
@@ -729,6 +735,8 @@ func astTypeToKind(
 				return client.FieldKind_NILLABLE_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
+			case typeDateTime:
+				return client.FieldKind_NILLABLE_DATETIME_ARRAY, nil
 			default:
 				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
 			}
@@ -759,13 +767,48 @@ func astTypeToKind(
 		}
 
 	case *ast.NonNull:
-		return client.FieldKind_None, ErrNonNullNotSupported
+		namedType, ok := astTypeVal.Type.(*ast.Named)
+		if !ok {
+			return client.FieldKind_None, ErrNonNullNotSupported
+		}
+		switch namedType.Name.Value {
+		case typeBoolean:
+			return client.FieldKind_BOOL, nil
+		case typeInt:
+			return client.FieldKind_INT, nil
+		case typeFloat, typeFloat64:
+			return client.FieldKind_FLOAT64, nil
+		case typeFloat32:
+			return client.FieldKind_FLOAT32, nil
+		case typeDateTime:
+			return client.FieldKind_DATETIME, nil
+		case typeString:
+			return client.FieldKind_STRING, nil
+		case typeBlob:
+			return client.FieldKind_BLOB, nil
+		case typeJSON:
+			return client.FieldKind_JSON, nil
+		default:
+			return client.FieldKind_None, ErrNonNullNotSupported
+		}
 
 	default:
 		if field.Type == nil {
 			return client.FieldKind_None, NewErrFieldTypeNotSpecified(hostObjectName, field.Name.Value)
 		}
 		return client.FieldKind_None, NewErrTypeNotFound(field.Type.String())
+	}
+}
+
+func isNestedListType(fieldType ast.Type) bool {
+	switch typeVal := fieldType.(type) {
+	case *ast.List:
+		return true
+	case *ast.NonNull:
+		_, isList := typeVal.Type.(*ast.List)
+		return isList
+	default:
+		return false
 	}
 }
 

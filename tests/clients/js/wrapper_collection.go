@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -75,13 +74,7 @@ func (c *Collection) NewIndex(
 	indexDesc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	indexDescVal, err := goji.MarshalJS(indexDesc)
-	if err != nil {
-		return client.IndexDescription{}, err
-	}
-	res, err := execute(ctx, c.client, "newIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "newIndex", goji.MustMarshalJS(indexDesc), jsOpts(opts))
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -92,21 +85,24 @@ func (c *Collection) NewIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.DeleteCollectionIndexOptions]) error {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	_, err := execute(ctx, c.client, "deleteIndex", indexName)
+func (c *Collection) DeleteIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
+) error {
+	_, err := execute(ctx, c.client, "deleteIndex", indexName, jsOpts(opts))
 	return err
 }
 
-func (c *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "listIndexes")
+func (c *Collection) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
+) ([]client.ListIndexesResult, error) {
+	res, err := execute(ctx, c.client, "listIndexes", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
-	var out []client.IndexDescription
+	var out []client.ListIndexesResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}
@@ -118,15 +114,7 @@ func (c *Collection) NewEncryptedIndex(
 	req client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	opt := utils.NewOptions(opts...)
-	if opt != nil {
-		ctx = ctxWithOptIdentity(ctx, opt)
-	}
-	indexDescVal, err := goji.MarshalJS(req)
-	if err != nil {
-		return client.EncryptedIndexDescription{}, err
-	}
-	res, err := execute(ctx, c.client, "newEncryptedIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "newEncryptedIndex", goji.MustMarshalJS(req), jsOpts(opts))
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
@@ -137,10 +125,11 @@ func (c *Collection) NewEncryptedIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "listEncryptedIndexes")
+func (c *Collection) ListEncryptedIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
+	res, err := execute(ctx, c.client, "listEncryptedIndexes", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -156,17 +145,14 @@ func (c *Collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
-	opt := utils.NewOptions(opts...)
-	if opt != nil {
-		ctx = ctxWithOptIdentity(ctx, opt)
-	}
-	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName)
+	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName, jsOpts(opts))
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
-	opt := utils.NewOptions(opts...)
-	ctx = ctxWithOptIdentity(ctx, opt)
-	_, err := execute(ctx, c.client, "truncate")
+func (c *Collection) Truncate(
+	ctx context.Context,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	_, err := execute(ctx, c.client, "truncate", jsOpts(opts))
 	return err
 }

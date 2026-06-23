@@ -125,7 +125,7 @@ func (db *DB) GetCollections(
 func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -217,7 +217,6 @@ func (db *DB) AddCollection(
 // The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-
 func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
@@ -240,12 +239,40 @@ func (db *DB) PatchCollection(
 
 	defer txn.Discard()
 
-	err = db.patchCollection(ctx, patchString, migration)
+	backfills, err := db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitAndRunDeferred(ctx, txn, backfills)
+}
+
+// commitAndRunDeferred commits the transaction and then runs each deferred function
+// sequentially. If the transaction is explicit (caller-provided), the functions are
+// instead registered as OnSuccess callbacks so they run when the caller commits.
+func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
+	if txn.explicit {
+		for _, fn := range deferred {
+			fn := fn
+			txn.OnSuccess(func() {
+				if err := fn(ctx); err != nil {
+					log.ErrorE("deferred operation after commit failed", err)
+				}
+			})
+		}
+		return nil
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+
+	for _, fn := range deferred {
+		if err := fn(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (db *DB) DeleteCollection(
@@ -269,17 +296,21 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	err = db.deleteCollection(ctx, names, opt.ActiveOnly)
+	backfills, err := db.deleteCollection(ctx, names, opt.ActiveOnly)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitAndRunDeferred(ctx, txn, backfills)
 }
 
-func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) error {
+func (db *DB) deleteCollection(
+	ctx context.Context,
+	names []string,
+	activeOnly bool,
+) ([]func(context.Context) error, error) {
 	if len(names) == 0 {
-		return client.ErrCollectionNameRequired
+		return nil, client.ErrCollectionNameRequired
 	}
 
 	seen := make(map[string]struct{}, len(names))
@@ -292,7 +323,7 @@ func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly b
 
 		col, err := db.getCollectionByName(ctx, name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if activeOnly {
@@ -304,7 +335,7 @@ func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly b
 			ctx, db.collectionRepository, col.Version().CollectionID,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, v := range allVersions {
 			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))

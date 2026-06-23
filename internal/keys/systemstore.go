@@ -23,4 +23,7 @@ const (
 	COLLECTION_SEQ      = "/seq/collection"
 	INDEX_ID_SEQ        = "/seq/index"
 	FIELD_ID_SEQ        = "/seq/field"
+	ACTION_STATUS       = "/a/s"
+	ACTION_REASON       = "/a/r"
+	ACTION_PAYLOAD      = "/a/p"
 )
