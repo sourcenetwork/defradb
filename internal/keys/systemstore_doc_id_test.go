@@ -36,17 +36,17 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		{
 			name: "short to public",
 			key:  NewShortIDToDocIDKey(collectionShortID, docShortID),
-			want: "/docid/" + collectionSegment + "/s/" + docShortIDSegment,
+			want: "/d/s/" + collectionSegment + "/" + docShortIDSegment,
 		},
 		{
 			name: "node public to short",
 			key:  NewNodeDocIDToShortIDKey(docID),
-			want: "/docid/n/p/" + docID,
+			want: "/d/p/" + docID,
 		},
 		{
 			name: "block to public",
 			key:  NewBlockCIDToDocIDKey(collectionShortID, fieldCID),
-			want: "/docid/b/" + fieldCID + "/" + collectionSegment,
+			want: "/d/b/" + fieldCID + "/" + collectionSegment,
 		},
 	}
 

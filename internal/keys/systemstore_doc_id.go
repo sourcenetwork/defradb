@@ -24,9 +24,9 @@ import (
 // maps to the public DocID once the genesis block has been materialized.
 //
 // Key shapes:
-//   - /docid/{collectionShortID}/s/{docShortID} -> public DocID
-//   - /docid/n/p/{docID} -> encoded {collectionShortID, docShortID}
-//   - /docid/b/{blockCID}/{collectionShortID} -> public DocID
+//   - /d/s/{collectionShortID}/{docShortID} -> public DocID
+//   - /d/p/{docID} -> encoded {collectionShortID, docShortID}
+//   - /d/b/{blockCID}/{collectionShortID} -> public DocID
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
 // delete, and encryption blocks. It lets CID-only paths such as P2P access
@@ -38,7 +38,6 @@ import (
 const (
 	SHORT_ID_TO_DOC_ID  = "s"
 	DOC_ID_TO_LOCAL_ID  = "p"
-	NODE_DOC_ID_INDEX   = "n"
 	BLOCK_CID_TO_DOC_ID = "b"
 )
 
@@ -93,8 +92,8 @@ var _ Key = (*ShortIDToDocIDKey)(nil)
 func NewShortIDToDocIDKey(collectionShortID uint32, docShortID uint32) ShortIDToDocIDKey {
 	return ShortIDToDocIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			collectionShortIDSegment(collectionShortID),
 			[]byte(SHORT_ID_TO_DOC_ID),
+			collectionShortIDSegment(collectionShortID),
 			EncodeDocShortID(docShortID),
 		),
 	}
@@ -110,7 +109,6 @@ var _ Key = (*NodeDocIDToShortIDKey)(nil)
 func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
 	return NodeDocIDToShortIDKey{
 		systemstoreDocIDKey: newSystemstoreDocIDKey(
-			[]byte(NODE_DOC_ID_INDEX),
 			[]byte(DOC_ID_TO_LOCAL_ID),
 			stringSegment(docID),
 		),
