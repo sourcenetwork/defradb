@@ -270,6 +270,7 @@ func parseAggregateTarget(
 	var limit immutable.Option[uint64]
 	var offset immutable.Option[uint64]
 	var order immutable.Option[request.OrderBy]
+	var groupBy immutable.Option[request.GroupBy]
 
 	for name, value := range arguments {
 		switch name {
@@ -316,6 +317,17 @@ func parseAggregateTarget(
 					Conditions: conditions,
 				})
 			}
+
+		case request.GroupByClause:
+			if raw, ok := value.([]any); ok {
+				fields := make([]string, len(raw))
+				for i, f := range raw {
+					if s, ok := f.(string); ok {
+						fields[i] = s
+					}
+				}
+				groupBy = immutable.Some(request.GroupBy{Fields: fields})
+			}
 		}
 	}
 
@@ -333,6 +345,9 @@ func parseAggregateTarget(
 		},
 		Orderable: request.Orderable{
 			OrderBy: order,
+		},
+		Groupable: request.Groupable{
+			GroupBy: groupBy,
 		},
 	}, nil
 }
