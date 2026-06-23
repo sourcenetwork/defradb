@@ -166,20 +166,20 @@ func TestBlockDocIDMappings(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, docID2, docID)
 
-	err = DeleteBlockDocIDMappings(ctx, txn.Systemstore(), collectionShortID, docID1)
+	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
 
 	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, docID2, docID)
+	require.False(t, found)
+	require.Empty(t, docID)
 
 	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, "")
 	require.NoError(t, err)
 	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
 	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, docID2, docID)
+	require.False(t, found)
+	require.Empty(t, docID)
 }
 
 func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {

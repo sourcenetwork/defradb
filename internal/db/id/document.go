@@ -11,7 +11,6 @@
 package id
 
 import (
-	"bytes"
 	"context"
 	stderrors "errors"
 
@@ -188,53 +187,16 @@ func GetDocIDForBlockFromStore(
 	return docID, true, nil
 }
 
-func DeleteBlockDocIDMappings(
+func DeleteBlockDocIDMapping(
 	ctx context.Context,
 	store corekv.ReaderWriter,
 	collectionShortID uint32,
-	docID string,
+	blockCID cid.Cid,
 ) error {
-	if collectionShortID == 0 || docID == "" {
+	if collectionShortID == 0 || !blockCID.Defined() {
 		return nil
 	}
-
-	blockPrefix := keys.NewBlockCIDToDocIDKey(0, "").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(blockPrefix)})
-	if err != nil {
-		return err
-	}
-
-	collectionSuffix := append([]byte{'/'}, keys.EncodeCollectionShortID(collectionShortID)...)
-	docIDBytes := []byte(docID)
-	mappingKeys := make([][]byte, 0)
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return stderrors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		value, err := iter.Value()
-		if err != nil {
-			return stderrors.Join(err, iter.Close())
-		}
-		if !bytes.Equal(value, docIDBytes) || !bytes.HasSuffix(iter.Key(), collectionSuffix) {
-			continue
-		}
-		mappingKeys = append(mappingKeys, append([]byte(nil), iter.Key()...))
-	}
-	if err := iter.Close(); err != nil {
-		return err
-	}
-
-	for _, key := range mappingKeys {
-		if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
-			return err
-		}
-	}
-	return nil
+	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocIDKey(collectionShortID, blockCID.String()).Bytes())
 }
 
 func DeleteDocIDMappings(
@@ -247,21 +209,10 @@ func DeleteDocIDMappings(
 		return nil
 	}
 
-	docID, found, err := GetDocIDFromStore(ctx, store, collectionShortID, docShortID)
-	if err != nil {
-		return err
-	}
-
 	if err := deleteKeyIfExists(ctx, store, keys.NewShortIDToDocIDKey(collectionShortID, docShortID).Bytes()); err != nil {
 		return err
 	}
-	if err := DeleteNodeDocIDAliasesForShortDocID(ctx, store, collectionShortID, docShortID); err != nil {
-		return err
-	}
-	if found {
-		return DeleteBlockDocIDMappings(ctx, store, collectionShortID, docID)
-	}
-	return nil
+	return DeleteNodeDocIDAliasesForShortDocID(ctx, store, collectionShortID, docShortID)
 }
 
 func DeleteNodeDocIDAliasesForShortDocID(
