@@ -100,6 +100,7 @@ const (
 	NodeListEncryptedIndexPerm
 	NodeListAllEncryptedIndexPerm
 	NodeConnectP2PPeerPerm
+	NodeDisconnectP2PPeerPerm
 	NodeGetP2PPeerInfoPerm
 	NodeGetP2PActivePeersPerm
 	NodeAddP2PReplicatorPerm
@@ -117,6 +118,7 @@ const (
 	NodeVerifySignaturePerm
 	NodeAddLensPerm
 	NodeListLensPerm
+	NodeListActionPerm
 	NodeRefreshViewPerm
 	NodeAddViewPerm
 	NodeSetMigrationPerm
@@ -154,6 +156,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"list-encrypted-index",
 	"list-all-encrypted-index",
 	"connect-p2p-peer",
+	"disconnect-p2p-peer",
 	"get-p2p-peer-info",
 	"get-p2p-active-peers",
 	"add-p2p-replicator",
@@ -171,6 +174,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"verify-signature",
 	"add-lens",
 	"list-lens",
+	"list-action",
 	"refresh-view",
 	"add-view",
 	"set-migration",
@@ -248,6 +252,8 @@ resources:
 
   - name: connect-p2p-peer
     expr: admin
+  - name: disconnect-p2p-peer
+    expr: admin
   - name: get-p2p-peer-info
     expr: admin
   - name: get-p2p-active-peers
@@ -283,6 +289,9 @@ resources:
   - name: add-lens
     expr: admin
   - name: list-lens
+    expr: admin
+
+  - name: list-action
     expr: admin
 
   - name: refresh-view

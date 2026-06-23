@@ -94,9 +94,11 @@ func (p *Planner) isValueFloat(
 		if !fieldDescriptionFound {
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
-		return fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
+		return fieldDescription.Kind == client.FieldKind_FLOAT32 ||
+			fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
 			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32 ||
 			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32_ARRAY ||
+			fieldDescription.Kind == client.FieldKind_FLOAT64 ||
 			fieldDescription.Kind == client.FieldKind_FLOAT64_ARRAY ||
 			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64 ||
 			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil
@@ -150,9 +152,11 @@ func (p *Planner) isValueFloat(
 		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}
 
-	return fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
+	return fieldDescription.Kind == client.FieldKind_FLOAT32 ||
+		fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
 		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32 ||
 		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32_ARRAY ||
+		fieldDescription.Kind == client.FieldKind_FLOAT64 ||
 		fieldDescription.Kind == client.FieldKind_FLOAT64_ARRAY ||
 		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64 ||
 		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil

@@ -21,12 +21,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func init() {
-	documentACPConstructors[options.NodeSourceHubDocumentACPType] = func(
-		ctx context.Context,
-		opts *options.NodeDocumentACPOptions,
-	) (immutable.Option[dac.DocumentACP], error) {
-		acpSourceHub := dac.NewSourceHubDocumentACP()
-		return immutable.Some(acpSourceHub), nil
-	}
+func newSourceHubDocumentACP(
+	ctx context.Context,
+	opts *options.NodeDocumentACPOptions,
+) (immutable.Option[dac.DocumentACP], error) {
+	acpSourceHub := dac.NewSourceHubDocumentACP()
+	return immutable.Some(acpSourceHub), nil
 }

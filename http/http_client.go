@@ -11,6 +11,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,10 +31,7 @@ type httpClient struct {
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
-	if !strings.HasPrefix(rawURL, "http") {
-		rawURL = "http://" + rawURL
-	}
-	baseURL, err := url.Parse(rawURL)
+	baseURL, err := parseBaseURL(rawURL)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +40,53 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 		baseURL: baseURL,
 		apiURL:  baseURL.JoinPath("/api/" + Version),
 	}, nil
+}
+
+// newInsecureHttpClient returns an httpClient that skips TLS certificate
+// verification. Only use for loopback health checks against a server whose
+// cert is not trusted by the system CA pool (e.g. self-signed certs).
+func newInsecureHttpClient(rawURL string) (*httpClient, error) {
+	baseURL, err := parseBaseURL(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &httpClient{
+		client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		},
+		baseURL: baseURL,
+		apiURL:  baseURL.JoinPath("/api/" + Version),
+	}, nil
+}
+
+// parseBaseURL normalizes a raw API address into a URL, defaulting to the
+// http scheme when none is provided. This is the same address the client
+// dials, so its host is what the server sees in the request Host header.
+func parseBaseURL(rawURL string) (*url.URL, error) {
+	// Detect a scheme by the "://" separator rather than a "http" prefix, so
+	// that scheme-less hosts that merely begin with "http" (e.g. httpbin:9181)
+	// still get a scheme prepended and parse with a non-empty host.
+	if !strings.Contains(rawURL, "://") {
+		rawURL = "http://" + rawURL
+	}
+	return url.Parse(rawURL)
+}
+
+// AuthAudienceForURL returns the audience an auth token must carry to be
+// accepted by a server reached at rawURL. It matches the server-side check
+// in AuthMiddleware, which validates the token audience against the
+// lower-cased request Host header.
+func AuthAudienceForURL(rawURL string) (string, error) {
+	baseURL, err := parseBaseURL(rawURL)
+	if err != nil {
+		return "", err
+	}
+	if baseURL.Host == "" {
+		return "", NewErrNoHostInURL(rawURL)
+	}
+	return strings.ToLower(baseURL.Host), nil
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) error {

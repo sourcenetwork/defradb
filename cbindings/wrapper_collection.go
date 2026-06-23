@@ -169,7 +169,7 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	cName := C.CString(c.def.Name)
@@ -192,12 +192,12 @@ func (c *Collection) ListIndexes(
 	res := ConvertAndFreeCResult(C.ListIndexes(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
-		return []client.IndexDescription{}, errors.New(res.Error)
+		return []client.ListIndexesResult{}, errors.New(res.Error)
 	}
 
-	retRes, err := unmarshalResult[[]client.IndexDescription](res.Value)
+	retRes, err := unmarshalResult[[]client.ListIndexesResult](res.Value)
 	if err != nil {
-		return []client.IndexDescription{}, err
+		return []client.ListIndexesResult{}, err
 	}
 
 	return retRes, nil

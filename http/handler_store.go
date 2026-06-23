@@ -36,7 +36,7 @@ const (
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
-	if !IsDevMode {
+	if !isDevMode(req) {
 		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicImport")})
 		return
 	}
@@ -57,7 +57,7 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
-	if !IsDevMode {
+	if !isDevMode(req) {
 		responseJSON(rw, http.StatusForbidden, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
 		return
 	}
@@ -82,6 +82,20 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *storeHandler) ListActions(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	ctx := req.Context()
+
+	opt := options.WithIdentity(options.ListActions(), identity.FromContext(ctx))
+
+	actionInfo, err := db.ListActions(ctx, opt)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, actionInfo)
 }
 
 func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) {
@@ -383,11 +397,15 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
-	colDesc := make([]client.CollectionVersion, len(cols))
+	display := make([]json.RawMessage, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Version()
+		display[i], err = col.Version().Display()
+		if err != nil {
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+			return
+		}
 	}
-	responseJSON(rw, http.StatusOK, colDesc)
+	responseJSON(rw, http.StatusOK, display)
 }
 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
@@ -438,7 +456,7 @@ func (h *storeHandler) ListIndexes(rw http.ResponseWriter, req *http.Request) {
 	txn, hadTxn := datastore.CtxTryGetClientTxn(req.Context())
 
 	// If there is an explicit transaction, use it. Otherwise use the db.
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	var err error
 	if !hadTxn {
 		indexes, err = db.ListIndexes(req.Context())
@@ -682,6 +700,20 @@ func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, identity)
 }
 
+func (h *storeHandler) GetNodeOptions(rw http.ResponseWriter, req *http.Request) {
+	nodeOpts := tryGetContextNodeOptions(req)
+	if nodeOpts == nil {
+		responseJSON(rw, http.StatusNotFound, errorResponse{fmt.Errorf("node options not available")})
+		return
+	}
+	out, err := nodeOpts.SanitizedMap()
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, out)
+}
+
 func (h *storeHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -709,6 +741,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 	identitySchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/identity",
+	}
+	actionInfoSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/action_execution",
 	}
 
 	graphQLResponseSchema := openapi3.NewObjectSchema().
@@ -780,6 +815,27 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	importBackup.RequestBody = &openapi3.RequestBodyRef{
 		Value: backupRequest,
 	}
+
+	actionInfosSchema := openapi3.NewArraySchema()
+	actionInfosSchema.Items = actionInfoSchema
+
+	listActionsResponseSchema := openapi3.NewOneOfSchema()
+	listActionsResponseSchema.OneOf = openapi3.SchemaRefs{
+		actionInfoSchema,
+		openapi3.NewSchemaRef("", actionInfosSchema),
+	}
+
+	listActionsResponse := openapi3.NewResponse().
+		WithDescription("Information on incomplete action executions").
+		WithJSONSchema(listActionsResponseSchema)
+
+	listActions := openapi3.NewOperation()
+	listActions.OperationID = "list_actions"
+	listActions.Description = "List information pertaining to long running actions"
+	listActions.Tags = []string{"action"}
+	listActions.Responses = openapi3.NewResponses()
+	listActions.AddResponse(200, listActionsResponse)
+	listActions.Responses.Set("400", errorResponse)
 
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
@@ -1065,4 +1121,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
+
+	nodeOptions := openapi3.NewOperation()
+	nodeOptions.OperationID = "get_node_options"
+	nodeOptions.Description = "Get node configuration options"
+	nodeOptions.Tags = []string{"node"}
+	nodeOptions.Responses = openapi3.NewResponses()
+	nodeOptions.Responses.Set("200", successResponse)
+	nodeOptions.Responses.Set("400", errorResponse)
+	// In the case of the response failing to be sanitized, it will be a 500 instead of a 400.
+	nodeOptions.Responses.Set("500", errorResponse)
+
+	router.AddRoute("/node/options", http.MethodGet, nodeOptions, h.GetNodeOptions)
+	router.AddRoute("/actions", http.MethodGet, listActions, h.ListActions)
 }

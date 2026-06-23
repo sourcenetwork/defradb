@@ -8,18 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package node
+//go:build explorer
+
+//go:generate powershell -ExecutionPolicy Bypass -File ../tools/scripts/download_explorer.ps1
+
+package explorer
 
 import (
-	"context"
-
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
+	"embed"
 )
 
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
-	if n.opts.DisableP2P {
-		return nil
-	}
-	return ErrP2PNotSupported
-}
+//go:embed dist
+var Dist embed.FS

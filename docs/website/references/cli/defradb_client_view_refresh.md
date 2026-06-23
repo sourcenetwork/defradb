@@ -22,7 +22,7 @@ refresh all views:
   defradb client view refresh
 
 refresh views by name:  
-  defradb client view refresh --name UserView
+  defradb client view refresh --collection-name UserView
 
 refresh views by collection id:  
   defradb client view refresh --collection-id bae123
@@ -34,20 +34,21 @@ refresh views by version id:
 ### Options
 
 ```
-      --collection-id string   View collection ID
-      --get-inactive           Get inactive views as well as active
-  -h, --help                   help for refresh
-      --name string            View name
-      --version-id string      View version ID
+      --collection-id string     Collection ID
+      --collection-name string   Collection name
+      --get-inactive             Get inactive collections as well as active
+  -h, --help                     help for refresh
+      --version-id string        Collection version ID
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
-      --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
+      --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")
       --log-format string           Log format to use. Options are text or json (default "text")
       --log-level string            Log level to use. Options are debug, info, error, fatal (default "info")
       --log-output string           Log output path. Options are stderr or stdout. (default "stderr")

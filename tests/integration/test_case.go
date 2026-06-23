@@ -12,8 +12,6 @@
 package tests
 
 import (
-	"time"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -97,6 +95,11 @@ type TestCase struct {
 	// A value of N means the test will be attempted up to N+1 times total
 	// (1 initial + N retries).
 	FlakeRetries uint
+
+	// SkipChangeDetector will skip this test when the change detector is active.
+	// Use this for tests whose results are inherently non-deterministic across the
+	// two change detector phases, such as tests that rely on the current time.
+	SkipChangeDetector bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -581,12 +584,6 @@ type GetNodeIdentity struct {
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[state.Identity]
-}
-
-// Wait is an action that will wait for the given duration.
-type Wait struct {
-	// Duration is the duration to wait.
-	Duration time.Duration
 }
 
 // VerifyBlockSignature is an action that will verify the signature of the given block.

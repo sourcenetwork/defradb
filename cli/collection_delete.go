@@ -23,7 +23,7 @@ import (
 func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	var activeOnly bool
 	var cmd = &cobra.Command{
-		Use:   "delete [collectionNames]",
+		Use:   "delete <collectionNames>",
 		Short: "Delete collections",
 		Long: `Delete one or more collections by name.
 

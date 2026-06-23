@@ -82,6 +82,11 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"URL of HTTP endpoint to listen on or connect to",
 	)
 	cmd.PersistentFlags().String(
+		"audience",
+		cfg.GetString(config.ConfigFlags["audience"]),
+		"Audience to set on minted auth tokens. Defaults to the host of --url",
+	)
+	cmd.PersistentFlags().String(
 		"keyring-namespace",
 		cfg.GetString(config.ConfigFlags["keyring-namespace"]),
 		"Service name to use when using the system backend",
@@ -94,7 +99,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	cmd.PersistentFlags().String(
 		"keyring-path",
 		cfg.GetString(config.ConfigFlags["keyring-path"]),
-		"Path to store encrypted keys when using the file backend",
+		"Path (relative to DefraDB root directory) to store encrypted keys when using the file backend",
 	)
 	cmd.PersistentFlags().Bool(
 		"no-keyring",

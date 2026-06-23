@@ -7,7 +7,7 @@ yaml-files:
 
 ignore:
   - "node_modules/**"
-  - "playground/node_modules/**"
+  - "explorer/node_modules/**"
 
 rules:
   # Disabled lint rules
