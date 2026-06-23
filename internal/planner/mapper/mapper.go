@@ -595,6 +595,19 @@ func resolveAggregates(
 
 					// Translate the (now-remapped) field names into their numeric mapping indices.
 					convertedGroupBy = toGroupBy(remappedGroupBy, childMapping)
+
+					// The group-by fields must be explicitly added to the child select so the
+					// fetcher knows to retrieve them. Unlike a top-level aggregate (whose scan
+					// has no explicit fields and so fetches everything by default), a relation
+					// host is fetched via a type-join whose child scan only retrieves the fields
+					// it is told about. Without this the group-by value is never fetched and all
+					// documents collapse into a single group.
+					for _, groupByField := range convertedGroupBy.Fields {
+						childFields = append(childFields, &Field{
+							Index: groupByField.Index,
+							Name:  groupByField.Name,
+						})
+					}
 				}
 
 				var dummyJoin Requestable
