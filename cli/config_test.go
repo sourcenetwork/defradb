@@ -106,28 +106,32 @@ func TestLoadConfigAutoEnablesTLSWhenDefaultCertsPresent(t *testing.T) {
 	assert.Equal(t, keyPath, cfg.GetString("api.privkeypath"))
 }
 
-func TestLoadConfigDoesNotEnableTLSWithOnlyDefaultCert(t *testing.T) {
+func TestLoadConfigSetsOnlyFoundDefaultCertPath(t *testing.T) {
+	// Only the certificate is present. The found path is set and its missing
+	// pair is left empty, so the start command rejects the incomplete pair
+	// rather than silently ignoring the certificate.
 	rootdir := t.TempDir()
-	writeDefaultCerts(t, rootdir, true, false)
+	certPath, _ := writeDefaultCerts(t, rootdir, true, false)
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
 	cfg, err := config.LoadConfig(rootdir, flags)
 	require.NoError(t, err)
 
-	assert.Equal(t, "", cfg.GetString("api.pubkeypath"))
+	assert.Equal(t, certPath, cfg.GetString("api.pubkeypath"))
 	assert.Equal(t, "", cfg.GetString("api.privkeypath"))
 }
 
-func TestLoadConfigDoesNotEnableTLSWithOnlyDefaultKey(t *testing.T) {
+func TestLoadConfigSetsOnlyFoundDefaultKeyPath(t *testing.T) {
+	// Only the key is present; symmetric to the cert-only case above.
 	rootdir := t.TempDir()
-	writeDefaultCerts(t, rootdir, false, true)
+	_, keyPath := writeDefaultCerts(t, rootdir, false, true)
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
 	cfg, err := config.LoadConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.Equal(t, "", cfg.GetString("api.pubkeypath"))
-	assert.Equal(t, "", cfg.GetString("api.privkeypath"))
+	assert.Equal(t, keyPath, cfg.GetString("api.privkeypath"))
 }
 
 func TestLoadConfigDoesNotOverrideExplicitCertPaths(t *testing.T) {

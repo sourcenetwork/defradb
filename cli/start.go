@@ -106,15 +106,12 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
 			// TLS is enabled when both the certificate (pubkeypath) and key
 			// (privkeypath) paths are set, either explicitly (flag/config/env) or
-			// by config.LoadConfig auto-detecting both default certificate files.
-			// Both are required, so reject an explicitly-incomplete pair here with
-			// a clear error rather than letting the node fail to start later when
-			// it cannot load the certificate.
-			//
-			// A partial *default* cert directory is handled differently by
-			// config.autoDetectTLSCertPaths, which leaves TLS disabled: an
-			// incomplete default directory is not an explicit request for TLS,
-			// so it must not block startup.
+			// by config.LoadConfig auto-detecting the default certificate files.
+			// Both are required, so reject an incomplete pair here with a clear
+			// error rather than letting the node fail to start later when it
+			// cannot load the certificate. This covers both an explicitly-set
+			// single path and a half-populated default certs directory (which
+			// config.autoDetectTLSCertPaths surfaces as a single set path).
 			tlsCertPath := cfg.GetString("api.pubkeypath")
 			tlsKeyPath := cfg.GetString("api.privkeypath")
 			if (tlsCertPath == "") != (tlsKeyPath == "") {

@@ -473,6 +473,8 @@ defradb start
 ```
 and the HTTP API is served over `https://localhost:9181` instead.
 
+Enabling TLS requires both files: if only one of `server.crt` and `server.key` is present (or only one of the paths below is set), `defradb start` fails with an error rather than silently starting without TLS. With neither present, DefraDB simply starts over plain HTTP.
+
 The certificate and key can be generated with your generator of choice, or with `make tls-certs`. Since they should live inside the DefraDB data and configuration directory, the recommended command is:
 ```shell
 make tls-certs path="~/.defradb/certs"
