@@ -100,7 +100,7 @@ func (db *DB) addView(
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)), false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +110,12 @@ func (db *DB) addView(
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
+func (db *DB) refreshViews(
+	ctx context.Context,
+	opts *options.GetCollectionsOptions,
+	recordAction bool,
+	clearExisting bool,
+) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -136,49 +141,63 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			return err
 		}
 
-		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+		var multistore *datastore.Multistore
+		var txnFreeCtx context.Context
+		if recordAction {
+			multistore = datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 
-		// Clear the transaction on the context used to write the action execution information, otherwise
-		// corekv will pick it up again, writing using the transaction.
-		// https://github.com/sourcenetwork/corekv/issues/107
-		txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
-		err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
-		if err != nil {
-			return err
+			// Clear the transaction on the context used to write the action execution information, otherwise
+			// corekv will pick it up again, writing using the transaction.
+			// https://github.com/sourcenetwork/corekv/issues/107
+			txnFreeCtx = datastore.CtxSetTxn(ctx, nil)
+			err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+			if err != nil {
+				return err
+			}
 		}
 
-		// Clearing and then constructing is a bit inefficient, but it should do for now.
-		// Long term we probably want to update inline as much as possible to avoid unnessecarily
-		// moving/adding/deleting keys in storage
-		err = colObject.truncate(ctx)
-		if err != nil {
-			errErr := action.Set(
-				txnFreeCtx,
-				multistore,
-				db.events,
-				col.CollectionID,
-				client.RefreshDatastoreAction,
-				client.ErroredActionStatus,
-			)
-			return errors.Join(errErr, err)
+		if clearExisting {
+			// Clearing and then constructing is a bit inefficient, but it should do for now.
+			// Long term we probably want to update inline as much as possible to avoid unnessecarily
+			// moving/adding/deleting keys in storage
+			err = colObject.truncate(ctx)
+			if err != nil {
+				var errErr error
+				if recordAction {
+					errErr = action.Set(
+						txnFreeCtx,
+						multistore,
+						db.events,
+						col.CollectionID,
+						client.RefreshDatastoreAction,
+						client.ErroredActionStatus,
+					)
+				}
+				return errors.Join(errErr, err)
+			}
 		}
 
 		err = db.buildViewCache(ctx, col)
 		if err != nil {
-			errErr := action.Set(
-				txnFreeCtx,
-				multistore,
-				db.events,
-				col.CollectionID,
-				client.RefreshDatastoreAction,
-				client.ErroredActionStatus,
-			)
+			var errErr error
+			if recordAction {
+				errErr = action.Set(
+					txnFreeCtx,
+					multistore,
+					db.events,
+					col.CollectionID,
+					client.RefreshDatastoreAction,
+					client.ErroredActionStatus,
+				)
+			}
 			return errors.Join(errErr, err)
 		}
 
-		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
-		if err != nil {
-			return err
+		if recordAction {
+			err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

@@ -528,7 +528,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	defer txn.Discard()
 
-	err = db.refreshViews(ctx, opt)
+	err = db.refreshViews(ctx, opt, true, true)
 	if err != nil {
 		return err
 	}
