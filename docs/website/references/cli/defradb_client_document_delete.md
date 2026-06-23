@@ -4,7 +4,11 @@ Delete documents by docID or filter.
 
 ### Synopsis
 
-Delete documents by docID or filter and lists the number of documents deleted.
+Delete documents by docID or filter and list the number of documents deleted.
+
+This is a soft delete. The document's data and commit history remain available locally
+and can be accessed using the --show-deleted flag on the 'document get' command
+or the showDeleted parameter on GraphQL queries.
 
 ```
 defradb client document delete [flags]

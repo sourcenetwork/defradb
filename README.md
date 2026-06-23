@@ -486,7 +486,7 @@ defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-pr
 ```
 
 ## Access Control System
-Read more about the DefraDB ACP System [here](/acp/README.md)
+Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 ## Supporting CORS
 
