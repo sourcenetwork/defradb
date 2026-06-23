@@ -643,6 +643,7 @@ func (txn *Txn) BasicExport(
 
 	if txn.isClosed {
 		return ErrTxnDiscarded
+
 	}
 
 	return txn.db.BasicExport(ctx, filepath, opts...)
