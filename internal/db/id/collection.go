@@ -50,7 +50,8 @@ func GetUncachedShortCollectionID(
 // GetShortCollectionID returns the local, shortened, internal, collection id, which is used
 // only in locations where using the full CID would be a waste of storage space.
 //
-// This method should be preferred over NewShortCollectionID because it utilizes the cache.
+// This uses the transaction's systemstore. Use GetShortCollectionIDFromStore
+// when the caller already has the store or is reading outside the txn path.
 func GetShortCollectionID(
 	ctx context.Context,
 	collectionID string,
