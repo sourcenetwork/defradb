@@ -477,7 +477,7 @@ func (p *P2P) checkBlockAccess(
 			identityFunc,
 			p.db.NodeACP(),
 			p.db.DocumentACP().Value(),
-			col, // For now we assume there is only one collection.
+			col,
 			acpTypes.DocumentReadPerm,
 			objectID,
 		)
