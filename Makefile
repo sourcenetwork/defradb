@@ -209,10 +209,10 @@ mocks:
 	mockery --config="tools/configs/mockery.yaml"
 
 # Regenerates the committed SDL test fixtures from the current generator output.
-# Uses the npx-tagged test but exits before the npx diff, so node is not required.
+# This is a standalone step and does not require node/npx.
 .PHONY: sdl-fixtures
 sdl-fixtures:
-	DEFRA_UPDATE_SDL_FIXTURES=1 go test -tags npx -run TestWriteSDL ./internal/request/graphql/schema/...
+	go run ./internal/request/graphql/schema/testfixtures/gen
 
 .PHONY: ollama
 ollama:
