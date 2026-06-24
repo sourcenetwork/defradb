@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -570,6 +571,13 @@ func (c *Client) ExecRequest(
 				return result
 			}
 		}
+		// If the body isn't of the form {"error": "..."}, wrap the raw body in a raw error.
+		errMsg := fmt.Sprintf(
+			"server returned non-200 status %d: %s",
+			res.StatusCode, bytes.TrimSpace(data),
+		)
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(errMsg))
+		return result
 	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)

@@ -256,8 +256,6 @@ func ReviveError(message string) error {
 	switch message {
 	case ErrTransactionNotFound.Error():
 		return ErrTransactionNotFound
-	case ErrTransactionNotFound.Error():
-		return ErrTransactionNotFound
 	case ErrDocumentNotFoundOrNotAuthorized.Error():
 		return ErrDocumentNotFoundOrNotAuthorized
 	case corekv.ErrTxnConflict.Error():
