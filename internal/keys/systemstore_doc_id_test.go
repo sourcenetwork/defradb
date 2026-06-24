@@ -37,8 +37,13 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		},
 		{
 			name: "doc id to local doc ref",
-			key:  NewNodeDocIDToShortIDKey(docID),
+			key:  NewDocIDToDocRefKey(docID),
 			want: "/d/p/" + docID,
+		},
+		{
+			name: "doc ref to doc id",
+			key:  NewDocRefToDocIDKey(docShortID, docID),
+			want: "/d/r/" + docShortIDSegment + "/" + docID,
 		},
 		{
 			name: "block to doc id",

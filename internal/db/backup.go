@@ -241,7 +241,7 @@ func (db *DB) setImportedDocIDAlias(
 	if !found {
 		return NewErrDocIDNotFound(doc.ID().String())
 	}
-	if err := id.SetDocIDAlias(ctx, colShortID, docShortID, importedDocID); err != nil {
+	if err := id.SetDocIDToDocRefMapping(ctx, colShortID, docShortID, importedDocID); err != nil {
 		return err
 	}
 	return txn.Commit()

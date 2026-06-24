@@ -91,7 +91,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.Equal(t, collectionShortID, gotDocRef.CollectionShortID)
 	require.Equal(t, docShortID, gotDocRef.DocShortID)
 
-	err = SetDocIDAlias(ctx, collectionShortID, docShortID, legacyDocID)
+	err = SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID)
 	require.NoError(t, err)
 
 	gotDocRef, found, err = GetDocRef(ctx, legacyDocID)
@@ -121,7 +121,7 @@ func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
 	)
 
 	require.NoError(t, SetDocIDMapping(ctx, collectionShortID, docShortID, docID))
-	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, docShortID, legacyDocID))
+	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
 
 	gotDocRef, found, err := GetDocRef(ctx, docID)
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestBlockDocIDMappings(t *testing.T) {
 	require.Empty(t, docID)
 }
 
-func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
+func TestDeleteDocRefMappings(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -197,11 +197,11 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 		otherDocID               = "bae-other-doc"
 	)
 
-	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, docShortID, docID))
-	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, docShortID, legacyDocID))
-	require.NoError(t, SetDocIDAlias(ctx, collectionShortID, otherDocShortID, otherDocID))
+	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, docID))
+	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
+	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, otherDocShortID, otherDocID))
 
-	err := DeleteNodeDocIDAliasesForShortDocID(ctx, txn.Systemstore(), collectionShortID, docShortID)
+	err := DeleteDocRefMappings(ctx, txn.Systemstore(), docShortID)
 	require.NoError(t, err)
 
 	_, found, err := GetDocRef(ctx, docID)

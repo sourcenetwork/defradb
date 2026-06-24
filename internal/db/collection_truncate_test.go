@@ -128,9 +128,9 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	require.True(t, found)
 
 	const legacyDocID = "bae-legacy-doc"
-	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, docShortID, legacyDocID))
+	require.NoError(t, id.SetDocIDToDocRefMapping(txnCtx, collectionShortID, docShortID, legacyDocID))
 
-	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), collectionShortID, docShortID))
+	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), docShortID))
 
 	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)

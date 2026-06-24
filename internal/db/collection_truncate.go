@@ -109,6 +109,7 @@ func (c *collection) truncate(
 		return err
 	}
 
+	// Truncate deletes through root stores, so keep these operations out of the outer txn.
 	ctx = corekv.SetCtxTxn(ctx, nil)
 
 	// The following operations must be performed without a transaction, due to store-level
@@ -232,7 +233,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 						if err != nil {
 							return err
 						}
-						if err := id.DeleteDocIDMappings(ctx, systemstore, colShortID, key.DocShortID); err != nil {
+						if err := id.DeleteDocIDMappings(ctx, systemstore, key.DocShortID); err != nil {
 							return err
 						}
 						deletedDocIDs[key.DocShortID] = struct{}{}

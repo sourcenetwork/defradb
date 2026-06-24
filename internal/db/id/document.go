@@ -37,24 +37,24 @@ func SetDocIDMapping(
 		return err
 	}
 
+	return SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, docID)
+}
+
+func SetDocIDToDocRefMapping(ctx context.Context, collectionShortID uint32, docShortID uint64, docID string) error {
+	if collectionShortID == 0 || docShortID == 0 || docID == "" {
+		return nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
 	if err := txn.Systemstore().Set(
 		ctx,
-		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
+		keys.NewDocIDToDocRefKey(docID).Bytes(),
 		keys.EncodeDocRef(collectionShortID, docShortID),
 	); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func SetDocIDAlias(ctx context.Context, collectionShortID uint32, docShortID uint64, docID string) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-	return txn.Systemstore().Set(
-		ctx,
-		keys.NewNodeDocIDToShortIDKey(docID).Bytes(),
-		keys.EncodeDocRef(collectionShortID, docShortID),
-	)
+	return txn.Systemstore().Set(ctx, keys.NewDocRefToDocIDKey(docShortID, docID).Bytes(), []byte(docID))
 }
 
 func GetDocID(
@@ -111,7 +111,7 @@ func GetDocRef(ctx context.Context, docID string) (keys.DocRef, bool, error) {
 }
 
 func GetDocRefFromStore(ctx context.Context, store corekv.Reader, docID string) (keys.DocRef, bool, error) {
-	value, err := store.Get(ctx, keys.NewNodeDocIDToShortIDKey(docID).Bytes())
+	value, err := store.Get(ctx, keys.NewDocIDToDocRefKey(docID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
 		return keys.DocRef{}, false, nil
 	}
@@ -174,36 +174,38 @@ func DeleteBlockDocIDMapping(
 func DeleteDocIDMappings(
 	ctx context.Context,
 	store corekv.ReaderWriter,
-	collectionShortID uint32,
 	docShortID uint64,
 ) error {
-	if collectionShortID == 0 || docShortID == 0 {
+	if docShortID == 0 {
 		return nil
 	}
 
 	if err := deleteKeyIfExists(ctx, store, keys.NewShortIDToDocIDKey(docShortID).Bytes()); err != nil {
 		return err
 	}
-	return DeleteNodeDocIDAliasesForShortDocID(ctx, store, collectionShortID, docShortID)
+	return DeleteDocRefMappings(ctx, store, docShortID)
 }
 
-func DeleteNodeDocIDAliasesForShortDocID(
+func DeleteDocRefMappings(
 	ctx context.Context,
 	store corekv.ReaderWriter,
-	collectionShortID uint32,
 	docShortID uint64,
 ) error {
-	if collectionShortID == 0 || docShortID == 0 {
+	if docShortID == 0 {
 		return nil
 	}
 
-	prefix := keys.NewNodeDocIDToShortIDKey("").ToString() + "/"
+	prefix := keys.NewDocRefToDocIDKey(docShortID, "").ToString() + "/"
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
 	if err != nil {
 		return err
 	}
 
-	var aliasKeys [][]byte
+	type docRefMapping struct {
+		docID string
+		key   []byte
+	}
+	var mappings []docRefMapping
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -216,20 +218,22 @@ func DeleteNodeDocIDAliasesForShortDocID(
 		if err != nil {
 			return stderrors.Join(err, iter.Close())
 		}
-		docRef, err := keys.DecodeDocRef(value)
-		if err != nil {
-			return stderrors.Join(err, iter.Close())
-		}
-		if docRef.CollectionShortID == collectionShortID && docRef.DocShortID == docShortID {
-			aliasKeys = append(aliasKeys, append([]byte(nil), iter.Key()...))
-		}
+		mappings = append(mappings, docRefMapping{
+			docID: string(value),
+			key:   append([]byte(nil), iter.Key()...),
+		})
 	}
 	if err := iter.Close(); err != nil {
 		return err
 	}
 
-	for _, key := range aliasKeys {
-		if err := store.Delete(ctx, key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
+	for _, mapping := range mappings {
+		if mapping.docID != "" {
+			if err := deleteKeyIfExists(ctx, store, keys.NewDocIDToDocRefKey(mapping.docID).Bytes()); err != nil {
+				return err
+			}
+		}
+		if err := store.Delete(ctx, mapping.key); err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return err
 		}
 	}

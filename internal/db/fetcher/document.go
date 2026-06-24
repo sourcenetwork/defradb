@@ -100,12 +100,17 @@ type keyValue struct {
 	Value []byte
 }
 
+// DecodeDataStoreKey also accepts partial prefix keys; they are not document rows.
+func isDocumentRowKey(key keys.DataStoreKey) bool {
+	return key.CollectionShortID != 0 && key.DocShortID != 0
+}
+
 func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	if f.nextKV.HasValue() {
 		kv := f.nextKV.Value()
 		f.nextKV = immutable.None[keyValue]()
 
-		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != 0 {
+		if isDocumentRowKey(kv.Key) {
 			f.currentKV = kv
 			f.execInfo.DocsFetched++
 			docID, _, err := id.GetDocID(f.ctx, kv.Key.DocShortID)
@@ -129,7 +134,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		if err != nil {
 			return immutable.None[string](), NewErrParseDocumentKey(err)
 		}
-		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == 0 {
+		if !isDocumentRowKey(dsKey) {
 			continue
 		}
 
@@ -162,7 +167,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 }
 
 func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
-	if f.currentKV.Key.CollectionShortID == 0 || f.currentKV.Key.DocShortID == 0 {
+	if !isDocumentRowKey(f.currentKV.Key) {
 		return immutable.None[EncodedDocument](), nil
 	}
 
@@ -193,7 +198,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 		if err != nil {
 			return immutable.None[EncodedDocument](), NewErrParseFieldKey(err)
 		}
-		if dsKey.CollectionShortID == 0 || dsKey.DocShortID == 0 {
+		if !isDocumentRowKey(dsKey) {
 			continue
 		}
 
@@ -234,6 +239,7 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 		bytes.Equal(kv.Value, []byte{base.DeletedObjectMarker}) {
 		return nil
 	}
+	// Prefix/object keys do not carry a user field.
 	if kv.Key.FieldID == "" {
 		return nil
 	}

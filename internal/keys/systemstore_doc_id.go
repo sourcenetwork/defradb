@@ -24,6 +24,7 @@ import (
 // Key shapes:
 //   - /d/s/{docShortID} -> DocID
 //   - /d/p/{docID} -> encoded DocRef
+//   - /d/r/{docShortID}/{docID} -> DocID
 //   - /d/b/{blockCID} -> DocID
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
@@ -34,7 +35,8 @@ import (
 // every document and document block.
 const (
 	SHORT_ID_TO_DOC_ID  = "s"
-	DOC_ID_TO_LOCAL_ID  = "p"
+	DOC_ID_TO_DOC_REF   = "p"
+	DOC_REF_TO_DOC_ID   = "r"
 	BLOCK_CID_TO_DOC_ID = "b"
 )
 
@@ -84,31 +86,62 @@ func (k ShortIDToDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// NodeDocIDToShortIDKey maps a DocID to this node's local DocRef.
-type NodeDocIDToShortIDKey struct {
+// DocIDToDocRefKey maps a DocID to this node's local DocRef.
+type DocIDToDocRefKey struct {
 	DocID string
 }
 
-var _ Key = (*NodeDocIDToShortIDKey)(nil)
+var _ Key = (*DocIDToDocRefKey)(nil)
 
-func NewNodeDocIDToShortIDKey(docID string) NodeDocIDToShortIDKey {
-	return NodeDocIDToShortIDKey{
+func NewDocIDToDocRefKey(docID string) DocIDToDocRefKey {
+	return DocIDToDocRefKey{
 		DocID: docID,
 	}
 }
 
-func (k NodeDocIDToShortIDKey) ToString() string {
+func (k DocIDToDocRefKey) ToString() string {
 	return string(k.Bytes())
 }
 
-func (k NodeDocIDToShortIDKey) Bytes() []byte {
+func (k DocIDToDocRefKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
-		[]byte(DOC_ID_TO_LOCAL_ID),
+		[]byte(DOC_ID_TO_DOC_REF),
 		stringSegment(k.DocID),
 	)
 }
 
-func (k NodeDocIDToShortIDKey) ToDS() ds.Key {
+func (k DocIDToDocRefKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+// DocRefToDocIDKey indexes all DocID aliases for a local doc short ID.
+type DocRefToDocIDKey struct {
+	DocShortID uint64
+	DocID      string
+}
+
+var _ Key = (*DocRefToDocIDKey)(nil)
+
+func NewDocRefToDocIDKey(docShortID uint64, docID string) DocRefToDocIDKey {
+	return DocRefToDocIDKey{
+		DocShortID: docShortID,
+		DocID:      docID,
+	}
+}
+
+func (k DocRefToDocIDKey) ToString() string {
+	return string(k.Bytes())
+}
+
+func (k DocRefToDocIDKey) Bytes() []byte {
+	return newDocIDSystemstoreKey(
+		[]byte(DOC_REF_TO_DOC_ID),
+		EncodeDocShortID(k.DocShortID),
+		stringSegment(k.DocID),
+	)
+}
+
+func (k DocRefToDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

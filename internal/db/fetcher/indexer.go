@@ -140,15 +140,14 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		f.currentShortDocID = immutable.Some(docShortID)
 	} else {
 		if res.key.DocShortID == 0 {
-			f.currentDocID = immutable.None[string]()
-		} else {
-			docID, err := f.docIDFromShortDocID(res.key.DocShortID)
-			if err != nil {
-				return immutable.None[string](), err
-			}
-			f.currentDocID = immutable.Some(docID)
-			f.currentShortDocID = immutable.Some(res.key.DocShortID)
+			return immutable.None[string](), NewErrUnexpectedTypeValue[uint64](res.key.DocShortID)
 		}
+		docID, err := f.docIDFromShortDocID(res.key.DocShortID)
+		if err != nil {
+			return immutable.None[string](), err
+		}
+		f.currentDocID = immutable.Some(docID)
+		f.currentShortDocID = immutable.Some(res.key.DocShortID)
 	}
 	return f.currentDocID, nil
 }

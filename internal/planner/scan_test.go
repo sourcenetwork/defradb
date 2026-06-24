@@ -38,7 +38,7 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 		legacyDocID       = "bae-legacy-doc"
 	)
 	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, docShortID, publicDocID))
-	require.NoError(t, id.SetDocIDAlias(ctx, collectionShortID, docShortID, legacyDocID))
+	require.NoError(t, id.SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
 
 	resolvedDocID, changed, err := publicDocIDForFilterValue(ctx, publicDocID)
 	require.NoError(t, err)
