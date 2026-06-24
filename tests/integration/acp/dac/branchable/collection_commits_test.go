@@ -21,8 +21,8 @@ import (
 // A branchable collection with one 2-field doc produces 4 commits: the name field commit, the age
 // field commit, the composite commit, and the collection-level commit.
 //
-// When the collection is created with an identity it is registered as a (private) acp object, and
-// when the doc is created with the same identity the doc is private too. The owner sees all 4.
+// When the collection is created with an identity it is registered as a (private) acp object. The
+// owner can read every commit of the collection's DAG.
 func TestACP_BranchableCollectionCommits_OwnerCanSeeAllCommits(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 
@@ -69,17 +69,12 @@ func TestACP_BranchableCollectionCommits_OwnerCanSeeAllCommits(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This isolates the feature: the doc is PUBLIC (created without identity) but the collection object
-// is PRIVATE (collection created with identity 1). A stranger can see the 3 public doc commits but
-// NOT the collection-level commit, which is gated on the (private) collection object.
-//
-// Without branchable-collection acp the stranger would see all 4 commits (the collection-level
-// commit would leak), so this asserts exactly 3.
-func TestACP_BranchableCollectionCommits_StrangerCannotSeeCollectionCommit(t *testing.T) {
-	// A fresh matcher is needed per request, as the uniqueness matcher tracks seen values across
-	// every request within a test run.
+// A private branchable collection gates its ENTIRE commit DAG, not just the collection-level commit.
+// Even though the document here is PUBLIC (created without identity), a stranger cannot see any of
+// its commits, because every commit of a branchable collection is also gated on the (private)
+// collection object.
+func TestACP_BranchableCollectionCommits_StrangerCannotSeeAnyCommit(t *testing.T) {
 	ownerCid := testUtils.NewUniqueValue()
-	strangerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -93,13 +88,13 @@ func TestACP_BranchableCollectionCommits_StrangerCannotSeeCollectionCommit(t *te
 				SDL:      branchablePermissionedSDL,
 			},
 
-			// Public doc - its commits are visible to everyone.
+			// Public doc - but the collection it belongs to is private.
 			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          userDoc,
 			},
 
-			// Owner sees all 4 (3 doc + 1 collection-level).
+			// Owner sees all 4 commits.
 			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -120,7 +115,7 @@ func TestACP_BranchableCollectionCommits_StrangerCannotSeeCollectionCommit(t *te
 				NonOrderedResults: true,
 			},
 
-			// Stranger sees only the 3 public doc commits, the collection-level commit is gated.
+			// Stranger sees nothing - the whole DAG is gated on the private collection object.
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -131,13 +126,8 @@ func TestACP_BranchableCollectionCommits_StrangerCannotSeeCollectionCommit(t *te
 					}
 				`,
 				Results: map[string]any{
-					"_commits": []map[string]any{
-						{"cid": strangerCid},
-						{"cid": strangerCid},
-						{"cid": strangerCid},
-					},
+					"_commits": []map[string]any{},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -145,11 +135,9 @@ func TestACP_BranchableCollectionCommits_StrangerCannotSeeCollectionCommit(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// A request without any identity is treated like a stranger: it can see the public doc commits but
-// not the private collection-level commit.
-func TestACP_BranchableCollectionCommits_NoIdentityCannotSeeCollectionCommit(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
+// A request without any identity is treated like a stranger: it cannot see any commit of a private
+// branchable collection.
+func TestACP_BranchableCollectionCommits_NoIdentityCannotSeeAnyCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -176,13 +164,8 @@ func TestACP_BranchableCollectionCommits_NoIdentityCannotSeeCollectionCommit(t *
 					}
 				`,
 				Results: map[string]any{
-					"_commits": []map[string]any{
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-					},
+					"_commits": []map[string]any{},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -190,12 +173,10 @@ func TestACP_BranchableCollectionCommits_NoIdentityCannotSeeCollectionCommit(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// After the owner grants a stranger the "reader" relation on the collection object, the stranger
-// can see the collection-level commit too (4 commits instead of 3).
-func TestACP_BranchableCollectionCommits_SharedReaderCanSeeCollectionCommit(t *testing.T) {
-	// A fresh matcher is needed per request, as the uniqueness matcher tracks seen values across
-	// every request within a test run.
-	beforeCid := testUtils.NewUniqueValue()
+// After the owner grants a stranger the "reader" relation on the collection object, the stranger can
+// read the whole DAG of the (otherwise private) branchable collection: here the doc is public, so
+// collection-level read access is all that is needed to see every commit.
+func TestACP_BranchableCollectionCommits_SharedCollectionReaderCanSeeAllCommits(t *testing.T) {
 	afterCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
@@ -210,14 +191,13 @@ func TestACP_BranchableCollectionCommits_SharedReaderCanSeeCollectionCommit(t *t
 				SDL:      branchablePermissionedSDL,
 			},
 
-			// Public doc so the stranger can already see the 3 doc commits, isolating the effect
-			// of sharing the collection object.
+			// Public doc - visibility is therefore gated only by the collection object.
 			&action.AddDoc{
 				CollectionID: 0,
 				Doc:          userDoc,
 			},
 
-			// Before sharing: stranger sees only the 3 public doc commits.
+			// Before sharing: stranger sees nothing.
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -228,13 +208,8 @@ func TestACP_BranchableCollectionCommits_SharedReaderCanSeeCollectionCommit(t *t
 					}
 				`,
 				Results: map[string]any{
-					"_commits": []map[string]any{
-						{"cid": beforeCid},
-						{"cid": beforeCid},
-						{"cid": beforeCid},
-					},
+					"_commits": []map[string]any{},
 				},
-				NonOrderedResults: true,
 			},
 
 			// Owner shares read access to the collection's commit DAG with the stranger.
@@ -262,6 +237,64 @@ func TestACP_BranchableCollectionCommits_SharedReaderCanSeeCollectionCommit(t *t
 						{"cid": afterCid},
 						{"cid": afterCid},
 						{"cid": afterCid},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Access is additive: a stranger granted ONLY the collection "reader" relation can see the
+// collection-level commit, but the document commits remain gated on the (private) document object,
+// which the stranger has no access to. So the stranger sees just the single collection-level commit.
+func TestACP_BranchableCollectionCommits_CollectionReaderStillGatedByPrivateDoc(t *testing.T) {
+	collectionCid := testUtils.NewUniqueValue()
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   usersPolicy,
+			},
+
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(1),
+				SDL:      branchablePermissionedSDL,
+			},
+
+			// Private doc - owned by identity 1.
+			&action.AddDoc{
+				CollectionID: 0,
+				Identity:     testUtils.ClientIdentity(1),
+				Doc:          userDoc,
+			},
+
+			// Share only the collection object (not the document) with the stranger.
+			testUtils.AddDACCollectionActorRelationship{
+				CollectionID:      0,
+				Relation:          "reader",
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				ExpectedExistence: false,
+			},
+
+			// Stranger sees only the collection-level commit; the 3 document commits remain gated
+			// on the private document object.
+			&action.Request{
+				Identity: testUtils.ClientIdentity(2),
+				Request: `
+					query {
+						_commits {
+							cid
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{"cid": collectionCid},
 					},
 				},
 				NonOrderedResults: true,

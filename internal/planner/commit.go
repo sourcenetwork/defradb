@@ -249,14 +249,18 @@ func (n *dagScanNode) Next() (bool, error) {
 	// We want to enforce DAC, so we skip commits the caller has no read access to.
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
 	// doc-mapping cost. We only check when document acp is configured.
-	// Note:
-	// - [CheckAccessOfDocOnCollection] itself further short-circuits when
-	// the collection has no policy or the object is public (unregistered).
+	//
+	// A commit is gated on every acp object it relates to, and the caller needs read
+	// access to all of them to see it:
 	// - Document-level commits carry a docID and are gated on the document object.
-	// - Collection-level commits of a branchable collection carry no docID and
-	// are gated on the collection object (using the collection id as the object
-	// id). Any other no-docID delta (e.g. schema-definition changes) is not
-	// DAC-gated.
+	// - Every commit of a branchable collection (the collection-level commit as well as
+	// the document-level commits that make up its history) is gated on the collection
+	// object (using the collection id as the object id), so a private branchable
+	// collection gates its entire commit DAG.
+	//
+	// [CheckAccessOfDocOnCollection] itself further short-circuits when the collection
+	// has no policy or the object is public (unregistered), so a no-docID delta that is
+	// not a branchable collection commit (e.g. schema-definition changes) is not gated.
 	if n.planner.documentACP.HasValue() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
@@ -271,14 +275,15 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
-		// Determine the acp object id to check access against. Document commits use their
-		// docID, branchable collection-level commits use the collection id.
-		objectID := string(dagBlock.Delta.GetDocID())
-		if objectID == "" && cols[0].Version().IsBranchable {
-			objectID = cols[0].Version().CollectionID
+		objectIDs := make([]string, 0, 2)
+		if docID := string(dagBlock.Delta.GetDocID()); docID != "" {
+			objectIDs = append(objectIDs, docID)
+		}
+		if cols[0].Version().IsBranchable {
+			objectIDs = append(objectIDs, cols[0].Version().CollectionID)
 		}
 
-		if objectID != "" {
+		for _, objectID := range objectIDs {
 			hasPermission, err := acpDB.CheckAccessOfDocOnCollection(
 				n.planner.ctx,
 				n.planner.identity,
