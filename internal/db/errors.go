@@ -195,7 +195,6 @@ const (
 	errGetAllDocIDs               string = "failed to get all document IDs"
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
-	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
 	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
 		" first truncate it and then try again."
 )
@@ -271,7 +270,6 @@ var (
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
-	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
 	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 

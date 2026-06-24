@@ -112,6 +112,60 @@ func TestInvertibleTypeJoin_Start_ClosesChildSideIfParentStartFails(t *testing.T
 	require.True(t, child.closeCalled)
 }
 
+//  1. Close() after a failed Init() must return its own outcome (nil),
+//     not the stuck Init error.
+func TestMultiScanNode_Close_ReturnsNilAfterFailedInit(t *testing.T) {
+	inner := &trackingPlanNode{initErr: errors.New("init boom")}
+	ms := &multiScanNode{planNode: inner, numReaders: 1}
+
+	require.ErrorContains(t, ms.Init(), "init boom")
+	require.NoError(t, ms.Close(),
+		"Close() must report its own outcome, not a stale Init error")
+	require.True(t, inner.closeCalled)
+}
+
+// 2. Stuck-error must not leak across reader cycles.
+func TestMultiScanNode_Next_ClearsPriorErrorOnNextCycle(t *testing.T) {
+	inner := &scriptedPlanNode{
+		nextResults: []nextResult{
+			// A non-terminal transient error (ok=true) keeps the script
+			// within the planNode.Next() contract, which forbids resuming
+			// after a terminal false.
+			{ok: true, err: errors.New("transient")}, // cycle 1
+			{ok: true, err: nil},                     // cycle 2
+		},
+	}
+	ms := &multiScanNode{planNode: inner, numReaders: 2}
+
+	ok, err := ms.Next()
+	require.ErrorContains(t, err, "transient")
+	require.True(t, ok)
+	ok, err = ms.Next()
+	require.ErrorContains(t, err, "transient")
+	require.True(t, ok)
+
+	ok, err = ms.Next()
+	require.NoError(t, err, "stale err leaked into next cycle")
+	require.True(t, ok)
+}
+
+//  3. Buffered-fan-out contract: within a cycle, all readers see the
+//     cached result without re-invoking the underlying node.
+func TestMultiScanNode_ReadersShareSameResultWithinCycle(t *testing.T) {
+	inner := &scriptedPlanNode{
+		nextResults: []nextResult{{ok: true, err: nil}},
+	}
+	ms := &multiScanNode{planNode: inner, numReaders: 3}
+
+	for i := 0; i < 3; i++ {
+		ok, err := ms.Next()
+		require.NoError(t, err)
+		require.True(t, ok, "reader %d should see cached cycle result", i)
+	}
+	require.Equal(t, 1, inner.nextInvocationCount,
+		"underlying Next() should be invoked exactly once per cycle")
+}
+
 type trackingPlanNode struct {
 	initCalled, startCalled, closeCalled bool
 	initErr, startErr, closeErr          error
@@ -139,4 +193,28 @@ func (n *trackingPlanNode) Source() planNode         { return nil }
 func (n *trackingPlanNode) Kind() string             { return "trackingPlanNode" }
 func (n *trackingPlanNode) DocumentMap() *core.DocumentMapping {
 	return &core.DocumentMapping{}
+}
+
+type nextResult struct {
+	ok  bool
+	err error
+}
+
+// scriptedPlanNode is a test helper whose Next() walks a pre-canned
+// sequence of results and counts invocations. Init/Start/Close are
+// inherited as no-ops from trackingPlanNode.
+type scriptedPlanNode struct {
+	trackingPlanNode
+	nextResults         []nextResult
+	nextInvocationCount int
+}
+
+func (n *scriptedPlanNode) Next() (bool, error) {
+	idx := n.nextInvocationCount
+	n.nextInvocationCount++
+	if idx >= len(n.nextResults) {
+		return false, nil
+	}
+	r := n.nextResults[idx]
+	return r.ok, r.err
 }

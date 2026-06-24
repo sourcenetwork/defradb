@@ -365,8 +365,10 @@ func (g *Generator) createExpandedFieldAggregate(
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var filterTypeName string
+		var groupByTypeName string
 		if target == request.GroupFieldName {
 			filterTypeName = obj.Name() + filterInputNameSuffix
+			groupByTypeName = obj.Name() + typeFieldEnumSuffix
 		} else {
 			if targeted := obj.Fields()[target]; targeted != nil {
 				if list, isList := targeted.Type.(*gql.List); isList && gql.IsLeafType(list.OfType) {
@@ -379,8 +381,10 @@ func (g *Generator) createExpandedFieldAggregate(
 					} else {
 						filterTypeName = genTypeName(list.OfType, filterInputNameSuffix)
 					}
+					// Inline arrays have no named fields to group by, so groupByTypeName is left empty.
 				} else {
 					filterTypeName = targeted.Type.Name() + filterInputNameSuffix
+					groupByTypeName = targeted.Type.Name() + typeFieldEnumSuffix
 				}
 			} else {
 				return NewErrAggregateTargetNotFound(obj.Name(), target)
@@ -394,6 +398,19 @@ func (g *Generator) createExpandedFieldAggregate(
 				Type:        filterType,
 			}
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
+		}
+
+		// The COUNT aggregate supports groupBy, so we need to add it to the input object
+		if f.Name == request.CountFieldName {
+			// groupByTypeName is only set for real collections, not scalar arrays
+			if groupByType, canHaveGroupBy := g.manager.schema.TypeMap()[groupByTypeName]; canHaveGroupBy {
+				expandedField := &gql.InputObjectFieldConfig{
+					Description: schemaTypes.GroupByArgDescription,
+					Type:        gql.NewList(gql.NewNonNull(groupByType)),
+				}
+				// Add the groupBy argument to the COUNT input object.
+				aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.GroupByClause, expandedField)
+			}
 		}
 	}
 
