@@ -14,7 +14,9 @@
 package schema_test
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,9 +32,14 @@ func TestWriteSDL(t *testing.T) {
 			sdlResult, err := testfixtures.GenerateSDL(t.Context(), fixture.SDL)
 			require.NoError(t, err)
 
+			// graphql-inspector's diff expects schema pointers (file paths/URLs), so write the
+			// generated SDL to a temp file (cleaned up via t.TempDir) rather than passing raw text.
+			generatedPath := filepath.Join(t.TempDir(), fixture.Name)
+			require.NoError(t, os.WriteFile(generatedPath, sdlResult, 0o644))
+
 			cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
 				"diff",
-				string(sdlResult),
+				generatedPath,
 				testfixtures.Path(fixture.Name))
 
 			output, err := cmd.CombinedOutput()
