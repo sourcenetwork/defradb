@@ -77,13 +77,6 @@ func isDevMode(req *http.Request) bool {
 	return opts != nil && opts.EnableDevelopment
 }
 
-// mustGetDataStoreTxn returns the datastore transaction or panics.
-//
-// This should only be called from functions within the http package.
-func mustGetDataStoreTxn(tx any) client.Txn {
-	return tx.(client.Txn) //nolint:forcetypeassert
-}
-
 // tryGetContexCtx returns the server context if it exists.
 //
 // This should only be called from functions within the http package.

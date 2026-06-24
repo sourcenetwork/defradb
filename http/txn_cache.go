@@ -38,7 +38,7 @@ type txnCache struct {
 	cache      *ttl.Cache[uint64, cachedTxn]
 }
 
-func newTxnCache(ctx context.Context, opts *options.NodeOptions) (*txnCache, error) {
+func newTxnCache(ctx context.Context, opts *options.NodeHTTPOptions) (*txnCache, error) {
 	cfg := txnCacheConfig(opts)
 	cache, err := ttl.NewCache(ctx, cfg.tick, cfg.buckets, func(_ uint64, item cachedTxn) {
 		item.txn.Discard()
@@ -58,7 +58,7 @@ type txnCacheConfiguration struct {
 	buckets    int
 }
 
-func txnCacheConfig(opts *options.NodeOptions) txnCacheConfiguration {
+func txnCacheConfig(opts *options.NodeHTTPOptions) txnCacheConfiguration {
 	cfg := txnCacheConfiguration{
 		defaultTTL: DefaultTxnTTL,
 		tick:       DefaultTxnTTLTick,
@@ -67,14 +67,14 @@ func txnCacheConfig(opts *options.NodeOptions) txnCacheConfiguration {
 	if opts == nil {
 		return cfg
 	}
-	if opts.HTTP.TxnTTL != 0 {
-		cfg.defaultTTL = opts.HTTP.TxnTTL
+	if opts.TxnTTL != 0 {
+		cfg.defaultTTL = opts.TxnTTL
 	}
-	if opts.HTTP.TxnTTLTick != 0 {
-		cfg.tick = opts.HTTP.TxnTTLTick
+	if opts.TxnTTLTick != 0 {
+		cfg.tick = opts.TxnTTLTick
 	}
-	if opts.HTTP.TxnTTLBuckets != 0 {
-		cfg.buckets = opts.HTTP.TxnTTLBuckets
+	if opts.TxnTTLBuckets != 0 {
+		cfg.buckets = opts.TxnTTLBuckets
 	}
 	return cfg
 }

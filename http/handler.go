@@ -91,7 +91,7 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 		return nil, err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	txs, err := newTxnCache(ctx, nodeOpts)
+	txs, err := newTxnCache(ctx, &nodeOpts.HTTP)
 	if err != nil {
 		cancel()
 		return nil, err
