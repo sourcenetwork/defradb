@@ -127,18 +127,9 @@ func (db *DB) publicDocIDForSignatureBlock(
 	if block.Delta.IsCollection() {
 		return "", nil
 	}
-	shortID, err := id.GetUncachedShortCollectionID(
-		ctx,
-		collection.Version().CollectionID,
-		datastore.SystemstoreFrom(db.rootstore),
-	)
-	if err != nil {
-		return "", err
-	}
 	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.SystemstoreFrom(db.rootstore),
-		shortID,
 		blockCID,
 	)
 	if err != nil {

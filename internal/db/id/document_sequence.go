@@ -12,16 +12,14 @@ package id
 
 import (
 	"context"
-	"math"
 
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// NextDocShortID returns the next local document storage ID for the collection.
-func NextDocShortID(ctx context.Context, collectionShortID uint32) (uint32, error) {
-	seq, err := sequence.Get(ctx, keys.NewDocIDSequenceKey(collectionShortID))
+// NextDocShortID returns the next node-unique document storage ID.
+func NextDocShortID(ctx context.Context) (uint64, error) {
+	seq, err := sequence.Get(ctx, keys.NewDocIDSequenceKey())
 	if err != nil {
 		return 0, err
 	}
@@ -30,8 +28,5 @@ func NextDocShortID(ctx context.Context, collectionShortID uint32) (uint32, erro
 	if err != nil {
 		return 0, err
 	}
-	if next > math.MaxUint32 {
-		return 0, errors.New("local document short ID sequence exhausted")
-	}
-	return uint32(next), nil
+	return next, nil
 }

@@ -17,14 +17,15 @@ import (
 )
 
 // DocRef is the systemstore value used to resolve a DocID to local storage.
-// DocShortID is collection-scoped, so CollectionShortID is stored with it.
+// CollectionShortID is stored with the node-unique DocShortID so callers can
+// recover the document's collection from only its DocID.
 type DocRef struct {
 	CollectionShortID uint32
-	DocShortID        uint32
+	DocShortID        uint64
 }
 
 // EncodeDocRef encodes a local collection/doc pair as a compact systemstore value.
-func EncodeDocRef(collectionShortID uint32, docShortID uint32) []byte {
+func EncodeDocRef(collectionShortID uint32, docShortID uint64) []byte {
 	if collectionShortID == 0 || docShortID == 0 {
 		return nil
 	}

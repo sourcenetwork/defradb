@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-const slashEncodedShortID uint32 = 303
+const slashEncodedShortID = 303
 
 func TestShortIDPathParsers_HandleSlashInEncodedID(t *testing.T) {
 	require.Contains(t, EncodeDocShortID(slashEncodedShortID), byte('/'))
@@ -45,9 +45,8 @@ func TestShortIDPathParsers_HandleSlashInEncodedID(t *testing.T) {
 	require.Equal(t, primaryKey, decodedPrimaryKey)
 
 	headKey := HeadstoreDocKey{
-		CollectionShortID: slashEncodedShortID,
-		DocShortID:        slashEncodedShortID,
-		FieldID:           "2",
+		DocShortID: slashEncodedShortID,
+		FieldID:    "2",
 		Cid: cid.MustParse(
 			"bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 		),
@@ -82,6 +81,6 @@ func TestDecodeDocShortIDPrefix(t *testing.T) {
 	rest, docShortID, err := DecodeDocShortIDPrefix(data)
 
 	require.NoError(t, err)
-	require.Equal(t, slashEncodedShortID, docShortID)
+	require.Equal(t, uint64(slashEncodedShortID), docShortID)
 	require.True(t, bytes.Equal([]byte{'/', '2'}, rest))
 }

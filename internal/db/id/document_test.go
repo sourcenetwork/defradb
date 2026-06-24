@@ -36,11 +36,11 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		docShortID        uint32 = 7
+		docShortID        uint64 = 7
 		docID                    = "bae-public-doc"
 	)
 
-	_, found, err := GetDocID(ctx, collectionShortID, docShortID)
+	_, found, err := GetDocID(ctx, docShortID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -53,7 +53,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.False(t, found)
 
 	undefinedCID := blocks.NewBlock(nil).Cid()
-	mappedDocID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, undefinedCID)
+	mappedDocID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), undefinedCID)
 	require.NoError(t, err)
 	require.False(t, found)
 	require.Empty(t, mappedDocID)
@@ -67,7 +67,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		docShortID        uint32 = 7
+		docShortID        uint64 = 7
 		docID                    = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 	)
@@ -75,7 +75,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	err := SetDocIDMapping(ctx, collectionShortID, docShortID, docID)
 	require.NoError(t, err)
 
-	gotDocID, found, err := GetDocID(ctx, collectionShortID, docShortID)
+	gotDocID, found, err := GetDocID(ctx, docShortID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, docID, gotDocID)
@@ -100,7 +100,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.Equal(t, collectionShortID, gotDocRef.CollectionShortID)
 	require.Equal(t, docShortID, gotDocRef.DocShortID)
 
-	gotDocID, found, err = GetDocID(ctx, gotDocRef.CollectionShortID, gotDocRef.DocShortID)
+	gotDocID, found, err = GetDocID(ctx, gotDocRef.DocShortID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, docID, gotDocID)
@@ -115,7 +115,7 @@ func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
 		otherCollectionID uint32 = 43
-		docShortID        uint32 = 7
+		docShortID        uint64 = 7
 		docID                    = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 	)
@@ -151,32 +151,32 @@ func TestBlockDocIDMappings(t *testing.T) {
 	)
 	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
 
-	err := SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID1)
+	err := SetBlockDocIDMapping(ctx, fieldCID, docID1)
 	require.NoError(t, err)
-	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, docID2)
+	err = SetBlockDocIDMapping(ctx, fieldCID, docID2)
 	require.NoError(t, err)
 
-	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, docID2, docID)
 
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, fieldCID)
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, docID2, docID)
 
-	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.False(t, found)
 	require.Empty(t, docID)
 
-	err = SetBlockDocIDMapping(ctx, collectionShortID, fieldCID, "")
+	err = SetBlockDocIDMapping(ctx, fieldCID, "")
 	require.NoError(t, err)
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), collectionShortID, fieldCID)
+	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.False(t, found)
 	require.Empty(t, docID)
@@ -190,8 +190,8 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
-		docShortID        uint32 = 7
-		otherDocShortID   uint32 = 8
+		docShortID        uint64 = 7
+		otherDocShortID        uint64 = 8
 		docID                    = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 		otherDocID               = "bae-other-doc"

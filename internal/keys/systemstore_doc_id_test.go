@@ -14,18 +14,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 func TestSystemstoreDocIDKeys(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
-		docShortID        uint32 = 7
+		docShortID        uint64 = 7
 		docID                    = "bae-doc"
 		fieldCID                 = "bafy-field-cid"
 	)
-	collectionSegment := string(encoding.EncodeUvarintAscending(nil, uint64(collectionShortID)))
 	docShortIDSegment := string(EncodeDocShortID(docShortID))
 
 	tests := []struct {
@@ -35,8 +32,8 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 	}{
 		{
 			name: "short to doc id",
-			key:  NewShortIDToDocIDKey(collectionShortID, docShortID),
-			want: "/d/s/" + collectionSegment + "/" + docShortIDSegment,
+			key:  NewShortIDToDocIDKey(docShortID),
+			want: "/d/s/" + docShortIDSegment,
 		},
 		{
 			name: "doc id to local doc ref",
@@ -45,8 +42,8 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		},
 		{
 			name: "block to doc id",
-			key:  NewBlockCIDToDocIDKey(collectionShortID, fieldCID),
-			want: "/d/b/" + fieldCID + "/" + collectionSegment,
+			key:  NewBlockCIDToDocIDKey(fieldCID),
+			want: "/d/b/" + fieldCID,
 		},
 	}
 

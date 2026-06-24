@@ -44,7 +44,7 @@ func (r collectionRetriever) ResolveBlockDocID(ctx context.Context, blockCID cid
 	}
 	defer txn.Discard()
 
-	return id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), 0, blockCID)
+	return id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), blockCID)
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
@@ -104,7 +104,6 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKe
 		publicDocID, found, err := id.GetDocIDFromStore(
 			ctx,
 			store,
-			docRef.CollectionShortID,
 			docRef.DocShortID,
 		)
 		if err != nil || found {
@@ -116,7 +115,7 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKe
 	if err != nil || !found {
 		return docKey, err
 	}
-	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, docRef.CollectionShortID, docRef.DocShortID)
+	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, docRef.DocShortID)
 	if err != nil || !found {
 		return docKey, err
 	}

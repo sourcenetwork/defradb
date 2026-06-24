@@ -315,9 +315,8 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	key := keys.HeadstoreDocKey{
-		CollectionShortID: docRef.CollectionShortID,
-		DocShortID:        docRef.DocShortID,
-		FieldID:           core.COMPOSITE_NAMESPACE,
+		DocShortID: docRef.DocShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)

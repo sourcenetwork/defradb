@@ -113,8 +113,8 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	targetCol, err := targetDB.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	setDocIDSequence(t, ctx, sourceDB, sourceCol, 100)
-	setDocIDSequence(t, ctx, targetDB, targetCol, 200)
+	setDocIDSequence(t, ctx, sourceDB, 100)
+	setDocIDSequence(t, ctx, targetDB, 200)
 
 	sourceDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"John","age":30}`), sourceCol.Version())
 	require.NoError(t, err)
@@ -158,7 +158,7 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	require.True(t, found)
 	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
 
-	blockDocID, found, err := id.GetDocIDForBlockFromStore(txnCtx, dbTxn.Systemstore(), collectionShortID, fieldCID)
+	blockDocID, found, err := id.GetDocIDForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, sourceDoc.ID().String(), blockDocID)
@@ -212,11 +212,11 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.Equal(t, genesisPublicDocID, fieldResolved.docID)
 	require.Equal(t, resolved.docShortID, fieldResolved.docShortID)
 
-	const existingDocShortID uint32 = 42
+	const existingDocShortID uint64 = 42
 	existingPublicDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
 	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingDocShortID, existingPublicDocID))
 	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()
-	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, mappedFieldCID, existingPublicDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, mappedFieldCID, existingPublicDocID))
 
 	mp.currentCompositeDocRef = nil
 	fieldResolved, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, mappedFieldCID)

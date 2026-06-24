@@ -225,7 +225,6 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		docID, found, err := id.GetDocIDFromStore(
 			ctx,
 			p.db.Multistore().Systemstore(),
-			shortCollectionID,
 			primaryKey.DocShortID,
 		)
 		if err != nil {
@@ -247,7 +246,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
 	collectionShortID uint32,
-	docShortID uint32,
+	docShortID uint64,
 	docID string,
 	collectionID string,
 	peerID string,
@@ -807,16 +806,15 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 func (p *P2P) getHeadsForShortDocID(
 	ctx context.Context,
 	collectionShortID uint32,
-	docShortID uint32,
+	docShortID uint64,
 	docID string,
 ) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
 	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
-		CollectionShortID: collectionShortID,
-		DocShortID:        docShortID,
-		FieldID:           core.COMPOSITE_NAMESPACE,
+		DocShortID: docShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	iter, err := headstore.Iterator(ctx, corekv.IterOptions{

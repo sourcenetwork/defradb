@@ -186,7 +186,7 @@ func (c *collection) applyDelete(
 	if err != nil {
 		return err
 	}
-	if err := id.SetBlockDocIDMapping(ctx, primaryKey.CollectionShortID, link.Cid, publicDocID); err != nil {
+	if err := id.SetBlockDocIDMapping(ctx, link.Cid, publicDocID); err != nil {
 		return err
 	}
 	encryptionCIDs, err := appendEncryptionCID(nil, b)
@@ -194,7 +194,7 @@ func (c *collection) applyDelete(
 		return err
 	}
 	for _, encCID := range encryptionCIDs {
-		if err := id.SetBlockDocIDMapping(ctx, primaryKey.CollectionShortID, encCID, publicDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, encCID, publicDocID); err != nil {
 			return err
 		}
 	}

@@ -41,12 +41,11 @@ func NewHeadBlocksIterator(
 	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
 	collectionShortID uint32,
-	docShortID uint32,
+	docShortID uint64,
 ) (*DocHeadBlocksIterator, error) {
 	headStoreKey := keys.HeadstoreDocKey{
-		CollectionShortID: collectionShortID,
-		DocShortID:        docShortID,
-		FieldID:           core.COMPOSITE_NAMESPACE,
+		DocShortID: docShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 	headset := coreblock.NewHeadSet(headstore, headStoreKey)
 	cids, _, err := headset.List(ctx)

@@ -238,7 +238,7 @@ err := VersionFetcher.Start(txn, prefixes) {
 // to the target state, creating the serialized state at the given version. It starts by seeking
 // to the closest existing state snapshot in the transient Versioned stores, which on the first
 // run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
-func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint32) error {
+func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint64) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
 
@@ -373,7 +373,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // gets the existing MerkleClock instance, or creates one.
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
-func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint32) error {
+func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
@@ -403,7 +403,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint32) error {
 			return NewErrEncryptionKeyMissing(current.cid.String())
 		}
 
-		var docID uint32
+		var docID uint64
 		if !block.Delta.IsCollection() {
 			docID = docShortID
 			if docID == 0 {
@@ -488,7 +488,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
-) (uint32, error) {
+) (uint64, error) {
 	if block.Delta.IsCollection() {
 		return 0, nil
 	}
@@ -496,7 +496,6 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	publicDocID, found, err := id.GetDocIDForBlockFromStore(
 		vf.ctx,
 		vf.txn.Systemstore(),
-		collectionShortID,
 		blockCID,
 	)
 	if err != nil {
@@ -527,7 +526,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 	collectionShortID uint32,
 	heads []cidlink.Link,
-) (uint32, error) {
+) (uint64, error) {
 	for _, head := range heads {
 		headBlock, err := vf.getDAGBlock(head.Cid)
 		if err != nil {

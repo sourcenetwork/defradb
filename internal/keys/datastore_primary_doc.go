@@ -25,7 +25,7 @@ const (
 
 type PrimaryDataStoreKey struct {
 	CollectionShortID uint32
-	DocShortID        uint32
+	DocShortID        uint64
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)

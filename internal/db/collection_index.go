@@ -387,7 +387,7 @@ func (c *collection) collectDocIDsAfter(
 		return nil, err
 	}
 
-	var prevDocShortID uint32
+	var prevDocShortID uint64
 	for len(docIDs) < limit {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -413,7 +413,7 @@ func (c *collection) collectDocIDsAfter(
 	return docIDs, iter.Close()
 }
 
-func indexWatermarkDocShortID(ctx context.Context, collectionShortID uint32, watermark string) (uint32, error) {
+func indexWatermarkDocShortID(ctx context.Context, collectionShortID uint32, watermark string) (uint64, error) {
 	docShortID, err := keys.DecodeDocShortID([]byte(watermark))
 	if err == nil {
 		return docShortID, nil

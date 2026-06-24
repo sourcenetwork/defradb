@@ -33,7 +33,7 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 
 	const (
 		collectionShortID = uint32(1)
-		docShortID        = uint32(7)
+		docShortID        = uint64(7)
 		publicDocID       = "bae-public-doc"
 		legacyDocID       = "bae-legacy-doc"
 	)

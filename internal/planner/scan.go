@@ -294,7 +294,7 @@ func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool,
 		return docID, false, nil
 	}
 
-	publicDocID, found, err := id.GetDocID(ctx, docRef.CollectionShortID, docRef.DocShortID)
+	publicDocID, found, err := id.GetDocID(ctx, docRef.DocShortID)
 	if err != nil {
 		return "", false, err
 	}

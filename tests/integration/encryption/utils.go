@@ -86,7 +86,7 @@ func encryptedCBORValueWithKey(
 	}
 }
 
-func docRefKey(collectionShortID uint32, docShortID uint32) string {
+func docRefKey(collectionShortID uint32, docShortID uint64) string {
 	return string(keys.EncodeDocRef(collectionShortID, docShortID))
 }
 

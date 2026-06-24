@@ -54,7 +54,7 @@ type dagScanNode struct {
 	headsScanNodes []*dagScanNode
 
 	activePublicDocID  immutable.Option[string]
-	activeStorageDocID immutable.Option[uint32]
+	activeStorageDocID immutable.Option[uint64]
 
 	execInfo dagScanExecInfo
 }
@@ -119,9 +119,7 @@ func (n *dagScanNode) Init() error {
 				n.noResults = true
 				return nil
 			}
-			key := keys.HeadstoreDocKey{}.
-				WithCollectionShortID(docRef.CollectionShortID).
-				WithDocShortID(docRef.DocShortID)
+			key := keys.HeadstoreDocKey{}.WithDocShortID(docRef.DocShortID)
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
 	}
@@ -591,12 +589,12 @@ func (n *dagScanNode) reset() {
 	n.prefixErr = nil
 	n.noResults = false
 	n.activePublicDocID = immutable.None[string]()
-	n.activeStorageDocID = immutable.None[uint32]()
+	n.activeStorageDocID = immutable.None[uint64]()
 }
 
 func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
 	n.activePublicDocID = immutable.None[string]()
-	n.activeStorageDocID = immutable.None[uint32]()
+	n.activeStorageDocID = immutable.None[uint64]()
 
 	currentKey := n.fetcher.CurrentKey()
 	if !currentKey.HasValue() {
@@ -650,24 +648,15 @@ func (n *dagScanNode) publicCommitDocID(
 }
 
 func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.Cid) (string, bool, error) {
-	collectionShortID, err := id.GetShortCollectionID(n.planner.ctx, collectionID)
-	if err != nil {
-		return "", false, err
-	}
 	return id.GetDocIDForBlockFromStore(
 		n.planner.ctx,
 		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
-		collectionShortID,
 		blockCID,
 	)
 }
 
-func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID uint32) (string, error) {
-	collectionShortID, err := id.GetShortCollectionID(n.planner.ctx, collectionID)
-	if err != nil {
-		return "", err
-	}
-	publicDocID, found, err := id.GetDocID(n.planner.ctx, collectionShortID, docID)
+func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID uint64) (string, error) {
+	publicDocID, found, err := id.GetDocID(n.planner.ctx, docID)
 	if err != nil {
 		return "", err
 	}

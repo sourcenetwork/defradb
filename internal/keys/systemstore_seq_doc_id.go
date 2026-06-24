@@ -11,24 +11,20 @@
 package keys
 
 import (
-	"strconv"
-
 	ds "github.com/ipfs/go-datastore"
 )
 
-// DocIDSequenceKey is used to key the per-collection short document ID sequence.
-type DocIDSequenceKey struct {
-	CollectionShortID uint32
-}
+// DocIDSequenceKey is used to key the node-local short document ID sequence.
+type DocIDSequenceKey struct{}
 
 var _ Key = (*DocIDSequenceKey)(nil)
 
-func NewDocIDSequenceKey(collectionShortID uint32) DocIDSequenceKey {
-	return DocIDSequenceKey{CollectionShortID: collectionShortID}
+func NewDocIDSequenceKey() DocIDSequenceKey {
+	return DocIDSequenceKey{}
 }
 
 func (k DocIDSequenceKey) ToString() string {
-	return DOC_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionShortID))
+	return DOC_ID_SEQ
 }
 
 func (k DocIDSequenceKey) Bytes() []byte {

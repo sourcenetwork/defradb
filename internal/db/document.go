@@ -53,7 +53,7 @@ func (c *collection) getAllDocIDsChan(
 	if err != nil {
 		return nil, err
 	}
-	prefix := keys.NewShortIDToDocIDKey(shortID, 0).ToString() + "/"
+	prefix := keys.NewShortIDToDocIDKey(0).ToString() + "/"
 	iter, err := systemstore.Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(prefix),
 	})
@@ -110,6 +110,17 @@ func (c *collection) getAllDocIDsChan(
 					Err: err,
 				}
 				return
+			}
+			docRef, found, err := id.GetDocRefFromStore(ctx, systemstore, docID.String())
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
+			}
+			if !found || docRef.CollectionShortID != shortID {
+				continue
 			}
 
 			canRead, err := c.checkAccessOfDocWithACP(
@@ -481,7 +492,7 @@ func (c *collection) save(
 
 	var primaryKey keys.PrimaryDataStoreKey
 	if isAdd {
-		docShortID, err := id.NextDocShortID(ctx, colShortID)
+		docShortID, err := id.NextDocShortID(ctx)
 		if err != nil {
 			return err
 		}
@@ -609,16 +620,16 @@ func (c *collection) save(
 		client.ApplySavedDocumentID(doc, docID)
 		updateDocID = docID.String()
 	}
-	if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, updateDocID); err != nil {
+	if err := id.SetBlockDocIDMapping(ctx, link.Cid, updateDocID); err != nil {
 		return err
 	}
 	for _, link := range links {
-		if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, updateDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, link.Cid, updateDocID); err != nil {
 			return err
 		}
 	}
 	for _, encCID := range encryptionCIDs {
-		if err := id.SetBlockDocIDMapping(ctx, colShortID, encCID, updateDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, encCID, updateDocID); err != nil {
 			return err
 		}
 	}
@@ -854,7 +865,7 @@ func (c *collection) getPublicDocIDFromPrimaryKey(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (string, error) {
-	docID, found, err := id.GetDocID(ctx, primaryKey.CollectionShortID, primaryKey.DocShortID)
+	docID, found, err := id.GetDocID(ctx, primaryKey.DocShortID)
 	if err != nil {
 		return "", err
 	}

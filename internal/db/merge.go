@@ -186,14 +186,14 @@ type mergeProcessor struct {
 
 type resolvedDocRef struct {
 	docID      string
-	docShortID uint32
+	docShortID uint64
 }
 
 func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
-) (uint32, error) {
+) (uint64, error) {
 	docShortID, found, err := id.GetShortDocID(ctx, collectionShortID, docID)
 	if err != nil {
 		return 0, err
@@ -202,7 +202,7 @@ func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 		return docShortID, nil
 	}
 
-	docShortID, err = id.NextDocShortID(ctx, collectionShortID)
+	docShortID, err = id.NextDocShortID(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -219,9 +219,8 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 			return nil, err
 		}
 		return keys.HeadstoreDocKey{
-			CollectionShortID: primaryKey.CollectionShortID,
-			DocShortID:        primaryKey.DocShortID,
-			FieldID:           core.COMPOSITE_NAMESPACE,
+			DocShortID: primaryKey.DocShortID,
+			FieldID:    core.COMPOSITE_NAMESPACE,
 		}, nil
 	}
 
@@ -422,11 +421,7 @@ func (mp *mergeProcessor) setBlockDocIDMapping(
 		return nil
 	}
 
-	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-	return id.SetBlockDocIDMapping(ctx, colShortID, blockCID, docID)
+	return id.SetBlockDocIDMapping(ctx, blockCID, docID)
 }
 
 func (mp *mergeProcessor) setLinkedBlockDocIDMappings(
@@ -438,12 +433,8 @@ func (mp *mergeProcessor) setLinkedBlockDocIDMappings(
 		return nil
 	}
 
-	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
-	if err != nil {
-		return err
-	}
 	for _, link := range links {
-		if err := id.SetBlockDocIDMapping(ctx, colShortID, link.Cid, docID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, link.Cid, docID); err != nil {
 			return err
 		}
 	}
@@ -558,7 +549,6 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 	if docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		collectionShortID,
 		blockCID,
 	); err != nil {
 		return resolvedDocRef{}, err
@@ -600,7 +590,6 @@ func (mp *mergeProcessor) resolveFieldBlockDocRef(
 	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		collectionShortID,
 		blockCID,
 	)
 	if err != nil {
@@ -624,7 +613,6 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		collectionShortID,
 		blockCID,
 	)
 	if err != nil {

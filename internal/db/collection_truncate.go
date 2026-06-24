@@ -171,7 +171,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ds := multistore.Datastore()
 	systemstore := multistore.Systemstore()
 
-	deletedDocIDs := make(map[uint32]struct{})
+	deletedDocIDs := make(map[uint64]struct{})
 	for _, instanceType := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
 		instancePrefix := keys.DataStoreKey{
 			CollectionShortID: colShortID,
@@ -331,7 +331,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	collectionShortID uint32,
-	docShortID uint32,
+	docShortID uint64,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
@@ -341,8 +341,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 
 	for hasMore {
 		prefix := keys.HeadstoreDocKey{
-			CollectionShortID: collectionShortID,
-			DocShortID:        docShortID,
+			DocShortID: docShortID,
 		}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
@@ -488,7 +487,7 @@ func (c *collection) deleteBlocks(
 		if systemstore == nil || collectionShortID == 0 {
 			return nil
 		}
-		return id.DeleteBlockDocIDMapping(ctx, systemstore, collectionShortID, blockCID)
+		return id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID)
 	}
 
 	deleteBlock := func(blockCID cid.Cid) error {

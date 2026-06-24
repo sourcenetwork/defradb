@@ -539,18 +539,9 @@ func (p *P2P) publicDocIDForBlockCID(
 		return "", nil
 	}
 
-	collectionShortID, err := id.GetUncachedShortCollectionID(
-		ctx,
-		col.Version().CollectionID,
-		p.db.Multistore().Systemstore(),
-	)
-	if err != nil {
-		return "", err
-	}
 	docID, found, err := id.GetDocIDForBlockFromStore(
 		ctx,
 		p.db.Multistore().Systemstore(),
-		collectionShortID,
 		blockCID,
 	)
 	if err != nil {

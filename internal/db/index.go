@@ -238,7 +238,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
-	var docShortID uint32
+	var docShortID uint64
 	if appendDocID {
 		var found bool
 		docShortID, found, err = id.GetShortDocID(ctx, shortID, doc.ID().String())
@@ -527,7 +527,7 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	docShortID uint32,
+	docShortID uint64,
 ) (keys.IndexDataStoreKey, []byte, error) {
 	encodedShortDocID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {

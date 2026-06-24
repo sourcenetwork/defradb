@@ -33,20 +33,16 @@ const projectDocIDTestSchema = `
 		name: String
 	}`
 
-func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, col client.Collection, value uint64) {
+func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, value uint64) {
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	defer txn.Discard()
 	dbTxn, ok := txn.(*Txn)
 	require.True(t, ok)
 
-	txnCtx := InitContext(ctx, dbTxn)
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
-	require.NoError(t, err)
-
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], value)
-	require.NoError(t, dbTxn.Systemstore().Set(ctx, keys.NewDocIDSequenceKey(collectionShortID).Bytes(), buf[:]))
+	require.NoError(t, dbTxn.Systemstore().Set(ctx, keys.NewDocIDSequenceKey().Bytes(), buf[:]))
 	require.NoError(t, txn.Commit())
 }
 
@@ -111,7 +107,7 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 	colB, err := dbB.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	setDocIDSequence(t, ctx, dbB, colB, 100)
+	setDocIDSequence(t, ctx, dbB, 100)
 
 	docA, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), colA.Version())
 	require.NoError(t, err)
@@ -149,7 +145,7 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 	require.NotEqual(t, shortIDA, shortIDB)
 }
 
-func TestNextShortDocIDUsesPerCollectionSequence(t *testing.T) {
+func TestNextShortDocIDUsesNodeSequence(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -160,33 +156,22 @@ func TestNextShortDocIDUsesPerCollectionSequence(t *testing.T) {
 	_, err = db.AddCollection(ctx, projectDocIDTestSchema)
 	require.NoError(t, err)
 
-	userCol, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-	projectCol, err := db.GetCollectionByName(ctx, "Project")
-	require.NoError(t, err)
-
-	setDocIDSequence(t, ctx, db, userCol, 10)
-	setDocIDSequence(t, ctx, db, projectCol, 20)
+	setDocIDSequence(t, ctx, db, 10)
 
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	defer txn.Discard()
 
 	txnCtx := InitContext(ctx, txn)
-	userShortID, err := id.GetShortCollectionID(txnCtx, userCol.CollectionID())
+	nextShortID, err := id.NextDocShortID(txnCtx)
 	require.NoError(t, err)
-	projectShortID, err := id.GetShortCollectionID(txnCtx, projectCol.CollectionID())
+	require.Equal(t, uint64(11), nextShortID)
+	nextShortID, err = id.NextDocShortID(txnCtx)
 	require.NoError(t, err)
-
-	nextShortID, err := id.NextDocShortID(txnCtx, userShortID)
+	require.Equal(t, uint64(12), nextShortID)
+	nextShortID, err = id.NextDocShortID(txnCtx)
 	require.NoError(t, err)
-	require.Equal(t, uint32(11), nextShortID)
-	nextShortID, err = id.NextDocShortID(txnCtx, projectShortID)
-	require.NoError(t, err)
-	require.Equal(t, uint32(21), nextShortID)
-	nextShortID, err = id.NextDocShortID(txnCtx, userShortID)
-	require.NoError(t, err)
-	require.Equal(t, uint32(12), nextShortID)
+	require.Equal(t, uint64(13), nextShortID)
 
 	require.NoError(t, txn.Commit())
 }

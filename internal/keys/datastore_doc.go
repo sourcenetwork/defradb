@@ -36,7 +36,7 @@ const (
 type DataStoreKey struct {
 	CollectionShortID uint32
 	InstanceType      InstanceType
-	DocShortID        uint32
+	DocShortID        uint64
 	FieldID           string
 }
 
@@ -82,7 +82,7 @@ func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithDocShortID(docShortID uint32) DataStoreKey {
+func (k DataStoreKey) WithDocShortID(docShortID uint64) DataStoreKey {
 	newKey := k
 	newKey.DocShortID = docShortID
 	return newKey
@@ -104,9 +104,8 @@ func (k DataStoreKey) WithFieldID(fieldID string) DataStoreKey {
 
 func (k DataStoreKey) ToHeadStoreKey() HeadstoreDocKey {
 	return HeadstoreDocKey{
-		CollectionShortID: k.CollectionShortID,
-		DocShortID:        k.DocShortID,
-		FieldID:           k.FieldID,
+		DocShortID: k.DocShortID,
+		FieldID:    k.FieldID,
 	}
 }
 
@@ -236,7 +235,7 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 		data = data[1:]
 	}
 
-	var docShortID uint32
+	var docShortID uint64
 	if len(data) > 0 {
 		if data[0] != '/' {
 			return DataStoreKey{}, ErrInvalidKey

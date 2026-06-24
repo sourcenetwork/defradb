@@ -12,8 +12,6 @@ package keys
 
 import (
 	ds "github.com/ipfs/go-datastore"
-
-	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 // Doc ID mapping keys bridge local storage references, DocIDs, and block CIDs.
@@ -24,19 +22,13 @@ import (
 // maps to the DocID once the genesis block has been materialized.
 //
 // Key shapes:
-//   - /d/s/{collectionShortID}/{docShortID} -> DocID
+//   - /d/s/{docShortID} -> DocID
 //   - /d/p/{docID} -> encoded DocRef
-//   - /d/b/{blockCID}/{collectionShortID} -> DocID
+//   - /d/b/{blockCID} -> DocID
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
 // delete, and encryption blocks. It lets CID-only paths such as P2P access
-// checks and signature verification recover the DocID. collectionShortID is
-// included because identical block CIDs can appear in different collections.
-//
-// collectionShortID is also part of the short-ID mapping because docShortID
-// values are collection-scoped, not node-scoped. For the same reason, it is
-// stored in DocRef values instead of being normalized behind a separate
-// docShortID -> collectionShortID lookup.
+// checks and signature verification recover the DocID.
 //
 // The path segments are intentionally short because these keys are persisted for
 // every document and document block.
@@ -57,13 +49,6 @@ func newDocIDSystemstoreKey(segments ...[]byte) []byte {
 	return result
 }
 
-func collectionShortIDSegment(collectionShortID uint32) []byte {
-	if collectionShortID == 0 {
-		return nil
-	}
-	return encoding.EncodeUvarintAscending(nil, uint64(collectionShortID))
-}
-
 func stringSegment(value string) []byte {
 	if value == "" {
 		return nil
@@ -71,18 +56,16 @@ func stringSegment(value string) []byte {
 	return []byte(value)
 }
 
-// ShortIDToDocIDKey maps a collection-scoped short doc ID to its DocID.
+// ShortIDToDocIDKey maps a node-unique short doc ID to its DocID.
 type ShortIDToDocIDKey struct {
-	CollectionShortID uint32
-	DocShortID        uint32
+	DocShortID uint64
 }
 
 var _ Key = (*ShortIDToDocIDKey)(nil)
 
-func NewShortIDToDocIDKey(collectionShortID uint32, docShortID uint32) ShortIDToDocIDKey {
+func NewShortIDToDocIDKey(docShortID uint64) ShortIDToDocIDKey {
 	return ShortIDToDocIDKey{
-		CollectionShortID: collectionShortID,
-		DocShortID:        docShortID,
+		DocShortID: docShortID,
 	}
 }
 
@@ -93,7 +76,6 @@ func (k ShortIDToDocIDKey) ToString() string {
 func (k ShortIDToDocIDKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
 		[]byte(SHORT_ID_TO_DOC_ID),
-		collectionShortIDSegment(k.CollectionShortID),
 		EncodeDocShortID(k.DocShortID),
 	)
 }
@@ -132,16 +114,14 @@ func (k NodeDocIDToShortIDKey) ToDS() ds.Key {
 
 // BlockCIDToDocIDKey maps a document-owned block CID to the DocID that owns it.
 type BlockCIDToDocIDKey struct {
-	BlockCID          string
-	CollectionShortID uint32
+	BlockCID string
 }
 
 var _ Key = (*BlockCIDToDocIDKey)(nil)
 
-func NewBlockCIDToDocIDKey(collectionShortID uint32, blockCID string) BlockCIDToDocIDKey {
+func NewBlockCIDToDocIDKey(blockCID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
-		BlockCID:          blockCID,
-		CollectionShortID: collectionShortID,
+		BlockCID: blockCID,
 	}
 }
 
@@ -153,7 +133,6 @@ func (k BlockCIDToDocIDKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
 		[]byte(BLOCK_CID_TO_DOC_ID),
 		stringSegment(k.BlockCID),
-		collectionShortIDSegment(k.CollectionShortID),
 	)
 }
 

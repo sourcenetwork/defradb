@@ -18,17 +18,16 @@ import (
 )
 
 type HeadstoreDocKey struct {
-	CollectionShortID uint32
-	DocShortID        uint32
-	FieldID           string //can be 'C'
-	Cid               cid.Cid
+	DocShortID uint64
+	FieldID    string //can be 'C'
+	Cid        cid.Cid
 }
 
 var _ HeadstoreKey = (*HeadstoreDocKey)(nil)
 
 // NewHeadstoreDocKey creates a new HeadstoreDocKey from its encoded path form:
 //
-// /d/[CollectionShortID]/[DocShortID]/[FieldId]/[Cid]
+// /d/[DocShortID]/[FieldId]/[Cid]
 func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
 	data := []byte(key)
 	docPrefix := append([]byte(HEADSTORE_DOC), '/')
@@ -37,15 +36,7 @@ func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
 	}
 	data = data[len(docPrefix):]
 
-	data, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
-	if err != nil {
-		return HeadstoreDocKey{}, err
-	}
-
-	if len(data) == 0 || data[0] != '/' {
-		return HeadstoreDocKey{}, ErrInvalidKey
-	}
-	data, docShortID, err := DecodeDocShortIDPrefix(data[1:])
+	data, docShortID, err := DecodeDocShortIDPrefix(data)
 	if err != nil {
 		return HeadstoreDocKey{}, err
 	}
@@ -66,21 +57,13 @@ func NewHeadstoreDocKey(key string) (HeadstoreDocKey, error) {
 	}
 
 	return HeadstoreDocKey{
-		CollectionShortID: collectionShortID,
-		DocShortID:        docShortID,
-		FieldID:           fieldID,
-		Cid:               cid,
+		DocShortID: docShortID,
+		FieldID:    fieldID,
+		Cid:        cid,
 	}, nil
 }
 
-// WithCollectionShortID returns a copy of the key scoped to the given collection.
-func (k HeadstoreDocKey) WithCollectionShortID(collectionShortID uint32) HeadstoreDocKey {
-	newKey := k
-	newKey.CollectionShortID = collectionShortID
-	return newKey
-}
-
-func (k HeadstoreDocKey) WithDocShortID(docShortID uint32) HeadstoreDocKey {
+func (k HeadstoreDocKey) WithDocShortID(docShortID uint64) HeadstoreDocKey {
 	newKey := k
 	newKey.DocShortID = docShortID
 	return newKey
@@ -109,10 +92,6 @@ func (k HeadstoreDocKey) ToString() string {
 func (k HeadstoreDocKey) Bytes() []byte {
 	result := []byte(HEADSTORE_DOC)
 
-	if k.CollectionShortID != 0 {
-		result = append(result, '/')
-		result = append(result, EncodeCollectionShortID(k.CollectionShortID)...)
-	}
 	if k.DocShortID != 0 {
 		result = append(result, '/')
 		result = append(result, EncodeDocShortID(k.DocShortID)...)
@@ -142,10 +121,6 @@ func (k HeadstoreDocKey) PrefixEnd() Walkable {
 	}
 	if k.DocShortID != 0 {
 		newKey.DocShortID++
-		return newKey
-	}
-	if k.CollectionShortID != 0 {
-		newKey.CollectionShortID++
 		return newKey
 	}
 	if k.Cid.Defined() {

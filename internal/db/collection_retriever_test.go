@@ -56,7 +56,7 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 
 	blockCID := blocks.NewBlock([]byte("encryption-key")).Cid()
 	require.NoError(t, id.SetDocIDAlias(txnCtx, collectionShortID, docShortID, legacyDocID))
-	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, collectionShortID, blockCID, publicDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, blockCID, publicDocID))
 	require.NoError(t, txn.Commit())
 
 	retriever := NewCollectionRetriever(db)

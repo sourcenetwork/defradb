@@ -108,7 +108,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		if kv.Key.CollectionShortID != 0 && kv.Key.DocShortID != 0 {
 			f.currentKV = kv
 			f.execInfo.DocsFetched++
-			docID, _, err := id.GetDocID(f.ctx, kv.Key.CollectionShortID, kv.Key.DocShortID)
+			docID, _, err := id.GetDocID(f.ctx, kv.Key.DocShortID)
 			if err != nil {
 				return immutable.None[string](), err
 			}
@@ -154,7 +154,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 
 	f.execInfo.DocsFetched++
 
-	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[string](), err
 	}
@@ -167,7 +167,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	}
 
 	doc := encodedDocument{}
-	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.CollectionShortID, f.currentKV.Key.DocShortID)
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}

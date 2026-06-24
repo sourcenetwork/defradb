@@ -19,14 +19,14 @@ import (
 // Short IDs are encoded as sortable path bytes for datastore/headstore keys.
 // They must not be split on '/', because valid encoded IDs may contain that byte.
 
-func encodeShortID(shortID uint32) []byte {
+func encodeShortID(shortID uint64) []byte {
 	if shortID == 0 {
 		return nil
 	}
-	return encoding.EncodeUvarintAscending(nil, uint64(shortID))
+	return encoding.EncodeUvarintAscending(nil, shortID)
 }
 
-func decodeShortID(data []byte) (uint32, error) {
+func decodeShortID(data []byte) (uint64, error) {
 	rest, shortID, err := decodeShortIDPrefix(data)
 	if err != nil {
 		return 0, err
@@ -38,7 +38,7 @@ func decodeShortID(data []byte) (uint32, error) {
 }
 
 // decodeShortIDPrefix returns the unconsumed suffix after one encoded short ID.
-func decodeShortIDPrefix(data []byte) ([]byte, uint32, error) {
+func decodeShortIDPrefix(data []byte) ([]byte, uint64, error) {
 	if len(data) == 0 {
 		return nil, 0, ErrInvalidKey
 	}
@@ -46,33 +46,40 @@ func decodeShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	if shortID == 0 || shortID > math.MaxUint32 {
+	if shortID == 0 {
 		return nil, 0, ErrInvalidKey
 	}
-	return rest, uint32(shortID), nil
+	return rest, shortID, nil
 }
 
 // EncodeCollectionShortID returns the encoded path form of a local collection ID.
 func EncodeCollectionShortID(collectionShortID uint32) []byte {
-	return encodeShortID(collectionShortID)
+	return encodeShortID(uint64(collectionShortID))
 }
 
 // DecodeCollectionShortIDPrefix decodes a local collection ID from a key prefix.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
-	return decodeShortIDPrefix(data)
+	rest, collectionShortID, err := decodeShortIDPrefix(data)
+	if err != nil {
+		return nil, 0, err
+	}
+	if collectionShortID > math.MaxUint32 {
+		return nil, 0, ErrInvalidKey
+	}
+	return rest, uint32(collectionShortID), nil
 }
 
 // EncodeDocShortID returns the encoded path form of a local document ID.
-func EncodeDocShortID(docShortID uint32) []byte {
+func EncodeDocShortID(docShortID uint64) []byte {
 	return encodeShortID(docShortID)
 }
 
 // DecodeDocShortID decodes a local document ID from one encoded value.
-func DecodeDocShortID(data []byte) (uint32, error) {
+func DecodeDocShortID(data []byte) (uint64, error) {
 	return decodeShortID(data)
 }
 
 // DecodeDocShortIDPrefix decodes a local document ID from a key prefix.
-func DecodeDocShortIDPrefix(data []byte) ([]byte, uint32, error) {
+func DecodeDocShortIDPrefix(data []byte) ([]byte, uint64, error) {
 	return decodeShortIDPrefix(data)
 }
