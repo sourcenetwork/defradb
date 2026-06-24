@@ -29,15 +29,69 @@ const commitsQuery = `
 	}
 `
 
-// A branchable, permissioned collection is registered as an acp object on every node it is added to
-// (the collection id is deterministic), so collection-level gating is enforced independently on each
-// node even with local document ACP.
-//
-// Here a public document is created on node 0 and synced to the subscribing node 1. Even though the
-// document (and its collection-level commit DAG) replicated to node 1, node 1 still gates the whole
-// DAG on its own (private) collection object: the owner can read every commit, but a stranger and an
-// unidentified request see nothing.
-func TestACP_P2PBranchableCollectionPrivateCollectionGatedOnPeer_LocalACP(t *testing.T) {
+// A private branchable collection's commits only sync to a peer node when that node's node identity is
+// an actor on the collection object. Here the peer node (node 1) is NOT granted access to the
+// collection object, so even a public document's commits (and the collection-level commit) are gated
+// at the sync layer and never reach node 1 - the owner sees nothing on the peer.
+func TestACP_P2PBranchableCollectionNotSyncedWithoutNodeCollectionAccess_LocalACP(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedDocumentACPTypes: immutable.Some(
+			[]state.DocumentACPType{
+				state.LocalDocumentACPType,
+			},
+		),
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   usersPolicy,
+			},
+
+			// Registers the (private) collection object on both nodes, owned by identity 1.
+			&action.AddCollection{
+				Identity: testUtils.ClientIdentity(1),
+				SDL:      branchablePermissionedSDL,
+			},
+
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+
+			testUtils.AddCollectionSubscription{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+
+			// Public document - but node 1's node identity is not an actor on the collection object,
+			// so the sync layer refuses the related blocks.
+			&action.AddDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				Doc:          userDoc,
+			},
+
+			// Even the collection owner sees nothing on the peer node: the blocks never synced.
+			&action.Request{
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
+				Request:  commitsQuery,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Once the peer node's node identity is an actor (reader) on the collection object, the private
+// branchable collection's commits sync to it. Query-time gating still applies on top: the owner can
+// read every commit, but a stranger and an unidentified request see nothing.
+func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *testing.T) {
 	ownerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
@@ -55,11 +109,19 @@ func TestACP_P2PBranchableCollectionPrivateCollectionGatedOnPeer_LocalACP(t *tes
 				Policy:   usersPolicy,
 			},
 
-			// Added with identity on all nodes -> the collection object is registered (private) on
-			// both node 0 and node 1, owned by identity 1.
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL:      branchablePermissionedSDL,
+			},
+
+			// Grant node 1's node identity read access to the collection object so the sync layer will
+			// let its related blocks through. Granted on all nodes (local ACP).
+			testUtils.AddDACCollectionActorRelationship{
+				CollectionID:      0,
+				Relation:          "reader",
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NodeIdentity(1),
+				ExpectedExistence: false,
 			},
 
 			testUtils.ConnectPeers{
@@ -72,7 +134,6 @@ func TestACP_P2PBranchableCollectionPrivateCollectionGatedOnPeer_LocalACP(t *tes
 				CollectionIDs: []int{0},
 			},
 
-			// Public document - it (and the collection-level commit) freely replicates to node 1.
 			&action.AddDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
@@ -97,7 +158,7 @@ func TestACP_P2PBranchableCollectionPrivateCollectionGatedOnPeer_LocalACP(t *tes
 				},
 			},
 
-			// Stranger sees nothing on the peer node.
+			// Stranger sees nothing on the peer node (query-time gating on the private collection).
 			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(2),
@@ -121,9 +182,9 @@ func TestACP_P2PBranchableCollectionPrivateCollectionGatedOnPeer_LocalACP(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// After the owner grants a stranger the "reader" relation on the collection object, the stranger can
-// read the replicated commit DAG on the peer node too. The relationship is added on every node (local
-// ACP), so node 1 enforces the grant locally.
+// With the collection synced to the peer node (via node-identity access), the owner can then share
+// read access to the collection commit DAG with a stranger. The relationship is added on every node
+// (local ACP), so the peer node enforces the grant locally and the stranger can read the synced DAG.
 func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testing.T) {
 	afterCid := testUtils.NewUniqueValue()
 
@@ -145,6 +206,15 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 			&action.AddCollection{
 				Identity: testUtils.ClientIdentity(1),
 				SDL:      branchablePermissionedSDL,
+			},
+
+			// Let the peer node receive the collection's blocks.
+			testUtils.AddDACCollectionActorRelationship{
+				CollectionID:      0,
+				Relation:          "reader",
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NodeIdentity(1),
+				ExpectedExistence: false,
 			},
 
 			testUtils.ConnectPeers{

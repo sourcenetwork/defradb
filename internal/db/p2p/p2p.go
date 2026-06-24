@@ -442,21 +442,54 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-		ctx,
-		identFunc,
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
-	)
+	peerHasAccess, err := p.checkBlockAccess(ctx, identFunc, cols[0], block)
 	if err != nil {
 		log.ErrorE("Failed to check access", err)
 		return false
 	}
 
 	return peerHasAccess
+}
+
+// checkBlockAccess reports whether the actor resolved by identityFunc may access block.
+//
+// Access is additive: a document commit is gated on its docID, and every commit of a
+// branchable collection is additionally gated on the collection object (objectID = the
+// collection id). The actor must have read access to every object the block relates to.
+// This mirrors the additive gating applied to commit queries by the planner.
+func (p *P2P) checkBlockAccess(
+	ctx context.Context,
+	identityFunc func() immutable.Option[identity.Identity],
+	col client.Collection,
+	block *coreblock.Block,
+) (bool, error) {
+	objectIDs := make([]string, 0, 2)
+	if docID := string(block.Delta.GetDocID()); docID != "" {
+		objectIDs = append(objectIDs, docID)
+	}
+	if col.Version().IsBranchable {
+		objectIDs = append(objectIDs, col.Version().CollectionID)
+	}
+
+	for _, objectID := range objectIDs {
+		hasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+			ctx,
+			identityFunc,
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			col, // For now we assume there is only one collection.
+			acpTypes.DocumentReadPerm,
+			objectID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if !hasAccess {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // trySelfHasAccess checks if the local node has access to the given block.
@@ -491,22 +524,14 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+	return p.checkBlockAccess(
 		ctx,
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
+		cols[0],
+		block,
 	)
-	if err != nil {
-		return false, err
-	}
-
-	return peerHasAccess, nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
