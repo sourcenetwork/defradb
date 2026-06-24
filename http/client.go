@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -569,6 +570,26 @@ func (c *Client) ExecRequest(
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+	// Non-200 responses from middleware (e.g. invalid/unknown transaction ID) use
+	// the {"error": "..."} envelope rather than the GraphQL {"errors": [...]} one.
+	// Convert those so the error surfaces to the caller instead of being silently
+	// swallowed as {"data": null}.
+	if res.StatusCode != http.StatusOK {
+		var raw map[string]any
+		if jsonErr := json.Unmarshal(data, &raw); jsonErr == nil {
+			if errMsg, ok := raw["error"].(string); ok {
+				result.GQL.Errors = append(result.GQL.Errors, client.ReviveError(errMsg))
+				return result
+			}
+		}
+		// If the body isn't of the form {"error": "..."}, wrap the raw body in a raw error.
+		errMsg := fmt.Sprintf(
+			"server returned non-200 status %d: %s",
+			res.StatusCode, bytes.TrimSpace(data),
+		)
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errMsg))
 		return result
 	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {

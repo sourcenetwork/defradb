@@ -655,6 +655,7 @@
         "securitySchemes": {
             "bearerToken": {
                 "bearerFormat": "JWT",
+                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the SourceHub address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
                 "scheme": "bearer",
                 "type": "http"
             }
@@ -2844,6 +2845,12 @@
             }
         }
     },
+    "security": [
+        {},
+        {
+            "bearerToken": []
+        }
+    ],
     "servers": [
         {
             "description": "DefraDB latest version",

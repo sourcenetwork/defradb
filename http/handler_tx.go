@@ -17,6 +17,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type txHandler struct{}
@@ -58,7 +60,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 	tx, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return
 	}
 
@@ -80,7 +82,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	tx, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return
 	}
 

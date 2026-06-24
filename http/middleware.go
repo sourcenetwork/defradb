@@ -69,7 +69,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		id, err := strconv.ParseUint(txValue, 10, 64)
 		if err != nil {
-			next.ServeHTTP(rw, req)
+			responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 			return
 		}
 		tx, ok := txs.Load(id)
