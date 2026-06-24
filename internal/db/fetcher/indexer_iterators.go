@@ -542,9 +542,7 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	key := keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields)
-	key.Epoch = f.epoch
-	return key, nil
+	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, f.epoch, fields), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.

@@ -20,13 +20,13 @@ import (
 // load-bearing: a change to the prefix or the segment order silently moves epochs to a different
 // keyspace, making every epoch read miss. ToString, Bytes and ToDS must agree.
 func TestIndexEpochSequenceKey_Format(t *testing.T) {
-	key := NewIndexEpochSequenceKey("bafycollection", 7)
+	key := NewIndexEpochSequenceKey(3, 7)
 
-	want := INDEX_EPOCH_SEQ + "/bafycollection/7"
+	want := INDEX_EPOCH_SEQ + "/3/7"
 	assert.Equal(t, want, key.ToString())
 	assert.Equal(t, []byte(want), key.Bytes())
 	assert.Equal(t, key.ToString(), key.ToDS().String())
 
-	assert.Equal(t, "bafycollection", key.CollectionID)
+	assert.Equal(t, uint32(3), key.CollectionShortID)
 	assert.Equal(t, uint32(7), key.IndexID)
 }

@@ -65,9 +65,8 @@ func NewIndexLookup(
 // to ctx. The caller owns fetch accounting.
 func (l *IndexLookup) Has(ctx context.Context, value client.NormalValue) (bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	key := keys.NewIndexDataStoreKey(l.shortID, l.indexID, []keys.IndexedField{
+	key := keys.NewIndexDataStoreKey(l.shortID, l.indexID, l.epoch, []keys.IndexedField{
 		{Value: value, Descending: l.descending},
 	})
-	key.Epoch = l.epoch
 	return txn.Datastore().Has(ctx, &key)
 }

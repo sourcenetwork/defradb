@@ -33,7 +33,11 @@ import (
 // The sequence is seeded when the index is created, so a missing sequence is an inconsistent
 // state and returns an error rather than defaulting, which would scan the wrong namespace.
 func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
-	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionID, indexID).Bytes())
+	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	if err != nil {
+		return 0, err
+	}
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID).Bytes())
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)

@@ -245,9 +245,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields)
-	key.Epoch = index.epoch
-	return key, nil
+	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, index.epoch, fields), nil
 }
 
 // deleteIndexKey removes a single index entry. While the index is building, a missing

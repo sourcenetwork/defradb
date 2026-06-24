@@ -53,10 +53,11 @@ var _ CollectionedKey = (*IndexDataStoreKey)(nil)
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
-func NewIndexDataStoreKey(collectionShortID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
+func NewIndexDataStoreKey(collectionShortID, indexID, epoch uint32, fields []IndexedField) IndexDataStoreKey {
 	return IndexDataStoreKey{
 		CollectionShortID: collectionShortID,
 		IndexID:           indexID,
+		Epoch:             epoch,
 		Fields:            fields,
 	}
 }
@@ -153,8 +154,9 @@ func DecodeIndexDataStoreKey(
 		return key, nil
 	}
 
-	// A non-zero epoch is a component between the index ID and the fields; consume it only
-	// when scanning a non-zero epoch keyspace.
+	// The epoch component looks identical to a field value, so the decoder can't detect it on its
+	// own. The caller passes the epoch of the keyspace it scanned: non-zero for real entries (read
+	// it), zero for a whole-index prefix scan (skip it, the rest are field values).
 	if epoch != 0 {
 		if data[0] != '/' {
 			return IndexDataStoreKey{}, ErrInvalidKey

@@ -22,20 +22,24 @@ import (
 // building epoch, so a building epoch never reuses the active epoch or one left behind by
 // an interrupted rebuild whose entries have not yet been collected.
 //
-// CollectionID is the stable collection ID, so the sequence survives version switches.
+// CollectionShortID is the short collection ID, which is keyed by the stable collection ID and so
+// is itself stable across version switches; the sequence therefore survives them. It is used in
+// place of the full collection ID to keep the key small.
 type IndexEpochSequenceKey struct {
-	CollectionID string
-	IndexID      uint32
+	CollectionShortID uint32
+	IndexID           uint32
 }
 
 var _ Key = (*IndexEpochSequenceKey)(nil)
 
-func NewIndexEpochSequenceKey(collectionID string, indexID uint32) IndexEpochSequenceKey {
-	return IndexEpochSequenceKey{CollectionID: collectionID, IndexID: indexID}
+func NewIndexEpochSequenceKey(collectionShortID, indexID uint32) IndexEpochSequenceKey {
+	return IndexEpochSequenceKey{CollectionShortID: collectionShortID, IndexID: indexID}
 }
 
 func (k IndexEpochSequenceKey) ToString() string {
-	return INDEX_EPOCH_SEQ + "/" + k.CollectionID + "/" + strconv.FormatUint(uint64(k.IndexID), 10)
+	return INDEX_EPOCH_SEQ + "/" +
+		strconv.FormatUint(uint64(k.CollectionShortID), 10) + "/" +
+		strconv.FormatUint(uint64(k.IndexID), 10)
 }
 
 func (k IndexEpochSequenceKey) Bytes() []byte {

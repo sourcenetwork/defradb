@@ -170,7 +170,7 @@ func TestNewIndexDataStoreKey(t *testing.T) {
 		{Value: client.NewNormalInt(42), Descending: true},
 	}
 
-	key := NewIndexDataStoreKey(123, 456, fields)
+	key := NewIndexDataStoreKey(123, 456, 0, fields)
 
 	assert.Equal(t, uint32(123), key.CollectionShortID)
 	assert.Equal(t, uint32(456), key.IndexID)

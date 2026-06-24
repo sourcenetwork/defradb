@@ -330,8 +330,9 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 
 	// Seed the index's epoch sequence as real index creation does, so the index resolves to
 	// epoch 1; without it a created index could not exist.
+	epochShortID := getCollectionShortID(t, ctx, db, colVersion.CollectionID)
 	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
-		seq, err := sequence.Get(c, keys.NewIndexEpochSequenceKey(colVersion.CollectionID, nameDesc.ID))
+		seq, err := sequence.Get(c, keys.NewIndexEpochSequenceKey(epochShortID, nameDesc.ID))
 		if err != nil {
 			return err
 		}

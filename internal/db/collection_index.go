@@ -273,7 +273,11 @@ func processNewIndexRequest(
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.
 func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
-	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(collectionID, indexID))
+	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	if err != nil {
+		return 0, err
+	}
+	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID))
 	if err != nil {
 		return 0, err
 	}

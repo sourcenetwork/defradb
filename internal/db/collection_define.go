@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -77,6 +78,12 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
+		// Index epoch allocation needs the short collection ID, but SaveCollection only registers
+		// it after the indexes are built, so register it now. The call is idempotent.
+		if err := id.SetShortCollectionID(ctx, def.Definition.CollectionID); err != nil {
+			return nil, err
+		}
+
 		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.NewIndexes))
 		for _, newIndex := range def.NewIndexes {
 			desc, err := processNewIndexRequest(ctx, def.Definition, newIndex)

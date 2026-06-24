@@ -376,13 +376,11 @@ func (db *DB) SetActiveCollectionVersion(
 		return err
 	}
 
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	// The rebuild drives its own batched transactions, so it runs after the commit that
-	// recorded the builds.
-	return runRebuild(ctx)
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild})
 }
 
 func (db *DB) SetMigration(
@@ -411,14 +409,11 @@ func (db *DB) SetMigration(
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return "", err
-	}
-
-	// The rebuild drives its own batched transactions, so it runs after the commit that
-	// recorded the builds.
-	if err := runRebuild(ctx); err != nil {
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	if err := commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild}); err != nil {
 		return "", err
 	}
 
