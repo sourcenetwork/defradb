@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	sse "github.com/vito/go-sse/sse"
 
@@ -65,9 +66,21 @@ func NewInsecureClient(rawURL string) (*Client, error) {
 }
 
 func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
+	return c.newTxn(readOnly, 0)
+}
+
+// NewTxnWithTTL creates a new HTTP transaction with the given idle TTL.
+func (c *Client) NewTxnWithTTL(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
+	return c.newTxn(readOnly, txnTTL)
+}
+
+func (c *Client) newTxn(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
+	}
+	if txnTTL != 0 {
+		query.Add("ttl", txnTTL.String())
 	}
 
 	methodURL := c.http.apiURL.JoinPath("tx")

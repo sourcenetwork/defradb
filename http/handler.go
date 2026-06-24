@@ -13,7 +13,6 @@ package http
 import (
 	"context"
 	"net/http"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -81,8 +80,9 @@ type DB interface {
 }
 
 type Handler struct {
-	mux *chi.Mux
-	txs *sync.Map
+	mux       *chi.Mux
+	txs       *txnCache
+	ctxCancel context.CancelFunc
 }
 
 func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
@@ -90,7 +90,12 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	txs := &sync.Map{}
+	ctx, cancel := context.WithCancel(context.Background())
+	txs, err := newTxnCache(ctx, nodeOpts)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
 
 	mux := chi.NewMux()
 	// Normalize trailing slashes so that, for example, `/collections` and
@@ -124,8 +129,9 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	})
 	mux.Handle("/*", explorerHandler)
 	return &Handler{
-		mux: mux,
-		txs: txs,
+		mux:       mux,
+		txs:       txs,
+		ctxCancel: cancel,
 	}, nil
 }
 
@@ -135,7 +141,13 @@ func (h *Handler) Transaction(id uint64) (client.Txn, error) {
 		return nil, ErrInvalidTransactionId
 	}
 
-	return mustGetDataStoreTxn(tx), nil
+	return tx, nil
+}
+
+// Close stops background handler resources.
+func (h *Handler) Close() {
+	h.ctxCancel()
+	h.txs.Close()
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

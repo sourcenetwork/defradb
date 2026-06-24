@@ -13,6 +13,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
@@ -26,60 +27,82 @@ type CreateTxResponse struct {
 
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
+	txnTTL, err := parseTxnTTL(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	tx, err := db.NewTxn(readOnly)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
+	if err := txs.Store(tx, txnTTL); err != nil {
+		tx.Discard()
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 
 	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.Load(txID)
+	tx, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit()
+	err = tx.Commit()
 	if err != nil {
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
-	txs.Delete(txID)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 
 	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.LoadAndDelete(txID)
+	tx, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	dsTxn.Discard()
+	tx.Discard()
 
 	rw.WriteHeader(http.StatusOK)
+}
+
+func parseTxnTTL(req *http.Request) (time.Duration, error) {
+	raw := req.URL.Query().Get("ttl")
+	if raw == "" {
+		return 0, nil
+	}
+	txnTTL, err := time.ParseDuration(raw)
+	if err == nil {
+		return txnTTL, nil
+	}
+	seconds, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return time.Duration(seconds) * time.Second, nil
 }
 
 func (h *txHandler) bindRoutes(router *Router) {
@@ -96,6 +119,9 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnReadOnlyQueryParam := openapi3.NewQueryParameter("read_only").
 		WithDescription("Read only transaction").
 		WithSchema(openapi3.NewBoolSchema().WithDefault(false))
+	txnTTLQueryParam := openapi3.NewQueryParameter("ttl").
+		WithDescription("Transaction idle TTL as a Go duration string, or seconds if no unit is provided").
+		WithSchema(openapi3.NewStringSchema())
 
 	txnCreateResponse := openapi3.NewResponse().
 		WithDescription("Transaction info").
@@ -106,6 +132,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCreate.Description = "Create a new transaction"
 	txnCreate.Tags = []string{"transaction"}
 	txnCreate.AddParameter(txnReadOnlyQueryParam)
+	txnCreate.AddParameter(txnTTLQueryParam)
 	txnCreate.AddResponse(200, txnCreateResponse)
 	txnCreate.Responses.Set("400", errorResponse)
 

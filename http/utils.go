@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -30,7 +29,7 @@ const (
 type contextKey string
 
 var (
-	// txsContextKey is the context key for the transaction *sync.Map
+	// txsContextKey is the context key for the transaction cache.
 	txsContextKey = contextKey("txs")
 	// dbContextKey is the context key for the client.TxnStore
 	dbContextKey = contextKey("db")
@@ -52,11 +51,11 @@ func mustGetContextClientCollection(req *http.Request) client.Collection {
 	return req.Context().Value(colContextKey).(client.Collection) //nolint:forcetypeassert
 }
 
-// mustGetContextSyncMap returns the sync map from the http request context or panics.
+// mustGetContextTxnCache returns the transaction cache from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextSyncMap(req *http.Request) *sync.Map {
-	return req.Context().Value(txsContextKey).(*sync.Map) //nolint:forcetypeassert
+func mustGetContextTxnCache(req *http.Request) *txnCache {
+	return req.Context().Value(txsContextKey).(*txnCache) //nolint:forcetypeassert
 }
 
 // mustGetContextClientDB returns the DB from the http request context or panics.

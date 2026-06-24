@@ -45,6 +45,7 @@ var (
 	ErrMigrationNotFound            = errors.New("migration not found")
 	ErrMissingRequest               = errors.New("missing request")
 	ErrInvalidTransactionId         = errors.New("invalid transaction id")
+	ErrMissingOrExpiredTransaction  = errors.New("missing or expired transaction")
 	ErrP2PDisabled                  = errors.New("p2p network is disabled")
 	ErrMethodIsNotImplemented       = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity              = errors.New("required identity is missing")

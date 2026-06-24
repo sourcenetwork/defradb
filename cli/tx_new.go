@@ -12,12 +12,21 @@ package cli
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
+
+type txnTTLClient interface {
+	NewTxnWithTTL(bool, time.Duration) (client.Txn, error)
+}
 
 func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 	var readOnly bool
+	var txnTTL time.Duration
 	var cmd = &cobra.Command{
 		Use:   "new",
 		Short: "Create a new DefraDB transaction.",
@@ -25,7 +34,16 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			tx, err := cliClient.NewTxn(readOnly)
+			var tx client.Txn
+			if txnTTL != 0 {
+				ttlClient, ok := cliClient.(txnTTLClient)
+				if !ok {
+					return fmt.Errorf("transaction ttl is not supported by this client")
+				}
+				tx, err = ttlClient.NewTxnWithTTL(readOnly, txnTTL)
+			} else {
+				tx, err = cliClient.NewTxn(readOnly)
+			}
 			if err != nil {
 				return err
 			}
@@ -33,5 +51,6 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&readOnly, "read-only", false, "Transaction is read only")
+	cmd.Flags().DurationVar(&txnTTL, "ttl", 0, "Transaction idle TTL")
 	return cmd
 }

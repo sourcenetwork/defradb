@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -44,7 +43,7 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.TxnStore, txs *sync.Map, nodeOpts *options.NodeOptions) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.TxnStore, txs *txnCache, nodeOpts *options.NodeOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
@@ -61,7 +60,7 @@ func ApiMiddleware(db client.TxnStore, txs *sync.Map, nodeOpts *options.NodeOpti
 // TransactionMiddleware sets the transaction context for the current request.
 func TransactionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		txs := mustGetContextSyncMap(req)
+		txs := mustGetContextTxnCache(req)
 
 		txValue := req.Header.Get(txHeaderName)
 		if txValue == "" {
@@ -75,13 +74,16 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			responseJSON(rw, httpStatusFromError(db.ErrTxnDiscarded), errorResponse{db.ErrTxnDiscarded})
+			err := ErrMissingOrExpiredTransaction
+			if strings.Contains(req.URL.Path, "/graphql") {
+				responseJSON(rw, httpStatusFromError(err), gqlErrorResponse{err})
+			} else {
+				responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+			}
 			return
 		}
 		ctx := req.Context()
-		if val, ok := tx.(client.Txn); ok {
-			ctx = db.InitContext(ctx, val)
-		}
+		ctx = db.InitContext(ctx, tx)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
