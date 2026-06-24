@@ -17,9 +17,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestTransactionMiddleware_WithInvalidTxID_ReturnsBadRequest(t *testing.T) {

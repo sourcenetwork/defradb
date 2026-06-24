@@ -576,7 +576,7 @@ func (c *Client) ExecRequest(
 			"server returned non-200 status %d: %s",
 			res.StatusCode, bytes.TrimSpace(data),
 		)
-		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(errMsg))
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errMsg))
 		return result
 	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
