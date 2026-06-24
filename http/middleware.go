@@ -75,7 +75,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			responseJSON(rw, http.StatusNotFound, errorResponse{ErrTransactionNotFound})
+			responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 			return
 		}
 		ctx := req.Context()
