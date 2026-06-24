@@ -239,10 +239,6 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 		bytes.Equal(kv.Value, []byte{base.DeletedObjectMarker}) {
 		return nil
 	}
-	// Prefix/object keys do not carry a user field.
-	if kv.Key.FieldID == "" {
-		return nil
-	}
 
 	fieldID, err := kv.Key.FieldIDAsUint()
 	if err != nil {

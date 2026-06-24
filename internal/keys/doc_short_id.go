@@ -17,7 +17,8 @@ import (
 )
 
 // Short IDs are encoded as sortable path bytes for datastore/headstore keys.
-// They must not be split on '/', because valid encoded IDs may contain that byte.
+// Keep the encoding here so every key type sorts the same way. Do not split
+// encoded IDs on '/', because valid encoded IDs may contain that byte.
 
 func encodeShortID(shortID uint64) []byte {
 	if shortID == 0 {

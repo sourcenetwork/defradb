@@ -139,6 +139,7 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		f.currentDocID = immutable.Some(docID)
 		f.currentShortDocID = immutable.Some(docShortID)
 	} else {
+		// Non-unique index entries must carry the doc suffix.
 		if res.key.DocShortID == 0 {
 			return immutable.None[string](), NewErrUnexpectedTypeValue[uint64](res.key.DocShortID)
 		}

@@ -59,7 +59,8 @@ func GetShortCollectionID(
 	return GetShortCollectionIDFromStore(ctx, collectionID, txn.Systemstore())
 }
 
-// GetShortCollectionIDFromStore returns the cached short collection ID, reading from systemStore on cache miss.
+// GetShortCollectionIDFromStore uses the context cache with an explicit store.
+// It is for paths that read outside the context txn, such as rootstore reads.
 func GetShortCollectionIDFromStore(
 	ctx context.Context,
 	collectionID string,
