@@ -148,6 +148,7 @@ func httpStatusFromError(err error) int {
 	// 404 Not Found
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
 		errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, client.ErrTransactionNotFound) ||
 		errors.Is(err, db.ErrDocIDNotFound) ||
 		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
 		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||
