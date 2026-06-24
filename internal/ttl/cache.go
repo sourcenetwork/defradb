@@ -136,6 +136,11 @@ func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) error {
 	return c.wheel.UpdateTTL(cacheWheelKey[K]{key: key, seq: item.seq}, ttl)
 }
 
+// ValidateTTL returns an error if ttl cannot be used by this cache.
+func (c *Cache[K, V]) ValidateTTL(ttl time.Duration) error {
+	return c.wheel.validTTL(ttl)
+}
+
 // Stop stops the cache expiration wheel.
 func (c *Cache[K, V]) Stop() {
 	c.wheel.Stop()

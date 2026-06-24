@@ -46,6 +46,10 @@ func newTxnCache(ctx context.Context, opts *options.NodeHTTPOptions) (*txnCache,
 	if err != nil {
 		return nil, err
 	}
+	if err := cache.ValidateTTL(cfg.defaultTTL); err != nil {
+		cache.Stop()
+		return nil, err
+	}
 	return &txnCache{
 		defaultTTL: cfg.defaultTTL,
 		cache:      cache,

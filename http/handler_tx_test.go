@@ -11,6 +11,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -21,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/ttl"
 )
 
 func TestParseTxnTTL(t *testing.T) {
@@ -64,7 +66,7 @@ func TestTxHandler_GivenTTL_ExpiresTransaction(t *testing.T) {
 	cdb := setupDatabase(t)
 	handler, err := NewHandler(cdb, &options.NodeOptions{
 		HTTP: options.NodeHTTPOptions{
-			TxnTTL:        time.Minute,
+			TxnTTL:        100 * time.Millisecond,
 			TxnTTLTick:    10 * time.Millisecond,
 			TxnTTLBuckets: 20,
 		},
@@ -90,4 +92,15 @@ func TestTxHandler_GivenTTL_ExpiresTransaction(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusNotFound, rec.Result().StatusCode)
+}
+
+func TestNewTxnCache_GivenDefaultTTLBeyondMax_ReturnsError(t *testing.T) {
+	cache, err := newTxnCache(context.Background(), &options.NodeHTTPOptions{
+		TxnTTL:        time.Minute,
+		TxnTTLTick:    time.Second,
+		TxnTTLBuckets: 1,
+	})
+
+	require.ErrorIs(t, err, ttl.ErrBeyondMaxTTL)
+	require.Nil(t, cache)
 }
