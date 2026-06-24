@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/binary"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,6 +35,9 @@ import (
 func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
 	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionID, indexID).Bytes())
 	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)
+		}
 		return 0, err
 	}
 	return uint32(binary.BigEndian.Uint64(val)), nil
