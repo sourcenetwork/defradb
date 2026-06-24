@@ -235,6 +235,17 @@ input Author__CountSelector {
     filter: AuthorFilterArg
     """
     
+    An optional set of fields for which to group the contents of this field by.
+    If this argument is provided, only fields used to group may be rendered in
+    the immediate child selector.  Additional fields may be selected by using
+    the 'GROUP' selector within the immediate child selector. If an empty set
+    is provided, the restrictions mentioned still apply, although all results
+    will appear within the same group.
+
+    """
+    groupBy: [AuthorField!]
+    """
+    
     An optional value that caps the number of results to the number provided.
     A limit of zero will be ignored.
 
@@ -613,6 +624,17 @@ input Book__CountSelector {
 
     """
     filter: BookFilterArg
+    """
+    
+    An optional set of fields for which to group the contents of this field by.
+    If this argument is provided, only fields used to group may be rendered in
+    the immediate child selector.  Additional fields may be selected by using
+    the 'GROUP' selector within the immediate child selector. If an empty set
+    is provided, the restrictions mentioned still apply, although all results
+    will appear within the same group.
+
+    """
+    groupBy: [BookField!]
     """
     
     An optional value that caps the number of results to the number provided.
