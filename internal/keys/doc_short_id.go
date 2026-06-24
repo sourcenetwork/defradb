@@ -16,12 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// DocRef is this node's local storage address for a DocID.
-// DocShortID is scoped to CollectionShortID, so both values are needed.
-type DocRef struct {
-	CollectionShortID uint32
-	DocShortID        uint32
-}
+// Short IDs are encoded as sortable path bytes for datastore/headstore keys.
+// They must not be split on '/', because valid encoded IDs may contain that byte.
 
 func encodeShortID(shortID uint32) []byte {
 	if shortID == 0 {
@@ -41,6 +37,7 @@ func decodeShortID(data []byte) (uint32, error) {
 	return shortID, nil
 }
 
+// decodeShortIDPrefix returns the unconsumed suffix after one encoded short ID.
 func decodeShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	if len(data) == 0 {
 		return nil, 0, ErrInvalidKey
@@ -55,55 +52,27 @@ func decodeShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return rest, uint32(shortID), nil
 }
 
-// EncodeCollectionShortID returns the sortable path encoding for a local collection ID.
+// EncodeCollectionShortID returns the encoded path form of a local collection ID.
 func EncodeCollectionShortID(collectionShortID uint32) []byte {
 	return encodeShortID(collectionShortID)
 }
 
-// DecodeCollectionShortIDPrefix decodes a local collection ID from the start of data.
+// DecodeCollectionShortIDPrefix decodes a local collection ID from a key prefix.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return decodeShortIDPrefix(data)
 }
 
-// EncodeDocShortID returns the sortable path encoding for a local document storage ID.
+// EncodeDocShortID returns the encoded path form of a local document ID.
 func EncodeDocShortID(docShortID uint32) []byte {
 	return encodeShortID(docShortID)
 }
 
-// DecodeDocShortID decodes a local document storage ID from a single encoded key segment.
+// DecodeDocShortID decodes a local document ID from one encoded value.
 func DecodeDocShortID(data []byte) (uint32, error) {
 	return decodeShortID(data)
 }
 
-// DecodeDocShortIDPrefix decodes a local document storage ID from the start of data.
+// DecodeDocShortIDPrefix decodes a local document ID from a key prefix.
 func DecodeDocShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return decodeShortIDPrefix(data)
-}
-
-// EncodeDocRef encodes a local collection/doc pair as a compact systemstore value.
-func EncodeDocRef(collectionShortID uint32, docShortID uint32) []byte {
-	if collectionShortID == 0 || docShortID == 0 {
-		return nil
-	}
-	result := EncodeCollectionShortID(collectionShortID)
-	return append(result, EncodeDocShortID(docShortID)...)
-}
-
-// DecodeDocRef decodes a local collection/doc pair from a compact systemstore value.
-func DecodeDocRef(data []byte) (DocRef, error) {
-	rest, collectionShortID, err := encoding.DecodeUvarintAscending(data)
-	if err != nil {
-		return DocRef{}, err
-	}
-	docShortID, err := DecodeDocShortID(rest)
-	if err != nil {
-		return DocRef{}, err
-	}
-	if collectionShortID == 0 || collectionShortID > math.MaxUint32 {
-		return DocRef{}, ErrInvalidKey
-	}
-	return DocRef{
-		CollectionShortID: uint32(collectionShortID),
-		DocShortID:        docShortID,
-	}, nil
 }

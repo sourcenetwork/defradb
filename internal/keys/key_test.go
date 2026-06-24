@@ -130,6 +130,15 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 5, false))))
 }
 
+func TestPrettyPrint_PrimaryDataStoreKey(t *testing.T) {
+	key := PrimaryDataStoreKey{
+		CollectionShortID: 12,
+		DocShortID:        34,
+	}
+
+	assert.Equal(t, "/12/pk/34", PrettyPrint(key))
+}
+
 func TestDecodeIndexDataStoreKey(t *testing.T) {
 	const colID, indexID = 1, 2
 	cases := []struct {

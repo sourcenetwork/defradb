@@ -12,6 +12,7 @@ package keys
 
 import (
 	"bytes"
+	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
 
@@ -89,6 +90,18 @@ func (k PrimaryDataStoreKey) ToDS() ds.Key {
 
 func (k PrimaryDataStoreKey) ToString() string {
 	return string(k.Bytes())
+}
+
+func (k PrimaryDataStoreKey) PrettyPrint() string {
+	var result string
+	if k.CollectionShortID != 0 {
+		result += "/" + strconv.Itoa(int(k.CollectionShortID))
+	}
+	result += PRIMARY_KEY
+	if k.DocShortID != 0 {
+		result += "/" + strconv.FormatUint(uint64(k.DocShortID), 10)
+	}
+	return result
 }
 
 func (k PrimaryDataStoreKey) GetCollectionShortID() uint32 {
