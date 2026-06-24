@@ -191,7 +191,7 @@ func TestDeleteNodeDocIDAliasesForShortDocID(t *testing.T) {
 	const (
 		collectionShortID uint32 = 42
 		docShortID        uint64 = 7
-		otherDocShortID        uint64 = 8
+		otherDocShortID   uint64 = 8
 		docID                    = "bae-public-doc"
 		legacyDocID              = "bae-legacy-doc"
 		otherDocID               = "bae-other-doc"

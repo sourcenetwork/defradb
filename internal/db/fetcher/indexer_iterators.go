@@ -422,9 +422,9 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		} else {
 			docShortID = res.key.DocShortID
 		}
-	if docShortID == 0 {
-		return indexIterResult{}, NewErrUnexpectedTypeValue[uint64](docShortID)
-	}
+		if docShortID == 0 {
+			return indexIterResult{}, NewErrUnexpectedTypeValue[uint64](docShortID)
+		}
 		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue
 		}

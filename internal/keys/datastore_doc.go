@@ -131,7 +131,7 @@ func (k DataStoreKey) PrettyPrint() string {
 		result = result + "/" + string(k.InstanceType)
 	}
 	if k.DocShortID != 0 {
-		result = result + "/" + strconv.FormatUint(uint64(k.DocShortID), 10)
+		result = result + "/" + strconv.FormatUint(k.DocShortID, 10)
 	}
 	if k.FieldID != "" {
 		result = result + "/" + k.FieldID

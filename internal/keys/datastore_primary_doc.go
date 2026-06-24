@@ -99,7 +99,7 @@ func (k PrimaryDataStoreKey) PrettyPrint() string {
 	}
 	result += PRIMARY_KEY
 	if k.DocShortID != 0 {
-		result += "/" + strconv.FormatUint(uint64(k.DocShortID), 10)
+		result += "/" + strconv.FormatUint(k.DocShortID, 10)
 	}
 	return result
 }

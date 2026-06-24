@@ -146,7 +146,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 		desc               client.IndexDescription
 		inputBytes         []byte
 		expectedFields     []IndexedField
-		expectedDocShortID        uint64
+		expectedDocShortID uint64
 		fieldKinds         []client.FieldKind
 	}{
 		{

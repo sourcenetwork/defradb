@@ -36,7 +36,7 @@ type IndexDataStoreKey struct {
 	Fields []IndexedField
 	// DocShortID is the trailing suffix that makes equal index values unique.
 	// It also lets index scans resolve the matching document without storing the full DocID.
-	DocShortID        uint64
+	DocShortID uint64
 	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
 	// is serialized.
 	//
