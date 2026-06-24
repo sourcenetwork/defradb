@@ -66,6 +66,9 @@ type TestCase struct {
 	// differences between database types, or we need to temporarily document a bug.
 	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
+	// HTTP configures the test node HTTP API behavior.
+	HTTP immutable.Option[options.NodeHTTPOptions]
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
@@ -127,6 +130,40 @@ type SetupComplete struct{}
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
 type ConfigureNode func() options.NodeP2POptions
+
+func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
+	httpBuilder := opts.HTTP()
+	if httpOpts.Address != "" {
+		httpBuilder.SetAddress(httpOpts.Address)
+	}
+	if len(httpOpts.AllowedOrigins) > 0 {
+		httpBuilder.SetAllowedOrigins(httpOpts.AllowedOrigins...)
+	}
+	if httpOpts.TLSCertPath != "" {
+		httpBuilder.SetCertPath(httpOpts.TLSCertPath)
+	}
+	if httpOpts.TLSKeyPath != "" {
+		httpBuilder.SetKeyPath(httpOpts.TLSKeyPath)
+	}
+	if httpOpts.ReadTimeout != 0 {
+		httpBuilder.SetReadTimeout(httpOpts.ReadTimeout)
+	}
+	if httpOpts.WriteTimeout != 0 {
+		httpBuilder.SetWriteTimeout(httpOpts.WriteTimeout)
+	}
+	if httpOpts.IdleTimeout != 0 {
+		httpBuilder.SetIdleTimeout(httpOpts.IdleTimeout)
+	}
+	if httpOpts.TxnTTL != 0 {
+		httpBuilder.SetTxnTTL(httpOpts.TxnTTL)
+	}
+	if httpOpts.TxnTTLTick != 0 {
+		httpBuilder.SetTxnTTLTick(httpOpts.TxnTTLTick)
+	}
+	if httpOpts.TxnTTLBuckets != 0 {
+		httpBuilder.SetTxnTTLBuckets(httpOpts.TxnTTLBuckets)
+	}
+}
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}

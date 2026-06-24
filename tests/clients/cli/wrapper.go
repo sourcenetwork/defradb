@@ -816,6 +816,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()
+	w.handler.Close()
 	_ = w.node.Close(context.Background())
 }
 
