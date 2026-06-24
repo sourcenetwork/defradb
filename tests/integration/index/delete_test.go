@@ -111,6 +111,66 @@ func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestDocDeleteWithFilter_WithUniqueIndex_CleansUpIndexEntries verifies that a filter-based
+// document deletion removes the document's index entries. It does this by adding a document,
+// deleting the documment with a filter, and then re-inserting a document with the same name.
+// If the index entries were not cleaned up, the re-insertion would fail with a "violates unique index" error.
+func TestDocDeleteWithFilter_WithUniqueIndex_CleansUpIndexEntries(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String @index(unique: true)
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 30
+				}`,
+			},
+			&action.Request{
+				Request: `mutation {
+					delete_User(filter: {name: {_eq: "John"}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 31
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John", "age": int64(31)},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
