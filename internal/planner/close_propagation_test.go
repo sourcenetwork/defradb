@@ -39,6 +39,27 @@ func TestParallelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
 	require.True(t, c3.closeCalled)
 }
 
+// Every child of a topLevelNode must get Close() called, even when an
+// earlier child's Close returned an error. Short-circuiting would
+// strand iterators on later children's shared transaction.
+func TestTopLevelNode_Close_CallsAllChildrenEvenIfOneErrors(t *testing.T) {
+	c1 := &trackingPlanNode{closeErr: errors.New("intentional close failure")}
+	c2 := &trackingPlanNode{closeErr: errors.New("intentional second close failure")}
+	c3 := &trackingPlanNode{}
+
+	n := &topLevelNode{
+		children: []planNode{c1, c2, c3},
+	}
+
+	err := n.Close()
+	require.Error(t, err)
+	require.ErrorContains(t, err, "intentional close failure")
+	require.ErrorContains(t, err, "intentional second close failure")
+	require.True(t, c1.closeCalled, "first child Close() should be called")
+	require.True(t, c2.closeCalled, "second child Close() must still be called after first errors")
+	require.True(t, c3.closeCalled, "third child Close() must still be called after first errors")
+}
+
 // Both sides of an invertibleTypeJoin must get Close() called, even
 // when one of them errors.
 func TestInvertibleTypeJoin_Close_ClosesBothSidesEvenIfOneErrors(t *testing.T) {
@@ -91,6 +112,60 @@ func TestInvertibleTypeJoin_Start_ClosesChildSideIfParentStartFails(t *testing.T
 	require.True(t, child.closeCalled)
 }
 
+//  1. Close() after a failed Init() must return its own outcome (nil),
+//     not the stuck Init error.
+func TestMultiScanNode_Close_ReturnsNilAfterFailedInit(t *testing.T) {
+	inner := &trackingPlanNode{initErr: errors.New("init boom")}
+	ms := &multiScanNode{planNode: inner, numReaders: 1}
+
+	require.ErrorContains(t, ms.Init(), "init boom")
+	require.NoError(t, ms.Close(),
+		"Close() must report its own outcome, not a stale Init error")
+	require.True(t, inner.closeCalled)
+}
+
+// 2. Stuck-error must not leak across reader cycles.
+func TestMultiScanNode_Next_ClearsPriorErrorOnNextCycle(t *testing.T) {
+	inner := &scriptedPlanNode{
+		nextResults: []nextResult{
+			// A non-terminal transient error (ok=true) keeps the script
+			// within the planNode.Next() contract, which forbids resuming
+			// after a terminal false.
+			{ok: true, err: errors.New("transient")}, // cycle 1
+			{ok: true, err: nil},                     // cycle 2
+		},
+	}
+	ms := &multiScanNode{planNode: inner, numReaders: 2}
+
+	ok, err := ms.Next()
+	require.ErrorContains(t, err, "transient")
+	require.True(t, ok)
+	ok, err = ms.Next()
+	require.ErrorContains(t, err, "transient")
+	require.True(t, ok)
+
+	ok, err = ms.Next()
+	require.NoError(t, err, "stale err leaked into next cycle")
+	require.True(t, ok)
+}
+
+//  3. Buffered-fan-out contract: within a cycle, all readers see the
+//     cached result without re-invoking the underlying node.
+func TestMultiScanNode_ReadersShareSameResultWithinCycle(t *testing.T) {
+	inner := &scriptedPlanNode{
+		nextResults: []nextResult{{ok: true, err: nil}},
+	}
+	ms := &multiScanNode{planNode: inner, numReaders: 3}
+
+	for i := 0; i < 3; i++ {
+		ok, err := ms.Next()
+		require.NoError(t, err)
+		require.True(t, ok, "reader %d should see cached cycle result", i)
+	}
+	require.Equal(t, 1, inner.nextInvocationCount,
+		"underlying Next() should be invoked exactly once per cycle")
+}
+
 type trackingPlanNode struct {
 	initCalled, startCalled, closeCalled bool
 	initErr, startErr, closeErr          error
@@ -118,4 +193,28 @@ func (n *trackingPlanNode) Source() planNode         { return nil }
 func (n *trackingPlanNode) Kind() string             { return "trackingPlanNode" }
 func (n *trackingPlanNode) DocumentMap() *core.DocumentMapping {
 	return &core.DocumentMapping{}
+}
+
+type nextResult struct {
+	ok  bool
+	err error
+}
+
+// scriptedPlanNode is a test helper whose Next() walks a pre-canned
+// sequence of results and counts invocations. Init/Start/Close are
+// inherited as no-ops from trackingPlanNode.
+type scriptedPlanNode struct {
+	trackingPlanNode
+	nextResults         []nextResult
+	nextInvocationCount int
+}
+
+func (n *scriptedPlanNode) Next() (bool, error) {
+	idx := n.nextInvocationCount
+	n.nextInvocationCount++
+	if idx >= len(n.nextResults) {
+		return false, nil
+	}
+	r := n.nextResults[idx]
+	return r.ok, r.err
 }
