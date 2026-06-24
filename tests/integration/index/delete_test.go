@@ -133,17 +133,9 @@ func TestDocDeleteWithFilter_WithUniqueIndex_CleansUpIndexEntries(t *testing.T) 
 					"age": 30
 				}`,
 			},
-			&action.Request{
-				Request: `mutation {
-					delete_User(filter: {name: {_eq: "John"}}) {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"delete_User": []map[string]any{
-						{"name": "John"},
-					},
-				},
+			testUtils.DeleteWithFilter{
+				CollectionID: 0,
+				Filter:       `{name: {_eq: "John"}}`,
 			},
 			&action.AddDoc{
 				CollectionID: 0,

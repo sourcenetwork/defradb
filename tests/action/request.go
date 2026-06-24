@@ -146,14 +146,6 @@ nodeLoop:
 			nodeID,
 			!a.NonOrderedResults,
 		)
-
-		// Drain any update events produced by mutation operations (delete, update, create).
-		// These events are fired via txn.OnSuccess and are not consumed by the request itself.
-		// Without draining, they accumulate in the channel and cause spurious failures in
-		// subsequent actions that call waitForUpdateEvents.
-		if !hadTxn && !expectedErrorRaised {
-			drainMutationUpdateEvents(a.s, immutable.Some(nodeID), result.GQL.Data)
-		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
