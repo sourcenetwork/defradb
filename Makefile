@@ -208,6 +208,12 @@ mocks:
 	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
+# Regenerates the committed SDL test fixtures from the current generator output.
+# This is a standalone step and does not require node/npx.
+.PHONY: sdl-fixtures
+sdl-fixtures:
+	go run ./internal/request/graphql/schema/testfixtures/gen
+
 .PHONY: ollama
 ollama:
 # run ollama in the background
@@ -462,6 +468,7 @@ fix:
 	@$(MAKE) lint\:fix
 	@$(MAKE) tidy
 	@$(MAKE) mocks
+	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
 
 .PHONY: build-c-static-windows
