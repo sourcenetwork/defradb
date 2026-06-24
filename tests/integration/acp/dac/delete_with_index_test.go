@@ -21,11 +21,6 @@ import (
 // TestACP_DAC_DeleteDocByID_WithReaderOnlyAccess_DoesNotOrphanIndex verifies that when an
 // identity with read-but-not-delete access attempts to delete a document by ID, the request
 // is denied and the document's index entries remain intact.
-//
-// Before the fix for https://github.com/sourcenetwork/defradb/issues/3554, deleteIndexedDocWithID
-// ran before the ACP delete-permission check, so a reader could strip a document's index entries
-// even though the subsequent permission check denied the delete. After the fix, index cleanup is
-// gated behind the permission check and cannot be reached without delete access.
 func TestACP_DAC_DeleteDocByID_WithReaderOnlyAccess_DoesNotOrphanIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -77,7 +72,7 @@ resources:
 				}`,
 			},
 
-			// Give identity 2 the reader relation only — read access, no delete access.
+			// Give identity 2 the reader relation only
 			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),
@@ -103,7 +98,7 @@ resources:
 				},
 			},
 
-			// Identity 2 attempts to delete by ID — must be denied.
+			// Identity 2 attempts to delete by ID, but should be denied.
 			testUtils.DeleteDoc{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
