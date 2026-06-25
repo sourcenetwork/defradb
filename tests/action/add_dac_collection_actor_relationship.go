@@ -113,6 +113,11 @@ func getCollectionAndCollectionObjectID(s *state.State, collectionID, nodeID int
 	if collection.Version().Name == "" {
 		require.Fail(s.T, "Expected non-empty collection name, but it was empty.")
 	}
+	// CollectionID is the acp object id used for collection-level checks; a "" would silently
+	// validate the wrong scope.
+	if collection.Version().CollectionID == "" {
+		require.Fail(s.T, "Expected non-empty collection object ID, but it was empty.")
+	}
 	return collection.Version().Name, collection.Version().CollectionID
 }
 
