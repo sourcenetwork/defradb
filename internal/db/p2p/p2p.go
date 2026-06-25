@@ -452,11 +452,10 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 // checkBlockAccess reports whether the actor resolved by identityFunc may read block.
 //
-// A block is gated by the read access of the document it belongs to (see
-// [acpDB.CheckDocReadAccessWithIdentityFunc]): an explicit grant on the document is sufficient on
-// its own, otherwise — for a branchable collection — the actor additionally needs access to the
-// collection object, so a private branchable collection gates its entire commit DAG. This mirrors
-// the gating the planner applies to commit queries (internal/planner/commit.go).
+// A block is gated by the read access of the document it belongs to: an explicit grant on the
+// document is sufficient on its own, otherwise — for a branchable collection — the actor
+// additionally needs access to the collection object, so a private branchable collection gates its
+// entire commit DAG. See [acpDB.CheckDocReadAccessWithIdentityFunc] for the canonical rules.
 func (p *P2P) checkBlockAccess(
 	ctx context.Context,
 	identityFunc func() immutable.Option[identity.Identity],

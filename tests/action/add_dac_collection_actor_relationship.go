@@ -83,7 +83,7 @@ func (a *AddDACCollectionActorRelationship) Execute() {
 			collectionName,
 			collectionObjectID,
 			a.Relation,
-			getIdentityDID(a.s, a.TargetIdentity),
+			state.GetIdentityDID(a.s, a.TargetIdentity),
 			opt,
 		)
 
@@ -119,15 +119,4 @@ func getCollectionAndCollectionObjectID(s *state.State, collectionID, nodeID int
 		require.Fail(s.T, "Expected non-empty collection object ID, but it was empty.")
 	}
 	return collection.Version().Name, collection.Version().CollectionID
-}
-
-// getIdentityDID returns the DID of the given identity, or the empty string if no identity is set.
-func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) string {
-	if identity.HasValue() {
-		if identity.Value().Selector == "*" {
-			return identity.Value().Selector
-		}
-		return state.GetIdentity(s, identity).DID()
-	}
-	return ""
 }

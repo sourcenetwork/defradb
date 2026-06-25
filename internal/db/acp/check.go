@@ -97,10 +97,11 @@ type docAccess struct {
 	// hasAccess is the final verdict: whether the actor may access the object.
 	hasAccess bool
 
-	// explicit is true when the verdict was decided by an explicit acp registration of the object
-	// (the object is registered, so the actor either was or was not granted a relationship on it).
-	// It is false for unrestricted access, i.e. a nac bypass, an unpermissioned collection, or a
-	// public (unregistered) object.
+	// explicit is true when the verdict was decided by something specific to this actor: an explicit
+	// acp registration of the object (it is registered, so the actor was or was not granted a
+	// relationship on it), or a DAC-bypass privilege granted to the actor via node acp. It is false
+	// for access that is unrestricted for everyone: an unpermissioned collection or a public
+	// (unregistered) object.
 	explicit bool
 }
 
@@ -132,8 +133,9 @@ func checkDocAccess(
 		identityValue = identity.Value().DID()
 	}
 
-	// Check if can bypass DAC, if not then continue DAC. A nac bypass is an explicit privilege
-	// granted to this actor (not unrestricted/public access), so it counts as explicit access.
+	// Check if can bypass DAC, if not then continue DAC. A DAC-bypass privilege (granted to this
+	// actor via node acp) is specific to the actor, not access that is unrestricted for everyone, so
+	// it counts as explicit access.
 	if canDACBypass(ctx, nodeACP, identityValue) {
 		return docAccess{hasAccess: true, explicit: true}, nil
 	}
@@ -187,8 +189,9 @@ func checkDocAccess(
 }
 
 // CheckDocReadAccessWithIdentityFunc reports whether the actor (resolved by identityFunc) may read
-// the document identified by docID on the given collection (and therefore its commits). docID is
-// empty for a collection-level object, which only branchable collections have.
+// the document identified by docID on the given collection. This gates the document's entire commit
+// DAG / history (every block of it), not just its current field values. docID is empty for a
+// collection-level object, which only branchable collections have.
 //
 // Access is granted if EITHER:
 //   - the actor was explicitly granted read access to the document — an actor with whom a specific

@@ -569,10 +569,10 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	// Read access to the document gates access to its encryption key. An explicit grant on the
-	// document suffices; otherwise a branchable collection also gates on the collection object, so
-	// a private branchable collection gates its whole DAG. Mirrors the planner
-	// (internal/planner/commit.go).
+	// Read access to the document gates access to its encryption key. See [acpDB.CheckDocReadAccess]
+	// for the canonical rules (an explicit grant on the document suffices; otherwise a branchable
+	// collection also gates on the collection object, so a private branchable collection gates its
+	// whole DAG).
 	return acpDB.CheckDocReadAccess(
 		ctx,
 		actorIdentity,

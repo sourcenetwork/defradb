@@ -76,11 +76,10 @@ func (db *DB) VerifySignature(
 	}
 
 	if db.documentACP.HasValue() {
-		// Verifying a signature requires read access to the block's document (and therefore the
-		// block). This mirrors the commit gating in the planner (internal/planner/commit.go): an
-		// explicit grant on the document suffices, otherwise a branchable collection also gates on
-		// the collection object. We resolve by version id, not docID, so collection-level commits
-		// (which have no docID) are handled too.
+		// Verifying a signature requires read access to the block's document. See
+		// [acpDB.CheckDocReadAccess] for the canonical rules (an explicit grant on the document
+		// suffices, otherwise a branchable collection also gates on the collection object). We
+		// resolve by version id, not docID, so collection-level commits (which have no docID) work.
 		versionID := block.Delta.GetCollectionVersionID()
 		// Pass the requester's identity so the collection lookup is authorised as them (rather than
 		// anonymously) when node acp gates the get-collection operation.

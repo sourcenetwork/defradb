@@ -204,7 +204,7 @@ func addDACActorRelationship(
 			collectionName,
 			docID,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			state.GetIdentityDID(s, action.TargetIdentity),
 			opt,
 		)
 
@@ -297,7 +297,7 @@ func deleteDACActorRelationship(
 			collectionName,
 			docID,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			state.GetIdentityDID(s, action.TargetIdentity),
 			opt,
 		)
 

@@ -255,14 +255,17 @@ func (n *dagScanNode) Next() (bool, error) {
 	// commit DAG (collection-level commits, which carry no docID, are gated on the collection object
 	// only). [CheckDocReadAccess] short-circuits when the collection has no policy or the object is
 	// public (unregistered), so a no-docID delta that is not a branchable collection commit (e.g.
-	// schema-definition changes) is not gated.
+	// schema definition changes) is not gated.
 	if n.planner.documentACP.HasValue() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
-		cols, err := n.planner.db.GetCollections(
-			n.planner.ctx,
-			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
-		)
+		// Pass the requester's identity so the collection lookup is authorised as them (rather than
+		// anonymously) when node acp gates the get-collection operation.
+		getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(versionID)
+		if n.planner.identity.HasValue() {
+			getColOpts = getColOpts.SetIdentity(n.planner.identity.Value())
+		}
+		cols, err := n.planner.db.GetCollections(n.planner.ctx, getColOpts)
 		if err != nil {
 			return false, err
 		}
