@@ -477,6 +477,11 @@ func (p *P2P) checkBlockAccess(
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
+//
+// The collection is resolved from collectionID (the stable root collection id) rather than the
+// block's collection version id, because the local node may legitimately hold a different version
+// of the collection than the one the block was authored against (e.g. replication to an older
+// collection version).
 func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
@@ -560,6 +565,17 @@ func (p *P2P) processPushlogRequest(
 		return err
 	}
 
+	// Verify the advertised CID actually matches the block contents, so a peer cannot push
+	// arbitrary content under a CID of its choosing. Everything below is then derived from the
+	// verified, content-addressed block rather than from the (spoofable) request fields.
+	blockLink, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+	if blockLink.Cid != headCID {
+		return ErrBlockCIDMismatch
+	}
+
 	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
 	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
 	// if this initial sync call had a negative response for a given link, the subsequent calls will
@@ -576,6 +592,11 @@ func (p *P2P) processPushlogRequest(
 	if isMerged {
 		return nil
 	}
+
+	// Derive the docID from the verified block rather than trusting req.DocID. (The collection is
+	// still routed by req.CollectionID — the stable root id — because the local node may hold a
+	// different collection version than the block was authored against; see [trySelfHasAccess].)
+	docID := string(block.Delta.GetDocID())
 
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
@@ -596,7 +617,7 @@ func (p *P2P) processPushlogRequest(
 	}
 
 	mergeEvt := event.Merge{
-		DocID:        req.DocID,
+		DocID:        docID,
 		ByPeer:       req.SenderID,
 		FromPeer:     req.Creator,
 		Cid:          headCID,
@@ -609,7 +630,7 @@ func (p *P2P) processPushlogRequest(
 
 	// Notify bus subscribers and the network of peers that we have a new document available.
 	updateEvt := event.Update{
-		DocID:        req.DocID,
+		DocID:        docID,
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
 		Block:        req.Block,
