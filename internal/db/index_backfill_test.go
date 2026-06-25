@@ -24,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // setupUserCollection opens a DB with a `User { name: String }` collection, closed on cleanup.
@@ -63,7 +65,8 @@ func readIndexState(t *testing.T, ctx context.Context, db *DB, collectionID stri
 	return state
 }
 
-// requireNoIndexState asserts the index has no state record (i.e. it is ready).
+// requireNoIndexState asserts the index has no action record of any kind (build or drop),
+// i.e. it is fully ready with nothing in flight.
 func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) {
 	t.Helper()
 	rawTxn, err := db.NewTxn(true)
@@ -71,9 +74,11 @@ func requireNoIndexState(t *testing.T, ctx context.Context, db *DB, collectionID
 	t.Cleanup(func() { rawTxn.Discard() })
 	txnCtx := InitContext(ctx, rawTxn)
 
-	_, err = getIndexState(txnCtx, collectionID, indexID)
-	require.True(t, errors.Is(err, corekv.ErrNotFound),
-		"expected no state record, got err: %v", err)
+	records, err := scanIndexStates(txnCtx, indexActionCollectionPrefix(collectionID), false)
+	require.NoError(t, err)
+	for _, rec := range records {
+		require.NotEqual(t, indexID, rec.Key.IndexID, "expected no state record, found %+v", rec.State)
+	}
 }
 
 // queryUserByName returns the rows from a name-filtered User query.
@@ -323,6 +328,18 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	colVersion := col.Version()
 	colVersion.Indexes = append(colVersion.Indexes, nameDesc)
 
+	// Seed the index's epoch sequence as real index creation does, so the index resolves to
+	// epoch 1; without it a created index could not exist.
+	epochShortID := getCollectionShortID(t, ctx, db, colVersion.CollectionID)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		seq, err := sequence.Get(c, keys.NewIndexEpochSequenceKey(epochShortID, nameDesc.ID))
+		if err != nil {
+			return err
+		}
+		_, err = seq.Next(c)
+		return err
+	}))
+
 	// txn1 stands in for the backfill batch transaction.
 	rawTxn1, err := db.NewTxn(false)
 	require.NoError(t, err)
@@ -333,7 +350,7 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	col1, err := db.newCollection(ctx1, colVersion, immutable.Some[datastore.Txn](txn1))
 	require.NoError(t, err)
 
-	colIndex, err := NewCollectionIndex(col1, nameDesc, true)
+	colIndex, err := NewCollectionIndex(ctx1, col1, nameDesc, true)
 	require.NoError(t, err)
 
 	// Run the batch body: reading the docs and writing entries puts the doc key range

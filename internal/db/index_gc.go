@@ -28,10 +28,9 @@ type rawBytesKey struct {
 
 func (r rawBytesKey) Bytes() []byte { return r.b }
 
-// gcIndex deletes all stored entries for the index in batched transactions so that
-// no single transaction exceeds the storage engine's transaction size limit, then
-// removes the index state record. The caller resolves collectionID and shortID
-// while its staging transaction is live.
+// gcIndex deletes all of the index's entries, across every epoch, in batched transactions, then
+// removes the drop record. Used by a whole-index drop. The caller resolves collectionID and
+// shortID while its staging transaction is live.
 func (db *DB) gcIndex(
 	ctx context.Context,
 	collectionID string,
@@ -39,19 +38,8 @@ func (db *DB) gcIndex(
 	indexID uint32,
 	indexName string,
 ) error {
-	prefixKey := &keys.IndexDataStoreKey{
-		CollectionShortID: shortID,
-		IndexID:           indexID,
-	}
-
-	for {
-		n, batchErr := db.gcIndexBatch(ctx, prefixKey)
-		if batchErr != nil {
-			return NewErrIndexGCFailed(batchErr, indexName)
-		}
-		if n < indexBackfillBatchSize {
-			break
-		}
+	if err := db.gcIndexEntries(ctx, shortID, indexID, indexName); err != nil {
+		return err
 	}
 
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
@@ -62,20 +50,55 @@ func (db *DB) gcIndex(
 	return nil
 }
 
-// gcIndexBatch deletes up to indexBackfillBatchSize raw index keys under prefixKey
-// in a single committed transaction. It returns the number of keys deleted.
-// A return value smaller than indexBackfillBatchSize means no more keys remain.
-// The backfill batch size is reused as the GC delete-batch size (single tunable).
-func (db *DB) gcIndexBatch(ctx context.Context, prefixKey *keys.IndexDataStoreKey) (int, error) {
+// gcIndexEntries deletes every entry for the index, across every epoch, in batched transactions,
+// leaving the state record untouched. Idempotent, so recovery can repeat it.
+func (db *DB) gcIndexEntries(ctx context.Context, shortID, indexID uint32, indexName string) error {
+	// Epoch 0 carries no component, so this prefix covers every epoch of the index.
+	prefixKey := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
+
+	for {
+		n, batchErr := db.gcIndexBatch(ctx, datastore.IterOptions{Prefix: prefixKey, KeysOnly: true})
+		if batchErr != nil {
+			return NewErrIndexGCFailed(batchErr, indexName)
+		}
+		if n < indexBackfillBatchSize {
+			break
+		}
+	}
+	return nil
+}
+
+// gcStaleEpochs deletes every entry of the index that belongs to a superseded epoch: everything
+// from the start of the index keyspace up to, but excluding, liveEpoch. Epochs are allocated by a
+// monotonic sequence and encode in ascending order, so all stale epochs sort before the live one
+// and a single range delete removes them. Idempotent, so recovery can repeat it.
+func (db *DB) gcStaleEpochs(ctx context.Context, shortID, indexID, liveEpoch uint32, indexName string) error {
+	start := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
+	end := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID, Epoch: liveEpoch}
+
+	for {
+		n, batchErr := db.gcIndexBatch(ctx, datastore.IterOptions{Start: start, End: end, KeysOnly: true})
+		if batchErr != nil {
+			return NewErrIndexGCFailed(batchErr, indexName)
+		}
+		if n < indexBackfillBatchSize {
+			break
+		}
+	}
+	return nil
+}
+
+// gcIndexBatch deletes up to indexBackfillBatchSize raw index keys matching opts in a single
+// committed transaction. It returns the number of keys deleted. A return value smaller than
+// indexBackfillBatchSize means no more keys remain. The backfill batch size is reused as the GC
+// delete-batch size (single tunable).
+func (db *DB) gcIndexBatch(ctx context.Context, opts datastore.IterOptions) (int, error) {
 	var n int
 	err := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
 		n = 0
 		txn := datastore.CtxMustGetTxn(batchCtx)
 
-		iter, err := txn.Datastore().Iterator(batchCtx, datastore.IterOptions{
-			Prefix:   prefixKey,
-			KeysOnly: true,
-		})
+		iter, err := txn.Datastore().Iterator(batchCtx, opts)
 		if err != nil {
 			return NewErrCreateDeleteIndexIterator(err)
 		}
