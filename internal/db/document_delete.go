@@ -165,6 +165,15 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
+	docID, err := client.NewDocIDFromString(primaryKey.DocID)
+	if err != nil {
+		return err
+	}
+
+	if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
+		return err
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	signingCtx := c.contextForSigning(ctx)
