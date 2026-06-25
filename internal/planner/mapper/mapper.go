@@ -212,7 +212,13 @@ func toSelect(
 
 	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
 	if selectRequest.GroupBy.HasValue() {
-		groupByFields := selectRequest.GroupBy.Value().Fields
+		// Copy the groupBy fields before remapping rather than rewriting them in
+		// place. The original slice is shared with the caller's request select (and
+		// any copy taken of it, e.g. for duplicate detection in getRequestables), so
+		// mutating it here would retroactively change those values.
+		originalFields := selectRequest.GroupBy.Value().Fields
+		groupByFields := make([]string, len(originalFields))
+		copy(groupByFields, originalFields)
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
 			fieldDesc, ok := definition.GetFieldByName(groupByField)
