@@ -13,14 +13,17 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/require"
 
+	clientmocks "github.com/sourcenetwork/defradb/client/mocks"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/ttl"
 )
@@ -103,4 +106,49 @@ func TestNewTxnCache_GivenDefaultTTLBeyondMax_ReturnsError(t *testing.T) {
 
 	require.ErrorIs(t, err, ttl.ErrBeyondMaxTTL)
 	require.Nil(t, cache)
+}
+
+func TestNewHandler_GivenNilNodeOptions_UsesDefaultTxnCache(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb, nil)
+
+	require.NoError(t, err)
+	defer handler.Close()
+	require.NotNil(t, handler.txs)
+	require.Equal(t, DefaultTxnTTL, handler.txs.defaultTTL)
+}
+
+func TestTxHandlerCommit_GivenCommitError_RestoresTransaction(t *testing.T) {
+	txs, err := newTxnCache(context.Background(), &options.NodeHTTPOptions{
+		TxnTTL:        5 * time.Second,
+		TxnTTLTick:    time.Second,
+		TxnTTLBuckets: 10,
+	})
+	require.NoError(t, err)
+	defer txs.Close()
+
+	const txID uint64 = 1
+	txnTTL := 3 * time.Second
+	commitErr := errors.New("commit failed")
+	tx := clientmocks.NewTxn(t)
+	tx.EXPECT().ID().Return(txID)
+	tx.EXPECT().Commit().Return(commitErr)
+	require.NoError(t, txs.Store(tx, txnTTL))
+
+	routeCtx := chi.NewRouteContext()
+	routeCtx.URLParams.Add("id", strconv.FormatUint(txID, 10))
+	req := httptest.NewRequest(http.MethodPost, "/tx/1", nil)
+	ctx := context.WithValue(req.Context(), txsContextKey, txs)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, routeCtx)
+	req = req.WithContext(ctx)
+	rec := httptest.NewRecorder()
+
+	(&txHandler{}).Commit(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Result().StatusCode)
+	item, ok := txs.cache.Load(txID)
+	require.True(t, ok)
+	require.Same(t, tx, item.txn)
+	require.Equal(t, txnTTL, item.ttl)
 }

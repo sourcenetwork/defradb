@@ -109,7 +109,9 @@ func TestCacheUpdateTTLRefreshesExpiration(t *testing.T) {
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 	time.Sleep(15 * time.Millisecond)
-	require.NoError(t, cache.UpdateTTL("key", 80*time.Millisecond))
+	refreshed, err := cache.UpdateTTL("key", 80*time.Millisecond)
+	require.NoError(t, err)
+	require.True(t, refreshed)
 
 	require.Never(t, func() bool {
 		select {
@@ -128,4 +130,15 @@ func TestCacheUpdateTTLRefreshesExpiration(t *testing.T) {
 			return false
 		}
 	}, 150*time.Millisecond, 5*time.Millisecond)
+}
+
+func TestCacheUpdateTTLReturnsFalseForMissingKey(t *testing.T) {
+	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {})
+	require.NoError(t, err)
+	defer cache.Stop()
+
+	refreshed, err := cache.UpdateTTL("key", 80*time.Millisecond)
+
+	require.NoError(t, err)
+	require.False(t, refreshed)
 }

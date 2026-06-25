@@ -31,8 +31,8 @@ func TestTxnTTL_GivenIdleHTTPTransaction_DiscardsTransaction(t *testing.T) {
 			state.CLIClientType,
 		}),
 		HTTP: immutable.Some(options.NodeHTTPOptions{
-			TxnTTL:        120 * time.Millisecond,
-			TxnTTLTick:    20 * time.Millisecond,
+			TxnTTL:        300 * time.Millisecond,
+			TxnTTLTick:    50 * time.Millisecond,
 			TxnTTLBuckets: 10,
 		}),
 		SkipChangeDetector: true,
@@ -69,7 +69,7 @@ func TestTxnTTL_GivenIdleHTTPTransaction_DiscardsTransaction(t *testing.T) {
 				},
 			},
 			&action.Wait{
-				Duration: immutable.Some(300 * time.Millisecond),
+				Duration: immutable.Some(900 * time.Millisecond),
 			},
 			&action.Request{
 				TransactionID: immutable.Some(1),
@@ -397,7 +397,7 @@ func TestTxnTTL_GivenExpiredHTTPTransaction_OnGetCollections_ReturnsNonGraphQLEr
 			state.CLIClientType,
 		}),
 		HTTP: immutable.Some(options.NodeHTTPOptions{
-			TxnTTL:        500 * time.Millisecond,
+			TxnTTL:        300 * time.Millisecond,
 			TxnTTLTick:    50 * time.Millisecond,
 			TxnTTLBuckets: 20,
 		}),
@@ -424,7 +424,7 @@ func TestTxnTTL_GivenExpiredHTTPTransaction_OnGetCollections_ReturnsNonGraphQLEr
 				},
 			},
 			&action.Wait{
-				Duration: immutable.Some(600 * time.Millisecond),
+				Duration: immutable.Some(900 * time.Millisecond),
 			},
 			&action.GetCollections{
 				TransactionID: immutable.Some(1),

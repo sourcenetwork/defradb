@@ -122,16 +122,17 @@ func (c *Cache[K, V]) Delete(key K) {
 }
 
 // UpdateTTL resets the expiration time for key if key is still cached.
-func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) error {
+// It returns false if key was no longer cached.
+func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) (bool, error) {
 	if err := c.wheel.validTTL(ttl); err != nil {
-		return err
+		return false, err
 	}
 
 	c.mu.Lock()
 	item, ok := c.items[key]
 	c.mu.Unlock()
 	if !ok {
-		return nil
+		return false, nil
 	}
 	return c.wheel.UpdateTTL(cacheWheelKey[K]{key: key, seq: item.seq}, ttl)
 }

@@ -101,9 +101,10 @@ func (w *Wheel[K]) Delete(key K) {
 }
 
 // UpdateTTL moves an existing key to a new expiration time.
-func (w *Wheel[K]) UpdateTTL(key K, ttl time.Duration) error {
+// It returns false if key was no longer tracked.
+func (w *Wheel[K]) UpdateTTL(key K, ttl time.Duration) (bool, error) {
 	if err := w.validTTL(ttl); err != nil {
-		return err
+		return false, err
 	}
 
 	w.mu.Lock()
@@ -111,12 +112,12 @@ func (w *Wheel[K]) UpdateTTL(key K, ttl time.Duration) error {
 
 	e, ok := w.index[key]
 	if !ok {
-		return nil
+		return false, nil
 	}
 
 	newSlot := w.slotForTTL(ttl)
 	if newSlot == e.slot {
-		return nil
+		return true, nil
 	}
 
 	w.unsafeDeleteFromSlot(e)
@@ -124,7 +125,7 @@ func (w *Wheel[K]) UpdateTTL(key K, ttl time.Duration) error {
 	w.slots[newSlot] = append(w.slots[newSlot], e)
 	e.idx = int64(len(w.slots[newSlot]) - 1)
 	w.index[key] = e
-	return nil
+	return true, nil
 }
 
 func (w *Wheel[K]) slotForTTL(ttl time.Duration) int64 {

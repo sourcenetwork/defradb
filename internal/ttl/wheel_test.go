@@ -72,7 +72,9 @@ func TestWheelUpdateTTL(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, wheel.Add("key", time.Millisecond))
-	require.NoError(t, wheel.UpdateTTL("key", 3*time.Millisecond))
+	refreshed, err := wheel.UpdateTTL("key", 3*time.Millisecond)
+	require.NoError(t, err)
+	require.True(t, refreshed)
 
 	wheel.tickOnce()
 	wheel.tickOnce()
@@ -91,6 +93,16 @@ func TestWheelUpdateTTL(t *testing.T) {
 	default:
 		t.Fatal("expected key to expire")
 	}
+}
+
+func TestWheelUpdateTTLReturnsFalseForMissingKey(t *testing.T) {
+	wheel, err := NewWheel(context.Background(), time.Millisecond, 10, func(string) {})
+	require.NoError(t, err)
+
+	refreshed, err := wheel.UpdateTTL("key", time.Millisecond)
+
+	require.NoError(t, err)
+	require.False(t, refreshed)
 }
 
 func TestWheelDelete(t *testing.T) {

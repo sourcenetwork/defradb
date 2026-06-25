@@ -58,7 +58,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	tx, ok := txs.LoadAndDelete(txID)
+	tx, txnTTL, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return
@@ -66,6 +66,10 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 
 	err = tx.Commit()
 	if err != nil {
+		if storeErr := txs.Store(tx, txnTTL); storeErr != nil {
+			log.ErrorE("failed to restore transaction after commit error", storeErr)
+			tx.Discard()
+		}
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
@@ -80,7 +84,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	tx, ok := txs.LoadAndDelete(txID)
+	tx, _, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return

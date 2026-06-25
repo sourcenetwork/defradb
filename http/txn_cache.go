@@ -95,18 +95,23 @@ func (c *txnCache) Load(id uint64) (client.Txn, bool) {
 	if !ok {
 		return nil, false
 	}
-	if err := c.cache.UpdateTTL(id, item.ttl); err != nil {
+	refreshed, err := c.cache.UpdateTTL(id, item.ttl)
+	if err != nil {
 		log.ErrorE("failed to refresh transaction ttl", err)
+		return nil, false
+	}
+	if !refreshed {
+		return nil, false
 	}
 	return item.txn, true
 }
 
-func (c *txnCache) LoadAndDelete(id uint64) (client.Txn, bool) {
+func (c *txnCache) LoadAndDelete(id uint64) (client.Txn, time.Duration, bool) {
 	item, ok := c.cache.LoadAndDelete(id)
 	if !ok {
-		return nil, false
+		return nil, 0, false
 	}
-	return item.txn, true
+	return item.txn, item.ttl, true
 }
 
 func (c *txnCache) Delete(id uint64) {

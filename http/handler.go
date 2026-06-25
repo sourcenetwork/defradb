@@ -90,8 +90,12 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	var httpOpts *options.NodeHTTPOptions
+	if nodeOpts != nil {
+		httpOpts = &nodeOpts.HTTP
+	}
 	ctx, cancel := context.WithCancel(context.Background())
-	txs, err := newTxnCache(ctx, &nodeOpts.HTTP)
+	txs, err := newTxnCache(ctx, httpOpts)
 	if err != nil {
 		cancel()
 		return nil, err
