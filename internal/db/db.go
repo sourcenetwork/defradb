@@ -249,11 +249,13 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
 	systemstore := datastore.SystemstoreFrom(db.rootstore)
-	collectionShortID, err := id.GetUncachedShortCollectionID(
-		ctx,
-		collection.Version().CollectionID,
-		systemstore,
-	)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	collectionShortID, err := id.GetShortCollectionID(ctx, collection.Version().CollectionID)
 	if err != nil {
 		return err
 	}
