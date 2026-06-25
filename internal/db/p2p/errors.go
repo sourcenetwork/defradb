@@ -58,6 +58,9 @@ const (
 	errGetAllP2PCollections    string = "failed to get all P2P collection IDs"
 	errListP2PDocuments        string = "failed to list P2P documents"
 	errLoadP2PDocuments        string = "failed to load P2P documents"
+	errWriteCAR                string = "failed to write CAR"
+	errReadCAR                 string = "failed to read CAR"
+	errIngestCARBlock          string = "failed to store block from CAR"
 )
 
 var (
@@ -251,4 +254,16 @@ func NewErrListP2PDocuments(inner error) error {
 
 func NewErrLoadP2PDocuments(inner error) error {
 	return errors.Wrap(errLoadP2PDocuments, inner)
+}
+
+func NewErrWriteCAR(inner error) error {
+	return errors.Wrap(errWriteCAR, inner)
+}
+
+func NewErrReadCAR(inner error) error {
+	return errors.Wrap(errReadCAR, inner)
+}
+
+func NewErrIngestCARBlock(inner error, cid string) error {
+	return errors.Wrap(errIngestCARBlock, inner, errors.NewKV("CID", cid))
 }
