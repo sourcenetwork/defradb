@@ -340,6 +340,92 @@ func TestQueryOneToManyWithParentGroupByOnRelationAndDuplicateRelationSelection(
 	executeTestCase(t, test)
 }
 
+// A relation selected twice identically must collapse onto a single join, even
+// when the duplicated relation carries its own groupBy on a relation field.
+//
+// This is the case CodeRabbit flagged: toSelect rewrites the inner groupBy
+// (`author` -> `author_id`) in place while processing the first `published`,
+// which mutates the value the duplicate-detection compares against, so the
+// second identical `published` is no longer recognised as a duplicate.
+//
+// The correct, de-duplicated plan is a single typeJoinMany over a plain
+// scanNode. If the duplicate is missed, the plan is instead a parallelNode of
+// two typeJoinMany, each over a multiScanNode (the shared-scan artifact). The
+// debug-explain assertion below pins the de-duplicated shape.
+func TestQueryOneToManyWithDuplicateRelationSelectionEachWithInnerGroupByOnRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.ExplainRequest{
+				Request: `query @explain(type: debug) {
+					Author {
+						published(groupBy: [author]) {
+							author {
+								name
+							}
+							GROUP {
+								name
+							}
+						}
+						published(groupBy: [author]) {
+							author {
+								name
+							}
+							GROUP {
+								name
+							}
+						}
+					}
+				}`,
+				ExpectedFullGraph: map[string]any{
+					"explain": map[string]any{
+						"operationNode": []map[string]any{
+							{
+								"selectTopNode": map[string]any{
+									"selectNode": map[string]any{
+										"typeIndexJoin": map[string]any{
+											"typeJoinMany": map[string]any{
+												"root": map[string]any{
+													"scanNode": map[string]any{},
+												},
+												"subType": map[string]any{
+													"selectTopNode": map[string]any{
+														"groupNode": map[string]any{
+															"selectNode": map[string]any{
+																"pipeNode": map[string]any{
+																	"typeIndexJoin": map[string]any{
+																		"typeJoinOne": map[string]any{
+																			"root": map[string]any{
+																				"scanNode": map[string]any{},
+																			},
+																			"subType": map[string]any{
+																				"selectTopNode": map[string]any{
+																					"selectNode": map[string]any{
+																						"scanNode": map[string]any{},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
