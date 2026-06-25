@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -77,6 +78,12 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
+		// Index epoch allocation needs the short collection ID, but SaveCollection only registers
+		// it after the indexes are built, so register it now. The call is idempotent.
+		if err := id.SetShortCollectionID(ctx, def.Definition.CollectionID); err != nil {
+			return nil, err
+		}
+
 		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.NewIndexes))
 		for _, newIndex := range def.NewIndexes {
 			desc, err := processNewIndexRequest(ctx, def.Definition, newIndex)
@@ -367,7 +374,7 @@ existingVersionLoop:
 		}
 
 		if !colExists && col.PreviousVersion.HasValue() && migration.HasValue() {
-			_, err = db.setMigration(ctx, client.LensConfig{
+			_, runRebuild, err := db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
 				Lens:                           migration.Value(),
@@ -375,16 +382,19 @@ existingVersionLoop:
 			if err != nil {
 				return nil, err
 			}
+			backfills = append(backfills, runRebuild)
 		}
 	}
 
-	// Reindex any collections that were upgraded from placeholders with migrations
+	// Reindex placeholder upgrades that carry a migration; the rebuild runs after commit with
+	// the backfills.
 	for _, col := range placeholderReplacers {
 		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			err = db.reindexNewActiveVersion(ctx, col)
+			runRebuild, err := db.reindexNewActiveVersion(ctx, col)
 			if err != nil {
 				return nil, err
 			}
+			backfills = append(backfills, runRebuild)
 		}
 	}
 
@@ -542,28 +552,29 @@ func containsLetter(s string) bool {
 	return false
 }
 
-// SetActiveCollectionVersion activates all collection versions with the given collection version, and deactivates all
-// those without it (if they share the same collection root).
+// setActiveCollectionVersion activates the versions sharing the given collection version's root
+// and deactivates the rest, affecting every operation that does not name a version explicitly
+// (GQL queries, Collection operations). It errors if the version ID does not exist.
 //
-// This will affect all operations interacting with the collection where a collection version is not explicitly
-// provided.  This includes GQL queries and Collection operations.
-//
-// It will return an error if the provided collection version ID does not exist.
+// Any resulting index rebuild is staged on the transaction bound to ctx; the returned function
+// runs it after that commit, and is a no-op when no reindex is needed.
 func (db *DB) setActiveCollectionVersion(
 	ctx context.Context,
 	versionID string,
-) error {
+) (func(context.Context) error, error) {
+	noRebuild := func(context.Context) error { return nil }
+
 	if versionID == "" {
-		return ErrCollectionVersionIDEmpty
+		return noRebuild, ErrCollectionVersionIDEmpty
 	}
 	col, err := description.GetCollectionByID(ctx, db.collectionRepository, versionID)
 	if err != nil {
-		return err
+		return noRebuild, err
 	}
 
 	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, col.CollectionID)
 	if err != nil {
-		return err
+		return noRebuild, err
 	}
 
 	// The optional collection is used to track if there was a switch to another version.
@@ -578,7 +589,7 @@ func (db *DB) setActiveCollectionVersion(
 			col.IsActive = true
 			err = description.SaveCollection(ctx, db.collectionRepository, col)
 			if err != nil {
-				return err
+				return noRebuild, err
 			}
 
 			newActiveCol = immutable.Some(col)
@@ -593,26 +604,30 @@ func (db *DB) setActiveCollectionVersion(
 		col.IsActive = false
 		err = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
-			return err
+			return noRebuild, err
 		}
 	}
 
+	runRebuild := noRebuild
 	if newActiveCol.HasValue() {
 		shouldReindex, err := db.shouldReindexForVersionSwitch(ctx, newActiveCol.Value())
 		if err != nil {
-			return err
+			return noRebuild, err
 		}
 
 		if shouldReindex {
-			err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
+			runRebuild, err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
 			if err != nil {
-				return err
+				return noRebuild, err
 			}
 		}
 	}
 
 	// Load the collection definitions into the clients (e.g. GQL)
-	return db.loadCollectionDefinitions(ctx)
+	if err := db.loadCollectionDefinitions(ctx); err != nil {
+		return noRebuild, err
+	}
+	return runRebuild, nil
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching

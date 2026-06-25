@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 // TestRecoverIndexStates_BuildingResumesAndCompletes checks recovery rebuilds an interrupted
@@ -217,4 +218,56 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	// A db with no records: recovery is a no-op.
 	db2, _ := setupUserCollection(t, ctx)
 	require.NoError(t, db2.recoverIndexStates(context.Background()))
+}
+
+// TestRecoverStaleEpochs_SweepsBelowBuildingEpoch checks the stale-epoch sweep collects a
+// superseded epoch even while a rebuild is in flight, without touching the epoch being built. A
+// migration invalidates the old epoch's values and a building index is excluded from query planning
+// (queries full-scan), so the old epoch is neither valid nor read and is safe to collect early. The
+// delete range is bounded strictly below the live epoch, so the in-progress build's epoch is left
+// intact. recoverStaleEpochs is called directly here (not via recoverIndexStates, which would also
+// resume the build) to isolate the sweep.
+func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	for _, name := range []string{"a", "b", "c"} {
+		addUserDoc(t, ctx, col, name)
+	}
+
+	desc, err := newNameIndex(t, ctx, col)
+	require.NoError(t, err)
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1))
+
+	// Advance to epoch 2 with a building record in place and a partial build in the new epoch. Epoch
+	// 1 is the stale, pre-migration epoch; epoch 2 is the one being built.
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		newEpoch, err := allocateIndexEpoch(c, collectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		require.Equal(t, uint32(2), newEpoch)
+		if err := db.startIndexBuild(c, collectionID, desc.ID); err != nil {
+			return err
+		}
+		coll, err := db.newCollection(c, col.Version(), datastore.CtxTryGetTxnOption(c))
+		if err != nil {
+			return err
+		}
+		colIndex, err := NewCollectionIndex(c, coll, desc, true)
+		if err != nil {
+			return err
+		}
+		return coll.indexExistingDocs(c, colIndex)
+	}))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+
+	require.NoError(t, db.recoverStaleEpochs(ctx))
+
+	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1),
+		"stale epoch below the building epoch must be collected")
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2),
+		"the epoch being built must be left intact")
 }

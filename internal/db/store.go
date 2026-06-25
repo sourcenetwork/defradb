@@ -254,13 +254,17 @@ func (db *DB) PatchCollection(
 // commitAndRunDeferred commits the transaction and then runs each deferred function
 // sequentially. If the transaction is explicit (caller-provided), the functions are
 // instead registered as OnSuccess callbacks so they run when the caller commits.
+//
+// On the explicit-transaction path the deferred functions run after the caller's commit, so an
+// error cannot be returned and is only logged. A failed index backfill/rebuild still records a
+// failed index state, so the failure shows up in the index status; callers should check it there.
 func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
 	if txn.explicit {
 		for _, fn := range deferred {
 			fn := fn
 			txn.OnSuccess(func() {
 				if err := fn(ctx); err != nil {
-					log.ErrorE("deferred operation after commit failed", err)
+					log.ErrorE("deferred operation after commit failed; check index status", err)
 				}
 			})
 		}
@@ -371,12 +375,16 @@ func (db *DB) SetActiveCollectionVersion(
 
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
+	runRebuild, err := db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild})
 }
 
 func (db *DB) SetMigration(
@@ -400,13 +408,16 @@ func (db *DB) SetMigration(
 	}
 	defer txn.Discard()
 
-	lensID, err := db.setMigration(ctx, cfg)
+	lensID, runRebuild, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	if err := commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild}); err != nil {
 		return "", err
 	}
 
