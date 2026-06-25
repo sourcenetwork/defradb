@@ -82,10 +82,13 @@ func (db *DB) VerifySignature(
 		// the collection object. We resolve by version id, not docID, so collection-level commits
 		// (which have no docID) are handled too.
 		versionID := block.Delta.GetCollectionVersionID()
-		cols, err := db.GetCollections(
-			ctx,
-			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
-		)
+		// Pass the requester's identity so the collection lookup is authorised as them (rather than
+		// anonymously) when node acp gates the get-collection operation.
+		getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(versionID)
+		if opt.Identity.HasValue() {
+			getColOpts = getColOpts.SetIdentity(opt.Identity.Value())
+		}
+		cols, err := db.GetCollections(ctx, getColOpts)
 		if err != nil {
 			return err
 		}
