@@ -31,7 +31,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -451,48 +450,27 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	return peerHasAccess
 }
 
-// checkBlockAccess reports whether the actor resolved by identityFunc may access block.
+// checkBlockAccess reports whether the actor resolved by identityFunc may read block.
 //
-// Access is additive: a document commit is gated on its docID, and every commit of a branchable
-// collection is additionally gated on the collection object (objectID = the collection id). A
-// branchable collection's commit DAG is built out of its document commits, so gating the DAG as a
-// whole necessarily gates those document commits on the collection object too — a private
-// branchable collection gates its entire history, not just its collection-level head. The actor
-// must have read access to every object a block relates to. This mirrors the additive gating
-// applied to commit queries by the planner (internal/planner/commit.go).
+// A block is gated by the read access of the document it belongs to (see
+// [acpDB.CheckDocReadAccessWithIdentityFunc]): an explicit grant on the document is sufficient on
+// its own, otherwise — for a branchable collection — the actor additionally needs access to the
+// collection object, so a private branchable collection gates its entire commit DAG. This mirrors
+// the gating the planner applies to commit queries (internal/planner/commit.go).
 func (p *P2P) checkBlockAccess(
 	ctx context.Context,
 	identityFunc func() immutable.Option[identity.Identity],
 	col client.Collection,
 	block *coreblock.Block,
 ) (bool, error) {
-	objectIDs := make([]string, 0, 2)
-	if docID := string(block.Delta.GetDocID()); docID != "" {
-		objectIDs = append(objectIDs, docID)
-	}
-	if col.Version().IsBranchable {
-		objectIDs = append(objectIDs, col.Version().CollectionID)
-	}
-
-	for _, objectID := range objectIDs {
-		hasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-			ctx,
-			identityFunc,
-			p.db.NodeACP(),
-			p.db.DocumentACP().Value(),
-			col,
-			acpTypes.DocumentReadPerm,
-			objectID,
-		)
-		if err != nil {
-			return false, err
-		}
-		if !hasAccess {
-			return false, nil
-		}
-	}
-
-	return true, nil
+	return acpDB.CheckDocReadAccessWithIdentityFunc(
+		ctx,
+		identityFunc,
+		p.db.NodeACP(),
+		p.db.DocumentACP().Value(),
+		col,
+		string(block.Delta.GetDocID()),
+	)
 }
 
 // trySelfHasAccess checks if the local node has access to the given block.

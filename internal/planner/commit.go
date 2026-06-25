@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -250,17 +249,13 @@ func (n *dagScanNode) Next() (bool, error) {
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
 	// doc-mapping cost. We only check when document acp is configured.
 	//
-	// A commit is gated on every acp object it relates to, and the caller needs read
-	// access to all of them to see it:
-	// - Document-level commits carry a docID and are gated on the document object.
-	// - Every commit of a branchable collection (the collection-level commit as well as
-	// the document-level commits that make up its history) is gated on the collection
-	// object (using the collection id as the object id), so a private branchable
-	// collection gates its entire commit DAG.
-	//
-	// [CheckAccessOfDocOnCollection] itself further short-circuits when the collection
-	// has no policy or the object is public (unregistered), so a no-docID delta that is
-	// not a branchable collection commit (e.g. schema-definition changes) is not gated.
+	// A commit is gated by the read access of the document it belongs to: an explicit grant on the
+	// document is sufficient on its own, otherwise — for a branchable collection — the caller also
+	// needs access to the collection object, so a private branchable collection gates its entire
+	// commit DAG (collection-level commits, which carry no docID, are gated on the collection object
+	// only). [CheckDocReadAccess] short-circuits when the collection has no policy or the object is
+	// public (unregistered), so a no-docID delta that is not a branchable collection commit (e.g.
+	// schema-definition changes) is not gated.
 	if n.planner.documentACP.HasValue() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
@@ -275,33 +270,22 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
-		objectIDs := make([]string, 0, 2)
-		if docID := string(dagBlock.Delta.GetDocID()); docID != "" {
-			objectIDs = append(objectIDs, docID)
+		hasPermission, err := acpDB.CheckDocReadAccess(
+			n.planner.ctx,
+			n.planner.identity,
+			n.planner.nodeACP,
+			n.planner.documentACP.Value(),
+			cols[0],
+			string(dagBlock.Delta.GetDocID()),
+		)
+		if err != nil {
+			return false, err
 		}
-		if cols[0].Version().IsBranchable {
-			objectIDs = append(objectIDs, cols[0].Version().CollectionID)
-		}
-
-		for _, objectID := range objectIDs {
-			hasPermission, err := acpDB.CheckAccessOfDocOnCollection(
-				n.planner.ctx,
-				n.planner.identity,
-				n.planner.nodeACP,
-				n.planner.documentACP.Value(),
-				cols[0],
-				acpTypes.DocumentReadPerm,
-				objectID,
-			)
-			if err != nil {
-				return false, err
-			}
-			if !hasPermission {
-				// Mark visited so the same denied cid is not re-checked if it
-				// reappears via a links/heads queue elsewhere in the traversal.
-				n.visitedNodes[currentCid.String()] = true
-				return n.Next()
-			}
+		if !hasPermission {
+			// Mark visited so the same denied cid is not re-checked if it
+			// reappears via a links/heads queue elsewhere in the traversal.
+			n.visitedNodes[currentCid.String()] = true
+			return n.Next()
 		}
 	}
 
