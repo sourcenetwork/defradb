@@ -165,7 +165,7 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	docID, err := client.NewDocIDFromString(primaryKey.DocID)
+	docID, err := client.NewDocIDFromString(publicDocID)
 	if err != nil {
 		return err
 	}
