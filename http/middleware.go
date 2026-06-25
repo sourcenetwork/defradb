@@ -76,9 +76,9 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		if !ok {
 			err := client.ErrTransactionNotFound
 			if strings.Contains(req.URL.Path, "/graphql") {
-				responseJSON(rw, httpStatusFromError(err), gqlErrorResponse{err})
+				responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{err})
 			} else {
-				responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			}
 			return
 		}
