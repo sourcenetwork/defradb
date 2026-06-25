@@ -74,7 +74,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			err := ErrMissingOrExpiredTransaction
+			err := client.ErrTransactionNotFound
 			if strings.Contains(req.URL.Path, "/graphql") {
 				responseJSON(rw, httpStatusFromError(err), gqlErrorResponse{err})
 			} else {

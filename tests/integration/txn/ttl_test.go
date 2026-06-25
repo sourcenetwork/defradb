@@ -79,7 +79,7 @@ func TestTxnTTL_GivenIdleHTTPTransaction_DiscardsTransaction(t *testing.T) {
 						age
 					}
 				}`,
-				ExpectedError: "missing or expired transaction",
+				ExpectedError: "transaction not found",
 			},
 			&action.Request{
 				Request: `
@@ -275,7 +275,7 @@ func TestTxnTTL_GivenCommittedHTTPTransaction_RemovesCacheEntry(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: "missing or expired transaction",
+				ExpectedError: "transaction not found",
 			},
 			&action.Wait{
 				Duration: immutable.Some(600 * time.Millisecond),
@@ -361,7 +361,7 @@ func TestTxnTTL_GivenDiscardedHTTPTransaction_RemovesCacheEntry(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: "missing or expired transaction",
+				ExpectedError: "transaction not found",
 			},
 			&action.Wait{
 				Duration: immutable.Some(600 * time.Millisecond),
@@ -429,7 +429,7 @@ func TestTxnTTL_GivenExpiredHTTPTransaction_OnGetCollections_ReturnsNonGraphQLEr
 			&action.GetCollections{
 				TransactionID: immutable.Some(1),
 				FilterOptions: options.GetCollections(),
-				ExpectedError: "missing or expired transaction",
+				ExpectedError: "transaction not found",
 			},
 		},
 	}

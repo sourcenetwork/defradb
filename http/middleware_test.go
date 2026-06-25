@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,5 +63,5 @@ func TestTransactionMiddleware_WithNonExistentTxID_ReturnsBadRequest(t *testing.
 
 	var errRes map[string]any
 	require.NoError(t, json.Unmarshal(body, &errRes))
-	assert.Contains(t, errRes["error"], ErrMissingOrExpiredTransaction.Error())
+	assert.Contains(t, errRes["error"], client.ErrTransactionNotFound.Error())
 }
