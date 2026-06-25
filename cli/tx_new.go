@@ -32,12 +32,14 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		Use:   "new",
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
 			var tx client.Txn
+			var err error
+			var ttl time.Duration
 			if txnTTL != "" {
-				ttl, err := parseTxnTTLFlag(txnTTL)
+				ttl, err = parseTxnTTLFlag(txnTTL)
 				if err != nil {
 					return err
 				}
@@ -56,7 +58,8 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&readOnly, "read-only", false, "Transaction is read only")
-	cmd.Flags().StringVar(&txnTTL, "ttl", "", "Transaction idle TTL as a Go duration string, or seconds if no unit is provided")
+	cmd.Flags().StringVar(&txnTTL, "ttl", "",
+		"Transaction idle TTL as a Go duration string, or seconds if no unit is provided")
 	return cmd
 }
 
