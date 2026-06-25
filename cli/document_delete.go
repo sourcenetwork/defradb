@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/spf13/cobra"
 
@@ -51,10 +52,15 @@ or the showDeleted parameter on GraphQL queries.`,
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
+				var filterValue any
+				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+					return NewErrParsingArgument("filter", err)
+				}
+
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
 
-				res, err := col.DeleteDocumentsWithFilter(ctx, filter, deleteWithFilterOpt)
+				res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteWithFilterOpt)
 				if err != nil {
 					return err
 				}

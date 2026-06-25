@@ -435,6 +435,9 @@ func performAction(
 	case DeleteDoc:
 		deleteDoc(s, action)
 
+	case DeleteWithFilter:
+		deleteWithFilter(s, action)
+
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
@@ -1485,6 +1488,60 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
+		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
+	}
+}
+
+// deleteWithFilter deletes the set of matched documents.
+func deleteWithFilter(s *state.State, a DeleteWithFilter) {
+	var res *client.DeleteResult
+	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
+
+	var collections []client.Collection
+
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+
+	for index, node := range nodes {
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		nodeID := nodeIDs[index]
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		opts := options.DeleteDocumentsWithFilter()
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err = withRetryOnNode(
+			node,
+			func() error {
+				var err error
+				res, err = collection.DeleteDocumentsWithFilter(s.Ctx, a.Filter, opts)
+				return err
+			},
+		)
+
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
+
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+		expect := make(map[string]struct{}, len(res.DocIDs))
+		for _, docID := range res.DocIDs {
+			expect[docID] = struct{}{}
+		}
 		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
