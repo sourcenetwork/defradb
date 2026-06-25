@@ -27,8 +27,8 @@ import (
 // value, which can approach the storage engine's per-key limit, so 100 entries stay well
 // under the transaction size limit even when every value is near-maximal. For typical small
 // fields this is conservative; a byte-budget batch (sized by accumulated entry bytes) would
-// pack far more docs per transaction and is tracked as a follow-up. It is a var so tests can
-// lower it to exercise multi-batch runs.
+// pack far more docs per transaction and is tracked as a follow-up. Tests lower it to exercise
+// multi-batch runs.
 var indexBackfillBatchSize = 100
 
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context
@@ -75,19 +75,47 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 	return lastErr
 }
 
-// backfillIndex indexes all existing documents in def for the given index desc,
-// running the work in batched transactions so that no single transaction exceeds
-// the storage engine's transaction size limit.
+// backfillIndex builds an index by indexing every existing document in batched transactions, then
+// deleting the build record to mark it ready. It is used both for a fresh index and for a rebuild
+// filling a new epoch; in both cases the epoch is resolved from the index's sequence.
 //
-// startAfter resumes the build after the given docID, used by startup recovery to
-// continue an interrupted build from its persisted watermark; pass None to build
-// the whole collection.
-//
-// Batches run concurrently with live writes and are serialized only by the storage
-// engine's optimistic conflict detection: a live write to a doc a batch already read
-// conflicts at commit, so the batch retries and re-reads the latest state. This is why
-// each batch builds a fresh collection and the loop retries on conflict.
+// startAfter resumes after the given docID from a persisted watermark; pass None to build the
+// whole collection. A non-retryable error marks the index failed; a conflict leaves it resumable.
 func (db *DB) backfillIndex(
+	ctx context.Context,
+	def client.CollectionVersion,
+	desc client.IndexDescription,
+	startAfter immutable.Option[string],
+) error {
+	if err := db.fillIndexBatches(ctx, def, desc, startAfter); err != nil {
+		return err
+	}
+
+	err := db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
+	})
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, corekv.ErrTxnConflict) {
+		return NewErrIndexBackfillInterrupted(err, desc.Name)
+	}
+	markErr := db.markIndexFailed(ctx, def, desc, err)
+	if markErr != nil {
+		log.ErrorE("failed to record index failure", markErr,
+			corelog.String("collectionID", def.CollectionID),
+			corelog.Any("indexID", desc.ID),
+		)
+	}
+	return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
+}
+
+// fillIndexBatches indexes every document from startAfter to the end of the collection in batched
+// transactions. The index writes the epoch resolved from its sequence.
+//
+// A non-retryable error marks the index failed; a conflict leaves it resumable. It does not
+// complete the build — the caller deletes the record once the fill is done.
+func (db *DB) fillIndexBatches(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
@@ -116,7 +144,7 @@ func (db *DB) backfillIndex(
 
 			// building=true so Save tolerates entries a concurrent live write
 			// already stored for the same document.
-			colIndex, err := NewCollectionIndex(col, desc, true)
+			colIndex, err := NewCollectionIndex(batchCtx, col, desc, true)
 			if err != nil {
 				return err
 			}
@@ -164,27 +192,6 @@ func (db *DB) backfillIndex(
 		watermark = immutable.Some(lastDocID)
 	}
 
-	// A missing state record means ready, so completion deletes the record
-	// instead of storing a terminal status. Only in-flight and failed
-	// indexes keep a record.
-	if err := db.withTxnRetries(ctx, func(c context.Context) error {
-		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
-	}); err != nil {
-		// A conflict here means entries are all written; state is still building and resumable.
-		// Only a non-retryable error warrants marking the index failed.
-		if errors.Is(err, corekv.ErrTxnConflict) {
-			return NewErrIndexBackfillInterrupted(err, desc.Name)
-		}
-		markErr := db.markIndexFailed(ctx, def, desc, err)
-		if markErr != nil {
-			log.ErrorE("failed to record index failure",
-				markErr,
-				corelog.String("collectionID", def.CollectionID),
-				corelog.Any("indexID", desc.ID),
-			)
-		}
-		return errors.Join(NewErrIndexBackfillFailed(err, desc.Name), markErr)
-	}
 	return nil
 }
 

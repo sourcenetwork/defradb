@@ -51,7 +51,7 @@ func (db *DB) listIndexDescriptions(
 		if len(col.Indexes) == 0 {
 			continue
 		}
-		states, err := getIndexStates(ctx, col.CollectionID)
+		states, err := getIndexBuildStates(ctx, col.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -259,12 +259,33 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	if _, err := allocateIndexEpoch(ctx, def.CollectionID, uint32(indexID)); err != nil {
+		return client.IndexDescription{}, err
+	}
+
 	return client.IndexDescription{
 		Name:   indexName,
 		ID:     uint32(indexID),
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}, nil
+}
+
+// allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.
+func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	if err != nil {
+		return 0, err
+	}
+	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID))
+	if err != nil {
+		return 0, err
+	}
+	next, err := seq.Next(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(next), nil
 }
 
 // newIndex stages the index definition in the current transaction and returns a
@@ -300,17 +321,17 @@ func (c *collection) newIndex(
 
 	// building=true: this instance maintains the index through the backfill that runs
 	// after commit, so writes in that window must use the build-tolerant save/delete.
-	colIndex, err := NewCollectionIndex(c, desc, true)
+	colIndex, err := NewCollectionIndex(ctx, c, desc, true)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return client.IndexDescription{}, nil, err
 	}
 	c.indexes = append(c.indexes, colIndex)
 
-	if c.indexStates == nil {
-		c.indexStates = make(map[uint32]indexState)
+	if c.indexBuildStates == nil {
+		c.indexBuildStates = make(map[uint32]indexState)
 	}
-	c.indexStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
+	c.indexBuildStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
 
 	// Backfill builds a fresh collection from this snapshot per batch,
 	// so each retry re-reads documents.
@@ -326,18 +347,18 @@ func (c *collection) newIndex(
 func (c *collection) appendNewIndexAndIndexExistingDocs(
 	ctx context.Context,
 	desc client.IndexDescription,
-) (CollectionIndex, error) {
-	colIndex, err := NewCollectionIndex(c, desc, false)
+) (client.CollectionIndex, error) {
+	colIndex, err := NewCollectionIndex(ctx, c, desc, false)
 	if err != nil {
 		return nil, err
 	}
 
 	c.indexes = append(c.indexes, colIndex)
 
-	err = c.indexExistingDocs(ctx, colIndex)
-	if err != nil {
-		removeErr := colIndex.RemoveAll(ctx)
-		return nil, errors.Join(err, removeErr)
+	// This runs inside the collection-definition transaction, so a failure here discards every
+	// index write along with the rest of that transaction; no explicit rollback is needed.
+	if err := c.indexExistingDocs(ctx, colIndex); err != nil {
+		return nil, err
 	}
 
 	return colIndex, nil
@@ -524,7 +545,7 @@ func (c *collection) iterateAllDocs(
 
 func (c *collection) indexExistingDocs(
 	ctx context.Context,
-	index CollectionIndex,
+	index client.CollectionIndex,
 ) error {
 	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
 	for _, field := range index.Description().Fields {
@@ -630,7 +651,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 			break
 		}
 	}
-	delete(c.indexStates, desc.ID)
+	delete(c.indexBuildStates, desc.ID)
 
 	collectionID := c.def.CollectionID
 	indexID := desc.ID
@@ -660,7 +681,7 @@ func (c *collection) ListIndexes(
 	}
 	defer txn.Discard()
 
-	states, err := getIndexStates(ctx, c.def.CollectionID)
+	states, err := getIndexBuildStates(ctx, c.def.CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -994,27 +1015,61 @@ func (db *DB) listAllEncryptedIndexDescriptions(
 	return indexes, nil
 }
 
-// reindexNewActiveVersion reindexes all documents in the collection for the new active version.
-func (db *DB) reindexNewActiveVersion(ctx context.Context, col client.CollectionVersion) error {
+// reindexNewActiveVersion stages, for every index in the new active version, a build of a fresh
+// epoch on the transaction bound to ctx so it commits with the version switch. The returned
+// function runs the builds after the commit, as each drives its own batched transactions.
+//
+// Each build advances the index's epoch sequence and fills the new epoch, then collects every
+// superseded epoch below the live one. A building index is excluded from query planning, so
+// queries full scan until its build finishes.
+func (db *DB) reindexNewActiveVersion(
+	ctx context.Context,
+	col client.CollectionVersion,
+) (func(context.Context) error, error) {
 	if !col.IsActive {
-		return nil
+		return func(context.Context) error { return nil }, nil
 	}
 
-	txnOpt := datastore.CtxTryGetTxnOption(ctx)
-	collection, err := db.newCollection(ctx, col, txnOpt)
+	descs := make([]client.IndexDescription, 0, len(col.Indexes))
+	for _, desc := range col.Indexes {
+		// Advance the sequence to the new epoch the build will fill; reads resolve the epoch
+		// from the sequence, so the build needs no epoch in its own record.
+		if _, err := allocateIndexEpoch(ctx, col.CollectionID, desc.ID); err != nil {
+			return nil, err
+		}
+
+		if err := db.startIndexBuild(ctx, col.CollectionID, desc.ID); err != nil {
+			return nil, err
+		}
+
+		descs = append(descs, desc)
+	}
+
+	run := func(runCtx context.Context) error {
+		for _, desc := range descs {
+			if err := db.rebuildIndex(runCtx, col, desc); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return run, nil
+}
+
+// rebuildIndex fills the index's new epoch, then deletes every superseded epoch below the live
+// one. The stale-epoch GC needs no record: the entries left below the live epoch are themselves
+// the to-do list, so a crash mid-collection is recovered by simply repeating it.
+func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, desc client.IndexDescription) error {
+	if err := db.backfillIndex(ctx, col, desc, immutable.None[string]()); err != nil {
+		return err
+	}
+	shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
 	if err != nil {
 		return err
 	}
-	for _, colIndex := range collection.indexes {
-		err = colIndex.RemoveAll(ctx)
-		if err != nil {
-			return err
-		}
-		err = collection.indexExistingDocs(ctx, colIndex)
-		if err != nil {
-			return err
-		}
+	liveEpoch, err := db.indexLiveEpoch(ctx, col.CollectionID, desc.ID)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, desc.Name)
 }
