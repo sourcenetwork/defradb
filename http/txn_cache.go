@@ -28,11 +28,22 @@ const (
 	DefaultTxnTTLBuckets = 60
 )
 
+// cachedTxn pairs a cached transaction with its configured idle TTL, so the TTL
+// can be reused if the transaction is re-stored (for example, restored after a
+// failed commit).
 type cachedTxn struct {
 	txn client.Txn
 	ttl time.Duration
 }
 
+// txnLease is a hold on a cached transaction that keeps it from expiring while
+// a request is using it. It is released once the request completes.
+type txnLease = ttl.Lease[uint64, cachedTxn]
+
+// txnCache holds the explicit HTTP transactions keyed by their ID, expiring
+// each after it has been idle for its TTL. A transaction does not expire while
+// a request holds a lease on it, so long-running requests cannot have their
+// transaction discarded mid-flight.
 type txnCache struct {
 	defaultTTL time.Duration
 	cache      *ttl.Cache[uint64, cachedTxn]
@@ -40,8 +51,8 @@ type txnCache struct {
 
 func newTxnCache(ctx context.Context, opts *options.NodeHTTPOptions) (*txnCache, error) {
 	cfg := txnCacheConfig(opts)
-	cache, err := ttl.NewCache(ctx, cfg.tick, cfg.buckets, func(_ uint64, item cachedTxn) {
-		item.txn.Discard()
+	cache, err := ttl.NewCache(ctx, cfg.tick, cfg.buckets, func(_ uint64, cached cachedTxn) {
+		cached.txn.Discard()
 	})
 	if err != nil {
 		return nil, err
@@ -83,6 +94,8 @@ func txnCacheConfig(opts *options.NodeHTTPOptions) txnCacheConfiguration {
 	return cfg
 }
 
+// Store caches txn until it has been idle for txnTTL. A txnTTL of zero uses the
+// cache's default TTL.
 func (c *txnCache) Store(txn client.Txn, txnTTL time.Duration) error {
 	if txnTTL == 0 {
 		txnTTL = c.defaultTTL
@@ -90,32 +103,30 @@ func (c *txnCache) Store(txn client.Txn, txnTTL time.Duration) error {
 	return c.cache.Store(txn.ID(), cachedTxn{txn: txn, ttl: txnTTL}, txnTTL)
 }
 
-func (c *txnCache) Load(id uint64) (client.Txn, bool) {
-	item, ok := c.cache.Load(id)
+// Get returns the cached transaction with the given ID without leasing it or
+// affecting its expiration.
+func (c *txnCache) Get(id uint64) (client.Txn, bool) {
+	cached, ok := c.cache.Load(id)
 	if !ok {
 		return nil, false
 	}
-	refreshed, err := c.cache.UpdateTTL(id, item.ttl)
-	if err != nil {
-		log.ErrorE("failed to refresh transaction ttl", err)
-		return nil, false
-	}
-	if !refreshed {
-		return nil, false
-	}
-	return item.txn, true
+	return cached.txn, true
 }
 
+// Acquire returns a lease on the cached transaction with the given ID,
+// suspending its expiration until the lease is released.
+func (c *txnCache) Acquire(id uint64) (*txnLease, bool) {
+	return c.cache.Acquire(id)
+}
+
+// LoadAndDelete removes the transaction with the given ID and returns it along
+// with its configured TTL, transferring ownership to the caller.
 func (c *txnCache) LoadAndDelete(id uint64) (client.Txn, time.Duration, bool) {
-	item, ok := c.cache.LoadAndDelete(id)
+	cached, ok := c.cache.LoadAndDelete(id)
 	if !ok {
 		return nil, 0, false
 	}
-	return item.txn, item.ttl, true
-}
-
-func (c *txnCache) Delete(id uint64) {
-	c.cache.Delete(id)
+	return cached.txn, cached.ttl, true
 }
 
 func (c *txnCache) Close() {

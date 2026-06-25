@@ -140,7 +140,7 @@ func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 }
 
 func (h *Handler) Transaction(id uint64) (client.Txn, error) {
-	tx, ok := h.txs.Load(id)
+	tx, ok := h.txs.Get(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}

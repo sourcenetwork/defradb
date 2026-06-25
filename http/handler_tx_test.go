@@ -86,8 +86,7 @@ func TestTxHandler_GivenTTL_ExpiresTransaction(t *testing.T) {
 	require.NoError(t, json.NewDecoder(rec.Result().Body).Decode(&response))
 
 	require.Eventually(t, func() bool {
-		_, ok := handler.txs.cache.Load(response.ID)
-		return !ok
+		return !isTxnCached(handler.txs, response.ID)
 	}, time.Second, 10*time.Millisecond)
 
 	req = httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx/"+strconv.FormatUint(response.ID, 10), nil)

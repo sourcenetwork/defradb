@@ -72,7 +72,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 			return
 		}
-		tx, ok := txs.Load(id)
+		lease, ok := txs.Acquire(id)
 		if !ok {
 			err := client.ErrTransactionNotFound
 			if strings.Contains(req.URL.Path, "/graphql") {
@@ -82,8 +82,10 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
+		defer lease.Release()
+
 		ctx := req.Context()
-		ctx = db.InitContext(ctx, tx)
+		ctx = db.InitContext(ctx, lease.Value().txn)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
