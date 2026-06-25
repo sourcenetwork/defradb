@@ -33,29 +33,6 @@ func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 	return linkSys
 }
 
-// syncDAG synchronizes the DAG starting with the given block
-// using the blockservice to fetch remote blocks.
-//
-// This process walks the entire DAG until the issue below is resolved.
-// https://github.com/sourcenetwork/defradb/issues/2722
-func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
-	sessionCtx, cancelSession := context.WithCancel(ctx)
-	defer cancelSession()
-
-	// use a session to make remote fetches more efficient
-	sessionCtx = p.host.ContextWithSession(sessionCtx)
-
-	linkSystem := makeLinkSystem(p.host.IPLDStore())
-
-	// Store the block in the DAG store
-	_, err := linkSystem.Store(linking.LinkContext{Ctx: sessionCtx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return NewErrStoreBlockDAGSync(err)
-	}
-
-	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
-}
-
 // loadBlockLinks loads the links of a block recursively.
 //
 // The function returns immediately on the first error encountered.

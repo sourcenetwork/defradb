@@ -18,8 +18,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/linking"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -235,14 +233,14 @@ func (p *P2P) handleDocSyncItem(
 	}
 }
 
-// syncDocumentAndMerge synchronizes a document from a remote peer and publishes a merge event.
+// syncDocumentAndMerge pulls a document's blocks from a remote peer and publishes a merge event.
 func (p *P2P) syncDocumentAndMerge(
 	ctx context.Context,
 	senderID string,
 	collectionID, docID string,
 	head cid.Cid,
 ) error {
-	err := p.syncDocumentDAG(ctx, head)
+	err := p.pullAndIngest(ctx, senderID, docID, collectionID, head)
 	if err != nil {
 		return err
 	}
@@ -256,23 +254,6 @@ func (p *P2P) syncDocumentAndMerge(
 	}
 
 	return p.db.Merge(ctx, evt)
-}
-
-// syncDocumentDAG synchronizes the DAG for a specific document CID.
-func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
-	linkSys := makeLinkSystem(p.host.IPLDStore())
-
-	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
-	if err != nil {
-		return err
-	}
-
-	linkBlock, err := coreblock.GetFromNode(nd)
-	if err != nil {
-		return err
-	}
-
-	return p.syncDAG(ctx, linkBlock)
 }
 
 // docSyncMessageHandler handles incoming document sync requests from the pubsub network.

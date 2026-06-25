@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	errStoreBlockDAGSync       string = "failed to store block in DAG sync"
 	errGenerateBlockLink       string = "failed to generate block link"
 	errCheckBlockMerged        string = "failed to check if block is merged"
 	errVerifyBlockSig          string = "failed to verify block signature"
@@ -153,7 +152,6 @@ func NewErrGetDocHeads(inner error, docID string) error {
 	return errors.Wrap(errGetDocHeads, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }
 func NewErrGenerateBlockLink(inner error) error  { return errors.Wrap(errGenerateBlockLink, inner) }
 func NewErrCheckBlockMerged(inner error) error   { return errors.Wrap(errCheckBlockMerged, inner) }
 func NewErrVerifyBlockSig(inner error) error     { return errors.Wrap(errVerifyBlockSig, inner) }
