@@ -64,12 +64,13 @@ func TestShortIDPathParsers_HandleSlashInEncodedID(t *testing.T) {
 	indexKey := NewIndexDataStoreKey(
 		slashEncodedShortID,
 		1,
+		0,
 		[]IndexedField{
 			{Value: client.NewNormalInt(33)},
 		},
 	)
 	indexKey.DocShortID = slashEncodedShortID
-	decodedIndexKey, err := DecodeIndexDataStoreKey(indexKey.Bytes(), indexDesc, fieldDefs)
+	decodedIndexKey, err := DecodeIndexDataStoreKey(indexKey.Bytes(), indexDesc, fieldDefs, 0)
 	require.NoError(t, err)
 	require.True(t, indexKey.Equal(decodedIndexKey))
 }

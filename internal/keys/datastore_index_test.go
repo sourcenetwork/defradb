@@ -170,7 +170,7 @@ func TestNewIndexDataStoreKey(t *testing.T) {
 		{Value: client.NewNormalInt(42), Descending: true},
 	}
 
-	key := NewIndexDataStoreKey(123, 456, fields)
+	key := NewIndexDataStoreKey(123, 456, 0, fields)
 
 	assert.Equal(t, uint32(123), key.CollectionShortID)
 	assert.Equal(t, uint32(456), key.IndexID)
@@ -476,6 +476,26 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "with epoch and no fields",
+			key: IndexDataStoreKey{
+				CollectionShortID: 123,
+				IndexID:           456,
+				Epoch:             7,
+			},
+		},
+		{
+			name: "with epoch and fields",
+			key: IndexDataStoreKey{
+				CollectionShortID: 123,
+				IndexID:           456,
+				Epoch:             7,
+				Fields: []IndexedField{
+					{Value: client.NewNormalString("test"), Descending: false},
+					{Value: client.NewNormalInt(42), Descending: true},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -487,7 +507,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 				return
 			}
 
-			decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs)
+			decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, tt.key.Epoch)
 
 			if tt.wantError {
 				assert.Error(t, err)
@@ -498,6 +518,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 
 			assert.Equal(t, tt.key.CollectionShortID, decoded.CollectionShortID)
 			assert.Equal(t, tt.key.IndexID, decoded.IndexID)
+			assert.Equal(t, tt.key.Epoch, decoded.Epoch)
 			assert.Equal(t, len(tt.key.Fields), len(decoded.Fields))
 
 			for i := range tt.key.Fields {
@@ -575,8 +596,103 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := DecodeIndexDataStoreKey(tt.data, indexDesc, fieldDefs)
+			_, err := DecodeIndexDataStoreKey(tt.data, indexDesc, fieldDefs, 0)
 			assert.ErrorIs(t, err, tt.wantErr)
 		})
+	}
+}
+
+// TestIndexDataStoreKey_Epoch_GoldenBytes pins the epoch wire layout: an Epoch of 0 carries no
+// component and so forms a prefix over every epoch of the index, while a non-zero epoch adds
+// exactly one component between the index ID and the fields, giving each epoch a disjoint keyspace.
+func TestIndexDataStoreKey_Epoch_GoldenBytes(t *testing.T) {
+	base := IndexDataStoreKey{
+		CollectionShortID: 1,
+		IndexID:           2,
+		Fields: []IndexedField{
+			{Value: client.NewNormalString("a"), Descending: false},
+		},
+	}
+
+	// Epoch 0 carries no component: it encodes identically to a key with no epoch set, so it
+	// serves as the whole-index prefix used to scan or drop the index.
+	withZeroEpoch := base
+	withZeroEpoch.Epoch = 0
+	assert.Equal(t, EncodeIndexDataStoreKey(&base), EncodeIndexDataStoreKey(&withZeroEpoch),
+		"Epoch 0 must encode identically to a key with no epoch")
+
+	// A non-zero epoch inserts its component immediately after the index ID. The epoch-bearing
+	// key shares the /col/index prefix and the trailing field with the epoch-0 prefix key,
+	// differing only by the inserted /epoch component.
+	withEpoch := base
+	withEpoch.Epoch = 5
+	prefixKey := EncodeIndexDataStoreKey(&base)
+	encoded := EncodeIndexDataStoreKey(&withEpoch)
+
+	prefix := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(base.CollectionShortID))
+	prefix = append(prefix, '/')
+	prefix = encoding.EncodeUvarintAscending(prefix, uint64(base.IndexID))
+	epochComponent := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(withEpoch.Epoch))
+	fieldSuffix := prefixKey[len(prefix):]
+
+	want := append(append(append([]byte{}, prefix...), epochComponent...), fieldSuffix...)
+	assert.Equal(t, want, encoded, "non-zero epoch must insert /epoch after the index ID")
+
+	// Each epoch's keyspace is disjoint and sorts consistently, so an epoch scan never reads
+	// another epoch's entries.
+	assert.NotEqual(t, prefixKey, encoded)
+
+	indexDesc := &client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Descending: false}},
+	}
+	fieldDefs := []client.CollectionFieldDescription{{Kind: client.FieldKind_NILLABLE_STRING}}
+	decoded, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, withEpoch.Epoch)
+	require.NoError(t, err)
+	assert.Equal(t, withEpoch.Epoch, decoded.Epoch)
+	assert.Equal(t, withEpoch.CollectionShortID, decoded.CollectionShortID)
+	assert.Equal(t, withEpoch.IndexID, decoded.IndexID)
+	require.Len(t, decoded.Fields, 1)
+	assert.True(t, decoded.Fields[0].Value.Equal(client.NewNormalString("a")))
+}
+
+// TestDecodeIndexDataStoreKey_WrongEpochMisreadsComponent documents the load-bearing contract of
+// the epoch parameter: the epoch component is indistinguishable from a field value by structure, so
+// the caller must pass the epoch of the keyspace it is scanning. Decoding an epoch>=1 key with
+// epoch=0 does not transparently work — the decoder does not consume an epoch component, so the
+// stored epoch value is misread as the first field value. Every reader therefore decodes with the
+// same epoch it scanned (e.g. the fetcher with f.epoch); the GC paths use KeysOnly and never
+// decode. This test catches any future change that would make epoch=0 accidentally consume an
+// epoch component.
+func TestDecodeIndexDataStoreKey_WrongEpochMisreadsComponent(t *testing.T) {
+	indexDesc := &client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Descending: false}},
+	}
+	fieldDefs := []client.CollectionFieldDescription{{Kind: client.FieldKind_NILLABLE_STRING}}
+
+	key := IndexDataStoreKey{
+		CollectionShortID: 1,
+		IndexID:           2,
+		Epoch:             5,
+		Fields: []IndexedField{
+			{Value: client.NewNormalString("a"), Descending: false},
+		},
+	}
+	encoded := EncodeIndexDataStoreKey(&key)
+
+	// Decoded with the correct epoch: epoch and field both come back right.
+	correct, err := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, 5)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(5), correct.Epoch)
+	require.Len(t, correct.Fields, 1)
+	assert.True(t, correct.Fields[0].Value.Equal(client.NewNormalString("a")))
+
+	// Decoded with epoch=0: the epoch component is not consumed. The result must NOT equal the
+	// correctly-decoded key — epoch=0 cannot transparently read an epoched key. It either reports
+	// epoch 0 with a misread/extra field, or fails outright; in every case it differs from correct.
+	wrong, wrongErr := DecodeIndexDataStoreKey(encoded, indexDesc, fieldDefs, 0)
+	if wrongErr == nil {
+		assert.Equal(t, uint32(0), wrong.Epoch, "epoch=0 must not recover the stored epoch")
+		assert.False(t, wrong.Equal(correct),
+			"decoding an epoched key with epoch=0 must not reproduce the correct key")
 	}
 }

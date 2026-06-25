@@ -116,7 +116,7 @@ func TestScanIndexStates_IgnoresCollectionWideActions(t *testing.T) {
 		client.InProgressActionStatus, "", nil, false,
 	))
 
-	states, err := getIndexStates(ctx, "col1")
+	states, err := getIndexBuildStates(ctx, "col1")
 	require.NoError(t, err)
 	require.Len(t, states, 1, "only the per-subject index record must be returned")
 	assert.True(t, states[1].isBuilding())
@@ -186,7 +186,7 @@ func TestGetIndexStates_SkipsCorruptRecord(t *testing.T) {
 	require.NoError(t, txn.Systemstore().Set(ctx, payloadKey, []byte("not json")))
 
 	// Lenient path: the healthy record survives, the corrupt one is skipped.
-	states, err := getIndexStates(ctx, "col1")
+	states, err := getIndexBuildStates(ctx, "col1")
 	require.NoError(t, err)
 	require.Len(t, states, 1)
 	assert.True(t, states[1].isBuilding())

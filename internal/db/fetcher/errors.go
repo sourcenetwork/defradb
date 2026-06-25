@@ -53,6 +53,7 @@ const (
 	errCreateVersionIterator      string = "failed to create version data iterator"
 	errDecryptVersionedBlock      string = "failed to decrypt block during version replay"
 	errEncryptionKeyMissing       string = "encryption key not available locally for block"
+	errIndexEpochNotFound         string = "index epoch sequence not found"
 )
 
 var (
@@ -70,6 +71,7 @@ var (
 	ErrInvalidFilterOperator      = errors.New(errInvalidFilterOperator)
 	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)
 	ErrEncryptionKeyMissing       = errors.New(errEncryptionKeyMissing)
+	ErrIndexEpochNotFound         = errors.New(errIndexEpochNotFound)
 )
 
 // NewErrDecryptVersionedBlock returns an error indicating that the given block could not
@@ -82,6 +84,14 @@ func NewErrDecryptVersionedBlock(inner error, cid string) error {
 // is not available locally for the given block, so the version replay cannot decrypt it.
 func NewErrEncryptionKeyMissing(cid string) error {
 	return errors.New(errEncryptionKeyMissing, errors.NewKV("Cid", cid))
+}
+
+// NewErrIndexEpochNotFound returns an error indicating that the given index has no epoch sequence,
+// so its entry namespace cannot be resolved. It wraps the raw storage error and matches
+// ErrIndexEpochNotFound, letting callers (e.g. collection open) react to this case specifically.
+func NewErrIndexEpochNotFound(inner error, collectionID string, indexID uint32) error {
+	return errors.Wrap(errIndexEpochNotFound, inner,
+		errors.NewKV("CollectionID", collectionID), errors.NewKV("IndexID", indexID))
 }
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.

@@ -12,7 +12,9 @@ package fetcher
 
 import (
 	"context"
+	"encoding/binary"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -25,6 +27,25 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
+
+// ReadIndexEpoch returns the index's current epoch: the value of its epoch sequence.
+//
+// The sequence is seeded when the index is created, so a missing sequence is an inconsistent
+// state and returns an error rather than defaulting, which would scan the wrong namespace.
+func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
+	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	if err != nil {
+		return 0, err
+	}
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID).Bytes())
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)
+		}
+		return 0, err
+	}
+	return uint32(binary.BigEndian.Uint64(val)), nil
+}
 
 // indexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
@@ -43,6 +64,8 @@ type indexFetcher struct {
 	collectionShortID uint32
 	execInfo          *ExecInfo
 	ordering          []mapper.OrderCondition
+	// epoch is the namespace this fetcher scans, resolved from the index's epoch sequence.
+	epoch uint32
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -71,6 +94,10 @@ func newIndexFetcher(
 	if err != nil {
 		return nil, err
 	}
+	epoch, err := ReadIndexEpoch(ctx, txn, col.Version().CollectionID, indexDesc.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	f := &indexFetcher{
 		ctx:               ctx,
@@ -82,6 +109,7 @@ func newIndexFetcher(
 		collectionShortID: collectionShortID,
 		execInfo:          execInfo,
 		ordering:          ordering,
+		epoch:             epoch,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))

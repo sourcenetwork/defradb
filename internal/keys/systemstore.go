@@ -24,6 +24,7 @@ const (
 	DOC_ID_INDEX        = "/d"
 	DOC_ID_SEQ          = "/seq/doc"
 	INDEX_ID_SEQ        = "/seq/index"
+	INDEX_EPOCH_SEQ     = "/seq/indexepoch"
 	FIELD_ID_SEQ        = "/seq/field"
 	ACTION_STATUS       = "/a/s"
 	ACTION_REASON       = "/a/r"

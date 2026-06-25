@@ -23,15 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
 
-// CollectionIndex is an interface for collection indexes
-// It abstracts away common index functionality to be implemented
-// by different index types: non-unique, unique, and composite
-type CollectionIndex interface {
-	client.CollectionIndex
-	// RemoveAll removes all documents from the index
-	RemoveAll(context.Context) error
-}
-
 func isSupportedKind(kind client.FieldKind) bool {
 	if kind.IsObject() && !kind.IsArray() {
 		return true
@@ -80,10 +71,11 @@ func isSupportedKind(kind client.FieldKind) bool {
 // already written by a concurrent live write of the same document, and Delete tolerates a
 // missing entry for a document the backfill has not yet reached.
 func NewCollectionIndex(
+	ctx context.Context,
 	collection client.Collection,
 	desc client.IndexDescription,
 	building bool,
-) (CollectionIndex, error) {
+) (client.CollectionIndex, error) {
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
@@ -108,6 +100,12 @@ func NewCollectionIndex(
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
+
+	epoch, err := getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
+	if err != nil {
+		return nil, err
+	}
+	base.epoch = epoch
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	}
@@ -195,6 +193,10 @@ type collectionBaseIndex struct {
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
 	building bool
+	// epoch is the namespace this instance reads and writes, resolved from the index's epoch
+	// sequence at construction. During a rebuild the sequence names the epoch being built, so
+	// live writes maintain it.
+	epoch uint32
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -250,7 +252,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		}
 	}
 
-	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields)
+	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, index.epoch, fields)
 	key.DocShortID = docShortID
 	return key, nil
 }
@@ -278,59 +280,6 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	if err != nil {
 		return NewErrDeleteIndexKey(err)
 	}
-	return nil
-}
-
-// RemoveAll remove all artifacts of the index from the storage, i.e. all index
-// field values for all documents.
-func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionShortID = shortID
-	prefixKey.IndexID = index.desc.ID
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   &prefixKey,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateDeleteIndexIterator(err)
-	}
-
-	keysToDelete := make([]keys.IndexDataStoreKey, 0)
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs)
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		keysToDelete = append(keysToDelete, key)
-	}
-	if err := iter.Close(); err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		err := txn.Datastore().Delete(ctx, &key)
-		if err != nil {
-			return NewCanNotDeleteIndexedField(err)
-		}
-	}
-
 	return nil
 }
 
@@ -394,7 +343,7 @@ type collectionSimpleIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+var _ client.CollectionIndex = (*collectionSimpleIndex)(nil)
 
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
@@ -450,7 +399,7 @@ type collectionUniqueIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionUniqueIndex)(nil)
+var _ client.CollectionIndex = (*collectionUniqueIndex)(nil)
 
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
@@ -589,7 +538,7 @@ func (index *collectionUniqueIndex) Update(
 	return nil
 }
 
-func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
 	for _, indexedFields := range index.Description().Fields {
 		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
 		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
