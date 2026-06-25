@@ -85,7 +85,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 
 	for _, col := range cols {
-		collectionShortID, err := id.GetShortCollectionIDFromStore(ctx, col.CollectionID(), txn.Systemstore())
+		collectionShortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
 		if err != nil {
 			return nil, err
 		}

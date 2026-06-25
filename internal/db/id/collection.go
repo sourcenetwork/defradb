@@ -49,23 +49,9 @@ func GetUncachedShortCollectionID(
 
 // GetShortCollectionID returns the local, shortened, internal, collection id, which is used
 // only in locations where using the full CID would be a waste of storage space.
-//
-// This uses the transaction's systemstore. Use GetShortCollectionIDFromStore
-// when the caller already has the store or is reading outside the txn path.
 func GetShortCollectionID(
 	ctx context.Context,
 	collectionID string,
-) (uint32, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-	return GetShortCollectionIDFromStore(ctx, collectionID, txn.Systemstore())
-}
-
-// GetShortCollectionIDFromStore uses the context cache with an explicit store.
-// It is for paths that read outside the context txn, such as rootstore reads.
-func GetShortCollectionIDFromStore(
-	ctx context.Context,
-	collectionID string,
-	systemStore corekv.ReaderWriter,
 ) (uint32, error) {
 	cache, ok := ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache)
 	if ok {
@@ -74,7 +60,8 @@ func GetShortCollectionIDFromStore(
 			return shortID, nil
 		}
 	}
-	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, systemStore)
+	txn := datastore.CtxMustGetTxn(ctx)
+	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, txn.Systemstore())
 	if err != nil {
 		return 0, err
 	}

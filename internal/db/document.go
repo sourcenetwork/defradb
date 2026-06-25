@@ -49,7 +49,7 @@ func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan docIDResult, error) {
 	systemstore := c.db.Multistore().Systemstore()
-	shortID, err := id.GetShortCollectionIDFromStore(ctx, c.Version().CollectionID, systemstore)
+	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, systemstore)
 	if err != nil {
 		return nil, err
 	}
