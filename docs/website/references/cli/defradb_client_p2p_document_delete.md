@@ -8,7 +8,7 @@ Delete P2P documents from the followed pubsub topics.
 The removed documents will no longer be synchronized between nodes.
 
 ```
-defradb client p2p document delete [docIDs] [flags]
+defradb client p2p document delete <docIDs> [flags]
 ```
 
 ### Examples
@@ -30,6 +30,7 @@ delete multiple documents:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

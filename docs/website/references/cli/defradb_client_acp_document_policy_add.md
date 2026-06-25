@@ -12,11 +12,13 @@ Notes:
   - A non-DRI policy will be accepted (will be registered with acp system).
   - But only a valid DRI policyID & resource can be specified on a collection.
   - DRI validation happens when attempting to add a collection with '@policy'.
-  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+  - Learn more about the
+  [Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+  system.
 
 
 ```
-defradb client acp document policy add [-i --identity] [policy] [flags]
+defradb client acp document policy add [policy] [flags]
 ```
 
 ### Examples
@@ -67,6 +69,7 @@ Add from stdin:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

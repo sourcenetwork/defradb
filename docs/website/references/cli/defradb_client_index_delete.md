@@ -7,7 +7,7 @@ Delete a collection's secondary index
 Delete a collection's secondary index.
 
 ```
-defradb client index delete -c --collection <collection> -n --name <name> [flags]
+defradb client index delete [flags]
 ```
 
 ### Examples
@@ -28,6 +28,7 @@ delete the index 'UsersByName' for 'Users' collection:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

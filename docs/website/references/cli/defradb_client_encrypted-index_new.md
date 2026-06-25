@@ -11,7 +11,7 @@ The --type flag is optional. If not provided, the default value will be "equalit
 Currently only "equality" type is supported.
 
 ```
-defradb client encrypted-index new -c --collection <collection> --field <field> [--type <type>] [flags]
+defradb client encrypted-index new [flags]
 ```
 
 ### Examples
@@ -33,6 +33,7 @@ make a new index for 'Users' collection on 'name' field:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

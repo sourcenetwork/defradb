@@ -9,18 +9,15 @@ Add, describe, patch, set-active, delete, and truncate collections.
 ### Options
 
 ```
-      --collection-id string   Collection ID
-      --get-inactive           Get inactive collections as well as active
-  -h, --help                   help for collection
-  -i, --identity string        Hex formatted private key used to authenticate with ACP
-      --name string            Collection name
-      --tx uint                Transaction ID
-      --version-id string      Collection version ID
+  -h, --help              help for collection
+  -i, --identity string   Hex formatted private key used to authenticate with ACP
+      --tx uint           Transaction ID
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")

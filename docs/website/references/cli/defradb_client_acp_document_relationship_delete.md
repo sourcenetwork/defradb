@@ -20,11 +20,13 @@ Notes:
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the relationship record was not found, then it will be a no-op.
-  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+  - Learn more about the
+[Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+system.
 
 
 ```
-defradb client acp document relationship delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp document relationship delete [flags]
 ```
 
 ### Examples
@@ -52,6 +54,7 @@ Remove an actor from reading a private document:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

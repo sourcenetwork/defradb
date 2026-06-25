@@ -10,7 +10,7 @@ all collections that are on the given source collection version within the local
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client lens set [src] [dst] [cfg] [flags]
+defradb client lens set <src> <dst> [cfg] [flags]
 ```
 
 ### Examples
@@ -22,7 +22,7 @@ set from an argument string:
 set from file:  
   defradb client lens set bae123 bae456 -f collection_migration.lens
 
-add from stdin:  
+set from stdin:  
   cat collection_migration.lens | defradb client lens set bae123 bae456 -
 ```
 
@@ -36,6 +36,7 @@ add from stdin:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

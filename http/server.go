@@ -38,23 +38,24 @@ var tlsCipherSuites = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
-const defaultHTTPAddress = "127.0.0.1:9181"
+// DefaultHTTPAddress is the default address for the HTTP server.
+const DefaultHTTPAddress = "127.0.0.1:9181"
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
 	options   *options.NodeHTTPOptions
 	server    *http.Server
 	listener  net.Listener
-	isTLS     bool
 	ctxCancel context.CancelFunc
 }
 
 // NewServer instantiates a new server with the given http.Handler.
 func NewServer(handler http.Handler, opts ...options.Enumerable[options.NodeHTTPOptions]) (*Server, error) {
-	cfg := options.NodeHTTPOptions{
-		Address: defaultHTTPAddress,
-	}
+	var cfg options.NodeHTTPOptions
 	utils.ApplyOptions(&cfg, opts...)
+	if cfg.Address == "" {
+		cfg.Address = DefaultHTTPAddress
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// setup a mux with the default middleware stack
@@ -98,7 +99,6 @@ func (s *Server) Serve() error {
 	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
 		return s.serve()
 	}
-	s.isTLS = true
 	return s.serveTLS()
 }
 
@@ -129,7 +129,7 @@ func (s *Server) serveTLS() error {
 }
 
 func (s *Server) Address() string {
-	if s.isTLS {
+	if s.options.TLSCertPath != "" && s.options.TLSKeyPath != "" {
 		return "https://" + s.listener.Addr().String()
 	}
 	return "http://" + s.listener.Addr().String()

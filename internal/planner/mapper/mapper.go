@@ -511,7 +511,7 @@ func resolveAggregates(
 				}
 				mapAggregateNestedTargets(target, hostSelectRequest)
 
-				childMapping, _, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
+				childMapping, childDef, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -562,6 +562,54 @@ func resolveAggregates(
 					return nil, err
 				}
 
+				// convertedGroupBy holds the planner-internal form of the aggregate's groupBy
+				// argument, with field names translated to the numeric indices the planner uses
+				// internally. It is nil when no groupBy was requested.
+				var convertedGroupBy *GroupBy
+				if target.groupBy.HasValue() {
+					// Work on a copy so we don't mutate the original request.
+					groupByFields := make([]string, len(target.groupBy.Value().Fields))
+					copy(groupByFields, target.groupBy.Value().Fields)
+
+					for i, groupByField := range groupByFields {
+						fieldDesc, ok := childDef.GetFieldByName(groupByField)
+						if ok && fieldDesc.Kind.IsObject() {
+							// Grouping by a multi-valued (array) relation is not meaningful.
+							if fieldDesc.Kind.IsArray() {
+								return nil, NewErrInvalidFieldToGroupBy(groupByField)
+							}
+							// The planner stores relation fields under their ID form (e.g. "author_id"
+							// rather than "author"), so rewrite the name to match.
+							groupByFields[i] = request.ToFieldID(groupByField)
+						}
+					}
+
+					remappedGroupBy := immutable.Some(request.GroupBy{Fields: groupByFields})
+
+					// The groupNode requires a slot in the mapping for the special GROUP field so
+					// it has a valid data-source index to read from. If one doees not exist, it will be added.
+					if _, isGroupFieldMapped := childMapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
+						groupIndex := childMapping.GetNextIndex()
+						childMapping.Add(groupIndex, request.GroupFieldName)
+					}
+
+					// Translate the (now-remapped) field names into their numeric mapping indices.
+					convertedGroupBy = toGroupBy(remappedGroupBy, childMapping)
+
+					// The group-by fields must be explicitly added to the child select so the
+					// fetcher knows to retrieve them. Unlike a top-level aggregate (whose scan
+					// has no explicit fields and so fetches everything by default), a relation
+					// host is fetched via a type-join whose child scan only retrieves the fields
+					// it is told about. Without this the group-by value is never fetched and all
+					// documents collapse into a single group.
+					for _, groupByField := range convertedGroupBy.Fields {
+						childFields = append(childFields, &Field{
+							Index: groupByField.Index,
+							Name:  groupByField.Name,
+						})
+					}
+				}
+
 				var dummyJoin Requestable
 				dummyJoinSelect := &Select{
 					Targetable: Targetable{
@@ -572,6 +620,7 @@ func resolveAggregates(
 						Filter:  convertedFilter,
 						Limit:   target.limit,
 						OrderBy: orderBy,
+						GroupBy: convertedGroupBy,
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: childMapping,
@@ -1880,6 +1929,9 @@ type aggregateRequestTarget struct {
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
 	order immutable.Option[request.OrderBy]
+
+	// The groupBy specified by the consumer for this target. Optional.
+	groupBy immutable.Option[request.GroupBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -1893,6 +1945,7 @@ func getAggregateSources(field *request.Aggregate) ([]*aggregateRequestTarget, e
 			filter:            target.Filter,
 			limit:             toLimit(target.Limit, target.Offset),
 			order:             target.OrderBy,
+			groupBy:           target.GroupBy,
 		}
 	}
 

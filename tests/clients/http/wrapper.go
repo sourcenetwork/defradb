@@ -42,7 +42,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, nil)
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +194,13 @@ func (w *Wrapper) BasicExport(
 	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	return w.client.BasicExport(ctx, filepath, opts...)
+}
+
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return w.client.ListActions(ctx, opts...)
 }
 
 func (w *Wrapper) AddCollection(
@@ -368,7 +375,7 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	return w.client.ListIndexes(ctx, opts...)
 }
 

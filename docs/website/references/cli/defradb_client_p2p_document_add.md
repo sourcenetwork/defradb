@@ -8,7 +8,7 @@ Add P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p document add [docIDs] [flags]
+defradb client p2p document add <docIDs> [flags]
 ```
 
 ### Examples
@@ -30,6 +30,7 @@ add multiple documents:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

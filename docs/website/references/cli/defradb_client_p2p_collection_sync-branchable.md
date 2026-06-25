@@ -11,7 +11,7 @@ This command allows you to sync the collection-level history for branchable coll
 to the collection for future updates.
 
 ```
-defradb client p2p collection sync-branchable [collection-id] [flags]
+defradb client p2p collection sync-branchable <collection-id> [flags]
 ```
 
 ### Examples
@@ -34,6 +34,7 @@ sync branchable collection with timeout:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

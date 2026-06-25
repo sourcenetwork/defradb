@@ -9,7 +9,7 @@ Generates the fully formatted GraphQL schema from a given user type definition(s
 Accepts multiple input files as well as "-" to use stdin.
 
 ```
-defradb sdl generate --output schema.graphql <input schema files...> [flags]
+defradb sdl generate <input schema files...> [flags]
 ```
 
 ### Examples
@@ -40,6 +40,7 @@ Generate SDL with Searchable Encryption type definitions:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path (relative to DefraDB root directory) to store encrypted keys when using the file backend (default "keys")

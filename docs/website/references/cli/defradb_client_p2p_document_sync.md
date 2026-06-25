@@ -10,7 +10,7 @@ This command allows you to sync documents from a specific collection across the 
 It doesn't automatically subscribe to the collection or the documents.
 
 ```
-defradb client p2p document sync [collection-name] [docID...] [flags]
+defradb client p2p document sync <collection-name> <docID...> [flags]
 ```
 
 ### Examples
@@ -33,6 +33,7 @@ sync multiple documents:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

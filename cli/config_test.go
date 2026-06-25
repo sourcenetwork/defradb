@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -20,6 +21,23 @@ import (
 
 	"github.com/sourcenetwork/defradb/cli/config"
 )
+
+// writeDefaultCerts writes placeholder certificate and/or key files into the
+// default <rootdir>/certs directory and returns their paths. Passing false for
+// either skips writing that file (to exercise the partial-pair case).
+func writeDefaultCerts(t *testing.T, rootdir string, writeCert, writeKey bool) (string, string) {
+	certDir := filepath.Join(rootdir, "certs")
+	require.NoError(t, os.MkdirAll(certDir, 0755))
+	certPath := filepath.Join(certDir, "server.crt")
+	keyPath := filepath.Join(certDir, "server.key")
+	if writeCert {
+		require.NoError(t, os.WriteFile(certPath, []byte("test-cert"), 0644))
+	}
+	if writeKey {
+		require.NoError(t, os.WriteFile(keyPath, []byte("test-key"), 0600))
+	}
+	return certPath, keyPath
+}
 
 func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
@@ -48,6 +66,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
 
 	assert.Equal(t, "127.0.0.1:9181", cfg.GetString("api.address"))
+	assert.Equal(t, "", cfg.GetString("api.audience"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("api.allowed-origins"))
 	assert.Equal(t, "", cfg.GetString("api.pubkeypath"))
 	assert.Equal(t, "", cfg.GetString("api.privkeypath"))
@@ -73,4 +92,63 @@ func TestLoadConfigNotExist(t *testing.T) {
 
 	assert.Equal(t, false, cfg.GetBool("development"))
 	assert.Equal(t, false, cfg.GetBool("telemetry.disabled"))
+}
+
+func TestLoadConfigAutoEnablesTLSWhenDefaultCertsPresent(t *testing.T) {
+	rootdir := t.TempDir()
+	certPath, keyPath := writeDefaultCerts(t, rootdir, true, true)
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	cfg, err := config.LoadConfig(rootdir, flags)
+	require.NoError(t, err)
+
+	assert.Equal(t, certPath, cfg.GetString("api.pubkeypath"))
+	assert.Equal(t, keyPath, cfg.GetString("api.privkeypath"))
+}
+
+func TestLoadConfigSetsOnlyFoundDefaultCertPath(t *testing.T) {
+	// Only the certificate is present. The found path is set and its missing
+	// pair is left empty, so the start command rejects the incomplete pair
+	// rather than silently ignoring the certificate.
+	rootdir := t.TempDir()
+	certPath, _ := writeDefaultCerts(t, rootdir, true, false)
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	cfg, err := config.LoadConfig(rootdir, flags)
+	require.NoError(t, err)
+
+	assert.Equal(t, certPath, cfg.GetString("api.pubkeypath"))
+	assert.Equal(t, "", cfg.GetString("api.privkeypath"))
+}
+
+func TestLoadConfigSetsOnlyFoundDefaultKeyPath(t *testing.T) {
+	// Only the key is present; symmetric to the cert-only case above.
+	rootdir := t.TempDir()
+	_, keyPath := writeDefaultCerts(t, rootdir, false, true)
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+
+	cfg, err := config.LoadConfig(rootdir, flags)
+	require.NoError(t, err)
+
+	assert.Equal(t, "", cfg.GetString("api.pubkeypath"))
+	assert.Equal(t, keyPath, cfg.GetString("api.privkeypath"))
+}
+
+func TestLoadConfigDoesNotOverrideExplicitCertPaths(t *testing.T) {
+	rootdir := t.TempDir()
+	// Default certs exist, but explicitly-configured paths must take precedence
+	// and auto-detection must not override them.
+	writeDefaultCerts(t, rootdir, true, true)
+
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	flags.String("pubkeypath", "", "")
+	flags.String("privkeypath", "", "")
+	require.NoError(t, flags.Set("pubkeypath", "/custom/my.crt"))
+	require.NoError(t, flags.Set("privkeypath", "/custom/my.key"))
+
+	cfg, err := config.LoadConfig(rootdir, flags)
+	require.NoError(t, err)
+
+	assert.Equal(t, "/custom/my.crt", cfg.GetString("api.pubkeypath"))
+	assert.Equal(t, "/custom/my.key", cfg.GetString("api.privkeypath"))
 }

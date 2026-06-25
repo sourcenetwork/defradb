@@ -450,6 +450,21 @@ func (w *Wrapper) ListLenses(
 	return lenses, nil
 }
 
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	res, err := execute(ctx, w.value, "listActions", jsOpts(opts))
+	if err != nil {
+		return nil, err
+	}
+	var actions []client.ActionExecution
+	if err := goji.UnmarshalJS(res[0], &actions); err != nil {
+		return nil, err
+	}
+	return actions, nil
+}
+
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
@@ -484,12 +499,12 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	res, err := execute(ctx, w.value, "listIndexes", jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
-	var out map[client.CollectionName][]client.IndexDescription
+	var out map[client.CollectionName][]client.ListIndexesResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}

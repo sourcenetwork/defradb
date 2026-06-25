@@ -11,7 +11,7 @@ The --unique flag is optional. If provided, the index will be unique.
 If no order is specified for the field, the default value will be "ASC"
 
 ```
-defradb client index new -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique] [flags]
+defradb client index new [flags]
 ```
 
 ### Examples
@@ -40,6 +40,7 @@ make a new unique index for 'Users' collection on 'name' and 'age':
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

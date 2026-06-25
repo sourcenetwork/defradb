@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -48,6 +49,16 @@ type Client struct {
 
 func NewClient(rawURL string) (*Client, error) {
 	httpClient, err := newHttpClient(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{httpClient}, nil
+}
+
+// NewInsecureClient returns a Client that skips TLS certificate verification.
+// Only use for loopback health checks against a server with a self-signed cert.
+func NewInsecureClient(rawURL string) (*Client, error) {
+	httpClient, err := newInsecureHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +126,28 @@ func (c *Client) BasicExport(
 	}
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Client) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("actions")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []client.ActionExecution
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (c *Client) AddCollection(
@@ -425,7 +458,7 @@ func (c *Client) GetCollections(
 func (c *Client) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -435,7 +468,7 @@ func (c *Client) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
@@ -524,6 +557,26 @@ func (c *Client) ExecRequest(
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+	// Non-200 responses from middleware (e.g. invalid/unknown transaction ID) use
+	// the {"error": "..."} envelope rather than the GraphQL {"errors": [...]} one.
+	// Convert those so the error surfaces to the caller instead of being silently
+	// swallowed as {"data": null}.
+	if res.StatusCode != http.StatusOK {
+		var raw map[string]any
+		if jsonErr := json.Unmarshal(data, &raw); jsonErr == nil {
+			if errMsg, ok := raw["error"].(string); ok {
+				result.GQL.Errors = append(result.GQL.Errors, client.ReviveError(errMsg))
+				return result
+			}
+		}
+		// If the body isn't of the form {"error": "..."}, wrap the raw body in a raw error.
+		errMsg := fmt.Sprintf(
+			"server returned non-200 status %d: %s",
+			res.StatusCode, bytes.TrimSpace(data),
+		)
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errMsg))
 		return result
 	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {

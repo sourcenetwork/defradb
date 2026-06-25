@@ -152,7 +152,7 @@ func ExecuteTestCase(
 	flattenActions(&testCase)
 	applyMultipliers(t, &testCase)
 	collectionNames := getCollectionNames(testCase)
-	changeDetector.PreTestChecks(t, collectionNames)
+	changeDetector.PreTestChecks(t, collectionNames, testCase.SkipChangeDetector)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
@@ -269,6 +269,8 @@ func executeTestCase(
 		corelog.String("changeDetector.TargetBranch", changeDetector.TargetBranch),
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	}
+
+	skipIfUnsupportedLevelDBAction(t, dbt, testCase.Actions)
 
 	if kms != NoneKMSType {
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
@@ -433,6 +435,9 @@ func performAction(
 	case DeleteDoc:
 		deleteDoc(s, action)
 
+	case DeleteWithFilter:
+		deleteWithFilter(s, action)
+
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
 
@@ -468,9 +473,6 @@ func performAction(
 
 	case SyncDocs:
 		syncDocs(s, action)
-
-	case Wait:
-		<-time.After(action.Duration)
 
 	case Benchmark:
 		benchmarkAction(s, testCase, actionIndex, action)
@@ -1412,6 +1414,60 @@ func deleteDoc(
 	}
 }
 
+// deleteWithFilter deletes the set of matched documents.
+func deleteWithFilter(s *state.State, a DeleteWithFilter) {
+	var res *client.DeleteResult
+	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
+
+	var collections []client.Collection
+
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+
+	for index, node := range nodes {
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		nodeID := nodeIDs[index]
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		opts := options.DeleteDocumentsWithFilter()
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err = withRetryOnNode(
+			node,
+			func() error {
+				var err error
+				res, err = collection.DeleteDocumentsWithFilter(s.Ctx, a.Filter, opts)
+				return err
+			},
+		)
+
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
+
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+		expect := make(map[string]struct{}, len(res.DocIDs))
+		for _, docID := range res.DocIDs {
+			expect[docID] = struct{}{}
+		}
+		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
+	}
+}
+
 // updateWithFilter updates the set of matched documents.
 func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var res *client.UpdateResult
@@ -2109,6 +2165,38 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	}
 	if !runVectorEmbeddingTests && hasVectorEmbedding {
 		t.Skip("test involves vector embedding generation")
+	}
+}
+
+// skipIfUnsupportedLevelDBAction skips the test if it contains an action that leveldb does
+// not support.
+func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, actions []any) {
+	if dbt != LevelStoreType {
+		return
+	}
+
+	for _, act := range actions {
+		switch a := act.(type) {
+		case *action.Truncate:
+			if a.TransactionID.HasValue() {
+				// https://github.com/sourcenetwork/defradb/issues/4983
+				t.Skip("explicit transactions for truncate with leveldb are not supported")
+			}
+		case *action.RefreshViews, *action.AddView:
+			// These actions are skipped due to:
+			// https://github.com/sourcenetwork/defradb/issues/4959
+			t.Skip("RefreshViews does not yet support the leveldb store")
+		case *action.Parallel:
+			for _, inner := range a.Children {
+				switch inner.(type) {
+				case *action.Truncate, *action.RefreshViews, *action.AddView:
+					t.Skip("write actions that acquire write locks are unsupported with leveldb in" +
+						" the test framework.  Another action may lock the store by opening a transaction" +
+						" after one of these acquires the write lock, but before it itself locks the leveldb" +
+						" store - causing a deadlock.")
+				}
+			}
+		}
 	}
 }
 

@@ -6,7 +6,10 @@ Interact with the access control system(s) of a DefraDB node
 
 Interact with the access control system(s) of a DefraDB node
 
-Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+Learn more about the
+[Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+and [Node Access Control](https://docs.source.network/defradb/security/node-access-control/)
+systems.
 
 		
 
@@ -19,6 +22,7 @@ Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/re
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

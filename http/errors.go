@@ -30,6 +30,7 @@ const (
 	errFailedToGetContext       string = "failed to get context"
 	errMissingRequiredParameter string = "required parameter %s is missing"
 	errCollectionNotFound       string = "collection not found"
+	errNoHostInURL              string = "could not derive a host from the url"
 )
 
 // Errors returnable from this package.
@@ -49,7 +50,6 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
-	ErrTransactionNotFound          = errors.New("transaction not found")
 )
 
 type errorResponse struct {
@@ -122,6 +122,13 @@ func NewErrCollectionNotFound(collectionName string) error {
 	)
 }
 
+func NewErrNoHostInURL(rawURL string) error {
+	return errors.New(
+		errNoHostInURL,
+		errors.NewKV("URL", rawURL),
+	)
+}
+
 // httpStatusFromError maps known error types to appropriate HTTP status codes.
 func httpStatusFromError(err error) int {
 	// 401 Unauthorized
@@ -140,6 +147,7 @@ func httpStatusFromError(err error) int {
 	// 404 Not Found
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
 		errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, client.ErrTransactionNotFound) ||
 		errors.Is(err, db.ErrDocIDNotFound) ||
 		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
 		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||

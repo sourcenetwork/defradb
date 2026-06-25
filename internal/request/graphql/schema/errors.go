@@ -26,6 +26,7 @@ const (
 	errTypeNotFound                     string = "no type found for given name"
 	errRelationNotFound                 string = "no relation found"
 	errNonNullForTypeNotSupported       string = "NonNull variants for type are not supported"
+	errNestedListTypeNotSupported       string = "nested list types are not supported"
 	errIndexMissingFields               string = "index missing fields"
 	errIndexUnknownArgument             string = "index with unknown argument"
 	errIndexInvalidArgument             string = "index with invalid argument"
@@ -153,6 +154,14 @@ func NewErrNonNullForTypeNotSupported(typeName string) error {
 	return errors.New(
 		errNonNullForTypeNotSupported,
 		errors.NewKV("Type", typeName),
+	)
+}
+
+func NewErrNestedListTypeNotSupported(objectName, fieldName string) error {
+	return errors.New(
+		errNestedListTypeNotSupported,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
 	)
 }
 

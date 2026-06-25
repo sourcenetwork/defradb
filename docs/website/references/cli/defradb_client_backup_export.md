@@ -20,7 +20,7 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 
 
 ```
-defradb client backup export  [-c --collections | -p --pretty | -f --format] <output_path> [flags]
+defradb client backup export <output_path> [flags]
 ```
 
 ### Examples
@@ -42,6 +42,7 @@ Export data for the 'Users' collection:
 ### Options inherited from parent commands
 
 ```
+      --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")

@@ -27,6 +27,7 @@ const (
 	errMaxTxnRetries                         string = "reached maximum transaction reties"
 	errCollectionNotFound                    string = "collection not found"
 	errUnknownCRDT                           string = "unknown crdt"
+	errUnknownCRDTString                     string = "unknown crdt string representation"
 	errCRDTKindMismatch                      string = "CRDT type %s can't be assigned to field kind %s"
 	errInvalidCRDTType                       string = "CRDT type not supported"
 	errFailedToUnmarshalCollection           string = "failed to unmarshal collection json"
@@ -56,6 +57,7 @@ const (
 	errSetDocFieldValue                      string = "failed to set document field value"
 	errNullValueForNonNillableField          string = "null value provided for non-nillable field"
 	errMissingRequiredField                  string = "value not provided for non-nillable field"
+	errTransactionNotFound                   string = "transaction not found"
 )
 
 // Errors returnable from this package.
@@ -104,6 +106,7 @@ var (
 	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
 	ErrNullValueForNonNillableField          = errors.New(errNullValueForNonNillableField)
 	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
+	ErrTransactionNotFound                   = errors.New(errTransactionNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -216,6 +219,13 @@ func NewErrUnknownCRDT(cType CType) error {
 	)
 }
 
+func NewErrUnknownCRDTString(s string) error {
+	return errors.New(
+		errUnknownCRDTString,
+		errors.NewKV("Type", s),
+	)
+}
+
 func NewErrInvalidCRDTType(name, crdtType string) error {
 	return errors.New(
 		errInvalidCRDTType,
@@ -244,6 +254,8 @@ func NewErrFailedToParseKind(kind []byte) error {
 // is wrapped in a new anonymous error type.
 func ReviveError(message string) error {
 	switch message {
+	case ErrTransactionNotFound.Error():
+		return ErrTransactionNotFound
 	case ErrDocumentNotFoundOrNotAuthorized.Error():
 		return ErrDocumentNotFoundOrNotAuthorized
 	case corekv.ErrTxnConflict.Error():

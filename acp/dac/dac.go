@@ -52,7 +52,9 @@ type DocumentACP interface {
 	// ValidateResourceInterface performs resource interface validation of the linked/matching
 	// resource name that is on the policy (matching policyID), returns an error upon validation failure.
 	//
-	// Learn more about the DefraDB [ACP System](/acp/README.md)
+	// Learn more about the
+	// [Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+	// system.
 	ValidateResourceInterface(
 		ctx context.Context,
 		policyID string,
