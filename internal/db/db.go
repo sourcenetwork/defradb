@@ -270,7 +270,6 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 			DocID:        docID,
 			Cid:          headsIterator.CurrentCid(),
 			CollectionID: collection.Version().CollectionID,
-			Block:        headsIterator.CurrentRawBlock(),
 		}
 		db.sendUpdate(updateEvent)
 	}
@@ -359,6 +358,11 @@ func (db *DB) Rootstore() corekv.TxnStore {
 
 func (db *DB) Multistore() *datastore.Multistore {
 	return datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+}
+
+// BlockStoreChunkSize returns the chunk size used by the block store, if any.
+func (db *DB) BlockStoreChunkSize() immutable.Option[int] {
+	return db.blockStoreChunkSize
 }
 
 // Events returns the events Channel.

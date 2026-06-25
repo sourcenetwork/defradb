@@ -51,7 +51,7 @@ func TestReplicationCoordinator_WhenBlockFailsToDeserialize_ShouldReturnError(t 
 	updateEvent := event.Update{
 		DocID:        setup.docID,
 		CollectionID: setup.collectionID,
-		Block:        []byte("invalid-block-data"),
+		Cid:          setup.storeBlock([]byte("invalid-block-data")),
 	}
 	err := setup.coordinator.HandlePushToReplicators(context.Background(), updateEvent)
 	require.Error(t, err, "Should return error when block fails to deserialize")
@@ -66,7 +66,7 @@ func TestReplicationCoordinator_WhenNonCompositeBlock_ShouldNotPushToPeer(t *tes
 	updateEvent := event.Update{
 		DocID:        setup.docID,
 		CollectionID: setup.collectionID,
-		Block:        setup.createNonCompositeBlock(),
+		Cid:          setup.storeBlock(setup.createNonCompositeBlock()),
 	}
 	err := setup.coordinator.HandlePushToReplicators(context.Background(), updateEvent)
 	require.NoError(t, err)

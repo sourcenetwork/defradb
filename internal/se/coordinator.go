@@ -249,7 +249,13 @@ func (coordinator *Coordinator) HandlePushToReplicators(ctx context.Context, evt
 		return nil
 	}
 
-	block, err := coreblock.GetFromBytes(evt.Block)
+	// The update event no longer carries the block bytes; this handler runs on the node that
+	// produced the update, so the composite block is available locally by its CID.
+	rawBlock, err := coordinator.db.Multistore().Blockstore().Get(ctx, evt.Cid)
+	if err != nil {
+		return NewErrFailedToDeserializeBlock(err)
+	}
+	block, err := coreblock.GetFromBytes(rawBlock.RawData())
 	if err != nil {
 		return NewErrFailedToDeserializeBlock(err)
 	}

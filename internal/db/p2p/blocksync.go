@@ -17,7 +17,10 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -25,8 +28,12 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // peerIdentityFunc returns a function that resolves and caches the ACP identity of the given peer
@@ -167,4 +174,85 @@ func (p *P2P) handleBlockSyncRequest(
 		return writeCAR(ctx, w, []cid.Cid{root}, allBlocks)
 	}
 	return encCIDs, writeCARFn, nil
+}
+
+// pullAndIngest requests the blocks needed to merge root from fromPeer, ingests the returned CAR
+// into the local stores, and prepares them for merge (signature verification + encryption keys).
+//
+// It is the bitswap-free replacement for syncDAG: the caller is responsible for calling db.Merge
+// afterwards.
+func (p *P2P) pullAndIngest(
+	ctx context.Context,
+	fromPeer string,
+	docID string,
+	collectionID string,
+	root cid.Cid,
+) error {
+	haveHeads, err := p.localHeads(ctx, docID)
+	if err != nil {
+		return err
+	}
+	have := make([][]byte, len(haveHeads))
+	for i, h := range haveHeads {
+		have[i] = h.Bytes()
+	}
+
+	req := &protocol.BlockSyncRequest{
+		DocID:        docID,
+		CollectionID: collectionID,
+		Root:         root.Bytes(),
+		HaveHeads:    have,
+		Full:         len(haveHeads) == 0,
+	}
+
+	blockDst := datastore.P2PBlockstoreFrom(p.db.Rootstore(), p.db.BlockStoreChunkSize())
+	encDst := p.db.Multistore().Encstore()
+
+	return p.blockSyncProtocol.RequestBlocks(ctx, fromPeer, req,
+		func(encCIDs [][]byte, car io.Reader) error {
+			encSet := make(map[cid.Cid]struct{}, len(encCIDs))
+			for _, c := range encCIDs {
+				parsed, err := cid.Cast(c)
+				if err != nil {
+					return err
+				}
+				encSet[parsed] = struct{}{}
+			}
+			if _, err := ingestCAR(ctx, blockDst, encDst, encSet, car); err != nil {
+				return err
+			}
+			return p.prepareForMerge(ctx, root)
+		},
+	)
+}
+
+// localHeads returns the current composite head CIDs the local node has for the given document.
+func (p *P2P) localHeads(ctx context.Context, docID string) ([]cid.Cid, error) {
+	if docID == "" {
+		return nil, nil
+	}
+	key := keys.HeadstoreDocKey{
+		DocID:   docID,
+		FieldID: core.COMPOSITE_NAMESPACE,
+	}
+	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
+	cids, _, err := headset.List(ctx)
+	return cids, err
+}
+
+// prepareForMerge walks the freshly-ingested DAG from root using a local link system, verifying
+// block signatures and fetching any required encryption keys so that db.Merge can proceed.
+func (p *P2P) prepareForMerge(ctx context.Context, root cid.Cid) error {
+	localStore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
+	linkSys := makeLinkSystem(localStore)
+
+	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: root}, coreblock.BlockSchemaPrototype)
+	if err != nil {
+		return NewErrLoadLinkedBlock(err)
+	}
+	rootBlock, err := coreblock.GetFromNode(nd)
+	if err != nil {
+		return NewErrDecodeLinkedBlock(err)
+	}
+	return p.loadBlockLinks(ctx, &linkSys, rootBlock)
 }

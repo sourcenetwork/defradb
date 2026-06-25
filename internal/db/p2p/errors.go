@@ -39,7 +39,6 @@ const (
 	errIterateReplicatorDocs   string = "failed to iterate replicator documents"
 	errPushDocHeads            string = "failed to push document heads"
 	errGetDocHeads             string = "failed to get document heads for replication"
-	errMarshalBlock            string = "failed to marshal block for replication"
 	errUpdateReplicatorStatus  string = "failed to update replicator status"
 	errCreateReplicatorRetry   string = "failed to create replicator retry"
 	errStoreRetryDoc           string = "failed to store retry doc for replicator"
@@ -152,10 +151,6 @@ func NewErrPushDocHeads(inner error, docID string) error {
 
 func NewErrGetDocHeads(inner error, docID string) error {
 	return errors.Wrap(errGetDocHeads, inner, errors.NewKV("DocID", docID))
-}
-
-func NewErrMarshalBlock(inner error, docID string, cid string) error {
-	return errors.Wrap(errMarshalBlock, inner, errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
 func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }

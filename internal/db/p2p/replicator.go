@@ -232,11 +232,6 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		return err
 	}
 	for _, head := range heads {
-		rawblock, err := head.block.Marshal()
-		if err != nil {
-			return NewErrMarshalBlock(err, docID, head.cid.String())
-		}
-
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
@@ -244,7 +239,6 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			CID:          head.cid.Bytes(),
 			CollectionID: collectionID,
 			Creator:      p.host.ID(),
-			Block:        rawblock,
 		}
 
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
@@ -381,7 +375,6 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 					CID:          lg.Cid.Bytes(),
 					CollectionID: lg.CollectionID,
 					Creator:      p.host.ID(),
-					Block:        lg.Block,
 				}
 				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 					log.ErrorE(
@@ -834,11 +827,6 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		default:
 		}
 
-		rawblock, err := head.block.Marshal()
-		if err != nil {
-			return NewErrMarshalBlock(err, docID, head.cid.String())
-		}
-
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
@@ -846,7 +834,6 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			CID:          head.cid.Bytes(),
 			CollectionID: head.block.Delta.GetCollectionVersionID(),
 			Creator:      p.host.ID(),
-			Block:        rawblock,
 		}
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 			return NewErrSendReplicatorRequest(err, peerID, docID)
