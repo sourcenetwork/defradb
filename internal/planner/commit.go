@@ -197,147 +197,149 @@ func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, 
 func (n *dagScanNode) Next() (bool, error) {
 	txn := datastore.CtxMustGetTxn(n.planner.ctx)
 
-	n.execInfo.iterations++
+	for {
+		n.execInfo.iterations++
 
-	var currentCid *cid.Cid
+		var currentCid *cid.Cid
 
-	if len(n.queuedCids) > 0 {
-		currentCid = n.queuedCids[0]
-		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else if n.commitSelect.Cids.HasValue() && n.currentSelectCidIndex < len(n.commitSelect.Cids.Value()) {
-		cid, err := cid.Parse(n.commitSelect.Cids.Value()[n.currentSelectCidIndex])
+		if len(n.queuedCids) > 0 {
+			currentCid = n.queuedCids[0]
+			n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
+		} else if n.commitSelect.Cids.HasValue() && n.currentSelectCidIndex < len(n.commitSelect.Cids.Value()) {
+			cid, err := cid.Parse(n.commitSelect.Cids.Value()[n.currentSelectCidIndex])
+			if err != nil {
+				return false, err
+			}
+
+			currentCid = &cid
+			n.currentSelectCidIndex++
+		} else if !n.commitSelect.Cids.HasValue() && n.fetcherStarted {
+			cid, err := n.fetcher.FetchNext()
+			if err != nil || cid == nil {
+				return false, err
+			}
+
+			currentCid = cid
+			// Reset the depthVisited for each head yielded by headset
+			n.depthVisited = 0
+		} else {
+			return false, nil
+		}
+
+		// skip already visited CIDs
+		if _, ok := n.visitedNodes[currentCid.String()]; ok {
+			continue
+		}
+
+		// use the stored cid to scan through the blockstore
+		// clear the cid after
+		block, err := txn.Blockstore().Get(n.planner.ctx, *currentCid)
+		if err != nil {
+			return false, errors.Join(ErrIncorrectOrMissingCID, err)
+		}
+
+		dagBlock, err := coreblock.GetFromBytes(block.RawData())
 		if err != nil {
 			return false, err
 		}
 
-		currentCid = &cid
-		n.currentSelectCidIndex++
-	} else if !n.commitSelect.Cids.HasValue() && n.fetcherStarted {
-		cid, err := n.fetcher.FetchNext()
-		if err != nil || cid == nil {
-			return false, err
+		// We want to enforce DAC, so we skip commits the caller has no read access to.
+		// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
+		// doc-mapping cost. We only check when document acp is configured,
+		// Note:
+		// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
+		// the collection has no policy or the doc is public.
+		// - Collection-level deltas (e.g. schema changes) carry no docID and
+		// are not DAC-gated, only doc-level deltas need an access check.
+		//
+		// The collection fetched here is passed to dagBlockToNodeDoc so it can
+		// reuse it instead of making a duplicate GetCollections call.
+		var acpCols []client.Collection
+		docIDBytes := dagBlock.Delta.GetDocID()
+		if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+			versionID := dagBlock.Delta.GetCollectionVersionID()
+
+			acpCols, err = n.planner.db.GetCollections(
+				n.planner.ctx,
+				options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
+			)
+			if err != nil {
+				return false, err
+			}
+			if len(acpCols) == 0 {
+				return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
+			}
+
+			hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+				n.planner.ctx,
+				n.planner.identity,
+				n.planner.nodeACP,
+				n.planner.documentACP.Value(),
+				acpCols[0],
+				acpTypes.DocumentReadPerm,
+				string(docIDBytes),
+			)
+			if err != nil {
+				return false, err
+			}
+			if !hasPermission {
+				// Mark visited so the same denied cid is not re-checked if it
+				// reappears via a links/heads queue elsewhere in the traversal.
+				n.visitedNodes[currentCid.String()] = true
+				continue
+			}
 		}
 
-		currentCid = cid
-		// Reset the depthVisited for each head yielded by headset
-		n.depthVisited = 0
-	} else {
-		return false, nil
-	}
-
-	// skip already visited CIDs
-	// we only need to call Next() again
-	// as it will reset and scan through the headset/queue
-	// and eventually return a value, or false if we've
-	// visited everything
-	if _, ok := n.visitedNodes[currentCid.String()]; ok {
-		return n.Next()
-	}
-
-	// use the stored cid to scan through the blockstore
-	// clear the cid after
-	block, err := txn.Blockstore().Get(n.planner.ctx, *currentCid)
-	if err != nil {
-		return false, errors.Join(ErrIncorrectOrMissingCID, err)
-	}
-
-	dagBlock, err := coreblock.GetFromBytes(block.RawData())
-	if err != nil {
-		return false, err
-	}
-
-	// We want to enforce DAC, so we skip commits the caller has no read access to.
-	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
-	// doc-mapping cost. We only check when document acp is configured,
-	// Note:
-	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
-	// the collection has no policy or the doc is public.
-	// - Collection-level deltas (e.g. schema changes) carry no docID and
-	// are not DAC-gated, only doc-level deltas need an access check.
-	docIDBytes := dagBlock.Delta.GetDocID()
-	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
-		versionID := dagBlock.Delta.GetCollectionVersionID()
-
-		cols, err := n.planner.db.GetCollections(
-			n.planner.ctx,
-			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
-		)
+		currentValue, err := n.dagBlockToNodeDoc(dagBlock, acpCols)
 		if err != nil {
 			return false, err
 		}
-		if len(cols) == 0 {
-			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
+
+		// if this is a time travel query or a _commits
+		// (cid + undefined depth + docId) then we need to make sure the
+		// target block actually belongs to the doc, since we are
+		// bypassing the HeadFetcher for the first cid
+		currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+		if n.commitSelect.Cids.HasValue() &&
+			len(n.visitedNodes) == 0 &&
+			n.commitSelect.DocIDs.HasValue() &&
+			len(n.commitSelect.DocIDs.Value()) > 0 &&
+			// todo - for now we just take the first docID and ignore the rest, an error
+			// should be thrown in the parser anyway if the user provides more than one.
+			// https://github.com/sourcenetwork/defradb/issues/4302
+			currentDocID != n.commitSelect.DocIDs.Value()[0] {
+			return false, ErrIncorrectOrMissingCID
 		}
 
-		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			n.planner.ctx,
-			n.planner.identity,
-			n.planner.nodeACP,
-			n.planner.documentACP.Value(),
-			cols[0],
-			acpTypes.DocumentReadPerm,
-			string(docIDBytes),
-		)
-		if err != nil {
-			return false, err
+		// the dagscan node can traverse into the merkle dag
+		// based on the specified depth limit.
+		// The default query operation 'latestCommit' only cares about
+		// the current latest heads, so it has a depth limit
+		// of 1. The query operation 'commits' doesn't have a depth
+		// limit, so it will continue to traverse the graph
+		// until there are no more links, and no more explored
+		// HEAD paths.
+		n.depthVisited++
+		n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
+
+		// the default behavior for depth is:
+		// doc ID, max depth
+		// just doc ID + CID, 0 depth
+		// doc ID + CID + depth, use depth
+		if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cids.HasValue()) ||
+			(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
+			// Insert the newly fetched cids into the slice of queued items, in reverse order
+			// so that the last new cid will be at the front of the slice
+			n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)
+
+			for i, head := range dagBlock.Heads {
+				n.queuedCids[len(dagBlock.Heads)-i-1] = &head.Cid
+			}
 		}
-		if !hasPermission {
-			// Mark visited so the same denied cid is not re-checked if it
-			// reappears via a links/heads queue elsewhere in the traversal.
-			n.visitedNodes[currentCid.String()] = true
-			return n.Next()
-		}
+
+		n.currentValue = currentValue
+		return true, nil
 	}
-
-	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
-	if err != nil {
-		return false, err
-	}
-
-	// if this is a time travel query or a _commits
-	// (cid + undefined depth + docId) then we need to make sure the
-	// target block actually belongs to the doc, since we are
-	// bypassing the HeadFetcher for the first cid
-	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
-	if n.commitSelect.Cids.HasValue() &&
-		len(n.visitedNodes) == 0 &&
-		n.commitSelect.DocIDs.HasValue() &&
-		len(n.commitSelect.DocIDs.Value()) > 0 &&
-		// todo - for now we just take the first docID and ignore the rest, an error
-		// should be thrown in the parser anyway if the user provides more than one.
-		// https://github.com/sourcenetwork/defradb/issues/4302
-		currentDocID != n.commitSelect.DocIDs.Value()[0] {
-		return false, ErrIncorrectOrMissingCID
-	}
-
-	// the dagscan node can traverse into the merkle dag
-	// based on the specified depth limit.
-	// The default query operation 'latestCommit' only cares about
-	// the current latest heads, so it has a depth limit
-	// of 1. The query operation 'commits' doesn't have a depth
-	// limit, so it will continue to traverse the graph
-	// until there are no more links, and no more explored
-	// HEAD paths.
-	n.depthVisited++
-	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-
-	// the default behavior for depth is:
-	// doc ID, max depth
-	// just doc ID + CID, 0 depth
-	// doc ID + CID + depth, use depth
-	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cids.HasValue()) ||
-		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
-		// Insert the newly fetched cids into the slice of queued items, in reverse order
-		// so that the last new cid will be at the front of the slice
-		n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)
-
-		for i, head := range dagBlock.Heads {
-			n.queuedCids[len(dagBlock.Heads)-i-1] = &head.Cid
-		}
-	}
-
-	n.currentValue = currentValue
-	return true, nil
 }
 
 //			   -> D1 -> E1 -> F1
@@ -377,7 +379,7 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
+func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block, prefetchedCols []client.Collection) (core.Doc, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
 	link, err := block.GenerateLink()
 	if err != nil {
@@ -388,12 +390,15 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
-	)
-	if err != nil {
-		return core.Doc{}, err
+	cols := prefetchedCols
+	if len(cols) == 0 {
+		cols, err = n.planner.db.GetCollections(
+			n.planner.ctx,
+			options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
+		)
+		if err != nil {
+			return core.Doc{}, err
+		}
 	}
 	if len(cols) == 0 {
 		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(collectionVersionId)
@@ -539,6 +544,7 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 func (n *dagScanNode) reset() {
 	n.visitedNodes = make(map[string]bool)
 	n.queuedCids = make([]*cid.Cid, 0)
+	n.currentSelectCidIndex = 0
 	n.depthVisited = 0
 	n.currentValue = core.Doc{}
 }
