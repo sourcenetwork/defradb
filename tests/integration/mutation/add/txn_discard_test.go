@@ -61,7 +61,7 @@ func TestMutationAdd_AddAfterDiscard(t *testing.T) {
 				},
 				// This error will occur if the commit txn action completes before the add document action.
 				// It should not impact the test execution.
-				ExpectedError: "transaction not found",
+				ExpectedError: "missing or expired transaction",
 			},
 			&action.Request{
 				Request: `
