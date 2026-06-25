@@ -414,9 +414,6 @@ func performAction(
 	case AddDACActorRelationship:
 		addDACActorRelationship(s, action)
 
-	case AddDACCollectionActorRelationship:
-		addDACCollectionActorRelationship(s, action)
-
 	case DeleteDACActorRelationship:
 		deleteDACActorRelationship(s, action)
 

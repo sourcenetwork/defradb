@@ -37,6 +37,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/keyring"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/sourcehub/sdk"
 )
@@ -59,7 +60,7 @@ func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACP
 		case
 			AddDACPolicy,
 			AddDACActorRelationship,
-			AddDACCollectionActorRelationship,
+			*action.AddDACCollectionActorRelationship,
 			DeleteDACActorRelationship:
 			isDocumentACPTest = true
 		}

@@ -453,10 +453,13 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 // checkBlockAccess reports whether the actor resolved by identityFunc may access block.
 //
-// Access is additive: a document commit is gated on its docID, and every commit of a
-// branchable collection is additionally gated on the collection object (objectID = the
-// collection id). The actor must have read access to every object the block relates to.
-// This mirrors the additive gating applied to commit queries by the planner.
+// Access is additive: a document commit is gated on its docID, and every commit of a branchable
+// collection is additionally gated on the collection object (objectID = the collection id). A
+// branchable collection's commit DAG is built out of its document commits, so gating the DAG as a
+// whole necessarily gates those document commits on the collection object too — a private
+// branchable collection gates its entire history, not just its collection-level head. The actor
+// must have read access to every object a block relates to. This mirrors the additive gating
+// applied to commit queries by the planner (internal/planner/commit.go).
 func (p *P2P) checkBlockAccess(
 	ctx context.Context,
 	identityFunc func() immutable.Option[identity.Identity],

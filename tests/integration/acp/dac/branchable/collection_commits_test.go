@@ -213,7 +213,7 @@ func TestACP_BranchableCollectionCommits_SharedCollectionReaderCanSeeAllCommits(
 			},
 
 			// Owner shares read access to the collection's commit DAG with the stranger.
-			testUtils.AddDACCollectionActorRelationship{
+			&action.AddDACCollectionActorRelationship{
 				CollectionID:      0,
 				Relation:          "reader",
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -273,7 +273,7 @@ func TestACP_BranchableCollectionCommits_CollectionReaderStillGatedByPrivateDoc(
 			},
 
 			// Share only the collection object (not the document) with the stranger.
-			testUtils.AddDACCollectionActorRelationship{
+			&action.AddDACCollectionActorRelationship{
 				CollectionID:      0,
 				Relation:          "reader",
 				RequestorIdentity: testUtils.ClientIdentity(1),

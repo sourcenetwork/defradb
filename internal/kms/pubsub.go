@@ -569,15 +569,33 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return acpDB.CheckAccessOfDocOnCollection(
-		ctx,
-		actorIdentity,
-		s.nodeACP(),
-		s.documentACP.Value(),
-		collection,
-		acpTypes.DocumentReadPerm,
-		docID,
-	)
+	// Additive gating: a doc commit is gated on its docID, and for a branchable collection
+	// additionally on the collection ID, so a private branchable collection gates its whole
+	// commit DAG. Mirrors the planner (internal/planner/commit.go).
+	objectIDs := []string{docID}
+	if collection.Version().IsBranchable {
+		objectIDs = append(objectIDs, collection.Version().CollectionID)
+	}
+
+	for _, objectID := range objectIDs {
+		hasPermission, err := acpDB.CheckAccessOfDocOnCollection(
+			ctx,
+			actorIdentity,
+			s.nodeACP(),
+			s.documentACP.Value(),
+			collection,
+			acpTypes.DocumentReadPerm,
+			objectID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if !hasPermission {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to

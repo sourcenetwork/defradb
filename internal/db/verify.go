@@ -19,6 +19,7 @@ import (
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -75,28 +76,47 @@ func (db *DB) VerifySignature(
 	}
 
 	if db.documentACP.HasValue() {
-		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID, opt.Identity)
-		if err != nil {
-			return err
-		}
-
-		hasPerm, err := acpDB.CheckAccessOfDocOnCollection(
+		// A commit is gated on every acp object it relates to (its docID, and for branchable
+		// collections the collection object too), and the caller needs read access to all of them.
+		// This mirrors the additive commit gating in the planner (internal/planner/commit.go). We
+		// resolve by version id, not docID, so collection-level commits (which have no docID) work.
+		versionID := block.Delta.GetCollectionVersionID()
+		cols, err := db.GetCollections(
 			ctx,
-			opt.Identity,
-			db.nodeACP,
-			db.documentACP.Value(),
-			collection,
-			acpTypes.DocumentReadPerm,
-			docID,
+			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
 		)
-
 		if err != nil {
 			return err
 		}
+		if len(cols) == 0 {
+			return client.NewErrCollectionNotFoundForCollectionVersion(versionID)
+		}
+		collection := cols[0]
 
-		if !hasPerm {
-			return ErrMissingPermission
+		objectIDs := make([]string, 0, 2)
+		if docID := string(block.Delta.GetDocID()); docID != "" {
+			objectIDs = append(objectIDs, docID)
+		}
+		if collection.Version().IsBranchable {
+			objectIDs = append(objectIDs, collection.Version().CollectionID)
+		}
+
+		for _, objectID := range objectIDs {
+			hasPerm, err := acpDB.CheckAccessOfDocOnCollection(
+				ctx,
+				opt.Identity,
+				db.nodeACP,
+				db.documentACP.Value(),
+				collection,
+				acpTypes.DocumentReadPerm,
+				objectID,
+			)
+			if err != nil {
+				return err
+			}
+			if !hasPerm {
+				return ErrMissingPermission
+			}
 		}
 	}
 

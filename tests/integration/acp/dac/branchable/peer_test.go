@@ -116,7 +116,7 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 
 			// Grant node 1's node identity read access to the collection object so the sync layer will
 			// let its related blocks through. Granted on all nodes (local ACP).
-			testUtils.AddDACCollectionActorRelationship{
+			&action.AddDACCollectionActorRelationship{
 				CollectionID:      0,
 				Relation:          "reader",
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -209,7 +209,7 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 			},
 
 			// Let the peer node receive the collection's blocks.
-			testUtils.AddDACCollectionActorRelationship{
+			&action.AddDACCollectionActorRelationship{
 				CollectionID:      0,
 				Relation:          "reader",
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -246,7 +246,7 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 			},
 
 			// Owner shares read access to the collection commit DAG with the stranger (on all nodes).
-			testUtils.AddDACCollectionActorRelationship{
+			&action.AddDACCollectionActorRelationship{
 				CollectionID:      0,
 				Relation:          "reader",
 				RequestorIdentity: testUtils.ClientIdentity(1),

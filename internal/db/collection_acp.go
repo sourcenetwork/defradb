@@ -37,7 +37,7 @@ func (c *collection) registerDoc(
 	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	return acpDB.RegisterDocOnCollectionWithDocumentACP(
+	return acpDB.RegisterObject(
 		ctx,
 		identity.FromContext(ctx),
 		c.db.documentACP.Value(),
@@ -46,26 +46,25 @@ func (c *collection) registerDoc(
 	)
 }
 
-// registerCollection handles the registration of the collection itself with document acp.
+// registerCollection registers the collection itself with document acp, using the collection id as
+// the acp object id. This gates read access to the collection-level commit DAG, the same way
+// document registration gates access to a document.
 //
-// This is only relevant for branchable collections, which maintain a collection-level commit DAG.
-// Registering the collection as an acp object lets us gate read access to that collection-level
-// commit DAG, the same way document registration gates access to a document.
-//
-// The registration is a no-op unless document acp is available, the collection is branchable, the
-// collection has a policy, and the request carries an identity (see
-// [acpDB.RegisterCollectionObject]).
+// Callers must only invoke this for branchable collections (the only collections that maintain a
+// collection-level commit DAG). The registration is a no-op unless document acp is available, the
+// collection has a policy, and the request carries an identity (see [acpDB.RegisterObject]).
 func (c *collection) registerCollection(
 	ctx context.Context,
 ) error {
 	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	return acpDB.RegisterCollectionObject(
+	return acpDB.RegisterObject(
 		ctx,
 		identity.FromContext(ctx),
 		c.db.documentACP.Value(),
 		c,
+		c.Version().CollectionID,
 	)
 }
 
