@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/action"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -29,9 +30,11 @@ import (
 // An index has no status of its own: it is an (Action, Status) pair plus the action's reason and
 // payload. A missing record means ready.
 //
-//	building → BackfillIndexAction + InProgress (Watermark set)
-//	failed   → BackfillIndexAction + Errored    (Reason set)
-//	dropping → DropIndexAction     + InProgress
+//	building  → BackfillIndexAction + InProgress (Watermark set)
+//	failed    → BackfillIndexAction + Errored    (Reason set)
+//	dropping  → DropIndexAction     + InProgress (whole-index drop)
+//
+// A rebuild collects the epochs it supersedes without a record; see gcStaleEpochs.
 type indexState struct {
 	Action client.Action
 	Status client.ActionStatus
@@ -41,8 +44,9 @@ type indexState struct {
 	Watermark string
 }
 
-// indexPayload is how the index action encodes its watermark into the action's opaque payload.
-type indexPayload struct {
+// buildPayload is the opaque payload of a build (backfill) action record.
+type buildPayload struct {
+	// Watermark is the last indexed docID, letting an interrupted build resume.
 	Watermark string
 }
 
@@ -90,20 +94,27 @@ func isIndexAction(a client.Action) bool {
 	return a == client.BackfillIndexAction || a == client.DropIndexAction
 }
 
-// getIndexState retrieves the runtime state for the given index.
+// getIndexState retrieves a runtime action record for the given index (build or drop).
 //
 // If no record describes the index, the returned error satisfies
 // errors.Is(err, corekv.ErrNotFound). Callers may treat a missing state as ready.
 func getIndexState(ctx context.Context, collectionID string, indexID uint32) (indexState, error) {
-	states, err := getIndexStates(ctx, collectionID)
+	records, err := scanIndexStates(ctx, indexActionCollectionPrefix(collectionID), true)
 	if err != nil {
 		return indexState{}, err
 	}
-	state, ok := states[indexID]
-	if !ok {
-		return indexState{}, corekv.ErrNotFound
+	for _, rec := range records {
+		if rec.Key.IndexID == indexID {
+			return rec.State, nil
+		}
 	}
-	return state, nil
+	return indexState{}, corekv.ErrNotFound
+}
+
+// getIndexEpoch returns the index entry namespace an index reads and writes, resolving it from
+// the index's epoch sequence using the transaction bound to ctx. See fetcher.ReadIndexEpoch.
+func getIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	return fetcher.ReadIndexEpoch(ctx, datastore.CtxMustGetTxn(ctx), collectionID, indexID)
 }
 
 // startIndexBuild records the start of a backfill and publishes an event. The record is
@@ -116,7 +127,7 @@ func (db *DB) startIndexBuild(ctx context.Context, collectionID string, indexID 
 	)
 }
 
-// startIndexDrop records the start of a drop and publishes an event.
+// startIndexDrop records the start of a whole-index drop and publishes an event.
 func (db *DB) startIndexDrop(ctx context.Context, collectionID string, indexID uint32) error {
 	return action.SetTxn(
 		ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID),
@@ -124,12 +135,10 @@ func (db *DB) startIndexDrop(ctx context.Context, collectionID string, indexID u
 	)
 }
 
-// advanceIndexWatermark records build progress for a building index without publishing an
-// event, since the status is unchanged from the initial building transition. The watermark
-// rides the transaction bound to ctx so it stays consistent with the index entries written in
-// the same batch.
+// advanceIndexWatermark records build progress on the transaction bound to ctx, without
+// publishing an event since the status is unchanged.
 func (db *DB) advanceIndexWatermark(ctx context.Context, collectionID string, indexID uint32, watermark string) error {
-	payload, err := json.Marshal(indexPayload{Watermark: watermark})
+	payload, err := json.Marshal(buildPayload{Watermark: watermark})
 	if err != nil {
 		return err
 	}
@@ -157,13 +166,21 @@ func (db *DB) completeIndexDrop(ctx context.Context, collectionID string, indexI
 	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID))
 }
 
-// scanIndexStates scans the action status records under the given prefix and returns the index
-// ones, keyed by IndexStateKey.
+// indexStateRecord is one index action record: its index identity plus the decoded state. An
+// index can have more than one (a concurrent build and drop), so records are returned as a slice
+// rather than a map keyed by index.
+type indexStateRecord struct {
+	Key   keys.IndexStateKey
+	State indexState
+}
+
+// scanIndexStates scans the action status records under the given prefix and returns every index
+// one as a separate record.
 //
 // When skipCorrupt is true an individually unparseable record is logged and skipped rather
 // than failing the whole scan, so one bad record does not deny access to an otherwise healthy
 // collection. Iterator errors are always fatal.
-func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) (map[keys.IndexStateKey]indexState, error) {
+func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) ([]indexStateRecord, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -173,7 +190,7 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) (map[
 		return nil, err
 	}
 
-	result := make(map[keys.IndexStateKey]indexState)
+	var result []indexStateRecord
 
 	for {
 		hasNext, err := iter.Next()
@@ -222,14 +239,17 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) (map[
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		result[keys.IndexStateKey{CollectionID: k.CollectionID, IndexID: uint32(indexID)}] = state
+		result = append(result, indexStateRecord{
+			Key:   keys.IndexStateKey{CollectionID: k.CollectionID, IndexID: uint32(indexID)},
+			State: state,
+		})
 	}
 
 	return result, iter.Close()
 }
 
 // loadIndexState builds an indexState for the given action record, fetching the generic reason
-// and decoding the index-specific watermark from the opaque action payload.
+// and decoding the action's own payload: a build carries a watermark; a drop carries none.
 func loadIndexState(ctx context.Context, k keys.ActionStatusKey, status client.ActionStatus) (indexState, error) {
 	reason, err := action.GetReason(ctx, k.CollectionID, k.Action, k.Subject)
 	if err != nil {
@@ -240,25 +260,24 @@ func loadIndexState(ctx context.Context, k keys.ActionStatusKey, status client.A
 	if err != nil {
 		return indexState{}, err
 	}
-	var payload indexPayload
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &payload); err != nil {
+
+	state := indexState{Action: k.Action, Status: status, Reason: reason}
+	// Only a build record carries a payload, holding its watermark.
+	if len(raw) > 0 && k.Action == client.BackfillIndexAction {
+		var p buildPayload
+		if err := json.Unmarshal(raw, &p); err != nil {
 			return indexState{}, NewErrCorruptIndexPayload(raw)
 		}
+		state.Watermark = p.Watermark
 	}
-
-	return indexState{
-		Action:    k.Action,
-		Status:    status,
-		Reason:    reason,
-		Watermark: payload.Watermark,
-	}, nil
+	return state, nil
 }
 
-// getIndexStates returns the runtime state for every index belonging to the given collection.
-//
-// The returned map is keyed by index ID.
-func getIndexStates(ctx context.Context, collectionID string) (map[uint32]indexState, error) {
+// getIndexBuildStates returns the build (backfill) state of every index in the given collection
+// that has one, keyed by index ID. It reports only the backfill action, which is what determines
+// whether an index is ready, failed or building; a concurrent drop (collecting a superseded epoch)
+// is irrelevant to callers of this function and is omitted.
+func getIndexBuildStates(ctx context.Context, collectionID string) (map[uint32]indexState, error) {
 	// Lenient: this feeds collection open and listings, so one corrupt record must not deny
 	// access to the whole collection.
 	scanned, err := scanIndexStates(ctx, indexActionCollectionPrefix(collectionID), true)
@@ -267,16 +286,18 @@ func getIndexStates(ctx context.Context, collectionID string) (map[uint32]indexS
 	}
 
 	result := make(map[uint32]indexState, len(scanned))
-	for k, v := range scanned {
-		result[k.IndexID] = v
+	for _, rec := range scanned {
+		if rec.State.Action == client.BackfillIndexAction {
+			result[rec.Key.IndexID] = rec.State
+		}
 	}
 	return result, nil
 }
 
-// listIndexStates returns the runtime state for every index across all collections.
-//
-// The returned map is keyed by the full IndexStateKey.
-func listIndexStates(ctx context.Context) (map[keys.IndexStateKey]indexState, error) {
+// listIndexStates returns every index action record across all collections, as a slice so an
+// index's concurrent build and drop are both present. Used by recovery, which resumes each
+// independently.
+func listIndexStates(ctx context.Context) ([]indexStateRecord, error) {
 	// Strict: recovery should surface a corrupt record rather than silently skip resolving it.
 	return scanIndexStates(ctx, keys.NewEmptyActionStatusKey().Bytes(), false)
 }
