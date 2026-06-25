@@ -14,6 +14,8 @@ package test_acp_dac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -101,11 +103,12 @@ resources:
 			// Identity 2 attempts to delete by ID, but should be denied.
 			testUtils.DeleteDoc{
 				Identity:      testUtils.ClientIdentity(2),
+				TransactionID: immutable.Some(0),
 				CollectionID:  0,
 				DocID:         0,
 				ExpectedError: "document not found or not authorized to access",
 			},
-
+			action.CommitTransaction{TransactionID: 0},
 			// After the failed delete, the owner must still find the document via the
 			// index. If index entries had been stripped by the unauthorized attempt, this
 			// filter-based query (which uses the index) would return nothing.
