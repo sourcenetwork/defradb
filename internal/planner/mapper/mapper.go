@@ -888,6 +888,11 @@ func getRequestables(
 	collectionName string,
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	// Tracks relation selects already mapped in this selection set so that an
+	// identical relation field is collapsed onto the first occurrence, mirroring
+	// how duplicate scalar fields collapse onto their first index. Without this a
+	// duplicate relation manufactures a redundant join over the same root scan.
+	seenSelects := []*request.Select{}
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
 		case *request.Field:
@@ -906,6 +911,19 @@ func getRequestables(
 				Key:   getRenderKey(f),
 			})
 		case *request.Select:
+			// Collapse identical duplicate relation selects onto the first one.
+			isDuplicate := false
+			for _, seen := range seenSelects {
+				if reflect.DeepEqual(seen, f) {
+					isDuplicate = true
+					break
+				}
+			}
+			if isDuplicate {
+				continue
+			}
+			seenSelects = append(seenSelects, f)
+
 			index := mapping.GetNextIndex()
 
 			innerSelect, err := toSelect(ctx, store, collectionRepository, rootSelectType, index, f, collectionName)
