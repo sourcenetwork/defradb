@@ -96,6 +96,59 @@ func TestRefreshCollectionListAction_ListsUncompletedRefresh(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestRefreshCollectionListAction_RecordsErrorAgainstRefreshAction(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddView{
+				Query: `
+					Users {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "remove",
+							"path": "/Users"
+						}
+					]
+				`,
+			},
+			&action.RefreshViews{
+				ExpectedError: "collection not found",
+			},
+			&action.ListActions{
+				ExpectedInfo: []client.ActionExecution{
+					{
+						CollectionID: "bafyreiex5xc3do2a42ymbt7tscfx7ifsdmgwkty6dbnfnktyiplqgeap4q",
+						Action:       client.RefreshDatastoreAction,
+						Status:       client.ErroredActionStatus,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestRefreshCollectionListAction_DoesNotListCompletedRefreshes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

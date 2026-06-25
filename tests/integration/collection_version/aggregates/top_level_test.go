@@ -69,6 +69,12 @@ func TestCollectionVersionAggregateTopLevelAddsCountGivenCollection(t *testing.T
 														},
 													},
 													map[string]any{
+														"name": "groupBy",
+														"type": map[string]any{
+															"name": nil,
+														},
+													},
+													map[string]any{
 														"name": "limit",
 														"type": map[string]any{
 															"name": "Int",

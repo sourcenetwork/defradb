@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"sort"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
@@ -114,6 +115,11 @@ func (s *SchemaManager) WriteSDL(writer io.Writer) error {
 		return errors.Join(ErrGeneratingSDL, r.Errors[0])
 	}
 
+	// The introspection result orders types and fields by Go map iteration,
+	// which is non-deterministic. Sort everything by name so the emitted SDL is
+	// stable across runs (keeps the generated golden fixtures diff-friendly).
+	sortIntrospectionByName(r.Data)
+
 	respJson, err := json.Marshal(r.Data)
 	if err != nil {
 		return err
@@ -131,6 +137,34 @@ func (s *SchemaManager) WriteSDL(writer io.Writer) error {
 		return errors.Join(ErrWritingSDL, err)
 	}
 	return nil
+}
+
+// sortIntrospectionByName recursively sorts any slice of name-bearing objects in
+// an introspection result alphabetically by name, making the serialized output
+// deterministic. Slices whose elements have no "name" are left in place.
+func sortIntrospectionByName(v any) {
+	switch val := v.(type) {
+	case map[string]any:
+		for _, child := range val {
+			sortIntrospectionByName(child)
+		}
+	case []any:
+		for _, child := range val {
+			sortIntrospectionByName(child)
+		}
+		sort.SliceStable(val, func(i, j int) bool {
+			return introspectionName(val[i]) < introspectionName(val[j])
+		})
+	}
+}
+
+func introspectionName(v any) string {
+	if m, ok := v.(map[string]any); ok {
+		if name, ok := m["name"].(string); ok {
+			return name
+		}
+	}
+	return ""
 }
 
 const introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}" //nolint:lll

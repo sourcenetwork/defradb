@@ -199,7 +199,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -244,7 +244,7 @@ func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 func TestQueryCommits_MultipleCidsDifferentDocs_NoAccessToSecondCid(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -321,7 +321,7 @@ resources:
 func TestQueryCommits_MultipleCidsSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{

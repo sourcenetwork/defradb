@@ -72,6 +72,12 @@ func tryGetContextNodeOptions(req *http.Request) *options.NodeOptions {
 	return opts
 }
 
+// isDevMode reports whether the node serving this request has development mode enabled.
+func isDevMode(req *http.Request) bool {
+	opts := tryGetContextNodeOptions(req)
+	return opts != nil && opts.EnableDevelopment
+}
+
 // mustGetDataStoreTxn returns the datastore transaction or panics.
 //
 // This should only be called from functions within the http package.

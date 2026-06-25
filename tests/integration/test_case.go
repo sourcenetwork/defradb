@@ -95,6 +95,11 @@ type TestCase struct {
 	// A value of N means the test will be attempted up to N+1 times total
 	// (1 initial + N retries).
 	FlakeRetries uint
+
+	// SkipChangeDetector will skip this test when the change detector is active.
+	// Use this for tests whose results are inherently non-deterministic across the
+	// two change detector phases, such as tests that rely on the current time.
+	SkipChangeDetector bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -249,6 +254,48 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
+}
+
+// DeleteWithFilter will delete the set of documents that match the given filter.
+type DeleteWithFilter struct {
+	// NodeID may hold the ID (index) of a node to apply this delete to.
+	//
+	// If a value is not provided the delete will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only delete public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then
+	// can also delete private document(s) that are owned by this Identity.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// The collection in which the documents should be deleted.
+	CollectionID int
+
+	// The filter to match documents against.
+	Filter any
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
 
 	// TransactionID to use for the action. Optional.
 	TransactionID immutable.Option[int]

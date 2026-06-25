@@ -11,7 +11,9 @@ Note:
 - If node acp is already disabled, then it will return an error.
 - If node acp is in a clean/non-configured state, then it will return an error.
 
-Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+Learn more about the
+[Node Access Control](https://docs.source.network/defradb/security/node-access-control/)
+system.
 
 
 

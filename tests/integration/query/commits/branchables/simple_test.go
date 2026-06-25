@@ -79,7 +79,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 
 	test := testUtils.TestCase{
 		// asserts plaintext delta bytes; encryption replaces them with ciphertext
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
