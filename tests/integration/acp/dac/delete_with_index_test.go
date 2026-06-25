@@ -108,7 +108,7 @@ resources:
 				DocID:         0,
 				ExpectedError: "document not found or not authorized to access",
 			},
-			action.CommitTransaction{TransactionID: 0},
+			&action.CommitTransaction{TransactionID: 0},
 			// After the failed delete, the owner must still find the document via the
 			// index. If index entries had been stripped by the unauthorized attempt, this
 			// filter-based query (which uses the index) would return nothing.
