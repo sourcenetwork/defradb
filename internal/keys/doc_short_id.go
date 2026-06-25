@@ -53,11 +53,6 @@ func decodeShortIDPrefix(data []byte) ([]byte, uint64, error) {
 	return rest, shortID, nil
 }
 
-// EncodeCollectionShortID returns the encoded path form of a local collection ID.
-func EncodeCollectionShortID(collectionShortID uint32) []byte {
-	return encodeShortID(uint64(collectionShortID))
-}
-
 // DecodeCollectionShortIDPrefix decodes a local collection ID from a key prefix.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	rest, collectionShortID, err := decodeShortIDPrefix(data)

@@ -24,7 +24,6 @@ const slashEncodedShortID = 303
 
 func TestShortIDPathParsers_HandleSlashInEncodedID(t *testing.T) {
 	require.Contains(t, EncodeDocShortID(slashEncodedShortID), byte('/'))
-	require.Contains(t, EncodeCollectionShortID(slashEncodedShortID), byte('/'))
 
 	docKey := DataStoreKey{
 		CollectionShortID: slashEncodedShortID,

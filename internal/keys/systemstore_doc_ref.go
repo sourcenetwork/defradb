@@ -29,7 +29,7 @@ func EncodeDocRef(collectionShortID uint32, docShortID uint64) []byte {
 	if collectionShortID == 0 || docShortID == 0 {
 		return nil
 	}
-	result := EncodeCollectionShortID(collectionShortID)
+	result := encodeShortID(uint64(collectionShortID))
 	return append(result, EncodeDocShortID(docShortID)...)
 }
 
