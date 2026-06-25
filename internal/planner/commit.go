@@ -243,17 +243,9 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, err
 		}
 
-		// We want to enforce DAC, so we skip commits the caller has no read access to.
-		// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
-		// doc-mapping cost. We only check when document acp is configured,
-		// Note:
-		// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
-		// the collection has no policy or the doc is public.
-		// - Collection-level deltas (e.g. schema changes) carry no docID and
-		// are not DAC-gated, only doc-level deltas need an access check.
-		//
-		// The collection fetched here is passed to dagBlockToNodeDoc so it can
-		// reuse it instead of making a duplicate GetCollections call.
+		// enforce DAC on doc-level commits when policy is configured.
+		// we check before converting block to doc to skip mapping costs for denied commits.
+		// prefetched collection is passed to dagBlockToNodeDoc to avoid a duplicate query.
 		var acpCols []client.Collection
 		docIDBytes := dagBlock.Delta.GetDocID()
 		if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {

@@ -71,3 +71,11 @@ resources:
     types:
     - actor
 `
+
+// secondUserDoc is a private document created by identity 2 used in multi-doc tests.
+const secondUserDoc = `{"name": "John", "age": 30}`
+
+// secondUserDocCompositeCid is the deterministic composite-block cid for secondUserDoc.
+// Only valid when the SignedDocs and EncryptedDocs multipliers are excluded.
+const secondUserDocCompositeCid = "bafyreidkaczhkludh2nk7u6zorcx7ltg5hi4lxyadvyqkerezdrj42py44"
+
