@@ -105,6 +105,7 @@ type DB interface {
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
+	blockSyncProtocol  *protocol.BlockSyncProtocol
 
 	ctx                  context.Context
 	db                   DB
@@ -193,6 +194,7 @@ func New(
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
+	p.blockSyncProtocol = protocol.NewBlockSyncProtocol(host, p.handleBlockSyncRequest)
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
@@ -408,43 +410,9 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	}
 	p.repMu.Unlock()
 
-	identFunc := func() immutable.Option[identity.Identity] {
-		p.piMu.RLock()
-		ident, ok := p.peerIdentities[pid]
-		p.piMu.RUnlock()
-		if !ok {
-			ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-			defer cancel()
-			resp, err := p.identityProtocol.GetIdentity(ctx, pid)
-			if err != nil {
-				log.ErrorE("Failed to get identity", err)
-				return immutable.None[identity.Identity]()
-			}
-			ident, err = identity.FromToken(resp.IdentityToken)
-			if err != nil {
-				log.ErrorE("Failed to parse identity token", err)
-				return immutable.None[identity.Identity]()
-			}
-			tokenIdent, ok := ident.(identity.TokenIdentity)
-			if !ok {
-				log.ErrorE("Identity is not of type TokenIdentity", nil, corelog.String("Actual", fmt.Sprintf("%T", ident)))
-				return immutable.None[identity.Identity]()
-			}
-			err = identity.VerifyAuthToken(tokenIdent, p.host.ID())
-			if err != nil {
-				log.ErrorE("Failed to verify auth token", err)
-				return immutable.None[identity.Identity]()
-			}
-			p.piMu.Lock()
-			p.peerIdentities[pid] = ident
-			p.piMu.Unlock()
-		}
-		return immutable.Some(ident)
-	}
-
 	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
-		identFunc,
+		p.peerIdentityFunc(ctx, pid),
 		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
