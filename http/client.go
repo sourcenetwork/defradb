@@ -67,21 +67,21 @@ func NewInsecureClient(rawURL string) (*Client, error) {
 }
 
 func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
-	return c.newTxn(readOnly, 0)
+	return c.newTxn(readOnly, immutable.None[time.Duration]())
 }
 
 // NewTxnWithTTL creates a new HTTP transaction with the given idle TTL.
 func (c *Client) NewTxnWithTTL(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
-	return c.newTxn(readOnly, txnTTL)
+	return c.newTxn(readOnly, immutable.Some(txnTTL))
 }
 
-func (c *Client) newTxn(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
+func (c *Client) newTxn(readOnly bool, txnTTL immutable.Option[time.Duration]) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
 	}
-	if txnTTL != 0 {
-		query.Add("ttl", txnTTL.String())
+	if txnTTL.HasValue() {
+		query.Add("ttl", txnTTL.Value().String())
 	}
 
 	methodURL := c.http.apiURL.JoinPath("tx")

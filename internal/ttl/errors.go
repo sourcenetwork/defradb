@@ -20,5 +20,6 @@ var (
 	// ErrNegativeTTL is returned when an entry is stored with a negative TTL.
 	ErrNegativeTTL = errors.New("ttl value can not be negative")
 	// ErrBeyondMaxTTL is returned when an entry TTL exceeds the wheel's maximum window.
-	ErrBeyondMaxTTL = errors.New("ttl larger than max allowed")
+	ErrBeyondMaxTTL      = errors.New("ttl larger than max allowed")
+	ErrInvalidExpireFunc = errors.New("invalid on expire function cant be nil")
 )

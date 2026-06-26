@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -59,7 +60,7 @@ func newTxnCache(ctx context.Context, opts *options.NodeHTTPOptions) (*txnCache,
 	}
 	if err := cache.ValidateTTL(cfg.defaultTTL); err != nil {
 		cache.Stop()
-		return nil, err
+		return nil, errors.Join(ErrInvalidTTL, err)
 	}
 	return &txnCache{
 		defaultTTL: cfg.defaultTTL,

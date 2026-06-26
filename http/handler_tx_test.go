@@ -96,6 +96,54 @@ func TestTxHandler_GivenTTL_ExpiresTransaction(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, rec.Result().StatusCode)
 }
 
+func TestTxHandler_GivenNoTTL_UsesDefaultTransactionTTL(t *testing.T) {
+	cdb := setupDatabase(t)
+	defaultTTL := 100 * time.Millisecond
+	handler, err := NewHandler(cdb, &options.NodeOptions{
+		HTTP: options.NodeHTTPOptions{
+			TxnTTL:        defaultTTL,
+			TxnTTLTick:    10 * time.Millisecond,
+			TxnTTLBuckets: 20,
+		},
+	})
+	require.NoError(t, err)
+	defer handler.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Result().StatusCode)
+	var response CreateTxResponse
+	require.NoError(t, json.NewDecoder(rec.Result().Body).Decode(&response))
+
+	cached, ok := handler.txs.cache.Load(response.ID)
+	require.True(t, ok)
+	require.Equal(t, defaultTTL, cached.ttl)
+}
+
+func TestTxHandler_GivenNegativeTTL_ReturnsError(t *testing.T) {
+	cdb := setupDatabase(t)
+	handler, err := NewHandler(cdb, &options.NodeOptions{
+		HTTP: options.NodeHTTPOptions{
+			TxnTTL:        100 * time.Millisecond,
+			TxnTTLTick:    10 * time.Millisecond,
+			TxnTTLBuckets: 20,
+		},
+	})
+	require.NoError(t, err)
+	defer handler.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=-1", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Result().StatusCode)
+	var response errorResponse
+	require.NoError(t, json.NewDecoder(rec.Result().Body).Decode(&response))
+	require.EqualError(t, response.Error, ttl.ErrNegativeTTL.Error())
+}
+
 func TestNewTxnCache_GivenDefaultTTLBeyondMax_ReturnsError(t *testing.T) {
 	cache, err := newTxnCache(context.Background(), &options.NodeHTTPOptions{
 		TxnTTL:        time.Minute,

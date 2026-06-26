@@ -53,6 +53,9 @@ func NewWheel[K comparable](
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	if onExpire == nil {
+		return nil, ErrInvalidExpireFunc
+	}
 	return &Wheel[K]{
 		tick:       tick,
 		slotCount:  slotCount,
@@ -228,8 +231,6 @@ func (w *Wheel[K]) tickOnce() {
 	w.mu.Unlock()
 
 	for _, key := range expired {
-		if w.expireFunc != nil {
-			w.expireFunc(key)
-		}
+		w.expireFunc(key)
 	}
 }

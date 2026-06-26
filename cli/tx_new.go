@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -43,9 +42,16 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
+				// `NewTxnWithTTL` is a helper that is specific to the HTTP client
+				// and not part of the default client interface, so we need to
+				// type cast to get to the underlying http client implementation.
+				// While the CLI client is hardcoded to use the HTTP client, the
+				// type system doesn't enforce this, so we need to gate the
+				// accidental unhappy path
 				ttlClient, ok := cliClient.(txnTTLClient)
 				if !ok {
-					return fmt.Errorf("transaction ttl is not supported by this client")
+					return ErrMissingTTLTxn
 				}
 				tx, err = ttlClient.NewTxnWithTTL(readOnly, ttl)
 			} else {
@@ -59,7 +65,7 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&readOnly, "read-only", false, "Transaction is read only")
 	cmd.Flags().StringVar(&txnTTL, "ttl", "",
-		"Transaction idle TTL as a Go duration string, or seconds if no unit is provided")
+		"Transaction idle TTL as a duration string, or seconds if no unit is provided")
 	return cmd
 }
 
