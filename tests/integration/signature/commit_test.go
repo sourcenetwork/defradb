@@ -17,6 +17,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -111,6 +112,56 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignature_WithPerOpSigningDisabled_ShouldNotSignAnyCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		// Keep this focused on the signing override.
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
+		// The override is a collection-client option, not a GraphQL argument.
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+					}`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+				EnableSigning: immutable.Some(false),
+			},
+			&action.Request{
+				Request: `
+					query {
+						_commits {
+							fieldName
+							signature {
+								type
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{"fieldName": "age", "signature": nil},
+						{"fieldName": "name", "signature": nil},
+						{"fieldName": "_C", "signature": nil},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

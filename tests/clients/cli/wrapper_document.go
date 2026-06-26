@@ -14,6 +14,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -112,6 +113,9 @@ func makeDocAddArgs(
 	if len(opt.EncryptedFields) > 0 {
 		args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
 	}
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 
 	return args
 }
@@ -133,6 +137,9 @@ func (c *Collection) UpdateDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
@@ -164,6 +171,9 @@ func (c *Collection) SaveDocument(
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
+		if opt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
@@ -183,6 +193,9 @@ func (c *Collection) DeleteDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
@@ -228,6 +241,9 @@ func (c *Collection) UpdateDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
@@ -258,6 +274,9 @@ func (c *Collection) DeleteDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)

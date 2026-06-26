@@ -34,6 +34,8 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -71,6 +73,7 @@ func (c *Collection) AddDocument(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, addOpts.EnableSigning)
 
 	docJSONbytes, err := doc.MarshalJSON()
 	if err != nil {
@@ -131,6 +134,7 @@ func (c *Collection) AddManyDocuments(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, addOpts.EnableSigning)
 
 	var jsonDocs []json.RawMessage
 	for _, doc := range docs {
@@ -188,6 +192,16 @@ func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
 	return nil
 }
 
+func setCCollectionSigningOption(copts *C.CollectionOptions, enableSigning immutable.Option[bool]) {
+	if !enableSigning.HasValue() {
+		return
+	}
+	copts.enableSigningSet = 1
+	if enableSigning.Value() {
+		copts.enableSigning = 1
+	}
+}
+
 func (c *Collection) UpdateDocument(
 	ctx context.Context,
 	doc *client.Document,
@@ -206,7 +220,8 @@ func (c *Collection) UpdateDocument(
 	cVersion := C.CString("")
 	cCollectionID := C.CString(c.CollectionID())
 	cName := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	updateOpts := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(updateOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filter))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -220,6 +235,7 @@ func (c *Collection) UpdateDocument(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, updateOpts.EnableSigning)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.UpdateDocument(
@@ -259,6 +275,9 @@ func (c *Collection) SaveDocument(
 		if saveOpt.Identity.HasValue() {
 			updateOpts.SetIdentity(saveOpt.Identity.Value())
 		}
+		if saveOpt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(saveOpt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
@@ -280,7 +299,8 @@ func (c *Collection) DeleteDocument(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	deleteOpts := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(deleteOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(filter))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -293,6 +313,7 @@ func (c *Collection) DeleteDocument(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, deleteOpts.EnableSigning)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteDocument(
@@ -370,7 +391,8 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	updateOpts := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(updateOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -384,6 +406,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, updateOpts.EnableSigning)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.UpdateDocument(
@@ -424,7 +447,8 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	deleteOpts := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(deleteOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -437,6 +461,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	copts.collectionID = cCollectionID
 	copts.name = cName
 	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, deleteOpts.EnableSigning)
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.DeleteDocument(

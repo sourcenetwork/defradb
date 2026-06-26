@@ -32,6 +32,8 @@ typedef struct {
     const char* collectionID;
     const char* name;
     int getInactive;
+    int enableSigningSet;
+    int enableSigning;
 } CollectionOptions;
 
 typedef struct {

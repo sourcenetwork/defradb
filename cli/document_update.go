@@ -25,6 +25,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var updater string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "update",
 		Short: "Update documents by docID or filter.",
@@ -49,6 +50,9 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 
 				updateWithFilterOpt := options.WithIdentity(
 					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+				if cmd.Flags().Changed("enable-signing") {
+					updateWithFilterOpt.SetEnableSigning(enableSigning)
+				}
 
 				res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
@@ -75,6 +79,9 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+				if cmd.Flags().Changed("enable-signing") {
+					updateOpt.SetEnableSigning(enableSigning)
+				}
 
 				return col.UpdateDocument(ctx, doc, updateOpt)
 			default:
@@ -99,6 +106,8 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
+	cmd.Flags().Lookup("enable-signing").Hidden = true
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

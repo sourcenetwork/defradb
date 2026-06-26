@@ -27,6 +27,7 @@ func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var returnIDs bool
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "add [<document>]",
 		Short: "Add a new document.",
@@ -82,6 +83,9 @@ Options:
 					SetEncryptedFields(encryptedFields),
 				identity.FromContext(ctx),
 			)
+			if cmd.Flags().Changed("enable-signing") {
+				addOpt.SetEnableSigning(enableSigning)
+			}
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
@@ -134,6 +138,8 @@ Options:
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
 	cmd.Flags().Lookup("return-ids").Hidden = true
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
+	cmd.Flags().Lookup("enable-signing").Hidden = true
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }
