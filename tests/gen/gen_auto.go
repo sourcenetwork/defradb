@@ -104,8 +104,9 @@ func (g *randomDocGenerator) generateDocs(ctx context.Context, options ...Option
 		typeDef := g.configurator.types[colName]
 		for _, doc := range g.generatedDocs[colName] {
 			resultDocs = append(resultDocs, GeneratedDoc{
-				Col: &typeDef,
-				Doc: doc.doc,
+				Col:         &typeDef,
+				Doc:         doc.doc,
+				GeneratedID: doc.docID,
 			})
 		}
 	}

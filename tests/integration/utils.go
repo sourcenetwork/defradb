@@ -509,12 +509,9 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		generatedDocID, _ := docMap[request.DocIDFieldName].(string)
+		generatedDocID := doc.GeneratedID
 		replaceGeneratedDocIDs(docMap, generatedDocIDs)
-		if state.ActiveMutationType == state.GQLRequestMutationType {
-			// GQL create mutations cannot accept _docID; other clients use it to wire generated relations.
-			delete(docMap, request.DocIDFieldName)
-		}
+		delete(docMap, request.DocIDFieldName)
 
 		a := &action.AddDoc{CollectionID: collectionID, DocMap: docMap, NodeID: nodeID}
 		a.SetState(s)
@@ -789,7 +786,6 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
 
-	signingWasEnabled := testCase.EnableSigning
 	activeMultipliers := multiplier.Get()
 	modified := multiplier.Apply(actions)
 
@@ -798,47 +794,6 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	}
 
 	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
-	if !signingWasEnabled && hasActiveMultiplier(activeMultipliers, defraMultiplier.SignedDocs) {
-		// The multiplier enables node signing, but explicit test cases still expect unsigned adds.
-		disableSigningForAddActions(testCase.Actions)
-	}
-}
-
-func hasActiveMultiplier(activeNames string, name defraMultiplier.Name) bool {
-	for _, activeName := range strings.Split(activeNames, ",") {
-		if strings.TrimSpace(activeName) == name {
-			return true
-		}
-	}
-	return false
-}
-
-func disableSigningForAddActions(actions []any) {
-	for i, a := range actions {
-		actions[i] = disableSigningForAddAction(a)
-	}
-}
-
-func disableSigningForAddAction(a any) any {
-	switch typed := a.(type) {
-	case *action.AddDoc:
-		next := *typed
-		next.EnableSigning = immutable.Some(false)
-		return &next
-	case *action.Async:
-		next := *typed
-		next.Child = disableSigningForAddAction(next.Child).(action.Action)
-		return &next
-	case *action.Parallel:
-		next := *typed
-		next.Children = make([]action.Action, len(typed.Children))
-		for i, child := range typed.Children {
-			next.Children[i] = disableSigningForAddAction(child).(action.Action)
-		}
-		return &next
-	default:
-		return a
-	}
 }
 
 // applyTestCaseLevelMultipliers mutates TestCase fields based on the given

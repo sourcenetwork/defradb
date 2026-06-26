@@ -147,7 +147,7 @@ func (d *docGenerator) generatePrimary(
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
 				requestedSecondary[request.ToFieldID(secDocField.Name)] = docID
-				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
+				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc, GeneratedID: docID})
 				result = append(result, subResult...)
 
 				secondaryDocs, err := d.generateSecondaryDocs(
@@ -181,7 +181,7 @@ func (d *docGenerator) generateRelatedDocs(ctx context.Context,
 		return nil, NewErrFailedToGenerateDoc(err)
 	}
 
-	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
+	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc, GeneratedID: docID})
 
 	secondaryDocs, err := d.generateSecondaryDocs(ctx, docMap, docID, &typeDef, "")
 	if err != nil {

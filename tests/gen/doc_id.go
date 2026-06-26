@@ -16,7 +16,6 @@ import (
 	"maps"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
@@ -51,9 +50,7 @@ func NewDocWithGeneratedID(
 	if err != nil {
 		return nil, "", err
 	}
-	dataWithID := maps.Clone(data)
-	dataWithID[request.DocIDFieldName] = docID.String()
-	doc, err := client.NewDocFromMap(ctx, dataWithID, collection)
+	doc, err := client.NewDocFromMap(ctx, maps.Clone(data), collection)
 	if err != nil {
 		return nil, "", err
 	}

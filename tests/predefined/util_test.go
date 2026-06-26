@@ -44,6 +44,9 @@ func assertDoc(expected map[string]any, actual gen.GeneratedDoc) string {
 	if err != nil {
 		return "can not convert doc to map: " + err.Error()
 	}
+	if actual.GeneratedID != "" {
+		actualMap[request.DocIDFieldName] = actual.GeneratedID
+	}
 	if !areMapsEquivalent(expected, actualMap) {
 		return "docs are not equal"
 	}
