@@ -127,8 +127,8 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 			if err != nil {
 				return NewErrUnmarshalReplicator(err, id)
 			}
-			for _, colID := range storedRep.CollectionIDs {
-				storedRepCollectionIDs[id][colID] = struct{}{}
+			for _, collectionID := range storedRep.CollectionIDs {
+				storedRepCollectionIDs[id][collectionID] = struct{}{}
 			}
 		} else {
 			storedRep.ID = id

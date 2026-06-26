@@ -166,7 +166,7 @@ func (c *collection) truncate(
 // Datastore keys are used as the document index so block cleanup can happen before data keys are removed.
 func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ctx context.Context,
-	colShortID uint32,
+	collectionShortID uint32,
 ) error {
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 	ds := multistore.Datastore()
@@ -175,7 +175,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	deletedDocIDs := make(map[uint64]struct{})
 	for _, instanceType := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
 		instancePrefix := keys.DataStoreKey{
-			CollectionShortID: colShortID,
+			CollectionShortID: collectionShortID,
 			InstanceType:      instanceType,
 		}
 		if err := ds.Delete(ctx, instancePrefix); err != nil && !errors.Is(err, corekv.ErrNotFound) {

@@ -365,7 +365,7 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 }
 
 // collectDocShortIDsAfter performs a keys-only raw range scan over the datastore and collects
-// up to limit distinct doc short IDs in key order: all of them when watermark is None, or only
+// up to limit distinct document short IDs in key order: all of them when watermark is None, or only
 // those sorting strictly after it.
 //
 // The scan range covers only active-value keys for the collection, so deleted docs and
@@ -432,9 +432,9 @@ func (c *collection) collectDocShortIDsAfter(
 
 // iterateDocsBatch iterates a batch of the collection's documents in storage order.
 //
-// When limit > 0 a keys-only scan collects the batch's doc short IDs (after startAfter,
+// When limit > 0 a keys-only scan collects the batch's document short IDs (after startAfter,
 // if set), and the document fetcher is started with one exact per-doc prefix per collected
-// doc short ID. Progress is based on those candidates, not on what the fetcher yields,
+// document short ID. Progress is based on those candidates, not on what the fetcher yields,
 // so documents filtered out by ACP cannot stall or truncate the backfill.
 //
 // When limit == 0 the fetcher scans the whole collection and progress is based on

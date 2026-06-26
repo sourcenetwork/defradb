@@ -119,7 +119,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		}
 	}
 
-	colShortID, err := id.GetCollectionShortID(ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	fieldsByID := make(map[uint32]client.CollectionFieldDescription, len(f.fields))
 	for _, field := range f.fields {
-		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.FieldID)
+		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, field.FieldID)
 		if err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	}
 
 	if f.filter != nil {
-		top = newFilteredFetcher(ctx, colShortID, f.filter, f.docMapper, top)
+		top = newFilteredFetcher(ctx, collectionShortID, f.filter, f.docMapper, top)
 	}
 
 	f.fetcher = top

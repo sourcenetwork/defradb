@@ -486,7 +486,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	colShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -498,7 +498,7 @@ func (c *collection) save(
 			return err
 		}
 		primaryKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: colShortID,
+			CollectionShortID: collectionShortID,
 			DocShortID:        docShortID,
 		}
 	} else {
@@ -508,7 +508,7 @@ func (c *collection) save(
 		}
 	}
 
-	encryptionDocID := keys.EncodeDocRef(colShortID, primaryKey.DocShortID)
+	encryptionDocID := keys.EncodeDocRef(collectionShortID, primaryKey.DocShortID)
 
 	links := make([]coreblock.DAGLink, 0)
 	encryptionCIDs := make([]cid.Cid, 0)
@@ -524,12 +524,12 @@ func (c *collection) save(
 				return client.NewErrFieldNotExist(k)
 			}
 
-			fieldID, err := id.GetShortFieldID(ctx, colShortID, fieldDescription.FieldID)
+			fieldID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDescription.FieldID)
 			if err != nil {
 				return err
 			}
 			fieldKey := keys.DataStoreKey{
-				CollectionShortID: colShortID,
+				CollectionShortID: collectionShortID,
 				DocShortID:        primaryKey.DocShortID,
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
@@ -595,13 +595,13 @@ func (c *collection) save(
 	updateDocID := doc.ID().String()
 	if isAdd {
 		docID := client.NewDocIDV0(link.Cid)
-		docShortID, found, err := id.GetDocShortID(ctx, colShortID, docID.String())
+		docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID.String())
 		if err != nil {
 			return err
 		}
 		if found {
 			existingKey := keys.PrimaryDataStoreKey{
-				CollectionShortID: colShortID,
+				CollectionShortID: collectionShortID,
 				DocShortID:        docShortID,
 			}
 			exists, isDeleted, err := c.exists(ctx, existingKey)
@@ -615,7 +615,7 @@ func (c *collection) save(
 				return NewErrDocumentAlreadyExists(docID.String())
 			}
 		}
-		if err := id.SetDocIDMapping(ctx, colShortID, primaryKey.DocShortID, docID.String()); err != nil {
+		if err := id.SetDocIDMapping(ctx, collectionShortID, primaryKey.DocShortID, docID.String()); err != nil {
 			return err
 		}
 		client.ApplySavedDocumentID(doc, docID)

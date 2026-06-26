@@ -132,12 +132,12 @@ func DecodeIndexDataStoreKey(
 	}
 	data = data[1:]
 
-	data, colID, err := encoding.DecodeUvarintAscending(data)
+	data, collectionShortID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {
 		return IndexDataStoreKey{}, err
 	}
 
-	key := IndexDataStoreKey{CollectionShortID: uint32(colID)}
+	key := IndexDataStoreKey{CollectionShortID: uint32(collectionShortID)}
 
 	if len(data) == 0 {
 		return key, nil

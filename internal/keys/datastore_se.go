@@ -83,11 +83,11 @@ func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
 	k := DatastoreSE{}
 
 	if len(parts) > 2 && len(parts[2]) != 0 {
-		_, colShortID, err := encoding.DecodeUvarintAscending([]byte(parts[2]))
+		_, collectionShortID, err := encoding.DecodeUvarintAscending([]byte(parts[2]))
 		if err != nil {
 			return DatastoreSE{}, err
 		}
-		k.CollectionShortID = uint32(colShortID)
+		k.CollectionShortID = uint32(collectionShortID)
 	}
 
 	if len(parts) > 3 {

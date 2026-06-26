@@ -18,7 +18,7 @@ import (
 //
 // DocIDs are derived from the genesis composite CID, but the datastore
 // needs a stable key before that CID exists. Document data is therefore written
-// under a doc short ID, and these systemstore keys record how that short ID
+// under a document short ID, and these systemstore keys record how that short ID
 // maps to the DocID once the genesis block has been materialized.
 //
 // Key shapes:
@@ -114,7 +114,7 @@ func (k DocIDToDocRefKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// DocShortIDToDocIDAliasKey indexes all DocID aliases for a doc short ID.
+// DocShortIDToDocIDAliasKey indexes all DocID aliases for a document short ID.
 type DocShortIDToDocIDAliasKey struct {
 	DocShortID uint64
 	DocID      string

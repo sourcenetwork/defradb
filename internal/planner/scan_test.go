@@ -34,26 +34,26 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 	const (
 		collectionShortID = uint32(1)
 		docShortID        = uint64(7)
-		publicDocID       = "bae-public-doc"
+		docID             = "bae-public-doc"
 		legacyDocID       = "bae-legacy-doc"
 	)
-	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, docShortID, publicDocID))
+	require.NoError(t, id.SetDocIDMapping(ctx, collectionShortID, docShortID, docID))
 	require.NoError(t, id.SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
 
-	resolvedDocID, changed, err := docIDForFilterValue(ctx, publicDocID)
+	resolvedDocID, changed, err := docIDForFilterValue(ctx, docID)
 	require.NoError(t, err)
 	require.False(t, changed)
-	require.Equal(t, publicDocID, resolvedDocID)
+	require.Equal(t, docID, resolvedDocID)
 
 	resolvedDocID, changed, err = docIDForFilterValue(ctx, legacyDocID)
 	require.NoError(t, err)
 	require.True(t, changed)
-	require.Equal(t, publicDocID, resolvedDocID)
+	require.Equal(t, docID, resolvedDocID)
 
-	expandedValues, changed, err := expandDocIDAliasValues(ctx, []any{publicDocID, legacyDocID, 123})
+	expandedValues, changed, err := expandDocIDAliasValues(ctx, []any{docID, legacyDocID, 123})
 	require.NoError(t, err)
 	require.True(t, changed)
-	require.ElementsMatch(t, []any{publicDocID, 123}, expandedValues)
+	require.ElementsMatch(t, []any{docID, 123}, expandedValues)
 
 	opMap := map[connor.FilterKey]any{
 		mapper.FilterEqOp: legacyDocID,
@@ -61,7 +61,7 @@ func TestDocIDFilterAliasResolution(t *testing.T) {
 	expandedOpMap, changed, err := expandDocIDAliasesInOpMap(ctx, opMap)
 	require.NoError(t, err)
 	require.True(t, changed)
-	require.Equal(t, publicDocID, expandedOpMap[mapper.FilterEqOp])
+	require.Equal(t, docID, expandedOpMap[mapper.FilterEqOp])
 
 	resolvedDocID, changed, err = docIDForFilterValue(ctx, "bae-unknown-doc")
 	require.NoError(t, err)

@@ -40,13 +40,13 @@ type indexState struct {
 	Status client.ActionStatus
 	// Reason is the action's generic error reason, set when failed.
 	Reason string
-	// Watermark is the last indexed doc short ID, decoded from the action payload while building.
+	// Watermark is the last indexed document short ID, decoded from the action payload while building.
 	Watermark uint64
 }
 
 // buildPayload is the opaque payload of a build (backfill) action record.
 type buildPayload struct {
-	// Watermark is the last indexed doc short ID, letting an interrupted build resume.
+	// Watermark is the last indexed document short ID, letting an interrupted build resume.
 	Watermark uint64
 }
 

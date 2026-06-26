@@ -79,7 +79,7 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 // deleting the build record to mark it ready. It is used both for a fresh index and for a rebuild
 // filling a new epoch; in both cases the epoch is resolved from the index's sequence.
 //
-// startAfter resumes after the given doc short ID from a persisted watermark; pass None to build the
+// startAfter resumes after the given document short ID from a persisted watermark; pass None to build the
 // whole collection. A non-retryable error marks the index failed; a conflict leaves it resumable.
 func (db *DB) backfillIndex(
 	ctx context.Context,

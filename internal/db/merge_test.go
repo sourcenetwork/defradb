@@ -93,7 +93,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
-func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *testing.T) {
+func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {
 	ctx := context.Background()
 
 	sourceDB, err := newBadgerDB(ctx)
@@ -193,7 +193,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.NoError(t, err)
 
 	genesisCID := blocks.NewBlock([]byte("genesis composite")).Cid()
-	genesisPublicDocID := client.NewDocIDV0(genesisCID).String()
+	genesisDocID := client.NewDocIDV0(genesisCID).String()
 	genesisBlock := &coreblock.Block{
 		Delta: crdt.NewCRDT(&crdt.DocCompositeDelta{
 			CollectionVersionID: col.Version().VersionID,
@@ -202,26 +202,26 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	}
 	resolved, err := mp.resolveCompositeBlockDocRef(txnCtx, collectionShortID, genesisBlock, genesisCID)
 	require.NoError(t, err)
-	require.Equal(t, genesisPublicDocID, resolved.docID)
+	require.Equal(t, genesisDocID, resolved.docID)
 	require.NotEmpty(t, resolved.docShortID)
 	require.NotZero(t, resolved.docShortID)
 
 	mp.currentCompositeDocRef = &resolved
 	fieldResolved, err := mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, cid.Undef)
 	require.NoError(t, err)
-	require.Equal(t, genesisPublicDocID, fieldResolved.docID)
+	require.Equal(t, genesisDocID, fieldResolved.docID)
 	require.Equal(t, resolved.docShortID, fieldResolved.docShortID)
 
 	const existingDocShortID uint64 = 42
-	existingPublicDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
-	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingDocShortID, existingPublicDocID))
+	existingDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
+	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingDocShortID, existingDocID))
 	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()
-	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, mappedFieldCID, existingPublicDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, mappedFieldCID, existingDocID))
 
 	mp.currentCompositeDocRef = nil
 	fieldResolved, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, mappedFieldCID)
 	require.NoError(t, err)
-	require.Equal(t, existingPublicDocID, fieldResolved.docID)
+	require.Equal(t, existingDocID, fieldResolved.docID)
 	require.Equal(t, existingDocShortID, fieldResolved.docShortID)
 
 	_, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, blocks.NewBlock([]byte("unknown field")).Cid())

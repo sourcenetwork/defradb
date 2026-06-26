@@ -563,7 +563,7 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 			wantErr: ErrInvalidKey,
 		},
 		{
-			name: "valid with short doc ID suffix",
+			name: "valid with document short ID suffix",
 			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
 				CollectionShortID: 123,
 				IndexID:           456,

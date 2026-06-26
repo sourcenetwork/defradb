@@ -47,7 +47,7 @@ func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, value uint64) {
 	require.NoError(t, txn.Commit())
 }
 
-func TestDocumentAdd_DerivesPublicDocIDFromCompositeCID(t *testing.T) {
+func TestDocumentAdd_DerivesDocIDFromCompositeCID(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -84,9 +84,9 @@ func TestDocumentAdd_DerivesPublicDocIDFromCompositeCID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, doc.ID().String(), primaryKey.DocShortID)
 
-	publicDocID, err := c.getDocIDFromPrimaryKey(txnCtx, primaryKey)
+	docID, err := c.getDocIDFromPrimaryKey(txnCtx, primaryKey)
 	require.NoError(t, err)
-	require.Equal(t, doc.ID().String(), publicDocID)
+	require.Equal(t, doc.ID().String(), docID)
 }
 
 func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {

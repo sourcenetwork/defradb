@@ -33,13 +33,13 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.ErrorIs(t, ErrEmptyKey, err)
 }
 
-func encodePrefix(colID, indexID uint32) []byte {
+func encodePrefix(collectionShortID, indexID uint32) []byte {
 	return encoding.EncodeUvarintAscending(append(encoding.EncodeUvarintAscending(
-		[]byte{'/'}, uint64(colID)), '/'), uint64(indexID))
+		[]byte{'/'}, uint64(collectionShortID)), '/'), uint64(indexID))
 }
 
-func encodeKey(colID, indexID uint32, fieldParts ...any) []byte {
-	b := encodePrefix(colID, indexID)
+func encodeKey(collectionShortID, indexID uint32, fieldParts ...any) []byte {
+	b := encodePrefix(collectionShortID, indexID)
 	const partSize = 2
 	if len(fieldParts)%partSize != 0 {
 		panic(fmt.Sprintf("fieldParts must be a multiple of %d: value, descending", partSize))
@@ -140,7 +140,7 @@ func TestPrettyPrint_PrimaryDataStoreKey(t *testing.T) {
 }
 
 func TestDecodeIndexDataStoreKey(t *testing.T) {
-	const colID, indexID = 1, 2
+	const collectionShortID, indexID = 1, 2
 	cases := []struct {
 		name               string
 		desc               client.IndexDescription
@@ -155,7 +155,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 				ID:     indexID,
 				Fields: []client.IndexedFieldDescription{{}},
 			},
-			inputBytes:     encodeKey(colID, indexID, 5, false),
+			inputBytes:     encodeKey(collectionShortID, indexID, 5, false),
 			expectedFields: []IndexedField{{Value: client.NewNormalInt(5)}},
 		},
 		{
@@ -164,14 +164,14 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 				ID:     indexID,
 				Fields: []client.IndexedFieldDescription{{}, {Descending: true}},
 			},
-			inputBytes: encodeKey(colID, indexID, 5, false, 7, true),
+			inputBytes: encodeKey(collectionShortID, indexID, 5, false, 7, true),
 			expectedFields: []IndexedField{
 				{Value: client.NewNormalInt(5)},
 				{Value: client.NewNormalInt(7), Descending: true},
 			},
 		},
 		{
-			name: "last encoded value without matching field description is short doc ID",
+			name: "last encoded value without matching field description is document short ID",
 			desc: client.IndexDescription{
 				ID:     indexID,
 				Fields: []client.IndexedFieldDescription{{}},
@@ -187,7 +187,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			expectedKey := NewIndexDataStoreKey(colID, indexID, 0, tc.expectedFields)
+			expectedKey := NewIndexDataStoreKey(collectionShortID, indexID, 0, tc.expectedFields)
 			expectedKey.DocShortID = tc.expectedDocShortID
 			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.Fields))
 			for i := range tc.fieldKinds {
@@ -210,7 +210,7 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		return b[:len(b)-l]
 	}
 
-	const colID, indexID = 1, 2
+	const collectionShortID, indexID = 1, 2
 
 	cases := []struct {
 		name      string
@@ -227,36 +227,36 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		},
 		{
 			name: "slash after collection",
-			val:  append(encoding.EncodeUvarintAscending([]byte{'/'}, colID), '/'),
+			val:  append(encoding.EncodeUvarintAscending([]byte{'/'}, collectionShortID), '/'),
 		},
 		{
 			name:      "wrong prefix",
-			val:       replace(encodeKey(colID, indexID, 5, false), 0, ' '),
+			val:       replace(encodeKey(collectionShortID, indexID, 5, false), 0, ' '),
 			numFields: 1,
 		},
 		{
 			name:      "no slash before collection",
-			val:       encodeKey(colID, indexID, 5, false)[1:],
+			val:       encodeKey(collectionShortID, indexID, 5, false)[1:],
 			numFields: 1,
 		},
 		{
 			name:      "no slash before index",
-			val:       replace(encodeKey(colID, indexID, 5, false), 2, ' '),
+			val:       replace(encodeKey(collectionShortID, indexID, 5, false), 2, ' '),
 			numFields: 1,
 		},
 		{
 			name:      "no slash before field value",
-			val:       replace(encodeKey(colID, indexID, 5, false), 4, ' '),
+			val:       replace(encodeKey(collectionShortID, indexID, 5, false), 4, ' '),
 			numFields: 1,
 		},
 		{
 			name:      "no field value",
-			val:       cutEnd(encodeKey(colID, indexID, 5, false), 1),
+			val:       cutEnd(encodeKey(collectionShortID, indexID, 5, false), 1),
 			numFields: 1,
 		},
 		{
 			name:      "no field description",
-			val:       encodeKey(colID, indexID, 5, false, 7, false, 9, false),
+			val:       encodeKey(collectionShortID, indexID, 5, false, 7, false, 9, false),
 			numFields: 2,
 		},
 	}
@@ -274,7 +274,7 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 }
 
 func TestIndexDataStoreKey_IsEqual(t *testing.T) {
-	const colID, indexID = 1, 2
+	const collectionShortID, indexID = 1, 2
 
 	cases := []struct {
 		name        string
@@ -290,45 +290,45 @@ func TestIndexDataStoreKey_IsEqual(t *testing.T) {
 		},
 		{
 			name:        "same",
-			key1:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key1:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
 			shouldMatch: true,
 		},
 		{
 			name:        "different collection",
-			key1:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2:        NewIndexDataStoreKey(colID+1, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key1:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(collectionShortID+1, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
 			shouldMatch: false,
 		},
 		{
 			name:        "different index",
-			key1:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2:        NewIndexDataStoreKey(colID, indexID+1, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key1:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(collectionShortID, indexID+1, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
 			shouldMatch: false,
 		},
 		{
 			name:        "different field",
-			key1:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(6)}}),
+			key1:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(6)}}),
 			shouldMatch: false,
 		},
 		{
 			name: "different field count",
-			key1: NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2: NewIndexDataStoreKey(colID, indexID, 0,
+			key1: NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2: NewIndexDataStoreKey(collectionShortID, indexID, 0,
 				[]IndexedField{{Value: client.NewNormalInt(5)}, {Value: client.NewNormalInt(6)}}),
 			shouldMatch: false,
 		},
 		{
 			name:        "different field type",
-			key1:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2:        NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalString("5")}}),
+			key1:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2:        NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalString("5")}}),
 			shouldMatch: false,
 		},
 		{
 			name: "different field descending",
-			key1: NewIndexDataStoreKey(colID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
-			key2: NewIndexDataStoreKey(colID, indexID, 0,
+			key1: NewIndexDataStoreKey(collectionShortID, indexID, 0, []IndexedField{{Value: client.NewNormalInt(5)}}),
+			key2: NewIndexDataStoreKey(collectionShortID, indexID, 0,
 				[]IndexedField{{Value: client.NewNormalInt(5), Descending: true}}),
 			shouldMatch: false,
 		},

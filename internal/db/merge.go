@@ -224,11 +224,11 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 		}, nil
 	}
 
-	colShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
-	return keys.NewHeadstoreColKey(colShortID), nil
+	return keys.NewHeadstoreColKey(collectionShortID), nil
 }
 
 func (db *DB) newMergeProcessor(
@@ -449,7 +449,7 @@ func (mp *mergeProcessor) initCRDTForType(
 	txn := datastore.CtxMustGetTxn(ctx)
 	crdtUnion := block.Delta
 
-	colShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, resolvedDocRef{}, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
@@ -458,7 +458,7 @@ func (mp *mergeProcessor) initCRDTForType(
 	case crdtUnion.IsComposite():
 		docRef, err := mp.resolveCompositeBlockDocRef(
 			ctx,
-			colShortID,
+			collectionShortID,
 			block,
 			blockLink.Cid,
 		)
@@ -477,7 +477,7 @@ func (mp *mergeProcessor) initCRDTForType(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			keys.DataStoreKey{
-				CollectionShortID: colShortID,
+				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), docRef, nil
@@ -485,13 +485,13 @@ func (mp *mergeProcessor) initCRDTForType(
 	case crdtUnion.IsCollection():
 		return crdt.NewCollection(
 			mp.col.Version().VersionID,
-			keys.NewHeadstoreColKey(colShortID),
+			keys.NewHeadstoreColKey(collectionShortID),
 		), resolvedDocRef{}, nil
 
 	default:
 		docRef, err := mp.resolveFieldBlockDocRef(
 			ctx,
-			colShortID,
+			collectionShortID,
 			blockLink.Cid,
 		)
 		if err != nil {
@@ -513,7 +513,7 @@ func (mp *mergeProcessor) initCRDTForType(
 			return nil, resolvedDocRef{}, nil
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, fd.FieldID)
+		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
 		if err != nil {
 			return nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
@@ -524,7 +524,7 @@ func (mp *mergeProcessor) initCRDTForType(
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{
-				CollectionShortID: colShortID,
+				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,

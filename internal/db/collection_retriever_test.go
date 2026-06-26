@@ -39,7 +39,7 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc))
 
-	publicDocID := doc.ID().String()
+	docID := doc.ID().String()
 	const legacyDocID = "bae-legacy-doc"
 
 	txn, err := db.NewTxn(false)
@@ -50,13 +50,13 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 
 	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.True(t, found)
 
 	blockCID := blocks.NewBlock([]byte("encryption-key")).Cid()
 	require.NoError(t, id.SetDocIDToDocRefMapping(txnCtx, collectionShortID, docShortID, legacyDocID))
-	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, blockCID, publicDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, blockCID, docID))
 	require.NoError(t, txn.Commit())
 
 	retriever := NewCollectionRetriever(db)
@@ -64,7 +64,7 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 	resolvedDocID, found, err := retriever.ResolveBlockDocID(ctx, blockCID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, publicDocID, resolvedDocID)
+	require.Equal(t, docID, resolvedDocID)
 
 	retrievedCol, err := retriever.RetrieveCollectionFromDocID(
 		ctx,

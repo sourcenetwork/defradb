@@ -37,7 +37,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	err = col.AddDocument(ctx, doc)
 	require.NoError(t, err)
 
-	publicDocID := doc.ID().String()
+	docID := doc.ID().String()
 	compositeBlock := loadTestBlock(t, ctx, db, doc.Head())
 	require.NotEmpty(t, compositeBlock.Links)
 	genesisFieldCID := compositeBlock.Links[0].Cid
@@ -50,7 +50,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 
 	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -61,7 +61,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, publicDocID, blockDocID)
+	require.Equal(t, docID, blockDocID)
 	txn.Discard()
 
 	err = col.Truncate(ctx)
@@ -74,7 +74,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.True(t, ok)
 	txnCtx = InitContext(ctx, dbTxn)
 
-	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
+	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -82,7 +82,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = id.GetDocRef(txnCtx, publicDocID)
+	_, found, err = id.GetDocRef(txnCtx, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -110,7 +110,7 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc))
 
-	publicDocID := doc.ID().String()
+	docID := doc.ID().String()
 	compositeBlock := loadTestBlock(t, ctx, db, doc.Head())
 	require.NotEmpty(t, compositeBlock.Links)
 	genesisFieldCID := compositeBlock.Links[0].Cid
@@ -123,7 +123,7 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 
 	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -132,13 +132,13 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 
 	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), docShortID))
 
-	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
+	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 	_, found, err = id.GetDocID(txnCtx, docShortID)
 	require.NoError(t, err)
 	require.False(t, found)
-	_, found, err = id.GetDocRef(txnCtx, publicDocID)
+	_, found, err = id.GetDocRef(txnCtx, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 	_, found, err = id.GetDocRef(txnCtx, legacyDocID)
@@ -152,7 +152,7 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, publicDocID, blockDocID)
+	require.Equal(t, docID, blockDocID)
 }
 
 func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {

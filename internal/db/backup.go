@@ -230,18 +230,18 @@ func (db *DB) setImportedDocIDAlias(
 	}
 	defer txn.Discard()
 
-	colShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
 	if err != nil {
 		return err
 	}
-	docShortID, found, err := id.GetDocShortID(ctx, colShortID, doc.ID().String())
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}
 	if !found {
 		return NewErrDocIDNotFound(doc.ID().String())
 	}
-	if err := id.SetDocIDToDocRefMapping(ctx, colShortID, docShortID, importedDocID); err != nil {
+	if err := id.SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, importedDocID); err != nil {
 		return err
 	}
 	return txn.Commit()

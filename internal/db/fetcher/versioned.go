@@ -276,7 +276,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint64) error {
 			if err != nil {
 				return err
 			}
-			docShortID, err = vf.storageDocIDForBlock(collectionShortID, block, cc)
+			docShortID, err = vf.docShortIDForBlock(collectionShortID, block, cc)
 			if err != nil {
 				return err
 			}
@@ -403,12 +403,12 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			return NewErrEncryptionKeyMissing(current.cid.String())
 		}
 
-		var docID uint64
+		var blockDocShortID uint64
 		if !block.Delta.IsCollection() {
-			docID = docShortID
-			if docID == 0 {
+			blockDocShortID = docShortID
+			if blockDocShortID == 0 {
 				var err error
-				docID, err = vf.storageDocIDForBlock(collectionShortID, block, current.cid)
+				blockDocShortID, err = vf.docShortIDForBlock(collectionShortID, block, current.cid)
 				if err != nil {
 					return err
 				}
@@ -429,7 +429,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				block.Delta.GetCollectionVersionID(),
 				keys.DataStoreKey{
 					CollectionShortID: collectionShortID,
-					DocShortID:        docID,
+					DocShortID:        blockDocShortID,
 					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 				},
 			)
@@ -452,7 +452,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				field.Kind,
 				keys.DataStoreKey{
 					CollectionShortID: collectionShortID,
-					DocShortID:        docID,
+					DocShortID:        blockDocShortID,
 					FieldID:           fmt.Sprint(fieldShortID),
 				},
 				field.Name,
@@ -484,7 +484,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) storageDocIDForBlock(
+func (vf *VersionedFetcher) docShortIDForBlock(
 	collectionShortID uint32,
 	block *coreblock.Block,
 	blockCID cid.Cid,
@@ -506,7 +506,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 			if len(block.Heads) == 0 {
 				docID = client.NewDocIDV0(blockCID).String()
 			} else {
-				return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
+				return vf.docShortIDForCompositeHead(collectionShortID, block.Heads)
 			}
 		} else {
 			return 0, client.ErrMalformedDocID
@@ -523,7 +523,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	return docShortID, nil
 }
 
-func (vf *VersionedFetcher) storageDocIDForCompositeHead(
+func (vf *VersionedFetcher) docShortIDForCompositeHead(
 	collectionShortID uint32,
 	heads []cidlink.Link,
 ) (uint64, error) {
@@ -532,12 +532,12 @@ func (vf *VersionedFetcher) storageDocIDForCompositeHead(
 		if err != nil {
 			return 0, err
 		}
-		docID, err := vf.storageDocIDForBlock(collectionShortID, headBlock, head.Cid)
+		docShortID, err := vf.docShortIDForBlock(collectionShortID, headBlock, head.Cid)
 		if err != nil {
 			return 0, err
 		}
-		if docID != 0 {
-			return docID, nil
+		if docShortID != 0 {
+			return docShortID, nil
 		}
 	}
 	return 0, client.ErrMalformedDocID

@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-func TestPublicDocIDForSignatureBlockResolvesGenesisCompositeAndField(t *testing.T) {
+func TestDocIDsForSignatureBlockResolveGenesisCompositeAndField(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestPublicDocIDForSignatureBlockResolvesGenesisCompositeAndField(t *testing
 	require.Equal(t, []string{doc.ID().String()}, docIDs)
 }
 
-func TestPublicDocIDForSignatureBlockMapsStoredBlockCID(t *testing.T) {
+func TestDocIDsForSignatureBlockMapStoredBlockCID(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
