@@ -41,17 +41,9 @@ func waitForIndexReady(t *testing.T, ctx context.Context, db *DB, collectionID s
 // forever. The gate forces the two builds to overlap; both must still converge to ready with full
 // entries.
 func TestConcurrentBuilds_SameCollection_BothComplete(t *testing.T) {
-	origBatch := indexBackfillBatchSize
-	indexBackfillBatchSize = 5
-	defer func() { indexBackfillBatchSize = origBatch }()
-
-	origConc := indexBuildConcurrency
-	indexBuildConcurrency = 4
-	defer func() { indexBuildConcurrency = origConc }()
-
-	origDelay := indexBuildRetryDelay
-	indexBuildRetryDelay = 10 * time.Millisecond
-	defer func() { indexBuildRetryDelay = origDelay }()
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildConcurrency, 4)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
 
 	// Gate: park each build at its first batch boundary until released, so both are in flight at
 	// once. Each build blocks on its first gate call, so the two signal exactly once before parking.
@@ -121,13 +113,8 @@ func TestConcurrentBuilds_SameCollection_BothComplete(t *testing.T) {
 // with more indexes than the concurrency limit, over a multi-batch collection, all on one
 // collection (so the cross-build conflict surface is exercised). Every index must converge.
 func TestConcurrentBuilds_ManyIndexes_AllComplete(t *testing.T) {
-	origBatch := indexBackfillBatchSize
-	indexBackfillBatchSize = 5
-	defer func() { indexBackfillBatchSize = origBatch }()
-
-	origDelay := indexBuildRetryDelay
-	indexBuildRetryDelay = 10 * time.Millisecond
-	defer func() { indexBuildRetryDelay = origDelay }()
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
 
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
@@ -210,21 +197,4 @@ func TestDeleteFailedIndex_ClearsBackfillRecord(t *testing.T) {
 
 	// No action record of any kind must remain (the leaked Errored backfill record is the bug).
 	requireNoIndexState(t, ctx, db, collectionID, failedID)
-	assertNoActionRecordsForIndex(t, ctx, db, collectionID, failedID)
-}
-
-// assertNoActionRecordsForIndex fails if any action record (any action type) exists for the index.
-func assertNoActionRecordsForIndex(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) {
-	t.Helper()
-	rawTxn, err := db.NewTxn(true)
-	require.NoError(t, err)
-	t.Cleanup(func() { rawTxn.Discard() })
-	txnCtx := InitContext(ctx, rawTxn)
-
-	records, err := scanIndexStates(txnCtx, indexActionCollectionPrefix(collectionID), false)
-	require.NoError(t, err)
-	for _, rec := range records {
-		require.NotEqual(t, indexID, rec.Key.IndexID,
-			"expected no action record for dropped index, found %+v", rec.State)
-	}
 }

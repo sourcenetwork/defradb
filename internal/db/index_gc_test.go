@@ -113,9 +113,7 @@ func getCollectionShortID(t *testing.T, ctx context.Context, db *DB, collectionI
 //   - The index is absent from ListIndexes.
 //   - A raw prefix scan over the index keys returns zero entries.
 func TestGCIndex_MultiBatch_DeletesAllEntries(t *testing.T) {
-	origBatchSize := indexBackfillBatchSize
-	indexBackfillBatchSize = 3
-	defer func() { indexBackfillBatchSize = origBatchSize }()
+	setForTest(t, &indexBackfillBatchSize, 3)
 
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)

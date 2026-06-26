@@ -167,16 +167,9 @@ func TestIndexWorker_EventDrivenBuild_Completes(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// The build runs in the background; poll the persisted state until it clears (ready).
+	// The build runs in the background; wait until the index becomes ready.
 	collectionID := col.Version().CollectionID
-	require.Eventually(t, func() bool {
-		rawTxn, err := db.NewTxn(true)
-		require.NoError(t, err)
-		defer rawTxn.Discard()
-		_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, desc.ID)
-		// A missing record means ready.
-		return err != nil
-	}, 10*time.Second, 5*time.Millisecond, "index did not become ready via the event-driven worker")
+	waitForIndexReady(t, ctx, db, collectionID, desc.ID)
 
 	require.Len(t, queryUserByName(t, db, ctx, "Alice"), 1)
 }
@@ -240,14 +233,7 @@ func TestIndexWorker_ConcurrentBuilds_AllComplete(t *testing.T) {
 
 	collectionID := col.Version().CollectionID
 	for _, desc := range descs {
-		desc := desc
-		require.Eventually(t, func() bool {
-			rawTxn, err := db.NewTxn(true)
-			require.NoError(t, err)
-			defer rawTxn.Discard()
-			_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, desc.ID)
-			return err != nil
-		}, 10*time.Second, 5*time.Millisecond, "index %d did not become ready", desc.ID)
+		waitForIndexReady(t, ctx, db, collectionID, desc.ID)
 	}
 }
 

@@ -22,6 +22,16 @@ import (
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
+// setForTest sets *p to v for the duration of the test, restoring the previous value on cleanup.
+// It collapses the orig := X; X = v; defer func() { X = orig }() dance used to tune package vars
+// (indexBackfillBatchSize, indexBuildConcurrency, indexBuildRetryDelay) into a single line.
+func setForTest[T any](t *testing.T, p *T, v T) {
+	t.Helper()
+	orig := *p
+	*p = v
+	t.Cleanup(func() { *p = orig })
+}
+
 func newBadgerDB(ctx context.Context) (*DB, error) {
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	if err != nil {

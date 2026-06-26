@@ -139,9 +139,7 @@ func deleteIndexSync(t *testing.T, ctx context.Context, db *DB, col client.Colle
 // TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState builds an index over 10 docs in
 // batches of 3, then checks the state record is cleared and every doc is queryable.
 func TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState(t *testing.T) {
-	origBatchSize := indexBackfillBatchSize
-	indexBackfillBatchSize = 3
-	defer func() { indexBackfillBatchSize = origBatchSize }()
+	setForTest(t, &indexBackfillBatchSize, 3)
 
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)

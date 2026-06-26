@@ -72,9 +72,7 @@ func TestBackfillIndex_Completion_PublishesNoDropEvent(t *testing.T) {
 // invariant: a multi-batch build emits exactly one building event (the initial transition),
 // not one per batch, so per-batch watermark advances do not flood the bus.
 func TestBackfillIndex_MultiBatch_PublishesSingleBuildingEvent(t *testing.T) {
-	origBatchSize := indexBackfillBatchSize
-	indexBackfillBatchSize = 2
-	defer func() { indexBackfillBatchSize = origBatchSize }()
+	setForTest(t, &indexBackfillBatchSize, 2)
 
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
